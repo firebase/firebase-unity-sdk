@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Android" xml:space="preserve">
+    <value>Android</value>
+  </data>
+  <data name="IOS" xml:space="preserve">
+    <value>iOS</value>
+  </data>
+  <data name="FirebaseDescription" xml:space="preserve">
+    <value>Firebase gives you the tools and infrastructure from Google to help you develop, grow and earn money from your app.</value>
+  </data>
+  <data name="OpenConsole" xml:space="preserve">
+    <value>Open in Console</value>
+  </data>
+  <data name="LearnMore" xml:space="preserve">
+    <value>Learn More</value>
+  </data>
+  <data name="AndroidConnected" xml:space="preserve">
+    <value>Ready to use Firebase on Android.</value>
+  </data>
+  <data name="AndroidDisconnected" xml:space="preserve">
+    <value>To connect Firebase for Android, add the google-services.json from Firebase to your Assets.</value>
+  </data>
+  <data name="IOSConnected" xml:space="preserve">
+    <value>Ready to use Firebase on iOS.</value>
+  </data>
+  <data name="IOSDisconnected" xml:space="preserve">
+    <value>To connect Firebase for iOS, add the GoogleService-Info.plist from Firebase to your Assets.</value>
+  </data>
+  <data name="AnalyticsName" xml:space="preserve">
+    <value>Analytics</value>
+  </data>
+  <data name="AnalyticsDescription" xml:space="preserve">
+    <value>Measure user activity and engagement with free, easy, and unlimited analytics.</value>
+  </data>
+  <data name="AnalyticsGuideSummary" xml:space="preserve">
+    <value>Log an Analytics event</value>
+  </data>
+  <data name="AuthName" xml:space="preserve">
+    <value>Authentication</value>
+  </data>
+  <data name="AuthDescription" xml:space="preserve">
+    <value>Sign in and manage users with ease, accepting emails, Google Sign-In, Facebook and other login providers.</value>
+  </data>
+  <data name="AuthGuideSummary" xml:space="preserve">
+    <value>Email and password authentication</value>
+  </data>
+  <data name="CloudMessagingName" xml:space="preserve">
+    <value>Cloud Messaging</value>
+  </data>
+  <data name="CloudMessagingDescription" xml:space="preserve">
+    <value>Deliver and receive messages and notifications reliably across cloud and device.</value>
+  </data>
+  <data name="CloudMessagingGuideSummary" xml:space="preserve">
+    <value>Set up Firebase Cloud Messaging</value>
+  </data>
+  <data name="CrashlyticsName" xml:space="preserve">
+    <value>Crashlytics</value>
+  </data>
+  <data name="CrashlyticsDescription" xml:space="preserve">
+    <value>Get clear, actionable insight into app issues with this powerful crash reporting solution.</value>
+  </data>
+  <data name="CrashlyticsGuideSummary" xml:space="preserve">
+    <value>Set up Firebase Crashlytics</value>
+  </data>
+  <data name="DatabaseName" xml:space="preserve">
+    <value>Realtime Database</value>
+  </data>
+  <data name="DatabaseDescription" xml:space="preserve">
+    <value>Store and sync data across all clients in realtime.</value>
+  </data>
+  <data name="DatabaseGuideSummary" xml:space="preserve">
+    <value>Set up Firebase Realtime Database</value>
+  </data>
+  <data name="DynamicLinksName" xml:space="preserve">
+    <value>Dynamic Links</value>
+  </data>
+  <data name="DynamicLinksDescription" xml:space="preserve">
+    <value>Send users to the right place in your app whether or not it is already installed.</value>
+  </data>
+  <data name="DynamicLinksGuideSummary" xml:space="preserve">
+    <value>Set up Firebase Dynamic Links</value>
+  </data>
+  <data name="FunctionsName" xml:space="preserve">
+    <value>Cloud Functions for Firebase</value>
+  </data>
+  <data name="FunctionsDescription" xml:space="preserve">
+    <value>Call Cloud Functions directly from your app.</value>
+  </data>
+  <data name="FunctionsGuideSummary" xml:space="preserve">
+    <value>Set up Cloud Functions for Firebase</value>
+  </data>
+  <data name="InvitesName" xml:space="preserve">
+    <value>Invites and Dynamic Links</value>
+  </data>
+  <data name="InvitesDescription" xml:space="preserve">
+    <value>Let your existing users easily share your app, or their favorite in-app content, via email or SMS.</value>
+  </data>
+  <data name="InvitesGuideSummary" xml:space="preserve">
+    <value>Send Firebase invites from your app</value>
+  </data>
+  <data name="RemoteConfigName" xml:space="preserve">
+    <value>Remote Config</value>
+  </data>
+  <data name="RemoteConfigDescription" xml:space="preserve">
+    <value>Customize and experiment with app behavior using cloud-based configuration parameters.</value>
+  </data>
+  <data name="RemoteConfigGuideSummary" xml:space="preserve">
+    <value>Set up Firebase Remote Config</value>
+  </data>
+  <data name="StorageName" xml:space="preserve">
+    <value>Storage</value>
+  </data>
+  <data name="StorageDescription" xml:space="preserve">
+    <value>Store files with ease.</value>
+  </data>
+  <data name="StorageGuideSummary" xml:space="preserve">
+    <value>Set up Firebase Storage</value>
+  </data>
+  <data name="GoogleServicesAndroidGenerateXml" xml:space="preserve">
+    <value>Generated Firebase Android Resources file {0} from {1}
+	
+Executed {2}</value>
+  </data>
+  <data name="GoogleServicesAndroidFileMissing" xml:space="preserve">
+    <value>No {0} files found in your project so it is not possible to generate Firebase Android resources file {1}.
+Building without Firebase Android resources ({1}) will result in an app that will fail to initialize.
+
+To resolve this problem, follow the setup instructions at {2}</value>
+  </data>
+  <data name="GoogleServicesIOSFileMissing" xml:space="preserve">
+    <value>No {0} files found in your project.
+Building without Firebase configuration will result in an app that will fail to initialize.
+
+To resolve this problem, follow the setup instructions at {1}</value>
+  </data>
+  <data name="GoogleServicesFileMultipleFiles" xml:space="preserve">
+    <value>Multiple {0} files found in your project. Using {1} (bundle ID {2}) to configure Firebase.
+
+All files present:
+{3}</value>
+  </data>
+  <data name="GoogleServicesMismatchedBundleId" xml:space="preserve">
+    <value>Incorrect Bundle ID</value>
+  </data>
+  <data name="GoogleServicesChangeBundleId" xml:space="preserve">
+    <value>Would you like to change your bundle ID from {0} to {1}?</value>
+  </data>
+  <data name="GoogleServicesFileBundleIdMissing" xml:space="preserve">
+    <value>Project Bundle ID {0} does not match any bundle IDs in your {1} files.
+This will result in an app that will fail to initialize.
+
+Available Bundle IDs:
+{2}
+
+You need to either:
+* Fix your app's bundle ID under "Player Settings --&gt; Bundle Identifier"
+or:
+* Add another app to your firebase project
+  Goto {3}
+  and add the new configuration file to your project.</value>
+  </data>
+  <data name="GoogleServicesAndroidGenerationFailed" xml:space="preserve">
+    <value>Generation of the Firebase Android resource file {0} from {1} failed.
+If you have not included a valid Firebase Android resources in your app it will fail to initialize.
+
+{2}
+{3}
+
+You can start to diagnose this issue by executing "{2}" from the command line.</value>
+  </data>
+  <data name="GoogleServicesToolMissing" xml:space="preserve">
+    <value>Unable to find command line tool {0} required for Firebase Android resource generation.
+{0} is required to generate the Firebase Android resource file {1} from {2}. Without Firebase Android resources, your app will fail to initialize.
+{0} was distributed with each Firebase Unity SDK plugin, was it deleted?
+
+{3}</value>
+  </data>
+  <data name="UnableToCreateDirectory" xml:space="preserve">
+    <value>Failed to create directory {0}. Is the directory read-only?</value>
+  </data>
+  <data name="IOSNotSupportedOnWindows" xml:space="preserve">
+    <value>Firebase iOS builds are not supported on Windows. Please build on a OSX machine instead.</value>
+  </data>
+  <data name="FailedToLoadIOSExtensions" xml:space="preserve">
+    <value>Failed to load the UnityEditor.iOS.Extensions.Xcode dll.
+Is iOS support installed?</value>
+  </data>
+  <data name="PropertyMissingForGoogleSignIn" xml:space="preserve">
+    <value>{0} file missing {1}, Google Sign-In will fail to initialize.
+To resolve this issue follow the instructions at {2}</value>
+  </data>
+  <data name="AndroidSdkVersionMismatchSummary" xml:space="preserve">
+    <value>Incorrect Minimum Android Version.</value>
+  </data>
+  <data name="AndroidSdkVersionMismatch" xml:space="preserve">
+    <value>Minimum Target Android SDK needs to be set to level 14 or above.
+
+Change the Android SDK version to at least "API level 14" in:
+Build Settings -&gt; Player Settings -&gt; Other Settings -&gt; Identification -&gt; Minimum API Level
+</value>
+  </data>
+  <data name="AndroidSdkVersionChange" xml:space="preserve">
+    <value>Change Android SDK Version?</value>
+  </data>
+  <data name="AndroidMinSdkVersionSetFailure" xml:space="preserve">
+    <value>Failed to set Minimum Target Android SDK level to {0}, this may be because
+you have an older version of the Android SDK installed on your machine.
+Try upgrading your Android SDK and setting the Android SDK level to {0} again.</value>
+  </data>
+  <data name="CouldNotCopyFile" xml:space="preserve">
+    <value>Could not copy file {0} to {1}.</value>
+  </data>
+  <data name="CouldNotFindPlistOrJson" xml:space="preserve">
+    <value>Could not locate google-services.json or GoogleService-Info.plist files.</value>
+  </data>
+  <data name="CouldNotTranslatePlist" xml:space="preserve">
+    <value>Could not parse the file {0} as a plist file. Redownload from the firebase console?</value>
+  </data>
+  <data name="PythonScriptExecutionFailed" xml:space="preserve">
+    <value>Python executable executable {0} failed.
+
+If you're using Windows 7/8 you could try installing the Windows Universal C Runtime
+https://www.microsoft.com/en-us/download/details.aspx?id=48234
+then try again.
+
+Or you could try:
+- Installing Python
+- Add Python it to your path
+- Delete the {1} executable which will force Firebase to use the Python interpreter
+- Restart Unity
+</value>
+  </data>
+</root>

@@ -1,0 +1,22 @@
+<!-- Copyright (C) 2019 Google Inc. All Rights Reserved.
+
+FirebaseTest iOS and Android Dependencies.
+-->
+
+<dependencies>
+  <iosPods>
+    <iosPod name="TestPod" version="1.2.3" minTargetSdk="7.8">
+    </iosPod>
+    <iosPod name="PinnedTestPod" version="7.8.9" minTargetSdk="1.0">
+    </iosPod>
+  </iosPods>
+  <androidPackages>
+    <androidPackage spec="test.group:test-name:2.3.4">
+    </androidPackage>
+    <androidPackage spec="com.google.firebase:firebase-test-unity:4.5.6">
+      <repositories>
+        <repository>Assets/Firebase/m2repository</repository>
+      </repositories>
+    </androidPackage>
+  </androidPackages>
+</dependencies>

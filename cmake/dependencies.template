@@ -1,0 +1,16 @@
+<!-- Copyright (C) 2019 Google Inc. All Rights Reserved.
+
+Firebase@MODULE_NAME@ iOS and Android Dependencies.
+-->
+
+<dependencies>
+  <iosPods>@IOS_PODS@
+  </iosPods>
+  <androidPackages>@ANDROID_PACKAGES@
+    <androidPackage spec="@ANDROID_SPEC@">
+      <repositories>
+        <repository>Assets/Firebase/m2repository</repository>
+      </repositories>
+    </androidPackage>
+  </androidPackages>
+</dependencies>

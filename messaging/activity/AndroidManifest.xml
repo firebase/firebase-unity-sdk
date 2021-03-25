@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="${applicationId}"
+          android:versionCode="1"
+          android:versionName="1.0">
+  <application android:label="@string/app_name"
+               android:icon="@drawable/app_icon">
+    <!-- The MessagingUnityPlayerActivity is a class that extends
+         UnityPlayerActivity to work around a known issue when receiving
+         notification data payloads in the background. -->
+    <activity android:name="com.google.firebase.MessagingUnityPlayerActivity"
+              android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+    </activity>
+    <service android:name="com.google.firebase.messaging.MessageForwardingService"
+             android:permission="android.permission.BIND_JOB_SERVICE"
+             android:exported="false" >
+    </service>
+  </application>
+
+</manifest>

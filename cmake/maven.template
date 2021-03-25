@@ -1,0 +1,9 @@
+<metadata>
+  <groupId>com.google.firebase</groupId>
+  <artifactId>@ARTIFACT_ID@</artifactId>
+  <versioning>
+    <release>@VERSION@</release>
+    <versions><version>@VERSION@</version></versions>
+    <lastUpdated/>
+  </versioning>
+</metadata>
