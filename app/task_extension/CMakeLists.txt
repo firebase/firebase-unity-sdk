@@ -29,7 +29,7 @@ mono_add_library(firebase_taskextension_cs
     ${firebase_platform_task_lib}
     firebase_platform_cs
   XBUILD_EXE
-    ${MONO_XBUILD_EXE}
+    ${XBUILD_EXE}
 )
 
 unity_pack_cs(firebase_taskextension_cs)

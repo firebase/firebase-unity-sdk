@@ -50,7 +50,7 @@ mono_add_library(unity_compat_cs
   REFERENCES
     unity_engine_cs
   XBUILD_EXE
-    ${MONO_XBUILD_EXE}
+    ${XBUILD_EXE}
 )
 
 mono_add_library(unity_tasks_cs
@@ -74,7 +74,7 @@ mono_add_library(unity_tasks_cs
     unity_engine_cs
     unity_compat_cs
   XBUILD_EXE
-    ${MONO_XBUILD_EXE}
+    ${XBUILD_EXE}
 )
 
 unity_pack_cs(unity_compat_cs
