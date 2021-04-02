@@ -39,7 +39,7 @@ if(EXISTS "${MONO_EXE}")
       mono_version_tmp "${mono_version_str}")
   set(MONO_VERSION ${mono_version_tmp} CACHE STRING "Mono version")
 else()
-  message(FATAL_ERROR "Cannot find mono.")
+  message(STATUS "Cannot find mono.")
 endif()
 
 if(FIREBASE_INCLUDE_UNITY)
