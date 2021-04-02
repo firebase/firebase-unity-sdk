@@ -49,10 +49,12 @@ if(FIREBASE_INCLUDE_UNITY)
       set(UNITY_PATH_SUFFIXES "Editor/Data/Managed")
     elseif(APPLE)
       set(UNITY_PATH_HUB_HINT "/Applications/Unity/Hub/Editor/*")
-      set(UNITY_PATH_SUFFIXES "Unity.app/Contents/Managed")
+      set(UNITY_PATH_SUFFIXES "Unity.app/Contents/Managed" "PlaybackEngines/iOSSupport"
+                              "Unity.app/Contents/MonoBleedingEdge/bin" "Unity.app/Contents/Mono/bin")
     elseif(UNIX) # Linux
       set(UNITY_PATH_HUB_HINT "$ENV{HOME}/Unity/Hub/Editor/*")
-      set(UNITY_PATH_SUFFIXES "Editor/Data/Managed")
+      set(UNITY_PATH_SUFFIXES "Editor/Data/Managed" "Editor/Data/PlaybackEngines/iOSSupport"
+                              "Editor/Data/MonoBleedingEdge/bin" "Editor/Data/Mono/bin")
     endif()
   else()
     set(UNITY_PATH_HUB_HINT ${UNITY_ENGINE_DLL_DIR})
@@ -78,14 +80,14 @@ if(FIREBASE_INCLUDE_UNITY)
   find_file(UNITY_EDITOR_IOS_XCODE_DLL
     NAMES UnityEditor.iOS.Extensions.Xcode.dll
     PATHS ${UNITY_PATH_HUB_HINT}
-    PATH_SUFFIXES "PlaybackEngines/iOSSupport"
+    PATH_SUFFIXES ${UNITY_PATH_SUFFIXES}
     NO_DEFAULT_PATH
     NO_CMAKE_FIND_ROOT_PATH
   )
 
   find_program(UNITY_XBUILD_EXE xbuild
     PATHS ${UNITY_PATH_HUB_HINT}
-    PATH_SUFFIXES ${UNITY_PATH_SUFFIXES}/../Mono/bin
+    PATH_SUFFIXES ${UNITY_PATH_SUFFIXES}
     NO_DEFAULT_PATH
     NO_CMAKE_FIND_ROOT_PATH
   )
