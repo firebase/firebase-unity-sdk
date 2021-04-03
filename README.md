@@ -53,15 +53,15 @@ The following CMake options are avaliable:
 * **FIREBASE_UNI_LIBRARY**: Build all native modules as one dynamic lib
 * **FIREBASE_CPP_SDK_DIR**: Local path to firebase cpp
 * **FIREBASE_UNITY_SDK_VERSION**: Set version string of firebase unity package
-* **UNITY_ENGINE_DLL_DIR**: Local path to UnityEngine.dll directory
-  (path should end with **/managed**)
+* **UNITY_ROOT_DIR**: Local path to Unity's installation directory
+  (path should end with version number)
 * **MONO_DIR**: Local path to mono's xbuild executable directory
 * **OPENSSL_ROOT_DIR**: Open ssl root directory
 * **PROTOBUF_SRC_ROOT_FOLDER**: Protobuf root directory
 
 > Note:<br/>
-> &nbsp;&nbsp;&nbsp;**UNITY_ENGINE_DLL_DIR** is a required setting for building
-> unity, CMake will not be able to auto find unity.
+> &nbsp;&nbsp;&nbsp;**UNITY_ROOT_DIR** is a recommended setting for building
+> unity, else CMake will make an effort to auto find unity.
 
 > Note:<br/>
 > &nbsp;&nbsp;&nbsp;On windows, **MONO_DIR** is a required setting.

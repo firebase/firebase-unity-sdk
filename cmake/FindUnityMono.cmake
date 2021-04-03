@@ -42,23 +42,37 @@ else()
   message(STATUS "Cannot find mono.")
 endif()
 
+if (NOT EXISTS "${UNITY_ROOT_DIR}")
+  # Make our best attempt to find the latest unity installed on the system.
+  # Note that Unity <=2018 include mono 2.x which causes compilation errors.
+  # Minimum supported version of mono is 3.5.
+  if(MSVC)
+    set(editordir "C:/Program Files/Unity/Hub/Editor")
+  elseif(APPLE)
+    set(editordir "/Applications/Unity/Hub/Editor")
+  elseif(UNIX) # Linux
+    set(editordir "$ENV{HOME}/Unity/Hub/Editor")
+  endif()
+  file(GLOB unity_versions RELATIVE ${editordir} ${editordir}/*)
+  list(SORT unity_versions ORDER DESCENDING)
+  list(GET unity_versions 0 latest_unity_version)
+  set(UNITY_ROOT_DIR ${editordir}/${latest_unity_version})
+  message(STATUS "Auto detected latest Unity version: ${UNITY_ROOT_DIR}")
+endif()
+
 if(FIREBASE_INCLUDE_UNITY)
-  if(NOT EXISTS "${UNITY_ENGINE_DLL_DIR}")
-    if(MSVC)
-      set(UNITY_PATH_HUB_HINT "C:/Program Files/Unity/Hub/Editor/*")
-      set(UNITY_PATH_SUFFIXES "Editor/Data/Managed")
-    elseif(APPLE)
-      set(UNITY_PATH_HUB_HINT "/Applications/Unity/Hub/Editor/*")
-      set(UNITY_PATH_SUFFIXES "Unity.app/Contents/Managed" "PlaybackEngines/iOSSupport"
-                              "Unity.app/Contents/MonoBleedingEdge/bin" "Unity.app/Contents/Mono/bin")
-    elseif(UNIX) # Linux
-      set(UNITY_PATH_HUB_HINT "$ENV{HOME}/Unity/Hub/Editor/*")
-      set(UNITY_PATH_SUFFIXES "Editor/Data/Managed" "Editor/Data/PlaybackEngines/iOSSupport"
-                              "Editor/Data/MonoBleedingEdge/bin" "Editor/Data/Mono/bin")
-    endif()
-  else()
-    set(UNITY_PATH_HUB_HINT ${UNITY_ENGINE_DLL_DIR})
-    set(UNITY_PATH_SUFFIXES "")
+  message(STATUS "Using Unity root directory: ${UNITY_ROOT_DIR}")
+  set(UNITY_PATH_HUB_HINT "${UNITY_ROOT_DIR}")
+  # Platform specific directories to search for various dlls and tools.
+  # These directories can also differ between Unity versions (eg: MonoBleedingEdge/bin or Mono/bin)
+  if(MSVC)
+    set(UNITY_PATH_SUFFIXES "Editor/Data/Managed")
+  elseif(APPLE)
+    set(UNITY_PATH_SUFFIXES "Unity.app/Contents/Managed" "PlaybackEngines/iOSSupport"
+                            "Unity.app/Contents/MonoBleedingEdge/bin" "Unity.app/Contents/Mono/bin")
+  elseif(UNIX) # Linux
+    set(UNITY_PATH_SUFFIXES "Editor/Data/Managed" "Editor/Data/PlaybackEngines/iOSSupport"
+                            "Editor/Data/MonoBleedingEdge/bin" "Editor/Data/Mono/bin")
   endif()
 
   find_file(UNITY_ENGINE_DLL
@@ -94,7 +108,7 @@ if(FIREBASE_INCLUDE_UNITY)
 
   if(NOT EXISTS ${UNITY_ENGINE_DLL} OR NOT EXISTS ${UNITY_EDITOR_DLL})
     message(FATAL_ERROR "Fail to find UnityEngine.dll or UnityEditor.dll. \
-      Please set valid path with -DUNITY_ENGINE_DLL_DIR or check that Unity \
+      Please set valid path with -DUNITY_ROOT_DIR or check that Unity \
       is installed in system default place ${UNITY_PATH_HUB_HINT}. \
       See the readme.md for more information.")
   endif()
