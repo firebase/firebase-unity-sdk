@@ -31,7 +31,7 @@ function check_exit_code {
 CMAKE_OPTIONS=
 
 if [ -d "../firebase-cpp-sdk" ]; then
-  CMAKE_OPTIONS="-DFIREBASE_CPP_SDK_DIR=`realpath ../firebase-cpp-sdk` "
+  CMAKE_OPTIONS="-DFIREBASE_CPP_SDK_DIR=`python -c "import os;print(os.path.realpath('../firebase-cpp-sdk'))"` "
 fi
 
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DUNITY_ROOT_DIR=${UNITY_ROOT_DIR}"
