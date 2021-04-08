@@ -38,7 +38,7 @@ if [ -d "../firebase-cpp-sdk" ]; then
   CMAKE_OPTIONS="-DFIREBASE_CPP_SDK_DIR=$REAL_PATH "
 fi
 
-CMAKE_OPTIONS="${CMAKE_OPTIONS}-DUNITY_ENGINE_DLL_DIR=${UNITY_ENGINE_DLL_DIR}"
+CMAKE_OPTIONS="${CMAKE_OPTIONS}-DUNITY_ROOT_DIR=${UNITY_ROOT_DIR}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_UNITY_BUILD_TESTS=ON"
 
 printf "#################################################################\n"

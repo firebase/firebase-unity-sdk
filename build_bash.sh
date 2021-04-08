@@ -31,18 +31,18 @@ function check_exit_code {
 CMAKE_OPTIONS=
 
 if [ -d "../firebase-cpp-sdk" ]; then
-  CMAKE_OPTIONS="-DFIREBASE_CPP_SDK_DIR=`realpath ../firebase-cpp-sdk` "
+  CMAKE_OPTIONS="-DFIREBASE_CPP_SDK_DIR=`python -c "import os;print(os.path.realpath('../firebase-cpp-sdk'))"` "
 fi
 
-CMAKE_OPTIONS="${CMAKE_OPTIONS}-DUNITY_ENGINE_DLL_DIR=${UNITY_ENGINE_DLL_DIR}"
+CMAKE_OPTIONS="${CMAKE_OPTIONS} -DUNITY_ROOT_DIR=${UNITY_ROOT_DIR}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_UNITY_BUILD_TESTS=ON"
 
 # TODO: Fix mono build to not need unity deps
 build_options=(
   "unity:-DFIREBASE_INCLUDE_UNITY=ON"
 #  "mono:-DFIREBASE_INCLUDE_MONO=ON"
-  "unity_seperate:-DFIREBASE_INCLUDE_UNITY=ON -DFIREBASE_UNI_LIBRARY=OFF"
-#  "mono_seperate:-DFIREBASE_INCLUDE_MONO=ON -DFIREBASE_UNI_LIBRARY=OFF"
+  "unity_separate:-DFIREBASE_INCLUDE_UNITY=ON -DFIREBASE_UNI_LIBRARY=OFF"
+#  "mono_separate:-DFIREBASE_INCLUDE_MONO=ON -DFIREBASE_UNI_LIBRARY=OFF"
 )
 
 for option in "${build_options[@]}" ; do
@@ -70,7 +70,7 @@ for option in "${build_options[@]}" ; do
     check_exit_code $?
 
     # Build the SDK
-    make -j 8
+    make
     check_exit_code $?
 
     # Package build output into zip
