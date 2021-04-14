@@ -18,7 +18,6 @@ set(firebase_crashlytics_cpp_ios
   ios/CrashlyticsiOSWrapper.m
   ios/CrashlyticsiOSWrapper.h
   ios/Crashlytics_PrivateHeaders/Crashlytics_Platform.h
-  ios/Crashlytics_PrivateHeaders/Fabric_Private.h
 )
 
 set(firebase_crashlytics_cpp_android
@@ -78,8 +77,7 @@ if(IOS)
   setup_pod_headers(
     firebase_crashlytics
     POD_NAMES
-      Crashlytics
-      Fabric
+      FirebaseCrashlytics
   )
 
   # Crashlytics pods use 'iOS' dir instead of 'Frameworks' dir
