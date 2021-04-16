@@ -57,6 +57,8 @@ CMAKE_OPTIONS="${CMAKE_OPTIONS}-DUNITY_ENGINE_DLL_DIR=${UNITY_ENGINE_DLL_DIR}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DANDROID_NDK=$ANDROID_NDK"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_TOOLCHAIN_FILE=${list[0]}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DANDROID_ABI=armeabi-v7a"
+CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_ANDROID_BUILD=true"
+CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=release"
 
 # Display commands being run.
 set -x
@@ -71,7 +73,7 @@ cmake .. ${CMAKE_OPTIONS} -DANDROID_ABI=armeabi-v7a
 check_exit_code $?
 
 # Build the SDK
-make -j 8
+make # -j 8
 check_exit_code $?
 
 # Package build output into zip

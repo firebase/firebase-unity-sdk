@@ -14,6 +14,7 @@
 
 #include "crashlytics/src/cpp/android/crashlytics_android.h"
 
+#include <assert.h>
 #include <jni.h>
 
 #include "app/src/include/firebase/app.h"
