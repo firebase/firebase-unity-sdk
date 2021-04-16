@@ -71,7 +71,7 @@ if (FIREBASE_INCLUDE_MONO AND FIREBASE_INCLUDE_UNITY)
 endif()
 
 # Darwin library for security
-if(APPLE AND NOT FIREBASE_IOS_BUILD)
+if(APPLE AND NOT FIREBASE_IOS_BUILD AND NOT FIREBASE_ANDROID_BUILD)
   set(FIREBASE_SYSTEM_DEPS
     "-framework Foundation"
     "-framework Security"
