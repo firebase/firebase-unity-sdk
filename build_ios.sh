@@ -61,7 +61,11 @@ pushd "$DIR"
   check_exit_code $?
 
   # Build the SDK
-  make -j 8
+  # using make -j <nprocs> is having some issues where the build hangs
+  # and continues on pressing return only to stop sometime later.
+  # Disabling parallel builds for now.
+  # TODO: Enable parallel builds after finding the reason
+  make
   check_exit_code $?
 
   # Package build output into zip
