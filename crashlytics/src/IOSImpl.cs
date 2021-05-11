@@ -50,6 +50,9 @@ namespace Firebase.Crashlytics
     private static extern void CLUSetKeyValue(string key, string value);
 
     [DllImport("__Internal")]
+    private static extern void CLUSetInternalKeyValue(string key, string value);
+
+    [DllImport("__Internal")]
     private static extern void CLUSetUserIdentifier(string identifier);
 
     [DllImport("__Internal")]
@@ -68,6 +71,7 @@ namespace Firebase.Crashlytics
 
     public IOSImpl() {
       CLUSetDevelopmentPlatform("Unity", Application.unityVersion);
+      CLUSetInternalKeyValue(MetadataBuilder.METADATA_KEY, MetadataBuilder.GenerateMetadataJSON());
     }
 
     public override bool IsSDKInitialized() {

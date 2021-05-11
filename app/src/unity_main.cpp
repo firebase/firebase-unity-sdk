@@ -20,6 +20,7 @@
 // the C++ module.
 
 #include <jni.h>
+
 #include "app/src/util.h"
 #include "app/src/util_android.h"
 
@@ -110,7 +111,6 @@ jint JNI_OnLoad(JavaVM *jvm, void *reserved) {
         {"com/google/firebase/dynamiclinks/FirebaseDynamicLinks",
          "dynamic_links"},
         {"com/google/firebase/functions/FirebaseFunctions", "functions"},
-        {"com/google/firebase/iid/FirebaseInstanceId", "instance_id"},
         {"com/google/firebase/installations/FirebaseInstallations",
          "installations"},
         {"com/google/android/gms/appinvite/AppInvite", "invites"},

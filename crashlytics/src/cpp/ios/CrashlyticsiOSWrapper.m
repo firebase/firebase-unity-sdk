@@ -69,6 +69,10 @@ void CLUSetKeyValue(const char *key, const char *value) {
                                         forKey:safeCharToNSString(key)];
 }
 
+void CLUSetInternalKeyValue(const char *key, const char *value) {
+  FIRCLSUserLoggingRecordInternalKeyValue(safeCharToNSString(key), safeCharToNSString(value));
+}
+
 void CLULog(const char *msg) { [[FIRCrashlytics crashlytics] log:safeCharToNSString(msg)]; }
 
 void CLUSetUserIdentifier(const char *identifier) {

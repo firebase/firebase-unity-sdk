@@ -181,6 +181,15 @@ namespace firebase {
     System.Threading.Tasks.TaskCompletionSource<CSTYPE> tcs =
         new System.Threading.Tasks.TaskCompletionSource<CSTYPE>();
 #endif  // TYPE_## %mangle(CTYPE)
+
+    // Check if an exception has occurred previously and propagate it if it has.
+    // This has to be done before accessing the future because the future object
+    // might be invalid.
+    if ($imclassname.SWIGPendingException.Pending) {
+      tcs.SetException($imclassname.SWIGPendingException.Retrieve());
+      return tcs.Task;
+    }
+
     if (fu.status() == FutureStatus.Invalid) {
       tcs.SetException(
         new FirebaseException(0, "Asynchronous operation was not started."));
