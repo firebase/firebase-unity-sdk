@@ -15,7 +15,7 @@
 
 %{
 #include "app/src/cpp_instance_manager.h"
-#include "third_party/firebase/cpp/installations/src/include/firebase/installations.h"
+#include "installations/src/include/firebase/installations.h"
 %}
 
 %import "app/src/swig/app.i"
@@ -197,4 +197,4 @@ static CppInstanceManager<Installations> g_installations_instances;
 // exceptions.  We know that *all* methods can potentially throw exceptions.
 %warnfilter(314,844);
 
-%include "third_party/firebase/cpp/installations/src/include/firebase/installations.h"
+%include "installations/src/include/firebase/installations.h"
