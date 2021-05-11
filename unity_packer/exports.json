@@ -187,7 +187,7 @@
         "manifest" : {
           "unity": "2017.1",
           "dependencies": {
-            "com.google.external-dependency-manager" : "1.2.164"
+            "com.google.external-dependency-manager" : "1.2.165"
           }
         }
       }
@@ -1132,89 +1132,6 @@
         "author": {
           "name" : "Google LLC",
           "url": "https://firebase.google.com/docs/reference/unity/namespace/firebase/installations"
-        }
-      },
-      "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
-          "unity": "2017.1"
-        }
-      }
-    },
-    {
-      "name": "FirebaseInstanceId.unitypackage",
-      "imports": [
-        {
-          "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Firebase.InstanceId.dll",
-            "Firebase/Plugins/Firebase.InstanceId.dll.mdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": ["iOS"],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppInstanceId.a",
-            "Firebase/Plugins/iOS/Firebase.InstanceId.dll",
-            "Firebase/Plugins/iOS/Firebase.InstanceId.dll.mdb"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/InstanceIdDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-instance-id-unity/"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppInstanceId*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "sections": ["samples"],
-          "paths": [
-            "Firebase/Sample/InstanceId/"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
-          "paths": [
-            "Firebase/Editor/InstanceIdReadme.md"
-          ]
-        }
-      ],
-      "includes": [
-        "FirebaseApp.unitypackage",
-        "SampleCommon.unitypackage"
-      ],
-      "manifest_path": "Firebase/Editor",
-      "readme": "Firebase/Editor/InstanceIdReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/InstanceIdReadme.md",
-      "common_manifest" : {
-        "name": "com.google.firebase.instance-id",
-        "display_name": "Firebase Instance ID",
-        "description": [
-          "You can use Instance ID to test Firebase A/B Testing or provide a ",
-          "unique identifier for each app instance and a mechanism to ",
-          "authenticate and authorize actions like sending a message via ",
-          "Cloud Messaging."
-        ],
-        "keywords": ["Google", "Firebase", "InstanceId"],
-        "author": {
-          "name" : "Google LLC",
-          "url": "https://firebase.google.com/docs/reference/unity/namespace/firebase/instance-id"
         }
       },
       "export_upm": 1,

@@ -139,7 +139,8 @@ def get_transformations(namespace):
       'csharp': [
           swig_post_process.SWIGEnumPostProcessing(),
           NamespaceCMethodsCMake(namespace),
-          swig_post_process.ReplaceExceptionChecks('AppUtil'),
+          swig_post_process.ReplaceExceptionChecks(
+              'AppUtil', ['firebase/firestore/client/unity']),
           swig_post_process.FixSealedClasses(),
           swig_post_process.InternalMethodsToInternalVisibility(),
           swig_post_process.RenameAsyncMethods(),

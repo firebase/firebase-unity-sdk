@@ -55,6 +55,8 @@ namespace Firebase.Crashlytics
             "Unable to create FirebaseCrashlytics instance.");
         return;
       }
+
+      SetCustomKey(MetadataBuilder.METADATA_KEY, MetadataBuilder.GenerateMetadataJSON());
     }
 
     ~AndroidImpl() {

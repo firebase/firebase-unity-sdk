@@ -17,12 +17,13 @@
 
 #include <map>
 #include <set>
+
+#include "crashlytics/src/cpp/include/firebase/crashlytics.h"
 #include "app/src/cleanup_notifier.h"
 #include "app/src/future_manager.h"
 #include "app/src/include/firebase/app.h"
 #include "app/src/include/firebase/internal/common.h"
 #include "app/src/mutex.h"
-#include "crashlytics/src/cpp/include/firebase/crashlytics.h"
 
 namespace firebase {
 namespace crashlytics {
