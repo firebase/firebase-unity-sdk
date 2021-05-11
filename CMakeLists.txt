@@ -42,8 +42,6 @@ option(FIREBASE_INCLUDE_DYNAMIC_LINKS
        "Include the Firebase Dynamic Links library." ON)
 option(FIREBASE_INCLUDE_FUNCTIONS
        "Include the Cloud Functions for Firebase library." ON)
-option(FIREBASE_INCLUDE_INSTANCE_ID
-       "Include the Firebase Instance ID library." ON)
 option(FIREBASE_INCLUDE_MESSAGING
        "Include the Firebase Cloud Messaging library." ON)
 option(FIREBASE_INCLUDE_REMOTE_CONFIG
@@ -230,11 +228,6 @@ if (FIREBASE_INCLUDE_FUNCTIONS)
   add_subdirectory(functions)
   list(APPEND TARGET_LINK_LIB_NAMES "firebase_functions" "firebase_functions_swig")
   list(APPEND PROJECT_LIST_HEADER "  X(Functions)")
-endif()
-if (FIREBASE_INCLUDE_INSTANCE_ID)
-  add_subdirectory(instance_id)
-  list(APPEND TARGET_LINK_LIB_NAMES "firebase_instance_id" "firebase_instance_id_swig")
-  list(APPEND PROJECT_LIST_HEADER "  X(InstanceId)")
 endif()
 if (FIREBASE_INCLUDE_MESSAGING)
   add_subdirectory(messaging)
