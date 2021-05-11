@@ -16,14 +16,16 @@
 #define FIREBASE_CRASHLYTICS_CLIENT_CPP_SRC_ANDROID_CRASHLYTICS_ANDROID_H_
 
 #include <jni.h>
+
 #include <map>
 #include <set>
+
+#include "crashlytics/src/cpp/include/firebase/crashlytics.h"
 #include "app/src/future_manager.h"
 #include "app/src/include/firebase/app.h"
 #include "app/src/include/firebase/internal/common.h"
 #include "app/src/mutex.h"
 #include "app/src/util_android.h"
-#include "crashlytics/src/cpp/include/firebase/crashlytics.h"
 
 namespace firebase {
 namespace crashlytics {

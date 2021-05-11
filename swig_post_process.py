@@ -39,6 +39,9 @@ flags.DEFINE_string('module_name_prefix', None,
                     'Prefix to add to generated C methods.')
 flags.DEFINE_string('exception_module_name', None,
                     'Name of the module to check for pending exceptions.')
+flags.DEFINE_list('exception_ignore_path_prefixes', [],
+                  'List of file path prefixes to ignore when replacing the '
+                  'name of the module that checks for pending exceptions.')
 flags.DEFINE_boolean('fix_sealed_classes', True,
                      'Remove the virtual modifier from sealed class methods '
                      'and make protected members private.')
@@ -194,13 +197,15 @@ class NamespaceCMethods(SWIGPostProcessingInterface):
 class ReplaceExceptionChecks(SWIGPostProcessingInterface):
   """Redirect module local exception checks to a global module."""
 
-  def __init__(self, module_name):
+  def __init__(self, module_name, ignore_paths):
     """Initialize the instance.
 
     Args:
       module_name: Name of the module to redirect exceptions to.
+      ignore_paths: List of path prefixes to ignore when doing the replacement.
     """
     self.module_name = module_name
+    self.ignore_paths = ignore_paths
     self.replace_regexp = re.compile(
         r'[A-Za-z]+(PINVOKE\.SWIGPendingException\.Pending.*throw *)'
         r'[A-Za-z]+(PINVOKE\.SWIGPendingException\.Retrieve)')
@@ -219,6 +224,11 @@ class ReplaceExceptionChecks(SWIGPostProcessingInterface):
     """
     if filename.endswith('PINVOKE.cs'):
       return file_str
+
+    for path in self.ignore_paths:
+      if path in filename:
+        return file_str
+
     return self.replace_regexp.sub(
         r'{module_name}\g<1>{module_name}\g<2>'.format(
             module_name=self.module_name), file_str)
@@ -509,6 +519,8 @@ class AddPInvokeAttribute(SWIGPostProcessingInterface):
     self.search_strings = [
         ('ExceptionArgumentDelegate',
          re.compile('static void SetPendingArgument.*string paramName\\)')),
+        ('FirestoreExceptionDelegate',
+         re.compile('static void SetPendingFirestoreException.*string message')),
         ('ExceptionDelegate',
          re.compile('static void SetPending.*string message')),
         ('SWIGStringDelegate',
@@ -640,7 +652,8 @@ def main(unused_argv):
   if FLAGS.module_name_prefix:
     post_processes += [NamespaceCMethods(FLAGS.module_name_prefix)]
   if FLAGS.exception_module_name:
-    post_processes += [ReplaceExceptionChecks(FLAGS.exception_module_name)]
+    post_processes += [ReplaceExceptionChecks(FLAGS.exception_module_name,
+                                              FLAGS.exception_ignore_path_prefixes)]
   if FLAGS.fix_sealed_classes:
     post_processes += [FixSealedClasses()]
   if FLAGS.internal_visibility:

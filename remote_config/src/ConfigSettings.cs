@@ -32,16 +32,6 @@ namespace Firebase.RemoteConfig {
     /// fetch. Default is 12 hours.
     public ulong MinimumFetchInternalInMilliseconds { get; set; }
 
-    /// @brief Enable / disable developer mode.
-    ///
-    /// During app development, you might want to refresh the cache very
-    /// frequently (many times per hour) to let you rapidly iterate as you
-    /// develop and test your app. To accommodate rapid iteration on a project
-    /// with up to 10 developers, you can set isDeveloperModeEnabled to true,
-    /// changing the caching settings of the FirebaseRemoteConfig object.
-    [System.Obsolete("This property is no longer used")]
-    public bool IsDeveloperMode { get; set; }
-
     internal static ConfigSettings FromInternal(ConfigSettingsInternal csInternal) {
       return new ConfigSettings {
         FetchTimeoutInMilliseconds = csInternal.fetch_timeout_in_milliseconds,
