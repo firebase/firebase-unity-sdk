@@ -22,13 +22,13 @@
 #include "app/src/cleanup_notifier.h"
 #include "app/src/include/firebase/app.h"
 #include "app/src/include/firebase/version.h"
-#include "app/src/mutex.h"
 #include "app/src/log.h"
+#include "app/src/mutex.h"
 #include "app/src/util.h"
 
 #if defined(__ANDROID__)
-#include "app/src/util_android.h"
 #include "crashlytics/src/cpp/android/crashlytics_android.h"
+#include "app/src/util_android.h"
 #else
 #include "crashlytics/src/cpp/stub/crashlytics_stub.h"
 #endif  // defined(__ANDROID__)

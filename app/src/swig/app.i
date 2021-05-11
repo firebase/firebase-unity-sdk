@@ -652,10 +652,6 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
           "installations"
         ),
         new EnableModuleParams(
-          "Firebase.InstanceId.FirebaseInstanceId, Firebase.InstanceId",
-          "instance_id"
-        ),
-        new EnableModuleParams(
           "Firebase.Invites.FirebaseInvites, Firebase.Invites",
           "invites"
         ),

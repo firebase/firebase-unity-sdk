@@ -956,7 +956,7 @@ static CppInstanceManager<Auth> g_auth_instances;
 %typemap(csclassmodifiers) firebase::auth::FederatedOAuthProvider
   "public sealed class";
 
-// Provider classes declared in auth/client/cpp/src/included/credential.h
+// Provider classes declared in third_party/firebase/cpp/auth/src/included/credential.h
 // Rename the kProviderId string constant for all of our AuthProviders.
 %rename(ProviderId) firebase::auth::EmailAuthProvider::kProviderId;
 %rename(ProviderId) firebase::auth::FacebookAuthProvider::kProviderId;

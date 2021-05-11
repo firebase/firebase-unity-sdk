@@ -16,49 +16,49 @@
 
 set(FIREBASE_APP_ANDROID_DEPS
     "com.google.firebase:firebase-common:19.5.0"
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )
 
 set(FIREBASE_ANALYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )
 
 set(FIREBASE_AUTH_ANDROID_DEPS
-    "com.google.firebase:firebase-auth:20.0.2"
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-auth:20.0.4"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )
 
 set(FIREBASE_DATABASE_ANDROID_DEPS
-    "com.google.firebase:firebase-database:19.6.0"
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-database:19.7.0"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )
 
 set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
     "com.google.android.gms:play-services-appinvite:18.0.0"
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )
 
 set(FIREBASE_FUNCTIONS_ANDROID_DEPS
     "com.google.firebase:firebase-functions:19.2.0"
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )
 
 set(FIREBASE_INSTANCE_ID_ANDROID_DEPS
-    "com.google.firebase:firebase-iid:21.0.1"
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-iid:21.1.0"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )
 
 set(FIREBASE_MESSAGING_ANDROID_DEPS
-    "com.google.firebase:firebase-messaging:21.0.1"
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-messaging:21.1.0"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )
 
 set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
-    "com.google.firebase:firebase-config:20.0.3"
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-config:20.0.4"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )
 
 set(FIREBASE_STORAGE_ANDROID_DEPS
-    "com.google.firebase:firebase-storage:19.2.1"
-    "com.google.firebase:firebase-analytics:18.0.2"
+    "com.google.firebase:firebase-storage:19.2.2"
+    "com.google.firebase:firebase-analytics:18.0.3"
 )

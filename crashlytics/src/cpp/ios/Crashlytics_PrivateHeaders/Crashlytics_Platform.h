@@ -26,3 +26,5 @@
 @property(nonatomic, strong, nullable) NSString* developmentPlatformVersion;
 
 @end
+
+void FIRCLSUserLoggingRecordInternalKeyValue(NSString* key, id value);
