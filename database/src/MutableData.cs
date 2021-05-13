@@ -166,7 +166,7 @@ namespace Firebase.Database {
     /// <param name="path">A relative path</param>
     /// <returns>An instance encapsulating the data and priority at the given path</returns>
     public MutableData Child(string path) {
-      return new MutableData(internalData.Child(path), database);
+      return new MutableData(internalData.GetChild(path), database);
     }
 
     /// Two MutableData are considered equal if they contain the same references and priority.

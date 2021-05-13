@@ -123,7 +123,6 @@ static CppInstanceManager<Database> g_database_instances;
 %rename("%s") firebase::database::MutableData::priority;
 %rename("%s") firebase::database::MutableData::set_priority;
 %rename("%s") firebase::database::MutableData::HasChild;
-%rename("%s") firebase::database::MutableData::Child;
 %rename("%s") firebase::database::MutableData::ChildrenEnumerator;
 
 // These methods are unused and trigger the creation of additional classes
@@ -175,8 +174,15 @@ class MutableDataChildrenEnumerator {
 %include "database/src/include/firebase/database/mutable_data.h"
 
 %newobject firebase::database::MutableData::ChildrenEnumerator;
+%rename("%s") firebase::database::MutableData::GetChild;
 %extend firebase::database::MutableData {
   firebase::database::MutableDataChildrenEnumerator* ChildrenEnumerator() {
     return new firebase::database::MutableDataChildrenEnumerator($self->children());
+  }
+
+  // Return a pointer to a move constructed Child, since swig tries to use
+  // a copy constructor otherwise.
+  firebase::database::MutableData* GetChild(const char* path) {
+    return new firebase::database::MutableData($self->Child(path));
   }
 }
