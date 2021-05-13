@@ -32,6 +32,8 @@ set(firebase_crashlytics_src
   src/ExceptionHandler.cs
   src/Impl.cs
   src/LoggedException.cs
+  src/Metadata.cs
+  src/MetadataBuilder.cs
   src/StackTraceParser.cs
 )
 
