@@ -113,7 +113,7 @@ if(FIREBASE_INCLUDE_UNITY)
       See the readme.md for more information.")
   endif()
 
-  if(NOT EXISTS ${UNITY_EDITOR_IOS_XCODE_DLL})
+  if(APPLE AND NOT EXISTS ${UNITY_EDITOR_IOS_XCODE_DLL})
     message(FATAL_ERROR "Fail to find UnityEditor.iOS.Extensions.Xcode.dll. \
       Please install iOS build support from Unity.")
   endif()
