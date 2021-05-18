@@ -32,6 +32,9 @@ CMAKE_OPTIONS=
 
 if [ -d "../firebase-cpp-sdk" ]; then
   CMAKE_OPTIONS="-DFIREBASE_CPP_SDK_DIR=`realpath ../firebase-cpp-sdk` "
+  cd ../firebase-cpp-sdk
+  ./gradlew
+  cd ../firebase-unity-sdk
 fi
 
 shopt -s nullglob
