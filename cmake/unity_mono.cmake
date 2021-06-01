@@ -14,9 +14,8 @@
 
 # This file provides support for compiling CSharp source code into libraries
 
-include(FindUnityMono)
-
-find_package(UnityMono REQUIRED)
+find_package(Mono REQUIRED)
+find_package(Unity REQUIRED)
 
 set(MONO_PROJ_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/project.template)
 
@@ -68,8 +67,8 @@ macro(mono_add_external_library name projpath)
   # Parse the arguments into UNITY_MONO_SOURCES and UNITY_MONO_DEPENDS.
   cmake_parse_arguments(UNITY_MONO "" "${single}" "${multi}" ${ARGN})
 
-  if("${UNITY_MONO_XBUILD_EXE}" STREQUAL "")
-    set(UNITY_MONO_XBUILD_EXE "${XBUILD_EXE}")
+  if("${UNITY_CSHARP_BUILD_EXE}" STREQUAL "")
+    set(UNITY_CSHARP_BUILD_EXE "${MONO_CSHARP_BUILD_EXE}")
   endif()
 
   get_filename_component(DLL_NAME ${projpath} NAME)
@@ -104,7 +103,7 @@ macro(mono_add_external_library name projpath)
 
   add_custom_command(
     COMMAND
-      ${UNITY_MONO_XBUILD_EXE}
+      ${UNITY_CSHARP_BUILD_EXE}
       /p:AllowUnsafeBlocks=true
       /p:Configuration=Release
       /p:OutDir="${outdir}/"
@@ -348,7 +347,7 @@ macro(mono_add_internal name output_type)
     SOURCES
       ${UNITY_MONO_SOURCES}
     XBUILD_EXE
-      ${UNITY_MONO_XBUILD_EXE}
+      ${UNITY_CSHARP_BUILD_EXE}
   )
 
   if(UNITY_MONO_DEPENDS)
