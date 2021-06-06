@@ -52,11 +52,11 @@ find_program(MONO_CSHARP_BUILD_EXE
 if(CMAKE_HOST_WIN32 AND
    NOT MONO_DISABLE_VISUAL_STUDIO_FALLBACK AND
    EXISTS "${CMAKE_VS_MSBUILD_COMMAND}")
-  message(STATUS "Mono installation not found, trying to fallback "
-    "to Visual Studio's msbuild ${CMAKE_VS_MSBUILD_COMMAND}."
-  )
-  # If Mono's build tool isn't found, fallback to Visual Studio.
   if(NOT MONO_CSHARP_BUILD_EXE)
+    # If Mono's build tool isn't found, fallback to Visual Studio.
+    message(STATUS "Mono installation not found, trying to fallback "
+      "to Visual Studio's msbuild ${CMAKE_VS_MSBUILD_COMMAND}."
+    )
     set(MONO_CSHARP_BUILD_EXE "${CMAKE_VS_MSBUILD_COMMAND}"
       CACHE STRING "" FORCE
     )

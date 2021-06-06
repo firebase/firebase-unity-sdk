@@ -4,6 +4,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
 ### Gradle ###
 .gradle
@@ -20,3 +21,6 @@ gcs_key_file.json
 *_build/
 *_unity/
 *_unity_seperate/
+
+# Windows ignore
+vcpkg

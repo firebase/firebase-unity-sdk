@@ -14,7 +14,6 @@
 
 # This file provides support for compiling CSharp source code into libraries
 
-find_package(Mono REQUIRED)
 find_package(Unity REQUIRED)
 
 set(MONO_PROJ_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/project.template)

@@ -14,6 +14,8 @@
 
 # Handles locating required files and executables for unity builds
 
+find_package(Mono REQUIRED)
+
 if (NOT EXISTS "${UNITY_ROOT_DIR}")
   # Make our best attempt to find the latest unity installed on the system.
   # Note that Unity <=2018 include mono 2.x which causes compilation errors.
@@ -38,7 +40,8 @@ if(FIREBASE_INCLUDE_UNITY)
   # Platform specific directories to search for various dlls and tools.
   # These directories can also differ between Unity versions (eg: MonoBleedingEdge/bin or Mono/bin)
   if(CMAKE_HOST_WIN32)
-    set(UNITY_PATH_SUFFIXES "Editor/Data/Managed")
+    set(UNITY_PATH_SUFFIXES "Editor/Data/Managed" "Editor/Data/MonoBleedingEdge/bin"
+                            "Editor/Data/Mono/bin")
   elseif(CMAKE_HOST_APPLE)
     set(UNITY_PATH_SUFFIXES "Unity.app/Contents/Managed" "PlaybackEngines/iOSSupport"
                             "Unity.app/Contents/MonoBleedingEdge/bin" "Unity.app/Contents/Mono/bin")
@@ -90,14 +93,16 @@ if(FIREBASE_INCLUDE_UNITY)
       Please install iOS build support from Unity.")
   endif()
 
-  if(NOT UNITY_MONO_EXE OR
-    NOT UNITY_CSHARP_BUILD_EXE)
+  message(STATUS "UNITY_MONO_EXE is ${UNITY_MONO_EXE}")
+  message(STATUS "UNITY_CSHARP_BUILD_EXE is ${UNITY_CSHARP_BUILD_EXE}")
+    
+  if(NOT EXISTS UNITY_MONO_EXE OR
+    NOT EXISTS UNITY_CSHARP_BUILD_EXE)
     set(FIND_TOOL_OPTIONS
       PATHS
-        "${UNITY_ROOT_PATH}"
+        ${UNITY_PATH_HUB_HINT}
       PATH_SUFFIXES
-        "${UNITY_RELATIVE_DATA_DIR}/MonoBleedingEdge/bin"
-        "${UNITY_RELATIVE_DATA_DIR}/Mono/bin"
+        ${UNITY_PATH_SUFFIXES}
       NO_DEFAULT_PATH
       NO_CMAKE_FIND_ROOT_PATH
     )
@@ -191,14 +196,21 @@ if(FIREBASE_INCLUDE_UNITY)
       endif()
     endif()
 
+    if (NOT EXISTS "${UNITY_MONO_EXE}")
+      message(STATUS "UNITY_MONO_EXE:${UNITY_MONO_EXE} not exist.")
+    endif()
+
+    if (NOT EXISTS "${UNITY_CSHARP_BUILD_EXE}")
+      message(STATUS "UNITY_CSHARP_BUILD_EXE:${UNITY_CSHARP_BUILD_EXE} not exist.")
+    endif()
+
     # If Mono tools aren't found in Unity try using the vanilla Mono distribution.
     if(NOT UNITY_DISABLE_MONO_TOOLS_FALLBACK AND (
         NOT EXISTS "${UNITY_MONO_EXE}" OR
         NOT EXISTS "${UNITY_CSHARP_BUILD_EXE}"))
-      message(STATUS "No working Mono tools not found in ${UNITY_ROOT_PATH} "
-        "trying the system installation."
+      message(STATUS "No working Mono tools not found in ${UNITY_PATH_HUB_HINT} "
+        "trying the system installation. MONO_EXE: ${MONO_EXE}, MONO_CSHARP_BUILD_EXE: ${MONO_CSHARP_BUILD_EXE}"
       )
-      find_package(Mono REQUIRED)
       set(UNITY_MONO_EXE "${MONO_EXE}" CACHE STRING "" FORCE)
       set(UNITY_CSHARP_BUILD_EXE "${MONO_CSHARP_BUILD_EXE}"
         CACHE STRING "" FORCE
@@ -218,14 +230,12 @@ if(FIREBASE_INCLUDE_UNITY)
     DEFAULT_MSG
     UNITY_ENGINE_DLL
     UNITY_EDITOR_DLL
-    UNITY_EDITOR_IOS_XCODE_DLL
     UNITY_MONO_EXE
     UNITY_CSHARP_BUILD_EXE
   )
   mark_as_advanced(
     UNITY_ENGINE_DLL
     UNITY_EDITOR_DLL
-    UNITY_EDITOR_IOS_XCODE_DLL
     UNITY_MONO_EXE
     UNITY_CSHARP_BUILD_EXE
   )

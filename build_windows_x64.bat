@@ -32,10 +32,10 @@ IF EXIST ..\firebase-cpp-sdk (
   SET CPP_DIR=-DFIREBASE_CPP_SDK_DIR^=../../firebase-cpp-sdk
 )
 
-IF EXIST "C:\Program Files (x86)\Mono\bin" (
-  SET MONO_DIR="C:/Program Files (x86)/Mono/bin"
+IF EXIST "C:\Program Files\Mono\bin" (
+  SET MONO_DIR="C:/Program Files/Mono/bin"
 ) ELSE (
-  ECHO ERROR: Cant find mono
+  ECHO ERROR: Cant find mono in program files
   EXIT /B -1
 )
 
