@@ -903,6 +903,9 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
         RegisterLibraryInternal(
             libraryPrefix + "-ver",
             Firebase.Platform.PlatformInformation.RuntimeVersion);
+        // fire-(unity|mono)/<github-action-built|custom_built>
+        RegisterLibraryInternal(
+            libraryPrefix + "-buildsrc", Firebase.VersionInfo.BuildSource);
       }
       // Cache the name so that it can be accessed after the app is disposed.
       newProxy.name = newProxy.NameInternal;
