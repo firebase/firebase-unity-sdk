@@ -49,6 +49,8 @@ option(FIREBASE_INCLUDE_REMOTE_CONFIG
 option(FIREBASE_INCLUDE_STORAGE
        "Include the Cloud Storage for Firebase library." ON)
 
+option(FIREBASE_INCLUDE_EDITOR_TOOL
+       "Include Unity editor tools for Firebase library." ON)
 option(FIREBASE_UNITY_BUILD_TESTS
        "Enable the Firebase Unity Build Tests." OFF)
 
@@ -215,6 +217,11 @@ add_subdirectory(app)
 set(TARGET_LINK_LIB_NAMES "firebase_app" "firebase_app_swig" "flatbuffers")
 set(PROJECT_LIST_HEADER "#define PROJECT_LIST(X)")
 list(APPEND PROJECT_LIST_HEADER "  X(App)")
+
+# Include Firebase editor tools.
+if (FIREBASE_INCLUDE_EDITOR_TOOL)
+  add_subdirectory(editor)
+endif()
 
 if (FIREBASE_INCLUDE_ANALYTICS)
   add_subdirectory(analytics)

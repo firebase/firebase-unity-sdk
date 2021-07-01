@@ -23,10 +23,7 @@ else()
   set(firebase_app_editor_eap_src "")
 endif()
 
-mono_add_library(firebase_app_editor_cs
-  MODULE
-    Firebase.Editor
-  SOURCES
+set(firebase_app_editor_src
     src/AndroidAPILevelChecker.cs
     src/ApiInfo.cs
     src/AssemblyInfo.cs
@@ -51,25 +48,26 @@ mono_add_library(firebase_app_editor_cs
     src/Link.Designer.cs
     src/Link.resx
     ${firebase_app_editor_eap_src}
+)
+
+mono_add_library(firebase_app_editor_cs
+  MODULE
+    Firebase.Editor
+  SOURCES
+    ${firebase_app_editor_src}
   REFERENCES
     unity_editor_cs
     unity_engine_cs
     unity_ios_extensions_xcode_cs
     google_jar_resolver_cs
     google_ios_resolver_cs
-    google_version_handler_cs
     google_version_handlerimpl_cs
   SYSTEM_REFERENCES
     System.Xml
-  DEFINES
-    UNITY_EDITOR
+  XBUILD_EXE
+    ${XBUILD_EXE}
 )
 
 unity_pack_cs(firebase_app_editor_cs
   PACK_PATH "Firebase/Editor/"
-)
-
-set_property(TARGET firebase_app_editor_cs
-  PROPERTY FOLDER
-  "Firebase ${FIREBASE_PLATFORM_NAME}"
 )
