@@ -22,6 +22,17 @@ internal class VersionInfo {
   /// @brief Retrieves the Firebase Unity SDK version number as a string.
   // "@FIREBASE_UNITY_SDK_VERSION@" is replaced at build time.
   internal static string SdkVersion { get { return "@FIREBASE_UNITY_SDK_VERSION@"; } }
+
+  /// @brief Retrieves a string indicating whether the SDK was built on github.
+  internal static string BuildSource {
+    get {
+#if FIREBASE_GITHUB_ACTION_BUILD
+      return "github_action_built";
+#else
+      return "custom_built";
+#endif
+    }
+  }
 }
 
 }  // namespace Firebase
