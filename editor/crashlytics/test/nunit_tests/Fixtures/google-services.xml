@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources tools:keep="@string/firebase_database_url,@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_web_client_id" xmlns:tools="http://schemas.android.com/tools">
+  <string name="firebase_database_url" translatable="false">https://something.fake.firebaseio.com</string>
+  <string name="gcm_defaultSenderId" translatable="false">000000000000</string>
+  <string name="google_storage_bucket" translatable="false">something.fake.appspot.com</string>
+  <string name="project_id" translatable="false">something-fake</string>
+  <string name="google_api_key" translatable="false">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</string>
+  <string name="google_crash_reporting_api_key" translatable="false">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</string>
+  <string name="google_app_id" translatable="false">1:000000000000:android:1111111111111111</string>
+  <string name="default_web_client_id" translatable="false">00000.somethingfake.apps.googleusercontent.com</string>
+</resources>
