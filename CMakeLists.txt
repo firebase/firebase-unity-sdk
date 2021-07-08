@@ -54,6 +54,10 @@ option(FIREBASE_INCLUDE_STORAGE
 option(FIREBASE_UNITY_BUILD_TESTS
        "Enable the Firebase Unity Build Tests." OFF)
 
+# This should only be enabled by the GitHub Action build script.
+option(FIREBASE_GITHUB_ACTION_BUILD
+       "Indicates that this build was created from a GitHub Action" OFF)
+
 # These options allow selecting what built outputs go into the CPack zip file
 # as we merge the different platform zip's together for unity package
 # For example: only packing dotnet libraries on linux builds
