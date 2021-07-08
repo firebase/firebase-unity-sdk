@@ -24,7 +24,7 @@ set(FIREBASE_ANALYTICS_ANDROID_DEPS
 )
 
 set(FIREBASE_AUTH_ANDROID_DEPS
-    "com.google.firebase:firebase-auth:21.0.0"
+    "com.google.firebase:firebase-auth:21.0.1"
     "com.google.firebase:firebase-analytics:19.0.0"
 )
 
