@@ -67,15 +67,34 @@ namespace Firebase.Database {
     // We only keeps a reference to the database to ensure that it's kept alive,
     // as the underlying C++ code needs that.
     private readonly FirebaseDatabase database;
+    // If the DataSnapshot is created via Child, we want to hold onto a reference of the original
+    // DataSnapshot that triggered it, to prevent the underlying C++ snapshot from being deleted.
+    private readonly DataSnapshot parentSnapshot;
+    // If the DataSnapshot is created via Children, we want to hold onto a reference to the List
+    // of Children that this originated from, to prevent the underlying C++ list from being deleted.
+    private readonly DataSnapshotList parentList;
 
-    private DataSnapshot(InternalDataSnapshot internalSnapshot, FirebaseDatabase database) {
+    private DataSnapshot(InternalDataSnapshot internalSnapshot, FirebaseDatabase database,
+                         DataSnapshot parentSnapshot, DataSnapshotList parentList) {
       this.internalSnapshot = internalSnapshot;
       this.database = database;
+      this.parentSnapshot = parentSnapshot;
+      this.parentList = parentList;
     }
 
     internal static DataSnapshot CreateSnapshot(
         InternalDataSnapshot internalSnapshot, FirebaseDatabase database) {
-      return new DataSnapshot(internalSnapshot, database);
+      return new DataSnapshot(internalSnapshot, database, null, null);
+    }
+
+    private static DataSnapshot CreateSnapshot(
+        InternalDataSnapshot internalSnapshot, FirebaseDatabase database, DataSnapshot parent) {
+      return new DataSnapshot(internalSnapshot, database, parent, null);
+    }
+
+    private static DataSnapshot CreateSnapshot(
+        InternalDataSnapshot internalSnapshot, FirebaseDatabase database, DataSnapshotList list) {
+      return new DataSnapshot(internalSnapshot, database, null, list);
     }
 
     /// <summary>Indicates whether this snapshot has any children</summary>
@@ -133,16 +152,19 @@ namespace Firebase.Database {
     private sealed class DataSnapshotEnumerator : IEnumerator<DataSnapshot> {
       private IEnumerator<InternalDataSnapshot> internalEnumerator;
       private FirebaseDatabase database;
+      private DataSnapshotList parentList;
       public DataSnapshotEnumerator(
-          IEnumerator<InternalDataSnapshot> internalEnumerator, FirebaseDatabase database) {
+          IEnumerator<InternalDataSnapshot> internalEnumerator, FirebaseDatabase database,
+          DataSnapshotList parentList) {
         this.internalEnumerator = internalEnumerator;
         this.database = database;
+        this.parentList = parentList;
       }
       public DataSnapshot Current {
-        get { return CreateSnapshot(internalEnumerator.Current, database); }
+        get { return CreateSnapshot(internalEnumerator.Current, database, parentList); }
       }
       object IEnumerator.Current {
-        get { return CreateSnapshot(internalEnumerator.Current, database); }
+        get { return CreateSnapshot(internalEnumerator.Current, database, parentList); }
       }
       public bool MoveNext() {
         return internalEnumerator.MoveNext();
@@ -166,10 +188,10 @@ namespace Firebase.Database {
         this.database = database;
       }
       public IEnumerator<DataSnapshot> GetEnumerator() {
-        return new DataSnapshotEnumerator(internalList.GetEnumerator(), database);
+        return new DataSnapshotEnumerator(internalList.GetEnumerator(), database, this);
       }
       IEnumerator IEnumerable.GetEnumerator() {
-        return new DataSnapshotEnumerator(internalList.GetEnumerator(), database);
+        return new DataSnapshotEnumerator(internalList.GetEnumerator(), database, this);
       }
     }
 
@@ -209,7 +231,7 @@ namespace Firebase.Database {
     /// <returns>The DataSnapshot for the child location</returns>
     public DataSnapshot Child(string path) {
       // Do not use CreateSnapshot here, because we do return an empty DataSnapshot here.
-      return new DataSnapshot(internalSnapshot.Child(path), database);
+      return new DataSnapshot(internalSnapshot.Child(path), database, this, null);
     }
 
     /// <summary>
