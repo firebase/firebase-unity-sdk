@@ -12,33 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CMake file for the firebase dynamic_links unity editor plugin
+# CMake file for the firebase dynamic links unity editor plugin
+
+if(FIREBASE_UNITY_EAP)
+  set(firebase_dynamic_links_editor_eap_src
+    src/eap/DynamicLinksConfig.cs
+    src/eap/Strings.Designer.cs
+    src/eap/Strings.resx
+  )
+else()
+  set(firebase_dynamic_links_editor_eap_src "")
+endif()
+
+set(firebase_dynamic_links_editor_src
+    src/Empty.cs
+    ${firebase_dynamic_links_editor_eap_src}
+)
 
 mono_add_library(firebase_dynamic_links_editor_cs
   MODULE
     Firebase.DynamicLinks.Editor
   SOURCES
-    src/eap/DynamicLinksConfig.cs
-    src/eap/Strings.Designer.cs
-    src/eap/Strings.resx
+    ${firebase_dynamic_links_editor_src}
   REFERENCES
     unity_editor_cs
     unity_engine_cs
-    google_jar_resolver_cs
-    google_ios_resolver_cs
-    google_version_handler_cs
-    google_version_handlerimpl_cs
-    unity_ios_extensions_xcode_cs
-    firebase_app_editor_cs
-  DEFINES
-    UNITY_EDITOR
+  XBUILD_EXE
+    ${XBUILD_EXE}
 )
 
 unity_pack_cs(firebase_dynamic_links_editor_cs
   PACK_PATH "Firebase/Editor/"
-)
-
-set_property(TARGET firebase_dynamic_links_editor_cs
-  PROPERTY FOLDER
-  "Firebase ${FIREBASE_PLATFORM_NAME}"
 )
