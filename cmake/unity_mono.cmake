@@ -312,8 +312,11 @@ macro(mono_add_internal name output_type)
       string(APPEND VAR_COMPILE "      <DesignTime>True</DesignTime>\n")
       string(APPEND VAR_COMPILE "      <DependentUpon>${tempname}</DependentUpon>\n")
       string(APPEND VAR_COMPILE "    </Compile>\n")
-    else()
+    elseif(${file} MATCHES "\.cs$")
       string(APPEND VAR_COMPILE "    <Compile Include=\"${VAR_FILE}\" />\n")
+    else()
+      # Assume all the non-cs file is an embedded resource.
+      string(APPEND VAR_COMPILE "    <EmbeddedResource Include=\"${VAR_FILE}\" />\n")
     endif()
   endforeach()
 

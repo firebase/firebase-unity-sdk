@@ -14,29 +14,35 @@
 
 # CMake file for the firebase messaging unity editor plugin
 
+if(FIREBASE_UNITY_EAP)
+  set(firebase_messaging_editor_eap_src
+    src/eap/MessagingConfig.cs
+    src/eap/Strings.Designer.cs
+    src/eap/Strings.resx
+  )
+else()
+  set(firebase_messaging_editor_eap_src "")
+endif()
+
+set(firebase_messaging_editor_src
+    ../../messaging/activity/AndroidManifest.xml
+    src/AndroidManifestPatcher.cs
+    ${firebase_messaging_editor_eap_src}
+)
+
 mono_add_library(firebase_messaging_editor_cs
   MODULE
     Firebase.Messaging.Editor
   SOURCES
-    ../activity/AndroidManifest.xml
-    src/AndroidManifestPatcher.cs
-    src/eap/MessagingConfig.cs
-    src/eap/Strings.Designer.cs
-    src/eap/Strings.resx
-  REFERENCES
+    ${firebase_messaging_editor_src}
+    REFERENCES
     unity_editor_cs
     unity_engine_cs
-    unity_ios_extensions_xcode_cs
-    firebase_app_editor_cs
-  DEFINES
-    UNITY_EDITOR
+    google_version_handlerimpl_cs
+  XBUILD_EXE
+    ${XBUILD_EXE}
 )
 
 unity_pack_cs(firebase_messaging_editor_cs
   PACK_PATH "Firebase/Editor/"
-)
-
-set_property(TARGET firebase_messaging_editor_cs
-  PROPERTY FOLDER
-  "Firebase ${FIREBASE_PLATFORM_NAME}"
 )
