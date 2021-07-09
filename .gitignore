@@ -20,7 +20,7 @@ gcs_key_file.json
 # Folders for cmake/test output
 *_build/
 *_unity/
-*_unity_seperate/
+*_unity_separate/
 
 # Windows ignore
 vcpkg
