@@ -180,6 +180,8 @@ Release Notes
     - Firestore: Added `null` and empty string argument checks to all
       public methods, which now throw exceptions instead of crashing
       ([#1053](https://github.com/firebase/quickstart-unity/issues/1053)).
+    - Firestore: Fixed Android crash due to missing QueryEventListener class
+      ([#1080](https://github.com/firebase/quickstart-unity/issues/1080)).
 
 ### 8.0.0:
 -   Breaking Changes
