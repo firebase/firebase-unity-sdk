@@ -14,14 +14,11 @@
 
 # This file defines the version numbers used by the Firebase Unity SDK.
 
-set(FIREBASE_UNITY_SDK_VERSION "7.1.0"
+set(FIREBASE_UNITY_SDK_VERSION "8.1.0"
     CACHE STRING "The version of the Unity SDK, used in the names of files.")
 
-set(FIREBASE_IOS_POD_VERSION "7.8.0"
+set(FIREBASE_IOS_POD_VERSION "8.3.0"
     CACHE STRING "The version of the top-level Firebase Cocoapod to use.")
-
-set(FIREBASE_INSTANCE_ID_POD_VERSION "4.3.1"
-    CACHE STRING "The version of the FirebaseInstanceId Cocoapod to use.")
 
 # https://github.com/googlesamples/unity-jar-resolver
 set(FIREBASE_UNITY_JAR_RESOLVER_VERSION
