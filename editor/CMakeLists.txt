@@ -15,7 +15,6 @@
 add_subdirectory(app)
 add_subdirectory(analytics)
 add_subdirectory(auth)
-# TODO(cl/383898177): Waiting for this cl to be synced to Github repo.
-# add_subdirectory(crashlytics)
+add_subdirectory(crashlytics)
 add_subdirectory(dynamic_links)
 add_subdirectory(messaging)
