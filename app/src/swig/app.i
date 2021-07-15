@@ -1407,7 +1407,7 @@ firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config);
   // This is a bit of a hack.  We need to undefine the header guard for
   // availability.h, because for non-android targets it has already been
   // included, and done nothing.  (Because __Android__ was not defined.)
-  #undef FIREBASE_APP_CLIENT_CPP_SRC_INCLUDE_GOOGLE_PLAY_SERVICES_AVAILABILITY_H_
+  #undef FIREBASE_APP_SRC_INCLUDE_GOOGLE_PLAY_SERVICES_AVAILABILITY_H_
 #endif  // !defined(__ANDROID__)
 
 %ignore google_play_services::CheckAvailability;
@@ -1430,7 +1430,7 @@ firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config);
   // This is a bit of a hack.  We need to undefine the header guard for
   // availability.h, because for non-android targets it has already been
   // included, and done nothing.  (Because __Android__ was not defined.)
-  #undef FIREBASE_APP_CLIENT_CPP_SRC_INCLUDE_GOOGLE_PLAY_SERVICES_AVAILABILITY_H_
+  #undef FIREBASE_APP_SRC_INCLUDE_GOOGLE_PLAY_SERVICES_AVAILABILITY_H_
 #endif  // !defined(__ANDROID__)
 
 #include "google_play_services/availability.h"
