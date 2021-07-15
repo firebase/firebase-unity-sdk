@@ -170,7 +170,7 @@ Release Notes
       `FirebaseFirestore.GetNamedQueryAsync()`. Bundles contain pre-packaged
       data produced with the Firestore Server SDKs and can be used to populate
       Firestore's cache without reading documents from the backend.
-      
+
 ### 8.1.0:
 -   Changes
     - Database: Fixed a crash around using DataSnapshots within Coroutines
@@ -180,6 +180,13 @@ Release Notes
     - Firestore: Added `null` and empty string argument checks to all
       public methods, which now throw exceptions instead of crashing
       ([#1053](https://github.com/firebase/quickstart-unity/issues/1053)).
+    - Firestore: Fixed Android crash due to missing QueryEventListener class
+      ([#1080](https://github.com/firebase/quickstart-unity/issues/1080)).
+    - Firestore: Added support for Firestore Bundles via
+      `FirebaseFirestore.LoadBundleAsync()` and
+      `FirebaseFirestore.GetNamedQueryAsync()`. Bundles contain pre-packaged
+      data produced with the Firestore Server SDKs and can be used to populate
+      Firestore's cache without reading documents from the backend.
 
 ### 8.0.0:
 -   Breaking Changes
