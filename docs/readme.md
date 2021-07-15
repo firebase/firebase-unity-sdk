@@ -163,14 +163,13 @@ Support
 
 Release Notes
 -------------
-### Unreleased:
+### 8.2.0:
 -   Changes
-    - Firestore: Added support for Firestore Bundles via
-      `FirebaseFirestore.LoadBundleAsync()` and
-      `FirebaseFirestore.GetNamedQueryAsync()`. Bundles contain pre-packaged
-      data produced with the Firestore Server SDKs and can be used to populate
-      Firestore's cache without reading documents from the backend.
-      
+    - Firestore: Removed `Equals` and `GetHashCode` methods from `Query`,
+      `QuerySnapshot`, and `DocumentSnapshot` classes. These methods were
+      unimplemented, and we plan to add proper support for them in a future
+      release.
+
 ### 8.1.0:
 -   Changes
     - Database: Fixed a crash around using DataSnapshots within Coroutines
@@ -182,6 +181,11 @@ Release Notes
       ([#1053](https://github.com/firebase/quickstart-unity/issues/1053)).
     - Firestore: Fixed Android crash due to missing QueryEventListener class
       ([#1080](https://github.com/firebase/quickstart-unity/issues/1080)).
+    - Firestore: Added support for Firestore Bundles via
+      `FirebaseFirestore.LoadBundleAsync()` and
+      `FirebaseFirestore.GetNamedQueryAsync()`. Bundles contain pre-packaged
+      data produced with the Firestore Server SDKs and can be used to populate
+      Firestore's cache without reading documents from the backend.
 
 ### 8.0.0:
 -   Breaking Changes
@@ -217,7 +221,7 @@ Release Notes
     - Database: Fixed a crash when setting large values on Windows and Mac
       systems ([#517](https://github.com/firebase/quickstart-unity/issues/517)].
     - FCM (Android): Fixed triggering of callback handlers for background
-      notifications. Using `enqueuWork` instead of `startService`.
+      notifications. Using `enqueueWork` instead of `startService`.
     - Crashlytics: Added new Unity-specific metadata to help diagnose tricky
       crashes around specific hardware setups.
 

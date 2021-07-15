@@ -156,9 +156,20 @@ namespace Firebase.Crashlytics.Editor {
       if (getUnityMainTargetGuid != null) {
         return (string)getUnityMainTargetGuid.Invoke(project, new object[] {});
       } else {
-        string targetName = UnityEditor.iOS.Xcode.PBXProject.GetUnityTargetName();
-        return project.TargetGuidByName(targetName);
+        // Hardcode the main target name "Unity-iPhone" by default, just in case
+        // GetUnityTargetName() is not available.
+        string targetName = "Unity-iPhone";
+        MethodInfo getUnityTargetName =  project.GetType().GetMethod("GetUnityTargetName");
+        if (getUnityTargetName != null) {
+          targetName = (string) getUnityTargetName.Invoke(null, new object[] {});
+        }
+
+        MethodInfo targetGuidByName = project.GetType().GetMethod("TargetGuidByName");
+        if (targetGuidByName != null) {
+          return (string)targetGuidByName.Invoke(project, new object[] { (object)targetName });
+        }
       }
+      return "";
     }
 
     /// <summary>
