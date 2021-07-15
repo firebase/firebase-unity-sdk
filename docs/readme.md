@@ -163,6 +163,13 @@ Support
 
 Release Notes
 -------------
+### 8.2.0:
+-   Changes
+    - Firestore: Removed `Equals` and `GetHashCode` methods from `Query`,
+      `QuerySnapshot`, and `DocumentSnapshot` classes. These methods were
+      unimplemented, and we plan to add proper support for them in a future
+      release.
+
 ### 8.1.0:
 -   Changes
     - Database: Fixed a crash around using DataSnapshots within Coroutines
@@ -214,7 +221,7 @@ Release Notes
     - Database: Fixed a crash when setting large values on Windows and Mac
       systems ([#517](https://github.com/firebase/quickstart-unity/issues/517)].
     - FCM (Android): Fixed triggering of callback handlers for background
-      notifications. Using `enqueuWork` instead of `startService`.
+      notifications. Using `enqueueWork` instead of `startService`.
     - Crashlytics: Added new Unity-specific metadata to help diagnose tricky
       crashes around specific hardware setups.
 
