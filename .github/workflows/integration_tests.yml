@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix_os: ${{ steps.set-matrix-os.outputs.matrix_os }}
-      matrix_unity_versions: ${{ steps.set-matrix-os.outputs.matrix_os }}
+      matrix_unity_versions: ${{ steps.set-matrix-os.outputs.matrix_unity_versions }}
     steps:
     - id: set-matrix-os
       # e.g. 'ubuntu-latest,macos-latest' -> '["ubuntu-latest","macos-latest"]'
