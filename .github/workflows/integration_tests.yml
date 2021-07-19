@@ -70,13 +70,13 @@ jobs:
       - name: Install Unity
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms ${{ github.event.inputs.platforms }} --version ${{ github.event.inputs.version }}
+          python scripts/gha/unity_installer.py --install --platforms "Android,iOS" --version ${{ matrix.unity_version }}
       # - name: Activate Unity license
       #   shell: bash
       #   run: |
       #     set +H
       #     python scripts/gha/unity_installer.py --activate_license \
-      #       --version ${{ github.event.inputs.version }}  \
+      #       --version ${{ matrix.unity_version }}  \
       #       --username "${{ secrets.UNITY_USERNAME }}" \
       #       --password "${{ secrets.UNITY_PASSWORD }}" \
       #       --serial_ids "${{ secrets.SERIAL_ID }}" \
@@ -85,4 +85,4 @@ jobs:
         shell: bash
         if: always()
         run: |
-          python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ github.event.inputs.version }}
+          python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ matrix.unity_version }}
