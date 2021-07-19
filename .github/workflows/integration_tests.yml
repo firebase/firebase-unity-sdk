@@ -2,6 +2,9 @@
 name: Integration tests
 
 on:
+  push:
+    branches:
+      - feature/workflow-unity-license
   workflow_dispatch:
     inputs:
       version:
