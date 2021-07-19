@@ -71,18 +71,20 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/unity_installer.py --install --platforms "Android,iOS" --version ${{ matrix.unity_version }}
-      # - name: Activate Unity license
-      #   shell: bash
-      #   run: |
-      #     set +H
-      #     python scripts/gha/unity_installer.py --activate_license \
-      #       --version ${{ matrix.unity_version }}  \
-      #       --username "${{ secrets.UNITY_USERNAME }}" \
-      #       --password "${{ secrets.UNITY_PASSWORD }}" \
-      #       --serial_ids "${{ secrets.SERIAL_ID }}" \
-      #       --logfile testapps/activate_license.log
+      - name: Activate Unity license
+        shell: bash
+        run: |
+          set +H
+          python scripts/gha/unity_installer.py --activate_license \
+            --version ${{ matrix.unity_version }}  \
+            --username "${{ secrets.UNITY_USERNAME }}" \
+            --password "${{ secrets.UNITY_PASSWORD }}" \
+            --serial_ids "${{ secrets.SERIAL_ID }}" \
+            --logfile testapps/activate_license.log
+          cat testapps/activate_license.log
       - name: Return Unity license
         shell: bash
         if: always()
         run: |
           python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ matrix.unity_version }}
+          cat testapps/activate_license.log
