@@ -28,8 +28,8 @@ jobs:
       # e.g. 'ubuntu-latest,macos-latest' -> '["ubuntu-latest","macos-latest"]'
       run: |
         if [[ "${{ github.event_name }}" == "push" ]]; then
-          echo "::set-output name=matrix_os::macos-latest"
-          echo "::set-output name=matrix_unity_versions::2017.4.40f1"
+          echo "::set-output name=matrix_os::[\"macos-latest\"]"
+          echo "::set-output name=matrix_unity_versions::[\"2017.4.40f1\"]"
         else
           OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
           echo "::set-output name=matrix_os::${OS_JSON}"
