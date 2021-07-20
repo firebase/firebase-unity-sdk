@@ -53,10 +53,8 @@ jobs:
       U3D_PASSWORD: ""
     steps:
       - uses: actions/checkout@v2
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6
       - name: Install Unity installer (U3D)
+        timeout-minutes: 10
         shell: bash
         run: gem install u3d
       - name: Setup python
@@ -64,14 +62,17 @@ jobs:
         with:
           python-version: '3.7'
       - name: Install python deps
+        timeout-minutes: 10
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
       - name: Install Unity
+        timeout-minutes: 20
         shell: bash
         run: |
           python scripts/gha/unity_installer.py --install --platforms "Android,iOS" --version ${{ matrix.unity_version }}
       - name: Activate Unity license
+        timeout-minutes: 10
         shell: bash
         run: |
           set +H
