@@ -83,8 +83,10 @@ jobs:
             --logfile testapps/activate_license.log
           cat testapps/activate_license.log
       - name: Return Unity license
-        uses: nick-invision/retry@v2
+        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
+        # Retry at most 3 times when Return Unity license fails.
+        uses: nick-invision/retry@v2
         with:
           timeout_minutes: 10
           max_attempts: 3
