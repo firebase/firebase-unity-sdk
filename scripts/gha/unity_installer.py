@@ -133,9 +133,6 @@ def main(argv):
     install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
-    logging.error("username %s", FLAGS.username)
-    logging.error("username %s", FLAGS.password)
-    logging.error("username %s", FLAGS.serial_ids)
     if FLAGS.license_file:
       with open(FLAGS.license_file, "r") as f:
         license_components = f.read().splitlines()
