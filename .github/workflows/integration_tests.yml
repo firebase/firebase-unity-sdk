@@ -1,4 +1,3 @@
-
 name: Integration tests
 
 on:
@@ -84,8 +83,11 @@ jobs:
             --logfile testapps/activate_license.log
           cat testapps/activate_license.log
       - name: Return Unity license
-        shell: bash
+        uses: nick-invision/retry@v2
         if: always()
-        run: |
-          python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ matrix.unity_version }}
-          cat testapps/activate_license.log
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: |
+            python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ matrix.unity_version }}
+            cat testapps/activate_license.log
