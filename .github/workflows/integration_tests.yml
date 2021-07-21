@@ -1,0 +1,91 @@
+name: Integration tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      unity_versions:
+        description: 'Unity version'
+        default: '2017.4.40f1'
+        required: true
+      operating_systems:
+        description: 'CSV of VMs to run on'
+        default: 'macos-latest'
+        required: true
+
+jobs:
+  prepare_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix_os: ${{ steps.set-matrix-os.outputs.matrix_os }}
+      matrix_unity_versions: ${{ steps.set-matrix-os.outputs.matrix_unity_versions }}
+    steps:
+    - id: set-matrix-os
+      # e.g. 'ubuntu-latest,macos-latest' -> '["ubuntu-latest","macos-latest"]'
+      run: |
+        if [[ "${{ github.event_name }}" == "push" ]]; then
+          echo "::set-output name=matrix_os::[\"macos-latest\"]"
+          echo "::set-output name=matrix_unity_versions::[\"2017.4.40f1\"]"
+        else
+          OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
+          echo "::set-output name=matrix_os::${OS_JSON}"
+          UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
+          echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
+        fi
+
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: prepare_matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJson(needs.prepare_matrix.outputs.matrix_os) }}
+        unity_version: ${{ fromJson(needs.prepare_matrix.outputs.matrix_unity_versions) }}
+    env:
+      # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+      U3D_PASSWORD: ""
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Unity installer (U3D)
+        timeout-minutes: 10
+        shell: bash
+        run: gem install u3d
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Install python deps
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+      - name: Install Unity
+        timeout-minutes: 20
+        shell: bash
+        run: |
+          python scripts/gha/unity_installer.py --install --platforms "Android,iOS" --version ${{ matrix.unity_version }}
+      - name: Activate Unity license
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set +H
+          python scripts/gha/unity_installer.py --activate_license \
+            --version ${{ matrix.unity_version }}  \
+            --username "${{ secrets.UNITY_USERNAME }}" \
+            --password "${{ secrets.UNITY_PASSWORD }}" \
+            --serial_ids "${{ secrets.SERIAL_ID }}" \
+            --logfile testapps/activate_license.log
+          cat testapps/activate_license.log
+      - name: Return Unity license
+        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
+        if: always()
+        # Retry at most 3 times when Return Unity license fails.
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: |
+            python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ matrix.unity_version }}
+            cat testapps/activate_license.log
