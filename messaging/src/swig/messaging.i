@@ -26,7 +26,7 @@
 #include "messaging/src/include/firebase/messaging.h"
 %}
 
-%import "app/src/swig/app.i"
+%import "app/src/swig/app.SWIG"
 %include "app/src/swig/future.i"
 %include "app/src/swig/null_check_this.i"
 %include "app/src/swig/serial_dispose.i"
