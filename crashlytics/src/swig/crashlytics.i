@@ -17,7 +17,7 @@
 
 %include "std_vector.i"
 
-%import "app/src/swig/app.i"
+%import "app/src/swig/app.SWIG"
 %include "app/src/swig/null_check_this.i"
 %include "app/src/swig/init_result.i"
 %include "app/src/swig/serial_dispose.i"
