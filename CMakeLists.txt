@@ -42,6 +42,8 @@ option(FIREBASE_INCLUDE_DYNAMIC_LINKS
        "Include the Firebase Dynamic Links library." ON)
 option(FIREBASE_INCLUDE_INSTALLATIONS
        "Include the Firebase Installations library." ON)
+option(FIREBASE_INCLUDE_FIRESTORE
+       "Include the Firebase Firestore library." ON)
 option(FIREBASE_INCLUDE_FUNCTIONS
        "Include the Cloud Functions for Firebase library." ON)
 option(FIREBASE_INCLUDE_MESSAGING
@@ -254,6 +256,10 @@ if (FIREBASE_INCLUDE_INSTALLATIONS)
   add_subdirectory(installations)
   list(APPEND TARGET_LINK_LIB_NAMES "firebase_installations" "firebase_installations_swig")
   list(APPEND PROJECT_LIST_HEADER "  X(Installations)")
+if (FIREBASE_INCLUDE_FIRESTORE)
+  add_subdirectory(firestore)
+  list(APPEND TARGET_LINK_LIB_NAMES "firebase_firestore" "firebase_firestore_swig")
+  list(APPEND PROJECT_LIST_HEADER "  X(Firestore)")
 endif()
 if (FIREBASE_INCLUDE_FUNCTIONS)
   add_subdirectory(functions)
