@@ -89,11 +89,11 @@ jobs:
       - name: Install python deps
         shell: bash
         run: |
-          pip install -r scripts/requirements.txt
+          pip install -r scripts/gha/requirements.txt
       - name: Install Unity
         shell: bash
         run: |
-          python scripts/unity_installer.py --install --platforms "Desktop" --version ${{ matrix.unity_version }}
+          python scripts/gha/unity_installer.py --install --platforms "Desktop" --version ${{ matrix.unity_version }}
       - name: Setup Unity path
         shell: bash
         run: |
