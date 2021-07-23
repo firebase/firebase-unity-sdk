@@ -56,7 +56,7 @@
 #include <assert.h>
 %}
 
-%import "app/src/swig/app.SWIG"
+%import "app/src/swig/app.i"
 %include "app/src/swig/null_check_this.i"
 %include "app/src/swig/serial_dispose.i"
 %include "stdint.i"

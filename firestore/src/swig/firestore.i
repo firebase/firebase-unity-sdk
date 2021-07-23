@@ -37,7 +37,7 @@
 // `SWIGTYPE`).
 %typemap(csclassmodifiers) SWIGTYPE * "internal class";
 
-%import "app/src/swig/app.SWIG"
+%import "app/src/swig/app.i"
 %import "firestore/src/swig/proxy_helpers.i"
 %include "app/src/swig/init_result.i"
 %include "app/src/swig/null_check_this.i"
