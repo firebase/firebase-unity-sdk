@@ -1,0 +1,124 @@
+# Workflow to handle building the Unity SDK
+name: SDK Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      # Which version of Unity to use
+      unity_version:
+        description: 'Unity version'
+        default: '2017.4.40f1'
+        required: true
+      # Linux uses a different number for its versions
+      linux_unity_version:
+        description: 'Linux Unity version'
+        default: '2017.4.10f1'
+        required: true
+
+jobs:
+  build_desktop:
+    name: build-desktop-${{matrix.os}}
+    runs-on: ${{matrix.os}}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+        - os: windows-latest
+          unity_version: ${{ github.event.inputs.unity_version }}
+          unity_install_dir: TBD
+          build_dir: windows_unity
+        - os: macos-latest
+          unity_version: ${{ github.event.inputs.unity_version }}
+          unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
+          build_dir: macos_unity
+        - os: ubuntu-latest
+          unity_version: ${{ github.event.inputs.linux_unity_version }}
+          unity_install_dir: /opt/unity-editor-${{ github.event.inputs.linux_unity_version }}
+          build_dir: linux_unity
+    env:
+        # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
+        LC_ALL: en_US.UTF-8
+        LANG: en_US.UTF-8
+        U3D_PASSWORD: ""
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - uses: actions/checkout@v2
+        with:
+          repository: firebase/firebase-cpp-sdk
+          path: firebase-cpp-sdk
+          submodules: true
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - name: Install prerequisites
+        shell: bash
+        run: |
+          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
+          cd firebase-cpp-sdk
+          python scripts/gha/install_prereqs_desktop.py
+          cd ..
+
+      - name: Install swig (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get remove -y swig
+          sudo apt-get remove -y swig4.0
+          sudo apt-get install -y swig3.0
+          alias swig='swig3.0'
+
+      # TODO: Change the swig versions installed on Mac and Windows
+      - name: Install swig (Mac & Windows)
+        if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'windows')
+        run: |
+          swig -version
+
+      # Set up the requirements, and install Unity
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6
+      - name: Install Unity installer (U3D)
+        shell: bash
+        run: gem install u3d
+      - name: Install python deps
+        shell: bash
+        run: |
+          pip install -r scripts/requirements.txt
+      - name: Install Unity
+        shell: bash
+        run: |
+          python scripts/unity_installer.py --install --platforms "Desktop" --version ${{ matrix.unity_version }}
+      - name: Setup Unity path
+        shell: bash
+        run: |
+          echo "UNITY_ROOT_DIR=${{ matrix.unity_install_dir }}" >> $GITHUB_ENV
+
+      - name: Build SDK (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
+        run: |
+          ./build_linux.sh
+
+      - name: Build SDK (MacOS)
+        if: startsWith(matrix.os, 'macos')
+        shell: bash
+        run: |
+          ./build_macos.sh
+
+      - name: Build SDK (Windows)
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          ./build_windows_x64.bat
+
+      - name: Upload Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.build_dir }}
+          path: ${{ matrix.build_dir }}/*.zip
