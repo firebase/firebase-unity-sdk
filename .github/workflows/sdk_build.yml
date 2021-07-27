@@ -93,6 +93,7 @@ jobs:
       - name: Install Unity
         shell: bash
         run: |
+          python --version
           python scripts/gha/unity_installer.py --install --platforms "Desktop" --version ${{ matrix.unity_version }}
       - name: Setup Unity path
         shell: bash
