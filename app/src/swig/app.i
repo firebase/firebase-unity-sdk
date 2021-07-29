@@ -1230,7 +1230,12 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
 // Replace the default Dispose() method to remove references to this instance
 // from the map of FirebaseApp instances and notify listeners that the app has
 // been disposed.
+#if SWIG_VERSION >= 0x040000
+%typemap(csdisposing, methodname="Dispose",
+         parameters="bool disposing", methodmodifiers="public")
+#else
 %typemap(csdestruct, methodname="Dispose", methodmodifiers="public")
+#endif
       firebase::App {
     // If the name was not cached beforehand, do so now.
     if (name == null) {
@@ -1247,13 +1252,14 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
   }
 
 // Delete the underlying C++ object when all references to this object have been
-// destroyed.
+// destroyed. This is automatically done with newer versions of swig.
+#if SWIG_VERSION < 0x040000
 %typemap(csfinalize) firebase::App %{
   ~$csclassname() {
     Dispose();
   }
 %}
-
+#endif
 
 %{
 namespace firebase {

@@ -127,7 +127,12 @@ static AttributeType& %mangle(Class) ##_## AttributeName ## _get_func(Class* sel
 %}
 
 // Delete the C++ object if hasn't already been deleted.
+#if SWIG_VERSION >= 0x040000
+%typemap(csdisposing, methodname="Dispose",
+         parameters="bool disposing", methodmodifiers="public")
+#else
 %typemap(csdestruct, methodname="Dispose", methodmodifiers="public")
+#endif
       firebase::storage::Storage {
     lock (FirebaseApp.disposeLock) {
       ReleaseReferenceInternal(this);
@@ -423,7 +428,12 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(
 
 // Remove the weak reference to this object when it's disposed.
 // The boilerplate dispose logic is copied from the default template.
+#if SWIG_VERSION >= 0x040000
+%typemap(csdisposing, methodname="Dispose",
+         parameters="bool disposing", methodmodifiers="public")
+#else
 %typemap(csdestruct, methodname="Dispose", methodmodifiers="public")
+#endif
     firebase::storage::MonitorController {
   lock (FirebaseApp.disposeLock) {
     if (swigCPtr.Handle != global::System.IntPtr.Zero) {

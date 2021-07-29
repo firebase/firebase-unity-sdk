@@ -96,7 +96,7 @@ firebase_swig_add_library(firebase_firestore_swig
     absl_variant
 )
 
-set(FIRESTORE_SOURCE_DIR ${FIREBASE_CPP_SDK_DIR}/build/external/src/firestore)
+set(FIRESTORE_SOURCE_DIR ${PROJECT_BINARY_DIR}/bin/external/src/firestore)
 
 # Additional public headers come from the Firestore core
 if(IOS)
