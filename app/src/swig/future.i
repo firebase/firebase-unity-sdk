@@ -140,7 +140,12 @@ namespace firebase {
 
 // Replace the default Dispose() method to delete the callback data if
 // allocated.
+#if SWIG_VERSION >= 0x040000
+%typemap(csdisposing_derived, methodname="Dispose",
+         parameters="bool disposing", methodmodifiers="public")
+#else
 %typemap(csdestruct_derived, methodname="Dispose", methodmodifiers="public")
+#endif
       firebase::Future<CTYPE> {
     lock (FirebaseApp.disposeLock) {
       if (swigCPtr.Handle != System.IntPtr.Zero) {

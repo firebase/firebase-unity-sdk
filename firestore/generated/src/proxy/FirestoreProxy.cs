@@ -121,11 +121,11 @@ internal class FirestoreProxy : global::System.IDisposable {
 
   public virtual System.Threading.Tasks.Task<QueryProxy> NamedQueryAsync(string queryName) {
     var future = FirestoreCppPINVOKE.FirestoreProxy_NamedQuery(swigCPtr, queryName);
-
-    if (FirestoreCppPINVOKE.SWIGPendingException.Pending)
-      throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    
+      if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
     return Future_Query.GetTask(new Future_Query(future, true));
   }
+
 }
 
 }

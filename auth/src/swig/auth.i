@@ -28,8 +28,13 @@
 
 %typemap(csclassmodifiers) CTYPE "public static class";
 %typemap(csbody) CTYPE "";
+#if SWIG_VERSION >= 0x040000
+%typemap(csdispose) CTYPE "";
+%typemap(csdisposing) CTYPE "";
+#else
 %typemap(csdestruct) CTYPE "";
 %typemap(csfinalize) CTYPE "";
+#endif
 %typemap(csinterfaces) CTYPE "";
 %ignore CONSTRUCTOR;
 
@@ -924,7 +929,12 @@ static CppInstanceManager<Auth> g_auth_instances;
 
 // Replace the default Dispose() method to remove references to this instance
 // from the map of FirebaseAuth instances.
+#if SWIG_VERSION >= 0x040000
+%typemap(csdisposing, methodname="Dispose",
+         parameters="bool disposing", methodmodifiers="public")
+#else
 %typemap(csdestruct, methodname="Dispose", methodmodifiers="public")
+#endif
       firebase::auth::Auth {
   DisposeInternal();
 }

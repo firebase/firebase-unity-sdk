@@ -401,7 +401,12 @@ SWIG_CREATE_PROXY(firebase::firestore::Firestore);
 %rename("%s") firebase::firestore::Firestore::set_log_level;
 
 // Replace the default Dispose() method to remove references from the CppInstanceManager.
+#if SWIG_VERSION >= 0x040000
+%typemap(csdisposing, methodname="Dispose",
+         parameters="bool disposing", methodmodifiers="public")
+#else
 %typemap(csdestruct, methodname="Dispose", methodmodifiers="public")
+#endif
     firebase::firestore::Firestore {
   lock (FirebaseApp.disposeLock) {
     if (swigCPtr.Handle != global::System.IntPtr.Zero) {
