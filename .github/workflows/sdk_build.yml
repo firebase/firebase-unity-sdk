@@ -14,6 +14,11 @@ on:
         description: 'Linux Unity version'
         default: '2017.4.10f1'
         required: true
+      # Additional CMake flags to use
+      additional_cmake_flags:
+        description: 'Additional flags to pass into CMake'
+        default: ''
+        required: false
 
 jobs:
   build_desktop:
@@ -103,13 +108,13 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         shell: bash
         run: |
-          ./build_linux.sh
+          ./build_linux.sh ${{ github.event.inputs.additional_cmake_flags }}
 
       - name: Build SDK (MacOS)
         if: startsWith(matrix.os, 'macos')
         shell: bash
         run: |
-          ./build_macos.sh
+          ./build_macos.sh ${{ github.event.inputs.additional_cmake_flags }}
 
       - name: Build SDK (Windows)
         if: startsWith(matrix.os, 'windows')

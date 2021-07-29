@@ -67,7 +67,7 @@ for option in "${build_options[@]}" ; do
   pushd "$DIR"
 
     # Configure cmake with option value
-    cmake .. ${CMAKE_OPTIONS} ${EXTRA_OPTIONS}
+    cmake .. ${CMAKE_OPTIONS} ${EXTRA_OPTIONS} "$@"
     check_exit_code $?
 
     # Build the SDK
