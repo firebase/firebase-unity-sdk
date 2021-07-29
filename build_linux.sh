@@ -22,4 +22,4 @@ set -e
 set -x
 
 export PLATFORM=linux
-./build_bash.sh
+./build_bash.sh "$@"
