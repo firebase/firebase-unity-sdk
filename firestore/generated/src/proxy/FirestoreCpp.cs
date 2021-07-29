@@ -27,13 +27,9 @@ internal sealed class FirestoreCpp {
     return ret;
   }
 
-  public static void LoadBundleWithCallback(
-      FirestoreProxy firestore, string bundleData, int callbackId,
-      Firebase.Firestore.FirebaseFirestore.LoadBundleTaskProgressDelegate callback) {
-    FirestoreCppPINVOKE.LoadBundleWithCallback(FirestoreProxy.getCPtr(firestore), bundleData,
-                                               callbackId, callback);
-    if (FirestoreCppPINVOKE.SWIGPendingException.Pending)
-      throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+  public static void LoadBundleWithCallback(FirestoreProxy firestore, string bundleData, int callbackId, Firebase.Firestore.FirebaseFirestore.LoadBundleTaskProgressDelegate callback) {
+    FirestoreCppPINVOKE.LoadBundleWithCallback(FirestoreProxy.getCPtr(firestore), bundleData, callbackId, callback);
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
   }
 
   public static FirestoreProxy GetFirestoreInstance(FirebaseApp app) {

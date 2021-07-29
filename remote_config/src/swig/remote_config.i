@@ -160,7 +160,12 @@ struct ConfigValueInternal {
 
 // Replace the default Dispose() method to remove references to this instance
 // from the map of FirebaseRemoteConfig instances.
+#if SWIG_VERSION >= 0x040000
+%typemap(csdisposing, methodname="Dispose",
+         parameters="bool disposing", methodmodifiers="public")
+#else
 %typemap(csdestruct, methodname="Dispose", methodmodifiers="public")
+#endif
     firebase::remote_config::RemoteConfig {
   lock (FirebaseApp.disposeLock) {
     ReleaseReferenceInternal(this);
