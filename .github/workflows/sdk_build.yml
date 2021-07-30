@@ -90,9 +90,8 @@ jobs:
       - name: Install python deps
         shell: bash
         run: |
-          pip --version
-          pip3 --version
-          pip3 install -r scripts/gha/requirements.txt
+          pip uninstall -r scripts/gha/requirements.txt
+          pip install -r scripts/gha/requirements.txt
       - name: Install Unity
         shell: bash
         run: |
