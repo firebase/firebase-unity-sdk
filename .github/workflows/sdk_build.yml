@@ -62,6 +62,7 @@ jobs:
         run: |
           echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
           cd firebase-cpp-sdk
+          python --version
           python scripts/gha/install_prereqs_desktop.py
           cd ..
 
@@ -89,7 +90,9 @@ jobs:
       - name: Install python deps
         shell: bash
         run: |
-          pip install -r scripts/gha/requirements.txt
+          pip --version
+          pip3 --version
+          pip3 install -r scripts/gha/requirements.txt
       - name: Install Unity
         shell: bash
         run: |
