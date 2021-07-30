@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest] #, macos-latest, ubuntu-latest]
         include:
         - os: windows-latest
           unity_version: ${{ github.event.inputs.unity_version }}
@@ -55,7 +55,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.7'
+          python-version: '3.9'
 
       - name: Install prerequisites
         shell: bash
