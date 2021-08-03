@@ -175,7 +175,12 @@ static CppInstanceManager<Installations> g_installations_instances;
 
 // Replace the default Dispose() method to remove references to this instance
 // from the map of FirebaseInstallations instances.
+#if SWIG_VERSION >= 0x040000
+%typemap(csdisposing, methodname="Dispose",
+         parameters="bool disposing", methodmodifiers="public")
+#else
 %typemap(csdestruct, methodname="Dispose", methodmodifiers="public")
+#endif
     firebase::installations::Installations {
   lock (installationsByAppCPtr) {
     if (appProxy != null) {
