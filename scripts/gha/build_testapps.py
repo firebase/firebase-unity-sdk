@@ -154,12 +154,9 @@ flags.DEFINE_list(
     short_name="t")
 
 flags.DEFINE_list(
-    "unity_versions", "2017.3.1f1",
+    "unity_versions", "2017.4.37f1",
     "Unity versions to build against. Must match the folder name in your"
-    " applications directory or Unity Hub subdirectory. e.g. 2017.3.1f1 matches"
-    " Applications/Unity2017.3.1f1/Unity.app/Contents/MacOS/Unity or"
-    " Applications/Unity/Hub/Editor/2017.3.1f1/Unity.app/Contents/Macos/Unity"
-    " on MacOS.",
+    " applications directory or Unity Hub subdirectory.",
     short_name="u")
 
 flags.DEFINE_string(
