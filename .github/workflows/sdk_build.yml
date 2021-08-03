@@ -70,20 +70,6 @@ jobs:
           python scripts/gha/install_prereqs_desktop.py
           cd ..
 
-      - name: Install swig (Linux)
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          sudo apt-get remove -y swig
-          sudo apt-get remove -y swig4.0
-          sudo apt-get install -y swig3.0
-          alias swig='swig3.0'
-
-      # TODO: Change the swig versions installed on Mac and Windows
-      - name: Install swig (Mac & Windows)
-        if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'windows')
-        run: |
-          swig -version
-
       # Set up the requirements, and install Unity
       - uses: ruby/setup-ruby@v1
         with:
@@ -103,6 +89,17 @@ jobs:
         shell: bash
         run: |
           echo "UNITY_ROOT_DIR=${{ matrix.unity_install_dir }}" >> $GITHUB_ENV
+
+      - name: Install OpenSSL (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt install openssl
+      - name: Install OpenSSL (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew install openssl
+          # brew won't overwrite MacOS system default OpenSSL, so force it here.
+          echo "OPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1" >> $GITHUB_ENV
 
       - name: Build SDK (Linux)
         if: startsWith(matrix.os, 'ubuntu')
