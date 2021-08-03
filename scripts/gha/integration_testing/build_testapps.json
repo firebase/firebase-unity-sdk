@@ -1,0 +1,194 @@
+{
+  "apis": [
+    {
+      "name": "analytics",
+      "full_name": "FirebaseAnalytics",
+      "captial_name": "Analytics",
+      "bundle_id": "com.google.firebase.unity.analytics.testapp",
+      "testapp_path": "analytics/testapp",
+      "plugins": [
+        "FirebaseAnalytics.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.analytics-*.tgz"
+      ]
+    },
+    {
+      "name": "auth",
+      "full_name": "FirebaseAuth",
+      "captial_name": "Auth",
+      "bundle_id": "com.google.FirebaseUnityAuthTestApp.dev",
+      "testapp_path": "auth/testapp",
+      "plugins": [
+        "FirebaseAuth.unitypackage"
+      ],
+      "provision": "Firebase_Unity_Auth_Test_App_Dev.mobileprovision",
+      "entitlements": "scripts/gha/integration_testing/entitlements/auth.entitlements",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.auth-*.tgz"
+      ]
+    },
+    {
+      "name": "crashlytics",
+      "full_name": "FirebaseCrashlytics",
+      "captial_name": "Crashlytics",
+      "bundle_id": "com.google.firebase.unity.crashlytics.testapp",
+      "testapp_path": "crashlytics/testapp",
+      "plugins": [
+        "FirebaseCrashlytics.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.crashlytics-*.tgz"
+      ]
+    },
+    {
+      "name": "database",
+      "full_name": "FirebaseDatabase",
+      "captial_name": "Database",
+      "bundle_id": "com.google.firebase.unity.database.testapp",
+      "testapp_path": "database/testapp",
+      "plugins": [
+        "FirebaseDatabase.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.auth-*.tgz",
+        "com.google.firebase.database-*.tgz"
+      ]
+    },
+    {
+      "name": "dynamic_links",
+      "full_name": "FirebaseDynamicLinks",
+      "captial_name": "DynamicLinks",
+      "bundle_id": "com.google.FirebaseUnityDynamicLinksTestApp.dev",
+      "testapp_path": "dynamic_links/testapp",
+      "plugins": [
+        "FirebaseDynamicLinks.unitypackage"
+      ],
+      "provision": "Firebase_Unity_Dynamic_Links_Test_App_Dev.mobileprovision",
+      "entitlements": "scripts/gha/integration_testing/entitlements/dynamic_links.entitlements",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.dynamic-links-*.tgz"
+      ]
+    },
+    {
+      "name": "firestore",
+      "full_name": "FirebaseFirestore",
+      "captial_name": "Firestore",
+      "bundle_id": "com.google.firebase.firestore.unity.testapp",
+      "testapp_path": "firestore/testapp",
+      "plugins": [
+        "FirebaseFirestore.unitypackage",
+        "FirebaseAuth.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "minify": "proguard",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.auth-*.tgz",
+        "com.google.firebase.firestore-*.tgz"
+      ]
+    },
+    {
+      "name": "functions",
+      "full_name": "FirebaseFunctions",
+      "captial_name": "Functions",
+      "bundle_id": "com.google.firebase.unity.functions.testapp",
+      "testapp_path": "functions/testapp",
+      "plugins": [
+        "FirebaseFunctions.unitypackage",
+        "FirebaseAuth.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.auth-*.tgz",
+        "com.google.firebase.functions-*.tgz"
+      ]
+    },
+    {
+      "name": "installations",
+      "full_name": "FirebaseInstallations",
+      "captial_name": "Installations",
+      "bundle_id": "com.google.firebase.unity.fis.testapp",
+      "testapp_path": "installations/testapp",
+      "plugins": [
+        "FirebaseInstallations.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.installations-*.tgz"
+      ]
+    },
+    {
+      "name": "messaging",
+      "full_name": "FirebaseMessaging",
+      "captial_name": "Messaging",
+      "bundle_id": "com.google.FirebaseUnityMessagingTestApp.dev",
+      "testapp_path": "messaging/testapp",
+      "plugins": [
+        "FirebaseMessaging.unitypackage"
+      ],
+      "provision": "Firebase_Unity_Messaging_Test_App_Dev.mobileprovision",
+      "entitlements": "scripts/gha/integration_testing/entitlements/messaging.entitlements",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.messaging-*.tgz"
+      ]
+    },
+    {
+      "name": "remote_config",
+      "full_name": "FirebaseRemoteConfig",
+      "captial_name": "RemoteConfig",
+      "bundle_id": "com.google.firebase.unity.remoteconfig.testapp",
+      "testapp_path": "remote_config/testapp",
+      "plugins": [
+        "FirebaseRemoteConfig.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.remote-config-*.tgz"
+      ]
+    },
+    {
+      "name": "storage",
+      "full_name": "FirebaseStorage",
+      "captial_name": "Storage",
+      "bundle_id": "com.google.firebase.unity.storage.testapp",
+      "testapp_path": "storage/testapp",
+      "plugins": [
+        "FirebaseStorage.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.auth-*.tgz",
+        "com.google.firebase.storage-*.tgz"
+      ]
+    }
+  ],
+  "skipped_testapp_files": [
+    "UIHandlerWithFacebook"
+  ],
+  "builder_directory": "scripts/gha/integration_testing"
+}
