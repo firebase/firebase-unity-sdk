@@ -163,6 +163,12 @@ Support
 
 Release Notes
 -------------
+### Unreleased:
+-   Changes
+    - Crashlytics: Upload UnityFramework symbols in addition to the main app
+      dSYM file to improve symbolication
+      ([#673](https://github.com/firebase/quickstart-unity/issues/673)).
+
 ### 8.2.0:
 -   Changes
     - Firestore: Removed `Equals` and `GetHashCode` methods from `Query`,
