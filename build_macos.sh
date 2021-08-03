@@ -25,4 +25,4 @@ set -e
 set -x
 
 export PLATFORM=macos
-./build_bash.sh
+./build_bash.sh "$@"

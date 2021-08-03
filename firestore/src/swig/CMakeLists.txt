@@ -46,7 +46,7 @@ target_include_directories(firebase_firestore_swig_cpp
     ${FIREBASE_UNITY_DIR}
 )
 
-set(FIRESTORE_SOURCE_DIR ${FIREBASE_CPP_SDK_DIR}/build/external/src/firestore)
+set(FIRESTORE_SOURCE_DIR ${PROJECT_BINARY_DIR}/bin/external/src/firestore)
 
 # Additional public headers come from the Firestore core
 if(IOS)
