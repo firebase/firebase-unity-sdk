@@ -99,7 +99,7 @@ jobs:
         run: |
           brew install openssl
           # brew won't overwrite MacOS system default OpenSSL, so force it here.
-          echo "OPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1" >> $GITHUB_ENV
+          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
 
       - name: Build SDK (Linux)
         if: startsWith(matrix.os, 'ubuntu')
