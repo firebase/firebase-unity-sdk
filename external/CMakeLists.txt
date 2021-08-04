@@ -17,14 +17,14 @@
 
 mono_add_external_dll(unity_editor_cs "${UNITY_EDITOR_DLL}")
 mono_add_external_dll(unity_engine_cs "${UNITY_ENGINE_DLL}")
-if(APPLE)
+if(FIREBASE_IOS_BUILD)
   mono_add_external_dll(unity_ios_extensions_xcode_cs "${UNITY_EDITOR_IOS_XCODE_DLL}")
 endif()
 
 # Dont pack libraries shipped with unity
 unity_pack_skip(unity_editor_cs)
 unity_pack_skip(unity_engine_cs)
-if(APPLE)
+if(FIREBASE_IOS_BUILD)
   unity_pack_skip(unity_ios_extensions_xcode_cs)
 endif()
 
