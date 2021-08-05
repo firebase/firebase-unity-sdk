@@ -81,8 +81,9 @@ jobs:
         timeout-minutes: 10
         shell: bash
         run: |
-          curl https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip -o /Users/runner/Downloads/client_unity_plugins.zip
-          unzip -q /Users/runner/Downloads/client_unity_plugins.zip -d /Users/runner/Downloads/
+          curl https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip -o /Users/runner/Downloads/firebase_unity_sdk.zip
+          unzip -q /Users/runner/Downloads/firebase_unity_sdk.zip -d /Users/runner/Downloads/
+          mv /Users/runner/Downloads/firebase_unity_sdk /Users/runner/Downloads/client_unity_plugins
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
