@@ -7,6 +7,10 @@ on:
         description: 'Unity version'
         default: '2017.4.37f1'
         required: true
+      platforms:
+        description: 'Platform of Desktop, Android, iOS'
+        default: 'iOS,Android,Win64,OSXUniversal,Linux64'
+        required: true
       operating_systems:
         description: 'CSV of VMs to run on'
         default: 'macos-latest'
@@ -17,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix_os: ${{ steps.set-matrix-os.outputs.matrix_os }}
+      matrix_platform: ${{ steps.set-matrix-os.outputs.platforms }}
       matrix_unity_versions: ${{ steps.set-matrix-os.outputs.matrix_unity_versions }}
     steps:
     - id: set-matrix-os
@@ -28,6 +33,8 @@ jobs:
         else
           OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
           echo "::set-output name=matrix_os::${OS_JSON}"
+          PLATFORM_JSON=[\"$(echo ${{ github.event.inputs.platform }} | sed 's/,/","/g')\"]
+          echo "::set-output name=matrix_platform::${PLATFORM_JSON}"
           UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
           echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
         fi
@@ -40,6 +47,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ${{ fromJson(needs.prepare_matrix.outputs.matrix_os) }}
+        platform: ${{ fromJson(needs.prepare_matrix.outputs.matrix_platform) }}
         unity_version: ${{ fromJson(needs.prepare_matrix.outputs.matrix_unity_versions) }}
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
@@ -65,7 +73,7 @@ jobs:
         timeout-minutes: 20
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms "Android,iOS,Unity,Linux,Windows" --version ${{ matrix.unity_version }}
+          python scripts/gha/unity_installer.py --install --platforms ${{ matrix.platform }} --version ${{ matrix.unity_version }}
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash
@@ -94,7 +102,7 @@ jobs:
         run: |
           python scripts/gha/build_testapps.py --t analytics,auth,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage \
             --u ${{ matrix.unity_version }} \
-            --p iOS,Android,Win64,OSXUniversal,Linux64 \
+            --p ${{ matrix.platform }} \
             --force_latest_runtime
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
