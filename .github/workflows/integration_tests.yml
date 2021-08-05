@@ -5,7 +5,7 @@ on:
     inputs:
       unity_versions:
         description: 'Unity version'
-        default: '2017.4.40f1'
+        default: '2017.4.37f1'
         required: true
       operating_systems:
         description: 'CSV of VMs to run on'
@@ -65,7 +65,7 @@ jobs:
         timeout-minutes: 20
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms "Android,iOS" --version ${{ matrix.unity_version }}
+          python scripts/gha/unity_installer.py --install --platforms "Android,iOS,Unity,Linux,Windows" --version ${{ matrix.unity_version }}
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash
@@ -77,7 +77,18 @@ jobs:
             --password "${{ secrets.UNITY_PASSWORD }}" \
             --serial_ids "${{ secrets.SERIAL_ID }}" \
             --logfile testapps/activate_license.log
-          cat testapps/activate_license.log
+      - name: Prepare for integration tests
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+      - name: Build integration tests
+        shell: bash
+        run: |
+          python scripts/gha/build_testapps.py --t admob,analytics,auth,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage \
+            --u ${{ matrix.unity_version }} \
+            --p iOS,Android,Win64,OSXUniversal,Linux64 \
+            --force_latest_runtime
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
@@ -88,4 +99,3 @@ jobs:
           max_attempts: 3
           command: |
             python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ matrix.unity_version }}
-            cat testapps/activate_license.log
