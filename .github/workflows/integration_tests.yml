@@ -30,14 +30,12 @@ jobs:
         OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
         echo "::set-output name=matrix_os::${OS_JSON}"
         PLATFORMS_JSON=[\"$(echo ${{ github.event.inputs.platforms }} | sed 's/,/","/g')\"]
-        echo ${{ github.event.inputs.platforms }}
         echo "::set-output name=matrix_platforms::${PLATFORMS_JSON}"
-        echo ${PLATFORM_JSON}
         UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
         echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
 
   test:
-    name: ${{ matrix.os }}
+    name: ${{ matrix.os }}-${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     needs: prepare_matrix
     strategy:
