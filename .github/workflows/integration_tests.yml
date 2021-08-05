@@ -85,7 +85,7 @@ jobs:
       - name: Build integration tests
         shell: bash
         run: |
-          python scripts/gha/build_testapps.py --t admob,analytics,auth,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage \
+          python scripts/gha/build_testapps.py --t analytics,auth,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage \
             --u ${{ matrix.unity_version }} \
             --p iOS,Android,Win64,OSXUniversal,Linux64 \
             --force_latest_runtime
