@@ -21,23 +21,20 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix_os: ${{ steps.set-matrix-os.outputs.matrix_os }}
-      matrix_platforms: ${{ steps.set-matrix-os.outputs.platforms }}
+      matrix_platforms: ${{ steps.set-matrix-os.outputs.matrix_platforms }}
       matrix_unity_versions: ${{ steps.set-matrix-os.outputs.matrix_unity_versions }}
     steps:
     - id: set-matrix-os
       # e.g. 'ubuntu-latest,macos-latest' -> '["ubuntu-latest","macos-latest"]'
       run: |
-        if [[ "${{ github.event_name }}" == "push" ]]; then
-          echo "::set-output name=matrix_os::[\"macos-latest\"]"
-          echo "::set-output name=matrix_unity_versions::[\"2017.4.40f1\"]"
-        else
-          OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
-          echo "::set-output name=matrix_os::${OS_JSON}"
-          PLATFORM_JSON=[\"$(echo ${{ github.event.inputs.platforms }} | sed 's/,/","/g')\"]
-          echo "::set-output name=matrix_platform::${PLATFORM_JSON}"
-          UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
-          echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
-        fi
+        OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
+        echo "::set-output name=matrix_os::${OS_JSON}"
+        PLATFORMS_JSON=[\"$(echo ${{ github.event.inputs.platforms }} | sed 's/,/","/g')\"]
+        echo ${{ github.event.inputs.platforms }}
+        echo "::set-output name=matrix_platforms::${PLATFORMS_JSON}"
+        echo ${PLATFORM_JSON}
+        UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
+        echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
 
   test:
     name: ${{ matrix.os }}
