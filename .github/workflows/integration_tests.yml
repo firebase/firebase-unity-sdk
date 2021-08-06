@@ -67,7 +67,7 @@ jobs:
           $ANDROID_HOME/tools/bin/sdkmanager --version
           curl https://dl.google.com/android/repository/tools_r25.2.5-macosx.zip -o /Users/runner/Downloads/tools.zip
           unzip -q /Users/runner/Downloads/tools.zip -d /Users/runner/Downloads/
-          rm -r /Users/runner/Downloads/tools
+          rm -r $ANDROID_HOME/tools
           mv /Users/runner/Downloads/tools $ANDROID_HOME
           $ANDROID_HOME/tools/bin/sdkmanager --version
           python scripts/gha/unity_installer.py --install --platforms ${{ github.event.inputs.platforms }} --version ${{ matrix.unity_version }}
