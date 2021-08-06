@@ -316,9 +316,6 @@ def main(argv):
                 api_config=api_config,
                 ios_config=ios_config,
                 target=build_target[p])
-            logging.info("finished build_testapp")
-            with open(dir_helper.make_log_path("build_" + build_target[p]), 'r') as f:
-              logging.info(f.read())
             if p == _IOS:
               run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config)
         except (subprocess.SubprocessError, RuntimeError) as e:
@@ -327,6 +324,9 @@ def main(argv):
                   description=build_desc + " " + p,
                   error_message=str(e)))
           logging.info(str(e))
+      logging.info("finished build_testapp")
+      with open(dir_helper.make_log_path("build_" + build_target[p]), 'r') as f:
+        logging.info(f.read())
       # Free up space by removing unneeded Unity Library directory.
       shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
       logging.info("END %s", build_desc)
