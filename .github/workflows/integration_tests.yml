@@ -69,7 +69,7 @@ jobs:
           unzip -q /Users/runner/Downloads/tools.zip -d /Users/runner/Downloads/
           rm -r $ANDROID_HOME/tools
           mv /Users/runner/Downloads/tools $ANDROID_HOME
-          $ANDROID_HOME/tools/bin/sdkmanager --version
+          ls $ANDROID_HOME
           python scripts/gha/unity_installer.py --install --platforms ${{ github.event.inputs.platforms }} --version ${{ matrix.unity_version }}
           u3d list -p
       - name: Activate Unity license
