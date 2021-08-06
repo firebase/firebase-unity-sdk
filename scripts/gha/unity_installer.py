@@ -82,10 +82,6 @@ from absl import logging
 
 FLAGS = flags.FLAGS
 
-_ANDROID = "Android"
-_IOS = "iOS"
-_SUPPORTED_PLATFORMS = (_ANDROID, _IOS)
-
 # These are the three actions supported by the tool.
 flags.DEFINE_bool(
     "install", False,
@@ -121,8 +117,7 @@ flags.DEFINE_list(
     "platforms", None,
     "(Optional) Additional platforms to install. Should be in the format of"
     " Unity build targets, i.e. the same format as taken by build_testapps.py."
-    " Invalid values will be ignored."
-    " Valid values: " + ",".join(_SUPPORTED_PLATFORMS))
+    " Invalid values will be ignored.")
 
 
 def main(argv):
@@ -156,9 +151,9 @@ def install_unity(unity_version, platforms):
   # for platforms other than the running OS, or embedded Android SDK/NDK.
   package_list = ["Unity"]
   for platform in platforms:
-    if platform == _ANDROID:
-      package_list.append("Android")
-    elif platform == _IOS:
+    if platform == "macOS":
+      continue
+    if platform == "iOS":
       package_list.append("Ios")
     else:
       package_list.append(platform)

@@ -126,14 +126,22 @@ _NET46 = "4.6"
 _ANDROID = "Android"
 _PLAYMODE = "Playmode"
 _IOS = "iOS"
-_WINDOWS_BUILD_TARGET = "Win64"
-_MACOS_BUILD_TARGET = "OSXUniversal"
-_LINUX_BUILD_TARGET = "Linux64"
-_DESKTOP_TARGET = "Desktop"
+_WINDOWS = "Windows"
+_MACOS = "macOS"
+_LINUX = "Linux"
+_DESKTOP = "Desktop"
+
+build_target = {
+  _ANDROID: "Android",
+  _IOS: "iOS",
+  _WINDOWS: "Win64",
+  _MACOS: "OSXUniversal",
+  _LINUX: "Linux64",
+}
 
 _SUPPORTED_PLATFORMS = (
-    _ANDROID, _IOS, _PLAYMODE, _DESKTOP_TARGET,
-    _WINDOWS_BUILD_TARGET, _LINUX_BUILD_TARGET, _MACOS_BUILD_TARGET)
+    _ANDROID, _IOS, _PLAYMODE, _DESKTOP,
+    _WINDOWS, _LINUX, _MACOS)
 
 _SUPPORTED_XCODE_CONFIGURATIONS = (
     "ReleaseForRunning", "Release", "Debug", "ReleaseForProfiling")
@@ -296,24 +304,24 @@ def main(argv):
         failures.append(Failure(description=build_desc, error_message=str(e)))
         logging.info(str(e))
         continue  # If setup failed, don't try to build. Move to next testapp.
-      for target in platforms:
+      for p in platforms:
         try:
-          if target == _DESKTOP_TARGET:  # e.g. 'Desktop' -> 'OSXUniversal'
-            target = get_desktop_build_target()
-          if target == _PLAYMODE:
+          if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
+            p = get_desktop_platform()
+          if p == _PLAYMODE:
             perform_in_editor_tests(dir_helper)
           else:
             build_testapp(
                 dir_helper=dir_helper,
                 api_config=api_config,
                 ios_config=ios_config,
-                target=target)
-            if target == _IOS:
+                target=build_target[p])
+            if p == _IOS:
               run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config)
         except (subprocess.SubprocessError, RuntimeError) as e:
           failures.append(
               Failure(
-                  description=build_desc + " " + target,
+                  description=build_desc + " " + p,
                   error_message=str(e)))
           logging.info(str(e))
       # Free up space by removing unneeded Unity Library directory.
@@ -716,17 +724,17 @@ def validate_platforms(platforms):
   return platforms
 
 
-def get_desktop_build_target():
+def get_desktop_platform():
   """This will get the Unity build target corresponding to the running OS."""
   # The motivation for this was to allow a CI job to specify "--p Desktop"
   # for all three operating systems, and build the correct target for each.
   operating_system = platform.system()
   if operating_system == "Windows":
-    return _WINDOWS_BUILD_TARGET
+    return _WINDOWS
   elif operating_system == "Linux":
-    return _LINUX_BUILD_TARGET
+    return _LINUX
   elif operating_system == "Darwin":
-    return _MACOS_BUILD_TARGET
+    return _MACOS
   else:
     raise RuntimeError("Unexpected OS: %s" % operating_system)
 
