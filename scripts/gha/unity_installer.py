@@ -48,11 +48,6 @@ MacOS: /Applications/Unity_{version}/Unity.app/Contents/MacOS/Unity
   unity_installer.py --activate_license --version 2017.3.1f1 \
     --license_file ~/license.txt --logfile activate.log
 
-  or:
-  unity_installer.py --activate_license --version 2017.3.1f1 \
-    --username username --password password --serial_ids serial_ids \
-    --logfile activate.log
-
 This will invoke the given version of Unity, passing in the license information
 from --license_file to activate Unity. The license file should be structured
 as follows:
@@ -102,9 +97,6 @@ flags.DEFINE_bool(
 
 flags.DEFINE_string("version", None, "Version string, e.g. 2017.3.1f1")
 flags.DEFINE_string("license_file", None, "Path to the license file.")
-flags.DEFINE_string("username", None, "username for a Unity account.")
-flags.DEFINE_string("password", None, "password for that Unity account.")
-flags.DEFINE_list("serial_ids", [], "Unity serial ID.")
 flags.DEFINE_string("logfile", None, "Where to store Unity logs.")
 
 # Implementation note: it would have been simpler to pass a
@@ -133,17 +125,7 @@ def main(argv):
     install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
-    if FLAGS.license_file:
-      with open(FLAGS.license_file, "r") as f:
-        license_components = f.read().splitlines()
-        username = license_components[0]
-        password = license_components[1]
-        serial_ids = license_components[2:]
-    else:
-      username = FLAGS.username
-      password = FLAGS.password
-      serial_ids = FLAGS.serial_ids
-    activate_license(username, password, serial_ids, FLAGS.logfile, FLAGS.version)
+    activate_license(FLAGS.license_file, FLAGS.logfile, FLAGS.version)
 
   if FLAGS.release_license:
     release_license(FLAGS.logfile, FLAGS.version)
@@ -155,10 +137,14 @@ def install_unity(unity_version, platforms):
   # and iOS. Other supports can be added here, e.g. desktop platforms
   # for platforms other than the running OS, or embedded Android SDK/NDK.
   package_list = ["Unity"]
-  if _ANDROID in platforms:
-    package_list.append("Android")
-  if _IOS in platforms:
-    package_list.append("Ios")
+  for platform in platforms:
+    if platform == _ANDROID:
+      package_list.append("Android")
+    elif platform == _IOS:
+      package_list.append("Ios")
+    else:
+      package_list.append("platform")
+
   package_csv = ",".join(package_list)
 
   u3d = find_u3d()
@@ -170,8 +156,13 @@ def install_unity(unity_version, platforms):
   logging.info("Finished installing Unity.")
 
 
-def activate_license(username, password, serial_ids, logfile, unity_version):
+def activate_license(license_file, logfile, unity_version):
   """Activates an installation of Unity with a license."""
+  with open(license_file, "r") as f:
+    license_components = f.read().splitlines()
+  username = license_components[0]
+  password = license_components[1]
+  serial_ids = license_components[2:]
   # Unity can report a license activation failure even if the activation
   # succeeds. This has occurred e.g. in Unity 2019.3.15 on Mac.
   # To handle this case, we check the Unity logs for the message indicating
