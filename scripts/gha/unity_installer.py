@@ -162,6 +162,7 @@ def install_unity(unity_version, platforms):
       package_list.append("Ios")
     else:
       package_list.append(platform)
+  package_csv = ",".join(package_list)
 
   u3d = find_u3d()
   run([u3d, "install", "--trace",
