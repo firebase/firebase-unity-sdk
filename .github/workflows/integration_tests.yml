@@ -32,7 +32,7 @@ jobs:
         echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
 
   test:
-    name: ${{ matrix.os }}-${{ matrix.platform }}
+    name: ${{ matrix.os }}-${{ matrix.unity_version }}-${{ github.event.inputs.platforms }}
     runs-on: ${{ matrix.os }}
     needs: prepare_matrix
     strategy:
@@ -64,7 +64,11 @@ jobs:
         timeout-minutes: 20
         shell: bash
         run: |
-          echo $JAVA_HOME
+          $ANDROID_HOME/tools/bin/sdkmanager --version
+          curl https://dl.google.com/android/repository/tools_r25.2.5-macosx.zip -o /Users/runner/Downloads/tools.zip
+          unzip -q /Users/runner/Downloads/tools.zip -d /Users/runner/Downloads/
+          rm -r /Users/runner/Downloads/tools
+          mv /Users/runner/Downloads/tools $ANDROID_HOME/tools
           $ANDROID_HOME/tools/bin/sdkmanager --version
           python scripts/gha/unity_installer.py --install --platforms ${{ github.event.inputs.platforms }} --version ${{ matrix.unity_version }}
           u3d list -p
