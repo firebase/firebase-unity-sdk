@@ -143,7 +143,7 @@ def install_unity(unity_version, platforms):
     elif platform == _IOS:
       package_list.append("Ios")
     else:
-      package_list.append("platform")
+      package_list.append(platform)
 
   package_csv = ",".join(package_list)
 
