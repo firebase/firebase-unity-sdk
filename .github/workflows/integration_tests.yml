@@ -69,6 +69,7 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/unity_installer.py --install --platforms Unity,Android,Ios,Linux,Windows --version ${{ matrix.unity_version }}
+          u3d list -p
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash
