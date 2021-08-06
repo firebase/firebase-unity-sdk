@@ -9,7 +9,7 @@ on:
         required: true
       platforms:
         description: 'Platform of Desktop, Android, iOS'
-        default: 'iOS,Android,Win64,OSXUniversal,Linux64'
+        default: 'all'
         required: true
       operating_systems:
         description: 'CSV of VMs to run on'
@@ -98,7 +98,7 @@ jobs:
         run: |
           python scripts/gha/build_testapps.py --t analytics,auth,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage \
             --u ${{ matrix.unity_version }} \
-            --p ${{ matrix.platform }} \
+            --p iOS,Android,Win64,OSXUniversal,Linux64 \
             --force_latest_runtime
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
