@@ -428,6 +428,8 @@ def build_testapp(dir_helper, api_config, ios_config, target):
       build_flags += ["-AppBuilderHelper.minify", api_config.minify]
   _run(arg_builder.get_args_to_open_project(build_flags))
   logging.info("Finished building target %s", target)
+  with open(dir_helper.make_log_path("build_" + target), 'r') as f:
+    logging.info(f.read())
 
 
 def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
