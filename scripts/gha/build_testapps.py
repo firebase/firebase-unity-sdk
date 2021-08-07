@@ -429,6 +429,8 @@ def build_testapp(dir_helper, api_config, ios_config, target):
   else:
     if api_config.minify:
       build_flags += ["-AppBuilderHelper.minify", api_config.minify]
+    if target == _ANDROID:
+      build_flags += ["-androidSdkPath", "/Users/runner/Library/Android/sdk"]
   _run(arg_builder.get_args_to_open_project(build_flags))
   logging.info("Finished building target %s", target)
 
