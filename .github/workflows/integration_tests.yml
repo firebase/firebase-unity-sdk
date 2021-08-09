@@ -72,6 +72,7 @@ jobs:
           # ls $ANDROID_HOME
           python scripts/gha/unity_installer.py --install --platforms ${{ github.event.inputs.platforms }} --version ${{ matrix.unity_version }}
           u3d list -p
+          cat ~/Library/Preferences/com.unity3d.UnityEditor5.x.plist
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash
