@@ -95,8 +95,10 @@ jobs:
         id: setup-ndk
         with:
           ndk-version: r13b
-          add-to-path: true
+          add-to-path: false
       - name: Build integration tests
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         shell: bash
         run: |
           echo $ANDROID_HOME
