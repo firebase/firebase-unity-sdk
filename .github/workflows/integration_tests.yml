@@ -65,11 +65,11 @@ jobs:
         shell: bash
         run: |
           $ANDROID_HOME/tools/bin/sdkmanager --version
-          curl https://dl.google.com/android/repository/tools_r25.2.5-macosx.zip -o /Users/runner/Downloads/tools.zip
-          unzip -q /Users/runner/Downloads/tools.zip -d /Users/runner/Downloads/
-          rm -r $ANDROID_HOME/tools
-          mv /Users/runner/Downloads/tools $ANDROID_HOME
-          ls $ANDROID_HOME
+          # curl https://dl.google.com/android/repository/tools_r25.2.5-macosx.zip -o /Users/runner/Downloads/tools.zip
+          # unzip -q /Users/runner/Downloads/tools.zip -d /Users/runner/Downloads/
+          # rm -r $ANDROID_HOME/tools
+          # mv /Users/runner/Downloads/tools $ANDROID_HOME
+          # ls $ANDROID_HOME
           python scripts/gha/unity_installer.py --install --platforms ${{ github.event.inputs.platforms }} --version ${{ matrix.unity_version }}
           u3d list -p
       - name: Activate Unity license
@@ -94,6 +94,7 @@ jobs:
       - name: Build integration tests
         shell: bash
         run: |
+          echo $ANDROID_HOME
           python scripts/gha/build_testapps.py --t analytics,auth,database,dynamic_links,functions,installations,messaging,remote_config,storage \
             --u ${{ matrix.unity_version }} \
             --p ${{ github.event.inputs.platforms }} \
