@@ -72,7 +72,6 @@ jobs:
           # ls $ANDROID_HOME
           python scripts/gha/unity_installer.py --install --platforms ${{ github.event.inputs.platforms }} --version ${{ matrix.unity_version }}
           u3d list -p
-          cat ~/Library/Preferences/com.unity3d.UnityEditor5.x.plist
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash
@@ -99,6 +98,11 @@ jobs:
           add-to-path: false
       - name: Build integration tests
         env:
+          ANDROID_SDK_HOME: /Users/runner/Library/Android/sdk
+          ANDROID_SDK_ROOT: /Users/runner/Library/Android/sdk
+          SDK_HOME: /Users/runner/Library/Android/sdk
+          SDK_ROOT: /Users/runner/Library/Android/sdk
+          ANDROID_HOME: /Users/runner/Library/Android/sdk
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
           NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
@@ -113,6 +117,7 @@ jobs:
             --u ${{ matrix.unity_version }} \
             --p ${{ github.event.inputs.platforms }} \
             --force_latest_runtime
+          cat ~/Library/Preferences/com.unity3d.UnityEditor5.x.plist
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
