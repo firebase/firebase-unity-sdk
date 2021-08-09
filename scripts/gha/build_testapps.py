@@ -326,7 +326,7 @@ def main(argv):
           logging.info(str(e))
       logging.info("finished build_testapp")
       with open(dir_helper.make_log_path("build_" + build_target[p]), 'r') as f:
-        logging.info(f.read())
+        print(f.read())
       # Free up space by removing unneeded Unity Library directory.
       shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
       logging.info("END %s", build_desc)
