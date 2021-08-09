@@ -91,10 +91,17 @@ jobs:
           curl https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip -o /Users/runner/Downloads/firebase_unity_sdk.zip
           unzip -q /Users/runner/Downloads/firebase_unity_sdk.zip -d /Users/runner/Downloads/
           mv /Users/runner/Downloads/firebase_unity_sdk /Users/runner/Downloads/client_unity_plugins
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r13b
+          add-to-path: true
       - name: Build integration tests
         shell: bash
         run: |
           echo $ANDROID_HOME
+          echo $ANDROID_NDK_HOME
+          ls /Users/runner/Library/Android/sdk/ndk/
           python scripts/gha/build_testapps.py --t analytics,auth,database,dynamic_links,functions,installations,messaging,remote_config,storage \
             --u ${{ matrix.unity_version }} \
             --p ${{ github.event.inputs.platforms }} \
