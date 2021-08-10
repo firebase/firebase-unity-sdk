@@ -100,17 +100,18 @@ jobs:
           curl https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip -o /Users/runner/Downloads/firebase_unity_sdk.zip
           unzip -q /Users/runner/Downloads/firebase_unity_sdk.zip -d /Users/runner/Downloads/
           mv /Users/runner/Downloads/firebase_unity_sdk /Users/runner/Downloads/client_unity_plugins
-      - uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r13b
-          add-to-path: false
+      # - uses: nttld/setup-ndk@v1
+      #   id: setup-ndk
+      #   with:
+      #     ndk-version: r13b
+      #     add-to-path: false
       - name: Build integration tests
         env:
-          UNITY_ANDROID_SDK: ${{ env.ANDROID_HOME }}
+          UNITY_ANDROID_SDK: ${ANDROID_HOME}
           # UNITY_ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         shell: bash
         run: |
+          echo $ANDROID_HOME
           echo $UNITY_ANDROID_SDK
           python scripts/gha/build_testapps.py \
             --t ${{ github.event.inputs.apis }} \
