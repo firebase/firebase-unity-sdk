@@ -8,13 +8,21 @@ on:
         default: '2017.4.37f1'
         required: true
       platforms:
-        description: 'Platform of Desktop, Android, iOS'
+        description: 'CSV of Android,iOS,Windows,macOS,Linux'
         default: 'Android,iOS,Windows,macOS,Linux'
+        required: true
+      apis:
+        description: 'CSV of apis to build and test'
+        default: 'analytics,auth,database,dynamic_links,functions,installations,messaging,remote_config,storage'
         required: true
       operating_systems:
         description: 'CSV of VMs to run on'
         default: 'macos-latest'
         required: true
+      mobile_test_on:
+        description: 'Run mobile tests on real and/or virtual devices? (separated by commas)'
+        default: 'real,virtual'
+        required: true 
 
 jobs:
   prepare_matrix:
@@ -105,9 +113,11 @@ jobs:
           echo $UNITY_ANDROID_SDK
           echo $UNITY_ANDROID_NDK
           ls /Users/runner/Library/Android/sdk/ndk/
-          python scripts/gha/build_testapps.py --t analytics,auth,database,dynamic_links,functions,installations,messaging,remote_config,storage \
+          python scripts/gha/build_testapps.py 
+            --t ${{ github.event.inputs.apis }} \
             --u ${{ matrix.unity_version }} \
             --p ${{ github.event.inputs.platforms }} \
+            --ios_sdk ${{ github.event.inputs.mobile_test_on }} \
             --force_latest_runtime
           cat ~/Library/Preferences/com.unity3d.UnityEditor5.x.plist
       - name: Return Unity license
