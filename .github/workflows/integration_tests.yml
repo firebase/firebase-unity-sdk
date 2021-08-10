@@ -107,7 +107,7 @@ jobs:
           add-to-path: false
       - name: Build integration tests
         env:
-          UNITY_ANDROID_SDK: $ANDROID_HOME
+          UNITY_ANDROID_SDK: ${{ env.ANDROID_HOME }}
           # UNITY_ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         shell: bash
         run: |
