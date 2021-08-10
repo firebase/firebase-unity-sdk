@@ -110,10 +110,7 @@ jobs:
           UNITY_ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         shell: bash
         run: |
-          echo $UNITY_ANDROID_SDK
-          echo $UNITY_ANDROID_NDK
-          ls /Users/runner/Library/Android/sdk/ndk/
-          python scripts/gha/build_testapps.py 
+          python scripts/gha/build_testapps.py \
             --t ${{ github.event.inputs.apis }} \
             --u ${{ matrix.unity_version }} \
             --p ${{ github.event.inputs.platforms }} \
