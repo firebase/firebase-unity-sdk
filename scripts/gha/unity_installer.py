@@ -96,7 +96,7 @@ _PACKAGE = {
   _ANDROID: "Android",
   _IOS: "Ios",
   _WINDOWS: "Windows",
-  _MACOS: "macOS",
+  _MACOS: None,
   _LINUX: "Linux"
 }
 
@@ -171,7 +171,7 @@ def install_unity(unity_version, platforms):
   package_list = [_PACKAGE[_DEFALUT]]
   for platform in platforms:
     package_list.append(_PACKAGE[platform])
-  package_csv = ",".join(package_list)
+  package_csv = ",".join(filter(None.__ne__, package_list))
 
   u3d = find_u3d()
   run([u3d, "install", "--trace",
