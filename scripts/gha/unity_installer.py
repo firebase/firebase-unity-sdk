@@ -82,6 +82,24 @@ from absl import logging
 
 FLAGS = flags.FLAGS
 
+_DEFALUT = "Default"
+_ANDROID = "Android"
+_IOS = "iOS"
+_WINDOWS = "Windows"
+_MACOS = "macOS"
+_LINUX = "Linux"
+_SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _WINDOWS, _MACOS, _LINUX)
+
+# TODO: This is for Unity 2017.4 only. Different Unity version has different packages
+_PACKAGE = {
+  _DEFALUT: "Unity",
+  _ANDROID: "Android",
+  _IOS: "Ios",
+  _WINDOWS: "Windows",
+  _MACOS: "macOS",
+  _LINUX: "Linux"
+}
+
 # These are the three actions supported by the tool.
 flags.DEFINE_bool(
     "install", False,
@@ -117,7 +135,8 @@ flags.DEFINE_list(
     "platforms", None,
     "(Optional) Additional platforms to install. Should be in the format of"
     " Unity build targets, i.e. the same format as taken by build_testapps.py."
-    " Invalid values will be ignored.")
+    " Invalid values will be ignored."
+    " Valid values: " + ",".join(_SUPPORTED_PLATFORMS))
 
 
 def main(argv):
@@ -149,14 +168,9 @@ def install_unity(unity_version, platforms):
   # This always installs Unity, and installs build supports for Android
   # and iOS. Other supports can be added here, e.g. desktop platforms
   # for platforms other than the running OS, or embedded Android SDK/NDK.
-  package_list = ["Unity"]
+  package_list = [_PACKAGE[_DEFALUT]]
   for platform in platforms:
-    if platform == "macOS":
-      continue
-    if platform == "iOS":
-      package_list.append("Ios")
-    else:
-      package_list.append(platform)
+    package_list.append(_PACKAGE[platform])
   package_csv = ",".join(package_list)
 
   u3d = find_u3d()

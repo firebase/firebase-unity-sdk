@@ -432,12 +432,14 @@ def build_testapp(dir_helper, api_config, ios_config, target):
             os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
       _run(arg_builder.get_args_to_open_project(build_flags))
       logging.info("Finished building target %s", target)
-      # run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config, device_type = device_type)
+      run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config, device_type = device_type)
   else:
     if api_config.minify:
       build_flags += ["-AppBuilderHelper.minify", api_config.minify]
     if target == _ANDROID:
-      build_flags += ["-androidSdkPath", "/Users/runner/Library/Android/sdk"]
+      os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
+      os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
+      os.environ["UNITY_ANDROID_JDK"]=os.environ["JAVA_HOME"]
     _run(arg_builder.get_args_to_open_project(build_flags))
     logging.info("Finished building target %s", target)
 

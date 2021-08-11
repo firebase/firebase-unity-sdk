@@ -13,6 +13,7 @@ on:
         required: true
       apis:
         description: 'CSV of apis to build and test'
+        # TODO: firestore is excluded, because it fails to build on Unity 2017
         default: 'analytics,auth,crashlytics,database,dynamic_links,functions,installations,messaging,remote_config,storage'
         required: true
       operating_systems:
@@ -39,7 +40,7 @@ jobs:
         UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
         echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
 
-  test:
+  build:
     name: ${{ matrix.os }}-${{ matrix.unity_version }}-${{ github.event.inputs.platforms }}
     runs-on: ${{ matrix.os }}
     needs: prepare_matrix
@@ -72,14 +73,9 @@ jobs:
         timeout-minutes: 20
         shell: bash
         run: |
-          $ANDROID_HOME/tools/bin/sdkmanager --version
-          # curl https://dl.google.com/android/repository/tools_r25.2.5-macosx.zip -o /Users/runner/Downloads/tools.zip
-          # unzip -q /Users/runner/Downloads/tools.zip -d /Users/runner/Downloads/
-          # rm -r $ANDROID_HOME/tools
-          # mv /Users/runner/Downloads/tools $ANDROID_HOME
-          # ls $ANDROID_HOME
-          python scripts/gha/unity_installer.py --install --platforms ${{ github.event.inputs.platforms }} --version ${{ matrix.unity_version }}
-          u3d list -p
+          python scripts/gha/unity_installer.py --install \
+            --platforms ${{ github.event.inputs.platforms }} \
+            --version ${{ matrix.unity_version }}
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash
@@ -91,33 +87,26 @@ jobs:
             --password "${{ secrets.UNITY_PASSWORD }}" \
             --serial_ids "${{ secrets.SERIAL_ID }}" \
             --logfile testapps/activate_license.log
-          echo $UNITY_ANDROID_SDK
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
-          curl https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip -o /Users/runner/Downloads/firebase_unity_sdk.zip
-          unzip -q /Users/runner/Downloads/firebase_unity_sdk.zip -d /Users/runner/Downloads/
-          mv /Users/runner/Downloads/firebase_unity_sdk /Users/runner/Downloads/client_unity_plugins
-      # - uses: nttld/setup-ndk@v1
-      #   id: setup-ndk
-      #   with:
-      #     ndk-version: r13b
-      #     add-to-path: false
       - name: Build integration tests
         env:
           UNITY_ANDROID_SDK: /Users/runner/Library/Android/sdk
           # UNITY_ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         shell: bash
         run: |
-          echo $ANDROID_HOME
-          echo $UNITY_ANDROID_SDK
+          # TODO: Download unity SDK first
+          curl https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip -o ~/Downloads/firebase_unity_sdk.zip
+          unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           python scripts/gha/build_testapps.py \
             --t ${{ github.event.inputs.apis }} \
             --u ${{ matrix.unity_version }} \
             --p ${{ github.event.inputs.platforms }} \
             --ios_sdk ${{ github.event.inputs.mobile_test_on }} \
+            --plugin_dir ~/Downloads/firebase_unity_sdk \
             --force_latest_runtime
           cat ~/Library/Preferences/com.unity3d.UnityEditor5.x.plist
       - name: Return Unity license
