@@ -636,8 +636,8 @@ def _add_menu_scene(dir_helper):
 
 
 def _add_automated_test_runner(dir_helper):
-  """Copies automated_testpp."""
-  logging.info("Adding automated_testpp to sample...")
+  """Copies automated_testapp."""
+  logging.info("Adding automated_testapp to sample...")
   shutil.copy(
       os.path.join(dir_helper.builder_dir, "automated_testapp", "AutomatedTestRunner.cs"),
       os.path.join(dir_helper.unity_project_sample_dir, "AutomatedTestRunner.cs"))
