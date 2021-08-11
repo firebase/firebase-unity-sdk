@@ -94,8 +94,6 @@ jobs:
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Build integration tests
         env:
-          UNITY_ANDROID_SDK: /Users/runner/Library/Android/sdk
-          # UNITY_ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         shell: bash
         run: |
           # TODO: Download unity SDK first
