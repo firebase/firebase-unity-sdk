@@ -108,7 +108,6 @@ jobs:
             --ios_sdk ${{ github.event.inputs.mobile_test_on }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --force_latest_runtime
-          cat ~/Library/Preferences/com.unity3d.UnityEditor5.x.plist
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
