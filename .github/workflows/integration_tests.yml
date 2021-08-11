@@ -93,7 +93,6 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Build integration tests
-        env:
         shell: bash
         run: |
           # TODO: Download unity SDK first
