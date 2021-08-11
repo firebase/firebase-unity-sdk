@@ -94,9 +94,23 @@ namespace Firebase.Crashlytics.Editor {
       var pbxProject = new UnityEditor.iOS.Xcode.PBXProject();
       pbxProject.ReadFromFile(projectPath);
 
-      string targetGuid = iOSPostBuild.GetMainUnityProjectTargetGuid(pbxProject);
       string completeRunScriptBody = GetRunScriptBody(configurationStorage);
 
+      string appGUID = iOSPostBuild.GetMainUnityProjectTargetGuid(pbxProject);
+      SetupGUIDForSymbolUploads(pbxProject, completeRunScriptBody, appGUID);
+
+      // In older versions of Unity there is no separate framework GUID, so this can
+      // be empty or null.
+      string frameworkGUID = iOSPostBuild.GetUnityFrameworkTargetGuid(pbxProject);
+      if (!String.IsNullOrEmpty(frameworkGUID)) {
+        SetupGUIDForSymbolUploads(pbxProject, completeRunScriptBody, frameworkGUID);
+      }
+
+      pbxProject.WriteToFile(projectPath);
+    }
+
+    private static void SetupGUIDForSymbolUploads(UnityEditor.iOS.Xcode.PBXProject pbxProject,
+                                                  string completeRunScriptBody, string targetGuid) {
       try {
         // Use reflection to append a Crashlytics Run Script
         BindingFlags bindingFlags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
@@ -117,8 +131,6 @@ namespace Firebase.Crashlytics.Editor {
       } finally {
         // Set debug information format to DWARF with DSYM
         pbxProject.SetBuildProperty(targetGuid, "DEBUG_INFORMATION_FORMAT", "dwarf-with-dsym");
-
-        pbxProject.WriteToFile(projectPath);
       }
     }
 
@@ -140,6 +152,28 @@ namespace Firebase.Crashlytics.Editor {
       }
     }
 
+    private static string GetUnityFrameworkTargetGuid(UnityEditor.iOS.Xcode.PBXProject project) {
+      // var project = (UnityEditor.iOS.Xcode.PBXProject)projectObj;
+      MethodInfo getUnityFrameworkTargetGuid =
+          project.GetType().GetMethod("GetUnityFrameworkTargetGuid");
+
+      // Starting in Unity 2019.3, TargetGuidByName is deprecated
+      // Use reflection to call the GetUnityFrameworkTargetGuid method if it exists (it was added
+      // ub 2019.3).
+      if (getUnityFrameworkTargetGuid != null) {
+        return (string)getUnityFrameworkTargetGuid.Invoke(project, new object[] {});
+      } else {
+        // Hardcode the main target name "UnityFramework" because there isn't a way to get the
+        // Unity Framework target name.
+        string targetName = "UnityFramework";
+        MethodInfo targetGuidByName = project.GetType().GetMethod("TargetGuidByName");
+        if (targetGuidByName != null) {
+          return (string)targetGuidByName.Invoke(project, new object[] { (object)targetName });
+        } else {
+          return "";
+        }
+      }
+    }
 
     /// <summary>
     /// Get the main Unity project's target GUID
