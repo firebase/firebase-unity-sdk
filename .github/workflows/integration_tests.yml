@@ -25,7 +25,7 @@ on:
         default: 'real,virtual'
         required: true
       sdk_url:
-        description: 'Download unity sdk for this URL'
+        description: 'Download unity sdk from this URL'
         default: 'https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip'
         required: true 
 
