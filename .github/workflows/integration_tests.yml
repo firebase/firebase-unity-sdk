@@ -23,6 +23,10 @@ on:
       mobile_test_on:
         description: 'Run mobile tests on real and/or virtual devices? (separated by commas)'
         default: 'real,virtual'
+        required: true
+      sdk_url:
+        description: 'Download unity sdk for this URL'
+        default: 'https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip'
         required: true 
 
 jobs:
@@ -96,7 +100,7 @@ jobs:
         shell: bash
         run: |
           # TODO: Download unity SDK first
-          curl https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip -o ~/Downloads/firebase_unity_sdk.zip
+          curl ${{ github.event.inputs.sdk_url }} -o ~/Downloads/firebase_unity_sdk.zip
           unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           python scripts/gha/build_testapps.py \
             --t ${{ github.event.inputs.apis }} \
