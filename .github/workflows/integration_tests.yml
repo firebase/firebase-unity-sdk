@@ -5,12 +5,29 @@ on:
     inputs:
       unity_versions:
         description: 'Unity version'
-        default: '2017.4.40f1'
+        default: '2017.4.37f1'
+        required: true
+      platforms:
+        description: 'CSV of Android,iOS,Windows,macOS,Linux'
+        default: 'Android,iOS,Windows,macOS,Linux'
+        required: true
+      apis:
+        description: 'CSV of apis to build and test'
+        # TODO: firestore is excluded, because it fails to build on Unity 2017
+        default: 'analytics,auth,crashlytics,database,dynamic_links,functions,installations,messaging,remote_config,storage'
         required: true
       operating_systems:
         description: 'CSV of VMs to run on'
         default: 'macos-latest'
         required: true
+      mobile_test_on:
+        description: 'Run mobile tests on real and/or virtual devices? (separated by commas)'
+        default: 'real,virtual'
+        required: true
+      sdk_url:
+        description: 'Download unity sdk from this URL'
+        default: 'https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip'
+        required: true 
 
 jobs:
   prepare_matrix:
@@ -22,18 +39,13 @@ jobs:
     - id: set-matrix-os
       # e.g. 'ubuntu-latest,macos-latest' -> '["ubuntu-latest","macos-latest"]'
       run: |
-        if [[ "${{ github.event_name }}" == "push" ]]; then
-          echo "::set-output name=matrix_os::[\"macos-latest\"]"
-          echo "::set-output name=matrix_unity_versions::[\"2017.4.40f1\"]"
-        else
-          OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
-          echo "::set-output name=matrix_os::${OS_JSON}"
-          UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
-          echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
-        fi
+        OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
+        echo "::set-output name=matrix_os::${OS_JSON}"
+        UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
+        echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
 
-  test:
-    name: ${{ matrix.os }}
+  build:
+    name: ${{ matrix.os }}-${{ matrix.unity_version }}-${{ github.event.inputs.platforms }}
     runs-on: ${{ matrix.os }}
     needs: prepare_matrix
     strategy:
@@ -65,7 +77,9 @@ jobs:
         timeout-minutes: 20
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms "Android,iOS" --version ${{ matrix.unity_version }}
+          python scripts/gha/unity_installer.py --install \
+            --platforms ${{ github.event.inputs.platforms }} \
+            --version ${{ matrix.unity_version }}
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash
@@ -77,7 +91,24 @@ jobs:
             --password "${{ secrets.UNITY_PASSWORD }}" \
             --serial_ids "${{ secrets.SERIAL_ID }}" \
             --logfile testapps/activate_license.log
-          cat testapps/activate_license.log
+      - name: Prepare for integration tests
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+      - name: Build integration tests
+        shell: bash
+        run: |
+          # TODO: Download unity SDK first
+          curl ${{ github.event.inputs.sdk_url }} -o ~/Downloads/firebase_unity_sdk.zip
+          unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
+          python scripts/gha/build_testapps.py \
+            --t ${{ github.event.inputs.apis }} \
+            --u ${{ matrix.unity_version }} \
+            --p ${{ github.event.inputs.platforms }} \
+            --ios_sdk ${{ github.event.inputs.mobile_test_on }} \
+            --plugin_dir ~/Downloads/firebase_unity_sdk \
+            --force_latest_runtime
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
@@ -88,4 +119,3 @@ jobs:
           max_attempts: 3
           command: |
             python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ matrix.unity_version }}
-            cat testapps/activate_license.log

@@ -112,8 +112,13 @@ from integration_testing import unity_version
 from integration_testing import xcodebuild
 
 # Used in specifying whether xcodebuild should build for device or simulator
-_DEVICE = "device"
-_SIMULATOR = "simulator"
+_DEVICE_REAL = "real"
+_DEVICE_VIRTUAL = "virtual"
+
+_IOS_SDK = {
+  _DEVICE_REAL: "device",
+  _DEVICE_VIRTUAL: "simulator"
+}
 
 _UNITY_PROJECT_NAME = "testapp"
 
@@ -126,14 +131,22 @@ _NET46 = "4.6"
 _ANDROID = "Android"
 _PLAYMODE = "Playmode"
 _IOS = "iOS"
-_WINDOWS_BUILD_TARGET = "Win64"
-_MACOS_BUILD_TARGET = "OSXUniversal"
-_LINUX_BUILD_TARGET = "Linux64"
-_DESKTOP_TARGET = "Desktop"
+_WINDOWS = "Windows"
+_MACOS = "macOS"
+_LINUX = "Linux"
+_DESKTOP = "Desktop"
+
+_BUILD_TARGET = {
+  _ANDROID: "Android",
+  _IOS: "iOS",
+  _WINDOWS: "Win64",
+  _MACOS: "OSXUniversal",
+  _LINUX: "Linux64"
+}
 
 _SUPPORTED_PLATFORMS = (
-    _ANDROID, _IOS, _PLAYMODE, _DESKTOP_TARGET,
-    _WINDOWS_BUILD_TARGET, _LINUX_BUILD_TARGET, _MACOS_BUILD_TARGET)
+    _ANDROID, _IOS, _PLAYMODE, _DESKTOP,
+    _WINDOWS, _LINUX, _MACOS)
 
 _SUPPORTED_XCODE_CONFIGURATIONS = (
     "ReleaseForRunning", "Release", "Debug", "ReleaseForProfiling")
@@ -184,8 +197,8 @@ flags.DEFINE_string(
     "Override the default behaviour of looking for Unity in the default"
     " installation directory. Will instead look in this provided folder.")
 
-flags.DEFINE_enum(
-    "ios_sdk", _DEVICE, [_DEVICE, _SIMULATOR],
+flags.DEFINE_list(
+    "ios_sdk", _DEVICE_REAL,
     "Build for device or simulator (only affects iOS).")
 
 flags.DEFINE_enum(
@@ -296,24 +309,22 @@ def main(argv):
         failures.append(Failure(description=build_desc, error_message=str(e)))
         logging.info(str(e))
         continue  # If setup failed, don't try to build. Move to next testapp.
-      for target in platforms:
+      for p in platforms:
         try:
-          if target == _DESKTOP_TARGET:  # e.g. 'Desktop' -> 'OSXUniversal'
-            target = get_desktop_build_target()
-          if target == _PLAYMODE:
+          if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
+            p = get_desktop_platform()
+          if p == _PLAYMODE:
             perform_in_editor_tests(dir_helper)
           else:
             build_testapp(
                 dir_helper=dir_helper,
                 api_config=api_config,
                 ios_config=ios_config,
-                target=target)
-            if target == _IOS:
-              run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config)
+                target=_BUILD_TARGET[p])
         except (subprocess.SubprocessError, RuntimeError) as e:
           failures.append(
               Failure(
-                  description=build_desc + " " + target,
+                  description=build_desc + " " + p,
                   error_message=str(e)))
           logging.info(str(e))
       # Free up space by removing unneeded Unity Library directory.
@@ -403,23 +414,31 @@ def build_testapp(dir_helper, api_config, ios_config, target):
       "-buildTarget", target
   ]
   if target == _IOS:
-    build_flags += ["-AppBuilderHelper.targetIosSdk", ios_config.ios_sdk]
-    if not ios_config.use_unity_symlinks:
-      build_flags.append("-AppBuilderHelper.noSymlinkLibraries")
-    if dir_helper.xcode_path.endswith(".xcodeproj"):
-      build_flags.append("-AppBuilderHelper.forceXcodeProject")
-    # This script will automatically configure the generated xcode project
-    dir_helper.copy_editor_script("XcodeCapabilities.cs")
-    # Some testapps have xcode entitlements
-    if api_config.entitlements:
-      shutil.copy(
-          os.path.join(dir_helper.root_dir, api_config.entitlements),
-          os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
+    for device_type in ios_config.ios_sdk:
+      build_flags += ["-AppBuilderHelper.targetIosSdk", _IOS_SDK[device_type]]
+      if not ios_config.use_unity_symlinks:
+        build_flags.append("-AppBuilderHelper.noSymlinkLibraries")
+      if dir_helper.xcode_path.endswith(".xcodeproj"):
+        build_flags.append("-AppBuilderHelper.forceXcodeProject")
+      # This script will automatically configure the generated xcode project
+      dir_helper.copy_editor_script("XcodeCapabilities.cs")
+      # Some testapps have xcode entitlements
+      if api_config.entitlements:
+        shutil.copy(
+            os.path.join(dir_helper.root_dir, api_config.entitlements),
+            os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
+      _run(arg_builder.get_args_to_open_project(build_flags))
+      logging.info("Finished building target %s", target)
+      run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config, device_type = device_type)
   else:
     if api_config.minify:
       build_flags += ["-AppBuilderHelper.minify", api_config.minify]
-  _run(arg_builder.get_args_to_open_project(build_flags))
-  logging.info("Finished building target %s", target)
+    if target == _ANDROID:
+      os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
+      os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
+      os.environ["UNITY_ANDROID_JDK"]=os.environ["JAVA_HOME"]
+    _run(arg_builder.get_args_to_open_project(build_flags))
+    logging.info("Finished building target %s", target)
 
 
 def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
@@ -487,18 +506,17 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
         "Tests did not finish running. Log tail:\n" + results.summary)
 
 
-def run_xcodebuild(dir_helper, ios_config):
+def run_xcodebuild(dir_helper, ios_config, device_type):
   """Uses xcode project generated by Unity to build an iOS binary."""
-  build_output_dir = os.path.join(dir_helper.output_dir, "ios_output")
-  os.makedirs(build_output_dir)
+  build_output_dir = os.path.join(dir_helper.output_dir, "ios_output"+device_type)
   _run(
       xcodebuild.get_args_for_build(
           path=dir_helper.xcode_path,
           scheme=ios_config.scheme,
           output_dir=build_output_dir,
-          ios_sdk=ios_config.ios_sdk,
+          ios_sdk=_IOS_SDK[device_type],
           configuration=ios_config.configuration))
-  if ios_config.ios_sdk == _DEVICE:
+  if device_type == _DEVICE_REAL:
     xcodebuild.generate_unsigned_ipa(
         output_dir=build_output_dir,
         configuration=ios_config.configuration)
@@ -716,17 +734,17 @@ def validate_platforms(platforms):
   return platforms
 
 
-def get_desktop_build_target():
+def get_desktop_platform():
   """This will get the Unity build target corresponding to the running OS."""
   # The motivation for this was to allow a CI job to specify "--p Desktop"
   # for all three operating systems, and build the correct target for each.
   operating_system = platform.system()
   if operating_system == "Windows":
-    return _WINDOWS_BUILD_TARGET
+    return _WINDOWS
   elif operating_system == "Linux":
-    return _LINUX_BUILD_TARGET
+    return _LINUX
   elif operating_system == "Darwin":
-    return _MACOS_BUILD_TARGET
+    return _MACOS
   else:
     raise RuntimeError("Unexpected OS: %s" % operating_system)
 
