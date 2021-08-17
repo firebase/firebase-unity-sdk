@@ -190,8 +190,8 @@ jobs:
         run: pip install -r scripts/gha/requirements.txt
       - name: Run Desktop integration tests
         run: |
-        python scripts/gha/desktop_tester.py --testapp_dir testapps \
-          --logfile_name "desktop-${{ matrix.os }}-${{ matrix.unity_version }}"
+          python scripts/gha/desktop_tester.py --testapp_dir testapps \
+            --logfile_name "desktop-${{ matrix.os }}-${{ matrix.unity_version }}"
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
