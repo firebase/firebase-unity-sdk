@@ -41,7 +41,7 @@ jobs:
         echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
 
   build:
-    name: build-${{ github.event.inputs.platforms }}-${{ matrix.unity_version }}
+    name: build-${{ matrix.unity_version }}-${{ github.event.inputs.platforms }}
     runs-on: macos-latest
     needs: prepare_matrix
     strategy:
@@ -165,7 +165,7 @@ jobs:
 
 
   test_desktop:
-    name: test-${{ matrix.os }}-${{ matrix.unity_version }}
+    name: test-${{ matrix.unity_version }}-${{ matrix.os }}-desktop
     runs-on: ${{ matrix.os }}
     needs: [prepare_matrix, build]
     strategy:
@@ -207,7 +207,7 @@ jobs:
           fi
 
   test_mobile:
-    name: test-${{ matrix.platform }}-${{ matrix.unity_version }}
+    name: test-${{ matrix.unity_version }}-${{ matrix.platform }}
     runs-on: macos-latest
     needs: [prepare_matrix, build]
     strategy:
