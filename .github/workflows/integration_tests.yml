@@ -18,7 +18,7 @@ on:
         required: true
       mobile_test_on:
         description: 'Run mobile tests on real and/or virtual devices? (separated by commas)'
-        default: 'real,virtual'
+        default: 'real'
         required: true
       sdk_url:
         description: 'Download unity sdk from this URL'
@@ -105,6 +105,11 @@ jobs:
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --artifact_name "all" \
             --force_latest_runtime
+      - name: Test
+        run: |
+          ls
+          tree testapps-all
+          tree /Users/runner/testapps-all
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
@@ -115,6 +120,11 @@ jobs:
           max_attempts: 3
           command: |
             python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ matrix.unity_version }}
+      - name: Test
+        run: |
+          ls
+          tree testapps-all
+          tree /Users/runner/testapps-all
       - name: Upload Android integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'Android') && ${{ !cancelled() }}
