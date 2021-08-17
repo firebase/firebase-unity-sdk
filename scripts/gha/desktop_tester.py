@@ -44,6 +44,10 @@ flags.DEFINE_string(
     "Name of the testapps. Behaviour differs on MacOS and Windows. For"
     " 'app', this will look for a file named 'app' on Linux, an 'app.app'"
     " directory on Mac, and a file named 'app.exe' on Windows.")
+flags.DEFINE_string(
+    "logfile_name", "ftl-test",
+    "Create test log artifact test-results-$logfile_name.log."
+    " logfile will be created and placed in testapp_dir.")  
 
 
 def main(argv):
