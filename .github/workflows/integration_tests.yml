@@ -92,6 +92,7 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Build integration tests
+        timeout-minutes: 220
         shell: bash
         run: |
           # TODO: Download unity SDK first
@@ -191,6 +192,7 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - name: Run Desktop integration tests
+        timeout-minutes: 30
         shell: bash
         run: |
           python scripts/gha/desktop_tester.py --testapp_dir testapps \
@@ -234,6 +236,7 @@ jobs:
       - name: Install Cloud SDK
         uses: google-github-actions/setup-gcloud@master
       - name: Run Monbile integration tests on Real Device via FTL
+        timeout-minutes: 60
         shell: bash
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
