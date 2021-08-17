@@ -344,7 +344,8 @@ def main(argv):
       platforms=platforms,
       versions=unity_versions,
       failures=failures,
-      output_dir=root_output_dir)
+      output_dir=root_output_dir, 
+      artifact_name=FLAGS.artifact_name)
 
 
 def setup_unity_project(dir_helper, setup_options):
@@ -594,8 +595,9 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
         break
 
 
-def _summarize_results(testapps, platforms, versions, failures, output_dir):
+def _summarize_results(testapps, platforms, versions, failures, output_dir, artifact_name):
   """Logs a readable summary of the results of the build."""
+  file_name = "build-results-" + artifact_name + ".log"
   summary = []
   summary.append("BUILD SUMMARY:")
   summary.append("TRIED TO BUILD: " + ",".join(testapps))
@@ -611,7 +613,7 @@ def _summarize_results(testapps, platforms, versions, failures, output_dir):
   summary = "\n".join(summary)
 
   logging.info(summary)
-  test_validation.write_summary(output_dir, summary)
+  test_validation.write_summary(output_dir, summary, file_name)
   return 1 if failures else 0
 
 

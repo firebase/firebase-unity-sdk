@@ -104,7 +104,7 @@ jobs:
             --ios_sdk ${{ github.event.inputs.mobile_test_on }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
-            --artifact_name "all" \
+            --artifact_name "${{ matrix.unity_version }}-all" \
             --force_latest_runtime
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
@@ -122,37 +122,45 @@ jobs:
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'Android') && ${{ !cancelled() }}
         with:
-          name: testapps-Android
-          path: testapps-all/Android
+          name: testapps-${{ matrix.unity_version }}-Android
+          path: testapps-${{ matrix.unity_version }}-all/Android
           retention-days: 2
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'iOS') && ${{ !cancelled() }}
         with:
-          name: testapps-iOS
-          path: testapps-all/iOS
+          name: testapps-${{ matrix.unity_version }}-iOS
+          path: testapps-${{ matrix.unity_version }}-all/iOS
           retention-days: 2
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'Linux') && ${{ !cancelled() }}
         with:
-          name: testapps-ubuntu-latest
-          path: testapps-all/Linux
+          name: testapps-${{ matrix.unity_version }}-ubuntu-latest
+          path: testapps-${{ matrix.unity_version }}-all/Linux
           retention-days: 2
       - name: Upload macOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'macOS') && ${{ !cancelled() }}
         with:
-          name: testapps-macos-latest
-          path: testapps-all/macOS
+          name: testapps-${{ matrix.unity_version }}-macos-latest
+          path: testapps-${{ matrix.unity_version }}-all/macOS
           retention-days: 2
       - name: Upload Windows integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'Windows') && ${{ !cancelled() }}
         with:
-          name: testapps-windows-latest
-          path: testapps-all/Windows
+          name: testapps-${{ matrix.unity_version }}-windows-latest
+          path: testapps-${{ matrix.unity_version }}-all/Windows
           retention-days: 2
+      - name: Summarize build results
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          cat build-results-${{ matrix.unity_version }}-all.log
+          if [[ "${{ job.status }}" != "success" ]]; then
+            exit 1
+          fi
 
 
   test_desktop:
@@ -172,7 +180,7 @@ jobs:
         uses: actions/download-artifact@v2.0.8
         with:
           path: testapps
-          name: testapps-${{ matrix.os }}
+          name: testapps-${{ matrix.unity_version }}-${{ matrix.os }}
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -186,12 +194,12 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/desktop_tester.py --testapp_dir testapps \
-            --logfile_name "desktop-${{ matrix.os }}-${{ matrix.unity_version }}"
+            --logfile_name "${{ matrix.unity_version }}-${{ matrix.os }}-desktop"
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat testapps/test-results-desktop-${{ matrix.os }}-${{ matrix.unity_version }}.log
+          cat testapps/test-results-${{ matrix.unity_version }}-${{ matrix.os }}-desktop.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
@@ -213,7 +221,7 @@ jobs:
         uses: actions/download-artifact@v2.0.8
         with:
           path: testapps
-          name: testapps-${{ matrix.platform }}
+          name: testapps-${{ matrix.unity_version }}-${{ matrix.platform }}
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -230,14 +238,14 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
           python scripts/gha/test_lab.py --testapp_dir testapps \
-            --logfile_name "mobile-${{ matrix.platform }}-${{ matrix.unity_version }}" \
+            --logfile_name "${{ matrix.unity_version }}-${{ matrix.platform }}" \
             --code_platform unity \
             --key_file scripts/gha-encrypted/gcs_key_file.json
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat testapps/mobile-${{ matrix.platform }}-${{ matrix.unity_version }}.log
+          cat testapps/test-results-${{ matrix.unity_version }}-${{ matrix.platform }}.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
