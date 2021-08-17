@@ -121,6 +121,7 @@ class Test(object):
           self.logs = f.read()
         test_running = "All tests finished" not in self.logs
     open_process.kill()
+    logging.info("Test result: %s", self.logs)
     logging.info("Finished running %s", self.testapp_path)
 
 
