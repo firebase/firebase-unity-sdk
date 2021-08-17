@@ -182,7 +182,24 @@ jobs:
         with:
           path: testapps
           name: testapps-${{ matrix.os }}
-
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.pythonVersion }}
+      - name: Install python deps
+        run: pip install -r scripts/gha/requirements.txt
+      - name: Run Desktop integration tests
+        run: |
+        python scripts/gha/desktop_tester.py --testapp_dir testapps \
+          --logfile_name "desktop-${{ matrix.os }}-${{ matrix.unity_version }}"
+      - name: Summarize test results
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          cat testapps/test-results-desktop-${{ matrix.os }}-${{ matrix.unity_version }}.log
+          if [[ "${{ job.status }}" != "success" ]]; then
+            exit 1
+          fi
 
   test_mobile:
     name: test-${{ matrix.platform }}-${{ matrix.unity_version }}
@@ -202,3 +219,26 @@ jobs:
         with:
           path: testapps
           name: testapps-${{ matrix.platform }}
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.pythonVersion }}
+      - name: Install python deps
+        run: pip install -r scripts/gha/requirements.txt
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@master
+      - name: Run Monbile integration tests on Real Device via FTL
+        run: |
+          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+          python scripts/gha/test_lab.py --testapp_dir testapps \
+            --logfile_name "mobile-${{ matrix.platform }}-${{ matrix.unity_version }}" \
+            --code_platform unity \
+            --key_file scripts/gha-encrypted/gcs_key_file.json
+      - name: Summarize test results
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          cat testapps/mobile-${{ matrix.platform }}-${{ matrix.unity_version }}.log
+          if [[ "${{ job.status }}" != "success" ]]; then
+            exit 1
+          fi

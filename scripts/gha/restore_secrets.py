@@ -138,6 +138,14 @@ def main(argv):
   file_path = os.path.join(repo_dir, "storage", "testapp", "Assets", "Firebase", "Sample", CAPITALIZATIONS["storage"], "UIHandler.cs")
   _patch_file(file_path, "REPLACE_WITH_YOUR_STORAGE_BUCKET", bucket)
 
+  print("Attempting to decrypt GCS service account key file.")
+  decrypted_key_file = os.path.join(secrets_dir, "gcs_key_file.json")
+  encrypted_key_file = decrypted_key_file + ".gpg"
+  decrypted_key_text = _decrypt(encrypted_key_file, passphrase)
+  with open(decrypted_key_file, "w") as f:
+    f.write(decrypted_key_text)
+  print("Created decrypted key file at %s" % decrypted_key_file)
+
 
 def _find_encrypted_files(directory_to_search):
   """Returns a list of full paths to all files encrypted with gpg."""

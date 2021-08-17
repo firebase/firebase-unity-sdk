@@ -80,7 +80,10 @@ def main(argv):
   logging.info("Finished running tests.")
 
   return test_validation.summarize_test_results(
-      tests, test_validation.UNITY, testapp_dir)
+      tests, 
+      test_validation.UNITY, 
+      testapp_dir,
+      file_name="test-results-" + FLAGS.logfile_name + ".log")
 
 
 def _fix_path(path):
