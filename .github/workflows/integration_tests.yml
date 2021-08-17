@@ -103,11 +103,13 @@ jobs:
             --p ${{ github.event.inputs.platforms }} \
             --ios_sdk ${{ github.event.inputs.mobile_test_on }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
+            --output_directory "${{ github.workspace }}" \
             --artifact_name "all" \
             --force_latest_runtime
       - name: Test
         run: |
           ls
+          brew install tree
           tree testapps-all
           tree /Users/runner/testapps-all
       - name: Return Unity license
