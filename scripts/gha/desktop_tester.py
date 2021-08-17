@@ -111,6 +111,7 @@ class Test(object):
       os.remove(log_path)  # Remove log file from previous runs.
     except FileNotFoundError:
       pass
+    os.chmod(self.testapp_path, 0o777)
     args = [
         self.testapp_path, "-batchmode", "-nographics",
         "-TestLabManager.logPath", log_path]

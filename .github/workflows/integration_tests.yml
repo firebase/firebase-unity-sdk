@@ -183,6 +183,7 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - name: Run Desktop integration tests
+        shell: bash
         run: |
           python scripts/gha/desktop_tester.py --testapp_dir testapps \
             --logfile_name "desktop-${{ matrix.os }}-${{ matrix.unity_version }}"
@@ -225,6 +226,7 @@ jobs:
       - name: Install Cloud SDK
         uses: google-github-actions/setup-gcloud@master
       - name: Run Monbile integration tests on Real Device via FTL
+        shell: bash
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
           python scripts/gha/test_lab.py --testapp_dir testapps \
