@@ -96,6 +96,11 @@ flags.DEFINE_string(
     "iOS version for desired device. See module docstring for details on how"
     " to find available values. If none, will use FTL's default.")
 
+flags.DEFINE_string(
+    "logfile_name", "ftl-test",
+    "Create test log artifact test-results-$logfile_name.log."
+    " logfile will be created and placed in testapp_dir.")  
+
 
 def main(argv):
   if len(argv) > 1:
@@ -165,7 +170,10 @@ def main(argv):
   )
 
   return test_validation.summarize_test_results(
-      tests, code_platform, testapp_dir)
+      tests, 
+      code_platform, 
+      testapp_dir,
+      file_name="test-results-" + FLAGS.logfile_name + ".log")
 
 
 def _install_gcloud_beta():
