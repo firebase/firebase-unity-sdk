@@ -131,7 +131,7 @@ def validate_results_cpp(log_text):
       summary=result_summary)
 
 
-def summarize_test_results(tests, platform, summary_dir):
+def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"):
   """Summarizes and logs test results for multiple tests.
 
   Each 'test' should be an object with properties "testapp_path", which
@@ -190,8 +190,13 @@ def summarize_test_results(tests, platform, summary_dir):
   if errors:
     summary.append("\n%d TESTAPPS EXPERIENCED ERRORS:" % len(errors))
     for test, results in errors:
+      summary.append(test.testapp_path)
+      if hasattr(test, "ftl_link") and test.ftl_link:
+        summary.append("ftl_link: %s" % test.ftl_link)
+      if hasattr(test, "raw_result_link") and test.raw_result_link:
+        summary.append("raw_result_link: %s" % test.raw_result_link)
       if results.summary:
-        summary.append("%s log tail:" % test.testapp_path)
+        summary.append("log tail:")
         summary.append(results.summary)
       else:
         summary.append(
@@ -200,18 +205,22 @@ def summarize_test_results(tests, platform, summary_dir):
     summary.append("\n%d TESTAPPS FAILED:" % len(failures))
     for test, results in failures:
       summary.append(test.testapp_path)
+      if hasattr(test, "ftl_link") and test.ftl_link:
+        summary.append("ftl_link: %s" % test.ftl_link)
+      if hasattr(test, "raw_result_link") and test.raw_result_link:
+        summary.append("raw_result_link: %s" % test.raw_result_link)
       summary.append(results.summary)
   summary.append(
       "%d TESTAPPS TOTAL: %d PASSES, %d FAILURES, %d ERRORS"
       % (len(tests), len(successes), len(failures), len(errors)))
   summary = "\n".join(summary)
   logging.info(summary)
-  write_summary(summary_dir, summary)
+  write_summary(summary_dir, summary, file_name)
 
   return 0 if len(tests) == len(successes) else 1
 
 
-def write_summary(testapp_dir, summary):
+def write_summary(testapp_dir, summary, file_name="summary.log"):
   """Writes a summary of tests/builds to a file in the testapp directory.
 
   This will append the given summary to a file in the testapp directory,
@@ -225,7 +234,7 @@ def write_summary(testapp_dir, summary):
   """
   # This method serves as the source of truth on where to put the summary.
   os.makedirs(testapp_dir, exist_ok=True)
-  with open(os.path.join(testapp_dir, "summary.log"), "a") as f:
+  with open(os.path.join(testapp_dir, file_name), "a") as f:
     # The timestamp mainly helps when running locally: if running multiple
     # tests on the same directory, the results will accumulate, with a timestamp
     # to help keep track of when a given test was run.

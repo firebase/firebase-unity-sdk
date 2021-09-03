@@ -44,6 +44,10 @@ flags.DEFINE_string(
     "Name of the testapps. Behaviour differs on MacOS and Windows. For"
     " 'app', this will look for a file named 'app' on Linux, an 'app.app'"
     " directory on Mac, and a file named 'app.exe' on Windows.")
+flags.DEFINE_string(
+    "logfile_name", "ftl-test",
+    "Create test log artifact test-results-$logfile_name.log."
+    " logfile will be created and placed in testapp_dir.")  
 
 
 def main(argv):
@@ -80,7 +84,10 @@ def main(argv):
   logging.info("Finished running tests.")
 
   return test_validation.summarize_test_results(
-      tests, test_validation.UNITY, testapp_dir)
+      tests, 
+      test_validation.UNITY, 
+      testapp_dir,
+      file_name="test-results-" + FLAGS.logfile_name + ".log")
 
 
 def _fix_path(path):
@@ -104,6 +111,7 @@ class Test(object):
       os.remove(log_path)  # Remove log file from previous runs.
     except FileNotFoundError:
       pass
+    os.chmod(self.testapp_path, 0o777)
     args = [
         self.testapp_path, "-batchmode", "-nographics",
         "-TestLabManager.logPath", log_path]
@@ -121,6 +129,7 @@ class Test(object):
           self.logs = f.read()
         test_running = "All tests finished" not in self.logs
     open_process.kill()
+    logging.info("Test result: %s", self.logs)
     logging.info("Finished running %s", self.testapp_path)
 
 

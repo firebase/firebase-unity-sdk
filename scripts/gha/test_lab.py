@@ -60,6 +60,7 @@ from absl import app
 from absl import flags
 from absl import logging
 import attr
+import re
 
 from integration_testing import gcs
 from integration_testing import test_validation
@@ -79,21 +80,26 @@ flags.DEFINE_enum(
 flags.DEFINE_string(
     "key_file", None, "Path to key file authorizing use of the GCS bucket.")
 flags.DEFINE_string(
-    "android_model", None,
+    "android_model", "Pixel2",
     "Model id for desired device. See module docstring for details on how"
     " to get this id. If none, will use FTL's default.")
 flags.DEFINE_string(
-    "android_api", None,
+    "android_api", "28",
     "API level for desired device. See module docstring for details on how"
     " to find available values. If none, will use FTL's default.")
 flags.DEFINE_string(
-    "ios_model", None,
+    "ios_model", "iphone8plus",
     "Model id for desired device. See module docstring for details on how"
     " to get this id. If none, will use FTL's default.")
 flags.DEFINE_string(
-    "ios_version", None,
+    "ios_version", "12.0",
     "iOS version for desired device. See module docstring for details on how"
     " to find available values. If none, will use FTL's default.")
+
+flags.DEFINE_string(
+    "logfile_name", "ftl-test",
+    "Create test log artifact test-results-$logfile_name.log."
+    " logfile will be created and placed in testapp_dir.")  
 
 
 def main(argv):
@@ -164,7 +170,10 @@ def main(argv):
   )
 
   return test_validation.summarize_test_results(
-      tests, code_platform, testapp_dir)
+      tests, 
+      code_platform, 
+      testapp_dir,
+      file_name="test-results-" + FLAGS.logfile_name + ".log")
 
 
 def _install_gcloud_beta():
@@ -206,6 +215,8 @@ class Test(object):
   results_dir = attr.ib()  # Subdirectory on Cloud storage for this testapp
   # This will be populated after the test completes, instead of initialization.
   logs = attr.ib(init=False, default=None)
+  ftl_link = attr.ib(init=False, default=None)
+  raw_result_link = attr.ib(init=False, default=None)
 
   # This runs in a separate thread, so instead of returning values we store
   # them as fields so they can be accessed from the main thread.
@@ -223,7 +234,14 @@ class Test(object):
     logging.info("Finished: %s\n%s", " ".join(args), result.stdout)
     if result.returncode:
       logging.error("gCloud returned non-zero error code")
+    ftl_link = re.search(r'Test results will be streamed to \[(.*?)\]', result.stdout, re.DOTALL)
+    if ftl_link:
+      self.ftl_link = ftl_link.group(1)
+    raw_result_link = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result.stdout, re.DOTALL)
+    if raw_result_link:
+      self.raw_result_link = raw_result_link.group(1)
     self.logs = self._get_testapp_log_text_from_gcs()
+    logging.info("Test result: %s", self.logs)
 
   @property
   def _gcloud_command(self):
