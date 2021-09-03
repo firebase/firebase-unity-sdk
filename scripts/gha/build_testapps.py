@@ -533,6 +533,9 @@ def run_xcodebuild(dir_helper, ios_config, device_type):
 
 
 def _collect_integration_tests(config, testapps, root_output_dir, output_dir, artifact_name):
+  """Collect testapps to dir /${output_dir}/testapps-${artifact_name}/${platform}/${api}.
+  In CI, testapps will be upload as Artifacts.
+  """
   testapps_artifact_dir = "testapps-" + artifact_name
   android_testapp_extension = ".apk"
   ios_testapp_dir = "ios_output_" + _DEVICE_REAL
