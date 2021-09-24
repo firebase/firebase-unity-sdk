@@ -72,7 +72,6 @@ PARAMETERS = {
   "integration_tests": {
     "matrix": {
       "unity_version": ["2017.4.37f1"],
-      "platform": ["Windows", "macOS", "Linux", "Android", "iOS"],
       "android_device": ["android_target", "emulator_target"],
       "ios_device": ["ios_target", "simulator_target"],
 
@@ -89,6 +88,7 @@ PARAMETERS = {
       }
     },
     "config": {
+      "platform": "Windows,macOS,Linux,Android,iOS",
       "apis": "analytics,auth,crashlytics,database,dynamic_links,functions,installations,messaging,remote_config,storage",
       "mobile_test_on": "real,virtual"
     }
