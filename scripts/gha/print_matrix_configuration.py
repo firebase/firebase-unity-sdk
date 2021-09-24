@@ -19,32 +19,13 @@ This script holds the configurations (standard, expanded) for all of our
 Github worklows and prints a string in the format that can be easily parsed
 in Github workflows.
 
-Design Notes:
-- Desktop workflow is treated as the fallback option if there is no match.
-  This also means that all workflows inherit the base set of keys and values from
-  Desktop and optionally override them.
-- There are 2 types of parameters - matrix and config. Matrix parameters are
-  lists and generate jobs dynamically in Github workflows. Config parameters
-  represent the additonal fine tuning parameters that can be used in workflow
-  dispatch. They are always treated as strings.
-
-Raises:
-    ValueError: If the specific key is not found at all even after trying all
-                the fallbacks.
-
 Usage examples:
-# Query value for matrix (default) parameter "os" for "desktop" (default) workflow.
-python scripts/gha/print_matrix_configuration.py -k os
+# Query value for matrix (default) parameter "unity_version".
+python scripts/gha/print_matrix_configuration.py -k unity_version
 
-# Query value for matrix (default) parameter "os" for "android" workflow.
-python scripts/gha/print_matrix_configuration.py -w android -k os
-
-# Query value for expanded matrix (default) parameter "os" for "android" workflow.
-python scripts/gha/print_matrix_configuration.py -w android -e 1 -k os
-
-# Override the value for "os" for "integration_tests"
+# Override the value for "unity_version" for "integration_tests"
 python scripts/gha/print_matrix_configuration.py -w integration_tests
-        -o my_custom_os -k os
+        -o my_custom_unity_version -k unity_version
 
 # Query value for config parameter "apis" for "integration_tests" workflow.
 python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k apis
@@ -159,9 +140,9 @@ def print_value(value):
   """ Print Json formatted string that can be consumed in Github workflow."""
   # Eg: for lists,
   # print(json.dumps) ->
-  # ["ubuntu-latest", "macos-latest", "windows-latest"]
+  # ["2017.4.37f1", "2019.2.8f1", "2021.1.9f1"]
   # print(repr(json.dumps)) ->
-  # '["ubuntu-latest", "macos-latest", "windows-latest"]'
+  # '["2017.4.37f1", "2019.2.8f1", "2021.1.9f1"]'
 
   # Eg: for strings
   # print(json.dumps) -> "flame"
@@ -170,6 +151,7 @@ def print_value(value):
   print(json.dumps(value))
 
 
+### TODO
 def filter_values_on_diff(parm_key, value, auto_diff):
   return value
 
