@@ -36,6 +36,10 @@ on:
       test_pull_request:
         description: 'Optional: Pull request # to build and test? (With optional commit hash, separated by a colon. Specify the FULL hash.)'
 
+env:
+  pythonVersion: '3.7'
+  artifactRetentionDays: 2
+
 jobs:
   check_and_prepare:
     runs-on: ubuntu-latest
@@ -106,6 +110,7 @@ jobs:
         # list. Then we can use fromJson to define the field in the matrix for the tests job.
         echo "::set-output name=apis::$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k apis -o "${{github.event.inputs.apis}}" ${TEST_MATRIX_PARAM} )"
         echo "::set-output name=platform::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k platform -o "${{github.event.inputs.platforms}}" )"
+        python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k unity_version -o "${{github.event.inputs.unity_versions}}"
         echo "::set-output name=matrix_unity_versions::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k unity_version -o "${{github.event.inputs.unity_versions}}")"
         mobile_test_on=$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k mobile_test_on -o "${{github.event.inputs.mobile_test_on}}")
         echo "::set-output name=mobile_test_on::${mobile_test_on}"
@@ -113,7 +118,7 @@ jobs:
         echo "::set-output name=ios_device::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k ios_device -t ${mobile_test_on} )"
 
   build:
-    name: build-${{ matrix.unity_version }}-${{ github.event.inputs.platforms }}
+    name: build-${{ matrix.unity_version }}-${{ needs.check_and_prepare.outputs.platform }}
     runs-on: macos-latest
     needs: check_and_prepare
     strategy:
@@ -197,35 +202,35 @@ jobs:
         with:
           name: testapps-${{ matrix.unity_version }}-Android
           path: testapps-${{ matrix.unity_version }}-all/Android
-          retention-days: 2
+          retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'iOS') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-iOS
           path: testapps-${{ matrix.unity_version }}-all/iOS
-          retention-days: 2
+          retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'Linux') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-ubuntu-latest
           path: testapps-${{ matrix.unity_version }}-all/Linux
-          retention-days: 2
+          retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload macOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'macOS') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-macos-latest
           path: testapps-${{ matrix.unity_version }}-all/macOS
-          retention-days: 2
+          retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Windows integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(github.event.inputs.platforms, 'Windows') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-windows-latest
           path: testapps-${{ matrix.unity_version }}-all/Windows
-          retention-days: 2
+          retention-days: ${{ env.artifactRetentionDays }}
       - name: Summarize build results
         if: ${{ !cancelled() }}
         shell: bash
