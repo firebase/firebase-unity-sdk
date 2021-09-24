@@ -57,12 +57,12 @@ PARAMETERS = {
       "ios_device": ["ios_target", "simulator_target"],
 
       MINIMAL_KEY: {
-        "platform": ["Desktop"],
+        "platform": ["Linux"],
         "apis": "firestore"
       },
 
       EXPANDED_KEY: {
-        # "2019.2.8f1", "2021.1.9f1" haven't been varified.
+        # "2019.2.8f1", "2021.1.9f1" haven't been verified.
         "unity_version": ["2017.4.37f1", "2019.2.8f1", "2021.1.9f1"],
         "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
         "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
@@ -77,19 +77,19 @@ PARAMETERS = {
 }
 
 TEST_DEVICES = {
-  "android_min": {"type": "real", "model":"Nexus10", "version":"19"},
-  "android_target": {"type": "real", "model":"blueline", "version":"28"},
-  "android_latest": {"type": "real", "model":"flame", "version":"29"},
-  "emulator_min": {"type": "virtual", "image":"system-images;android-18;google_apis;x86"},
-  "emulator_target": {"type": "virtual", "image":"system-images;android-28;google_apis;x86_64"},
-  "emulator_latest": {"type": "virtual", "image":"system-images;android-30;google_apis;x86_64"},
-  "emulator_32bit": {"type": "virtual", "image":"system-images;android-30;google_apis;x86"},
-  "ios_min": {"type": "real", "model":"iphone8", "version":"11.4"},
-  "ios_target": {"type": "real", "model":"iphone8plus", "version":"12.0"},
-  "ios_latest": {"type": "real", "model":"iphone11", "version":"13.6"},
-  "simulator_min": {"type": "virtual", "name":"iPhone 6", "version":"11.4"},
-  "simulator_target": {"type": "virtual", "name":"iPhone 8", "version":"12.0"},
-  "simulator_latest": {"type": "virtual", "name":"iPhone 11", "version":"14.4"},
+  "android_min": {"type": "real", "model": "Nexus10", "version": "19"},
+  "android_target": {"type": "real", "model": "blueline", "version": "28"},
+  "android_latest": {"type": "real", "model": "flame", "version": "29"},
+  "emulator_min": {"type": "virtual", "image": "system-images;android-18;google_apis;x86"},
+  "emulator_target": {"type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
+  "emulator_latest": {"type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
+  "emulator_32bit": {"type": "virtual", "image": "system-images;android-30;google_apis;x86"},
+  "ios_min": {"type": "real", "model": "iphone8", "version": "11.4"},
+  "ios_target": {"type": "real", "model": "iphone8plus", "version": "12.0"},
+  "ios_latest": {"type": "real", "model": "iphone11", "version": "13.6"},
+  "simulator_min": {"type": "virtual", "name": "iPhone 6", "version": "11.4"},
+  "simulator_target": {"type": "virtual", "name": "iPhone 8", "version": "12.0"},
+  "simulator_latest": {"type": "virtual", "name": "iPhone 11", "version": "14.4"},
 }
 
 
@@ -151,7 +151,7 @@ def print_value(value):
   print(json.dumps(value))
 
 
-### TODO
+# TODO(sunmou): add auto_diff feature
 def filter_values_on_diff(parm_key, value, auto_diff):
   return value
 
