@@ -80,7 +80,7 @@ flags.DEFINE_enum(
 flags.DEFINE_string(
     "key_file", None, "Path to key file authorizing use of the GCS bucket.")
 flags.DEFINE_string(
-    "android_model", "Pixel2",
+    "android_model", "blueline",
     "Model id for desired device. See module docstring for details on how"
     " to get this id. If none, will use FTL's default.")
 flags.DEFINE_string(
