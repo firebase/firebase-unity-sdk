@@ -29,7 +29,7 @@ jobs:
       - name: Fetch Artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
-          #name: '*.zip'
+          name: '*.zip'
           workflow: 'sdk_build.yml'
           run_id: ${{ github.event.inputs.downloadPreviousRun }}
     
