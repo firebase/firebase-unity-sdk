@@ -1,0 +1,35 @@
+# Workflow to handle packaging the Unity SDK
+name: Package SDKs
+
+on:
+  workflow_dispatch:
+    inputs:
+      operating_systems:
+        description: 'CSV of VMs to run on'
+        default: 'macos-latest'
+        required: true
+
+jobs:
+  package_sdks:
+    name: package-${{matrix.os}}
+    runs-on: ${{matrix.os}}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        include:
+        - os: ubuntu-latest
+          package_dir: output
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Fetch Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          name: 'linux_unity.zip'
+          workflow: 'sdk_build.yml'
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+    
