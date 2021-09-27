@@ -6,7 +6,7 @@ on:
     inputs:
       operating_systems:
         description: 'CSV of VMs to run on'
-        default: 'macos-latest'
+        default: 'ubuntu-latest'
         required: true
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
       - name: Fetch Artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
-          name: 'linux_unity.zip'
+          #name: '*.zip'
           workflow: 'sdk_build.yml'
           run_id: ${{ github.event.inputs.downloadPreviousRun }}
     
