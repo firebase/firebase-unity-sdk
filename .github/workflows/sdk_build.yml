@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest] #, macos-latest, ubuntu-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
         include:
         - os: windows-latest
           unity_version: ${{ github.event.inputs.unity_version }}
@@ -55,14 +55,13 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.7'
 
       - name: Install prerequisites
         shell: bash
         run: |
           echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
           cd firebase-cpp-sdk
-          python --version
           python scripts/gha/install_prereqs_desktop.py
           cd ..
 
@@ -90,12 +89,10 @@ jobs:
       - name: Install python deps
         shell: bash
         run: |
-          pip uninstall -r scripts/gha/requirements.txt
           pip install -r scripts/gha/requirements.txt
       - name: Install Unity
         shell: bash
         run: |
-          python --version
           python scripts/gha/unity_installer.py --install --platforms "Desktop" --version ${{ matrix.unity_version }}
       - name: Setup Unity path
         shell: bash
