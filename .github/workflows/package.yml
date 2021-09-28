@@ -55,7 +55,12 @@ jobs:
 
       - name: Listing output
         run: |
-          ls -R
+          ls -Rl
         working-directory: output
+
+      - name: Upload Build
+        uses: actions/upload-artifact@v2
+        with:
+          path: output
         
     
