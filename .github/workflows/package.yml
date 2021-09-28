@@ -26,10 +26,15 @@ jobs:
         with:
           python-version: 3.7
 
+      # Fetch all the zip files from previous run
       - name: Fetch Artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
-          name: '*.zip'
           workflow: 'sdk_build.yml'
           run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          path: built_artifect
+
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: built_artifect 
     
