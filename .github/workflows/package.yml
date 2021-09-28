@@ -52,5 +52,10 @@ jobs:
       - name: Package
         run: |
           python build_package.py --zip_dir=built_artifect
+
+      - name: Listing output
+        run: |
+          ls -R
+        working-directory: output
         
     
