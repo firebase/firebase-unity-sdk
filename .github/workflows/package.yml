@@ -45,7 +45,7 @@ jobs:
       - name: move zip files
         run: |
           cd built_artifect
-          find . -type f -name "*.zip" -exec mv {} \;
+          find . -type f -name "*.zip" -exec mv {} . \;
           ls -l
           cd ..
 
