@@ -61,6 +61,7 @@ jobs:
       - name: Upload Build
         uses: actions/upload-artifact@v2
         with:
+          name: firebase_unity_sdk
           path: output
         
     
