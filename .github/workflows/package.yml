@@ -6,7 +6,7 @@ on:
     inputs:
       operating_systems:
         description: 'CSV of VMs to run on'
-        default: 'macos-latest'
+        default: 'ubuntu-latest'
         required: true
 
 jobs:
@@ -21,15 +21,47 @@ jobs:
         - os: ubuntu-latest
           package_dir: output
     steps:
+      - name: fetch SDK
+        uses: actions/checkout@v2.3.1
+
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.7
 
+      - name: Install python deps
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+
+      # Fetch all the zip files from previous run
       - name: Fetch Artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
-          name: 'linux_unity.zip'
           workflow: 'sdk_build.yml'
           run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          path: built_artifect
+
+      - name: move zip files
+        run: |
+          cd built_artifect
+          find . -type f -name "*.zip" -exec mv {} . \;
+          ls -l
+          cd ..
+
+      - name: Package
+        run: |
+          python build_package.py --zip_dir=built_artifect
+
+      - name: Listing output
+        run: |
+          ls -Rl
+        working-directory: output
+
+      - name: Upload Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: firebase_unity_sdk
+          path: output
+        
     
