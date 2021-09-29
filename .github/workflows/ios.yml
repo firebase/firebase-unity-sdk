@@ -15,6 +15,12 @@ jobs:
     runs-on: macos-latest
     strategy:
       fail-fast: false
+
+    env:
+      # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+      U3D_PASSWORD: ""
   
     steps:
       - name: Checkout Unity Repo
