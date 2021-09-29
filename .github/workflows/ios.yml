@@ -12,18 +12,10 @@ on:
 
 jobs:
   build_ios:
-  name: build-ios
     runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest]
-        include:
-        - os: macos-latest
-          package_dir: output
-          unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
-          build_dir: ios_unity
+    unity_version: ${{ github.event.inputs.unity_version }}
+    unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
+    build_dir: ios_unity
   
     steps:
       - uses: actions/checkout@v2
