@@ -13,13 +13,17 @@ on:
 jobs:
   build_ios:
     runs-on: macos-latest
+    strategy:
+      fail-fast: false
   
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Unity Repo
+        uses: actions/checkout@v2
         with:
           submodules: true
           
-      - uses: actions/checkout@v2
+      - name: Checkout CPP Repo
+        uses: actions/checkout@v2
         with:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
@@ -37,3 +41,37 @@ jobs:
           cd firebase-cpp-sdk
           python scripts/gha/install_prereqs_desktop.py
           cd ..
+
+      - name: Install swig
+        run: |
+          swig -version
+
+      - name: Install Unity installer (U3D)
+        shell: bash
+        run: gem install u3d
+
+      - name: Install python deps
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+      
+      - name: Install Unity
+        shell: bash
+        run: |
+          python scripts/gha/unity_installer.py --install --platforms "Desktop" --version ${{ github.event.inputs.unity_version }}
+      
+      - name: Setup Unity path
+        shell: bash
+        run: |
+          echo "UNITY_ROOT_DIR=/Applications/Unity_${{ github.event.inputs.unity_version }}" >> $GITHUB_ENV
+      
+      - name: Build SDK (iOS)
+        shell: bash
+        run: |
+          ./build_ios.sh
+
+      - name: Upload Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: ios_unity
+          path: ios_unity/*.zip
