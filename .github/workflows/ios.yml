@@ -48,10 +48,6 @@ jobs:
           python scripts/gha/install_prereqs_desktop.py
           cd ..
 
-      - name: Install swig
-        run: |
-          swig -version
-
       - name: Install Unity installer (U3D)
         shell: bash
         run: gem install u3d
