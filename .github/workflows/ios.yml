@@ -1,0 +1,43 @@
+# Workflow to handle building the Unity SDK on iOS
+name: iOS Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      # Which version of Unity to use
+      unity_version:
+        description: 'Unity version'
+        default: '2017.4.40f1'
+        required: true
+
+jobs:
+  build_ios:
+  name: build-ios
+    runs-on: macos-latest
+    unity_version: ${{ github.event.inputs.unity_version }}
+    unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
+    build_dir: ios_unity
+  
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+          
+      - uses: actions/checkout@v2
+        with:
+          repository: firebase/firebase-cpp-sdk
+          path: firebase-cpp-sdk
+          submodules: true
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - name: Install prerequisites
+        shell: bash
+        run: |
+          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
+          cd firebase-cpp-sdk
+          python scripts/gha/install_prereqs_desktop.py
+          cd ..
