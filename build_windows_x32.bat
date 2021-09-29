@@ -53,11 +53,11 @@ if %errorlevel% neq 0 (SET status=%errorlevel%)
 :: CALL :BUILD mono, "-DFIREBASE_INCLUDE_MONO=ON"
 :: if %errorlevel% neq 0 (SET status=%errorlevel%)
 
-CALL :BUILD unity_seperate, "-DFIREBASE_INCLUDE_UNITY=ON -DFIREBASE_UNI_LIBRARY=OFF"
+CALL :BUILD unity_separate, "-DFIREBASE_INCLUDE_UNITY=ON -DFIREBASE_UNI_LIBRARY=OFF"
 if %errorlevel% neq 0 (SET status=%errorlevel%)
 
 :: TODO: Fix mono build to not need unity deps
-:: CALL :BUILD mono_seperate, "-DFIREBASE_INCLUDE_MONO=ON -DFIREBASE_UNI_LIBRARY=OFF"
+:: CALL :BUILD mono_separate, "-DFIREBASE_INCLUDE_MONO=ON -DFIREBASE_UNI_LIBRARY=OFF"
 :: if %errorlevel% neq 0 (SET status=%errorlevel%)
 
 EXIT /B %status%

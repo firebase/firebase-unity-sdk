@@ -5,12 +5,25 @@ on:
     inputs:
       unity_versions:
         description: 'Unity version'
-        default: '2017.4.40f1'
+        default: '2017.4.37f1'
         required: true
-      operating_systems:
-        description: 'CSV of VMs to run on'
-        default: 'macos-latest'
+      platforms:
+        description: 'CSV of Android,iOS,Windows,macOS,Linux'
+        default: 'Android,iOS,Windows,macOS,Linux'
         required: true
+      apis:
+        description: 'CSV of apis to build and test'
+        # TODO: firestore is excluded, because it fails to build on Unity 2017
+        default: 'analytics,auth,crashlytics,database,dynamic_links,functions,installations,messaging,remote_config,storage'
+        required: true
+      mobile_test_on:
+        description: 'Run mobile tests on real and/or virtual devices? (separated by commas)'
+        default: 'real'
+        required: true
+      sdk_url:
+        description: 'Download unity sdk from this URL'
+        default: 'https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip'
+        required: true 
 
 jobs:
   prepare_matrix:
@@ -22,24 +35,18 @@ jobs:
     - id: set-matrix-os
       # e.g. 'ubuntu-latest,macos-latest' -> '["ubuntu-latest","macos-latest"]'
       run: |
-        if [[ "${{ github.event_name }}" == "push" ]]; then
-          echo "::set-output name=matrix_os::[\"macos-latest\"]"
-          echo "::set-output name=matrix_unity_versions::[\"2017.4.40f1\"]"
-        else
-          OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
-          echo "::set-output name=matrix_os::${OS_JSON}"
-          UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
-          echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
-        fi
+        OS_JSON=[\"$(echo ${{ github.event.inputs.operating_systems }} | sed 's/,/","/g')\"]
+        echo "::set-output name=matrix_os::${OS_JSON}"
+        UNITY_VERSIONS_JSON=[\"$(echo ${{ github.event.inputs.unity_versions }} | sed 's/,/","/g')\"]
+        echo "::set-output name=matrix_unity_versions::${UNITY_VERSIONS_JSON}"
 
-  test:
-    name: ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  build:
+    name: build-${{ matrix.unity_version }}-${{ github.event.inputs.platforms }}
+    runs-on: macos-latest
     needs: prepare_matrix
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJson(needs.prepare_matrix.outputs.matrix_os) }}
         unity_version: ${{ fromJson(needs.prepare_matrix.outputs.matrix_unity_versions) }}
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
@@ -65,7 +72,9 @@ jobs:
         timeout-minutes: 20
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms "Android,iOS" --version ${{ matrix.unity_version }}
+          python scripts/gha/unity_installer.py --install \
+            --platforms ${{ github.event.inputs.platforms }} \
+            --version ${{ matrix.unity_version }}
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash
@@ -77,7 +86,27 @@ jobs:
             --password "${{ secrets.UNITY_PASSWORD }}" \
             --serial_ids "${{ secrets.SERIAL_ID }}" \
             --logfile testapps/activate_license.log
-          cat testapps/activate_license.log
+      - name: Prepare for integration tests
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+      - name: Build integration tests
+        timeout-minutes: 220
+        shell: bash
+        run: |
+          # TODO: Download unity SDK first
+          curl ${{ github.event.inputs.sdk_url }} -o ~/Downloads/firebase_unity_sdk.zip
+          unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
+          python scripts/gha/build_testapps.py \
+            --t ${{ github.event.inputs.apis }} \
+            --u ${{ matrix.unity_version }} \
+            --p ${{ github.event.inputs.platforms }} \
+            --ios_sdk ${{ github.event.inputs.mobile_test_on }} \
+            --plugin_dir ~/Downloads/firebase_unity_sdk \
+            --output_directory "${{ github.workspace }}" \
+            --artifact_name "${{ matrix.unity_version }}-all" \
+            --force_latest_runtime
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
@@ -87,5 +116,139 @@ jobs:
           timeout_minutes: 10
           max_attempts: 3
           command: |
-            python scripts/gha/unity_installer.py --release_license --logfile testapps/release_license.log --version ${{ matrix.unity_version }}
-            cat testapps/activate_license.log
+            python scripts/gha/unity_installer.py --release_license \
+              --logfile testapps/release_license.log \
+              --version ${{ matrix.unity_version }}
+      - name: Upload Android integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(github.event.inputs.platforms, 'Android') && ${{ !cancelled() }}
+        with:
+          name: testapps-${{ matrix.unity_version }}-Android
+          path: testapps-${{ matrix.unity_version }}-all/Android
+          retention-days: 2
+      - name: Upload iOS integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(github.event.inputs.platforms, 'iOS') && ${{ !cancelled() }}
+        with:
+          name: testapps-${{ matrix.unity_version }}-iOS
+          path: testapps-${{ matrix.unity_version }}-all/iOS
+          retention-days: 2
+      - name: Upload Linux integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(github.event.inputs.platforms, 'Linux') && ${{ !cancelled() }}
+        with:
+          name: testapps-${{ matrix.unity_version }}-ubuntu-latest
+          path: testapps-${{ matrix.unity_version }}-all/Linux
+          retention-days: 2
+      - name: Upload macOS integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(github.event.inputs.platforms, 'macOS') && ${{ !cancelled() }}
+        with:
+          name: testapps-${{ matrix.unity_version }}-macos-latest
+          path: testapps-${{ matrix.unity_version }}-all/macOS
+          retention-days: 2
+      - name: Upload Windows integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(github.event.inputs.platforms, 'Windows') && ${{ !cancelled() }}
+        with:
+          name: testapps-${{ matrix.unity_version }}-windows-latest
+          path: testapps-${{ matrix.unity_version }}-all/Windows
+          retention-days: 2
+      - name: Summarize build results
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          cat build-results-${{ matrix.unity_version }}-all.log
+          if [[ "${{ job.status }}" != "success" ]]; then
+            exit 1
+          fi
+
+
+  test_desktop:
+    name: test-${{ matrix.unity_version }}-${{ matrix.os }}-desktop
+    runs-on: ${{ matrix.os }}
+    needs: [prepare_matrix, build]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest,windows-latest,macos-latest]
+        unity_version: ${{ fromJson(needs.prepare_matrix.outputs.matrix_unity_versions) }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{needs.prepare_matrix.outputs.github_ref}}
+      - name: Download Desktop integration tests artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          path: testapps
+          name: testapps-${{ matrix.unity_version }}-${{ matrix.os }}
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Install python deps
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+      - name: Run Desktop integration tests
+        timeout-minutes: 30
+        shell: bash
+        run: |
+          python scripts/gha/desktop_tester.py --testapp_dir testapps \
+            --logfile_name "${{ matrix.unity_version }}-${{ matrix.os }}-desktop"
+      - name: Summarize test results
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          cat testapps/test-results-${{ matrix.unity_version }}-${{ matrix.os }}-desktop.log
+          if [[ "${{ job.status }}" != "success" ]]; then
+            exit 1
+          fi
+
+  test_mobile:
+    name: test-${{ matrix.unity_version }}-${{ matrix.platform }}
+    runs-on: macos-latest
+    needs: [prepare_matrix, build]
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [Android, iOS]
+        unity_version: ${{ fromJson(needs.prepare_matrix.outputs.matrix_unity_versions) }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{needs.prepare_matrix.outputs.github_ref}}
+      - name: Download Desktop integration tests artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          path: testapps
+          name: testapps-${{ matrix.unity_version }}-${{ matrix.platform }}
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Install python deps
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@master
+      - name: Run Monbile integration tests on Real Device via FTL
+        timeout-minutes: 60
+        shell: bash
+        run: |
+          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+          python scripts/gha/test_lab.py --testapp_dir testapps \
+            --logfile_name "${{ matrix.unity_version }}-${{ matrix.platform }}" \
+            --code_platform unity \
+            --key_file scripts/gha-encrypted/gcs_key_file.json
+      - name: Summarize test results
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          cat testapps/test-results-${{ matrix.unity_version }}-${{ matrix.platform }}.log
+          if [[ "${{ job.status }}" != "success" ]]; then
+            exit 1
+          fi

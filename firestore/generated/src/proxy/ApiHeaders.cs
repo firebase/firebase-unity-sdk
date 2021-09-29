@@ -26,6 +26,7 @@ internal class ApiHeaders : global::System.IDisposable {
   }
 
   public virtual void Dispose() {
+
     lock (FirebaseApp.disposeLock) {
       if (swigCPtr.Handle != global::System.IntPtr.Zero) {
         if (swigCMemOwn) {

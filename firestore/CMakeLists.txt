@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#      https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing software
 # distributed under the License is distributed on an AS IS BASIS
@@ -96,7 +96,7 @@ firebase_swig_add_library(firebase_firestore_swig
     absl_variant
 )
 
-set(FIRESTORE_SOURCE_DIR ${FIREBASE_CPP_SDK_DIR}/build/external/src/firestore)
+set(FIRESTORE_SOURCE_DIR ${PROJECT_BINARY_DIR}/bin/external/src/firestore)
 
 # Additional public headers come from the Firestore core
 if(IOS)

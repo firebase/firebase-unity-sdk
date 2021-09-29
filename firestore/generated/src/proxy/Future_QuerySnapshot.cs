@@ -39,7 +39,7 @@ internal class Future_QuerySnapshot : FutureBase {
     }
  }
 /*@SWIG@*/
-  /*@SWIG:firebase/app/client/unity/src/swig/future.i,172,%SWIG_FUTURE_GET_TASK@*/
+  /*@SWIG:firebase/app/client/unity/src/swig/future.i,177,%SWIG_FUTURE_GET_TASK@*/
   // Helper for csout typemap to convert futures into tasks.
   // This would be internal, but we need to share it accross assemblies.
 
@@ -102,7 +102,7 @@ internal class Future_QuerySnapshot : FutureBase {
     return tcs.Task;
   }
 /*@SWIG@*/
-  /*@SWIG:firebase/app/client/unity/src/swig/future.i,241,%SWIG_FUTURE_FOOTER@*/
+  /*@SWIG:firebase/app/client/unity/src/swig/future.i,246,%SWIG_FUTURE_FOOTER@*/
   public delegate void Action();
 
   // On iOS, in order to marshal a delegate from C#, it needs both a
@@ -169,7 +169,6 @@ internal class Future_QuerySnapshot : FutureBase {
 
   internal delegate void SWIG_CompletionDelegate(int index);
   private SWIG_CompletionDelegate SWIG_CompletionCB = null;
-  /// @brief Construct a future.
   public Future_QuerySnapshot() : this(FirestoreCppPINVOKE.new_Future_QuerySnapshot(), true) {
     if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
   }

@@ -26,11 +26,7 @@ template<typename T> class SwigValueWrapper {
 public:
   SwigValueWrapper() : pointer(0) { }
 #if __cplusplus >= 201103L
-  SwigValueWrapper &operator=(T t) {
-    SwigMovePointer tmp(new T(std::move(t)));
-    pointer = tmp;
-    return *this;
-  }
+  SwigValueWrapper& operator=(T t) { SwigMovePointer tmp(new T(std::move(t))); pointer = tmp; return *this; }
 #else
   SwigValueWrapper& operator=(const T& t) { SwigMovePointer tmp(new T(t)); pointer = tmp; return *this; }
 #endif
@@ -358,29 +354,39 @@ SWIGINTERN void SWIG_CSharpException(int code, const char *msg) {
   }
 }
 
+
 #include <stdexcept>
+
+
 #include <utility>
+
+
+#include "firestore/src/include/firebase/firestore.h"
+
+
+#include <stdexcept>
+
+#include "firestore/src/common/firestore_exceptions_common.h"
+
 
 #include "app/src/callback.h"
 #include "app/src/include/firebase/future.h"
-#include "firestore/src/common/firestore_exceptions_common.h"
-#include "firestore/src/include/firebase/firestore.h"
 
-// This adds the STDCALL thunk, necessary for C/C# interoperability.
-// The function pointer type declared in the C++ library should have the
-// exact same signature, however it lacks this explicit calling convention
-// declaration. We declare it here with explicit calling convention and use
-// a thin wrapper (just below) so that we can be certain we match the same
-// calling convention in C# when we trigger the callback.
-typedef void(SWIGSTDCALL *Future_QuerySnapshot_CB_Type)(int index);
 
-// Associates callback data with each Future<firebase::firestore::QuerySnapshot>
-// instance.
-struct Future_QuerySnapshotCallbackData {
-  // C# delegate method that should be called on the main thread.
-  Future_QuerySnapshot_CB_Type cs_callback;
-  // Key of the callback in the C# QuerySnapshotProxy.Callbacks dictionary.
-  int cs_key;
+  // This adds the STDCALL thunk, necessary for C/C# interoperability.
+  // The function pointer type declared in the C++ library should have the
+  // exact same signature, however it lacks this explicit calling convention
+  // declaration. We declare it here with explicit calling convention and use
+  // a thin wrapper (just below) so that we can be certain we match the same
+  // calling convention in C# when we trigger the callback.
+  typedef void (SWIGSTDCALL* Future_QuerySnapshot_CB_Type)(int index);
+
+  // Associates callback data with each Future<firebase::firestore::QuerySnapshot> instance.
+  struct Future_QuerySnapshotCallbackData {
+    // C# delegate method that should be called on the main thread.
+    Future_QuerySnapshot_CB_Type cs_callback;
+    // Key of the callback in the C# QuerySnapshotProxy.Callbacks dictionary.
+    int cs_key;
   };
 
   // Use a static function to make callback so don't need to worry about

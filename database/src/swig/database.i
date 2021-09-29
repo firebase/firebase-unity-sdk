@@ -86,7 +86,12 @@ static CppInstanceManager<Database> g_database_instances;
              firebase::database::DataSnapshot, FirebaseException)
 
 // Delete the C++ object if hasn't already been deleted.
+#if SWIG_VERSION >= 0x040000
+%typemap(csdisposing, methodname="Dispose",
+         parameters="bool disposing", methodmodifiers="public")
+#else
 %typemap(csdestruct, methodname="Dispose", methodmodifiers="public")
+#endif
       firebase::database::Database {
     lock (FirebaseApp.disposeLock) {
       ReleaseReferenceInternal(this);

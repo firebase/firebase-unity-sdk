@@ -30,31 +30,44 @@ option(FIREBASE_UNI_LIBRARY "Link all firebase libraries into one shared object"
 
 # Different options to enable/disable each library being included during
 # configuration.
+option(FIREBASE_INCLUDE_LIBRARY_DEFAULT
+       "Should each library be included by default." ON)
 option(FIREBASE_INCLUDE_ANALYTICS
-       "Include the Google Analytics for Firebase library." ON)
+       "Include the Google Analytics for Firebase library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_AUTH
-       "Include the Firebase Authentication library." ON)
+       "Include the Firebase Authentication library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_CRASHLYTICS
-       "Include the Firebase Crashlytics library." ON)
+       "Include the Firebase Crashlytics library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_DATABASE
-       "Include the Firebase Realtime Database library." ON)
+       "Include the Firebase Realtime Database library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_DYNAMIC_LINKS
-       "Include the Firebase Dynamic Links library." ON)
+       "Include the Firebase Dynamic Links library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_INSTALLATIONS
-       "Include the Firebase Installations library." ON)
+       "Include the Firebase Installations library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_FIRESTORE
-       "Include the Firebase Firestore library." ON)
+       "Include the Firebase Firestore library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_FUNCTIONS
-       "Include the Cloud Functions for Firebase library." ON)
+       "Include the Cloud Functions for Firebase library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_MESSAGING
-       "Include the Firebase Cloud Messaging library." ON)
+       "Include the Firebase Cloud Messaging library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_REMOTE_CONFIG
-       "Include the Firebase Remote Config library." ON)
+       "Include the Firebase Remote Config library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_STORAGE
-       "Include the Cloud Storage for Firebase library." ON)
+       "Include the Cloud Storage for Firebase library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 
 option(FIREBASE_INCLUDE_EDITOR_TOOL
-       "Include Unity editor tools for Firebase library." ON)
+       "Include Unity editor tools for Firebase library." OFF)
 option(FIREBASE_UNITY_BUILD_TESTS
        "Enable the Firebase Unity Build Tests." OFF)
 
