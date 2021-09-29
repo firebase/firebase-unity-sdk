@@ -64,7 +64,7 @@ jobs:
       - name: Install Unity
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms "Desktop" --version ${{ github.event.inputs.unity_version }}
+          python scripts/gha/unity_installer.py --install --platforms "iOS" --version ${{ github.event.inputs.unity_version }}
       
       - name: Setup Unity path
         shell: bash
