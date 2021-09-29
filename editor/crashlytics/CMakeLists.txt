@@ -41,7 +41,7 @@ set(firebase_crashlytics_editor_reference
   firebase_app_editor_cs
 )
 
-if(FIREBASE_IOS_BUILD)
+if(APPLE)
   list(APPEND firebase_crashlytics_editor_reference unity_ios_extensions_xcode_cs)
 endif()
 

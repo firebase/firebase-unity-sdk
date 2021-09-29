@@ -58,7 +58,7 @@ set(firebase_app_editor_reference
   google_version_handlerimpl_cs
 )
 
-if(FIREBASE_IOS_BUILD)
+if(APPLE)
   list(APPEND firebase_app_editor_reference unity_ios_extensions_xcode_cs)
 endif()
 
