@@ -13,9 +13,6 @@ on:
 jobs:
   build_ios:
     runs-on: macos-latest
-    unity_version: ${{ github.event.inputs.unity_version }}
-    unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
-    build_dir: ios_unity
   
     steps:
       - uses: actions/checkout@v2
