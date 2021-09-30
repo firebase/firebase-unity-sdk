@@ -35,10 +35,17 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       # Fetch all the zip files from previous run
-      - name: Fetch Artifacts
+      - name: Fetch Desktop Artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'sdk_build.yml'
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          path: built_artifect
+
+      - name: Fetch iOS Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: 'ios.yml'
           run_id: ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
 
