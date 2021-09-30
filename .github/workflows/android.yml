@@ -26,7 +26,7 @@ jobs:
         include:
         - os: windows-latest
           unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: TBD
+          unity_install_dir: /c/Program Files/Unity_${{ github.event.inputs.unity_version }}
         - os: macos-latest
           unity_version: ${{ github.event.inputs.unity_version }}
           unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
@@ -67,6 +67,10 @@ jobs:
           build_scripts/android/install_prereqs.sh
           cd ..
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6
+          
       - name: Install Unity installer (U3D)
         shell: bash
         run: gem install u3d
