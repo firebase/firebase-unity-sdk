@@ -1,0 +1,80 @@
+# Workflow to handle building the Unity SDK on android
+name: Android Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      # Which version of Unity to use
+      unity_version:
+        description: 'Unity version'
+        default: '2017.4.40f1'
+        required: true
+
+jobs:
+  build_android:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    env:
+      # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+      U3D_PASSWORD: ""
+  
+    steps:
+      - name: Checkout Unity Repo
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          
+      - name: Checkout CPP Repo
+        uses: actions/checkout@v2
+        with:
+          repository: firebase/firebase-cpp-sdk
+          path: firebase-cpp-sdk
+          submodules: true
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - name: Install prerequisites
+        shell: bash
+        run: |
+          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
+          cd firebase-cpp-sdk
+          python scripts/gha/install_prereqs_desktop.py
+          build_scripts/android/install_prereqs.sh
+          cd ..
+
+      - name: Install Unity installer (U3D)
+        shell: bash
+        run: gem install u3d
+
+      - name: Install python deps
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+      
+      - name: Install Unity
+        shell: bash
+        run: |
+          python scripts/gha/unity_installer.py --install --platforms "Android" --version ${{ github.event.inputs.unity_version }}
+      
+      - name: Setup Unity path
+        shell: bash
+        run: |
+          echo "UNITY_ROOT_DIR=/Applications/Unity_${{ github.event.inputs.unity_version }}" >> $GITHUB_ENV
+
+      - name: Build SDK (Android)
+        shell: bash
+        run: |
+          ./build_android.sh
+
+      - name: Upload Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: android_unity
+          path: android_unity/*.zip
