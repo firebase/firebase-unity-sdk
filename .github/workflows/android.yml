@@ -53,6 +53,10 @@ jobs:
           path: firebase-cpp-sdk
           submodules: true
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6
+
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -67,10 +71,6 @@ jobs:
           build_scripts/android/install_prereqs.sh
           cd ..
 
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6
-          
       - name: Install Unity installer (U3D)
         shell: bash
         run: gem install u3d
