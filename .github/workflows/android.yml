@@ -11,7 +11,7 @@ on:
         required: true
 
 jobs:
-  build_ios:
+  build_android:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
