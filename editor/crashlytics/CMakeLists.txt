@@ -32,19 +32,26 @@ set(firebase_crashlytics_editor_src
   ${firebase_crashlytics_editor_eap_src}
 )
 
+set(firebase_crashlytics_editor_reference
+  unity_editor_cs
+  unity_engine_cs
+  google_jar_resolver_cs
+  google_ios_resolver_cs
+  google_version_handlerimpl_cs
+  firebase_app_editor_cs
+)
+
+if(APPLE)
+  list(APPEND firebase_crashlytics_editor_reference unity_ios_extensions_xcode_cs)
+endif()
+
 mono_add_library(firebase_crashlytics_editor_cs
   MODULE
     Firebase.Crashlytics.Editor
   SOURCES
     ${firebase_crashlytics_editor_src}
   REFERENCES
-    unity_editor_cs
-    unity_engine_cs
-    unity_ios_extensions_xcode_cs
-    google_jar_resolver_cs
-    google_ios_resolver_cs
-    google_version_handlerimpl_cs
-    firebase_app_editor_cs
+    ${firebase_crashlytics_editor_reference}
   XBUILD_EXE
     ${XBUILD_EXE}
 )
