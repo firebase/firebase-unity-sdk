@@ -54,13 +54,13 @@ def main(unused_argv):
     pro_folder = os.path.dirname(proguard_file)
     build_type_name = os.path.basename(pro_folder)
     if build_type_name == "debug":
-      proguard_file.replace(build_type_name, "Debug")
+      proguard_file=proguard_file.replace(build_type_name, "Debug")
     elif build_type_name == "release":
-      proguard_file.replace(build_type_name, "Release")
+      proguard_file=proguard_file.replace(build_type_name, "Release")
   
   # still cannot find proguard files
   if not os.path.exists(proguard_file):
-    logging.error("Pro file {} not exist.", proguard_file)
+    logging.error("Pro file (%s) not exist.", proguard_file)
     return 1
 
   with zipfile.ZipFile(output_file, "w") as myzip:
