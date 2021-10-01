@@ -48,6 +48,13 @@ jobs:
           workflow: 'ios.yml'
           run_id: ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
+      
+      - name: Fetch Android Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: 'android.yml'
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          path: built_artifect
 
       - name: move zip files
         run: |
