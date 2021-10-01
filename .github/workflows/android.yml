@@ -22,8 +22,6 @@ on:
 jobs:
   build_android:
     name: build-android-${{matrix.os}}
-    runs-on: ${{matrix.os}}
-    if: contains(${{ github.event.inputs.operating_systems }}, ${{matrix.os}})
     strategy:
       fail-fast: false
       matrix:
@@ -38,7 +36,8 @@ jobs:
         - os: ubuntu-latest
           unity_version: ${{ github.event.inputs.linux_unity_version }}
           unity_install_dir: /opt/unity-editor-${{ github.event.inputs.linux_unity_version }}
-
+    runs-on: ${{matrix.os}}
+    if: contains(${{ github.event.inputs.operating_systems }}, ${{matrix.os}})
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
       LC_ALL: en_US.UTF-8
