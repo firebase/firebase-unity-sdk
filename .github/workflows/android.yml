@@ -4,10 +4,10 @@ name: Android Build
 on:
   workflow_dispatch:
     inputs:
-      # Which version of Unity to use
-      unity_version:
-        description: 'Unity version'
-        default: '2017.4.40f1'
+      # Linux uses a different number for its versions
+      linux_unity_version:
+        description: 'Linux Unity version'
+        default: '2017.4.10f1'
         required: true
 
 jobs:
@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
       LC_ALL: en_US.UTF-8
@@ -34,6 +33,10 @@ jobs:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
           submodules: true
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6
 
       - name: Setup python
         uses: actions/setup-python@v2
@@ -61,12 +64,12 @@ jobs:
       - name: Install Unity
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms "Android" --version ${{ github.event.inputs.unity_version }}
+          python scripts/gha/unity_installer.py --install --platforms "Android" --version ${{ github.event.inputs.linux_unity_version }}
       
       - name: Setup Unity path
         shell: bash
         run: |
-          echo "UNITY_ROOT_DIR=/Applications/Unity_${{ github.event.inputs.unity_version }}" >> $GITHUB_ENV
+          echo "UNITY_ROOT_DIR=/opt/unity-editor-${{ github.event.inputs.linux_unity_version }}" >> $GITHUB_ENV
 
       - name: Build SDK (Android)
         shell: bash
@@ -76,5 +79,5 @@ jobs:
       - name: Upload Build
         uses: actions/upload-artifact@v2
         with:
-          name: android_unity
-          path: android_unity/*.zip
+          name: android_build
+          path: android_build/*.zip

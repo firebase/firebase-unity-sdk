@@ -137,6 +137,12 @@ if(NOT MSVC AND NOT APPLE)
   endif()
 endif()
 
+if(NOT ANDROID AND NOT IOS)
+  set(DESKTOP ON)
+else()
+  set(DESKTOP OFF)
+endif()
+
 include(FindPkgConfig)
 include(android_dependencies)
 include(build_universal)

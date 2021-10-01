@@ -93,7 +93,6 @@ firebase_swig_add_library(firebase_firestore_swig
   DEPENDS
     firebase_firestore
     firebase_firestore_swig_cpp
-    absl_variant
 )
 
 set(FIRESTORE_SOURCE_DIR ${PROJECT_BINARY_DIR}/bin/external/src/firestore)
