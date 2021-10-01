@@ -4,15 +4,6 @@ name: Android Build
 on:
   workflow_dispatch:
     inputs:
-      operating_systems:
-        description: 'CSV of VMs to run on'
-        default: 'ubuntu-latest,windows-latest,macos-latest'
-        required: true
-      # Which version of Unity to use
-      unity_version:
-        description: 'Unity version'
-        default: '2017.4.40f1'
-        required: true
       # Linux uses a different number for its versions
       linux_unity_version:
         description: 'Linux Unity version'
@@ -21,23 +12,9 @@ on:
 
 jobs:
   build_android:
-    name: build-android-${{matrix.os}}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        include:
-        - os: windows-latest
-          unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: /c/Program Files/Unity_${{ github.event.inputs.unity_version }}
-        - os: macos-latest
-          unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
-        - os: ubuntu-latest
-          unity_version: ${{ github.event.inputs.linux_unity_version }}
-          unity_install_dir: /opt/unity-editor-${{ github.event.inputs.linux_unity_version }}
-    runs-on: ${{matrix.os}}
-    if: contains(github.event.inputs.operating_systems, github.job.build_android.strategy.matrix.os)
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
       LC_ALL: en_US.UTF-8
@@ -87,12 +64,12 @@ jobs:
       - name: Install Unity
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms "Android" --version ${{ matrix.unity_version }}
+          python scripts/gha/unity_installer.py --install --platforms "Android" --version ${{ github.event.inputs.linux_unity_version }}
       
       - name: Setup Unity path
         shell: bash
         run: |
-          echo "UNITY_ROOT_DIR=${{ matrix.unity_install_dir }}" >> $GITHUB_ENV
+          echo "UNITY_ROOT_DIR=/opt/unity-editor-${{ github.event.inputs.linux_unity_version }}" >> $GITHUB_ENV
 
       - name: Build SDK (Android)
         shell: bash

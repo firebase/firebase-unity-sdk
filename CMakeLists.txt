@@ -52,7 +52,7 @@ option(FIREBASE_INCLUDE_INSTALLATIONS
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_FIRESTORE
        "Include the Firebase Firestore library."
-       OFF)
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_FUNCTIONS
        "Include the Cloud Functions for Firebase library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
@@ -135,6 +135,12 @@ if(NOT MSVC AND NOT APPLE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
   endif()
+endif()
+
+if(NOT ANDROID AND NOT IOS)
+  set(DESKTOP ON)
+else()
+  set(DESKTOP OFF)
 endif()
 
 include(FindPkgConfig)

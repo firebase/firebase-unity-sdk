@@ -33,7 +33,6 @@ target_link_libraries(firebase_firestore_swig_cpp
   PUBLIC
     firebase_app
     firebase_firestore
-    absl_variant
 )
 # Public C++ headers all refer to each other relative to the src/include
 # directory, while private headers are relative to the entire C++ SDK
