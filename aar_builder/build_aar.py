@@ -17,6 +17,7 @@ import os
 import zipfile
 from absl import app
 from absl import flags
+from absl import logging
 
 FLAGS = flags.FLAGS
 
@@ -47,6 +48,20 @@ def main(unused_argv):
   # Delete the aar file, if it already exists
   if os.path.exists(output_file):
     os.remove(output_file)
+
+  # Linux is case sensitive, need to match the debug/release in correct case
+  if not os.path.exists(proguard_file):
+    pro_folder = os.path.dirname(proguard_file)
+    build_type_name = os.path.basename(pro_folder)
+    if build_type_name == "debug":
+      proguard_file.replace(build_type_name, "Debug")
+    elif build_type_name == "release":
+      proguard_file.replace(build_type_name, "Release")
+  
+  # still cannot find proguard files
+  if not os.path.exists(proguard_file):
+    logging.error("Pro file {} not exist.", proguard_file)
+    return 1
 
   with zipfile.ZipFile(output_file, "w") as myzip:
     # Write the generic base files that are required in an aar file.
