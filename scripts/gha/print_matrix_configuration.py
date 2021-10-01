@@ -62,8 +62,8 @@ PARAMETERS = {
       },
 
       EXPANDED_KEY: {
-        # "2019.2.8f1", "2021.1.9f1" haven't been verified.
-        "unity_version": ["2017.4.37f1", "2019.2.8f1", "2021.1.9f1"],
+        # TODO: add "2019.4.30f1", "2020.3.19f1" later.
+        "unity_version": ["2017.4.37f1"],
         "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
         "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
       }
