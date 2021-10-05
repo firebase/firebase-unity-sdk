@@ -79,7 +79,7 @@ PARAMETERS = {
 UNITY_PACKAGE = {
   "2020.3.19f1": {
     "Default": ["Unity"],
-    "Android": ["Android", "Android-open-jdk", "Android-sdk-ndk-tools", "Android-sdk-platform-tools", "Android-sdk-platforms", "Android-ndk"],
+    "Android": ["Android"],
     "iOS": ["Ios"],
     "Windows": ["Windows-mono"],
     "macOS": None,
@@ -87,7 +87,7 @@ UNITY_PACKAGE = {
     },
   "2019.4.30f1": {
     "Default": ["Unity"],
-    "Android": ["Android", "Android-open-jdk", "Android-sdk-ndk-tools", "Android-sdk-platform-tools", "Android-sdk-platforms", "Android-ndk"],
+    "Android": ["Android"],
     "iOS": ["Ios"],
     "Windows": ["Windows-mono"],
     "macOS": None,
