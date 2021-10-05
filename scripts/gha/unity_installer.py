@@ -79,6 +79,8 @@ from absl import app
 from absl import flags
 from absl import logging
 
+from print_matrix_configuration import UNITY_PACKAGE
+
 
 FLAGS = flags.FLAGS
 
@@ -89,16 +91,6 @@ _WINDOWS = "Windows"
 _MACOS = "macOS"
 _LINUX = "Linux"
 _SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _WINDOWS, _MACOS, _LINUX)
-
-# TODO: This is for Unity 2017.4 only. Different Unity version has different packages
-_PACKAGE = {
-  _DEFALUT: "Unity",
-  _ANDROID: "Android",
-  _IOS: "Ios",
-  _WINDOWS: "Windows",
-  _MACOS: None,
-  _LINUX: "Linux"
-}
 
 # These are the three actions supported by the tool.
 flags.DEFINE_bool(
@@ -168,9 +160,10 @@ def install_unity(unity_version, platforms):
   # This always installs Unity, and installs build supports for Android
   # and iOS. Other supports can be added here, e.g. desktop platforms
   # for platforms other than the running OS, or embedded Android SDK/NDK.
-  package_list = [_PACKAGE[_DEFALUT]]
+  package_list = UNITY_PACKAGE[unity_version][_DEFALUT]
   for platform in platforms:
-    package_list.append(_PACKAGE[platform])
+    if UNITY_PACKAGE[unity_version][platform]:
+      package_list.extend(UNITY_PACKAGE[unity_version][platform])
   package_csv = ",".join(filter(None.__ne__, package_list))
 
   u3d = find_u3d()

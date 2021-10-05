@@ -8,7 +8,7 @@ on:
     inputs:
       unity_versions:
         description: 'Unity version'
-        default: '2017.4.37f1'
+        default: '2020.3.19f1,2019.4.30f1,2018.4.36f1,2017.4.40f1'
         required: true
       platforms:
         description: 'CSV of Android,iOS,Windows,macOS,Linux'
@@ -172,7 +172,12 @@ jobs:
         shell: bash
         run: |
           # TODO: Download unity SDK first
-          curl ${{ github.event.inputs.sdk_url }} -o ~/Downloads/firebase_unity_sdk.zip
+          if [[ -z "${{ github.event.inputs.sdk_url }}" ]];then
+            sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip"
+          else
+            sdk_url=${{ github.event.inputs.sdk_url }}
+          fi
+          curl ${sdk_url} -o ~/Downloads/firebase_unity_sdk.zip
           unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
