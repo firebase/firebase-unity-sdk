@@ -157,6 +157,7 @@ def main(argv):
       "--guids_file=" + guids_file_path,
       "--enabled_sections=" + " ".join(FLAGS.enabled_sections),
       "--output_dir=" + FLAGS.output,
+      "--output_unitypackage=False",
   ]
   cmd_args.extend(["--assets_zip=" + zip_file for zip_file in zip_file_list])
   last_version = get_last_version(guids_file_path)
