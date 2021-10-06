@@ -76,39 +76,12 @@ PARAMETERS = {
 }
 
 # Plese use Unity LTS version: https://unity3d.com/unity/qa/lts-releases
+# Assume Unity Hub is not installed.
 UNITY_PACKAGE = {
-  "2020.3.19f1": {
-    "Default": ["Unity"],
-    "Android": ["Android"],
-    "iOS": ["Ios"],
-    "Windows": ["Windows-mono"],
-    "macOS": None,
-    "Linux": ["Linux-mono"]
-    },
-  "2019.4.30f1": {
-    "Default": ["Unity"],
-    "Android": ["Android"],
-    "iOS": ["Ios"],
-    "Windows": ["Windows-mono"],
-    "macOS": None,
-    "Linux": ["Linux-mono"]
-    },
-  "2018.4.36f1": {
-    "Default": ["Unity"],
-    "Android": ["Android"],
-    "iOS": ["Ios"],
-    "Windows": ["Windows-mono"],
-    "macOS": None,
-    "Linux": ["Linux"]
-    },
-  "2017.4.40f1": {
-    "Default": ["Unity"],
-    "Android": ["Android"],
-    "iOS": ["Ios"],
-    "Windows": ["Windows"],
-    "macOS": None,
-    "Linux": ["Linux"]
-    }
+  "2020.3.19f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+  "2019.4.30f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+  "2018.4.36f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux"]},
+  "2017.4.40f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]}
 }
 
 TEST_DEVICES = {
