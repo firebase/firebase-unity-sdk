@@ -248,6 +248,7 @@ jobs:
   test_desktop:
     name: test-${{ matrix.unity_version }}-${{ matrix.os }}-desktop
     runs-on: ${{ matrix.os }}
+    if: (contains(needs.check_and_prepare.outputs.platform, 'Windows') || contains(needs.check_and_prepare.outputs.platform, 'macOS') || contains(needs.check_and_prepare.outputs.platform, 'Linux')) && !cancelled()
     needs: [check_and_prepare, build]
     strategy:
       fail-fast: false
@@ -290,6 +291,7 @@ jobs:
   test_mobile:
     name: test-${{ matrix.unity_version }}-${{ matrix.platform }}
     runs-on: macos-latest
+    if: (contains(needs.check_and_prepare.outputs.platform, 'Android') || contains(needs.check_and_prepare.outputs.platform, 'iOS')) && !cancelled()
     needs: [check_and_prepare, build]
     strategy:
       fail-fast: false
