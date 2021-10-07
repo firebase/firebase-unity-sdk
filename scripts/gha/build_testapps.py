@@ -97,6 +97,8 @@ import platform
 import shutil
 import subprocess
 import time
+import requests
+import zipfile
 
 from absl import app
 from absl import flags
@@ -444,11 +446,27 @@ def build_testapp(dir_helper, api_config, ios_config, target):
     if api_config.minify:
       build_flags += ["-AppBuilderHelper.minify", api_config.minify]
     if target == _ANDROID:
+      install_ndk()
       os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
       os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
       os.environ["UNITY_ANDROID_JDK"]=os.environ["JAVA_HOME"]
     _run(arg_builder.get_args_to_open_project(build_flags))
     logging.info("Finished building target %s", target)
+
+
+def install_ndk():
+  url = "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
+  logging.info("install ndk: %s", url)
+  ndk_zip_path = "ndk_zip"
+  ndk_path = "ndk"
+  r = requests.get(url, stream=True)
+  with open(ndk_zip_path, 'wb') as fd:
+    for chunk in r.iter_content(chunk_size=128):
+      fd.write(chunk)
+  with zipfile.ZipFile(ndk_zip_path, 'r') as zip_ref:
+      zip_ref.extractall(ndk_path)
+  os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, "android-ndk-r19"))
+  logging.info("ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
 
 
 def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
