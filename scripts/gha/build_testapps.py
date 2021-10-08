@@ -450,6 +450,10 @@ def build_testapp(dir_helper, api_config, ios_config, target):
       os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
       os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
       os.environ["UNITY_ANDROID_JDK"]=os.environ["JAVA_HOME"]
+      logging.info("ANDROID_ENV")
+      logging.info(os.environ["UNITY_ANDROID_SDK"])
+      logging.info(os.environ["UNITY_ANDROID_NDK"])
+      logging.info(os.environ["UNITY_ANDROID_JDK"])
     _run(arg_builder.get_args_to_open_project(build_flags))
     logging.info("Finished building target %s", target)
 

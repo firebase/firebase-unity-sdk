@@ -168,7 +168,7 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Build integration tests
-        timeout-minutes: 220
+        timeout-minutes: 40
         shell: bash
         run: |
           # TODO: Download unity SDK first
