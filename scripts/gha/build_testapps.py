@@ -335,6 +335,10 @@ def main(argv):
                   description=build_desc + " " + p,
                   error_message=str(e)))
           logging.info(str(e))
+          log_file = dir_helper.make_log_path("build_" + _BUILD_TARGET[p])
+          logging.info(log_file)
+          with open(log_file, 'r') as f:
+            logging.info(f.read())
       # Free up space by removing unneeded Unity Library directory.
       shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
       logging.info("END %s", build_desc)
@@ -926,7 +930,7 @@ def _fix_path(path):
   return os.path.abspath(os.path.expanduser(path))
 
 
-def _run(args, timeout=3000, capture_output=False, text=None, check=True):
+def _run(args, timeout=1200, capture_output=False, text=None, check=True):
   """Executes a command in a subprocess."""
   logging.info("Running in subprocess: %s", " ".join(args))
   return subprocess.run(
