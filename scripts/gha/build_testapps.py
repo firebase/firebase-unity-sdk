@@ -474,7 +474,13 @@ def install_ndk():
   with zipfile.ZipFile(ndk_zip_path, 'r') as zip_ref:
       zip_ref.extractall(ndk_path)
   os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, "android-ndk-r19"))
-  logging.info("ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+  logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+  try:
+    _run(["brew", "install", "--cask", "adoptopenjdk8"])
+    os.environ["JAVA_HOME"] = "/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home"
+    logging.info("set JAVA_HOME: %s", os.environ["JAVA_HOME"])
+  except:
+    logging.info("brew install jdk8 failed")
 
 
 def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
@@ -930,7 +936,7 @@ def _fix_path(path):
   return os.path.abspath(os.path.expanduser(path))
 
 
-def _run(args, timeout=1200, capture_output=False, text=None, check=True):
+def _run(args, timeout=3000, capture_output=False, text=None, check=True):
   """Executes a command in a subprocess."""
   logging.info("Running in subprocess: %s", " ".join(args))
   return subprocess.run(

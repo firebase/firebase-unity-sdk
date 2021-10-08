@@ -119,7 +119,9 @@ public sealed class AppBuilderHelper {
     SetUnityPrefWithEnvVar(ANDROID_SDK_KEY, ANDROID_SDK_ENVVAR);
     SetUnityPrefWithEnvVar(ANDROID_NDK_KEY, ANDROID_NDK_ENVVAR);
     SetUnityPrefWithEnvVar(ANDROID_JDK_KEY, ANDROID_JDK_ENVVAR);
+#if UNITY_2019_1_OR_NEWER
     AndroidExternalToolsSettings.gradlePath = null;
+#endif
   }
 
   /// <summary>
