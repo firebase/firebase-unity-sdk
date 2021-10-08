@@ -130,8 +130,6 @@ jobs:
       LANG: en_US.UTF-8
       U3D_PASSWORD: ""
     steps:
-      - name: Test Gradle
-        run: whereis gradle
       - uses: actions/checkout@v2
       - name: Install Unity installer (U3D)
         timeout-minutes: 10
@@ -164,6 +162,7 @@ jobs:
             --password "${{ secrets.UNITY_PASSWORD }}" \
             --serial_ids "${{ secrets.SERIAL_ID }}" \
             --logfile testapps/activate_license.log
+          ls '/Applications/Unity_2020.3.19f1/PlaybackEngines/AndroidPlayer'
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
