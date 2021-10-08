@@ -115,7 +115,7 @@ class Test(object):
       pass
     os.chmod(self.testapp_path, 0o777)
     args = [
-        "open", "-n", self.testapp_path, "--args", "-batchmode", "-nographics",
+        self.testapp_path, "-batchmode", "-nographics",
         "-TestLabManager.logPath", log_path]
     # Unity testapps do not exit when they're done, so we need more control
     # over the process than subprocess.run gives us. We kill the process
