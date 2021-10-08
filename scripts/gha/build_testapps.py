@@ -279,6 +279,8 @@ def main(argv):
 
   testapps = validate_testapps(FLAGS.testapps, config.apis)
   platforms = validate_platforms(FLAGS.platforms)
+  if _ANDROID in platforms:
+    setup_android_env()
 
   output_root = os.path.join(root_output_dir, "testapps")
   failures = []
@@ -443,26 +445,22 @@ def build_testapp(dir_helper, api_config, ios_config, target):
         shutil.copy(
             os.path.join(dir_helper.root_dir, api_config.entitlements),
             os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
-      _run(arg_builder.get_args_to_open_project(build_flags))
-      logging.info("Finished building target %s", target)
-      run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config, device_type = device_type)
+      try:
+        # Unity 2018 retrun non 0 value, but it build successfully
+        _run(arg_builder.get_args_to_open_project(build_flags))
+        logging.info("Finished building target %s xcode project", target)
+      except(subprocess.SubprocessError, RuntimeError) as e:
+        logging.info(str(e))
+      finally:
+        run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config, device_type = device_type)
   else:
     if api_config.minify:
       build_flags += ["-AppBuilderHelper.minify", api_config.minify]
-    if target == _ANDROID:
-      install_ndk()
-      os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
-      os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
-      os.environ["UNITY_ANDROID_JDK"]=os.environ["JAVA_HOME"]
-      logging.info("ANDROID_ENV")
-      logging.info(os.environ["UNITY_ANDROID_SDK"])
-      logging.info(os.environ["UNITY_ANDROID_NDK"])
-      logging.info(os.environ["UNITY_ANDROID_JDK"])
     _run(arg_builder.get_args_to_open_project(build_flags))
     logging.info("Finished building target %s", target)
 
 
-def install_ndk():
+def setup_android_env():
   url = "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
   logging.info("install ndk: %s", url)
   ndk_zip_path = "ndk_zip"
@@ -475,6 +473,13 @@ def install_ndk():
       zip_ref.extractall(ndk_path)
   os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, "android-ndk-r19"))
   logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+  os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
+  os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
+  os.environ["UNITY_ANDROID_JDK"]=os.environ["JAVA_HOME"]
+  logging.info("ANDROID_ENV")
+  logging.info(os.environ["UNITY_ANDROID_SDK"])
+  logging.info(os.environ["UNITY_ANDROID_NDK"])
+  logging.info(os.environ["UNITY_ANDROID_JDK"])
 
 
 def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
