@@ -162,7 +162,6 @@ jobs:
             --password "${{ secrets.UNITY_PASSWORD }}" \
             --serial_ids "${{ secrets.SERIAL_ID }}" \
             --logfile testapps/activate_license.log
-          ls '/Applications/Unity_2020.3.19f1/PlaybackEngines/AndroidPlayer'
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash

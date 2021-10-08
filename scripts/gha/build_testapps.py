@@ -479,6 +479,7 @@ def install_ndk():
     _run(["brew", "tap", "adoptopenjdk/openjdk"])
     _run(["brew", "install", "--cask", "adoptopenjdk8"])
     os.environ["JAVA_HOME"] = "/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home"
+    os.environ["PATH"] += os.pathsep + os.path.join(os.environ["JAVA_HOME"], "bin")
     logging.info("set JAVA_HOME: %s", os.environ["JAVA_HOME"])
   except:
     logging.info("brew install jdk8 failed")
