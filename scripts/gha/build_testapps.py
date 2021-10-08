@@ -476,8 +476,8 @@ def install_ndk():
   os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, "android-ndk-r19"))
   logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
   try:
-    _run(["brew", "install", "--cask", "adoptopenjdk8"])
-    os.environ["JAVA_HOME"] = "/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home"
+    _run(["brew", "install", "openjdk@8"])
+    os.environ["JAVA_HOME"] = "/Library/Java/JavaVirtualMachines/openjdk-8.jdk/Contents/Home"
     logging.info("set JAVA_HOME: %s", os.environ["JAVA_HOME"])
   except:
     logging.info("brew install jdk8 failed")
