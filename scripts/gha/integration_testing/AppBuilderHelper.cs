@@ -55,7 +55,6 @@
 
 using UnityEngine;
 using UnityEditor;
-using UnityEditor.Android;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -115,15 +114,10 @@ public sealed class AppBuilderHelper {
         continue;
       }
     }
-    if (buildTarget == "Android") {
-      // This will set the appropriate values in Unity Preferences -> External Tools.
-      SetUnityPrefWithEnvVar(ANDROID_SDK_KEY, ANDROID_SDK_ENVVAR);
-      SetUnityPrefWithEnvVar(ANDROID_NDK_KEY, ANDROID_NDK_ENVVAR);
-      SetUnityPrefWithEnvVar(ANDROID_JDK_KEY, ANDROID_JDK_ENVVAR);
-#if UNITY_2019_1_OR_NEWER
-    AndroidExternalToolsSettings.gradlePath = null;
-#endif
-    }
+    // This will set the appropriate values in Unity Preferences -> External Tools.
+    SetUnityPrefWithEnvVar(ANDROID_SDK_KEY, ANDROID_SDK_ENVVAR);
+    SetUnityPrefWithEnvVar(ANDROID_NDK_KEY, ANDROID_NDK_ENVVAR);
+    SetUnityPrefWithEnvVar(ANDROID_JDK_KEY, ANDROID_JDK_ENVVAR);
   }
 
   /// <summary>
