@@ -148,6 +148,7 @@ jobs:
         timeout-minutes: 20
         shell: bash
         run: |
+          u3d available -u ${{ matrix.unity_version }} -p
           python scripts/gha/unity_installer.py --install \
             --platforms ${{ needs.check_and_prepare.outputs.platform }} \
             --version ${{ matrix.unity_version }}
