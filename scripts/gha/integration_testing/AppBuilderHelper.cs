@@ -55,7 +55,9 @@
 
 using UnityEngine;
 using UnityEditor;
+#if UNITY_ANDROID 
 using UnityEditor.Android;
+#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
