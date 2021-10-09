@@ -936,7 +936,7 @@ def _fix_path(path):
   return os.path.abspath(os.path.expanduser(path))
 
 
-def _run(args, timeout=1200, capture_output=False, text=None, check=True):
+def _run(args, timeout=3000, capture_output=False, text=None, check=True):
   """Executes a command in a subprocess."""
   logging.info("Running in subprocess: %s", " ".join(args))
   return subprocess.run(
