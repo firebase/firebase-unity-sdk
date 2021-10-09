@@ -55,6 +55,7 @@
 
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Android;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -118,6 +119,14 @@ public sealed class AppBuilderHelper {
     SetUnityPrefWithEnvVar(ANDROID_SDK_KEY, ANDROID_SDK_ENVVAR);
     SetUnityPrefWithEnvVar(ANDROID_NDK_KEY, ANDROID_NDK_ENVVAR);
     SetUnityPrefWithEnvVar(ANDROID_JDK_KEY, ANDROID_JDK_ENVVAR);
+#if UNITY_ANDROID 
+#if UNITY_2019_1_OR_NEWER
+    AndroidExternalToolsSettings.sdkRootPath = System.Environment.GetEnvironmentVariable(ANDROID_SDK_ENVVAR);
+    AndroidExternalToolsSettings.ndkRootPath = System.Environment.GetEnvironmentVariable(ANDROID_NDK_ENVVAR);
+    AndroidExternalToolsSettings.jdkRootPath = System.Environment.GetEnvironmentVariable(ANDROID_JDK_ENVVAR);
+    AndroidExternalToolsSettings.gradlePath = null;
+#endif
+#endif
   }
 
   /// <summary>
