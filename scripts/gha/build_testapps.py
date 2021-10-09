@@ -337,6 +337,7 @@ def main(argv):
                   description=build_desc + " " + p,
                   error_message=str(e)))
           logging.info(str(e))
+        finally:
           log_file = dir_helper.make_log_path("build_" + _BUILD_TARGET[p])
           logging.info(log_file)
           with open(log_file, 'r') as f:
