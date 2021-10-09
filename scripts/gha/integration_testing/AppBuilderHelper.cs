@@ -124,7 +124,7 @@ public sealed class AppBuilderHelper {
     AndroidExternalToolsSettings.sdkRootPath = System.Environment.GetEnvironmentVariable(ANDROID_SDK_ENVVAR);
     AndroidExternalToolsSettings.ndkRootPath = System.Environment.GetEnvironmentVariable(ANDROID_NDK_ENVVAR);
     AndroidExternalToolsSettings.jdkRootPath = System.Environment.GetEnvironmentVariable(ANDROID_JDK_ENVVAR);
-    // AndroidExternalToolsSettings.gradlePath = null;
+    AndroidExternalToolsSettings.gradlePath = null; // use Unity Gradle tool
 #endif
 #endif
   }
