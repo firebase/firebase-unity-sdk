@@ -52,7 +52,7 @@ MINIMAL_KEY = "minimal"
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "unity_version": ["2017.4.40f1"],
+      "unity_version": ["2019.4.30f1"],
       "android_device": ["android_target", "emulator_target"],
       "ios_device": ["ios_target", "simulator_target"],
 
