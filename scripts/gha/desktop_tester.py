@@ -63,8 +63,10 @@ def main(argv):
   logging.info("Searching for file named '%s' in %s", testapp_name, testapp_dir)
   testapps = []
   for file_dir, _, file_names in os.walk(testapp_dir):
-    if testapp_name in file_names:
-      testapps.append(os.path.join(file_dir, testapp_name))
+    for file_name in file_names:
+      # match Testapp names, e.g. "Firebase Analytics Unity Testapp"
+      if testapp_name in file_name.lower():
+        testapps.append(os.path.join(file_dir, file_name))
 
   if not testapps:
     logging.error("No testapps found.")
