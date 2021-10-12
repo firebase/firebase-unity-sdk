@@ -338,3 +338,28 @@ function(unity_pack_aar AAR_FILE POM_FILE MAVEN_FILE ARTIFACT_ID VERSION)
     DESTINATION "${maven_path}/"
   )
 endfunction()
+
+# Packs an folder into the unity zip
+#
+# unity_pack_folder(<folder>
+#                 PACK_PATH
+# )
+#
+# Args:
+#  folder: Path of folder to pack
+#  pack_path: Destination to put the folder in.
+#
+function(unity_pack_folder folder)
+  set(multi PACK_PATH)
+  # Parse the arguments into UNITY_MONO_SOURCES and UNITY_MONO_DEPENDS.
+  cmake_parse_arguments(UNITY_PACK "" "" "${multi}" ${ARGN})
+
+  if("${UNITY_PACK_PACK_PATH}" STREQUAL "")
+    set(UNITY_PACK_PACK_PATH ${UNITY_PACK_DEFAULT_CS_PATH})
+  endif()
+  
+  install(
+    DIRECTORY ${folder}
+    DESTINATION ${UNITY_PACK_PACK_PATH}
+  )
+endfunction()

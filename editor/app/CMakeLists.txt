@@ -78,3 +78,8 @@ mono_add_library(firebase_app_editor_cs
 unity_pack_cs(firebase_app_editor_cs
   PACK_PATH "Firebase/Editor/"
 )
+
+unity_pack_folder(
+  "${FIREBASE_UNITY_DIR}/editor/app/assets/"
+  PACK_PATH "Editor Default Resources/Firebase"
+)
