@@ -64,6 +64,7 @@ def main(argv):
   testapps = []
   for file_dir, _, file_names in os.walk(testapp_dir):
     for file_name in file_names:
+      # match Testapp names, e.g. "Firebase Analytics Unity Testapp"
       if testapp_name in file_name.lower():
         testapps.append(os.path.join(file_dir, file_name))
 

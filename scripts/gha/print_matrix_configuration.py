@@ -75,9 +75,10 @@ PARAMETERS = {
   },
 }
 
-# Plese use Unity LTS version: https://unity3d.com/unity/qa/lts-releases
-# Assume Unity Hub is not installed.
-UNITY_PACKAGE = {
+# Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
+# To list avaliable packages, install u3d, and use cmd "u3d available -u $unity_version -p"
+# The packages below is valid only if Unity Hub is not installed.
+UNITY_PACKAGES = {
   "2020.3.19f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
   "2019.4.30f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
   "2018.4.36f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux"]},

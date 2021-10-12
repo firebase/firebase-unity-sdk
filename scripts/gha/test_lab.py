@@ -88,11 +88,11 @@ flags.DEFINE_string(
     "API level for desired device. See module docstring for details on how"
     " to find available values. If none, will use FTL's default.")
 flags.DEFINE_string(
-    "ios_model", "iphone11pro",
+    "ios_model", "iphone8plus",
     "Model id for desired device. See module docstring for details on how"
     " to get this id. If none, will use FTL's default.")
 flags.DEFINE_string(
-    "ios_version", "14.7",
+    "ios_version", "12.0",
     "iOS version for desired device. See module docstring for details on how"
     " to find available values. If none, will use FTL's default.")
 

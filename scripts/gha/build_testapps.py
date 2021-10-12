@@ -279,8 +279,6 @@ def main(argv):
 
   testapps = validate_testapps(FLAGS.testapps, config.apis)
   platforms = validate_platforms(FLAGS.platforms)
-  if _ANDROID in platforms:
-    setup_android_env()
 
   output_root = os.path.join(root_output_dir, "testapps")
   failures = []
@@ -313,6 +311,8 @@ def main(argv):
       build_desc = "{0}, .NET{1}, Unity{2}".format(
           testapp, runtime, str(version))
       logging.info("BEGIN %s", build_desc)
+      if _ANDROID in platforms:
+        patch_android_env(version)
       try:
         setup_unity_project(dir_helper, setup_options)
       except (subprocess.SubprocessError, RuntimeError) as e:
@@ -337,7 +337,7 @@ def main(argv):
                   description=build_desc + " " + p,
                   error_message=str(e)))
           logging.info(str(e))
-        finally:
+          # If there is an error, print out the log file.
           log_file = dir_helper.make_log_path("build_" + _BUILD_TARGET[p])
           logging.info(log_file)
           with open(log_file, 'r') as f:
@@ -447,7 +447,7 @@ def build_testapp(dir_helper, api_config, ios_config, target):
             os.path.join(dir_helper.root_dir, api_config.entitlements),
             os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
       try:
-        # Unity 2018 retrun non 0 value, but it build successfully
+        # This is a patch. Unity 2018 retrun non 0 value, but it build successfully
         _run(arg_builder.get_args_to_open_project(build_flags))
         logging.info("Finished building target %s xcode project", target)
       except(subprocess.SubprocessError, RuntimeError) as e:
@@ -461,26 +461,33 @@ def build_testapp(dir_helper, api_config, ios_config, target):
     logging.info("Finished building target %s", target)
 
 
-def setup_android_env():
-  url = "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
-  logging.info("install ndk: %s", url)
-  ndk_zip_path = "ndk_zip"
-  ndk_path = "ndk"
-  r = requests.get(url, stream=True)
-  with open(ndk_zip_path, 'wb') as fd:
-    for chunk in r.iter_content(chunk_size=128):
-      fd.write(chunk)
-  with zipfile.ZipFile(ndk_zip_path, 'r') as zip_ref:
-      zip_ref.extractall(ndk_path)
-  os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, "android-ndk-r19"))
-  logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+def patch_android_env(unity_version):
+  major_version = int(unity_version.split(".")[0])
+  if major_version >= 2019:
+    url = "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
+    logging.info("install ndk: %s", url)
+    ndk_zip_path = "ndk_zip"
+    ndk_path = "ndk"
+    r = requests.get(url, stream=True)
+    with open(ndk_zip_path, 'wb') as fd:
+      for chunk in r.iter_content(chunk_size=128):
+        fd.write(chunk)
+    with zipfile.ZipFile(ndk_zip_path, 'r') as zip_ref:
+        zip_ref.extractall(ndk_path)
+    os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, "android-ndk-r19"))
+    logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+  if major_version >= 2020:
+    try:
+      # This is a bug from Unity: 
+      # https://issuetracker.unity3d.com/issues/android-android-build-fails-when-targeting-sdk-31-and-using-build-tools-31-dot-0-0
+      _run(["$ANDROID_HOME/tools/bin/sdkmanager", "--uninstall", "build-tools;31.0.0"])
+      logging.info("Uninstall Android build tool 31.0.0")
+    except(subprocess.SubprocessError, RuntimeError) as e:
+      logging.info(str(e))
+    
   os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
   os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
   os.environ["UNITY_ANDROID_JDK"]=os.environ["JAVA_HOME"]
-  logging.info("ANDROID_ENV")
-  logging.info(os.environ["UNITY_ANDROID_SDK"])
-  logging.info(os.environ["UNITY_ANDROID_NDK"])
-  logging.info(os.environ["UNITY_ANDROID_JDK"])
 
 
 def perform_in_editor_tests(dir_helper, retry_on_license_check=True):

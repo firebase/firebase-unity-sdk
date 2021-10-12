@@ -123,10 +123,11 @@ public sealed class AppBuilderHelper {
     SetUnityPrefWithEnvVar(ANDROID_JDK_KEY, ANDROID_JDK_ENVVAR);
 #if UNITY_ANDROID 
 #if UNITY_2019_3_OR_NEWER
+    // Unity 2019.3+ introduced new method of set values in Unity Preferences -> External Tools
     AndroidExternalToolsSettings.sdkRootPath = System.Environment.GetEnvironmentVariable(ANDROID_SDK_ENVVAR);
     AndroidExternalToolsSettings.ndkRootPath = System.Environment.GetEnvironmentVariable(ANDROID_NDK_ENVVAR);
     AndroidExternalToolsSettings.jdkRootPath = System.Environment.GetEnvironmentVariable(ANDROID_JDK_ENVVAR);
-    AndroidExternalToolsSettings.gradlePath = null; // use Unity Gradle tool
+    AndroidExternalToolsSettings.gradlePath = null; // use default Gradle tool integrated in Unity
 #endif
 #endif
   }

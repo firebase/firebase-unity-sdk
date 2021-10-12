@@ -148,7 +148,6 @@ jobs:
         timeout-minutes: 20
         shell: bash
         run: |
-          u3d available -u ${{ matrix.unity_version }} -p
           python scripts/gha/unity_installer.py --install \
             --platforms ${{ needs.check_and_prepare.outputs.platform }} \
             --version ${{ matrix.unity_version }}
@@ -172,7 +171,6 @@ jobs:
         timeout-minutes: 220
         shell: bash
         run: |
-          $ANDROID_HOME/tools/bin/sdkmanager --uninstall "build-tools;31.0.0"
           # TODO: Download unity SDK first
           if [[ -z "${{ github.event.inputs.sdk_url }}" ]];then
             sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip"
