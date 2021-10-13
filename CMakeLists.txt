@@ -67,7 +67,7 @@ option(FIREBASE_INCLUDE_STORAGE
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 
 option(FIREBASE_INCLUDE_EDITOR_TOOL
-       "Include Unity editor tools for Firebase library." OFF)
+       "Include Unity editor tools for Firebase library." ON)
 option(FIREBASE_UNITY_BUILD_TESTS
        "Enable the Firebase Unity Build Tests." OFF)
 
