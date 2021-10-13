@@ -22,7 +22,7 @@ set(FIREBASE_IOS_POD_VERSION "8.3.0"
 
 # https://github.com/googlesamples/unity-jar-resolver
 set(FIREBASE_UNITY_JAR_RESOLVER_VERSION
-  "1.2.166"
+  "1.2.167"
    CACHE STRING
   "Version tag of Play Services Resolver to download and use (no trailing .0)"
 )

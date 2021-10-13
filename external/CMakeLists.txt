@@ -115,40 +115,49 @@ if(FIREBASE_INCLUDE_UNITY)
     "${JAR_RESOLVER_DLL_DIR}/Google.VersionHandler.dll"
   )
 
-  unity_pack_cs(google_version_handler_cs
-    PACK_PATH "ExternalDependencyManager/Editor"
-  )
-
   mono_add_external_dll(google_version_handlerimpl_cs
-    "${JAR_RESOLVER_DLL_DIR}/Google.VersionHandlerImpl_v${FIREBASE_UNITY_JAR_RESOLVER_VERSION}.dll"
-  )
-
-  unity_pack_cs(google_version_handlerimpl_cs
-    PACK_PATH "ExternalDependencyManager/Editor"
+    "${JAR_RESOLVER_DLL_DIR}/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}/Google.VersionHandlerImpl.dll"
   )
 
   mono_add_external_dll(google_jar_resolver_cs
-    "${JAR_RESOLVER_DLL_DIR}/Google.JarResolver_v${FIREBASE_UNITY_JAR_RESOLVER_VERSION}.dll"
-  )
-
-  unity_pack_cs(google_jar_resolver_cs
-    PACK_PATH "ExternalDependencyManager/Editor"
+    "${JAR_RESOLVER_DLL_DIR}/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}/Google.JarResolver.dll"
   )
 
   mono_add_external_dll(google_ios_resolver_cs
-    "${JAR_RESOLVER_DLL_DIR}/Google.IOSResolver_v${FIREBASE_UNITY_JAR_RESOLVER_VERSION}.dll"
-  )
-
-  unity_pack_cs(google_ios_resolver_cs
-    PACK_PATH "ExternalDependencyManager/Editor"
+    "${JAR_RESOLVER_DLL_DIR}/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}/Google.IOSResolver.dll"
   )
 
   mono_add_external_dll(google_package_manager_resolver_cs
-    "${JAR_RESOLVER_DLL_DIR}/Google.PackageManagerResolver_v${FIREBASE_UNITY_JAR_RESOLVER_VERSION}.dll"
+    "${JAR_RESOLVER_DLL_DIR}/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}/Google.PackageManagerResolver.dll"
+  )
+
+  # TODO: Pack everything under ${GOOGLE_UNITY_JAR_RESOLVER_SOURCE_DIR}/exploded/Assets/
+  # Temporarily group these `unity_package_cs` call together before we change to
+  # package the entire folder.
+  unity_pack_cs(google_version_handler_cs
+    PACK_PATH "ExternalDependencyManager/Editor/"
+  )
+
+  unity_pack_cs(google_version_handlerimpl_cs
+    PACK_PATH "ExternalDependencyManager/Editor/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}"
+  )
+
+  unity_pack_cs(google_jar_resolver_cs
+    PACK_PATH "ExternalDependencyManager/Editor/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}"
+  )
+
+  unity_pack_cs(google_ios_resolver_cs
+    PACK_PATH "ExternalDependencyManager/Editor/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}"
   )
 
   unity_pack_cs(google_package_manager_resolver_cs
-    PACK_PATH "ExternalDependencyManager/Editor"
+    PACK_PATH "ExternalDependencyManager/Editor/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}"
+  )
+
+  unity_pack_file(
+    "${JAR_RESOLVER_DLL_DIR}/external-dependency-manager_version-${FIREBASE_UNITY_JAR_RESOLVER_VERSION}_manifest.txt"
+    "${JAR_RESOLVER_DLL_DIR}/external-dependency-manager_version-${FIREBASE_UNITY_JAR_RESOLVER_VERSION}_manifest.txt.meta"
+    PACK_PATH "ExternalDependencyManager/Editor/"
   )
 
   unity_pack_file(
