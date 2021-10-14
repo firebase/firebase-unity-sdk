@@ -316,3 +316,6 @@ endif()
 if(FIREBASE_INCLUDE_MONO)
   add_subdirectory(samples/mono_app)
 endif()
+
+# add release files
+add_subdirectory(release_build_files)

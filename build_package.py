@@ -36,6 +36,7 @@ import os
 import sys
 import subprocess
 import zipfile
+import shutil
 
 from absl import app
 from absl import flags
@@ -56,12 +57,8 @@ flags.DEFINE_string("script_folder", "unity_packer",
 flags.DEFINE_string("output", "output",
                     "Output folder for unitypackage.")
 
-flags.DEFINE_spaceseplist(
-    "enabled_sections", "build_dotnet3 build_dotnet4 asset_package_only",
-    ("List of sections to include in the set of packages. "
-     "Package specifications that do not specify any sections are always "
-     "included."))
-
+flags.DEFINE_boolean("output_upm", False, "Whether output packages as tgz for"
+    "Unity Package Manager.")
 
 def get_zip_files():
   """Get all zip files from FLAGS.zip_dir.
@@ -149,19 +146,29 @@ def main(argv):
   if not zip_file_list:
     raise app.UsageError("No zip files to process.")
 
+  output_folder = os.path.join(os.getcwd(), FLAGS.output)
+  if os.path.exists(output_folder):
+    shutil.rmtree(output_folder)
+
   cmd_args = [
       sys.executable,
       packer_script_path,
       "--assets_dir=" + FLAGS.zip_dir,
       "--config_file=" + config_file_path,
       "--guids_file=" + guids_file_path,
-      "--enabled_sections=" + " ".join(FLAGS.enabled_sections),
-      "--output_dir=" + FLAGS.output,
+      "--output_dir=" + output_folder,
+      "--output_upm=" + str(FLAGS.output_upm),
   ]
   cmd_args.extend(["--assets_zip=" + zip_file for zip_file in zip_file_list])
   last_version = get_last_version(guids_file_path)
   if last_version:
     cmd_args.append("--plugins_version=" + last_version)
+
+  if FLAGS.output_upm:
+    cmd_args.append("--enabled_sections=build_dotnet4")
+    cmd_args.append("--output_unitypackage=False")
+  else:
+    cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4")
 
   return subprocess.call(cmd_args)
 

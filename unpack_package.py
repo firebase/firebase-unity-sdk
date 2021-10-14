@@ -24,7 +24,6 @@ Example usage:
 import os
 import sys
 import subprocess
-import zipfile
 import shutil
 
 from absl import app
