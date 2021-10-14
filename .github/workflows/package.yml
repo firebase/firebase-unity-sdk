@@ -63,7 +63,7 @@ jobs:
           ls -l
           cd ..
 
-      - name: Package
+      - name: Package unitypackage
         run: |
           python build_package.py --zip_dir=built_artifect
 
@@ -71,11 +71,26 @@ jobs:
         run: |
           ls -Rl
         working-directory: output
+      
+      - name: Package tgz
+        run: |
+          python build_package.py --zip_dir=built_artifect --output_upm=True --output=output_tgz
 
-      - name: Upload Build
+      - name: Listing output tgz
+        run: |
+          ls -Rl
+        working-directory: output_tgz
+
+      - name: Upload Build unitypackage
         uses: actions/upload-artifact@v2
         with:
           name: firebase_unity_sdk
           path: output
+
+      - name: Upload Build tgz
+        uses: actions/upload-artifact@v2
+        with:
+          name: firebase_unity_sdk_tgz
+          path: output_tgz
         
     
