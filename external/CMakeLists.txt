@@ -131,32 +131,8 @@ if(FIREBASE_INCLUDE_UNITY)
     "${JAR_RESOLVER_DLL_DIR}/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}/Google.PackageManagerResolver.dll"
   )
 
-  # TODO: Pack everything under ${GOOGLE_UNITY_JAR_RESOLVER_SOURCE_DIR}/exploded/Assets/
-  # Temporarily group these `unity_package_cs` call together before we change to
-  # package the entire folder.
-  unity_pack_cs(google_version_handler_cs
-    PACK_PATH "ExternalDependencyManager/Editor/"
-  )
-
-  unity_pack_cs(google_version_handlerimpl_cs
-    PACK_PATH "ExternalDependencyManager/Editor/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}"
-  )
-
-  unity_pack_cs(google_jar_resolver_cs
-    PACK_PATH "ExternalDependencyManager/Editor/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}"
-  )
-
-  unity_pack_cs(google_ios_resolver_cs
-    PACK_PATH "ExternalDependencyManager/Editor/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}"
-  )
-
-  unity_pack_cs(google_package_manager_resolver_cs
-    PACK_PATH "ExternalDependencyManager/Editor/${FIREBASE_UNITY_JAR_RESOLVER_VERSION}"
-  )
-
-  unity_pack_file(
-    "${JAR_RESOLVER_DLL_DIR}/external-dependency-manager_version-${FIREBASE_UNITY_JAR_RESOLVER_VERSION}_manifest.txt"
-    "${JAR_RESOLVER_DLL_DIR}/external-dependency-manager_version-${FIREBASE_UNITY_JAR_RESOLVER_VERSION}_manifest.txt.meta"
+  unity_pack_folder(
+    "${JAR_RESOLVER_DLL_DIR}/"
     PACK_PATH "ExternalDependencyManager/Editor/"
   )
 
@@ -179,5 +155,4 @@ if(FIREBASE_INCLUDE_UNITY)
     "${FIREBASE_UNITY_DIR}/network_request.py"
     PACK_PATH "Firebase/Editor"
   )
-
 endif()

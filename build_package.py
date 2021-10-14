@@ -36,6 +36,7 @@ import os
 import sys
 import subprocess
 import zipfile
+import shutil
 
 from absl import app
 from absl import flags
@@ -149,6 +150,10 @@ def main(argv):
   if not zip_file_list:
     raise app.UsageError("No zip files to process.")
 
+  output_folder = os.path.join(os.getcwd(), FLAGS.output)
+  if os.path.exists(output_folder):
+    shutil.rmtree(output_folder)
+
   cmd_args = [
       sys.executable,
       packer_script_path,
@@ -156,7 +161,7 @@ def main(argv):
       "--config_file=" + config_file_path,
       "--guids_file=" + guids_file_path,
       "--enabled_sections=" + " ".join(FLAGS.enabled_sections),
-      "--output_dir=" + FLAGS.output,
+      "--output_dir=" + output_folder,
   ]
   cmd_args.extend(["--assets_zip=" + zip_file for zip_file in zip_file_list])
   last_version = get_last_version(guids_file_path)
