@@ -71,6 +71,12 @@ jobs:
         run: |
           ls -Rl
         working-directory: output
+
+      - name: Upload Build unitypackage
+        uses: actions/upload-artifact@v2
+        with:
+          name: firebase_unity_sdk
+          path: output
       
       - name: Package tgz
         run: |
@@ -80,12 +86,6 @@ jobs:
         run: |
           ls -Rl
         working-directory: output_tgz
-
-      - name: Upload Build unitypackage
-        uses: actions/upload-artifact@v2
-        with:
-          name: firebase_unity_sdk
-          path: output
 
       - name: Upload Build tgz
         uses: actions/upload-artifact@v2
