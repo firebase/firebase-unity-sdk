@@ -26,3 +26,10 @@ set(FIREBASE_UNITY_JAR_RESOLVER_VERSION
    CACHE STRING
   "Version tag of Play Services Resolver to download and use (no trailing .0)"
 )
+
+# https://github.com/firebase/firebase-cpp-sdk
+set(FIREBASE_CPP_SDK_PRESET_VERSION
+  "8.6.0"
+   CACHE STRING
+  "Version tag of Firebase CPP SDK to download (if no local or not passed in) and use (no trailing .0)"
+)
