@@ -22,10 +22,15 @@ if("${FIREBASE_CPP_GIT_REPO}" STREQUAL "")
   set(FIREBASE_CPP_GIT_REPO "https://github.com/firebase/firebase-cpp-sdk")
 endif()
 
+if("${FIREBASE_CPP_SDK_VERSION}" STREQUAL "")
+  set(FIREBASE_CPP_SDK_VERSION ${FIREBASE_CPP_SDK_PRESET_VERSION})
+endif()
+
 ExternalProject_Add(
   firebase_cpp_sdk
 
   GIT_REPOSITORY ${FIREBASE_CPP_GIT_REPO}
+  GIT_TAG        ${FIREBASE_CPP_SDK_VERSION}
   GIT_SHALLOW    1
 
   PREFIX ${PROJECT_BINARY_DIR}

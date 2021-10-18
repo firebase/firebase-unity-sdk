@@ -9,6 +9,10 @@ on:
         description: 'Linux Unity version'
         default: '2017.4.10f1'
         required: true
+      firebase_cpp_sdk_version:
+        description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
+        default: ''
+        required: false
 
 jobs:
   build_android:
@@ -32,6 +36,7 @@ jobs:
         with:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
+          ref: ${{ github.event.inputs.firebase_cpp_sdk_version }}
           submodules: true
 
       - uses: ruby/setup-ruby@v1
