@@ -221,13 +221,6 @@ if(FIREBASE_INCLUDE_UNITY)
   add_external_library(google_unity_jar_resolver)
 endif()
 
-if(${FIREBASE_CPP_SDK_DIR} STREQUAL "")
-  message("Downloading FIREBASE_CPP_SDK")
-  add_external_library(firebase_cpp_sdk)
-else()
-  message("FIREBASE_CPP_SDK_DIR is ${FIREBASE_CPP_SDK_DIR}")
-endif()
-
 add_external_library(minijson)
 add_external_library(parse)
 
