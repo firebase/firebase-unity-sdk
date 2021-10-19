@@ -7,7 +7,7 @@ on:
       # Linux uses a different number for its versions
       linux_unity_version:
         description: 'Linux Unity version'
-        default: '2019.4.31f1'
+        default: '2019.4.30f1'
         required: true
       firebase_cpp_sdk_version:
         description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
@@ -16,7 +16,7 @@ on:
 
 jobs:
   build_android:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: false
     env:
