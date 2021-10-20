@@ -74,7 +74,7 @@ jobs:
       - name: Setup Unity path
         shell: bash
         run: |
-          echo "UNITY_ROOT_DIR=/opt/unity-editor-${{ github.event.inputs.linux_unity_version }}" >> $GITHUB_ENV
+          echo "UNITY_ROOT_DIR=/Applications/Unity_${{ github.event.inputs.unity_version }}" >> $GITHUB_ENV
 
       - name: Build SDK (Android)
         shell: bash
