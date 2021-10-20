@@ -18,6 +18,12 @@ find_package(Mono REQUIRED)
 
 message(STATUS "System UNITY_ROOT_DIR is: ${UNITY_ROOT_DIR}")
 if (NOT EXISTS "${UNITY_ROOT_DIR}")
+  message(STATUS "${UNITY_ROOT_DIR} NOT exist")
+else()
+  message(STATUS "${UNITY_ROOT_DIR} exist")
+endif()
+
+if (NOT EXISTS "${UNITY_ROOT_DIR}")
   # Make our best attempt to find the latest unity installed on the system.
   # Note that Unity <=2018 include mono 2.x which causes compilation errors.
   # Minimum supported version of mono is 3.5.
