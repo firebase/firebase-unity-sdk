@@ -4,9 +4,8 @@ name: Android Build
 on:
   workflow_dispatch:
     inputs:
-      # Linux uses a different number for its versions
-      linux_unity_version:
-        description: 'Linux Unity version'
+      unity_version:
+        description: 'Unity version'
         default: '2019.4.30f1'
         required: true
       firebase_cpp_sdk_version:
@@ -69,7 +68,7 @@ jobs:
       - name: Install Unity
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms "Android" --version ${{ github.event.inputs.linux_unity_version }}
+          python scripts/gha/unity_installer.py --install --platforms "Android" --version ${{ github.event.inputs.unity_version }}
       
       - name: Setup Unity path
         shell: bash
