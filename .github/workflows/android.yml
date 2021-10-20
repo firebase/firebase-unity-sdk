@@ -56,6 +56,13 @@ jobs:
           build_scripts/android/install_prereqs.sh
           cd ..
 
+      - name: Cache NDK
+        id: cache_ndk
+        uses: actions/cache@v2
+        with:
+          path: /tmp/android-ndk-r16b
+          key: android-ndk-${{ matrix.os }}-r16b
+
       - name: Install Unity installer (U3D)
         shell: bash
         run: gem install u3d
