@@ -37,11 +37,14 @@ if [ -d "../firebase-cpp-sdk" ]; then
   cd ../firebase-unity-sdk
 fi
 
+echo "ANDROID_NDK is : ${ANDROID_NDK}"
 if [[ -z "${ANDROID_NDK}" ]]; then
+  echo "Using ANDROID_NDK: ${ANDROID_NDK} android tool chain"
   shopt -s nullglob
   list=(${ANDROID_NDK}/build/cmake/android.toolchain.cmake)
   shopt -u nullglob 
 else
+  echo "Using ANDROID_HOME: ${ANDROID_HOME} android tool chain"
   shopt -s nullglob
   list=(${ANDROID_HOME}/**/build/cmake/android.toolchain.cmake)
   shopt -u nullglob
