@@ -37,13 +37,7 @@ if [ -d "../firebase-cpp-sdk" ]; then
   cd ../firebase-unity-sdk
 fi
 
-echo "ANDROID_NDK is : ${ANDROID_NDK}"
-if [[ -z "${ANDROID_NDK}" ]]; then
-  echo "Using ANDROID_NDK: ${ANDROID_NDK} android tool chain"
-  shopt -s nullglob
-  list=(${ANDROID_NDK}/build/cmake/android.toolchain.cmake)
-  shopt -u nullglob 
-else
+if [[ -z "${ANDROID_NDK}" ]]; then #ANDROID_NDK not set
   echo "Using ANDROID_HOME: ${ANDROID_HOME} android tool chain"
   shopt -s nullglob
   list=(${ANDROID_HOME}/**/build/cmake/android.toolchain.cmake)
@@ -61,6 +55,11 @@ else
       exit -1
     fi
   fi
+else
+  echo "Using ANDROID_NDK: ${ANDROID_NDK} android tool chain"
+  shopt -s nullglob
+  list=(${ANDROID_NDK}/build/cmake/android.toolchain.cmake)
+  shopt -u nullglob
 fi
 
 echo "Using android toolchain: ${list[0]}"
