@@ -58,7 +58,6 @@ jobs:
           echo "NDK_ROOT=/tmp/android-ndk-r16b" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=/tmp/android-ndk-r16b" >> $GITHUB_ENV
           echo "ANDROID_NDK=/tmp/android-ndk-r16b" >> $GITHUB_ENV
-          set
           cd ..
 
       - name: Cache NDK

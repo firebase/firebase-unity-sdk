@@ -37,20 +37,26 @@ if [ -d "../firebase-cpp-sdk" ]; then
   cd ../firebase-unity-sdk
 fi
 
-shopt -s nullglob
-list=(${ANDROID_HOME}/**/build/cmake/android.toolchain.cmake)
-shopt -u nullglob
-
-if [ ! -f "${list[0]}" ]; then
-  # Some installations of the NDK have it in NDK/version, instead of just
-  # ndk-bundle, and ** sometimes does not recurse correctly, so check that case.
+if [[ -z "${ANDROID_NDK}" ]]; then
   shopt -s nullglob
-  list=(${ANDROID_HOME}/*/*/build/cmake/android.toolchain.cmake)
+  list=(${ANDROID_NDK}/build/cmake/android.toolchain.cmake)
+  shopt -u nullglob 
+else
+  shopt -s nullglob
+  list=(${ANDROID_HOME}/**/build/cmake/android.toolchain.cmake)
   shopt -u nullglob
 
   if [ ! -f "${list[0]}" ]; then
-    echo "Failed to find android.toolchain.cmake. Please ensure ANDROID_HOME is set to a valid ndk directory."
-    exit -1
+    # Some installations of the NDK have it in NDK/version, instead of just
+    # ndk-bundle, and ** sometimes does not recurse correctly, so check that case.
+    shopt -s nullglob
+    list=(${ANDROID_HOME}/*/*/build/cmake/android.toolchain.cmake)
+    shopt -u nullglob
+
+    if [ ! -f "${list[0]}" ]; then
+      echo "Failed to find android.toolchain.cmake. Please ensure ANDROID_HOME is set to a valid ndk directory."
+      exit -1
+    fi
   fi
 fi
 
