@@ -23,6 +23,7 @@ jobs:
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
       U3D_PASSWORD: ""
+      CCACHE_DIR: ${{ github.workspace }}/ccache_dir
   
     steps:
       - name: Checkout Unity Repo
@@ -54,6 +55,8 @@ jobs:
           cd firebase-cpp-sdk
           python scripts/gha/install_prereqs_desktop.py
           build_scripts/android/install_prereqs.sh
+          echo "NDK_ROOT=/tmp/android-ndk-r16b" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=/tmp/android-ndk-r16b" >> $GITHUB_ENV
           cd ..
 
       - name: Cache NDK
