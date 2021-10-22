@@ -83,10 +83,10 @@ option(FIREBASE_PACK_DOTNET "Add CSharp libraries to CPack output" ON)
 
 set(FIREBASE_CPP_SDK_DIR "" CACHE STRING "Directory to the firebase cpp sdk")
 
-# set(FIREBASE_ANDROID_STL "" CACHE STRING "STL implementation to use.")
-# if (NOT FIREBASE_ANDROID_STL STREQUAL "")
-#   set(ANDROID_STL ${FIREBASE_ANDROID_STL})
-# endif()
+set(FIREBASE_ANDROID_STL "" CACHE STRING "STL implementation to use.")
+if (NOT FIREBASE_ANDROID_STL STREQUAL "")
+  set(ANDROID_STL ${FIREBASE_ANDROID_STL})
+endif()
 
 # UseSWIG generates standard target names.
 cmake_policy(SET CMP0078 NEW)
