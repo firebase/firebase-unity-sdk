@@ -37,8 +37,8 @@ if [ -d "../firebase-cpp-sdk" ]; then
   cd ../firebase-unity-sdk
 fi
 
-if [[ -z "${ANDROID_NDK}" ]]; then #ANDROID_NDK not set
-  echo "Using ANDROID_HOME: ${ANDROID_HOME} android tool chain"
+if [[ -z "${ANDROID_NDK_HOME}" ]]; then #ANDROID_NDK_HOME not set
+  echo "Using ANDROID_NDK_HOME: ${ANDROID_NDK_HOME} android tool chain"
   shopt -s nullglob
   list=(${ANDROID_HOME}/**/build/cmake/android.toolchain.cmake)
   shopt -u nullglob
@@ -56,9 +56,9 @@ if [[ -z "${ANDROID_NDK}" ]]; then #ANDROID_NDK not set
     fi
   fi
 else
-  echo "Using ANDROID_NDK: ${ANDROID_NDK} android tool chain"
+  echo "Using ANDROID_NDK_HOME: ${ANDROID_NDK_HOME} android tool chain"
   shopt -s nullglob
-  list=(${ANDROID_NDK}/build/cmake/android.toolchain.cmake)
+  list=(${ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake)
   shopt -u nullglob
 fi
 
@@ -70,8 +70,6 @@ CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_TOOLCHAIN_FILE=${list[0]}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DANDROID_ABI=armeabi-v7a"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_ANDROID_BUILD=true"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=release"
-CMAKE_OPTIONS="${CMAKE_OPTIONS} -DANDROID_STL=c++_static"
-
 
 # Display commands being run.
 set -x
