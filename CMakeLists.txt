@@ -83,6 +83,11 @@ option(FIREBASE_PACK_DOTNET "Add CSharp libraries to CPack output" ON)
 
 set(FIREBASE_CPP_SDK_DIR "" CACHE STRING "Directory to the firebase cpp sdk")
 
+set(FIREBASE_ANDROID_STL "" CACHE STRING "STL implementation to use.")
+if (NOT FIREBASE_ANDROID_STL STREQUAL "")
+  set(ANDROID_STL ${FIREBASE_ANDROID_STL})
+endif()
+
 # UseSWIG generates standard target names.
 cmake_policy(SET CMP0078 NEW)
 
@@ -242,7 +247,7 @@ set(PROJECT_LIST_HEADER "#define PROJECT_LIST(X)")
 list(APPEND PROJECT_LIST_HEADER "  X(App)")
 
 # Include Firebase editor tools.
-if (FIREBASE_INCLUDE_EDITOR_TOOL)
+if (DESKTOP AND FIREBASE_INCLUDE_EDITOR_TOOL)
   add_subdirectory(editor)
 endif()
 
