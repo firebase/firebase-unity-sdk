@@ -1,10 +1,10 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -116,7 +116,8 @@ namespace Firebase.Firestore {
     /// <returns>The list of document changes since the last snapshot.</returns>
     // TODO(zxu): change to IReadOnlyList type, which needs .net 4.5 while current tool-chain is .net 4.0.
     public IEnumerable<DocumentChange> GetChanges(MetadataChanges metadataChanges) {
-      var changes = FirestoreCpp.QuerySnapshotDocumentChanges(_proxy, metadataChanges);
+      var changes = FirestoreCpp.QuerySnapshotDocumentChanges(_proxy,
+          Enums.Convert(metadataChanges));
       uint size = changes.Size();
 
       if (size > Int32.MaxValue) {
@@ -130,6 +131,19 @@ namespace Firebase.Firestore {
       }
 
       return result;
+    }
+
+    /// <inheritdoc />
+    public override bool Equals(object obj) => Equals(obj as QuerySnapshot);
+
+    /// <inheritdoc />
+    public bool Equals(QuerySnapshot other) => other != null
+                                               && FirestoreCpp.QuerySnapshotEquals(_proxy,
+                                                                                   other._proxy);
+
+    /// <inheritdoc />
+    public override int GetHashCode() {
+      return FirestoreCpp.QuerySnapshotHashCode(_proxy);
     }
 
     /// <inheritdoc />

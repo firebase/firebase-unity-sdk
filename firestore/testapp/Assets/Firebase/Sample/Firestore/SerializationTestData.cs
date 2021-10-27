@@ -1,10 +1,10 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -245,7 +245,7 @@ namespace Firebase.Sample.Firestore {
     }
 
     public static IEnumerable<TestCase> UnsupportedTestData() {
-      return new List<TestCase> {
+      var testCases = new List<TestCase> {
         // Nullable type handling
         { new TestCase(new NullableContainer { NullableValue = 10 },
                        new Dictionary<string, object> { { "NullableValue", 10L } },
@@ -261,13 +261,6 @@ namespace Firebase.Sample.Firestore {
         { new TestCase(new NullableEnumContainer { NullableValue = null },
                        new Dictionary<string, object> { { "NullableValue", null } },
                        TestCase.TestOutcome.Unsupported) },
-
-        // IEnumerable values cannot be assigned from a List.
-        // TODO(b/173894435): there should be a way to specify if it is serialization or
-        // deserialization failure.
-        { new TestCase(Enumerable.Range(3, 2).Select(i => (long)i),
-                       Enumerable.Range(3, 2).Select(i => (long)i),
-                       TestCase.TestOutcome.ReadToInputTypesNotSupported) },
         { new TestCase(
             new CustomUserSetEmails { Name = "Jon", HighScore = 10,
                                       Emails = new HashSet<string> { "jon@example.com" } },
@@ -276,6 +269,18 @@ namespace Firebase.Sample.Firestore {
                                              { "Emails", new List<object> { "jon@example.com" } } },
             TestCase.TestOutcome.ReadToInputTypesNotSupported) },
       };
+
+      // TODO(b/198466069) Re-enable this test once the bug is fixed in dotnet3 runtimes.
+      if (Environment.Version.Major >= 4) {
+        // IEnumerable values cannot be assigned from a List.
+        // TODO(b/173894435): there should be a way to specify if it is serialization or
+        // deserialization failure.
+        testCases.Add(new TestCase(Enumerable.Range(3, 2).Select(i => (long)i),
+                                   Enumerable.Range(3, 2).Select(i => (long)i),
+                                   TestCase.TestOutcome.ReadToInputTypesNotSupported));
+      }
+
+      return testCases;
     }
 
     // Only equatable for the sake of testing; that's not a requirement of the serialization code.

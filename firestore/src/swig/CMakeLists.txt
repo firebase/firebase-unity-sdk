@@ -16,7 +16,9 @@
 
 set(firebase_firestore_swig_cpp_src
   document_event_listener.cc
+  equality_compare.cc
   firestore_instance_management.cc
+  hash.cc
   load_bundle_task_progress_callback.cc
   query_event_listener.cc
   snapshots_in_sync_listener.cc

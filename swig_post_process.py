@@ -350,7 +350,7 @@ class RenameArgsFromSnakeToCamelCase(SWIGPostProcessingInterface):
     for index, word in enumerate(identifier.split('_')):
       if index == 0:
         output_words.append(word)
-      else:
+      elif word:
         output_words.append(word[0].upper() + word[1:])
     return ''.join(output_words)
 

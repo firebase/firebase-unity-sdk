@@ -1,16 +1,16 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.using System;
+// limitations under the License.
 
 using System;
 using System.Collections.Generic;
@@ -26,22 +26,26 @@ namespace Firebase.Firestore {
   using LoadBundleProgressCallbackMap = ListenerRegistrationMap<Action<LoadBundleTaskProgress>>;
 
   /// <summary>
-  /// Represents a Cloud Firestore database and is the entry point fr all Cloud Firestore
+  /// Represents a Cloud Firestore database and is the entry point for all Cloud Firestore
   /// operations.
   /// </summary>
   public sealed class FirebaseFirestore {
+    // This lock and boolean pair are used to ensure that the mapping from Firebase app to Firestore
+    // instance is removed atomically from the C++ instance cache and the C# instance cache. Any
+    // call to a C++ method that removes the mapping from the C++ instance cache must do so while
+    // holding this lock and must then set the boolean flag to false while still holding the lock.
+    // Abiding by this contract ensures that the two caches are kept in sync.
+    private readonly object _isInCppInstanceCacheLock = new object();
+    private bool _isInCppInstanceCache = true;
+
+    private readonly ReaderWriterLock _disposeLock = new ReaderWriterLock();
     private FirestoreProxy _proxy;
 
-    private FirebaseFirestoreSettings _settings = new FirebaseFirestoreSettings();
-    private Boolean _settingsApplied;
-
+    private readonly FirebaseFirestoreSettings _settings;
     private readonly TransactionManager _transactionManager;
 
-    // Track Firestore instances so that we return the same one each time they're requested (e.g.
-    // via DefaultInstance, though also via calls to GetInstance that are passed the same
-    // FirebaseApp instance). As a side effect of keying by FirebaseApp, this also prevents the
-    // FirebaseApp from being GC'd.
-    private static IDictionary<FirebaseApp, FirebaseFirestore> databases = new Dictionary<FirebaseApp, FirebaseFirestore>();
+    private static readonly IDictionary<FirebaseApp, FirebaseFirestore> _instanceCache =
+        new Dictionary<FirebaseApp, FirebaseFirestore>();
 
     // We rely on e.g. firestore.Document("a/b").Firestore returning the original Firestore
     // instance so it's important the constructor remains private and we only create one
@@ -57,6 +61,7 @@ namespace Firebase.Firestore {
       string dotnetVersion = EnvironmentVersion.GetEnvironmentVersion();
       ApiHeaders.SetClientLanguage(String.Format("gl-dotnet/{0}", dotnetVersion));
 
+      _settings = new FirebaseFirestoreSettings(proxy);
       _transactionManager = new TransactionManager(this, proxy);
     }
 
@@ -71,38 +76,39 @@ namespace Firebase.Firestore {
       Dispose();
     }
 
-    private FirestoreProxy GetProxy() {
-        if (!_settingsApplied) {
-          _proxy.set_settings(Settings.Proxy);
-          _settingsApplied = true;
-        }
-        return _proxy;
-    }
-
+    // TODO(b/201097848) Make `Dispose()` public and implement `IDisposable`.
     private void Dispose() {
-      System.GC.SuppressFinalize(this);
-      if (_proxy == null) return;
-      lock (_proxy) {
-        if (_proxy == null) return;
+      _disposeLock.AcquireWriterLock(Int32.MaxValue);
+      try {
+        if (_proxy == null) {
+          return;
+        }
 
-        App.AppDisposed -= OnAppDisposed;
-
-        _transactionManager.Dispose();
         snapshotsInSyncCallbacks.ClearCallbacksForOwner(this);
         loadBundleProgressCallbackMap.ClearCallbacksForOwner(this);
         DocumentReference.ClearCallbacksForOwner(this);
         Query.ClearCallbacksForOwner(this);
 
-        // Make sure the cache doesn't hold on to a stale (cleaned-up) instance.
-        lock (databases) {
-          databases.Remove(App);
+        _transactionManager.Dispose();
+        _settings.Dispose();
+
+        App.AppDisposed -= OnAppDisposed;
+
+        lock (_isInCppInstanceCacheLock) {
+          _proxy.Dispose();
+          _isInCppInstanceCache = false;
+          RemoveSelfFromInstanceCache();
         }
 
-        _proxy.Dispose();
         _proxy = null;
         App = null;
+      } finally {
+        _disposeLock.ReleaseWriterLock();
       }
+
+      System.GC.SuppressFinalize(this);
     }
+
     /// <summary>
     /// Returns the <c>FirebaseApp</c> instance to which this <c>FirebaseFirestore</c> belongs.
     /// </summary>
@@ -128,25 +134,54 @@ namespace Firebase.Firestore {
     public static FirebaseFirestore GetInstance(FirebaseApp app) {
       Preconditions.CheckNotNull(app, nameof(app));
 
-      lock (databases) {
-        if (!databases.ContainsKey(app)) {
-          FirestoreProxy fp = Util.NotNull(FirestoreCpp.GetFirestoreInstance(app));
-          databases[app] = new FirebaseFirestore(fp, app);
+      while (true) {
+        FirebaseFirestore firestore;
+
+        // Acquire the lock on `_instanceCache` to see if the given `FirebaseApp` is in
+        // `_instanceCache`; if it isn't then create the `FirebaseFirestore` instance, put it in the
+        // cache, and return it.
+        lock (_instanceCache) {
+          if (!_instanceCache.TryGetValue(app, out firestore)) {
+            // NOTE: FirestoreProxy.GetInstance() returns an *owning* reference (see the %newobject
+            // directive in firestore.SWIG); therefore, we must make sure that we *never* call
+            // FirestoreProxy.GetInstance() when it would return a proxy for a C++ object that it
+            // previously returned. Otherwise, if it did, then that C++ object would be deleted
+            // twice, causing a crash.
+            FirestoreProxy firestoreProxy = Util.NotNull(FirestoreProxy.GetInstance(app));
+            firestore = new FirebaseFirestore(firestoreProxy, app);
+            _instanceCache[app] = firestore;
+            return firestore;
+          }
         }
-        return databases[app];
+
+        // Acquire the lock on the specific `FirebaseFirestore` instance's `_isInCppInstanceCache`
+        // and check if the mapping is also present in the C++ instance cache. If it is, then go
+        // ahead and return the `FirebaseFirestore` object. If it isn't, then there must have been a
+        // concurrent call to `TerminateAsync` or `Dispose` that removed it from the C++ instance
+        // cache, in which case we just try the whole process over again. That's why this logic is
+        // in "while" loop as opposed to a single "if" statement.
+        lock (firestore._isInCppInstanceCacheLock) {
+          if (firestore._isInCppInstanceCache) {
+            return firestore;
+          }
+        }
       }
     }
 
     /// <summary>
-    /// Gets or sets the settings used to configure this <c>FirebaseFirestore</c> object.
-    /// Changing settings after calling other methods of the instance will have no effect.
+    /// The settings of this <c>FirebaseFirestore</c> object.
     /// </summary>
+    /// <remarks>
+    /// <para>To change the settings used by this <c>FirebaseFirestore</c> instance, simply change
+    /// the values of the properties on this <c>FirebaseFirestoreSettings</c> object.</para>
+    /// <para>Invoking any non-static method on this <c>FirebaseFirestore</c> instance will "lock
+    /// in" the settings. No changes are allowed to be made to the settings once they are locked in.
+    /// Attempting to do so will result in an exception being thrown by the property setter.
+    /// </para>
+    /// </remarks>
     public FirebaseFirestoreSettings Settings {
       get {
         return _settings;
-      }
-      set {
-        _settings = value;
       }
     }
 
@@ -158,7 +193,7 @@ namespace Firebase.Firestore {
     /// <returns>A collection reference.</returns>
     public CollectionReference Collection(string path) {
       Preconditions.CheckNotNullOrEmpty(path, nameof(path));
-      return new CollectionReference(GetProxy().Collection(path), this);
+      return WithFirestoreProxy(proxy => new CollectionReference(proxy.Collection(path), this));
     }
 
     /// <summary>
@@ -169,7 +204,7 @@ namespace Firebase.Firestore {
     /// <returns>A document reference.</returns>
     public DocumentReference Document(string path) {
       Preconditions.CheckNotNullOrEmpty(path, nameof(path));
-      return new DocumentReference(GetProxy().Document(path), this);
+      return WithFirestoreProxy(proxy => new DocumentReference(proxy.Document(path), this));
     }
 
     /// <summary>
@@ -183,14 +218,16 @@ namespace Firebase.Firestore {
     /// <returns>The created <see cref="Query"/>.</returns>
     public Query CollectionGroup(string collectionId) {
       Preconditions.CheckNotNullOrEmpty(collectionId, nameof(collectionId));
-      return new Query(GetProxy().CollectionGroup(collectionId), this);
+      return WithFirestoreProxy(proxy => new Query(proxy.CollectionGroup(collectionId), this));
     }
 
     /// <summary>
     /// Creates a write batch, which can be used to commit multiple mutations atomically.
     /// </summary>
     /// <returns>A write batch for this database.</returns>
-    public WriteBatch StartBatch() => new WriteBatch(GetProxy().batch());
+    public WriteBatch StartBatch() {
+      return WithFirestoreProxy(proxy => new WriteBatch(proxy.batch()));
+    }
 
     /// <summary>
     /// Runs a transaction asynchronously, with an asynchronous callback that doesn't return a
@@ -207,7 +244,8 @@ namespace Firebase.Firestore {
     /// <c>FieldValue.ArrayRemove</c>, or <c>FieldValue.Increment</c> inside a transaction counts as
     /// an additional write.</para>
     /// </remarks>
-    /// <param name="callback">The callback to execute. Must not be <c>null</c>.</param>
+    /// <param name="callback">The callback to execute. Must not be <c>null</c>. The callback will
+    /// be invoked on the main thread.</param>
     /// <returns>A task which completes when the transaction has committed.</returns>
     public Task RunTransactionAsync(Func<Transaction, Task> callback) {
       Preconditions.CheckNotNull(callback, nameof(callback));
@@ -233,15 +271,13 @@ namespace Firebase.Firestore {
     /// </remarks>
     ///
     /// <typeparam name="T">The result type of the callback.</typeparam>
-    /// <param name="callback">The callback to execute. Must not be <c>null</c>.</param>
+    /// <param name="callback">The callback to execute. Must not be <c>null</c>. The callback will
+    /// be invoked on the main thread.</param>
     /// <returns>A task which completes when the transaction has committed. The result of the task
     /// then contains the result of the callback.</returns>
     public Task<T> RunTransactionAsync<T>(Func<Transaction, Task<T>> callback) {
       Preconditions.CheckNotNull(callback, nameof(callback));
-      if (_proxy != null) {
-        GetProxy();  // Ensure that the settings are applied.
-      }
-      return _transactionManager.RunTransactionAsync(callback);
+      return WithFirestoreProxy(proxy => _transactionManager.RunTransactionAsync(callback));
     }
 
     private static SnapshotsInSyncCallbackMap snapshotsInSyncCallbacks = new SnapshotsInSyncCallbackMap();
@@ -251,13 +287,18 @@ namespace Firebase.Firestore {
 
     [MonoPInvokeCallback(typeof(SnapshotsInSyncDelegate))]
     private static void SnapshotsInSyncHandler(int callbackId) {
-      Action callback;
+      try {
+        Action callback;
 
-      if (snapshotsInSyncCallbacks.TryGetCallback(callbackId, out callback)) {
-        FirebaseHandler.RunOnMainThread<object>(() => {
-          callback();
-          return null;
-        });
+        if (snapshotsInSyncCallbacks.TryGetCallback(callbackId, out callback)) {
+          FirebaseHandler.RunOnMainThread<object>(() => {
+            callback();
+            return null;
+          });
+        }
+
+      } catch (Exception e) {
+        Util.OnPInvokeManagedException(e, nameof(SnapshotsInSyncHandler));
       }
     }
 
@@ -273,15 +314,17 @@ namespace Firebase.Firestore {
     /// the server.
     /// </remarks>
     /// <param name="callback">A callback to be called every time all snapshot listeners are in
-    /// sync with each other.</param>
+    /// sync with each other. The callback will be invoked on the main thread.</param>
     /// <returns>A registration object that can be used to remove the listener.</returns>
     public ListenerRegistration ListenForSnapshotsInSync(Action callback) {
       Preconditions.CheckNotNull(callback, nameof(callback));
       var tcs = new TaskCompletionSource<object>();
-      int uid = snapshotsInSyncCallbacks.Register(this, callback);
-      var listener =
-          FirestoreCpp.AddSnapshotsInSyncListener(GetProxy(), uid, snapshotsInSyncHandler);
-      return new ListenerRegistration(snapshotsInSyncCallbacks, uid, tcs, listener);
+      int uid = -1;
+      ListenerRegistrationProxy listenerProxy = WithFirestoreProxy(proxy => {
+        uid = snapshotsInSyncCallbacks.Register(this, callback);
+        return FirestoreCpp.AddSnapshotsInSyncListener(proxy, uid, snapshotsInSyncHandler);
+      });
+      return new ListenerRegistration(snapshotsInSyncCallbacks, uid, tcs, listenerProxy);
     }
 
     private static LoadBundleProgressCallbackMap loadBundleProgressCallbackMap =
@@ -292,10 +335,17 @@ namespace Firebase.Firestore {
 
     [MonoPInvokeCallback(typeof(LoadBundleTaskProgressDelegate))]
     private static void LoadBundleTaskProgressHandler(int callbackId, IntPtr progressPtr) {
-      Action<LoadBundleTaskProgress> callback;
-      var progress = new LoadBundleTaskProgress(new LoadBundleTaskProgressProxy(progressPtr, true));
-      if (loadBundleProgressCallbackMap.TryGetCallback(callbackId, out callback)) {
-        callback(progress);
+      try {
+        // Create the proxy object _before_ doing anything else to ensure that the C++ object's
+        // memory does not get leaked (https://github.com/firebase/firebase-unity-sdk/issues/49).
+        var progressProxy = new LoadBundleTaskProgressProxy(progressPtr, /*cMemoryOwn=*/true);
+
+        Action<LoadBundleTaskProgress> callback;
+        if (loadBundleProgressCallbackMap.TryGetCallback(callbackId, out callback)) {
+          callback(new LoadBundleTaskProgress(progressProxy));
+        }
+      } catch (Exception e) {
+        Util.OnPInvokeManagedException(e, nameof(LoadBundleTaskProgressHandler));
       }
     }
 
@@ -307,7 +357,10 @@ namespace Firebase.Firestore {
     /// the task then contains the final progress of the loading operation.
     /// </returns>
     public Task<LoadBundleTaskProgress> LoadBundleAsync(string bundleData) {
-      return LoadBundleAsync(bundleData, (sender, progress) => {});
+      Preconditions.CheckNotNull(bundleData, nameof(bundleData));
+      return WithFirestoreProxy(
+          proxy => Util.MapResult(FirestoreCpp.LoadBundleAsync(proxy, bundleData),
+                                  progressProxy => new LoadBundleTaskProgress(progressProxy)));
     }
 
     /// <summary>
@@ -316,7 +369,8 @@ namespace Firebase.Firestore {
     /// </summary>
     /// <param name="bundleData">The bundle to be loaded.</param>
     /// <param name="progressHandler">A <see cref="System.EventHandler"/> that is notified with
-    /// progress updates, and completion or error updates.</param>
+    /// progress updates, and completion or error updates. The handler will be invoked on the
+    /// main thread.</param>
     /// <returns>A task that is completed when the loading is completed. The result of the task
     /// then contains the final progress of the loading operation.
     /// </returns>
@@ -325,25 +379,18 @@ namespace Firebase.Firestore {
       Preconditions.CheckNotNull(bundleData, nameof(bundleData));
       Preconditions.CheckNotNull(progressHandler, nameof(progressHandler));
 
-      var tcs = new TaskCompletionSource<LoadBundleTaskProgress>();
       Action<LoadBundleTaskProgress> action = (LoadBundleTaskProgress progress) => {
-        try {
+        FirebaseHandler.RunOnMainThread<object>(() => {
           progressHandler(this, progress);
-        } finally {
-          // Make sure returning task completes regardless of progressHanlder state.
-          if (progress.State == LoadBundleTaskProgress.LoadBundleTaskState.Success) {
-            tcs.SetResult(progress);
-          } else if (progress.State == LoadBundleTaskProgress.LoadBundleTaskState.Error) {
-            tcs.SetException(new FirestoreException(
-                FirestoreError.Unknown, "Loading Firestore bundle encountered an error."));
-          }
-        }
+          return null;
+        });
       };
 
-      int callbackId = loadBundleProgressCallbackMap.Register(this, action);
-      FirestoreCpp.LoadBundleWithCallback(GetProxy(), bundleData, callbackId, handler);
-
-      return tcs.Task;
+      return WithFirestoreProxy(proxy => {
+        int callbackId = loadBundleProgressCallbackMap.Register(this, action);
+        return Util.MapResult(FirestoreCpp.LoadBundleAsync(proxy, bundleData, callbackId, handler),
+                              progressProxy => new LoadBundleTaskProgress(progressProxy));
+      });
     }
 
     /// <summary>
@@ -366,7 +413,8 @@ namespace Firebase.Firestore {
     /// </summary>
     /// <param name="bundleData">The bundle to be loaded, as a UTF8 encoded byte array.</param>
     /// <param name="progressHandler">An <see cref="System.EventHandler"/> that is notified with
-    /// progress updates, and completion or error updates.</param>
+    /// progress updates, and completion or error updates. The handler will be invoked on the main
+    /// thread.</param>
     /// <returns>A task that is completed when the loading is completed. The result of the task
     /// then contains the final progress of the loading operation.
     /// </returns>
@@ -393,12 +441,14 @@ namespace Firebase.Firestore {
     /// </returns>
     public Task<Query> GetNamedQueryAsync(string queryName) {
       Preconditions.CheckNotNull(queryName, nameof(queryName));
-      return GetProxy().NamedQueryAsync(queryName).ContinueWith<Query>((queryProxy) => {
-        if (queryProxy.IsFaulted) {
-          return null;
-        }
+      return WithFirestoreProxy(proxy => {
+        return proxy.NamedQueryAsync(queryName).ContinueWith<Query>((queryProxy) => {
+          if (queryProxy.IsFaulted) {
+            return null;
+          }
 
-        return new Query(queryProxy.Result, this);
+          return new Query(queryProxy.Result, this);
+        });
       });
     }
 
@@ -411,14 +461,18 @@ namespace Firebase.Firestore {
     /// re-enabled via a call to <see cref="FirebaseFirestore.EnableNetworkAsync"/>.
     /// </remarks>
     /// <returns>A task which completes once networking is disabled.</returns>
-    public Task DisableNetworkAsync() => GetProxy().DisableNetworkAsync();
+    public Task DisableNetworkAsync() {
+      return WithFirestoreProxy(proxy => proxy.DisableNetworkAsync());
+    }
 
     /// <summary>
     /// Re-enables network usage for this instance after a prior call to
     /// <see cref="FirebaseFirestore.DisableNetworkAsync"/>.
     /// </summary>
     /// <returns>A task which completes once networking is enabled.</returns>
-    public Task EnableNetworkAsync() => GetProxy().EnableNetworkAsync();
+    public Task EnableNetworkAsync() {
+      return WithFirestoreProxy(proxy => proxy.EnableNetworkAsync());
+    }
 
     /// <summary>
     /// Waits until all currently pending writes for the active user have been acknowledged by the
@@ -436,7 +490,9 @@ namespace Firebase.Firestore {
     ///
     /// <returns> A Task which completes when all currently pending writes have been acknowledged
     /// by the backend.</returns>
-    public Task WaitForPendingWritesAsync() => GetProxy().WaitForPendingWritesAsync();
+    public Task WaitForPendingWritesAsync() {
+      return WithFirestoreProxy(proxy => proxy.WaitForPendingWritesAsync());
+    }
 
     /// <summary>
     /// Terminates this <c>FirebaseFirestore</c> instance.
@@ -463,12 +519,14 @@ namespace Firebase.Firestore {
     /// A Task which completes when the instance has been successfully terminated.
     /// </returns>
     public Task TerminateAsync() {
-      lock (databases) {
-        if (databases.ContainsKey(App)) {
-          databases.Remove(App);
+      return WithFirestoreProxy(proxy => {
+        lock (_isInCppInstanceCacheLock) {
+          Task terminateTask = proxy.TerminateAsync();
+          _isInCppInstanceCache = false;
+          RemoveSelfFromInstanceCache();
+          return terminateTask;
         }
-      }
-      return GetProxy().TerminateAsync();
+      });
     }
 
     /// <summary>
@@ -491,7 +549,9 @@ namespace Firebase.Firestore {
     ///
     /// <returns>A Task which completes when the clear persistence operation has completed.
     /// </returns>
-    public Task ClearPersistenceAsync() => GetProxy().ClearPersistenceAsync();
+    public Task ClearPersistenceAsync() {
+      return WithFirestoreProxy(proxy => proxy.ClearPersistenceAsync());
+    }
 
     /// <summary>
     ///  Sets the log verbosity of all Firestore instances.
@@ -508,6 +568,50 @@ namespace Firebase.Firestore {
       set {
         // This is thread-safe as far as the underlying one is thread-safe.
         FirestoreProxy.set_log_level(value);
+      }
+    }
+
+    /// <summary>
+    /// Ensure that the `FirestoreProxy` has had its settings applied, and then call the given
+    /// `Function` with that `FirestoreProxy` instance, returning whatever it returns. If the
+    /// `FirestoreProxy` has been disposed, then a `FirestoreException` is thrown.
+    /// </summary>
+    private T WithFirestoreProxy<T>(Func<FirestoreProxy, T> func) {
+      _disposeLock.AcquireReaderLock(Int32.MaxValue);
+      try {
+        if (_proxy == null) {
+          throw new InvalidOperationException("Firestore instance has been disposed");
+        }
+
+        _settings.EnsureAppliedToFirestoreProxy();
+
+        return func(_proxy);
+      } finally {
+        _disposeLock.ReleaseReaderLock();
+      }
+    }
+
+    /// <summary>
+    /// Ensure that the `FirestoreProxy` has had its settings applied, and then call the given
+    /// `Action` with that `FirestoreProxy` instance. If the `FirestoreProxy` has been disposed,
+    /// then a `FirestoreException` is thrown.
+    /// </summary>
+    private void WithFirestoreProxy(Action<FirestoreProxy> action) {
+      WithFirestoreProxy<object>(proxy => {
+        action(proxy);
+        return null;
+      });
+    }
+
+    /// <summary>
+    /// Removes the mapping from the instance cache for this object.
+    /// </summary>
+    private void RemoveSelfFromInstanceCache() {
+      lock (_instanceCache) {
+        FirebaseFirestore cachedFirestore;
+        if (_instanceCache.TryGetValue(App, out cachedFirestore) && cachedFirestore == this) {
+          _instanceCache.Remove(App);
+        }
       }
     }
   }

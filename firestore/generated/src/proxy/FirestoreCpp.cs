@@ -9,13 +9,61 @@
 namespace Firebase.Firestore {
 
 internal sealed class FirestoreCpp {
-  public static ListenerRegistrationProxy AddDocumentSnapshotListener(DocumentReferenceProxy reference, MetadataChanges metadataChanges, int callbackId, Firebase.Firestore.DocumentReference.ListenerDelegate callback) {
+  public static ListenerRegistrationProxy AddDocumentSnapshotListener(DocumentReferenceProxy reference, MetadataChangesProxy metadataChanges, int callbackId, Firebase.Firestore.DocumentReference.ListenerDelegate callback) {
     ListenerRegistrationProxy ret = new ListenerRegistrationProxy(FirestoreCppPINVOKE.AddDocumentSnapshotListener(DocumentReferenceProxy.getCPtr(reference), (int)metadataChanges, callbackId, callback), true);
     if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
     return ret;
   }
 
-  public static ListenerRegistrationProxy AddQuerySnapshotListener(QueryProxy query, MetadataChanges metadataChanges, int callbackId, Firebase.Firestore.Query.ListenerDelegate callback) {
+  public static bool QueryEquals(QueryProxy lhs, QueryProxy rhs) {
+    bool ret = FirestoreCppPINVOKE.QueryEquals(QueryProxy.getCPtr(lhs), QueryProxy.getCPtr(rhs));
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
+
+  public static bool QuerySnapshotEquals(QuerySnapshotProxy lhs, QuerySnapshotProxy rhs) {
+    bool ret = FirestoreCppPINVOKE.QuerySnapshotEquals(QuerySnapshotProxy.getCPtr(lhs), QuerySnapshotProxy.getCPtr(rhs));
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
+
+  public static bool DocumentSnapshotEquals(DocumentSnapshotProxy lhs, DocumentSnapshotProxy rhs) {
+    bool ret = FirestoreCppPINVOKE.DocumentSnapshotEquals(DocumentSnapshotProxy.getCPtr(lhs), DocumentSnapshotProxy.getCPtr(rhs));
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
+
+  public static bool DocumentChangeEquals(DocumentChangeProxy lhs, DocumentChangeProxy rhs) {
+    bool ret = FirestoreCppPINVOKE.DocumentChangeEquals(DocumentChangeProxy.getCPtr(lhs), DocumentChangeProxy.getCPtr(rhs));
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
+
+  public static int QueryHashCode(QueryProxy query) {
+    int ret = FirestoreCppPINVOKE.QueryHashCode(QueryProxy.getCPtr(query));
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
+
+  public static int QuerySnapshotHashCode(QuerySnapshotProxy snapshot) {
+    int ret = FirestoreCppPINVOKE.QuerySnapshotHashCode(QuerySnapshotProxy.getCPtr(snapshot));
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
+
+  public static int DocumentSnapshotHashCode(DocumentSnapshotProxy snapshot) {
+    int ret = FirestoreCppPINVOKE.DocumentSnapshotHashCode(DocumentSnapshotProxy.getCPtr(snapshot));
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
+
+  public static int DocumentChangeHashCode(DocumentChangeProxy change) {
+    int ret = FirestoreCppPINVOKE.DocumentChangeHashCode(DocumentChangeProxy.getCPtr(change));
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
+
+  public static ListenerRegistrationProxy AddQuerySnapshotListener(QueryProxy query, MetadataChangesProxy metadataChanges, int callbackId, Firebase.Firestore.Query.ListenerDelegate callback) {
     ListenerRegistrationProxy ret = new ListenerRegistrationProxy(FirestoreCppPINVOKE.AddQuerySnapshotListener(QueryProxy.getCPtr(query), (int)metadataChanges, callbackId, callback), true);
     if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
     return ret;
@@ -27,21 +75,18 @@ internal sealed class FirestoreCpp {
     return ret;
   }
 
-  public static void LoadBundleWithCallback(FirestoreProxy firestore, string bundleData, int callbackId, Firebase.Firestore.FirebaseFirestore.LoadBundleTaskProgressDelegate callback) {
-    FirestoreCppPINVOKE.LoadBundleWithCallback(FirestoreProxy.getCPtr(firestore), bundleData, callbackId, callback);
-    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+  public static System.Threading.Tasks.Task<LoadBundleTaskProgressProxy> LoadBundleAsync(FirestoreProxy firestore, string bundleData) {
+    var future = FirestoreCppPINVOKE.LoadBundle__SWIG_0(FirestoreProxy.getCPtr(firestore), bundleData);
+    
+      if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return Future_LoadBundleTaskProgress.GetTask(new Future_LoadBundleTaskProgress(future, true));
   }
 
-  public static FirestoreProxy GetFirestoreInstance(FirebaseApp app) {
-    global::System.IntPtr cPtr = FirestoreCppPINVOKE.GetFirestoreInstance(FirebaseApp.getCPtr(app));
-    FirestoreProxy ret = (cPtr == global::System.IntPtr.Zero) ? null : new FirestoreProxy(cPtr, false);
-    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
-    return ret;
-  }
-
-  public static void ReleaseFirestoreInstance(FirestoreProxy firestore) {
-    FirestoreCppPINVOKE.ReleaseFirestoreInstance(FirestoreProxy.getCPtr(firestore));
-    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+  public static System.Threading.Tasks.Task<LoadBundleTaskProgressProxy> LoadBundleAsync(FirestoreProxy firestore, string bundleData, int callbackId, Firebase.Firestore.FirebaseFirestore.LoadBundleTaskProgressDelegate callback) {
+    var future = FirestoreCppPINVOKE.LoadBundle__SWIG_1(FirestoreProxy.getCPtr(firestore), bundleData, callbackId, callback);
+    
+      if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return Future_LoadBundleTaskProgress.GetTask(new Future_LoadBundleTaskProgress(future, true));
   }
 
   public static FieldToValueMap ConvertFieldValueToMap(FieldValueProxy fieldValue) {
@@ -193,7 +238,7 @@ internal sealed class FirestoreCpp {
     return ret;
   }
 
-  public static DocumentChangeVector QuerySnapshotDocumentChanges(QuerySnapshotProxy snapshot, MetadataChanges metadataChanges) {
+  public static DocumentChangeVector QuerySnapshotDocumentChanges(QuerySnapshotProxy snapshot, MetadataChangesProxy metadataChanges) {
     DocumentChangeVector ret = new DocumentChangeVector(FirestoreCppPINVOKE.QuerySnapshotDocumentChanges(QuerySnapshotProxy.getCPtr(snapshot), (int)metadataChanges), true);
     if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
     return ret;

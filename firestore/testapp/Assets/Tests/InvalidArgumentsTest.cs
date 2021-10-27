@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -275,11 +289,10 @@ namespace Tests {
     }
 
     [Test]
-    [Ignore("TODO(b/190063255) This test crashes the Unity Editor; fix it")]
     public void FirebaseFirestore_GetInstance_DisposedApp() {
       FirebaseApp disposedApp = FirebaseApp.Create(db.App.Options, "test-getinstance-disposedapp");
       disposedApp.Dispose();
-      FirebaseFirestore.GetInstance(disposedApp);
+      Assert.Throws<ArgumentException>(() => FirebaseFirestore.GetInstance(disposedApp));
     }
 
     [Test]
@@ -307,15 +320,9 @@ namespace Tests {
       Assert.Throws<ArgumentException>(() => db.CollectionGroup(""));
     }
 
-    [UnityTest]
-    public IEnumerator FirebaseFirestore_CollectionGroup_CollectionIdContainsSlash() {
-      Query query = db.CollectionGroup("a/b");
-      // TODO(b/190041743) The `collectionId` argument to CollectionGroup() is documented that
-      // it "must not contain a slash"; however, this does not appear to be validated because
-      // getting the snapshot completes successfully. This test may need to be updated if the
-      // behavior is changed. In either case, leave this test here to ensure that specifying a
-      // slash does not crash the app.
-      yield return AwaitSuccess(query.GetSnapshotAsync(Source.Cache));
+    [Test]
+    public void FirebaseFirestore_CollectionGroup_CollectionIdContainsSlash() {
+      Assert.Throws<ArgumentException>(() => db.CollectionGroup("a/b"));
     }
 
     [Test]

@@ -64,7 +64,7 @@ internal class DocumentReferenceProxy : global::System.IDisposable {
     return ret;
   }
 
-  public virtual System.Threading.Tasks.Task<DocumentSnapshotProxy> GetAsync(Source source) {
+  public virtual System.Threading.Tasks.Task<DocumentSnapshotProxy> GetAsync(SourceProxy source) {
     var future = FirestoreCppPINVOKE.DocumentReferenceProxy_Get__SWIG_0(swigCPtr, (int)source);
     
       if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();

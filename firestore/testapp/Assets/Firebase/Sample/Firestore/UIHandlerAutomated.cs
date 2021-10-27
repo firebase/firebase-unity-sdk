@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 namespace Firebase.Sample.Firestore {
   using Firebase;
   using Firebase.Extensions;
@@ -19,7 +33,7 @@ namespace Firebase.Sample.Firestore {
 
     // Class for forcing code to run on the main thread.
     private MainThreadDispatcher mainThreadDispatcher;
-    private int mainThreadId;
+    public int MainThreadId { get; private set; }
 
     // Number of characters that UnityEngine.Debug.Log will output to Android's logcat before
     // truncating the rest. (See LogInBatches docstring for further discussion.)
@@ -67,7 +81,7 @@ namespace Firebase.Sample.Firestore {
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       Func<Task>[] tests = {
-        TestGetKnownValue,
+        // clang-format off
         TestDeleteDocument,
         TestWriteDocument,
         TestWriteDocumentViaCollection,
@@ -85,9 +99,12 @@ namespace Firebase.Sample.Firestore {
         TestTransactionWithNonGenericTask,
         TestTransactionAbort,
         TestTransactionTaskFailures,
+        TestTransactionRollsBackIfException,
         TestTransactionPermanentError,
+        TestTransactionDispose,
+        TestTransactionsInParallel,
         // Waiting for all retries is slow, so we usually leave this test disabled.
-        //TestTransactionMaxRetryFailure,
+        // TestTransactionMaxRetryFailure,
         TestSetOptions,
         TestCanTraverseCollectionsAndDocuments,
         TestCanTraverseCollectionAndDocumentParents,
@@ -95,6 +112,7 @@ namespace Firebase.Sample.Firestore {
         TestDocumentSnapshotIntegerIncrementBehavior,
         TestDocumentSnapshotDoubleIncrementBehavior,
         TestDocumentSnapshotServerTimestampBehavior,
+        TestSnapshotMetadataEqualsAndGetHashCode,
         TestAuthIntegration,
         TestDocumentListen,
         TestDocumentListenWithMetadataChanges,
@@ -121,6 +139,24 @@ namespace Firebase.Sample.Firestore {
         TestAssertTaskFaults,
         TestInternalExceptions,
         TestListenerRegistrationDispose,
+        TestLoadBundles,
+        TestQueryEqualsAndGetHashCode,
+        TestQuerySnapshotEqualsAndGetHashCode,
+        TestDocumentSnapshotEqualsAndGetHashCode,
+        TestDocumentChangeEqualsAndGetHashCode,
+        TestLoadBundlesForASecondTime_ShouldSkip,
+        TestLoadBundlesFromOtherProjects_ShouldFail,
+        LoadedBundleDocumentsAlreadyPulledFromBackend_ShouldNotOverwrite,
+        TestInvalidArgumentAssertions,
+        TestFirestoreDispose,
+        TestFirestoreGetInstance,
+        // clang-format on
+      };
+
+      // For local development convenience, populate `testFilter` with the tests that you would like
+      // to run (instead of running the entire suite).
+      Func<Task>[] testFilter = {
+        // THIS LIST MUST BE EMPTY WHEN CHECKED INTO SOURCE CONTROL!
       };
 
       // Unity "helpfully" adds stack traces whenever you call Debug.Log. Unfortunately, these stack
@@ -134,11 +170,11 @@ namespace Firebase.Sample.Firestore {
         return;
       }
       mainThreadDispatcher.RunOnMainThread(() => {
-        mainThreadId = Thread.CurrentThread.ManagedThreadId;
+        MainThreadId = Thread.CurrentThread.ManagedThreadId;
       });
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
-        testsToRun: tests,
+        testsToRun: testFilter.Length > 0 ? testFilter : tests,
         logFunc: LogInBatches
       );
 
@@ -158,19 +194,32 @@ namespace Firebase.Sample.Firestore {
       }
     }
 
+    // Fails the test by throwing an exception with the given `reason` string.
+    public void FailTest(String reason) {
+      testRunner.FailTest(reason);
+    }
+
     // Throw when condition is false.
     private void Assert(string message, bool condition) {
-      if (!condition)
-        throw new Exception(String.Format("Assertion failed ({0}): {1}",
-                                          testRunner.CurrentTestDescription, message));
+      if (!condition) {
+        FailTest(String.Format("Assertion failed ({0}): {1}", testRunner.CurrentTestDescription,
+                               message));
+      }
+    }
+
+    // Throw when `obj` is null.
+    private void AssertNotNull(string message, object obj) {
+      if (obj == null) {
+        FailTest(String.Format("Assertion failed ({0}): object is null: {1}",
+                               testRunner.CurrentTestDescription, message));
+      }
     }
 
     // Throw when value1 != value2 (using direct .Equals() check).
     private void AssertEq<T>(string message, T value1, T value2) {
       if (!(object.Equals(value1, value2))) {
-        throw new Exception(String.Format("Assertion failed ({0}): {1} != {2} ({3})",
-                                          testRunner.CurrentTestDescription, value1, value2,
-                                          message));
+        FailTest(String.Format("Assertion failed ({0}): {1} != {2} ({3})",
+                               testRunner.CurrentTestDescription, value1, value2, message));
       }
     }
 
@@ -179,14 +228,34 @@ namespace Firebase.Sample.Firestore {
       AssertEq("Values not equal", value1, value2);
     }
 
+    // Throw when value1 == value2 (using direct .Equals() check).
+    private void AssertNe<T>(string message, T value1, T value2) {
+      if ((object.Equals(value1, value2))) {
+        FailTest(String.Format("Assertion failed ({0}): {1} == {2} ({3})",
+                               testRunner.CurrentTestDescription, value1, value2, message));
+      }
+    }
+
+    // Throw when value1 == value2 (using direct .Equals() check).
+    private void AssertNe<T>(T value1, T value2) {
+      AssertNe("Values are equal", value1, value2);
+    }
+
+    // Throw when `expectedSubstring` is not a substring of `s`, case-insensitively.
+    private void AssertStringContainsNoCase(string s, string expectedSubstring) {
+      if (!s.ToLower().Contains(expectedSubstring.ToLower())) {
+        throw new Exception(String.Format("Assertion failed: The string \"{0}\" is not " +
+                                              "contained, case-insensitively, in: {1}",
+                                          expectedSubstring, s));
+      }
+    }
+
     // Throw when value1 != value2 (traversing the values recursively, including arrays and maps).
     private void AssertDeepEq<T>(string message, T value1, T value2) {
       if (!ObjectDeepEquals(value1, value2)) {
-        throw new Exception(String.Format("Assertion failed ({0}): {1} != {2} ({3})",
-                                          testRunner.CurrentTestDescription,
-                                          ObjectToString(value1),
-                                          ObjectToString(value2),
-                                          message));
+        FailTest(String.Format("Assertion failed ({0}): {1} != {2} ({3})",
+                               testRunner.CurrentTestDescription, ObjectToString(value1),
+                               ObjectToString(value2), message));
       }
     }
 
@@ -197,12 +266,12 @@ namespace Firebase.Sample.Firestore {
 
     private void AssertIsType(object obj, Type expectedType) {
       if (!expectedType.IsInstanceOfType(obj)) {
-        throw new Exception("object has type " + obj.GetType() + " but expected "
-                            + expectedType + " (" + obj + ")");
+        FailTest("object has type " + obj.GetType() + " but expected " + expectedType + " (" + obj +
+                 ")");
       }
     }
 
-    private void AssertException(Type exceptionType, Action a) {
+    internal void AssertException(Type exceptionType, Action a) {
       AssertException("", exceptionType, a);
     }
 
@@ -214,14 +283,15 @@ namespace Firebase.Sample.Firestore {
           e = e.InnerException;
         }
         if (!exceptionType.IsAssignableFrom(e.GetType())) {
-          throw new Exception(
+          FailTest(
               String.Format("{0}\nException of wrong type was thrown. Expected {1} but got: {2}",
                             context, exceptionType, e));
         }
         return;
       }
-      throw new Exception(String.Format("{0}\nExpected exception was not thrown ({1})", context,
-                                        testRunner.CurrentTestDescription));
+
+      FailTest(String.Format("{0}\nExpected exception was not thrown ({1})", context,
+                             testRunner.CurrentTestDescription));
     }
 
     private void AssertTaskProperties(Task t, bool isCompleted, bool isFaulted, bool isCanceled) {
@@ -244,19 +314,35 @@ namespace Firebase.Sample.Firestore {
              && isCanceled == actualIsCanceled);
     }
 
-    private void AssertTaskSucceeds(Task t) {
+    internal void AssertTaskSucceeds(Task t) {
       t.Wait();
       AssertTaskProperties(t, isCompleted: true, isFaulted: false, isCanceled: false);
     }
 
-    private Exception AssertTaskFaults(Task t) {
+    private T AssertTaskSucceeds<T>(Task<T> t) {
+      t.Wait();
+      AssertTaskProperties(t, isCompleted: true, isFaulted: false, isCanceled: false);
+      return t.Result;
+    }
+
+    internal Exception AssertTaskFaults(Task t) {
       var exception = AwaitException(t);
       AssertTaskProperties(t, isCompleted: true, isFaulted: true, isCanceled: false);
       return exception;
     }
 
-    private FirestoreException AssertTaskFaults(Task t, FirestoreError expectedError,
-                                                string expectedMessageRegex = null) {
+    internal Exception AssertTaskFaults(Type exceptionType, Task t) {
+      var exception = AssertTaskFaults(t);
+      Assert("The Task faulted (as expected); however, it was supposed to fault with" +
+                 " an exception of type " + exceptionType +
+                 " but it actually faulted with an exception of type " + exception.GetType() +
+                 ": " + exception,
+             exceptionType.IsAssignableFrom(exception.GetType()));
+      return exception;
+    }
+
+    internal FirestoreException AssertTaskFaults(Task t, FirestoreError expectedError,
+                                                 string expectedMessageRegex = null) {
       var exception = AssertTaskFaults(t);
       AssertEq(
           String.Format("The task faulted (as expected); however, its exception was expected to "
@@ -293,7 +379,7 @@ namespace Firebase.Sample.Firestore {
       Assert("Task completed successfully", t.IsCompleted);
     }
 
-    private T Await<T>(Task<T> t) {
+    internal T Await<T>(Task<T> t) {
       Await((Task)t);
       return t.Result;
     }
@@ -305,7 +391,31 @@ namespace Firebase.Sample.Firestore {
         AssertEq("AwaitException() task returned multiple exceptions", e.InnerExceptions.Count, 1);
         return e.InnerExceptions[0];
       }
-      throw new Exception("AwaitException() task succeeded rather than throwing an exception.");
+
+      FailTest("AwaitException() task succeeded rather than throwing an exception.");
+      return null;
+    }
+
+    // Waits for the `Count` property of the given list to be greater than or
+    // equal to the given `minCount`, failing if that count is not reached.
+    private void AssertListCountReaches<T>(ThreadSafeList<T> list, int minCount) {
+      var stopWatch = new System.Diagnostics.Stopwatch();
+      stopWatch.Start();
+
+      while (true) {
+        lock (list) {
+          if (list.Count >= minCount) {
+            return;
+          }
+
+          var remainingMilliseconds = 5000 - stopWatch.ElapsedMilliseconds;
+          Assert(String.Format("Timeout waiting for the list to reach a count of %d (count is %d)",
+                               minCount, list.Count),
+                 remainingMilliseconds >= 0);
+
+          Monitor.Wait(list, (int)remainingMilliseconds);
+        }
+      }
     }
 
     /**
@@ -427,16 +537,16 @@ namespace Firebase.Sample.Firestore {
       return result;
     }
 
-    private CollectionReference TestCollection() {
+    internal CollectionReference TestCollection() {
       return db.Collection("test-collection_" + AutoId());
     }
 
-    private DocumentReference TestDocument() {
+    internal DocumentReference TestDocument() {
       return TestCollection().Document();
     }
 
     /// Runs the given action in a task to avoid blocking the main thread.
-    private Task Async(Action action) {
+    internal Task Async(Action action) {
       return Task.Run(action);
     }
 
@@ -448,7 +558,7 @@ namespace Firebase.Sample.Firestore {
       return res;
     }
 
-    private Dictionary<string, object> TestData(long n = 1) {
+    internal Dictionary<string, object> TestData(long n = 1) {
       return new Dictionary<string, object> {
         {"name", "room " + n},
         {"active", true},
@@ -462,21 +572,6 @@ namespace Firebase.Sample.Firestore {
         }}
         // TODO(rgowman): Add other types here too.
       };
-    }
-
-    /**
-     * Tests a *very* basic trip through the Firestore API.
-     */
-    Task TestGetKnownValue() {
-      return ToTask(GetKnownValue()).ContinueWithOnMainThread((task) => {
-        DocumentSnapshot snap = (previousTask as Task<DocumentSnapshot>).Result;
-
-        var dict = snap.ToDictionary();
-        Assert("Resulting document is missing 'field1' field.", dict.ContainsKey("field1"));
-        AssertEq("'field1' is not equal to 'value1'", dict["field1"].ToString(), "value1");
-
-        return task;
-      }).Unwrap();
     }
 
     Task TestDeleteDocument() {
@@ -598,7 +693,7 @@ namespace Firebase.Sample.Firestore {
         var events = new List<string>();
 
         var doc = TestDocument();
-        var docAccumulator = new EventAccumulator<DocumentSnapshot>(mainThreadId);
+        var docAccumulator = new EventAccumulator<DocumentSnapshot>(MainThreadId, FailTest);
         var docListener = doc.Listen(snapshot => {
           events.Add("doc");
           docAccumulator.Listener(snapshot);
@@ -609,7 +704,7 @@ namespace Firebase.Sample.Firestore {
         docAccumulator.Await();
         events.Clear();
 
-        var syncAccumulator = new EventAccumulator<string>();
+        var syncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
         var syncListener = doc.Firestore.ListenForSnapshotsInSync(() => {
           events.Add("sync");
           syncAccumulator.Listener("sync");
@@ -647,16 +742,14 @@ namespace Firebase.Sample.Firestore {
         var db2 = FirebaseFirestore.GetInstance(app2);
         var db2Doc = db2.Collection(db1Doc.Parent.Id).Document(db1Doc.Id);
 
-        var db1SyncAccumulator = new EventAccumulator<string>();
+        var db1SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
         var db1SyncListener = db1.ListenForSnapshotsInSync(() => {
           db1SyncAccumulator.Listener("db1 in sync");
         });
         db1SyncAccumulator.Await();
 
-        var db2SyncAccumulator = new EventAccumulator<string>();
-        db2.ListenForSnapshotsInSync(() => {
-          db2SyncAccumulator.Listener("db2 in sync");
-        });
+        var db2SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
+        db2.ListenForSnapshotsInSync(() => { db2SyncAccumulator.Listener("db2 in sync"); });
         db2SyncAccumulator.Await();
 
         db1Doc.Listen((snap) => { });
@@ -695,11 +788,11 @@ namespace Firebase.Sample.Firestore {
         var db2 = FirebaseFirestore.GetInstance(app2);
         var db2Doc = db2.Collection(db1Doc.Parent.Id).Document(db1Doc.Id);
 
-        var db1DocAccumulator = new EventAccumulator<DocumentSnapshot>();
+        var db1DocAccumulator = new EventAccumulator<DocumentSnapshot>(MainThreadId, FailTest);
         db1Doc.Listen(db1DocAccumulator.Listener);
         db1DocAccumulator.Await();
 
-        var db2DocAccumulator = new EventAccumulator<DocumentSnapshot>();
+        var db2DocAccumulator = new EventAccumulator<DocumentSnapshot>(MainThreadId, FailTest);
         db2Doc.Listen(db2DocAccumulator.Listener);
         db2DocAccumulator.Await();
 
@@ -729,11 +822,11 @@ namespace Firebase.Sample.Firestore {
         var db2 = FirebaseFirestore.GetInstance(app2);
         var db2Coll = db2.Collection(db1Coll.Id);
 
-        var db1CollAccumulator = new EventAccumulator<QuerySnapshot>();
+        var db1CollAccumulator = new EventAccumulator<QuerySnapshot>(MainThreadId, FailTest);
         db1Coll.Listen(db1CollAccumulator.Listener);
         db1CollAccumulator.Await();
 
-        var db2CollAccumulator = new EventAccumulator<QuerySnapshot>();
+        var db2CollAccumulator = new EventAccumulator<QuerySnapshot>(MainThreadId, FailTest);
         db2Coll.Listen(db2CollAccumulator.Listener);
         db2CollAccumulator.Await();
 
@@ -953,8 +1046,7 @@ namespace Firebase.Sample.Firestore {
         Task commitWithInvalidDocTask = docWithInvalidName.Firestore.StartBatch()
             .Set(docWithInvalidName, TestData(0))
             .CommitAsync();
-        // TODO(b/193834769) Assert "__badpath__" is in the message once the message is fixed.
-        AssertTaskFaults(commitWithInvalidDocTask, FirestoreError.InvalidArgument, "invalid");
+        AssertTaskFaults(commitWithInvalidDocTask, FirestoreError.InvalidArgument, "__badpath__");
       });
     }
 
@@ -973,7 +1065,7 @@ namespace Firebase.Sample.Firestore {
 
         // Perform transaction that reads doc1, deletes doc1, updates doc2, and overwrites doc3.
         string result = Await(doc1.Firestore.RunTransactionAsync<string>((transaction) => {
-          AssertEq(mainThreadId, Thread.CurrentThread.ManagedThreadId);
+          AssertEq(MainThreadId, Thread.CurrentThread.ManagedThreadId);
           return transaction.GetSnapshotAsync(doc1).ContinueWith((getTask) => {
             AssertDeepEq("doc1 value matches expected", getTask.Result.ToDictionary(), initialData);
             transaction.Delete(doc1);
@@ -1056,6 +1148,28 @@ namespace Firebase.Sample.Firestore {
       });
     }
 
+    Task TestTransactionRollsBackIfException() {
+      return Async(() => {
+        DocumentReference doc = TestDocument();
+        Task txnTask = db.RunTransactionAsync((transaction) => {
+          return transaction.GetSnapshotAsync(doc).ContinueWith(snapshotTask => {
+            transaction.Set(doc, new Dictionary<string, object> { { "key", 42 } }, null);
+            throw new TestException();
+          });
+        });
+        Exception exception = AssertTaskFaults(txnTask);
+            AssertEq(exception.GetType(), typeof(TestException));
+
+            // Verify that the transaction was rolled back.
+            DocumentSnapshot snap = Await(doc.GetSnapshotAsync());
+            Assert("Document is still written when transaction throws exceptions", !snap.Exists);
+      });
+    }
+
+    private class TestException : Exception {
+      public TestException() {}
+    }
+
     Task TestTransactionPermanentError() {
       return Async(() => {
         int retries = 0;
@@ -1069,6 +1183,255 @@ namespace Firebase.Sample.Firestore {
         });
         AssertTaskFaults(txnTask, FirestoreError.NotFound, doc.Id);
         AssertEq(retries, 1);
+      });
+    }
+
+    // Asserts that all methods of a `Transaction` object throw `InvalidOperationException`.
+    private void AssertTransactionMethodsThrow(Transaction txn, DocumentReference doc) {
+      var sampleDataString = new Dictionary<string, object> { { "key", "value" } };
+      var sampleDataPath = new Dictionary<FieldPath, object> { { new FieldPath("key"), "value" } };
+
+      AssertException(typeof(InvalidOperationException), () => txn.Set(doc, sampleDataString));
+      AssertException(typeof(InvalidOperationException), () => txn.Update(doc, sampleDataString));
+      AssertException(typeof(InvalidOperationException), () => txn.Update(doc, sampleDataPath));
+      AssertException(typeof(InvalidOperationException), () => txn.Update(doc, "key", "value"));
+      AssertException(typeof(InvalidOperationException), () => txn.Delete(doc));
+
+      Exception exception = AssertTaskFaults(txn.GetSnapshotAsync(doc));
+      AssertIsType(exception, typeof(InvalidOperationException));
+    }
+
+    Task TestTransactionDispose() {
+      return Async(() => {
+        // Verify that the Transaction is disposed if the callback returns a null Task.
+        // TODO(b/197348363) Re-enable this test on Android once the bug where returning null from
+        // the callback specified to `RunTransactionAsync()` causes the test to hang is fixed.
+        #if !UNITY_ANDROID
+        {
+          DocumentReference doc = TestDocument();
+          Transaction capturedTransaction = null;
+          Task txnTask = db.RunTransactionAsync(transaction => {
+            capturedTransaction = transaction;
+            return null;
+          });
+          AssertTaskFaults(txnTask);
+          AssertTransactionMethodsThrow(capturedTransaction, doc);
+        }
+        #endif
+
+        // Verify that the Transaction is disposed if the callback throws an exception.
+        {
+          DocumentReference doc = TestDocument();
+          Transaction capturedTransaction = null;
+          Task txnTask = db.RunTransactionAsync(transaction => {
+            capturedTransaction = transaction;
+            throw new InvalidOperationException("forced exception");
+          });
+          AssertTaskFaults(txnTask);
+          AssertTransactionMethodsThrow(capturedTransaction, doc);
+        }
+
+        // Verify that the Transaction is disposed if the callback returns a Task that succeeds.
+        {
+          DocumentReference doc = TestDocument();
+          Transaction capturedTransaction = null;
+          Task txnTask = db.RunTransactionAsync(transaction => {
+            return transaction.GetSnapshotAsync(doc).ContinueWith(task => {
+              // Call a method on Transaction to ensure that it does not throw an exception.
+              transaction.Set(doc, new Dictionary<string, object> { { "answer", 42 } });
+              capturedTransaction = transaction;
+            });
+          });
+          AssertTaskSucceeds(txnTask);
+          AssertTransactionMethodsThrow(capturedTransaction, doc);
+        }
+
+        // Verify that the Transaction is disposed if the callback returns a Task that faults.
+        {
+          DocumentReference doc = TestDocument();
+          Transaction capturedTransaction = null;
+          Task txnTask = db.RunTransactionAsync(transaction => {
+            capturedTransaction = transaction;
+            var taskCompletionSource = new TaskCompletionSource<object>();
+            taskCompletionSource.SetException(new InvalidOperationException("forced exception"));
+            return taskCompletionSource.Task;
+          });
+          AssertTaskFaults(txnTask);
+          AssertTransactionMethodsThrow(capturedTransaction, doc);
+        }
+
+        // Verify that the Transaction is disposed when the Firestore instance terminated.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-terminate");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          DocumentReference doc = customDb.Document(TestDocument().Path);
+          var barrier = new BarrierCompat(2);
+          Transaction capturedTransaction = null;
+          customDb.RunTransactionAsync(transaction => {
+            return Task.Factory.StartNew<object>(() => {
+              capturedTransaction = transaction;
+              barrier.SignalAndWait();
+              barrier.SignalAndWait();
+              return null;
+            });
+          });
+          try {
+            barrier.SignalAndWait();
+            AssertTaskSucceeds(customDb.TerminateAsync());
+            // TODO(b/201415845) Remove the following two assertions once the commented call to
+            // `AssertTaskFaults` below is uncommented. With that code commented the C# compiler
+            // complains about these two variables being "unused".
+            AssertNotNull("dummy call to prevent unused variable warning", doc);
+            AssertNotNull("dummy call to prevent unused variable warning", capturedTransaction);
+            // TODO(b/201415845) Uncomment this check once the crash on iOS and hang on Android
+            // that it causes is fixed.
+            // AssertTaskFaults(typeof(InvalidOperationException),
+            //                  capturedTransaction.GetSnapshotAsync(doc));
+          } finally {
+            barrier.SignalAndWait();
+          }
+          customApp.Dispose();
+          // TODO(b/171568274): Add an assertion that the Task returned from RunTransactionAsync()
+          // either completes or faults once the inconsistent behavior is fixed.
+        }
+
+        // Verify that the Transaction is disposed when the Firestore instance is disposed.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-dispose1");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          DocumentReference doc = customDb.Document(TestDocument().Path);
+          var barrier = new BarrierCompat(2);
+          Transaction capturedTransaction = null;
+          Task capturedTask = null;
+          customDb.RunTransactionAsync(transaction => {
+            capturedTask = Task.Factory.StartNew<object>(() => {
+              capturedTransaction = transaction;
+              barrier.SignalAndWait();
+              barrier.SignalAndWait();
+              return null;
+            });
+            return capturedTask;
+          });
+          try {
+            barrier.SignalAndWait();
+            customApp.Dispose();
+            AssertTaskIsPending(capturedTask);
+            AssertTransactionMethodsThrow(capturedTransaction, doc);
+            AssertTaskIsPending(capturedTask);
+          } finally {
+            barrier.SignalAndWait();
+          }
+          AssertTaskSucceeds(capturedTask);
+          // TODO(b/171568274): Add an assertion that the Task returned from RunTransactionAsync()
+          // either completes or faults once the inconsistent behavior is fixed.
+        }
+
+        // Verify that the Transaction is disposed when the Firestore instance is disposed
+        // directly from the transaction callback.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-dispose2");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          DocumentReference doc = customDb.Document(TestDocument().Path);
+          var barrier = new BarrierCompat(2);
+          Transaction capturedTransaction = null;
+          customDb.RunTransactionAsync(transaction => {
+            capturedTransaction = transaction;
+            customApp.Dispose();
+            barrier.SignalAndWait();
+            barrier.SignalAndWait();
+            var taskCompletionSource = new TaskCompletionSource<object>();
+            taskCompletionSource.SetResult(null);
+            return taskCompletionSource.Task;
+          });
+          try {
+            barrier.SignalAndWait();
+            AssertTransactionMethodsThrow(capturedTransaction, doc);
+          } finally {
+            barrier.SignalAndWait();
+          }
+          // TODO(b/171568274): Add an assertion that the Task returned from RunTransactionAsync()
+          // either completes or faults once the inconsistent behavior is fixed.
+        }
+
+        // Verify that the Transaction is disposed when the Firestore instance is disposed
+        // from the task returned from the transaction callback.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-dispose3");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          DocumentReference doc = customDb.Document(TestDocument().Path);
+          var barrier = new BarrierCompat(2);
+          Transaction capturedTransaction = null;
+          Task capturedTask = null;
+          customDb.RunTransactionAsync(transaction => {
+            capturedTask = Task.Factory.StartNew<object>(() => {
+              capturedTransaction = transaction;
+              customApp.Dispose();
+              barrier.SignalAndWait();
+              barrier.SignalAndWait();
+              return null;
+            });
+            return capturedTask;
+          });
+          try {
+            barrier.SignalAndWait();
+            AssertTaskIsPending(capturedTask);
+            AssertTransactionMethodsThrow(capturedTransaction, doc);
+          } finally {
+            barrier.SignalAndWait();
+          }
+          // TODO(b/171568274): Add an assertion that the Task returned from RunTransactionAsync()
+          // either completes or faults once the inconsistent behavior is fixed.
+        }
+      });
+    }
+
+    Task TestTransactionsInParallel() {
+      return Async(() => {
+        string documentPath = TestDocument().Path;
+
+        FirebaseApp[] apps = new FirebaseApp[3];
+        for (int i = 0; i < apps.Length; i++) {
+          apps[i] = FirebaseApp.Create(db.App.Options, "transactions-in-parallel" + (i + 1));
+        }
+        FirebaseFirestore[] firestores = new FirebaseFirestore[apps.Length];
+        for (int i = 0; i < firestores.Length; i++) {
+          firestores[i] = FirebaseFirestore.GetInstance(apps[i]);
+        }
+
+        int numTransactionsPerFirestore = 3;
+        List<Task> tasks = new List<Task>();
+        for (int i = 0; i < numTransactionsPerFirestore; i++) {
+          foreach (FirebaseFirestore firestore in firestores) {
+            Task txnTask = firestore.RunTransactionAsync(transaction => {
+              DocumentReference currentDoc = firestore.Document(documentPath);
+              return transaction.GetSnapshotAsync(currentDoc).ContinueWith(task => {
+                DocumentSnapshot currentSnapshot = task.Result;
+                int currentValue;
+                if (currentSnapshot.TryGetValue("count", out currentValue)) {
+                  transaction.Update(currentDoc, "count", currentValue + 1);
+                } else {
+                  var data = new Dictionary<string, object> { { "count", 1 } };
+                  transaction.Set(currentDoc, data);
+                }
+              });
+            });
+            tasks.Add(txnTask);
+          }
+        }
+
+        foreach (Task task in tasks) {
+          AssertTaskSucceeds(task);
+        }
+
+        DocumentReference doc = db.Document(documentPath);
+        DocumentSnapshot snapshot = AssertTaskSucceeds(doc.GetSnapshotAsync(Source.Server));
+        int actualValue = snapshot.GetValue<int>("count", ServerTimestampBehavior.None);
+        int expectedValue = numTransactionsPerFirestore * firestores.Length;
+        AssertEq<int>(actualValue, expectedValue);
+
+        foreach (FirebaseApp app in apps) {
+          app.Dispose();
+        }
       });
     }
 
@@ -1312,6 +1675,36 @@ namespace Firebase.Sample.Firestore {
       Assert("Field should not exist", !snap.ContainsField("namex"));
     }
 
+    Task TestSnapshotMetadataEqualsAndGetHashCode() {
+      return Async(() => {
+        var meta1 = new SnapshotMetadata(false, false);
+        var meta2 = new SnapshotMetadata(false, true);
+        var meta3 = new SnapshotMetadata(true, false);
+        var meta4 = new SnapshotMetadata(true, true);
+        var meta5 = new SnapshotMetadata(false, true);
+
+        AssertEq(meta1.Equals(meta1), true);
+        AssertEq(meta2.Equals(meta5), true);
+        AssertEq(meta1.Equals(meta2), false);
+        AssertEq(meta1.Equals(meta3), false);
+        AssertEq(meta1.Equals(meta4), false);
+        AssertEq(meta2.Equals(meta3), false);
+        AssertEq(meta2.Equals(meta4), false);
+        AssertEq(meta3.Equals(meta4), false);
+        AssertEq(meta1.Equals(null), false);
+        AssertEq(meta1.Equals("string"), false);
+
+        AssertEq(meta1.GetHashCode() == meta1.GetHashCode(), true);
+        AssertEq(meta2.GetHashCode() == meta5.GetHashCode(), true);
+        AssertEq(meta1.GetHashCode() == meta2.GetHashCode(), false);
+        AssertEq(meta1.GetHashCode() == meta3.GetHashCode(), false);
+        AssertEq(meta1.GetHashCode() == meta4.GetHashCode(), false);
+        AssertEq(meta2.GetHashCode() == meta3.GetHashCode(), false);
+        AssertEq(meta2.GetHashCode() == meta4.GetHashCode(), false);
+        AssertEq(meta3.GetHashCode() == meta4.GetHashCode(), false);
+      });
+    }
+
     Task TestAuthIntegration() {
       return Async(() => {
         var firebaseAuth = Firebase.Auth.FirebaseAuth.DefaultInstance;
@@ -1345,7 +1738,7 @@ namespace Firebase.Sample.Firestore {
 
         Await(doc.SetAsync(initialData));
 
-        var accumulator = new EventAccumulator<DocumentSnapshot>(mainThreadId);
+        var accumulator = new EventAccumulator<DocumentSnapshot>(MainThreadId, FailTest);
         var registration = doc.Listen(accumulator.Listener);
 
         // Ensure that the Task from the ListenerRegistration is in the correct state.
@@ -1389,7 +1782,7 @@ namespace Firebase.Sample.Firestore {
 
         Await(doc.SetAsync(initialData));
 
-        var accumulator = new EventAccumulator<DocumentSnapshot>();
+        var accumulator = new EventAccumulator<DocumentSnapshot>(MainThreadId, FailTest);
         var registration = doc.Listen(MetadataChanges.Include, accumulator.Listener);
 
         // Ensure that the Task from the ListenerRegistration is in the correct state.
@@ -1442,7 +1835,7 @@ namespace Firebase.Sample.Firestore {
 
         Await(collection.Document("a").SetAsync(firstDoc));
 
-        var accumulator = new EventAccumulator<QuerySnapshot>(mainThreadId);
+        var accumulator = new EventAccumulator<QuerySnapshot>(MainThreadId, FailTest);
         var registration = collection.Listen(accumulator.Listener);
 
         // Ensure that the Task from the ListenerRegistration is in the correct state.
@@ -1489,7 +1882,7 @@ namespace Firebase.Sample.Firestore {
 
         Await(collection.Document("a").SetAsync(firstDoc));
 
-        var accumulator = new EventAccumulator<QuerySnapshot>();
+        var accumulator = new EventAccumulator<QuerySnapshot>(MainThreadId, FailTest);
         var registration = collection.Listen(MetadataChanges.Include, accumulator.Listener);
 
         // Ensure that the Task from the ListenerRegistration is in the correct state.
@@ -1545,7 +1938,7 @@ namespace Firebase.Sample.Firestore {
 
         Await(collection.Document("a").SetAsync(initialData));
 
-        var accumulator = new EventAccumulator<QuerySnapshot>();
+        var accumulator = new EventAccumulator<QuerySnapshot>(MainThreadId, FailTest);
         var registration = collection.Listen(MetadataChanges.Include, accumulator.Listener);
 
         // Wait for the first snapshot.
@@ -1742,12 +2135,12 @@ namespace Firebase.Sample.Firestore {
 
         // Setup `limit` query.
         var limit = c.Limit(2).OrderBy("sort");
-        var limitAccumulator = new EventAccumulator<QuerySnapshot>();
+        var limitAccumulator = new EventAccumulator<QuerySnapshot>(MainThreadId, FailTest);
         var limitReg = limit.Listen(limitAccumulator.Listener);
 
         // Setup mirroring `limitToLast` query.
         var limitToLast = c.LimitToLast(2).OrderByDescending("sort");
-        var limitToLastAccumulator = new EventAccumulator<QuerySnapshot>();
+        var limitToLastAccumulator = new EventAccumulator<QuerySnapshot>(MainThreadId, FailTest);
         var limitToLastReg = limitToLast.Listen(limitToLastAccumulator.Listener);
 
         // Verify both query get expected result.
@@ -1939,13 +2332,13 @@ namespace Firebase.Sample.Firestore {
         AssertQueryResults(
             desc: "InQueryWithObject",
             query: c.WhereIn(new FieldPath("zip"),
-                             new List<object> { new Dictionary<string, object> { { "code", 500 } } }),
+                             new object[] { new Dictionary<string, object> { { "code", 500 } } }),
             docIds: AsList("f"));
 
         AssertQueryResults(
             desc: "InQueryWithDocIds",
             query: c.WhereIn(FieldPath.DocumentId,
-                             new List<object> { "c", "e" }),
+                             new object[] { "c", "e" }),
             docIds: AsList("c", "e"));
 
         AssertQueryResults(
@@ -1958,18 +2351,18 @@ namespace Firebase.Sample.Firestore {
             desc: "NotInQueryWithObject",
             query: c.WhereNotIn(
                 new FieldPath("zip"),
-                new List<object> { new List<object> { 98101, 98102 },
-                                   new Dictionary<string, object> { { "code", 500 } } }),
+                new object[] { new List<object> { 98101, 98102 },
+                               new Dictionary<string, object> { { "code", 500 } } }),
             docIds: AsList("a", "b", "c", "d", "e"));
 
         AssertQueryResults(
             desc: "NotInQueryWithDocIds",
-            query: c.WhereNotIn(FieldPath.DocumentId, new List<object> { "a", "c", "e" }),
+            query: c.WhereNotIn(FieldPath.DocumentId, new object[] { "a", "c", "e" }),
             docIds: AsList("b", "d", "f", "g"));
 
         AssertQueryResults(
             desc: "NotInQueryWithNulls",
-            query: c.WhereNotIn(new FieldPath("nullable"), new List<object> { null }),
+            query: c.WhereNotIn(new FieldPath("nullable"), new object[] { null }),
             docIds: new List<String> {});
       });
     }
@@ -2061,32 +2454,127 @@ namespace Firebase.Sample.Firestore {
       return Async(() => {
         var db1 = NonDefaultFirestore("TestTerminate");
         FirebaseApp app = db1.App;
-        var doc = db1.Document("abc/123");
-        var accumulator = new EventAccumulator<DocumentSnapshot>();
+        var doc = db1.Document("ColA/DocA/ColB/DocB");
+        var doc2 = db1.Document("ColA/DocA/ColB/DocC");
+        var collection = doc.Parent;
+        var writeBatch = db1.StartBatch();
+        var accumulator = new EventAccumulator<DocumentSnapshot>(MainThreadId, FailTest);
         var registration = doc.Listen(accumulator.Listener);
 
         // Multiple calls to terminate should go through.
-        Await(db1.TerminateAsync());
-        Await(db1.TerminateAsync());
+        AssertTaskSucceeds(db1.TerminateAsync());
+        AssertTaskSucceeds(db1.TerminateAsync());
 
         // Can call registration.Stop multiple times even after termination.
         registration.Stop();
         registration.Stop();
 
-        // TODO(b/149105903) Uncomment this line when a C# exception can be thrown here.
-        // AssertException(typeof(Exception), () => Await(db2.DisableNetworkAsync()));
+        var taskCompletionSource = new TaskCompletionSource<string>();
+        taskCompletionSource.SetException(new InvalidOperationException("forced exception"));
+        Task sampleUntypedTask = taskCompletionSource.Task;
+        Task<string> sampleTypedTask = taskCompletionSource.Task;
+
+        // Verify that the `App` property is still valid after `TerminateAsync()`.
+        Assert("App property should not have changed", db1.App == app);
+
+        // Verify that synchronous methods in `FirebaseFirestore` still return values after
+        // `TerminateAsync()`.
+        AssertNotNull("Collection() returned null", db1.Collection("a"));
+        AssertNotNull("CollectionGroup() returned null", db1.CollectionGroup("c"));
+        AssertNotNull("Document() returned null", db1.Document("a/b"));
+        AssertNotNull("StartBatch() returned null", db1.StartBatch());
+
+        // Verify that adding a listener via `ListenForSnapshotsInSync()` is not notified
+        // after `TerminateAsync()`.
+        bool snapshotsInSyncListenerInvoked = false;
+        Action snapshotsInSyncListener = () => { snapshotsInSyncListenerInvoked = true; };
+#if UNITY_ANDROID
+        AssertException(typeof(InvalidOperationException),
+                        () => db1.ListenForSnapshotsInSync(snapshotsInSyncListener));
+#else
+        // TODO(b/201438171) `ListenForSnapshotsInSync()` should throw `InvalidOperationException`,
+        // like it does on Android and like `CollectionReference.Listen()` and
+        // `DocumentReference.Listen()` do.
+        db1.ListenForSnapshotsInSync(snapshotsInSyncListener);
+#endif
+
+        // Verify that all non-static methods in `FirebaseFirestore` that start a `Task`, other
+        // than `ClearPersistenceAsync()` fail.
+        AssertTaskFaults(typeof(InvalidOperationException),
+                         db1.RunTransactionAsync(transaction => sampleUntypedTask));
+        AssertTaskFaults(typeof(InvalidOperationException),
+                         db1.RunTransactionAsync<string>(transaction => sampleTypedTask));
+        // TODO(b/201098348) Change `AssertException()` to `AssertTaskFaults()` for the 5 bundle
+        // loading methods below, since they should be consistent with the rest of the methods.
+        AssertException(typeof(InvalidOperationException), () => db1.LoadBundleAsync("BundleData"));
+        AssertException(typeof(InvalidOperationException),
+                        () => db1.LoadBundleAsync("BundleData", (sender, progress) => {}));
+        AssertException(typeof(InvalidOperationException), () => db1.LoadBundleAsync(new byte[0]));
+        AssertException(typeof(InvalidOperationException),
+                        () => db1.LoadBundleAsync(new byte[0], (sender, progress) => {}));
+        AssertException(typeof(InvalidOperationException),
+                        () => db1.GetNamedQueryAsync("QueryName"));
+        AssertTaskFaults(typeof(InvalidOperationException), db1.DisableNetworkAsync());
+        AssertTaskFaults(typeof(InvalidOperationException), db1.EnableNetworkAsync());
+        AssertTaskFaults(typeof(InvalidOperationException), db1.WaitForPendingWritesAsync());
+
+        // Verify the behavior of methods in `CollectionReference` after `TerminateAsync()`.
+        Assert("collection.Firestore is not correct", collection.Firestore == db1);
+        AssertEq(collection.Id, "ColB");
+        AssertEq(collection.Path, "ColA/DocA/ColB");
+        bool collectionListenerInvoked = false;
+        Action<QuerySnapshot> collectionListener = snap => { collectionListenerInvoked = true; };
+        AssertException(typeof(InvalidOperationException),
+                        () => collection.Listen(collectionListener));
+        AssertNotNull("Collection.Document() returned null", collection.Document());
+        AssertNotNull("Collection.Document(string) returned null", collection.Document("abc"));
+        AssertTaskFaults(typeof(InvalidOperationException), collection.AddAsync(TestData(1)));
+        // TODO(b/201438328) Change `AssertException()` to `AssertTaskFaults()` for
+        // `GetSnapshotAsync()`, since it should be consistent with other methods.
+        AssertException(typeof(InvalidOperationException),
+                        () => collection.GetSnapshotAsync(Source.Default));
+
+        // Verify the behavior of methods in `DocumentReference` after `TerminateAsync()`.
+        Assert("doc.Firestore is not correct", doc.Firestore == db1);
+        AssertEq(doc.Id, "DocB");
+        AssertEq(doc.Path, "ColA/DocA/ColB/DocB");
+        AssertEq(doc.Parent, collection);
+        bool docListenerInvoked = false;
+        Action<DocumentSnapshot> docListener = snap => { docListenerInvoked = true; };
+        AssertException(typeof(InvalidOperationException), () => doc.Listen(docListener));
+        AssertNotNull("DocumentReference.Collection() returned null", doc.Collection("zzz"));
+        AssertTaskFaults(typeof(InvalidOperationException), doc.DeleteAsync());
+        AssertTaskFaults(typeof(InvalidOperationException), doc.SetAsync(TestData(1)));
+        AssertTaskFaults(typeof(InvalidOperationException), doc.UpdateAsync("life", 42));
+        // TODO(b/201438328) Change `AssertException()` to `AssertTaskFaults()` for
+        // `GetSnapshotAsync()`, since it should be consistent with other methods.
+        AssertException(typeof(InvalidOperationException),
+                        () => doc.GetSnapshotAsync(Source.Default));
+
+        // Verify the behavior of methods in `WriteBatch` after `TerminateAsync()`.
+        writeBatch.Delete(doc);
+        writeBatch.Set(doc2, TestData(1), null);
+        AssertTaskFaults(typeof(InvalidOperationException), writeBatch.CommitAsync());
+
+        // Verify that the listeners were not notified. Do it here instead of above to allow
+        // some time to pass for unexpected notifications to be received.
+        Assert("The listener registered with FirebaseFirestore.ListenForSnapshotsInSync() " +
+                   "should not be notified after TerminateAsync()",
+               !snapshotsInSyncListenerInvoked);
+        Assert("The listener registered with CollectionReference.Listen() " +
+                   "should not be notified after TerminateAsync()",
+               !collectionListenerInvoked);
+        Assert("The listener registered with DocumentReference.Listen() " +
+                   "should not be notified after TerminateAsync()",
+               !docListenerInvoked);
 
         // Create a new functional instance.
         var db2 = FirebaseFirestore.GetInstance(app);
         Assert("Should create a new instance.", db1 != db2);
-        Await(db2.DisableNetworkAsync());
-        Await(db2.EnableNetworkAsync());
+        AssertTaskSucceeds(db2.DisableNetworkAsync());
+        AssertTaskSucceeds(db2.EnableNetworkAsync());
 
         app.Dispose();
-        // TODO(wuandy): App.Dispose really should leads to Firestore terminated, a NRE here is
-        // not ideal, but serves the purpose for now. Ideally, it should throw an exception
-        // telling user it is terminated.
-        AssertException(typeof(NullReferenceException), () => Await(db2.DisableNetworkAsync()));
       });
     }
 
@@ -2169,28 +2657,23 @@ namespace Firebase.Sample.Firestore {
 
         {
           Task task = docWithInvalidName.DeleteAsync();
-          // TODO(b/193834769) Assert "__badpath__" is in the message once the message is fixed.
-          AssertTaskFaults(task, FirestoreError.InvalidArgument, "invalid");
+          AssertTaskFaults(task, FirestoreError.InvalidArgument, "__badpath__");
         }
         {
           Task task = docWithInvalidName.UpdateAsync(TestData(0));
-          // TODO(b/193834769) Assert "__badpath__" is in the message once the message is fixed.
-          AssertTaskFaults(task, FirestoreError.InvalidArgument, "invalid");
+          AssertTaskFaults(task, FirestoreError.InvalidArgument, "__badpath__");
         }
         {
           Task task = docWithInvalidName.UpdateAsync("fieldName", 42);
-          // TODO(b/193834769) Assert "__badpath__" is in the message once the message is fixed.
-          AssertTaskFaults(task, FirestoreError.InvalidArgument, "invalid");
+          AssertTaskFaults(task, FirestoreError.InvalidArgument, "__badpath__");
         }
         {
           Task task = docWithInvalidName.UpdateAsync(fieldPathData);
-          // TODO(b/193834769) Assert "__badpath__" is in the message once the message is fixed.
-          AssertTaskFaults(task, FirestoreError.InvalidArgument, "invalid");
+          AssertTaskFaults(task, FirestoreError.InvalidArgument, "__badpath__");
         }
         {
           Task task = docWithInvalidName.SetAsync(TestData(), SetOptions.MergeAll);
-          // TODO(b/193834769) Assert "__badpath__" is in the message once the message is fixed.
-          AssertTaskFaults(task, FirestoreError.InvalidArgument, "invalid");
+          AssertTaskFaults(task, FirestoreError.InvalidArgument, "__badpath__");
         }
         {
           Task<DocumentSnapshot> task = docWithInvalidName.GetSnapshotAsync();
@@ -2222,8 +2705,7 @@ namespace Firebase.Sample.Firestore {
         }
         {
           Task<DocumentReference> task = collectionWithInvalidName.AddAsync(TestData(0));
-          // TODO(b/193834769) Assert "__badpath__" is in the message once the message is fixed.
-          AssertTaskFaults(task, FirestoreError.InvalidArgument, "invalid");
+          AssertTaskFaults(task, FirestoreError.InvalidArgument, "__badpath__");
         }
         {
           ListenerRegistration listenerRegistration = collectionWithInvalidName.Listen(snap => { });
@@ -2234,9 +2716,8 @@ namespace Firebase.Sample.Firestore {
         {
           ListenerRegistration listenerRegistration = collectionWithInvalidName.Listen(
               MetadataChanges.Include, snap => { });
-          // TODO(b/193834769) Assert "__badpath__" is in the message once the message is fixed.
           AssertTaskFaults(listenerRegistration.ListenerTask, FirestoreError.InvalidArgument,
-                           "invalid");
+                           "__badpath__");
           listenerRegistration.Stop();
         }
       });
@@ -2285,50 +2766,144 @@ namespace Firebase.Sample.Firestore {
 
     Task TestFirestoreSettings() {
       return Async(() => {
-        FirebaseFirestore db = FirebaseFirestore.DefaultInstance;
-        DocumentReference doc = db.Collection("coll").Document();
-        var data = new Dictionary<string, object>{
-          {"f1", "v1"},
-        };
-        Await(doc.SetAsync(data));
+        // Verify that ToString() returns a meaningful value.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-tostring-test");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          customDb.Settings.Host = "a.b.c";
+          customDb.Settings.SslEnabled = true;
+          customDb.Settings.PersistenceEnabled = false;
+          customDb.Settings.CacheSizeBytes = 9876543;
+          AssertStringContainsNoCase(customDb.Settings.ToString(), "FirebaseFirestoreSettings");
+          AssertStringContainsNoCase(customDb.Settings.ToString(), "Host=a.b.c");
+          AssertStringContainsNoCase(customDb.Settings.ToString(), "SslEnabled=true");
+          AssertStringContainsNoCase(customDb.Settings.ToString(), "PersistenceEnabled=false");
+          AssertStringContainsNoCase(customDb.Settings.ToString(), "CacheSizeBytes=9876543");
+          customApp.Dispose();
+        }
 
-        // Verify it can get snapshot from cache, this is the behavior when
-        // persistence is set to true in settings, which is the default setting.
-        Await(doc.GetSnapshotAsync(Source.Cache));
+        // Verify the default FirebaseFirestoreSettings values.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-defaults-test");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          AssertEq(customDb.Settings.Host, "firestore.googleapis.com");
+          AssertEq(customDb.Settings.SslEnabled, true);
+          AssertEq(customDb.Settings.PersistenceEnabled, true);
+          AssertEq(customDb.Settings.CacheSizeBytes, 100 * 1024 * 1024);
+          customApp.Dispose();
+        }
 
-        // Terminate the current instance and create a new one (via DefaultInstance) such that
-        // we can apply a new FirebaseFirestoreSettings.
-        Await(db.TerminateAsync());
-        db = FirebaseFirestore.DefaultInstance;
-        db.Settings = new FirebaseFirestoreSettings { PersistenceEnabled = false };
+        // Verify that the FirebaseFirestoreSettings written are read back.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-readwrite-test");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
 
-        doc = db.Collection("coll").Document();
-        Await(doc.SetAsync(data));
+          customDb.Settings.Host = "a.b.c";
+          AssertEq<string>(customDb.Settings.Host, "a.b.c");
+          customDb.Settings.Host = "d.e.f";
+          AssertEq<string>(customDb.Settings.Host, "d.e.f");
 
-        // Verify it cannot get snapshot from cache, this behavior only exists with memory
-        // persistence.
-        AssertException(typeof(Exception), () => Await(doc.GetSnapshotAsync(Source.Cache)));
+          customDb.Settings.SslEnabled = true;
+          AssertEq<bool>(customDb.Settings.SslEnabled, true);
+          customDb.Settings.SslEnabled = false;
+          AssertEq<bool>(customDb.Settings.SslEnabled, false);
 
-        // Restart SDK again to test mutating existing settings.
-        Await(db.TerminateAsync());
-        db = FirebaseFirestore.DefaultInstance;
-        db.Settings.PersistenceEnabled = false;
+          customDb.Settings.PersistenceEnabled = true;
+          AssertEq<bool>(customDb.Settings.PersistenceEnabled, true);
+          customDb.Settings.PersistenceEnabled = false;
+          AssertEq<bool>(customDb.Settings.PersistenceEnabled, false);
 
-        doc = db.Collection("coll").Document();
-        data = new Dictionary<string, object>{
-          {"f1", "v1"},
-        };
-        Await(doc.SetAsync(data));
+          customDb.Settings.CacheSizeBytes = 9876543;
+          AssertEq<long>(customDb.Settings.CacheSizeBytes, 9876543);
+          customDb.Settings.CacheSizeBytes = 1234567;
+          AssertEq<long>(customDb.Settings.CacheSizeBytes, 1234567);
 
-        // Verify it cannot get snapshot from cache, this behavior only exists with memory
-        // persistence.
-        AssertException(typeof(Exception), () => Await(doc.GetSnapshotAsync(Source.Cache)));
+          customApp.Dispose();
+        }
 
-        Await(db.TerminateAsync());
-        db = FirebaseFirestore.DefaultInstance;
-        long fiveMb = 5 * 1024 * 1024;
-        db.Settings = new FirebaseFirestoreSettings { CacheSizeBytes = fiveMb };
-        AssertEq(db.Settings.CacheSizeBytes, fiveMb);
+        // Verify the FirebaseFirestoreSettings behavior after the FirebaseFirestore is disposed.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-dispose-test");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestoreSettings settings = customDb.Settings;
+
+          var oldHost = settings.Host;
+          var oldSslEnabled = settings.SslEnabled;
+          var oldPersistenceEnabled = settings.PersistenceEnabled;
+          var oldCacheSizeBytes = settings.CacheSizeBytes;
+
+          customApp.Dispose();
+
+          AssertException(typeof(InvalidOperationException), () => { settings.Host = "a.b.c"; });
+          AssertException(typeof(InvalidOperationException),
+                          () => { settings.SslEnabled = false; });
+          AssertException(typeof(InvalidOperationException),
+                          () => { settings.PersistenceEnabled = false; });
+          AssertException(typeof(InvalidOperationException),
+                          () => { settings.CacheSizeBytes = 9876543; });
+
+          // Test "getting" the values after verifying that setting throws an exception to ensure
+          // that the values were not actually changed by the exception-throwing set operation.
+          AssertEq<string>(settings.Host, oldHost);
+          AssertEq<bool>(settings.SslEnabled, oldSslEnabled);
+          AssertEq<bool>(settings.PersistenceEnabled, oldPersistenceEnabled);
+          AssertEq<long>(settings.CacheSizeBytes, oldCacheSizeBytes);
+        }
+
+        // Verify the FirebaseFirestoreSettings behavior after the FirebaseFirestore is used.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-toolate-test");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          var oldHost = customDb.Settings.Host;
+          var oldSslEnabled = customDb.Settings.SslEnabled;
+          var oldPersistenceEnabled = customDb.Settings.PersistenceEnabled;
+          var oldCacheSizeBytes = customDb.Settings.CacheSizeBytes;
+
+          // "Use" the settings to lock them in, so that future "set" operations will fail.
+          customDb.Collection("a");
+
+          AssertException(typeof(InvalidOperationException),
+                          () => { customDb.Settings.Host = "a.b.c"; });
+          AssertException(typeof(InvalidOperationException),
+                          () => { customDb.Settings.SslEnabled = false; });
+          AssertException(typeof(InvalidOperationException),
+                          () => { customDb.Settings.PersistenceEnabled = false; });
+          AssertException(typeof(InvalidOperationException),
+                          () => { customDb.Settings.CacheSizeBytes = 9876543; });
+
+          // Test "getting" the values after verifying that setting throws an exception to ensure
+          // that the values were not actually changed by the exception-throwing set operation.
+          AssertEq<string>(customDb.Settings.Host, oldHost);
+          AssertEq<bool>(customDb.Settings.SslEnabled, oldSslEnabled);
+          AssertEq<bool>(customDb.Settings.PersistenceEnabled, oldPersistenceEnabled);
+          AssertEq<long>(customDb.Settings.CacheSizeBytes, oldCacheSizeBytes);
+
+          customApp.Dispose();
+        }
+
+        // Verify that FirebaseFirestoreSettings.PersistenceEnabled is respected.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-persistence-test");
+          string docPath;
+          {
+            FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+            customDb.Settings.PersistenceEnabled = true;
+            DocumentReference doc = customDb.Collection("settings-persistence-test").Document();
+            docPath = doc.Path;
+            AssertTaskSucceeds(doc.SetAsync(TestData(1)));
+            AssertTaskSucceeds(doc.GetSnapshotAsync(Source.Cache));
+            AssertTaskSucceeds(customDb.TerminateAsync());
+          }
+          {
+            FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+            customDb.Settings.PersistenceEnabled = false;
+            DocumentReference doc = customDb.Document(docPath);
+            AssertTaskSucceeds(doc.SetAsync(TestData(1)));
+            AssertTaskFaults(doc.GetSnapshotAsync(Source.Cache));
+            AssertTaskSucceeds(customDb.TerminateAsync());
+          }
+          customApp.Dispose();
+        }
       });
     }
 
@@ -2423,8 +2998,8 @@ namespace Firebase.Sample.Firestore {
 
                 break;
               case SerializationTestData.TestCase.TestOutcome.Success:
-                throw new Exception(
-                    "Expecting a failing outcome with the test case, got 'Success'");
+                FailTest("Expecting a failing outcome with the test case, got 'Success'");
+                break;
             }
           }
         } catch (ThreadAbortException) {
@@ -2440,6 +3015,8 @@ namespace Firebase.Sample.Firestore {
 
     Task TestAssertTaskFaults() {
       return Async(() => {
+        testRunner.DisablePostTestIgnoredFailureCheck();
+
         // Verify that AssertTaskFaults() passes if the Task faults with a FirestoreException with
         // the expected error code.
         {
@@ -2463,7 +3040,7 @@ namespace Firebase.Sample.Firestore {
             thrownException = e;
           }
           if (thrownException == null) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() should have thrown an exception because the AggregateException" +
                 "has multiple nested AggregateException instances.");
           }
@@ -2481,7 +3058,7 @@ namespace Firebase.Sample.Firestore {
             thrownException = e;
           }
           if (thrownException == null) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() should have thrown an exception because the task faulted " +
                 "with an incorrect error code.");
           }
@@ -2498,7 +3075,7 @@ namespace Firebase.Sample.Firestore {
             thrownException = e;
           }
           if (thrownException == null) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() should have thrown an exception because the task completed " +
                 "successfully.");
           }
@@ -2516,7 +3093,7 @@ namespace Firebase.Sample.Firestore {
             thrownException = e;
           }
           if (thrownException == null) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() should have thrown an exception because the task faulted " +
                 "with an incorrect exception type.");
           }
@@ -2537,7 +3114,7 @@ namespace Firebase.Sample.Firestore {
             thrownException = e;
           }
           if (thrownException == null) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() should have thrown an exception because the task faulted " +
                 "with an AggregateException that flattened to an unexpected exception.");
           }
@@ -2558,7 +3135,7 @@ namespace Firebase.Sample.Firestore {
             thrownException = e;
           }
           if (thrownException == null) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() should have thrown an exception because the task faulted " +
                 "with an AggregateException that could not be fully flattened.");
           }
@@ -2576,11 +3153,11 @@ namespace Firebase.Sample.Firestore {
             thrownException = e;
           }
           if (thrownException == null) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() should have thrown an exception because the task faulted " +
                 "with an exception that does not have a message.");
           } else if (!thrownException.Message.Contains("SomeMessageRegex")) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() threw an exception (as expected); however, its message was " +
                 "incorrect: " + thrownException.Message);
           }
@@ -2598,12 +3175,12 @@ namespace Firebase.Sample.Firestore {
             thrownException = e;
           }
           if (thrownException == null) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() should have thrown an exception because the task faulted " +
                 "with an exception that does not have a message.");
           } else if (!(thrownException.Message.Contains("TheActualMessage") &&
                        thrownException.Message.Contains("The.*MeaningOfLife"))) {
-            throw new Exception(
+            FailTest(
                 "AssertTaskFaults() threw an exception (as expected); however, its message was " +
                 "incorrect: " + thrownException.Message);
           }
@@ -2647,7 +3224,7 @@ namespace Firebase.Sample.Firestore {
         exception = null;
         try {
           var db = NonDefaultFirestore("IllegalState");
-          db.Settings = new FirebaseFirestoreSettings{SslEnabled = false};
+          db.Settings.SslEnabled = false;
           // Make sure the Firestore client is initialized.
           db.Collection("foo").Document("bar");
 
@@ -2702,6 +3279,519 @@ namespace Firebase.Sample.Firestore {
         Await(doc2.SetAsync(initialData));
         System.Threading.Thread.Sleep(50);
         Assert("The callback should not have been invoked", !callbackInvoked);
+      });
+    }
+
+    Task TestLoadBundles() {
+      return Async(() => {
+        var db = NonDefaultFirestore("TestLoadBundles");
+        AssertTaskSucceeds(db.ClearPersistenceAsync());
+
+        string bundle = BundleBuilder.CreateBundle(db.App.Options.ProjectId);
+        var progresses = new ThreadSafeList<LoadBundleTaskProgress>();
+        object eventSender = null;
+        var loadTask = db.LoadBundleAsync(Encoding.UTF8.GetBytes(bundle), (sender, progress) => {
+          eventSender = sender;
+          progresses.Add(progress);
+        });
+
+        // clang-format off
+        LoadBundleTaskProgress finalProgress = Await(loadTask);
+        AssertEq(finalProgress.State, LoadBundleTaskProgress.LoadBundleTaskState.Success);
+
+        AssertListCountReaches(progresses, 4);
+        AssertEq(progresses[0].DocumentsLoaded, 0);
+        AssertEq(progresses[0].State, LoadBundleTaskProgress.LoadBundleTaskState.InProgress);
+        AssertEq(progresses[1].DocumentsLoaded, 1);
+        AssertEq(progresses[1].State, LoadBundleTaskProgress.LoadBundleTaskState.InProgress);
+        AssertEq(progresses[2].DocumentsLoaded, 2);
+        AssertEq(progresses[2].State, LoadBundleTaskProgress.LoadBundleTaskState.InProgress);
+        AssertEq(progresses[3], finalProgress);
+
+        Assert("Expecting eventSender to be db", eventSender == db);
+
+        VerifyBundledQueryResults(db);
+        // clang-format on
+      });
+    }
+
+    Task TestLoadBundlesForASecondTime_ShouldSkip() {
+      return Async(() => {
+        var db = NonDefaultFirestore("TestLoadBundlesForASecondTime_ShouldSkip");
+        AssertTaskSucceeds(db.ClearPersistenceAsync());
+
+        string bundle = BundleBuilder.CreateBundle(db.App.Options.ProjectId);
+        var loadTask = db.LoadBundleAsync(bundle);
+        LoadBundleTaskProgress finalProgress = Await(loadTask);
+        AssertEq(finalProgress.State, LoadBundleTaskProgress.LoadBundleTaskState.Success);
+
+        var progresses = new ThreadSafeList<LoadBundleTaskProgress>();
+        object eventSender = null;
+        loadTask = db.LoadBundleAsync(Encoding.UTF8.GetBytes(bundle), (sender, progress) => {
+          eventSender = sender;
+          progresses.Add(progress);
+        });
+
+        // clang-format off
+        finalProgress = Await(loadTask);
+        AssertEq(finalProgress.State, LoadBundleTaskProgress.LoadBundleTaskState.Success);
+
+        AssertListCountReaches(progresses, 1);
+        AssertEq(progresses[0], finalProgress);
+
+        Assert("Expecting eventSender to be db", eventSender == db);
+
+        VerifyBundledQueryResults(db);
+        // clang-format on
+      });
+    }
+
+    Task TestLoadBundlesFromOtherProjects_ShouldFail() {
+      return Async(() => {
+        var db = NonDefaultFirestore("TestLoadBundlesFromOtherProjects_ShouldFail");
+        Await(db.ClearPersistenceAsync());
+        string bundle = BundleBuilder.CreateBundle("other-project");
+
+        // clang-format off
+        var progresses = new ThreadSafeList<LoadBundleTaskProgress>();
+        var loadTask =
+            db.LoadBundleAsync(bundle, (sender, progress) => { progresses.Add(progress); });
+        AssertTaskFaults(loadTask);
+
+        AssertListCountReaches(progresses, 2);
+        AssertEq(progresses[0].State, LoadBundleTaskProgress.LoadBundleTaskState.InProgress);
+        AssertEq(progresses[1].State, LoadBundleTaskProgress.LoadBundleTaskState.Error);
+        // clang-format on
+      });
+    }
+
+    Task LoadedBundleDocumentsAlreadyPulledFromBackend_ShouldNotOverwrite() {
+      return Async(() => {
+        var db = FirebaseFirestore.GetInstance(FirebaseApp.DefaultInstance);
+        Await(db.TerminateAsync());
+        Await(db.ClearPersistenceAsync());
+        db = FirebaseFirestore.GetInstance(FirebaseApp.DefaultInstance);
+
+        var collection = db.Collection("coll-1");
+        Await(collection.Document("a").SetAsync(new Dictionary<string, object> {
+          { "k", "a" },
+          { "bar", "newValueA" },
+        }));
+        Await(collection.Document("b").SetAsync(new Dictionary<string, object> {
+          { "k", "b" },
+          { "bar", "newValueB" },
+        }));
+
+        string bundle = BundleBuilder.CreateBundle(db.App.Options.ProjectId);
+        var loadTask = db.LoadBundleAsync(bundle);
+        var finalProgress = Await(loadTask);
+        AssertEq(finalProgress.State, LoadBundleTaskProgress.LoadBundleTaskState.Success);
+
+        // Verify documents are not overwritten
+        {
+          QuerySnapshot snapshot = Await(db.Collection("coll-1").GetSnapshotAsync(Source.Cache));
+          AssertDeepEq(QuerySnapshotToValues(snapshot), new List<Dictionary<string, object>> {
+            new Dictionary<string, object> { { "k", "a" }, { "bar", "newValueA" } },
+            new Dictionary<string, object> { { "k", "b" }, { "bar", "newValueB" } }
+          });
+        }
+
+        // Read documents using named query
+        {
+          Query limitQuery = Await(db.GetNamedQueryAsync("limit"));
+          QuerySnapshot snapshot = Await(limitQuery.GetSnapshotAsync(Source.Cache));
+          AssertDeepEq(QuerySnapshotToValues(snapshot), new List<Dictionary<string, object>> {
+            new Dictionary<string, object> { { "k", "b" }, { "bar", "newValueB" } }
+          });
+        }
+
+        {
+          Query limitToLastQuery = Await(db.GetNamedQueryAsync("limit-to-last"));
+          QuerySnapshot snapshot = Await(limitToLastQuery.GetSnapshotAsync(Source.Cache));
+          AssertDeepEq(QuerySnapshotToValues(snapshot), new List<Dictionary<string, object>> {
+            new Dictionary<string, object> { { "k", "a" }, { "bar", "newValueA" } }
+          });
+        }
+      });
+    }
+
+    void VerifyBundledQueryResults(FirebaseFirestore firebaseFirestore) {
+      // Verify documents are saved
+      {
+        QuerySnapshot snapshot =
+            Await(firebaseFirestore.Collection("coll-1").GetSnapshotAsync(Source.Cache));
+        AssertDeepEq(QuerySnapshotToValues(snapshot), new List<Dictionary<string, object>> {
+          new Dictionary<string, object> { { "k", "a" }, { "bar", 1L } },
+          new Dictionary<string, object> { { "k", "b" }, { "bar", 2L } }
+        });
+      }
+
+      // Read documents using named query
+      {
+        Query limitQuery = Await(firebaseFirestore.GetNamedQueryAsync("limit"));
+        QuerySnapshot snapshot = Await(limitQuery.GetSnapshotAsync(Source.Cache));
+        AssertDeepEq(QuerySnapshotToValues(snapshot), new List<Dictionary<string, object>> {
+          new Dictionary<string, object> { { "k", "b" }, { "bar", 2L } }
+        });
+      }
+
+      {
+        Query limitToLastQuery = Await(firebaseFirestore.GetNamedQueryAsync("limit-to-last"));
+        QuerySnapshot snapshot = Await(limitToLastQuery.GetSnapshotAsync(Source.Cache));
+        AssertDeepEq(QuerySnapshotToValues(snapshot), new List<Dictionary<string, object>> {
+          new Dictionary<string, object> { { "k", "a" }, { "bar", 1L } }
+        });
+      }
+    }
+
+    Task TestQueryEqualsAndGetHashCode() {
+      return Async(() => {
+        var collection = TestCollection();
+
+        var query1 = collection.WhereEqualTo("num", 1);
+        var query2 = collection.WhereEqualTo("num", 1);
+        AssertEq(query1.Equals(query2), true);
+        AssertEq(query1.GetHashCode(), query2.GetHashCode());
+
+        var query3 = collection.WhereNotEqualTo("num", 1);
+        AssertEq(query1.Equals(query3), false);
+        AssertNe(query1.GetHashCode(), query3.GetHashCode());
+
+        var query4 = collection.WhereEqualTo("state", "done");
+        AssertEq(query1.Equals(query4), false);
+        AssertNe(query1.GetHashCode(), query4.GetHashCode());
+
+        var query5 = collection.OrderBy("num");
+        var query6 = collection.Limit(2);
+        var query7 = collection.OrderBy("num").Limit(2);
+        AssertEq(query5.Equals(query6), false);
+        AssertEq(query5.Equals(query7), false);
+        AssertEq(query6.Equals(query7), false);
+        AssertEq(query1.Equals(null), false);
+
+        AssertNe(query5.GetHashCode(), query6.GetHashCode());
+        AssertNe(query5.GetHashCode(), query7.GetHashCode());
+        AssertNe(query6.GetHashCode(), query7.GetHashCode());
+      });
+    }
+
+    Task TestQuerySnapshotEqualsAndGetHashCode() {
+      return Async(() => {
+        var collection = TestCollection();
+
+        AssertTaskSucceeds(collection.Document("a").SetAsync(TestData(1)));
+        QuerySnapshot snapshot1 = AssertTaskSucceeds(collection.GetSnapshotAsync());
+        QuerySnapshot snapshot2 = AssertTaskSucceeds(collection.GetSnapshotAsync());
+        QuerySnapshot snapshot3 = AssertTaskSucceeds(collection.GetSnapshotAsync());
+
+        AssertTaskSucceeds(collection.Document("b").SetAsync(TestData(2)));
+        QuerySnapshot snapshot4 = AssertTaskSucceeds(collection.GetSnapshotAsync());
+
+        AssertEq(snapshot1.Equals(snapshot1), true);
+        // Note: snapshot1 is not equal to snapshot2 as snapshot1 contains a document with
+        // `DocumentState` of `kHasCommittedMutations`, but snapshot2 has the same document with
+        // `DocumentState` of `kSynced`.
+        AssertEq(snapshot1.Equals(snapshot2), false);
+        AssertEq(snapshot2.Equals(snapshot3), true);
+        AssertEq(snapshot3.Equals(snapshot4), false);
+        AssertEq(snapshot1.Equals(null), false);
+
+        AssertEq(snapshot1.GetHashCode(), snapshot1.GetHashCode());
+        AssertEq(snapshot2.GetHashCode(), snapshot3.GetHashCode());
+        AssertNe(snapshot3.GetHashCode(), snapshot4.GetHashCode());
+      });
+    }
+
+    Task TestDocumentSnapshotEqualsAndGetHashCode() {
+      return Async(() => {
+        DocumentReference doc1 = db.Collection("col2").Document();
+        DocumentReference doc2 = db.Collection("col2").Document();
+        var data1 = TestData();
+        var data2 = TestData(2);
+
+        AssertTaskSucceeds(doc1.SetAsync(data1));
+        DocumentSnapshot snapshot1 = AssertTaskSucceeds(doc1.GetSnapshotAsync());
+
+        AssertTaskSucceeds(doc1.SetAsync(data2));
+        DocumentSnapshot snapshot2 = AssertTaskSucceeds(doc1.GetSnapshotAsync());
+
+        AssertTaskSucceeds(doc2.SetAsync(data1));
+        DocumentSnapshot snapshot3 = AssertTaskSucceeds(doc2.GetSnapshotAsync());
+        DocumentSnapshot snapshot4 = AssertTaskSucceeds(doc2.GetSnapshotAsync());
+        DocumentSnapshot snapshot5 = AssertTaskSucceeds(doc2.GetSnapshotAsync());
+
+        AssertEq(snapshot1.Equals(snapshot1), true);
+        AssertEq(snapshot1.Equals(snapshot2), false);
+        AssertEq(snapshot1.Equals(snapshot3), false);
+        AssertEq(snapshot1.Equals(null), false);
+
+        // Note: snapshot3 is not equal to snapshot4 as snapshot3 has `DocumentState` of
+        // `kHasCommittedMutations`, but snapshot4 has `DocumentState` of `kSynced`.
+        // TODO(b/204238341) Remove this #if once the Android and iOS implementations converge.
+#if UNITY_ANDROID
+        AssertEq(snapshot3.Equals(snapshot4), false);
+#else
+        AssertEq(snapshot3.Equals(snapshot4), true);
+#endif
+
+        AssertEq(snapshot4.Equals(snapshot5), true);
+
+        AssertEq(snapshot1.GetHashCode(), snapshot1.GetHashCode());
+
+#if UNITY_ANDROID
+        // TODO(b/198001784): Re-enable the following check once the iOS implementation is fixed.
+        // Note: the non-Android implementation calculates the hash based on the document key (and
+        // ignores the document contents), and so it produces the same hash for snapshot1 and
+        // snapshot2.
+        AssertNe(snapshot1.GetHashCode(), snapshot2.GetHashCode());
+#endif
+
+        AssertNe(snapshot1.GetHashCode(), snapshot3.GetHashCode());
+        AssertEq(snapshot4.GetHashCode(), snapshot5.GetHashCode());
+      });
+    }
+
+    Task TestDocumentChangeEqualsAndGetHashCode() {
+      return Async(() => {
+        var collection = TestCollection();
+
+        AssertTaskSucceeds(collection.Document("a").SetAsync(TestData(1)));
+
+        var accumulator = new EventAccumulator<QuerySnapshot>(MainThreadId, FailTest);
+        collection.Listen(MetadataChanges.Include, accumulator.Listener);
+
+        // Wait for the first snapshot.
+        QuerySnapshot snapshot1 = accumulator.Await();
+        var changes = snapshot1.GetChanges(MetadataChanges.Include);
+        AssertEq(changes.Count(), 1);
+        var change1 = changes.First();
+
+        // Wait for new snapshot once we're synced with the backend.
+        var snapshot2 = accumulator.Await();
+        // This is expected to be empty.
+        changes = snapshot2.GetChanges(MetadataChanges.Include);
+        AssertEq(changes.Count(), 0);
+
+        // Update the document and wait for the resulting snapshot.
+        collection.Document("a").SetAsync(TestData(2));
+        var snapshot3 = accumulator.Await();
+        changes = snapshot3.GetChanges(MetadataChanges.Include);
+        AssertEq(changes.Count(), 1);
+        var change2 = changes.First();
+
+        // Wait for snapshot indicating the write has completed.
+        var snapshot4 = accumulator.Await();
+        changes = snapshot4.GetChanges(MetadataChanges.Include);
+        AssertEq(changes.Count(), 1);
+        var change3 = changes.First();
+
+        QuerySnapshot snapshot5 = AssertTaskSucceeds(collection.GetSnapshotAsync());
+        changes = snapshot5.GetChanges(MetadataChanges.Include);
+        AssertEq(changes.Count(), 1);
+        var change4 = changes.First();
+        QuerySnapshot snapshot6 = AssertTaskSucceeds(collection.GetSnapshotAsync());
+        changes = snapshot6.GetChanges(MetadataChanges.Include);
+        AssertEq(changes.Count(), 1);
+        var change5 = changes.First();
+
+        AssertEq(change1.Equals(change1), true);
+        AssertEq(change1.Equals(change2), false);
+        AssertEq(change1.Equals(change3), false);
+        AssertEq(change1.Equals(null), false);
+        AssertEq(change4.Equals(change5), true);
+
+        AssertEq(change1.GetHashCode(), change1.GetHashCode());
+        AssertNe(change1.GetHashCode(), change2.GetHashCode());
+        AssertNe(change1.GetHashCode(), change3.GetHashCode());
+        AssertEq(change4.GetHashCode(), change5.GetHashCode());
+      });
+    }
+
+    Task TestInvalidArgumentAssertions() {
+      return Async(() => {
+        foreach (var test in InvalidArgumentsTest.TestCases) {
+          bool pass = false;
+          try {
+            test.action(this);
+            pass = true;
+          } finally {
+            if (!pass) {
+              DebugLog("InvalidArgumentsTest test FAILED: " + test.name);
+            }
+          }
+        }
+      });
+    }
+
+    Task TestFirestoreDispose() {
+      return Async(() => {
+        // Verify that disposing the `FirebaseApp` in turn disposes the `FirebaseFirestore` object.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "dispose-app-to-firestore");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          customApp.Dispose();
+          Assert("App property should be null", customDb.App == null);
+        }
+
+        // Verify that all non-static methods in `FirebaseFirestore` throw if invoked after
+        // the instance is disposed.
+        {
+          var taskCompletionSource = new TaskCompletionSource<string>();
+          taskCompletionSource.SetException(new InvalidOperationException("forced exception"));
+          Task sampleUntypedTask = taskCompletionSource.Task;
+          Task<string> sampleTypedTask = taskCompletionSource.Task;
+
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "dispose-exceptions");
+          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          var doc = customDb.Document("ColA/DocA/ColB/DocB");
+          var doc2 = customDb.Document("ColA/DocA/ColB/DocC");
+          var collection = doc.Parent;
+          var writeBatch = customDb.StartBatch();
+          customApp.Dispose();
+
+          // Verify that the `App` property is null valid after `FirebaseFirestore` is disposed.
+          Assert("App property should be null", customDb.App == null);
+
+          // Verify that all non-static methods in `FirebaseFirestore` throw after it is disposed.
+          AssertException(typeof(InvalidOperationException), () => customDb.Collection("a"));
+          AssertException(typeof(InvalidOperationException), () => customDb.Document("a/b"));
+          AssertException(typeof(InvalidOperationException), () => customDb.CollectionGroup("c"));
+          AssertException(typeof(InvalidOperationException), () => customDb.StartBatch());
+          AssertException(typeof(InvalidOperationException),
+                          () => customDb.RunTransactionAsync(transaction => sampleUntypedTask));
+          AssertException(
+              typeof(InvalidOperationException),
+              () => customDb.RunTransactionAsync<string>(transaction => sampleTypedTask));
+          bool snapshotsInSyncListenerInvoked = false;
+          Action snapshotsInSyncListener = () => { snapshotsInSyncListenerInvoked = true; };
+          AssertException(typeof(InvalidOperationException),
+                          () => customDb.ListenForSnapshotsInSync(snapshotsInSyncListener));
+          AssertException(typeof(InvalidOperationException),
+                          () => customDb.LoadBundleAsync("BundleData"));
+          AssertException(typeof(InvalidOperationException),
+                          () => customDb.LoadBundleAsync("BundleData", (sender, progress) => {}));
+          AssertException(typeof(InvalidOperationException),
+                          () => customDb.LoadBundleAsync(new byte[0]));
+          AssertException(typeof(InvalidOperationException),
+                          () => customDb.LoadBundleAsync(new byte[0], (sender, progress) => {}));
+          AssertException(typeof(InvalidOperationException),
+                          () => customDb.GetNamedQueryAsync("QueryName"));
+          AssertException(typeof(InvalidOperationException), () => customDb.DisableNetworkAsync());
+          AssertException(typeof(InvalidOperationException), () => customDb.EnableNetworkAsync());
+          AssertException(typeof(InvalidOperationException),
+                          () => customDb.WaitForPendingWritesAsync());
+          AssertException(typeof(InvalidOperationException), () => customDb.TerminateAsync());
+          AssertException(typeof(InvalidOperationException),
+                          () => customDb.ClearPersistenceAsync());
+
+          // Verify the behavior of methods in `CollectionReference` after `FirebaseFirestore` is
+          // disposed.
+          Assert("collection.Firestore is not correct", collection.Firestore == customDb);
+          AssertEq(collection.Id, "");
+          AssertEq(collection.Path, "");
+          bool collectionListenerInvoked = false;
+          Action<QuerySnapshot> collectionListener = snap => { collectionListenerInvoked = true; };
+          // TODO(b/201440423) `Listen()` should throw `InvalidOperationException`, not succeed.
+          AssertNotNull("Collection.Listen()", collection.Listen(collectionListener));
+          AssertNotNull("Collection.Document() returned null", collection.Document());
+          AssertNotNull("Collection.Document(string) returned null", collection.Document("abc"));
+          AssertTaskFaults(collection.AddAsync(TestData(1)), FirestoreError.FailedPrecondition);
+          AssertTaskFaults(collection.GetSnapshotAsync(Source.Default),
+                           FirestoreError.FailedPrecondition);
+
+          // Verify the behavior of methods in `DocumentReference` after `FirebaseFirestore` is
+          // disposed.
+          Assert("doc.Firestore is not correct", doc.Firestore == customDb);
+          AssertEq(doc.Id, "");
+          AssertEq(doc.Path, "");
+          AssertEq(doc.Parent, collection);
+          bool docListenerInvoked = false;
+          Action<DocumentSnapshot> docListener = snap => { docListenerInvoked = true; };
+          // TODO(b/201440423) `Listen()` should throw `InvalidOperationException`, not succeed.
+          AssertNotNull("DocumentReference.Listen()", doc.Listen(docListener));
+          AssertNotNull("DocumentReference.Collection() returned null", doc.Collection("zzz"));
+          AssertTaskFaults(doc.DeleteAsync(), FirestoreError.FailedPrecondition);
+          AssertTaskFaults(doc.SetAsync(TestData(1)), FirestoreError.FailedPrecondition);
+          AssertTaskFaults(doc.UpdateAsync("life", 42), FirestoreError.FailedPrecondition);
+          AssertTaskFaults(doc.GetSnapshotAsync(Source.Default), FirestoreError.FailedPrecondition);
+
+          // Verify the behavior of methods in `WriteBatch` after `FirebaseFirestore` is disposed.
+          writeBatch.Delete(doc);
+          writeBatch.Set(doc2, TestData(1), null);
+          AssertTaskFaults(writeBatch.CommitAsync(), FirestoreError.FailedPrecondition);
+
+          // Verify that the listeners were not notified. Do it here instead of above to allow
+          // some time to pass for unexpected notifications to be received.
+          Assert("The listener registered with FirebaseFirestore.ListenForSnapshotsInSync() " +
+                     "should not be notified after TerminateAsync()",
+                 !snapshotsInSyncListenerInvoked);
+          Assert("The listener registered with CollectionReference.Listen() " +
+                     "should not be notified after TerminateAsync()",
+                 !collectionListenerInvoked);
+          Assert("The listener registered with DocumentReference.Listen() " +
+                     "should not be notified after TerminateAsync()",
+                 !docListenerInvoked);
+        }
+      });
+    }
+
+    Task TestFirestoreGetInstance() {
+      return Async(() => {
+        // Verify that invoking `FirebaseFirestore.GetInstance()` with the same `FirebaseApp`
+        // returns the exact same `FirebaseFirestore` instance.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-same-instance");
+          FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance(customApp);
+          Assert("GetInstance() should return the same instance", customDb1 == customDb2);
+          customApp.Dispose();
+        }
+
+        // Verify that invoking `FirebaseFirestore.GetInstance()` with different `FirebaseApp`
+        // instances return distinct and consistent `FirebaseFirestore` instances.
+        {
+          FirebaseApp customAppA = FirebaseApp.Create(db.App.Options, "getinstance-multi-a");
+          FirebaseApp customAppB = FirebaseApp.Create(db.App.Options, "getinstance-multi-b");
+          FirebaseFirestore customDbA1 = FirebaseFirestore.GetInstance(customAppA);
+          FirebaseFirestore customDbB1 = FirebaseFirestore.GetInstance(customAppB);
+          FirebaseFirestore customDbA2 = FirebaseFirestore.GetInstance(customAppA);
+          FirebaseFirestore customDbB2 = FirebaseFirestore.GetInstance(customAppB);
+          Assert("GetInstance() should return the same instance A", customDbA1 == customDbA2);
+          Assert("GetInstance() should return the same instance B", customDbB1 == customDbB2);
+          Assert("GetInstance() should return distinct instances", customDbA1 != customDbB1);
+          customAppB.Dispose();
+          customAppA.Dispose();
+        }
+
+        // Verify that invoking `FirebaseFirestore.GetInstance()` with a disposed `FirebaseApp`
+        // does not crash.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-disposed-app");
+          FirebaseFirestore.GetInstance(customApp);
+          customApp.Dispose();
+          AssertException(typeof(ArgumentException),
+                          () => FirebaseFirestore.GetInstance(customApp));
+        }
+
+        // Verify that invoking `FirebaseFirestore.GetInstance()` after `TerminateAsync()` results
+        // in a distinct, functional `FirebaseFirestore` instance.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-after-terminate");
+          FirebaseFirestore customDbBefore = FirebaseFirestore.GetInstance(customApp);
+          Task terminateTask = customDbBefore.TerminateAsync();
+          FirebaseFirestore customDbAfter = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDbAfter2 = FirebaseFirestore.GetInstance(customApp);
+          // Wait for completion of the `Task` returned from `TerminateAsync()` *after* calling
+          // `GetInstance()` to ensure that `TerminateAsync()` *synchronously* evicts the
+          // "firestore" objects from both the C++ and C# instance caches (as opposed to evicting
+          // from the caches *asynchronously*).
+          AssertTaskSucceeds(terminateTask);
+          Assert("GetInstance() should return a new instance", customDbBefore != customDbAfter);
+          Assert("GetInstance() should return the same instance", customDbAfter == customDbAfter2);
+          DocumentReference doc = customDbAfter.Collection("a").Document();
+          AssertTaskSucceeds(doc.SetAsync(TestData(1)));
+          customApp.Dispose();
+        }
       });
     }
 
@@ -2867,6 +3957,63 @@ namespace Firebase.Sample.Firestore {
       [FirestoreProperty]
       [ServerTimestamp]
       public DateTime ServerTimestamp { get; set; }
+    }
+
+    // A minimal port of the .NET `System.Threading.Barrier` class.
+    // TODO: Delete this class and use the `Barrier` class from the standard library once .NET 3.5
+    // support is dropped.
+    private sealed class BarrierCompat {
+      private readonly object _lock = new object();
+      private readonly int _participantCount;
+      private int _waitingParticipantCount = 0;
+
+      internal BarrierCompat(int participantCount) {
+        if (participantCount < 2) {
+          throw new ArgumentException("invalid participantCount: " + participantCount);
+        }
+        _participantCount = participantCount;
+      }
+
+      internal void SignalAndWait() {
+        lock (_lock) {
+          _waitingParticipantCount++;
+          if (_waitingParticipantCount == _participantCount) {
+            _waitingParticipantCount = 0;
+            Monitor.PulseAll(_lock);
+          } else {
+            Monitor.Wait(_lock);
+          }
+        }
+      }
+    }
+
+    // A minimal implementation of a "list" that is safe for concurrent access
+    // from multiple threads.
+    private sealed class ThreadSafeList<T> {
+      private readonly List<T> elements = new List<T>();
+
+      public int Count {
+        get {
+          lock (this) {
+            return elements.Count;
+          }
+        }
+      }
+
+      public T this[int index] {
+        get {
+          lock (this) {
+            return elements[index];
+          }
+        }
+      }
+
+      public void Add(T element) {
+        lock (this) {
+          elements.Add(element);
+          Monitor.PulseAll(this);
+        }
+      }
     }
   }
 }

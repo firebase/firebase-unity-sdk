@@ -683,10 +683,11 @@ SWIGINTERN firebase::firestore::Query const firebase_Future_Sl_firebase_firestor
   }
 
 #include "firestore/src/swig/document_event_listener.h"
+#include "firestore/src/swig/equality_compare.h"
+#include "firestore/src/swig/hash.h"
 #include "firestore/src/swig/query_event_listener.h"
 #include "firestore/src/swig/snapshots_in_sync_listener.h"
 #include "firestore/src/swig/load_bundle_task_progress_callback.h"
-#include "firestore/src/swig/firestore_instance_management.h"
 
 
 #include "firestore/src/swig/api_headers.h"
@@ -8426,6 +8427,150 @@ SWIGEXPORT void SWIGSTDCALL Firebase_Firestore_CSharp_delete_LoadBundleTaskProgr
 }
 
 
+SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_FirestoreProxy_GetInstance__SWIG_0(void * jarg1, int * jarg2) {
+  void * jresult ;
+  ::firebase::App *arg1 = (::firebase::App *) 0 ;
+  firebase::InitResult *arg2 = (firebase::InitResult *) 0 ;
+  firebase::firestore::Firestore *result = 0 ;
+  
+  arg1 = (::firebase::App *)jarg1; 
+  arg2 = (firebase::InitResult *)jarg2; 
+  {
+    try {
+      result = (firebase::firestore::Firestore *)firebase::firestore::Firestore::GetInstance(arg1,arg2);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = (void *)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_FirestoreProxy_GetInstance__SWIG_1(void * jarg1) {
+  void * jresult ;
+  ::firebase::App *arg1 = (::firebase::App *) 0 ;
+  firebase::firestore::Firestore *result = 0 ;
+  
+  arg1 = (::firebase::App *)jarg1; 
+  {
+    try {
+      result = (firebase::firestore::Firestore *)firebase::firestore::Firestore::GetInstance(arg1);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = (void *)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_FirestoreProxy_GetInstance__SWIG_2(int * jarg1) {
+  void * jresult ;
+  firebase::InitResult *arg1 = (firebase::InitResult *) 0 ;
+  firebase::firestore::Firestore *result = 0 ;
+  
+  arg1 = (firebase::InitResult *)jarg1; 
+  {
+    try {
+      result = (firebase::firestore::Firestore *)firebase::firestore::Firestore::GetInstance(arg1);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = (void *)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_FirestoreProxy_GetInstance__SWIG_3() {
+  void * jresult ;
+  firebase::firestore::Firestore *result = 0 ;
+  
+  {
+    try {
+      result = (firebase::firestore::Firestore *)firebase::firestore::Firestore::GetInstance();
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = (void *)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT void SWIGSTDCALL Firebase_Firestore_CSharp_delete_FirestoreProxy(void * jarg1) {
   firebase::firestore::Firestore *arg1 = (firebase::firestore::Firestore *) 0 ;
   
@@ -9215,6 +9360,302 @@ SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_AddDocumentSnapshotListe
 }
 
 
+SWIGEXPORT unsigned int SWIGSTDCALL Firebase_Firestore_CSharp_QueryEquals(void * jarg1, void * jarg2) {
+  unsigned int jresult ;
+  firebase::firestore::Query *arg1 = (firebase::firestore::Query *) 0 ;
+  firebase::firestore::Query *arg2 = (firebase::firestore::Query *) 0 ;
+  bool result;
+  
+  arg1 = (firebase::firestore::Query *)jarg1; 
+  arg2 = (firebase::firestore::Query *)jarg2; 
+  {
+    try {
+      result = (bool)firebase::firestore::csharp::QueryEquals((firebase::firestore::Query const *)arg1,(firebase::firestore::Query const *)arg2);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT unsigned int SWIGSTDCALL Firebase_Firestore_CSharp_QuerySnapshotEquals(void * jarg1, void * jarg2) {
+  unsigned int jresult ;
+  firebase::firestore::QuerySnapshot *arg1 = (firebase::firestore::QuerySnapshot *) 0 ;
+  firebase::firestore::QuerySnapshot *arg2 = (firebase::firestore::QuerySnapshot *) 0 ;
+  bool result;
+  
+  arg1 = (firebase::firestore::QuerySnapshot *)jarg1; 
+  arg2 = (firebase::firestore::QuerySnapshot *)jarg2; 
+  {
+    try {
+      result = (bool)firebase::firestore::csharp::QuerySnapshotEquals((firebase::firestore::QuerySnapshot const *)arg1,(firebase::firestore::QuerySnapshot const *)arg2);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT unsigned int SWIGSTDCALL Firebase_Firestore_CSharp_DocumentSnapshotEquals(void * jarg1, void * jarg2) {
+  unsigned int jresult ;
+  firebase::firestore::DocumentSnapshot *arg1 = (firebase::firestore::DocumentSnapshot *) 0 ;
+  firebase::firestore::DocumentSnapshot *arg2 = (firebase::firestore::DocumentSnapshot *) 0 ;
+  bool result;
+  
+  arg1 = (firebase::firestore::DocumentSnapshot *)jarg1; 
+  arg2 = (firebase::firestore::DocumentSnapshot *)jarg2; 
+  {
+    try {
+      result = (bool)firebase::firestore::csharp::DocumentSnapshotEquals((firebase::firestore::DocumentSnapshot const *)arg1,(firebase::firestore::DocumentSnapshot const *)arg2);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT unsigned int SWIGSTDCALL Firebase_Firestore_CSharp_DocumentChangeEquals(void * jarg1, void * jarg2) {
+  unsigned int jresult ;
+  firebase::firestore::DocumentChange *arg1 = (firebase::firestore::DocumentChange *) 0 ;
+  firebase::firestore::DocumentChange *arg2 = (firebase::firestore::DocumentChange *) 0 ;
+  bool result;
+  
+  arg1 = (firebase::firestore::DocumentChange *)jarg1; 
+  arg2 = (firebase::firestore::DocumentChange *)jarg2; 
+  {
+    try {
+      result = (bool)firebase::firestore::csharp::DocumentChangeEquals((firebase::firestore::DocumentChange const *)arg1,(firebase::firestore::DocumentChange const *)arg2);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT int SWIGSTDCALL Firebase_Firestore_CSharp_QueryHashCode(void * jarg1) {
+  int jresult ;
+  firebase::firestore::Query *arg1 = (firebase::firestore::Query *) 0 ;
+  int32_t result;
+  
+  arg1 = (firebase::firestore::Query *)jarg1; 
+  {
+    try {
+      result = (int32_t)firebase::firestore::csharp::QueryHashCode((firebase::firestore::Query const *)arg1);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT int SWIGSTDCALL Firebase_Firestore_CSharp_QuerySnapshotHashCode(void * jarg1) {
+  int jresult ;
+  firebase::firestore::QuerySnapshot *arg1 = (firebase::firestore::QuerySnapshot *) 0 ;
+  int32_t result;
+  
+  arg1 = (firebase::firestore::QuerySnapshot *)jarg1; 
+  {
+    try {
+      result = (int32_t)firebase::firestore::csharp::QuerySnapshotHashCode((firebase::firestore::QuerySnapshot const *)arg1);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT int SWIGSTDCALL Firebase_Firestore_CSharp_DocumentSnapshotHashCode(void * jarg1) {
+  int jresult ;
+  firebase::firestore::DocumentSnapshot *arg1 = (firebase::firestore::DocumentSnapshot *) 0 ;
+  int32_t result;
+  
+  arg1 = (firebase::firestore::DocumentSnapshot *)jarg1; 
+  {
+    try {
+      result = (int32_t)firebase::firestore::csharp::DocumentSnapshotHashCode((firebase::firestore::DocumentSnapshot const *)arg1);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT int SWIGSTDCALL Firebase_Firestore_CSharp_DocumentChangeHashCode(void * jarg1) {
+  int jresult ;
+  firebase::firestore::DocumentChange *arg1 = (firebase::firestore::DocumentChange *) 0 ;
+  int32_t result;
+  
+  arg1 = (firebase::firestore::DocumentChange *)jarg1; 
+  {
+    try {
+      result = (int32_t)firebase::firestore::csharp::DocumentChangeHashCode((firebase::firestore::DocumentChange const *)arg1);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = result; 
+  return jresult;
+}
+
+
 SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_AddQuerySnapshotListener(void * jarg1, int jarg2, int jarg3, void * jarg4) {
   void * jresult ;
   firebase::firestore::Query *arg1 = (firebase::firestore::Query *) 0 ;
@@ -9301,16 +9742,61 @@ SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_AddSnapshotsInSyncListen
 }
 
 
-SWIGEXPORT void SWIGSTDCALL Firebase_Firestore_CSharp_LoadBundleWithCallback(void * jarg1, char * jarg2, int jarg3, void * jarg4) {
+SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_LoadBundle__SWIG_0(void * jarg1, char * jarg2) {
+  void * jresult ;
   firebase::firestore::Firestore *arg1 = (firebase::firestore::Firestore *) 0 ;
   std::string *arg2 = 0 ;
-  int32_t arg3 ;
-  firebase::firestore::csharp::LoadBundleTaskProgressCallback arg4 = (firebase::firestore::csharp::LoadBundleTaskProgressCallback) 0 ;
+  firebase::Future< firebase::firestore::LoadBundleTaskProgress > result;
   
   arg1 = (firebase::firestore::Firestore *)jarg1; 
   if (!jarg2) {
     SWIG_CSharpSetPendingExceptionArgument(SWIG_CSharpArgumentNullException, "null string", 0);
-    return ;
+    return 0;
+  }
+  std::string arg2_str(jarg2);
+  arg2 = &arg2_str; 
+  {
+    try {
+      result = firebase::firestore::csharp::LoadBundle(arg1,(std::string const &)*arg2);
+    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
+      SWIG_CSharpSetPendingExceptionFirestore(e.what());
+      return 0;
+    } catch (const std::invalid_argument& e) {
+      SWIG_CSharpSetPendingExceptionArgument(
+        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
+        e.what(), /*paramName=*/"");
+      return 0;
+    } catch (const std::logic_error& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (const std::exception& e) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        e.what());
+      return 0;
+    } catch (...) {
+      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
+        "Unknown error has occurred.");
+      return 0;
+    }
+  }
+  jresult = new firebase::Future< firebase::firestore::LoadBundleTaskProgress >(result);
+  return jresult;
+}
+
+
+SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_LoadBundle__SWIG_1(void * jarg1, char * jarg2, int jarg3, void * jarg4) {
+  void * jresult ;
+  firebase::firestore::Firestore *arg1 = (firebase::firestore::Firestore *) 0 ;
+  std::string *arg2 = 0 ;
+  int32_t arg3 ;
+  firebase::firestore::csharp::LoadBundleTaskProgressCallback arg4 = (firebase::firestore::csharp::LoadBundleTaskProgressCallback) 0 ;
+  firebase::Future< firebase::firestore::LoadBundleTaskProgress > result;
+  
+  arg1 = (firebase::firestore::Firestore *)jarg1; 
+  if (!jarg2) {
+    SWIG_CSharpSetPendingExceptionArgument(SWIG_CSharpArgumentNullException, "null string", 0);
+    return 0;
   }
   std::string arg2_str(jarg2);
   arg2 = &arg2_str; 
@@ -9320,41 +9806,7 @@ SWIGEXPORT void SWIGSTDCALL Firebase_Firestore_CSharp_LoadBundleWithCallback(voi
   
   {
     try {
-      firebase::firestore::csharp::LoadBundleWithCallback(arg1,(std::string const &)*arg2,arg3,arg4);
-    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
-      SWIG_CSharpSetPendingExceptionFirestore(e.what());
-      return ;
-    } catch (const std::invalid_argument& e) {
-      SWIG_CSharpSetPendingExceptionArgument(
-        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
-        e.what(), /*paramName=*/"");
-      return ;
-    } catch (const std::logic_error& e) {
-      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
-        e.what());
-      return ;
-    } catch (const std::exception& e) {
-      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
-        e.what());
-      return ;
-    } catch (...) {
-      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
-        "Unknown error has occurred.");
-      return ;
-    }
-  }
-}
-
-
-SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_GetFirestoreInstance(void * jarg1) {
-  void * jresult ;
-  firebase::App *arg1 = (firebase::App *) 0 ;
-  firebase::firestore::Firestore *result = 0 ;
-  
-  arg1 = (firebase::App *)jarg1; 
-  {
-    try {
-      result = (firebase::firestore::Firestore *)firebase::firestore::csharp::GetFirestoreInstance(arg1);
+      result = firebase::firestore::csharp::LoadBundle(arg1,(std::string const &)*arg2,arg3,arg4);
     } catch (const ::firebase::firestore::FirestoreInternalError& e) {
       SWIG_CSharpSetPendingExceptionFirestore(e.what());
       return 0;
@@ -9377,40 +9829,8 @@ SWIGEXPORT void * SWIGSTDCALL Firebase_Firestore_CSharp_GetFirestoreInstance(voi
       return 0;
     }
   }
-  jresult = (void *)result; 
+  jresult = new firebase::Future< firebase::firestore::LoadBundleTaskProgress >(result);
   return jresult;
-}
-
-
-SWIGEXPORT void SWIGSTDCALL Firebase_Firestore_CSharp_ReleaseFirestoreInstance(void * jarg1) {
-  firebase::firestore::Firestore *arg1 = (firebase::firestore::Firestore *) 0 ;
-  
-  arg1 = (firebase::firestore::Firestore *)jarg1; 
-  {
-    try {
-      firebase::firestore::csharp::ReleaseFirestoreInstance(arg1);
-    } catch (const ::firebase::firestore::FirestoreInternalError& e) {
-      SWIG_CSharpSetPendingExceptionFirestore(e.what());
-      return ;
-    } catch (const std::invalid_argument& e) {
-      SWIG_CSharpSetPendingExceptionArgument(
-        SWIG_CSharpExceptionArgumentCodes::SWIG_CSharpArgumentException,
-        e.what(), /*paramName=*/"");
-      return ;
-    } catch (const std::logic_error& e) {
-      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
-        e.what());
-      return ;
-    } catch (const std::exception& e) {
-      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
-        e.what());
-      return ;
-    } catch (...) {
-      SWIG_CSharpSetPendingException(SWIG_CSharpInvalidOperationException,
-        "Unknown error has occurred.");
-      return ;
-    }
-  }
 }
 
 

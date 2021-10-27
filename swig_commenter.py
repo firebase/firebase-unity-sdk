@@ -45,7 +45,7 @@ flags.DEFINE_string(
     'The prefix used to converted the C++ namespace to a C# class.')
 
 # A regex to extract a C++ enum name from a line.
-CPP_ENUM_DECLARATION_REGEX = re.compile(r'^\s*enum (\w+)\s*{')
+CPP_ENUM_DECLARATION_REGEX = re.compile(r'^\s*enum\s*(?:class\s*)?(\w+)\s*{')
 
 # A regex to extract a C++ enum value identifier from a line. In other words,
 # given the line `  kFoo = 1,` this will extract "kFoo".

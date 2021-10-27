@@ -1,10 +1,10 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -85,7 +85,7 @@ namespace Firebase.Firestore {
     /// that is not specified in <paramref name="fields"/> is ignored and remains untouched.
     /// </summary>
     /// <remarks>
-    /// It is an error to pass a {@code SetOptions} object to a {@code set()} call that is missing a
+    /// It is an error to pass a <c>SetOptions</c> object to a <c>set()</c> call that is missing a
     /// value for any of the fields specified here.
     /// </remarks>
     /// <param name="fields">The fields to merge. An empty array is equivalent to using
