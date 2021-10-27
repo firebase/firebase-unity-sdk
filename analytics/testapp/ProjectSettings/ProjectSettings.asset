@@ -159,9 +159,10 @@ PlayerSettings:
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
     Android: com.google.firebase.unity.analytics.testapp
-    Standalone: unity.Google.Firebase Analytics Unity Testapp
+    Standalone: com.google.firebase.unity.analytics.testapp
     Tizen: com.google.firebase.unity.analytics.testapp
     iOS: com.google.firebase.unity.analytics.testapp
+    iPhone: com.google.firebase.unity.analytics.testapp
     tvOS: com.google.firebase.unity.analytics.testapp
   buildNumber:
     iOS: 0

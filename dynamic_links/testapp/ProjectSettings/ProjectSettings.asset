@@ -159,9 +159,10 @@ PlayerSettings:
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
     Android: com.google.FirebaseUnityDynamicLinksTestApp.dev
-    Standalone: unity.Google.Firebase Dynamic Links Unity Testapp
+    Standalone: com.google.FirebaseUnityDynamicLinksTestApp.dev
     Tizen: com.google.FirebaseUnityDynamicLinksTestApp.dev
     iOS: com.google.FirebaseUnityDynamicLinksTestApp.dev
+    iPhone: com.google.FirebaseUnityDynamicLinksTestApp.dev
     tvOS: com.google.FirebaseUnityDynamicLinksTestApp.dev
   buildNumber:
     iOS: 0

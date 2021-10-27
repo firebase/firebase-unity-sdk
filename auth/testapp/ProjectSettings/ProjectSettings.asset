@@ -162,6 +162,7 @@ PlayerSettings:
     Standalone: unity.Google.Firebase Auth Unity Testapp
     Tizen: com.google.FirebaseUnityAuthTestApp.dev
     iOS: com.google.FirebaseUnityAuthTestApp.dev
+    iPhone: com.google.FirebaseUnityAuthTestApp.dev
     tvOS: com.google.FirebaseUnityAuthTestApp.dev
   buildNumber:
     iOS: 0
