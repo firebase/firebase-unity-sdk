@@ -441,9 +441,7 @@ namespace Tests {
 
   [UnityTest]
   public IEnumerator LoadedDocuments_ShouldNotBeGarbageCollectedRightAway() {
-    var newSettings = db.Settings;
-    newSettings.PersistenceEnabled = false;
-    db.Settings = newSettings;
+    db.Settings.PersistenceEnabled = false;
 
     string bundle = BundleBuilder.CreateBundle(db.App.Options.ProjectId);
     var loadTask = db.LoadBundleAsync(bundle);

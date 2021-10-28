@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #include "firestore/src/swig/load_bundle_task_progress_callback.h"
 
@@ -50,9 +50,14 @@ class ProgressCallback {
 
 }  // namespace
 
-void LoadBundleWithCallback(Firestore* firestore,
-                            const std::string& bundle_data, int32_t callback_id,
-                            LoadBundleTaskProgressCallback callback) {
+Future<LoadBundleTaskProgress> LoadBundle(Firestore* firestore,
+                                          const std::string& bundle_data) {
+  return firestore->LoadBundle(bundle_data);
+}
+
+Future<LoadBundleTaskProgress> LoadBundle(
+    Firestore* firestore, const std::string& bundle_data, int32_t callback_id,
+    LoadBundleTaskProgressCallback callback) {
   auto progress_listener =
       [callback, callback_id](const LoadBundleTaskProgress& progress) {
         // NOLINTNEXTLINE(modernize-make-unique)
@@ -64,7 +69,7 @@ void LoadBundleWithCallback(Firestore* firestore,
             std::move(progress_callback), ProgressCallback::Run);
         callback::AddCallback(callback);
       };
-  firestore->LoadBundle(bundle_data, progress_listener);
+  return firestore->LoadBundle(bundle_data, progress_listener);
 }
 
 }  // namespace csharp

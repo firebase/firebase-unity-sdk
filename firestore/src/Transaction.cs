@@ -57,10 +57,10 @@ namespace Firebase.Firestore {
         TransactionResultOfGetProxy result = _proxy.Get(documentReference.Proxy);
         if (!result.is_valid()) {
           throw new InvalidOperationException("Transaction has ended");
-        } else if (result.error_code() == FirestoreError.Ok) {
+        } else if (Enums.Convert(result.error_code()) == FirestoreError.Ok) {
           return new DocumentSnapshot(result.TakeSnapshot(), Firestore);
         } else {
-          throw new FirestoreException(result.error_code(), result.error_message());
+          throw new FirestoreException(Enums.Convert(result.error_code()), result.error_message());
         }
       });
     }

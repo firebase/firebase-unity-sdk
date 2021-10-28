@@ -40,7 +40,7 @@ namespace Firebase.Sample.Firestore {
     public Action<T> Listener {
       get {
         return (value) => {
-          if (mainThreadId > 0) {
+          if (mainThreadId >= 0) {
             Assert.That(Thread.CurrentThread.ManagedThreadId, Is.EqualTo(mainThreadId),
                         "Listener callback from non-main thread.");
           }

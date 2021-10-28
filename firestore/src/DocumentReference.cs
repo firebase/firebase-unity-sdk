@@ -182,6 +182,11 @@ namespace Firebase.Firestore {
       }
 
       FieldValueProxy fieldValue = ValueSerializer.Serialize(SerializationContext.Default, documentData);
+      if (!fieldValue.is_map()) {
+        throw new ArgumentException("documentData must be either an IDictionary or a POCO." +
+                                    " Instead we got " + documentData.GetType().FullName);
+      }
+
       return FirestoreCpp.DocumentReferenceSetAsync(_proxy, fieldValue, options.Proxy);
     }
 
@@ -199,7 +204,8 @@ namespace Firebase.Firestore {
     /// fall back to the cache (<c>Source.Default</c>).</param>
     /// <returns>A snapshot of the document. The snapshot may represent a missing document.</returns>
     public Task<DocumentSnapshot> GetSnapshotAsync(Source source = Source.Default) {
-      return Util.MapResult(_proxy.GetAsync(source), taskResult => {
+      var sourceProxy = Enums.Convert(source);
+      return Util.MapResult(_proxy.GetAsync(sourceProxy), taskResult => {
         return new DocumentSnapshot(taskResult, Firestore);
       });
     }
@@ -208,7 +214,7 @@ namespace Firebase.Firestore {
     /// Starts listening to changes to the document referenced by this <c>DocumentReference</c>.
     /// </summary>
     /// <param name="callback">The callback to invoke each time the query results change. Must not
-    /// be <c>null</c>.</param>
+    /// be <c>null</c>. The callback will be invoked on the main thread.</param>
     /// <returns>A <see cref="ListenerRegistration"/> which may be used to stop listening
     /// gracefully.</returns>
     public ListenerRegistration Listen(Action<DocumentSnapshot> callback) {
@@ -222,7 +228,7 @@ namespace Firebase.Firestore {
     /// <param name="metadataChanges">Indicates whether metadata-only changes (i.e. only
     /// <c>DocumentSnapshot.Metadata</c> changed) should trigger snapshot events.</param>
     /// <param name="callback">The callback to invoke each time the query results change. Must not
-    /// be <c>null</c>.</param>
+    /// be <c>null</c>. The callback will be invoked on the main thread.</param>
     /// <returns>A <see cref="ListenerRegistration"/> which may be used to stop listening
     /// gracefully.</returns>
     public ListenerRegistration Listen(MetadataChanges metadataChanges, Action<DocumentSnapshot> callback) {
@@ -239,7 +245,9 @@ namespace Firebase.Firestore {
           });
         }
       });
-      var listener = FirestoreCpp.AddDocumentSnapshotListener(_proxy, metadataChanges, uid,
+
+      var metadataChangesProxy = Enums.Convert(metadataChanges);
+      var listener = FirestoreCpp.AddDocumentSnapshotListener(_proxy, metadataChangesProxy, uid,
                                                               documentSnapshotsHandler);
 
       return new ListenerRegistration(snapshotListenerCallbacks, uid, tcs, listener);
@@ -254,9 +262,18 @@ namespace Firebase.Firestore {
     [MonoPInvokeCallback(typeof(ListenerDelegate))]
     private static void DocumentSnapshotsHandler(int callbackId, IntPtr snapshotPtr,
                                                  FirestoreError errorCode, string errorMessage) {
-      Action<DocumentSnapshotProxy, FirestoreError, string> callback;
-      if (snapshotListenerCallbacks.TryGetCallback(callbackId, out callback)) {
-        callback(new DocumentSnapshotProxy(snapshotPtr, true), errorCode, errorMessage);
+      try {
+        // Create the proxy object _before_ doing anything else to ensure that the C++ object's
+        // memory does not get leaked (https://github.com/firebase/firebase-unity-sdk/issues/49).
+        var documentSnapshotProxy = new DocumentSnapshotProxy(snapshotPtr, /*cMemoryOwn=*/true);
+
+        Action<DocumentSnapshotProxy, FirestoreError, string> callback;
+        if (snapshotListenerCallbacks.TryGetCallback(callbackId, out callback)) {
+          callback(documentSnapshotProxy, errorCode, errorMessage);
+        }
+
+      } catch (Exception e) {
+        Util.OnPInvokeManagedException(e, nameof(DocumentSnapshotsHandler));
       }
     }
   }

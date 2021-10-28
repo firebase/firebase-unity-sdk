@@ -27,10 +27,11 @@ namespace Firebase.Sample.Firestore {
     private int maxEvents = 0;
     private bool assertOnAnyEvent = false;
     private int mainThreadId = -1;
+    private Action<string> onAssertionFailure;
 
-    public EventAccumulator() { }
-    public EventAccumulator(int mainThreadId) {
+    public EventAccumulator(int mainThreadId, Action<string> onAssertionFailure) {
       this.mainThreadId = mainThreadId;
+      this.onAssertionFailure = onAssertionFailure;
     }
 
     /// <summary>
@@ -41,8 +42,8 @@ namespace Firebase.Sample.Firestore {
         return (value) => {
           lock (this) {
             HardAssert(!assertOnAnyEvent, "Received unexpected event: " + value);
-            if (mainThreadId > 0) {
-              HardAssert(1 == Thread.CurrentThread.ManagedThreadId, "Listener callback from non-main thread.");
+            if (mainThreadId >= 0) {
+              HardAssert(mainThreadId == Thread.CurrentThread.ManagedThreadId, "Listener callback from non-main thread.");
             }
             events.Add(value);
             CheckFulfilled();
@@ -99,7 +100,7 @@ namespace Firebase.Sample.Firestore {
       if (!condition) {
         string text = "Assertion Failure: " + message;
         UnityEngine.Debug.Log(text);
-        throw new Exception(text);
+        onAssertionFailure(text);
       }
     }
   }

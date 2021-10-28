@@ -59,6 +59,8 @@ class CrashlyticsInternal {
                              std::vector<firebase::crashlytics::Frame>& frames);
   jobject BuildJavaStackTrace(std::vector<Frame>& frames);
 
+  void InstallNdkSignalHandler();
+
   static Mutex init_mutex_;
   static Mutex data_collection_mutex_;
   static int initialize_count_;

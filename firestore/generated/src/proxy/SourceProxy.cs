@@ -8,7 +8,7 @@
 
 namespace Firebase.Firestore {
 
-public enum Source {
+public enum SourceProxy {
   Default,
   Server,
   Cache

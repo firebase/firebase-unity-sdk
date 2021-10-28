@@ -70,42 +70,43 @@ namespace Tests {
       {
         Task task = docWithInvalidName.DeleteAsync();
         yield return AwaitCompletion(task);
-        AssertTaskFaulted(task, FirestoreError.InvalidArgument);
+        AssertTaskFaulted(task, FirestoreError.InvalidArgument, "__badpath__");
       }
       {
         Task task = docWithInvalidName.UpdateAsync(TestData(0));
         yield return AwaitCompletion(task);
-        AssertTaskFaulted(task, FirestoreError.InvalidArgument);
+        AssertTaskFaulted(task, FirestoreError.InvalidArgument, "__badpath__");
       }
       {
         Task task = docWithInvalidName.UpdateAsync("fieldName", 42);
         yield return AwaitCompletion(task);
-        AssertTaskFaulted(task, FirestoreError.InvalidArgument);
+        AssertTaskFaulted(task, FirestoreError.InvalidArgument, "__badpath__");
       }
       {
         Task task = docWithInvalidName.UpdateAsync(fieldPathData);
         yield return AwaitCompletion(task);
-        AssertTaskFaulted(task, FirestoreError.InvalidArgument);
+        AssertTaskFaulted(task, FirestoreError.InvalidArgument, "__badpath__");
       }
       {
         Task task = docWithInvalidName.SetAsync(TestData(), SetOptions.MergeAll);
         yield return AwaitCompletion(task);
-        AssertTaskFaulted(task, FirestoreError.InvalidArgument);
+        AssertTaskFaulted(task, FirestoreError.InvalidArgument, "__badpath__");
       }
       {
         Task<DocumentSnapshot> task = docWithInvalidName.GetSnapshotAsync();
         yield return AwaitCompletion(task);
-        AssertTaskFaulted(task, FirestoreError.InvalidArgument);
+        AssertTaskFaulted(task, FirestoreError.InvalidArgument, "__badpath__");
       }
       {
         Task<DocumentSnapshot> task = docWithInvalidName.GetSnapshotAsync(Source.Default);
         yield return AwaitCompletion(task);
-        AssertTaskFaulted(task, FirestoreError.InvalidArgument);
+        AssertTaskFaulted(task, FirestoreError.InvalidArgument, "__badpath__");
       }
       {
         ListenerRegistration listenerRegistration = docWithInvalidName.Listen(snap => {});
         yield return AwaitCompletion(listenerRegistration.ListenerTask);
-        AssertTaskFaulted(listenerRegistration.ListenerTask, FirestoreError.InvalidArgument);
+        AssertTaskFaulted(listenerRegistration.ListenerTask, FirestoreError.InvalidArgument,
+                          "__badpath__");
         listenerRegistration.Stop();
       }
     }
@@ -126,7 +127,7 @@ namespace Tests {
       {
         Task<DocumentReference> task = collectionWithInvalidName.AddAsync(TestData(0));
         yield return AwaitCompletion(task);
-        AssertTaskFaulted(task, FirestoreError.InvalidArgument);
+        AssertTaskFaulted(task, FirestoreError.InvalidArgument, "__badpath__");
       }
       {
         ListenerRegistration listenerRegistration = collectionWithInvalidName.Listen(snap => {});

@@ -116,7 +116,8 @@ namespace Firebase.Firestore {
     /// <returns>The list of document changes since the last snapshot.</returns>
     // TODO(zxu): change to IReadOnlyList type, which needs .net 4.5 while current tool-chain is .net 4.0.
     public IEnumerable<DocumentChange> GetChanges(MetadataChanges metadataChanges) {
-      var changes = FirestoreCpp.QuerySnapshotDocumentChanges(_proxy, metadataChanges);
+      var changes = FirestoreCpp.QuerySnapshotDocumentChanges(_proxy,
+          Enums.Convert(metadataChanges));
       uint size = changes.Size();
 
       if (size > Int32.MaxValue) {
@@ -130,6 +131,19 @@ namespace Firebase.Firestore {
       }
 
       return result;
+    }
+
+    /// <inheritdoc />
+    public override bool Equals(object obj) => Equals(obj as QuerySnapshot);
+
+    /// <inheritdoc />
+    public bool Equals(QuerySnapshot other) => other != null
+                                               && FirestoreCpp.QuerySnapshotEquals(_proxy,
+                                                                                   other._proxy);
+
+    /// <inheritdoc />
+    public override int GetHashCode() {
+      return FirestoreCpp.QuerySnapshotHashCode(_proxy);
     }
 
     /// <inheritdoc />

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 // This file is used by SWIG to generate wrappers in target languages (so far
 // just C#) around the C++ interface. A few .i files are defined to help
@@ -50,6 +50,23 @@
 // `SWIGTYPE`).
 %typemap(csclassmodifiers) SWIGTYPE * "internal class";
 
+// Work around a corner case in SWIG postprocessing by an FPL team's script (
+// http://google3/firebase/app/client/unity/swig_post_process.py):
+// - by default, SWIG makes all generated methods public, and there doesn't
+//   appear to be a way to modify that default for all methods;
+// - the script changes method visibility of all classes suffixed by `Internal`
+//   to `internal`. This doesn't apply to Firestore classes because they use
+//   the `Proxy` suffix.
+// - the script also changes arguments of all `public` methods to use camelCase,
+//   regardless of the accessibility level of the enclosing class.
+// - taken together, this leads to compilation errors where `init_result_out`
+//   argument of `Firestore::GetInstance` would be renamed in the function
+//   signature but not in its implementation
+//
+// As a workaround, manually mark this method as `internal` so that the
+// processing meant for `public` methods doesn't get applied.
+%csmethodmodifiers firebase::firestore::Firestore::GetInstance "internal";
+
 %import "app/src/swig/app.i"
 %import "firestore/src/swig/proxy_helpers.i"
 %include "app/src/swig/init_result.i"
@@ -75,7 +92,6 @@
 
 #include "firestore/src/common/firestore_exceptions_common.h"
 %}
-
 
 // The boilerplate necessary to propagate Firestore exceptions from C++ to C#.
 // See http://www.swig.org/Doc3.0/CSharp.html#CSharp_custom_application_exception
@@ -231,6 +247,7 @@ SWIG_CREATE_PROXY(firebase::firestore::ListenerRegistration)
 %include "firestore/src/include/firebase/firestore/listener_registration.h"
 
 // Generate a C# wrapper for Source. Must be before DocumentReference and Query.
+SWIG_CREATE_PROXY(firebase::firestore::Source)
 %include "firestore/src/include/firebase/firestore/source.h"
 
 // Generate a C# wrapper for FieldPath. Must be above DocumentSnapshot and SetOptions.
@@ -328,6 +345,7 @@ SWIG_CREATE_PROXY(firebase::firestore::WriteBatch);
 %include "firestore/src/include/firebase/firestore/write_batch.h"
 
 // Generate a C# wrapper for MetadataChanges.
+SWIG_CREATE_PROXY(firebase::firestore::MetadataChanges)
 %include "firestore/src/include/firebase/firestore/metadata_changes.h"
 
 // Generate a C# wrapper for Query and Query::Direction. Must be above CollectionReference.
@@ -395,10 +413,10 @@ SWIG_CREATE_PROXY(firebase::firestore::LoadBundleTaskProgress);
 
 // Generate a C# wrapper for Firestore. Comes last because it refers to multiple
 // other classes (e.g. `CollectionReference`).
-// Note that `GetInstance` is intentionally excluded below because instances are to be retrieved
-// from FirestoreCpp.GetFirestoreInstance() defined in firestore_instance_management.h.
 SWIG_CREATE_PROXY(firebase::firestore::Firestore);
 %rename("%s") firebase::firestore::Firestore::app;
+%newobject firebase::firestore::Firestore::GetInstance;
+%rename("%s") firebase::firestore::Firestore::GetInstance;
 %rename("%s") firebase::firestore::Firestore::Collection;
 %rename("%s") firebase::firestore::Firestore::Document;
 %rename("%s") firebase::firestore::Firestore::CollectionGroup;
@@ -413,40 +431,23 @@ SWIG_CREATE_PROXY(firebase::firestore::Firestore);
 %rename("%s") firebase::firestore::Firestore::NamedQuery;
 %rename("%s") firebase::firestore::Firestore::set_log_level;
 
-// Replace the default Dispose() method to remove references from the CppInstanceManager.
-#if SWIG_VERSION >= 0x040000
-%typemap(csdisposing, methodname="Dispose",
-         parameters="bool disposing", methodmodifiers="public")
-#else
-%typemap(csdestruct, methodname="Dispose", methodmodifiers="public")
-#endif
-    firebase::firestore::Firestore {
-  lock (FirebaseApp.disposeLock) {
-    if (swigCPtr.Handle != global::System.IntPtr.Zero) {
-      FirestoreCpp.ReleaseFirestoreInstance(this);
-      swigCMemOwn = false;
-      swigCPtr = new global::System.Runtime.InteropServices.HandleRef(
-          null, global::System.IntPtr.Zero);
-    }
-    global::System.GC.SuppressFinalize(this);
-  }
-}
-
 %include "firestore/src/include/firebase/firestore.h"
 
 // Interop helpers.
 %{
 #include "firestore/src/swig/document_event_listener.h"
+#include "firestore/src/swig/equality_compare.h"
+#include "firestore/src/swig/hash.h"
 #include "firestore/src/swig/query_event_listener.h"
 #include "firestore/src/swig/snapshots_in_sync_listener.h"
 #include "firestore/src/swig/load_bundle_task_progress_callback.h"
-#include "firestore/src/swig/firestore_instance_management.h"
 %}
 %include "firestore/src/swig/document_event_listener.h"
+%include "firestore/src/swig/equality_compare.h"
+%include "firestore/src/swig/hash.h"
 %include "firestore/src/swig/query_event_listener.h"
 %include "firestore/src/swig/snapshots_in_sync_listener.h"
 %include "firestore/src/swig/load_bundle_task_progress_callback.h"
-%include "firestore/src/swig/firestore_instance_management.h"
 
 %{
 #include "firestore/src/swig/api_headers.h"

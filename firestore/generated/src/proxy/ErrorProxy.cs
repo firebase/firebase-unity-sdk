@@ -8,7 +8,7 @@
 
 namespace Firebase.Firestore {
 
-public enum FirestoreError {
+public enum ErrorProxy {
   Ok = 0,
   None = 0,
   Cancelled = 1,

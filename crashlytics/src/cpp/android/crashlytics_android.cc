@@ -18,6 +18,7 @@
 #include <jni.h>
 
 #include "app/src/include/firebase/app.h"
+#include "app/src/log.h"
 #include "app/src/util_android.h"
 
 namespace firebase {
@@ -111,6 +112,22 @@ METHOD_LOOKUP_DEFINITION(java_stack_trace_element,
                          "java/lang/StackTraceElement",
                          JAVA_STACK_TRACE_ELEMENT);
 
+// clang-format off
+#define CRASHLYTICS_NDK_METHODS(X)                                     \
+  X(GetInstance, "getInstance",                                        \
+    "()Lcom/google/firebase/crashlytics/ndk/FirebaseCrashlyticsNdk;",  \
+    util::kMethodTypeStatic),                                          \
+  X(InstallSignalHandler, "installSignalHandler",                      \
+    "()V",                                                             \
+    util::kMethodTypeInstance)
+// clang-format on
+METHOD_LOOKUP_DECLARATION(firebase_crashlytics_ndk, CRASHLYTICS_NDK_METHODS);
+METHOD_LOOKUP_DEFINITION(
+    firebase_crashlytics_ndk,
+    PROGUARD_KEEP_CLASS
+    "com/google/firebase/crashlytics/ndk/FirebaseCrashlyticsNdk",
+    CRASHLYTICS_NDK_METHODS);
+
 static const int ANDROID_LOG_DEBUG = 3;
 static const char* EXCEPTION_MESSAGE_SEPARATOR = " : ";
 
@@ -177,6 +194,9 @@ CrashlyticsInternal::CrashlyticsInternal(App* app) {
   // We cache this value in case it was set to false on a previous run
   cached_data_collection_enabled_ =
       GetCrashlyticsCollectionEnabled(java_vm_, data_collection_obj_);
+
+  // For Unity apps, the signal handler must be explicitly installed
+  InstallNdkSignalHandler();
 }
 
 CrashlyticsInternal::~CrashlyticsInternal() {
@@ -206,6 +226,7 @@ bool CrashlyticsInternal::Initialize(JNIEnv* env, jobject activity) {
     }
     if (!(firebase_crashlytics::CacheMethodIds(env, activity) &&
           firebase_crashlytics::CacheFieldIds(env, activity) &&
+          firebase_crashlytics_ndk::CacheMethodIds(env, activity) &&
           crashlytics_core::CacheFieldIds(env, activity) &&
           crashlytics_data_collection::CacheMethodIds(env, activity) &&
           java_exception::CacheMethodIds(env, activity) &&
@@ -232,6 +253,19 @@ void CrashlyticsInternal::Terminate() {
 
     util::CheckAndClearJniExceptions(env);
   }
+}
+
+void CrashlyticsInternal::InstallNdkSignalHandler() {
+  firebase::LogDebug("Installing Crashlytics NDK signal handlers...");
+  JNIEnv* env = util::GetThreadsafeJNIEnv(java_vm_);
+  jobject ndk_obj =
+      env->CallStaticObjectMethod(firebase_crashlytics_ndk::GetClass(),
+                                  firebase_crashlytics_ndk::GetMethodId(
+                                      firebase_crashlytics_ndk::kGetInstance));
+  env->CallVoidMethod(ndk_obj,
+                      firebase_crashlytics_ndk::GetMethodId(
+                          firebase_crashlytics_ndk::kInstallSignalHandler));
+  env->DeleteLocalRef(ndk_obj);
 }
 
 void CrashlyticsInternal::Log(const char* message) {

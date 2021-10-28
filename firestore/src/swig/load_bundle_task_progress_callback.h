@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
 #ifndef FIREBASE_FIRESTORE_CLIENT_UNITY_SRC_SWIG_LOAD_BUNDLE_TASK_PROGRESS_CALLBACK_H_
 #define FIREBASE_FIRESTORE_CLIENT_UNITY_SRC_SWIG_LOAD_BUNDLE_TASK_PROGRESS_CALLBACK_H_
@@ -21,6 +21,7 @@
 
 #include <string>
 
+#include "app/src/include/firebase/future.h"
 #include "firestore/src/include/firebase/firestore.h"
 #include "firestore/src/include/firebase/firestore/load_bundle_task_progress.h"
 
@@ -43,13 +44,18 @@ namespace csharp {
 typedef void(SWIGSTDCALL* LoadBundleTaskProgressCallback)(
     int32_t callback_id, LoadBundleTaskProgress* progress);
 
-// This method is a proxy to Firestore::LoadBundle()
-// that can be easily called from C#. It allows our C# wrapper to
-// track user callbacks in a dictionary keyed off of a unique int
-// for each user callback and then raise the correct one later.
-void LoadBundleWithCallback(Firestore* firestore,
-                            const std::string& bundle_data, int32_t callback_id,
-                            LoadBundleTaskProgressCallback callback);
+// This method is a proxy to the Firestore::LoadBundle() overload that does
+// *not* deliver progress updates.
+Future<LoadBundleTaskProgress> LoadBundle(Firestore* firestore,
+                                          const std::string& bundle_data);
+
+// This method is a proxy to the Firestore::LoadBundle() overload that *does*
+// deliver progress updates. It allows our C# wrapper to track user callbacks
+// in a dictionary keyed off of a unique int for each user callback and then
+// raise the correct one later.
+Future<LoadBundleTaskProgress> LoadBundle(
+    Firestore* firestore, const std::string& bundle_data, int32_t callback_id,
+    LoadBundleTaskProgressCallback callback);
 
 }  // namespace csharp
 }  // namespace firestore

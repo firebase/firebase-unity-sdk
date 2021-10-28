@@ -224,5 +224,17 @@ namespace Firebase.Firestore {
       Preconditions.CheckNotNull(path, nameof(path));
       return Exists && _proxy.Get(path.ConvertToProxy()).is_valid();
     }
+
+    /// <inheritdoc />
+    public override bool Equals(object obj) => Equals(obj as DocumentSnapshot);
+
+    /// <inheritdoc />
+    public bool Equals(DocumentSnapshot other) =>
+        other != null && FirestoreCpp.DocumentSnapshotEquals(_proxy, other._proxy);
+
+    /// <inheritdoc />
+    public override int GetHashCode() {
+      return FirestoreCpp.DocumentSnapshotHashCode(_proxy);
+    }
   }
 }

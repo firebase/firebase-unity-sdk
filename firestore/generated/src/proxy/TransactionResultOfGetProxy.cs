@@ -52,8 +52,8 @@ internal class TransactionResultOfGetProxy : global::System.IDisposable {
     return ret;
   }
 
-  public FirestoreError error_code() {
-    FirestoreError ret = (FirestoreError)FirestoreCppPINVOKE.TransactionResultOfGetProxy_error_code(swigCPtr);
+  public ErrorProxy error_code() {
+    ErrorProxy ret = (ErrorProxy)FirestoreCppPINVOKE.TransactionResultOfGetProxy_error_code(swigCPtr);
     if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
     return ret;
   }

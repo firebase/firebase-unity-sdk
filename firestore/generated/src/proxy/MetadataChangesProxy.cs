@@ -8,7 +8,7 @@
 
 namespace Firebase.Firestore {
 
-public enum MetadataChanges {
+public enum MetadataChangesProxy {
   Exclude,
   Include
 }
