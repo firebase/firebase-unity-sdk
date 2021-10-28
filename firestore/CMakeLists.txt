@@ -38,6 +38,7 @@ set(firebase_firestore_src
   src/Converters/MapConverterBase.cs
   src/Converters/SimpleConverters.cs
   src/internal/AssertFailedException.cs
+  src/internal/Enums.cs
   src/internal/EnvironmentVersion.cs
   src/internal/Hash.cs
   src/internal/Preconditions.cs
@@ -58,12 +59,14 @@ set(firebase_firestore_src
   src/FirestoreDataAttribute.cs
   src/FirestoreDocumentIdAttribute.cs
   src/FirestoreEnumNameConverter.cs
+  src/FirestoreError.cs
   src/FirestoreException.cs
   src/FirestorePropertyAttribute.cs
   src/GeoPoint.cs
   src/ListenerRegistration.cs
   src/ListenerRegistrationMap.cs
   src/LoadBundleTaskProgress.cs
+  src/Metadatachanges.cs
   src/MonoPInvokeCallbackAttribute.cs
   src/Query.cs
   src/QuerySnapshot.cs
@@ -72,6 +75,7 @@ set(firebase_firestore_src
   src/ServerTimestampBehavior.cs
   src/SetOptions.cs
   src/SnapshotMetadata.cs
+  src/Source.cs
   src/Timestamp.cs
   src/Transaction.cs
   src/TransactionManager.cs
