@@ -105,5 +105,18 @@ namespace Firebase.Firestore {
         return _proxy.new_index() == DocumentChangeProxy.npos ? -1 : (int)_proxy.new_index();
       }
     }
+
+    /// <inheritdoc />
+    public override bool Equals(object obj) => Equals(obj as DocumentChange);
+
+    /// <inheritdoc />
+    public bool Equals(DocumentChange other) => other != null
+                                                && FirestoreCpp.DocumentChangeEquals(_proxy,
+                                                                                     other._proxy);
+
+    /// <inheritdoc />
+    public override int GetHashCode() {
+      return FirestoreCpp.DocumentChangeHashCode(_proxy);
+    }
   }
 }

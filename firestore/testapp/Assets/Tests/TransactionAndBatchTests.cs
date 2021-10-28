@@ -83,7 +83,7 @@ namespace Tests {
                                           .Set(docWithInvalidName, TestData(0))
                                           .CommitAsync();
       yield return AwaitCompletion(commitWithInvalidDocTask);
-      AssertTaskFaulted(commitWithInvalidDocTask, FirestoreError.InvalidArgument);
+      AssertTaskFaulted(commitWithInvalidDocTask, FirestoreError.InvalidArgument, "__badpath__");
     }
 
     [UnityTest]

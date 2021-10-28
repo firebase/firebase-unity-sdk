@@ -184,7 +184,7 @@ internal class QueryProxy : global::System.IDisposable {
     return ret;
   }
 
-  public virtual System.Threading.Tasks.Task<QuerySnapshotProxy> GetAsync(Source source) {
+  public virtual System.Threading.Tasks.Task<QuerySnapshotProxy> GetAsync(SourceProxy source) {
     var future = FirestoreCppPINVOKE.QueryProxy_Get__SWIG_0(swigCPtr, (int)source);
     
       if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();

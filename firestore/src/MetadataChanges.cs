@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,24 +13,17 @@
 // limitations under the License.
 
 namespace Firebase.Firestore {
-  /// <summary>
-  /// Determines how unknown properties are handled when deserializing a
-  /// Firestore document.
-  /// </summary>
-  public enum UnknownPropertyHandling {
-    /// <summary>
-    /// Unknown properties are silently ignored.
-    /// </summary>
-    Ignore = 0,
 
-    /// <summary>
-    /// Unknown properties cause a warning, but no error.
-    /// </summary>
-    Warn = 1,
+/// <summary>
+/// Indicates whether metadata-only changes (that is, <see cref="DocumentSnapshot.Metadata"/> or
+/// <see cref="QuerySnapshot.Metadata"/> changed) should trigger snapshot events.
+/// </summary>
+public enum MetadataChanges {
+  /// Snapshot events will not be triggered by metadata-only changes.
+  Exclude,
 
-    /// <summary>
-    /// Unknown properties cause an exception to be thrown.
-    /// </summary>
-    Throw = 2
-  }
+  /// Snapshot events will be triggered by any changes, including metadata-only changes.
+  Include
+}
+
 }

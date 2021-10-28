@@ -26,16 +26,57 @@ internal class FirestoreProxy : global::System.IDisposable {
   }
 
   public virtual void Dispose() {
-  lock (FirebaseApp.disposeLock) {
-    if (swigCPtr.Handle != global::System.IntPtr.Zero) {
-      FirestoreCpp.ReleaseFirestoreInstance(this);
-      swigCMemOwn = false;
-      swigCPtr = new global::System.Runtime.InteropServices.HandleRef(
-          null, global::System.IntPtr.Zero);
+
+    lock (FirebaseApp.disposeLock) {
+      if (swigCPtr.Handle != global::System.IntPtr.Zero) {
+        if (swigCMemOwn) {
+          swigCMemOwn = false;
+          FirestoreCppPINVOKE.delete_FirestoreProxy(swigCPtr);
+        }
+        swigCPtr = new global::System.Runtime.InteropServices.HandleRef(
+            null, global::System.IntPtr.Zero);
+      }
+      global::System.GC.SuppressFinalize(this);
     }
-    global::System.GC.SuppressFinalize(this);
   }
-}
+
+  internal static FirestoreProxy GetInstance(FirebaseApp app, out InitResult init_result_out) {
+    int tempinit_result_out = 0;
+    try {
+      global::System.IntPtr cPtr = FirestoreCppPINVOKE.FirestoreProxy_GetInstance__SWIG_0(FirebaseApp.getCPtr(app), out tempinit_result_out);
+      FirestoreProxy ret = (cPtr == global::System.IntPtr.Zero) ? null : new FirestoreProxy(cPtr, true);
+      if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+      return ret;
+    } finally {
+      init_result_out = (InitResult)tempinit_result_out;
+    }
+  }
+
+  internal static FirestoreProxy GetInstance(FirebaseApp app) {
+    global::System.IntPtr cPtr = FirestoreCppPINVOKE.FirestoreProxy_GetInstance__SWIG_1(FirebaseApp.getCPtr(app));
+    FirestoreProxy ret = (cPtr == global::System.IntPtr.Zero) ? null : new FirestoreProxy(cPtr, true);
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
+
+  internal static FirestoreProxy GetInstance(out InitResult init_result_out) {
+    int tempinit_result_out = 0;
+    try {
+      global::System.IntPtr cPtr = FirestoreCppPINVOKE.FirestoreProxy_GetInstance__SWIG_2(out tempinit_result_out);
+      FirestoreProxy ret = (cPtr == global::System.IntPtr.Zero) ? null : new FirestoreProxy(cPtr, true);
+      if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+      return ret;
+    } finally {
+      init_result_out = (InitResult)tempinit_result_out;
+    }
+  }
+
+  internal static FirestoreProxy GetInstance() {
+    global::System.IntPtr cPtr = FirestoreCppPINVOKE.FirestoreProxy_GetInstance__SWIG_3();
+    FirestoreProxy ret = (cPtr == global::System.IntPtr.Zero) ? null : new FirestoreProxy(cPtr, true);
+    if (FirestoreCppPINVOKE.SWIGPendingException.Pending) throw FirestoreCppPINVOKE.SWIGPendingException.Retrieve();
+    return ret;
+  }
 
   public virtual FirebaseApp app() {
     global::System.IntPtr cPtr = FirestoreCppPINVOKE.FirestoreProxy_app__SWIG_0(swigCPtr);

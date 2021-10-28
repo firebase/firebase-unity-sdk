@@ -127,5 +127,24 @@ namespace Firebase.Firestore.Internal {
         return flattenedException;
       }
     }
+
+    /// <summary>
+    /// Logs the given exception with some additional information. The purpose of this function is
+    /// to make the handling of managed exceptions inside P/Invoke calls uniform.
+    /// </summary>
+    /// <param name="exception">The exception to log.</param>
+    /// <param name="methodName">The name of the method that triggered the exception.</param>
+    /// <remarks>
+    /// C# exceptions should not be allowed to escape into the C++ layer when invoked by P/Invoke
+    /// (i.e., from C++). P/Invoke assumes that the unmanaged code is C and would ignore the C++
+    /// stack unwinding, resulting in incorrect behavior. See
+    /// https://www.mono-project.com/docs/advanced/pinvoke/#runtime-exception-propagation
+    /// </remarks>
+    internal static void OnPInvokeManagedException(Exception exception, string methodName) {
+      Firebase.LogUtil.LogMessage(
+          LogLevel.Error,
+          "Unexpected exception thrown by " + methodName + "() when invoked by P/Invoke: " +
+          exception.ToString());
+    }
   }
 }

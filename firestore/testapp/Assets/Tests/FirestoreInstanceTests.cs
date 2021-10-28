@@ -198,7 +198,7 @@ namespace Tests {
       // we can apply a new FirebaseFirestoreSettings.
       yield return AwaitSuccess(db.TerminateAsync());
       db = FirebaseFirestore.DefaultInstance;
-      db.Settings = new FirebaseFirestoreSettings { PersistenceEnabled = false };
+      db.Settings.PersistenceEnabled = false;
 
       doc = db.Collection("coll").Document();
       yield return AwaitSuccess(doc.SetAsync(data));
@@ -233,7 +233,7 @@ namespace Tests {
       // There is no way to actually verify the cache size is applied, we simply
       // verify the size is set properly in the settings object.
       long fiveMb = 5 * 1024 * 1024;
-      db.Settings = new FirebaseFirestoreSettings { CacheSizeBytes = fiveMb };
+      db.Settings.CacheSizeBytes = fiveMb;
       Assert.That(db.Settings.CacheSizeBytes, Is.EqualTo(fiveMb));
     }
   }

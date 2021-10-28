@@ -85,7 +85,8 @@ namespace Firebase.Firestore {
 
         try {
           var transaction = new Transaction(callbackProxy, _firestore);
-          Task<T> callbackTask = callback(transaction);
+          Task<T> callbackTask =
+              FirebaseHandler.RunOnMainThread<Task<T>>(() => { return callback(transaction); });
           lastCallbackTask = callbackTask;
           return callbackTask;
         } catch (Exception e) {
@@ -101,8 +102,7 @@ namespace Firebase.Firestore {
         _callbacks.Unregister(callbackId);
 
         if (!callbackWrapperInvoked) {
-          throw new FirestoreException(FirestoreError.FailedPrecondition,
-                                       "Firestore instance has been disposed");
+          throw new InvalidOperationException("Firestore instance has been disposed");
         } else if (lastCallbackException != null) {
           throw lastCallbackException;
         } else if (lastCallbackTask == null) {
@@ -126,9 +126,12 @@ namespace Firebase.Firestore {
 
     [MonoPInvokeCallback(typeof(TransactionCallbackDelegate))]
     static bool ExecuteCallback(System.IntPtr transactionCallbackProxyPtr) {
-      var callbackProxy =
-          new TransactionCallbackProxy(transactionCallbackProxyPtr, /*cMemoryOwn=*/true);
       try {
+        // Create the proxy object _before_ doing anything else to ensure that the C++ object's
+        // memory does not get leaked (https://github.com/firebase/firebase-unity-sdk/issues/49).
+        var callbackProxy =
+            new TransactionCallbackProxy(transactionCallbackProxyPtr, /*cMemoryOwn=*/true);
+
         Func<TransactionCallbackProxy, Task> callbackWrapper;
         if (!_callbacks.TryGetCallback(callbackProxy.callback_id(), out callbackWrapper)) {
           return false;
@@ -144,12 +147,9 @@ namespace Firebase.Firestore {
           callbackProxy.OnCompletion(callbackSucceeded);
         });
         return true;
+
       } catch (Exception e) {
-        // Do not allow exceptions to propagate into C++ because it is undefined behavior.
-        // https://www.mono-project.com/docs/advanced/pinvoke/#runtime-exception-propagation
-        Firebase.LogUtil.LogMessage(
-            LogLevel.Error,
-            "Unexpected exception thrown by " + nameof(ExecuteCallback) + "(): " + e.ToString());
+        Util.OnPInvokeManagedException(e, nameof(ExecuteCallback));
         return false;
       }
     }

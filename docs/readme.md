@@ -163,11 +163,42 @@ Support
 
 Release Notes
 -------------
-### Unreleased:
+### 8.5.0:
 -   Changes
-    - Crashlytics: Upload UnityFramework symbols in addition to the main app
-      dSYM file to improve symbolication
-      ([#673](https://github.com/firebase/quickstart-unity/issues/673)).
+    - General (iOS): iOS SDKs are now built using Xcode 13.0.0.
+    - Crashlytics: Improved crash reporting for Unity Android apps using the
+      IL2CPP scripting backend. To display symbolicated IL2CPP stack traces in
+      the Crashlytics console, Android customers will need to upload symbol
+      files for their builds. See the [Getting Started with Crashlytics Unity]
+      (https://firebase.google.com/docs/crashlytics/get-started?platform=unity)
+      Guild for more details.
+    - Firestore: Fixed an issue where the `Equals()` and `GetHashCode()` methods
+      of `DocumentSnapshot` would sometimes be inconsistent
+      ([#8647](https://github.com/firebase/firebase-ios-sdk/pull/8647)).
+
+### 8.4.0:
+-   Changes
+    - General: Added support for Android x86 64.
+    - Firestore: Improved the efficiency of progress callbacks in
+      `LoadBundleAsync()`.
+    - Firestore: Fixed crashes in Unity Editor on Linux caused by C++ exceptions
+      failing to be converted to C# exceptions.
+    - Firestore: Fixed intermittent hangs on Android when exceptions are thrown
+      by callbacks.
+    - Firestore: Fixed a crash on Android when `DocumentReference.Set()` was
+      invoked with an invalid `documentData` value (e.g. an int).
+    - Firestore: Fixed race conditions in the instance caching, terminate, and
+      disposal logic of `FirebaseFirestore`.
+
+### 8.3.0:
+-   Changes
+    - Firestore: Simplified the API for modifying the settings of a
+      `FirebaseFirestore` instance. This is a backwards-incompatible change and
+      requires updates to code that sets `FirebaseFirestore.Settings`.
+    - Firestore: Changed an argument to `Query.WhereNotIn()` from `List` to
+      `IEnumerable`, to be consistent with `Query.WhereIn()`.
+    - Messaging (Android): Fixes an issue with receiving tokens when
+      initializing the app.
 
 ### 8.2.0:
 -   Changes
@@ -175,6 +206,11 @@ Release Notes
       `QuerySnapshot`, and `DocumentSnapshot` classes. These methods were
       unimplemented, and we plan to add proper support for them in a future
       release.
+    - Crashlytics: Upload UnityFramework symbols in addition to the main app
+      dSYM file to improve symbolication
+      ([#673](https://github.com/firebase/quickstart-unity/issues/673)).
+    - Messaging: Fixed a duplicate class error when building an application
+      which also uses Firebase Functions.
 
 ### 8.1.0:
 -   Changes

@@ -85,7 +85,7 @@ namespace Firebase.Firestore {
     /// that is not specified in <paramref name="fields"/> is ignored and remains untouched.
     /// </summary>
     /// <remarks>
-    /// It is an error to pass a {@code SetOptions} object to a {@code set()} call that is missing a
+    /// It is an error to pass a <c>SetOptions</c> object to a <c>set()</c> call that is missing a
     /// value for any of the fields specified here.
     /// </remarks>
     /// <param name="fields">The fields to merge. An empty array is equivalent to using
