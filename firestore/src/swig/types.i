@@ -44,7 +44,7 @@ SWIG_CREATE_PROXY(firebase::Timestamp)
 // Generate Error enum.
 SWIG_CREATE_PROXY(firebase::firestore::Error)
 %rename("%(regex:/Error(.*)/\\1/)s", %$isenumitem) "";
-# Remove the `Error` prefix from enum members.
+// Remove the `Error` prefix from enum members.
 %include "firebase/firestore/firestore_errors.h"
 
 // # LINT.ThenChange(//depot/google3/firebase/firestore/client/unity/generated/src/last-updated.txt)
