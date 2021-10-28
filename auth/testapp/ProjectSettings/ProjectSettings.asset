@@ -159,7 +159,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
     Android: com.google.FirebaseUnityAuthTestApp.dev
-    Standalone: unity.Google.Firebase Auth Unity Testapp
+    Standalone: com.google.FirebaseUnityAuthTestApp.dev
     Tizen: com.google.FirebaseUnityAuthTestApp.dev
     iOS: com.google.FirebaseUnityAuthTestApp.dev
     iPhone: com.google.FirebaseUnityAuthTestApp.dev
