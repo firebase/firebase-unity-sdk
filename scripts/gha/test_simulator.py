@@ -161,10 +161,7 @@ def main(argv):
     for directory in directories:
       full_path = os.path.join(file_dir, directory)
       if directory.endswith(".app"):
-        if "iOS" in full_path:
-          ios_testapps.append(full_path)
-        elif "tvOS" in full_path:
-          tvos_testapps.append(full_path)
+        ios_testapps.append(full_path)
     for file_name in file_names:
       full_path = os.path.join(file_dir, file_name)
       if file_name.endswith(".apk"):
