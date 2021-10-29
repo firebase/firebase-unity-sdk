@@ -297,6 +297,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [Android, iOS]
+        mobile_test_on: [real, virtual]
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
     steps:
       - uses: actions/checkout@v2
@@ -317,8 +318,10 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - name: Install Cloud SDK
+        if: matrix.mobile_test_on == 'real'
         uses: google-github-actions/setup-gcloud@master
-      - name: Run Monbile integration tests on Real Device via FTL
+      - name: Run Mobile integration tests on Real Device via FTL
+        if: matrix.mobile_test_on == 'real'
         timeout-minutes: 60
         shell: bash
         run: |
@@ -327,6 +330,13 @@ jobs:
             --logfile_name "${{ matrix.unity_version }}-${{ matrix.platform }}" \
             --code_platform unity \
             --key_file scripts/gha-encrypted/gcs_key_file.json
+      - name: Run Mobile integration tests on virtual device locally
+        timeout-minutes: 60
+        if: matrix.mobile_test_on == 'virtual'
+        run: |
+          python scripts/gha/test_simulator.py --testapp_dir testapps \
+            --logfile_name "${{ matrix.unity_version }}-${{ matrix.platform }}" \
+            --ci
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
