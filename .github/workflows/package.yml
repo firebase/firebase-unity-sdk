@@ -35,12 +35,12 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       # Fetch all the zip files from previous run
-      # - name: Fetch Desktop Artifacts
-      #   uses: dawidd6/action-download-artifact@v2
-      #   with:
-      #     workflow: 'sdk_build.yml'
-      #     run_id: ${{ github.event.inputs.downloadPreviousRun }}
-      #     path: built_artifect
+      - name: Fetch Desktop Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: 'sdk_build.yml'
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          path: built_artifect
 
       - name: Fetch iOS Artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -49,12 +49,12 @@ jobs:
           run_id: ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
       
-      # - name: Fetch Android Artifacts
-      #   uses: dawidd6/action-download-artifact@v2
-      #   with:
-      #     workflow: 'android.yml'
-      #     run_id: ${{ github.event.inputs.downloadPreviousRun }}
-      #     path: built_artifect
+      - name: Fetch Android Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: 'android.yml'
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          path: built_artifect
 
       - name: move zip files
         run: |
@@ -78,19 +78,19 @@ jobs:
           name: firebase_unity_sdk
           path: output
       
-      # - name: Package tgz
-      #   run: |
-      #     python build_package.py --zip_dir=built_artifect --output_upm=True --output=output_tgz
+      - name: Package tgz
+        run: |
+          python build_package.py --zip_dir=built_artifect --output_upm=True --output=output_tgz
 
-      # - name: Listing output tgz
-      #   run: |
-      #     ls -Rl
-      #   working-directory: output_tgz
+      - name: Listing output tgz
+        run: |
+          ls -Rl
+        working-directory: output_tgz
 
-      # - name: Upload Build tgz
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: firebase_unity_sdk_tgz
-      #     path: output_tgz
+      - name: Upload Build tgz
+        uses: actions/upload-artifact@v2
+        with:
+          name: firebase_unity_sdk_tgz
+          path: output_tgz
         
     
