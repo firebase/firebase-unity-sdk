@@ -289,7 +289,7 @@ jobs:
           fi
 
   test_mobile:
-    name: test-${{ matrix.unity_version }}-${{ matrix.platform }}
+    name: test-${{ matrix.unity_version }}-${{ matrix.platform }}-${{ matrix.mobile_test_on }}
     runs-on: macos-latest
     if: (contains(needs.check_and_prepare.outputs.platform, 'Android') || contains(needs.check_and_prepare.outputs.platform, 'iOS')) && !cancelled()
     needs: [check_and_prepare, build]

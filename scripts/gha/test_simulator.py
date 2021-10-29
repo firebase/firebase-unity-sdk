@@ -126,7 +126,7 @@ flags.DEFINE_string(
     "See module docstring for details on how to set and get this id."
     "If none, will use android_sdk.")
 flags.DEFINE_string(
-    "android_sdk", "system-images;android-29;google_apis;x86",
+    "android_sdk", "system-images;android-28;google_apis;x86",
     "See module docstring for details on how to set and get this id.")
 flags.DEFINE_string(
     "build_tools_version", "28.0.3",
