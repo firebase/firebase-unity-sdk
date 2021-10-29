@@ -7,7 +7,7 @@ on:
       # Which version of Unity to use
       unity_version:
         description: 'Unity version'
-        default: '2017.4.40f1'
+        default: '2019.4.30f1'
         required: true
       # Linux uses a different number for its versions
       linux_unity_version:
@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest]
         include:
         - os: windows-latest
           unity_version: ${{ github.event.inputs.unity_version }}
