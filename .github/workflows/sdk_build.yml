@@ -33,7 +33,7 @@ jobs:
           unity_version: ${{ github.event.inputs.unity_version }}
           unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
           build_dir: macos_unity
-          unity_platform_name: macOS
+          unity_platform_name: macOS,iOS
         # - os: windows-latest
         #   unity_version: ${{ github.event.inputs.unity_version }}
         #   unity_install_dir: TBD
