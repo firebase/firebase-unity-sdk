@@ -289,10 +289,9 @@ def main(argv):
 
   return test_validation.summarize_test_results(
     tests, 
-    test_validation.CPP, 
+    test_validation.UNITY, 
     testapp_dir, 
-    file_name="test-results-" + FLAGS.logfile_name + ".log", 
-    extra_info=" (ON SIMULATOR/EMULATOR)")
+    file_name="test-results-" + FLAGS.logfile_name + ".log")
 
 
 # -------------------Apple Only-------------------
@@ -424,7 +423,7 @@ def _run_apple_gameloop_test(bundle_id, app_path, gameloop_app, device_id, retry
   log = _get_apple_test_log(bundle_id, app_path, device_id)
   _uninstall_apple_app(bundle_id, device_id)
   if retry > 1:
-    result = test_validation.validate_results(log, test_validation.CPP)
+    result = test_validation.validate_results(log, test_validation.UNITY)
     if not result.complete:
       logging.info("Retry _run_apple_gameloop_test. Remaining retry: %s", retry-1)
       return _run_apple_gameloop_test(bundle_id, app_path, gameloop_app, device_id, retry=retry-1)
@@ -585,7 +584,7 @@ def _run_android_gameloop_test(package_name, app_path, gameloop_project, retry=1
   log = _get_android_test_log(package_name)
   _uninstall_android_app(package_name)
   if retry > 1:
-    result = test_validation.validate_results(log, test_validation.CPP)
+    result = test_validation.validate_results(log, test_validation.UNITY)
     if not result.complete:
       logging.info("Retry _run_android_gameloop_test. Remaining retry: %s", retry-1)
       return _run_android_gameloop_test(package_name, app_path, gameloop_project, retry=retry-1)
