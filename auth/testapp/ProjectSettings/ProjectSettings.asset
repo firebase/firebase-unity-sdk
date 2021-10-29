@@ -165,7 +165,10 @@ PlayerSettings:
     iPhone: com.google.FirebaseUnityAuthTestApp.dev
     tvOS: com.google.FirebaseUnityAuthTestApp.dev
   buildNumber:
+    Standalone: 0
     iOS: 0
+    iPhone: 0
+    tvOS: 0
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 26
   AndroidTargetSdkVersion: 0
