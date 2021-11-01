@@ -96,3 +96,17 @@ add_custom_target(
 
 add_dependencies(firebase_firestore_swig_cpp FIREBASE_FIRESTORE_SWIG_CPP_HEADERS)
 
+if(IOS)
+ # Enable Automatic Reference Counting (ARC).
+  set_property(
+    TARGET firebase_firestore
+    APPEND_STRING PROPERTY
+    COMPILE_FLAGS "-fobjc-arc")
+
+  setup_pod_headers(
+    firebase_firestore
+    POD_NAMES
+      FirebaseFirestore
+  )
+endif()
+

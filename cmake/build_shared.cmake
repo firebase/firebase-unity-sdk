@@ -32,11 +32,34 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
   target_link_libraries(${shared_target}
     "firebase_${LIBRARY_NAME}_swig"
   )
-  set_target_properties(${shared_target}
+
+  set_target_properties(${shared_target} 
     PROPERTIES
       OUTPUT_NAME "${OUTPUT_NAME}"
-      PREFIX "lib"
   )
+  if(APPLE AND NOT FIREBASE_IOS_BUILD)
+    # Other approach like set target link or set BUNDLE property fail due to
+    # trying to treat the bundle as a directory instead of a file.
+    # Only override suffix produces a single file bundle.
+    set_target_properties(${shared_target} 
+      PROPERTIES
+        PREFIX ""
+        SUFFIX ".bundle"
+    )
+  elseif(FIREBASE_IOS_BUILD)
+    set_target_properties(${shared_target}
+      PROPERTIES
+        PREFIX "lib"
+        SUFFIX ".a"
+    )
+  else()
+    set_target_properties(${shared_target}
+      PROPERTIES
+        PREFIX "lib"
+    )
+  endif()
+  
+  unity_pack_native(${shared_target})
 
   if(ANDROID)
     # Build the srcaar, and package it with CPack.
