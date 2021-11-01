@@ -12,7 +12,7 @@ on:
       # Linux uses a different number for its versions
       linux_unity_version:
         description: 'Linux Unity version'
-        default: '2017.4.10f1'
+        default: '2019.4.32f1'
         required: true
       # Additional CMake flags to use
       additional_cmake_flags:
