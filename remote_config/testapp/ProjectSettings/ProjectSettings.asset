@@ -95,6 +95,18 @@ PlayerSettings:
     16:9: 1
     Others: 1
   bundleIdentifier: com.google.firebase.unity.remoteconfig.testapp
+  applicationIdentifier:
+    Android: com.google.firebase.unity.remoteconfig.testapp
+    Standalone: com.google.firebase.unity.remoteconfig.testapp
+    Tizen: com.google.firebase.unity.remoteconfig.testapp
+    iOS: com.google.firebase.unity.remoteconfig.testapp
+    iPhone: com.google.firebase.unity.remoteconfig.testapp
+    tvOS: com.google.firebase.unity.remoteconfig.testapp
+  buildNumber:
+    Standalone: 0
+    iOS: 0
+    iPhone: 0
+    tvOS: 0
   bundleVersion: 1.0
   preloadedAssets: []
   metroEnableIndependentInputSource: 0

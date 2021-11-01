@@ -95,6 +95,18 @@ PlayerSettings:
     16:9: 1
     Others: 1
   bundleIdentifier: com.google.FirebaseUnityMessagingTestApp.dev
+  applicationIdentifier:
+    Android: com.google.FirebaseUnityMessagingTestApp.dev
+    Standalone: com.google.FirebaseUnityMessagingTestApp.dev
+    Tizen: com.google.FirebaseUnityMessagingTestApp.dev
+    iOS: com.google.FirebaseUnityMessagingTestApp.dev
+    iPhone: com.google.FirebaseUnityMessagingTestApp.dev
+    tvOS: com.google.FirebaseUnityMessagingTestApp.dev
+  buildNumber:
+    Standalone: 0
+    iOS: 0
+    iPhone: 0
+    tvOS: 0
   bundleVersion: 1.0
   preloadedAssets: []
   metroEnableIndependentInputSource: 0

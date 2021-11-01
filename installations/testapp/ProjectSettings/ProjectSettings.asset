@@ -95,6 +95,18 @@ PlayerSettings:
     16:9: 1
     Others: 1
   bundleIdentifier: com.google.firebase.unity.installations.testapp
+  applicationIdentifier:
+    Android: com.google.firebase.unity.installations.testapp
+    Standalone: com.google.firebase.unity.installations.testapp
+    Tizen: com.google.firebase.unity.installations.testapp
+    iOS: com.google.firebase.unity.installations.testapp
+    iPhone: com.google.firebase.unity.installations.testapp
+    tvOS: com.google.firebase.unity.installations.testapp
+  buildNumber:
+    Standalone: 0
+    iOS: 0
+    iPhone: 0
+    tvOS: 0
   bundleVersion: 1.0
   preloadedAssets: []
   metroEnableIndependentInputSource: 0

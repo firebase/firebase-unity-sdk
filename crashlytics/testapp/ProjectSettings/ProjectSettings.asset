@@ -159,12 +159,16 @@ PlayerSettings:
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
     Android: com.google.firebase.unity.crashlytics.testapp
-    Standalone: unity.Google.Crashlytics for Firebase Unity Testapp
+    Standalone: com.google.firebase.unity.crashlytics.testapp
     Tizen: com.google.firebase.unity.crashlytics.testapp
     iOS: com.google.firebase.unity.crashlytics.testapp
+    iPhone: com.google.firebase.unity.crashlytics.testapp
     tvOS: com.google.firebase.unity.crashlytics.testapp
   buildNumber:
+    Standalone: 0
     iOS: 0
+    iPhone: 0
+    tvOS: 0
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 26
   AndroidTargetSdkVersion: 0
