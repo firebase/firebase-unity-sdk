@@ -37,9 +37,9 @@ if(FIREBASE_IOS_BUILD)
   set(UNITY_PACK_NATIVE_DIR "Plugins/iOS/Firebase")
 elseif("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64" OR
        "${CMAKE_GENERATOR_PLATFORM}" STREQUAL "")
-  set(UNITY_PACK_NATIVE_DIR "Plugins/x86_64")
+  set(UNITY_PACK_NATIVE_DIR "Firebase/Plugins/x86_64")
 else()
-  set(UNITY_PACK_NATIVE_DIR "Plugins/x86_32")
+  set(UNITY_PACK_NATIVE_DIR "Firebase/Plugins/x86_32")
 endif()
 
 if(FIREBASE_IOS_BUILD)

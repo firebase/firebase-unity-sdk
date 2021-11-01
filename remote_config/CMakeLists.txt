@@ -25,6 +25,7 @@ set(firebase_remote_config_swig
 set(firebase_remote_config_src
   src/ConfigSettings.cs
   src/ConfigValue.cs
+  src/FirebaseRemoteConfig.cs
 )
 
 firebase_swig_add_library(firebase_remote_config_swig
