@@ -247,7 +247,7 @@ set(PROJECT_LIST_HEADER "#define PROJECT_LIST(X)")
 list(APPEND PROJECT_LIST_HEADER "  X(App)")
 
 # Include Firebase editor tools.
-if (DESKTOP AND FIREBASE_INCLUDE_EDITOR_TOOL)
+if (DESKTOP AND APPLE AND FIREBASE_INCLUDE_EDITOR_TOOL)
   add_subdirectory(editor)
 endif()
 
