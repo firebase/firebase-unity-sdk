@@ -25,7 +25,7 @@ on:
         required: true
       sdk_url:
         description: 'Download unity sdk from this URL'
-        default: 'https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip'
+        default: 'https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.5.0.zip'
         required: true 
       use_expanded_matrix:
         description: 'Use an expanded matrix? Note: above config will be ignored.'
@@ -173,7 +173,7 @@ jobs:
         run: |
           # TODO: Download unity SDK first
           if [[ -z "${{ github.event.inputs.sdk_url }}" ]];then
-            sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.1.0.zip"
+            sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.5.0.zip"
           else
             sdk_url=${{ github.event.inputs.sdk_url }}
           fi
