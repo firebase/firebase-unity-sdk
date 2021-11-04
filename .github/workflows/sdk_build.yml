@@ -7,7 +7,7 @@ on:
       # Which version of Unity to use
       unity_version:
         description: 'Unity version'
-        default: '2019.4.30f1'
+        default: '2019.4.32f1'
         required: true
       # Linux uses a different number for its versions
       linux_unity_version:

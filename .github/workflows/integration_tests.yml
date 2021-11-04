@@ -8,7 +8,7 @@ on:
     inputs:
       unity_versions:
         description: 'Unity version'
-        default: '2019.4.30f1'
+        default: '2019.4.32f1'
         required: true
       platforms:
         description: 'CSV of Android,iOS,Windows,macOS,Linux'
