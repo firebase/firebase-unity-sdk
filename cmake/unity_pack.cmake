@@ -157,6 +157,7 @@ function(unity_pack_cs name)
   string(REPLACE ".dll" "" dllbasename ${dllname})
   string(REPLACE ".dll" "" dllbaserename ${dllrename})
 
+  message(WARNING "Setting up install: FILE:${dllpath}/${dllname} DEST:${UNITY_PACK_PACK_PATH} RENAME:${dllrename}")
   # Dll file
   install(
     FILES "${dllpath}/${dllname}"
@@ -246,6 +247,7 @@ function(unity_pack_native name)
     set(lib_dest "")
   endif()
 
+  message(WARNING "unity_pack_native TARGETS:${name} LIBRARY:${dll_dest} ARCHIVE:${lib_dest}")
   # Win32 treats Dll's as 'runtime' other platforms as 'library'
   install(
     TARGETS

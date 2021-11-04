@@ -27,23 +27,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [windows-latest]
         include:
-        - os: macos-latest
-          unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
-          build_dir: macos_unity
-          unity_platform_name: macOS,iOS
+        # - os: macos-latest
+        #   unity_version: ${{ github.event.inputs.unity_version }}
+        #   unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
+        #   build_dir: macos_unity
+        #   unity_platform_name: macOS,iOS
         - os: windows-latest
           unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: TBD
+          unity_install_dir: /c/Program Files/Unity_${{ github.event.inputs.unity_version }}
           build_dir: windows_unity
           unity_platform_name: Windows
-        - os: ubuntu-latest
-          unity_version: ${{ github.event.inputs.linux_unity_version }}
-          unity_install_dir: /opt/unity-editor-${{ github.event.inputs.linux_unity_version }}
-          build_dir: linux_unity
-          unity_platform_name: Linux
+        # - os: ubuntu-latest
+        #   unity_version: ${{ github.event.inputs.linux_unity_version }}
+        #   unity_install_dir: /opt/unity-editor-${{ github.event.inputs.linux_unity_version }}
+        #   build_dir: linux_unity
+        #   unity_platform_name: Linux
     env:
         # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
         LC_ALL: en_US.UTF-8
@@ -72,11 +72,20 @@ jobs:
           cd firebase-cpp-sdk
           python scripts/gha/install_prereqs_desktop.py
           cd ..
+      
+      - name: Support longpaths
+        if: startsWith(matrix.os, 'windows')
+        run: git config --system core.longpaths true
 
       # Set up the requirements, and install Unity
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 2.6
+
+      - name: Add msbuild to PATH (windows)
+        if: startsWith(matrix.os, 'windows')
+        uses: microsoft/setup-msbuild@v1.0.2
+
       - name: Install Unity installer (U3D)
         shell: bash
         run: gem install u3d
@@ -88,10 +97,14 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/unity_installer.py --install --platforms ${{ matrix.unity_platform_name }} --version ${{ matrix.unity_version }}
+
       - name: Setup Unity path
         shell: bash
         run: |
           echo "UNITY_ROOT_DIR=${{ matrix.unity_install_dir }}" >> $GITHUB_ENV
+          echo "$(swig -swiglib)" >> $GITHUB_PATH
+          swig -swiglib
+          echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
 
       - name: Install OpenSSL (Linux)
         if: startsWith(matrix.os, 'ubuntu')
@@ -120,7 +133,19 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
-          ./build_windows_x64.bat
+          #./build_windows_x64.bat
+          mkdir ${{ matrix.build_dir }}
+          pushd ${{ matrix.build_dir }}
+          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${{ matrix.unity_install_dir }}" -DSWIG_DIR="$(swig -swiglib)" ${{ github.event.inputs.additional_cmake_flags }}
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Build"
+          echo "=-=-=-=-=-=-=-=-="
+          cmake --build .  --config Release
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Package"
+          echo "=-=-=-=-=-=-=-=-="
+          cpack .
+          popd
 
       - name: Upload Build
         uses: actions/upload-artifact@v2

@@ -207,10 +207,10 @@ if(NOT EXISTS ${FIREBASE_CPP_SDK_DIR})
   ${FIREBASE_CPP_SDK_DIR}. See the readme.md for more information")
 endif()
 
-if(MSVC AND NOT EXISTS ${MONO_DIR})
-  message(FATAL_ERROR "Mono directory doesn't exist: \
-  ${MONO_DIR}. See the readme.md for more information")
-endif()
+# if(MSVC AND NOT EXISTS ${MONO_DIR})
+#   message(FATAL_ERROR "Mono directory doesn't exist: \
+#   ${MONO_DIR}. See the readme.md for more information")
+# endif()
 
 # Add the Firebase libraries to the target using the function from the SDK.
 add_subdirectory(${FIREBASE_CPP_SDK_DIR} bin/ EXCLUDE_FROM_ALL)

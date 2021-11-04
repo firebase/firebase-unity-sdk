@@ -60,9 +60,15 @@ function(download_external_sources)
         "${FIREBASE_BINARY_DIR}/external/src/firebase_cpp_sdk" PARENT_SCOPE)
   endif()
 
+  message(WARNING "${ENV_COMMAND} cmake --debug-output")
+
   execute_process(
     COMMAND
-      ${ENV_COMMAND} cmake
+      ${ENV_COMMAND} cmake --debug-output
+      -G ${CMAKE_GENERATOR}
+      -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+      -DPLATFORM=${PLATFORM}
+      -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
       -DCMAKE_INSTALL_PREFIX=${FIREBASE_INSTALL_DIR}
       -DFIREBASE_CPP_GIT_REPO=${FIREBASE_CPP_GIT_REPO}
       -DFIREBASE_DOWNLOAD_DIR=${FIREBASE_DOWNLOAD_DIR}
