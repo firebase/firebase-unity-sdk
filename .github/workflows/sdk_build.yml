@@ -60,19 +60,6 @@ jobs:
           path: firebase-cpp-sdk
           submodules: true
 
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.7'
-
-      - name: Install prerequisites
-        shell: bash
-        run: |
-          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
-          cd firebase-cpp-sdk
-          python scripts/gha/install_prereqs_desktop.py
-          cd ..
-      
       - name: Support longpaths
         if: startsWith(matrix.os, 'windows')
         run: git config --system core.longpaths true
@@ -82,13 +69,27 @@ jobs:
         with:
           ruby-version: 2.6
 
+      - name: Install Unity installer (U3D)
+        shell: bash
+        run: gem install u3d
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
       - name: Add msbuild to PATH (windows)
         if: startsWith(matrix.os, 'windows')
         uses: microsoft/setup-msbuild@v1.0.2
 
-      - name: Install Unity installer (U3D)
+      - name: Install prerequisites
         shell: bash
-        run: gem install u3d
+        run: |
+          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
+          cd firebase-cpp-sdk
+          python scripts/gha/install_prereqs_desktop.py
+          cd ..
+
       - name: Install python deps
         shell: bash
         run: |
@@ -110,6 +111,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt install openssl
+
       - name: Install OpenSSL (macOS)
         if: startsWith(matrix.os, 'macos')
         run: |
