@@ -94,9 +94,11 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
+
       - name: Install Unity
         shell: bash
         run: |
+          u3d available
           python scripts/gha/unity_installer.py --install --platforms ${{ matrix.unity_platform_name }} --version ${{ matrix.unity_version }}
 
       - name: Setup Unity path
