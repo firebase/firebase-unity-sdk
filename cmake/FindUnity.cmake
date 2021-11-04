@@ -138,27 +138,7 @@ if(FIREBASE_INCLUDE_UNITY)
           "${UNITY_CSHARP_BUILD_EXE}" NAME
       )
 
-      # On Linux, Unity's mono distribution can fail to execute build tools in a
-      # non-clean environment so wrap in a script that clears the environment.
-      if(CMAKE_HOST_UNIX AND NOT CMAKE_HOST_APPLE)
-        set(UNITY_CSHARP_BUILD_WRAPPER_DIR
-          "${CMAKE_CURRENT_BINARY_DIR}/unity_csharp_build_wrapper"
-        )
-        set(UNITY_CSHARP_BUILD_WRAPPER
-          "${UNITY_CSHARP_BUILD_WRAPPER_DIR}/${UNITY_CSHARP_BUILD_EXE_NAME}"
-        )
-        file(MAKE_DIRECTORY "${UNITY_CSHARP_BUILD_WRAPPER_DIR}")
-        # Copy the build script to preserve the executable bit.
-        file(COPY "${UNITY_CSHARP_BUILD_EXE}"
-          DESTINATION "${UNITY_CSHARP_BUILD_WRAPPER_DIR}"
-        )
-        file(WRITE "${UNITY_CSHARP_BUILD_WRAPPER}"
-          "#!/bin/sh\nenv -i ${UNITY_CSHARP_BUILD_EXE} \$@\n"
-        )
-        set(UNITY_CSHARP_BUILD_EXE "${UNITY_CSHARP_BUILD_WRAPPER}"
-          CACHE STRING "" FORCE
-        )
-      elseif(CMAKE_HOST_WIN32)
+      if(CMAKE_HOST_WIN32)
         # Mono that is packaged with unity has a bug in resgen.bat where it
         # incorrectly forwards arguments. Resgen.bat gets passed an argument
         # like 'a,b' and incorrectly forwards it as 'a b'. Copy the mono folder

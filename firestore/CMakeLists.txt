@@ -66,7 +66,7 @@ set(firebase_firestore_src
   src/ListenerRegistration.cs
   src/ListenerRegistrationMap.cs
   src/LoadBundleTaskProgress.cs
-  src/Metadatachanges.cs
+  src/MetadataChanges.cs
   src/MonoPInvokeCallbackAttribute.cs
   src/Query.cs
   src/QuerySnapshot.cs
