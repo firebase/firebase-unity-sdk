@@ -95,6 +95,23 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
 
+      - name: Install OpenSSL (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          choco install openssl -r
+
+      - name: Install OpenSSL (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt install openssl
+
+      - name: Install OpenSSL (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew install openssl
+          # brew won't overwrite MacOS system default OpenSSL, so force it here.
+          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
+
       - name: Install Unity
         shell: bash
         run: |
@@ -108,18 +125,6 @@ jobs:
           echo "$(swig -swiglib)" >> $GITHUB_PATH
           swig -swiglib
           echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
-
-      - name: Install OpenSSL (Linux)
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          sudo apt install openssl
-
-      - name: Install OpenSSL (macOS)
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          brew install openssl
-          # brew won't overwrite MacOS system default OpenSSL, so force it here.
-          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
 
       - name: Build SDK (Linux)
         if: startsWith(matrix.os, 'ubuntu')
