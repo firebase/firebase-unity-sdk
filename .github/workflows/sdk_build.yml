@@ -142,19 +142,19 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
-          #./build_windows_x64.bat
-          mkdir ${{ matrix.build_dir }}
-          pushd ${{ matrix.build_dir }}
-          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${{ matrix.unity_install_dir }}" -DSWIG_DIR="$(swig -swiglib)" ${{ github.event.inputs.additional_cmake_flags }}
-          echo "=-=-=-=-=-=-=-=-="
-          echo "Start Build"
-          echo "=-=-=-=-=-=-=-=-="
-          cmake --build .  --config Release
-          echo "=-=-=-=-=-=-=-=-="
-          echo "Start Package"
-          echo "=-=-=-=-=-=-=-=-="
-          cpack .
-          popd
+          ./build_windows_x64.bat ${{ github.event.inputs.additional_cmake_flags }}
+          # mkdir ${{ matrix.build_dir }}
+          # pushd ${{ matrix.build_dir }}
+          # cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${{ matrix.unity_install_dir }}" -DSWIG_DIR="$(swig -swiglib)" ${{ github.event.inputs.additional_cmake_flags }}
+          # echo "=-=-=-=-=-=-=-=-="
+          # echo "Start Build"
+          # echo "=-=-=-=-=-=-=-=-="
+          # cmake --build .  --config Release
+          # echo "=-=-=-=-=-=-=-=-="
+          # echo "Start Package"
+          # echo "=-=-=-=-=-=-=-=-="
+          # cpack .
+          # popd
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
