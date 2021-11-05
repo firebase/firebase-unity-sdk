@@ -67,7 +67,7 @@ jobs:
       # Set up the requirements, and install Unity
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.6
+          ruby-version: 3.0.2
 
       - name: Install Unity installer (U3D)
         shell: bash
