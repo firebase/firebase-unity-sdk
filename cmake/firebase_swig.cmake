@@ -16,13 +16,8 @@
 
 include(FindSWIG)
 
-message(WARNING "=================")
-message(WARNING "${SWIG_DIR}")
-
 # 3.0.6 has support for -outfile command line option, min version request 3.0.6
 find_package(SWIG 3.0.6)
-
-message(WARNING "${SWIG_DIR}")
 
 include(${SWIG_USE_FILE})
 

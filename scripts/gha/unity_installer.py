@@ -171,7 +171,7 @@ def install_unity(unity_version, platforms):
        "--verbose", unity_version,
        "-p", package_csv])
   # This will list what u3d has installed. For debugging purposes.
-  #run([u3d, "list"])
+  # run([u3d, "list"]) TODO sort out the crash issue.
   logging.info("Finished installing Unity.")
 
 
