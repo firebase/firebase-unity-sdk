@@ -6,12 +6,12 @@ on:
     inputs:
       # Which version of Unity to use
       unity_version:
-        description: 'Unity version'
+        description: 'Unity version [2017.4.40f1, 2018.4.36f1, 2019.4.32f1, 2020.3.21f1]'
         default: '2019.4.32f1'
         required: true
       # Linux uses a different number for its versions
       linux_unity_version:
-        description: 'Linux Unity version'
+        description: 'Linux Unity version [2017.4.10f1, 2018.4.36f1, 2019.4.32f1, 2020.3.21f1]'
         default: '2019.4.32f1'
         required: true
       # Additional CMake flags to use
@@ -115,7 +115,7 @@ jobs:
       - name: Install Unity
         shell: bash
         run: |
-          u3d available
+          u3d available -u ${{ matrix.unity_version }} -p
           python scripts/gha/unity_installer.py --install --platforms ${{ matrix.unity_platform_name }} --version ${{ matrix.unity_version }}
 
       - name: Setup Unity path
