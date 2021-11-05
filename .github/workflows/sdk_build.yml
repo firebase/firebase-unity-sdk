@@ -27,23 +27,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
         include:
-        # - os: macos-latest
-        #   unity_version: ${{ github.event.inputs.unity_version }}
-        #   unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
-        #   build_dir: macos_unity
-        #   unity_platform_name: macOS,iOS
+        - os: macos-latest
+          unity_version: ${{ github.event.inputs.unity_version }}
+          unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
+          build_dir: macos_unity
+          unity_platform_name: macOS,iOS
         - os: windows-latest
           unity_version: ${{ github.event.inputs.unity_version }}
           unity_install_dir: /c/Program Files/Unity_${{ github.event.inputs.unity_version }}
           build_dir: windows_unity
           unity_platform_name: Windows
-        # - os: ubuntu-latest
-        #   unity_version: ${{ github.event.inputs.linux_unity_version }}
-        #   unity_install_dir: /opt/unity-editor-${{ github.event.inputs.linux_unity_version }}
-        #   build_dir: linux_unity
-        #   unity_platform_name: Linux
+        - os: ubuntu-latest
+          unity_version: ${{ github.event.inputs.linux_unity_version }}
+          unity_install_dir: /opt/unity-editor-${{ github.event.inputs.linux_unity_version }}
+          build_dir: linux_unity
+          unity_platform_name: Linux
     env:
         # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
         LC_ALL: en_US.UTF-8
