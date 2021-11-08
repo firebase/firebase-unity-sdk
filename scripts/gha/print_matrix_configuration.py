@@ -82,8 +82,8 @@ UNITY_PACKAGES = {
   "2020.3.21f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["windows-mono"], "macOS": None, "Linux": ["linux-il2cpp"]},
   "2019.4.32f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["windows-il2cpp"], "macOS": None, "Linux": ["linux-il2cpp"]},
   "2018.4.36f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["windows-mono"], "macOS": None, "Linux": ["Linux"]},
-  "2017.4.40f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]},
-  "2017.4.10f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]} # For Linux Special
+  "2017.4.40f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": None, "Linux": ["Linux"]},
+  "2017.4.10f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": None} # For Linux Special
 }
 
 TEST_DEVICES = {
