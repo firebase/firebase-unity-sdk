@@ -79,10 +79,10 @@ PARAMETERS = {
 # To list avaliable packages, install u3d, and use cmd "u3d available -u $unity_version -p"
 # The packages below is valid only if Unity Hub is not installed.
 UNITY_PACKAGES = {
-  "2020.3.21f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["windows-mono"], "macOS": None, "Linux": ["linux-il2cpp"]},
+  "2020.3.21f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": None, "Linux": ["linux-il2cpp"]},
   "2019.4.32f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["windows-il2cpp"], "macOS": None, "Linux": ["linux-il2cpp"]},
-  "2018.4.36f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["windows-mono"], "macOS": None, "Linux": ["Linux"]},
-  "2017.4.40f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": None, "Linux": ["Linux"]},
+  "2018.4.36f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": None, "Linux": None},
+  "2017.4.40f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": None, "Linux": None},
   "2017.4.10f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": None} # For Linux Special
 }
 
