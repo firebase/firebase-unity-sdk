@@ -117,12 +117,13 @@ jobs:
         echo "::set-output name=ios_device::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k ios_device -t ${mobile_test_on} )"
 
   build:
-    name: build-${{ matrix.unity_version }}-${{ needs.check_and_prepare.outputs.platform }}
-    runs-on: macos-latest
+    name: build-${{matrix.os}}-${{ matrix.unity_version }}-${{ needs.check_and_prepare.outputs.platform }}
+    runs-on: ${{matrix.os}}
     needs: check_and_prepare
     strategy:
       fail-fast: false
       matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
@@ -134,7 +135,9 @@ jobs:
       - name: Install Unity installer (U3D)
         timeout-minutes: 10
         shell: bash
-        run: gem install u3d
+        run: |
+          gem install u3d
+          u3d available -u ${{ matrix.unity_version }} -p
       - name: Setup python
         uses: actions/setup-python@v2
         with:
