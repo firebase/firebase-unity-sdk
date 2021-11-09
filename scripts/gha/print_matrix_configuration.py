@@ -62,7 +62,7 @@ PARAMETERS = {
       },
 
       EXPANDED_KEY: {
-        "unity_version": ["2020.3.19f1", "2019.4.30f1", "2018.4.36f1", "2017.4.40f1"],
+        "unity_version": ["2020.3.22f1", "2019.4.32f1", "2018.4.36f1", "2017.4.10f1"],
         "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
         "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
       }
@@ -79,11 +79,22 @@ PARAMETERS = {
 # To list avaliable packages, install u3d, and use cmd "u3d available -u $unity_version -p"
 # The packages below is valid only if Unity Hub is not installed.
 UNITY_PACKAGES = {
-  "2020.3.19f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
-  "2019.4.30f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
-  "2019.4.32f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["linux-il2cpp"]},
-  "2018.4.36f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux"]},
-  "2017.4.40f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]}
+  "2020.3.22f1": {
+    "Windows": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux-il2cpp"]},
+    "macOS": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux-il2cpp"]},
+    "Linux": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": ["Linux-il2cpp"]}},
+  "2019.4.32f1": {
+    "Windows": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux-il2cpp"]},
+    "macOS": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux-il2cpp"]},
+    "Linux": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]}},
+  "2018.4.36f1": {
+    "Windows": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux"]},
+    "macOS": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux"]},
+    "Linux": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}},
+  "2017.4.10f1": {
+    "Windows": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac"], "Linux": ["Linux"]},
+    "macOS": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]},
+    "Linux": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": ["Mac"], "Linux": None}}
 }
 
 TEST_DEVICES = {

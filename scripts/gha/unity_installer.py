@@ -160,10 +160,16 @@ def install_unity(unity_version, platforms):
   # This always installs Unity, and installs build supports for Android
   # and iOS. Other supports can be added here, e.g. desktop platforms
   # for platforms other than the running OS, or embedded Android SDK/NDK.
-  package_list = UNITY_PACKAGES[unity_version][_DEFALUT]
-  for platform in platforms:
-    if UNITY_PACKAGES[unity_version][platform]:
-      package_list.extend(UNITY_PACKAGES[unity_version][platform])
+  if platform.system() == 'Windows':
+    os = _WINDOWS
+  elif platform.system() == 'Darwin':
+    os = _MACOS
+  elif platform.system() == 'Linux':
+    os = _LINUX
+  package_list = UNITY_PACKAGES[unity_version][os][_DEFALUT]
+  for p in platforms:
+    if UNITY_PACKAGES[unity_version][os][p]:
+      package_list.extend(UNITY_PACKAGES[unity_version][os][p])
   package_csv = ",".join(filter(None.__ne__, package_list))
 
   u3d = find_u3d()
