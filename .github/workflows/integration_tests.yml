@@ -132,11 +132,16 @@ jobs:
       U3D_PASSWORD: ""
     steps:
       - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.2
       - name: Install Unity installer (U3D)
         timeout-minutes: 10
         shell: bash
         run: |
           gem install u3d
+          u3d available
+          u3d available -u ${{ matrix.unity_version }} -p
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -150,8 +155,6 @@ jobs:
         timeout-minutes: 30
         shell: bash
         run: |
-          u3d available
-          u3d available -u ${{ matrix.unity_version }} -p
           python scripts/gha/unity_installer.py --install \
             --platforms ${{ needs.check_and_prepare.outputs.platform }} \
             --version ${{ matrix.unity_version }}
