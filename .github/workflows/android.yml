@@ -6,7 +6,7 @@ on:
     inputs:
       unity_version:
         description: 'Unity version'
-        default: '2019.4.30f1'
+        default: '2019.4.32f1'
         required: true
       firebase_cpp_sdk_version:
         description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
