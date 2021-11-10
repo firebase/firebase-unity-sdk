@@ -177,7 +177,7 @@ def install_unity(unity_version, platforms):
        "--verbose", unity_version,
        "-p", package_csv])
   # This will list what u3d has installed. For debugging purposes.
-  run([u3d, "list"])
+  run([u3d, "list"], check=False)
   logging.info("Finished installing Unity.")
 
 
@@ -246,9 +246,9 @@ def get_unity_path(version):
     raise RuntimeError("Only Windows and MacOS are supported.")
 
 
-def run(args):
+def run(args, check=True):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
-  subprocess.run(args=args, check=True)
+  subprocess.run(args=args, check=check)
 
 if __name__ == "__main__":
   app.run(main)
