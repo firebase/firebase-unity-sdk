@@ -188,7 +188,7 @@ jobs:
           unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u ${{ matrix.unity_version }} \
+            --u $( python scripts/gha/print_matrix_configuration.py -u ${{matrix.unity_version}} -k version ) \
             --p ${{ needs.check_and_prepare.outputs.platform }} \
             --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
