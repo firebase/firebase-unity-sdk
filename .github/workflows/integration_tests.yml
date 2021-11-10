@@ -132,9 +132,6 @@ jobs:
       U3D_PASSWORD: ""
     steps:
       - uses: actions/checkout@v2
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.0.2
       - name: Install Unity installer (U3D)
         timeout-minutes: 10
         shell: bash
