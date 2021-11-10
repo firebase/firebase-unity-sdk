@@ -65,6 +65,7 @@ jobs:
         run: git config --system core.longpaths true
 
       # Set up the requirements, and install Unity
+      # Ruby setup has to happen before python install and setup, to keep the absl config.
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0.2

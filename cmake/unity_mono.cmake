@@ -100,8 +100,6 @@ macro(mono_add_external_library name projpath)
     set(absprojpath ${CMAKE_CURRENT_LIST_DIR}/${projpath})
   endif()
 
-  message(WARNING "Defining build of ${DLL_NAME} using ${MONO_CSHARP_BUILD_EXE}")
-
   set(CSHARP_BUILD_EXE "${UNITY_CSHARP_BUILD_EXE}")
   if(MSVC)
     set(CSHARP_BUILD_EXE "${MONO_CSHARP_BUILD_EXE}")
