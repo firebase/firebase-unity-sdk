@@ -100,9 +100,14 @@ macro(mono_add_external_library name projpath)
     set(absprojpath ${CMAKE_CURRENT_LIST_DIR}/${projpath})
   endif()
 
+  set(CSHARP_BUILD_EXE "${UNITY_CSHARP_BUILD_EXE}")
+  if(MSVC)
+    set(CSHARP_BUILD_EXE "${MONO_CSHARP_BUILD_EXE}")
+  endif()
+
   add_custom_command(
     COMMAND
-      ${UNITY_CSHARP_BUILD_EXE}
+      ${CSHARP_BUILD_EXE}
       /p:AllowUnsafeBlocks=true
       /p:Configuration=Release
       /p:OutDir="${outdir}/"
@@ -116,7 +121,7 @@ macro(mono_add_external_library name projpath)
     OUTPUT
       ${outdir}/${DLL_NAME}.dll
     COMMENT
-      "Building csproj for ${DLL_NAME}.dll"
+      "Building csproj for ${DLL_NAME}.dll with ${CSHARP_BUILD_EXE}"
   )
 
   set_target_properties(${name} PROPERTIES

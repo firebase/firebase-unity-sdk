@@ -6,12 +6,12 @@ on:
     inputs:
       # Which version of Unity to use
       unity_version:
-        description: 'Unity version'
-        default: '2019.4.30f1'
+        description: 'Unity version [2017.4.40f1, 2018.4.36f1, 2019.4.32f1, 2020.3.22f1]'
+        default: '2019.4.32f1'
         required: true
       # Linux uses a different number for its versions
       linux_unity_version:
-        description: 'Linux Unity version'
+        description: 'Linux Unity version [2017.4.10f1, 2018.4.36f1, 2019.4.32f1, 2020.3.22f1]'
         default: '2019.4.32f1'
         required: true
       # Additional CMake flags to use
@@ -22,12 +22,12 @@ on:
 
 jobs:
   build_desktop:
-    name: build-desktop-${{matrix.os}}
+    name: build-desktop-${{matrix.os}}-${{matrix.unity_version}}
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
           unity_version: ${{ github.event.inputs.unity_version }}
@@ -36,7 +36,7 @@ jobs:
           unity_platform_name: macOS,iOS
         - os: windows-latest
           unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: TBD
+          unity_install_dir: /c/Program Files/Unity_${{ github.event.inputs.unity_version }}
           build_dir: windows_unity
           unity_platform_name: Windows
         - os: ubuntu-latest
@@ -60,10 +60,28 @@ jobs:
           path: firebase-cpp-sdk
           submodules: true
 
+      - name: Support longpaths
+        if: startsWith(matrix.os, 'windows')
+        run: git config --system core.longpaths true
+
+      # Set up the requirements, and install Unity
+      # Ruby setup has to happen before python install and setup, to keep the absl config.
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.2
+
+      - name: Install Unity installer (U3D)
+        shell: bash
+        run: gem install u3d
+
       - name: Setup python
         uses: actions/setup-python@v2
         with:
           python-version: '3.7'
+
+      - name: Add msbuild to PATH (windows)
+        if: startsWith(matrix.os, 'windows')
+        uses: microsoft/setup-msbuild@v1.0.2
 
       - name: Install prerequisites
         shell: bash
@@ -73,36 +91,41 @@ jobs:
           python scripts/gha/install_prereqs_desktop.py
           cd ..
 
-      # Set up the requirements, and install Unity
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6
-      - name: Install Unity installer (U3D)
-        shell: bash
-        run: gem install u3d
       - name: Install python deps
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-      - name: Install Unity
-        shell: bash
+
+      - name: Install OpenSSL (Windows)
+        if: startsWith(matrix.os, 'windows')
         run: |
-          python scripts/gha/unity_installer.py --install --platforms ${{ matrix.unity_platform_name }} --version ${{ matrix.unity_version }}
-      - name: Setup Unity path
-        shell: bash
-        run: |
-          echo "UNITY_ROOT_DIR=${{ matrix.unity_install_dir }}" >> $GITHUB_ENV
+          choco install openssl -r
 
       - name: Install OpenSSL (Linux)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt install openssl
+
       - name: Install OpenSSL (macOS)
         if: startsWith(matrix.os, 'macos')
         run: |
           brew install openssl
           # brew won't overwrite MacOS system default OpenSSL, so force it here.
           echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
+
+      - name: Install Unity
+        shell: bash
+        run: |
+          u3d available -u ${{ matrix.unity_version }} -p
+          python scripts/gha/unity_installer.py --install --platforms ${{ matrix.unity_platform_name }} --version ${{ matrix.unity_version }}
+
+      - name: Setup Unity path
+        shell: bash
+        run: |
+          echo "UNITY_ROOT_DIR=${{ matrix.unity_install_dir }}" >> $GITHUB_ENV
+          echo "$(swig -swiglib)" >> $GITHUB_PATH
+          swig -swiglib
+          echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
 
       - name: Build SDK (Linux)
         if: startsWith(matrix.os, 'ubuntu')
@@ -120,7 +143,19 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
-          ./build_windows_x64.bat
+          # ./build_windows_x64.bat ${{ github.event.inputs.additional_cmake_flags }} TODO convert to python script
+          mkdir ${{ matrix.build_dir }}
+          pushd ${{ matrix.build_dir }}
+          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${{ matrix.unity_install_dir }}" -DSWIG_DIR="$(swig -swiglib)" ${{ github.event.inputs.additional_cmake_flags }}
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Build"
+          echo "=-=-=-=-=-=-=-=-="
+          cmake --build .  --config Release
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Package"
+          echo "=-=-=-=-=-=-=-=-="
+          cpack .
+          popd
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
