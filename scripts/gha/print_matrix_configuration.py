@@ -52,7 +52,7 @@ MINIMAL_KEY = "minimal"
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "unity_version": ["2019.4.30f1"],
+      "unity_version": ["2019"],
       "android_device": ["android_target", "emulator_target"],
       "ios_device": ["ios_target", "simulator_target"],
 
@@ -62,7 +62,7 @@ PARAMETERS = {
       },
 
       EXPANDED_KEY: {
-        "unity_version": ["2020.3.22f1", "2019.4.32f1", "2018.4.36f1", "2017.4.10f1"],
+        "unity_version": ["2020", "2019", "2018", "2017"],
         "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
         "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
       }
@@ -78,23 +78,64 @@ PARAMETERS = {
 # Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
 # To list avaliable packages, install u3d, and use cmd "u3d available -u $unity_version -p"
 # The packages below is valid only if Unity Hub is not installed.
-UNITY_PACKAGES = {
-  "2020.3.22f1": {
-    "Windows": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
-    "macOS": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
-    "Linux": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}},
-  "2019.4.32f1": {
-    "Windows": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
-    "macOS": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
-    "Linux": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}},
-  "2018.4.36f1": {
-    "Windows": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux"]},
-    "macOS": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux"]},
-    "Linux": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}},
-  "2017.4.10f1": {
-    "Windows": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac"], "Linux": ["Linux"]},
-    "macOS": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]},
-    "Linux": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": ["Mac"], "Linux": None}}
+UNITY_SETTINGS = {
+  "2020": {
+    "Windows": {
+      "version": "2020.3.22f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]}
+    },
+    "macOS": {
+      "version": "2020.3.22f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]}
+    },
+    "Linux": {
+      "version": "2020.3.22f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+    }
+  },
+  "2019": {
+    "Windows": {
+      "version": "2019.4.32f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]}
+    },
+    "macOS": {
+      "version": "2019.4.32f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]}
+    },
+    "Linux": {
+      "version": "2019.4.32f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+    }
+  },
+  "2018": {
+    "Windows": {
+      "version": "2018.4.36f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux"]}
+    },
+    "macOS": {
+      "version": "2018.4.36f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux"]}
+    },
+    "Linux": {
+      "version": "2018.4.36f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+    }
+  },
+  "2017.4.10f1": 
+  {
+    "Windows": {
+      "version": "2017.4.40f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac"], "Linux": ["Linux"]}
+    },
+    "macOS": {
+      "version": "2017.4.40f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]}
+    },
+    "Linux": {
+      "version": "2017.4.10f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": ["Mac"], "Linux": None}
+    }
+  }
 }
 
 TEST_DEVICES = {
