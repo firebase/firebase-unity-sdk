@@ -121,8 +121,7 @@ UNITY_SETTINGS = {
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
     }
   },
-  "2017.4.10f1": 
-  {
+  "2017": {
     "Windows": {
       "version": "2017.4.40f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac"], "Linux": ["Linux"]}
