@@ -209,6 +209,7 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
         return
       else:
         logging.info("Failed to activate license %d", i)
+        return 1
 
 
 def release_license(logfile, unity_version):
