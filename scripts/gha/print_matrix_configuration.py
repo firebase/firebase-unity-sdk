@@ -77,6 +77,7 @@ PARAMETERS = {
 # Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
 # To list avaliable packages, install u3d, and use cmd "u3d available -u $unity_version -p"
 # The packages below is valid only if Unity Hub is not installed.
+# TODO(@sunmou): Add Android Setting. e.g. NDK_VERSION
 UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {
