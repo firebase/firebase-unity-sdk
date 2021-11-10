@@ -26,17 +26,14 @@ jobs:
         include:
         - os: macos-latest
           unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: /Applications/Unity_${{ github.event.inputs.unity_version }}
           build_dir: macos_unity
           unity_platform_name: macOS,iOS
         - os: windows-latest
           unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: /c/Program Files/Unity_${{ github.event.inputs.unity_version }}
           build_dir: windows_unity
           unity_platform_name: Windows
         - os: ubuntu-latest
           unity_version: ${{ github.event.inputs.unity_version }}
-          unity_install_dir: /opt/unity-editor-${{ github.event.inputs.unity_version }}
           build_dir: linux_unity
           unity_platform_name: Linux
     env:
@@ -117,7 +114,7 @@ jobs:
       - name: Setup Unity path
         shell: bash
         run: |
-          echo "UNITY_ROOT_DIR=${{ matrix.unity_install_dir }}" >> $GITHUB_ENV
+          echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{matrix.unity_version}} -k unity_path )" >> $GITHUB_ENV
           echo "$(swig -swiglib)" >> $GITHUB_PATH
           swig -swiglib
           echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
@@ -141,7 +138,7 @@ jobs:
           # ./build_windows_x64.bat ${{ github.event.inputs.additional_cmake_flags }} TODO convert to python script
           mkdir ${{ matrix.build_dir }}
           pushd ${{ matrix.build_dir }}
-          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${{ matrix.unity_install_dir }}" -DSWIG_DIR="$(swig -swiglib)" ${{ github.event.inputs.additional_cmake_flags }}
+          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${UNITY_ROOT_DIR}" -DSWIG_DIR="${SWIG_DIR}" ${{ github.event.inputs.additional_cmake_flags }}
           echo "=-=-=-=-=-=-=-=-="
           echo "Start Build"
           echo "=-=-=-=-=-=-=-=-="
