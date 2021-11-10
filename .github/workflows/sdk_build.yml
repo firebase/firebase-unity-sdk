@@ -6,13 +6,8 @@ on:
     inputs:
       # Which version of Unity to use
       unity_version:
-        description: 'Unity version [2017.4.40f1, 2018.4.36f1, 2019.4.32f1, 2020.3.22f1]'
-        default: '2019.4.32f1'
-        required: true
-      # Linux uses a different number for its versions
-      linux_unity_version:
-        description: 'Linux Unity version [2017.4.10f1, 2018.4.36f1, 2019.4.32f1, 2020.3.22f1]'
-        default: '2019.4.32f1'
+        description: 'Unity version [2017, 2018, 2019, 2020]'
+        default: '2019'
         required: true
       # Additional CMake flags to use
       additional_cmake_flags:
@@ -40,8 +35,8 @@ jobs:
           build_dir: windows_unity
           unity_platform_name: Windows
         - os: ubuntu-latest
-          unity_version: ${{ github.event.inputs.linux_unity_version }}
-          unity_install_dir: /opt/unity-editor-${{ github.event.inputs.linux_unity_version }}
+          unity_version: ${{ github.event.inputs.unity_version }}
+          unity_install_dir: /opt/unity-editor-${{ github.event.inputs.unity_version }}
           build_dir: linux_unity
           unity_platform_name: Linux
     env:
