@@ -37,22 +37,21 @@ python scripts/gha/print_matrix_configuration.py -c -w integration_tests
 
 import argparse
 import json
-import os
-import re
-import subprocess
-import sys
-
-from integration_testing import config_reader
+import platform
 
 
 DEFAULT_WORKFLOW = "desktop"
 EXPANDED_KEY = "expanded"
 MINIMAL_KEY = "minimal"
 
+_WINDOWS = "Windows"
+_MACOS = "macOS"
+_LINUX = "Linux"
+
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "unity_version": ["2019.4.32f1"],
+      "unity_version": ["2019"],
       "android_device": ["android_target", "emulator_target"],
       "ios_device": ["ios_target", "simulator_target"],
 
@@ -62,7 +61,7 @@ PARAMETERS = {
       },
 
       EXPANDED_KEY: {
-        "unity_version": ["2020.3.22f1", "2019.4.32f1", "2018.4.36f1", "2017.4.40f1", "2017.4.10f1"],
+        "unity_version": ["2020", "2019", "2018", "2017"],
         "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
         "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
       }
@@ -78,12 +77,64 @@ PARAMETERS = {
 # Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
 # To list avaliable packages, install u3d, and use cmd "u3d available -u $unity_version -p"
 # The packages below is valid only if Unity Hub is not installed.
-UNITY_PACKAGES = {
-  "2020.3.22f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": None, "Linux": ["linux-il2cpp"]},
-  "2019.4.32f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["windows-il2cpp"], "macOS": None, "Linux": ["linux-il2cpp"]},
-  "2018.4.36f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": None, "Linux": None},
-  "2017.4.40f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": None, "Linux": None},
-  "2017.4.10f1": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": None} # For Linux Special
+# TODO(@sunmou): Add Android Setting. e.g. NDK_VERSION
+UNITY_SETTINGS = {
+  "2020": {
+    _WINDOWS: {
+      "version": "2020.3.22f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]}
+    },
+    _MACOS: {
+      "version": "2020.3.22f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]}
+    },
+    _LINUX: {
+      "version": "2020.3.22f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+    }
+  },
+  "2019": {
+    _WINDOWS: {
+      "version": "2019.4.32f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]}
+    },
+    _MACOS: {
+      "version": "2019.4.32f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]}
+    },
+    _LINUX: {
+      "version": "2019.4.32f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+    }
+  },
+  "2018": {
+    _WINDOWS: {
+      "version": "2018.4.36f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux"]}
+    },
+    _MACOS: {
+      "version": "2018.4.36f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux"]}
+    },
+    _LINUX: {
+      "version": "2018.4.36f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+    }
+  },
+  "2017": {
+    _WINDOWS: {
+      "version": "2017.4.40f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac"], "Linux": ["Linux"]}
+    },
+    _MACOS: {
+      "version": "2017.4.40f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]}
+    },
+    _LINUX: {
+      "version": "2017.4.10f1",
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": ["Mac"], "Linux": None}
+    }
+  }
 }
 
 TEST_DEVICES = {
@@ -101,6 +152,29 @@ TEST_DEVICES = {
   "simulator_target": {"type": "virtual", "name": "iPhone 8", "version": "12.0"},
   "simulator_latest": {"type": "virtual", "name": "iPhone 11", "version": "14.4"},
 }
+
+
+def get_os():
+  """Current Operation System"""
+  if platform.system() == 'Windows':
+    return _WINDOWS
+  elif platform.system() == 'Darwin':
+    return _MACOS
+  elif platform.system() == 'Linux':
+    return _LINUX
+
+
+def get_unity_path(version):
+  """Returns the path to this version of Unity, as generated by U3D."""
+  # These are the path formats assumed by U3D, as documented here:
+  # https://github.com/DragonBox/u3d
+  unity_full_version = UNITY_SETTINGS[version][get_os()]["version"]
+  if platform.system() == "Windows":
+    return "/c/Program Files/Unity_%s" % unity_full_version
+  elif platform.system() == "Darwin":
+    return "/Applications/Unity_%s" % unity_full_version
+  elif platform.system() == 'Linux':
+    return "/opt/unity-editor-%s" % unity_full_version
 
 
 def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
@@ -168,6 +242,17 @@ def filter_values_on_diff(parm_key, value, auto_diff):
 
 def main():
   args = parse_cmdline_args()
+  if args.unity_version:
+    if args.parm_key == "unity_path":
+      print(get_unity_path(args.unity_version))
+    else:
+      print(UNITY_SETTINGS[args.unity_version][get_os()].get(args.parm_key))
+    return 
+
+  if args.device:
+    print(TEST_DEVICES.get(args.parm_key).get("type"))
+    return 
+
   if args.override:
     # If it is matrix parm, convert CSV string into a list
     if not args.config:
@@ -175,10 +260,6 @@ def main():
 
     print_value(args.override)
     return
-
-  if args.device:
-    print(TEST_DEVICES.get(args.parm_key).get("type"))
-    return 
 
   if args.expanded:
     test_matrix = EXPANDED_KEY
@@ -203,8 +284,9 @@ def parse_cmdline_args():
   parser.add_argument('-k', '--parm_key', required=True, help='Print the value of specified key from matrix or config maps.')
   parser.add_argument('-a', '--auto_diff', metavar='BRANCH', help='Compare with specified base branch to automatically set matrix options')
   parser.add_argument('-o', '--override', help='Override existing value with provided value')
-  parser.add_argument('-d', '--device', action='store_true', help='Get the device type, used with -k $device')
+  parser.add_argument('-d', '--device', type=bool, default=False, help='Get the device type, used with -k $device')
   parser.add_argument('-t', '--device_type', default=['real', 'virtual'], help='Test on which type of mobile devices')
+  parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version')
   args = parser.parse_args()
   return args
 
