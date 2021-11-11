@@ -32,7 +32,7 @@ on:
         default: '0'
         required: true
       test_packaged_sdk:
-        description: 'Optional: Packaging run # to build against?'
+        description: 'Optional: Packaging run # to build against? (sdk_url will be ignored.)'
       test_pull_request:
         description: 'Optional: Pull request # to build and test? (With optional commit hash, separated by a colon. Specify the FULL hash.)'
 
@@ -171,18 +171,30 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+      - name: Fetch prebuilt packaged SDK from previous run
+        uses: dawidd6/action-download-artifact@v2
+        if: ${{ github.event.inputs.test_packaged_sdk != '' }}
+        with:
+          name: 'firebase_unity_sdk.zip'
+          workflow: 'packaging.yml'
+          run_id: ${{ github.event.inputs.test_packaged_sdk }}
       - name: Build integration tests
         timeout-minutes: 220
         shell: bash
         run: |
-          # TODO: Download unity SDK first
-          if [[ -z "${{ github.event.inputs.sdk_url }}" ]];then
-            sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.5.0.zip"
+          if [[ -n "${{ github.event.inputs.test_packaged_sdk }}" ]]; then
+            mkdir downloaded_sdk
+            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+            ls ~/Downloads/
           else
-            sdk_url=${{ github.event.inputs.sdk_url }}
+            if [[ -z "${{ github.event.inputs.sdk_url }}" ]];then
+              sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.5.0.zip"
+            else
+              sdk_url=${{ github.event.inputs.sdk_url }}
+            fi
+            curl ${sdk_url} -o ~/Downloads/firebase_unity_sdk.zip
+            unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           fi
-          curl ${sdk_url} -o ~/Downloads/firebase_unity_sdk.zip
-          unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
             --u $( python scripts/gha/print_matrix_configuration.py -u ${{matrix.unity_version}} -k version ) \
