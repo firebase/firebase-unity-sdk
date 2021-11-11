@@ -183,7 +183,9 @@ jobs:
         shell: bash
         run: |
           if [[ -n "${{ github.event.inputs.test_packaged_sdk }}" ]]; then
-            mv -v firebase_unity_sdk ~/Downloads/
+            ls
+            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+            # mv -v firebase_unity_sdk ~/Downloads/
             ls ~/Downloads/
           else
             if [[ -z "${{ github.event.inputs.sdk_url }}" ]];then
