@@ -8,7 +8,7 @@ on:
     inputs:
       unity_versions:
         description: 'Unity version'
-        default: '2020,2019,2018,2017'
+        default: '2019'
         required: true
       platforms:
         description: 'CSV of Android,iOS,Windows,macOS,Linux'
@@ -123,7 +123,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [windows-latest, macos-latest]
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
@@ -159,7 +159,6 @@ jobs:
         timeout-minutes: 10
         shell: bash
         run: |
-          set +H
           python scripts/gha/unity_installer.py --activate_license \
             --version ${{ matrix.unity_version }}  \
             --username "${{ secrets.UNITY_USERNAME }}" \
@@ -215,6 +214,7 @@ jobs:
             python scripts/gha/unity_installer.py --release_license \
               --logfile testapps/release_license.log \
               --version ${{ matrix.unity_version }}
+            cat testapps/release_license.log
       - name: Upload Android integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'Android') && ${{ !cancelled() }}
