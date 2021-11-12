@@ -33,7 +33,7 @@ RETRY_STATUS = (403, 500, 502, 504)
 TIMEOUT = 5
 
 OWNER = 'firebase'
-REPO = 'firebase-cpp-sdk'
+REPO = 'firebase-unity-sdk'
 
 BASE_URL = 'https://api.github.com'
 GITHUB_API_URL = '%s/repos/%s/%s' % (BASE_URL, OWNER, REPO)
