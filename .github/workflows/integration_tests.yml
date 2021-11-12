@@ -184,11 +184,7 @@ jobs:
         shell: bash
         run: |
           if [[ -n "${{ github.event.inputs.test_packaged_sdk }}" ]]; then
-            ls
-            mkdir ~/Downloads/firebase_unity_sdk
             mv -v firebase_unity_sdk ~/Downloads/
-            ls ~/Downloads/
-            ls ~/Downloads/firebase_unity_sdk
           else
             if [[ -z "${{ github.event.inputs.sdk_url }}" ]];then
               sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.5.0.zip"
