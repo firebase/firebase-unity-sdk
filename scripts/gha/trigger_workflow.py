@@ -39,7 +39,7 @@ def main():
   if args.branch is None:
     args.branch=subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).decode('utf-8').rstrip('\n')
     print('autodetected branch: %s' % args.branch)
-  if args.repo: # else use default firebase/firebase-cpp-sdk repo
+  if args.repo: # else use default firebase/firebase-unity-sdk repo
     if not github.set_repo_url(args.repo):
       exit(2)
     else:
@@ -78,7 +78,7 @@ def main():
         break
 
   if run_id:
-    workflow_url = 'https://github.com/firebase/firebase-cpp-sdk/actions/runs/%s' % (run_id)
+    workflow_url = 'https://github.com/firebase/firebase-unity-sdk/actions/runs/%s' % (run_id)
   else:
     # Couldn't get a run ID, use a generic URL.
     workflow_url = '/%s/actions/workflows/%s?query=%s+%s' % (
