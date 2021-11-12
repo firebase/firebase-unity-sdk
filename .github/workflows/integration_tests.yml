@@ -164,7 +164,7 @@ jobs:
             --username "${{ secrets.UNITY_USERNAME }}" \
             --password "${{ secrets.UNITY_PASSWORD }}" \
             --serial_ids "${{ secrets.SERIAL_ID }}" \
-            --logfile testapps/activate_license.log
+            --logfile "testapps/activate_license.log"
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
@@ -210,10 +210,11 @@ jobs:
         with:
           timeout_minutes: 10
           max_attempts: 3
+          shell: bash
           command: |
             python scripts/gha/unity_installer.py --release_license \
-              --logfile testapps/release_license.log \
-              --version ${{ matrix.unity_version }}
+              --version ${{ matrix.unity_version }} \
+              --logfile "testapps/release_license.log"
             cat testapps/release_license.log
       - name: Upload Android integration tests artifact
         uses: actions/upload-artifact@v2.2.2
