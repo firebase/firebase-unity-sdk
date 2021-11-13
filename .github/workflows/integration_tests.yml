@@ -8,11 +8,11 @@ on:
     inputs:
       build_os:
         description: 'Build OS'
-        default: 'windows-latest, macos-latest'
+        default: 'windows-latest,macos-latest'
         required: true
       unity_versions:
         description: 'Unity version'
-        default: '2019'
+        default: '2020,2019,2018,2017'
         required: true
       platforms:
         description: 'CSV of Android,iOS,Windows,macOS,Linux'
