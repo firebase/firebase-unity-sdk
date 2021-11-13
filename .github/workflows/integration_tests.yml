@@ -211,7 +211,8 @@ jobs:
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{matrix.os}}-${{ matrix.unity_version }}-all" \
-            --force_latest_runtime
+            --force_latest_runtime \
+            --ci
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
@@ -265,7 +266,7 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat build-results-${{ matrix.unity_version }}-all.log
+          cat build-results-${{matrix.os}}-${{ matrix.unity_version }}-all.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
