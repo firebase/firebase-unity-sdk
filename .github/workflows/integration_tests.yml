@@ -210,7 +210,7 @@ jobs:
             --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
-            --artifact_name "${{ matrix.unity_version }}-all" \
+            --artifact_name "${{matrix.os}}-${{ matrix.unity_version }}-all" \
             --force_latest_runtime
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
