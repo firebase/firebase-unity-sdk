@@ -12,7 +12,7 @@ on:
         required: true
       unity_versions:
         description: 'Unity version'
-        default: '2020,2019,2018,2017'
+        default: '2019'
         required: true
       platforms:
         description: 'CSV of Android,iOS,Windows,macOS,Linux'
@@ -25,7 +25,7 @@ on:
         required: true
       mobile_test_on:
         description: 'Run mobile tests on real and/or virtual devices? (separated by commas)'
-        default: 'real'
+        default: 'real,virtual'
         required: true
       sdk_url:
         description: 'Download unity sdk from this URL'
