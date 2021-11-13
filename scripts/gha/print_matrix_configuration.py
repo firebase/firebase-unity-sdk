@@ -223,7 +223,7 @@ def filter_devices(devices, device_type):
 
 
 # TODO(sunmou): add auto_diff feature
-def filterdesktop_os(parm_key, value, auto_diff):
+def filter_values_on_diff(parm_key, value, auto_diff):
   return value
 
 
