@@ -328,6 +328,12 @@ jobs:
         platform: ${{ fromJson(needs.check_and_prepare.outputs.matrix_mobile_platform) }}
         mobile_test_on: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
+        exclude:
+          # TODO(sunmou): exclude because temporarily not working
+          - platform: "Android"
+            mobile_test_on: virtual
+          - platform: "iOS"
+            mobile_test_on: real
     steps:
       - uses: actions/checkout@v2
         with:
