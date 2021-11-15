@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       build_os:
-        description: 'Build OS'
-        default: 'windows-latest,macos-latest'
+        description: 'Build OS (windows-latest,macos-latest)'
+        default: 'macos-latest'
         required: true
       unity_versions:
         description: 'Unity version'
