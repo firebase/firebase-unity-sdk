@@ -326,14 +326,13 @@ jobs:
       matrix:
         build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
         platform: ${{ fromJson(needs.check_and_prepare.outputs.matrix_mobile_platform) }}
-        mobile_test_on: ${{ fromJson(needs.check_and_prepare.outputs.mobile_test_on) }}
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
-        exclude:
-          # TODO(sunmou): exclude because temporarily not working
+        include:
+          # TODO(sunmou): include test device that are currently working
           - platform: "Android"
-            mobile_test_on: virtual
+            mobile_test_on: "real"
           - platform: "iOS"
-            mobile_test_on: real
+            mobile_test_on: "virtual"
     steps:
       - uses: actions/checkout@v2
         with:
