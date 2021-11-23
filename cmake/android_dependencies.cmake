@@ -28,6 +28,11 @@ set(FIREBASE_AUTH_ANDROID_DEPS
     "com.google.firebase:firebase-analytics:19.0.0"
 )
 
+set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
+    "com.google.firebase:firebase-crashlytics-ndk:18.2.4"
+    "com.google.firebase:firebase-analytics:19.0.0"
+)
+
 set(FIREBASE_DATABASE_ANDROID_DEPS
     "com.google.firebase:firebase-database:20.0.0"
     "com.google.firebase:firebase-analytics:19.0.0"
@@ -46,6 +51,7 @@ set(FIREBASE_FUNCTIONS_ANDROID_DEPS
 set(FIREBASE_MESSAGING_ANDROID_DEPS
     "com.google.firebase:firebase-messaging:22.0.0"
     "com.google.firebase:firebase-analytics:19.0.0"
+    "com.google.firebase:firebase-iid:21.1.0"
 )
 
 set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS

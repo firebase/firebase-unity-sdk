@@ -97,7 +97,7 @@ if (FIREBASE_INCLUDE_UNITY)
     IOS_DEPS
       "Firebase/Crashlytics"
     ANDROID_DEPS
-      ${FIREBASE_AUTH_ANDROID_DEPS}
+      ${FIREBASE_CRASHLYTICS_ANDROID_DEPS}
     ANDROID_SPEC
       "crashlytics"
   )
