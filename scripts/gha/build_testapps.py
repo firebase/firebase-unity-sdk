@@ -249,6 +249,9 @@ flags.DEFINE_string(
     " testapps artifact is testapps-$artifact_name;"
     " build log artifact is build-results-$artifact_name.log.")   
 
+flags.DEFINE_bool(
+    "ci", False, "If running the script on CI")
+
 flags.register_validator(
     "platforms", lambda x: set(x) <= set(_SUPPORTED_PLATFORMS))
 
@@ -342,8 +345,11 @@ def main(argv):
           logging.info(log_file)
           with open(log_file, 'r') as f:
             logging.info(f.read())
-      # Free up space by removing unneeded Unity Library directory.
-      shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
+      # Free up space by removing unneeded Unity directory.
+      if FLAGS.ci:
+        shutil.rmtree(dir_helper.unity_project_dir)
+      else:
+        shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
       logging.info("END %s", build_desc)
 
   _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)

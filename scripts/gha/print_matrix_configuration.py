@@ -51,6 +51,7 @@ _LINUX = "Linux"
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
+      "build_os": ["macos-latest","windows-latest"],
       "unity_version": ["2019"],
       "android_device": ["android_target", "emulator_target"],
       "ios_device": ["ios_target", "simulator_target"],
@@ -61,9 +62,11 @@ PARAMETERS = {
       },
 
       EXPANDED_KEY: {
-        "unity_version": ["2020", "2019", "2018", "2017"],
+        "build_os": ["macos-latest"],
+        "unity_version": ["2020", "2019", "2018"],
         "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
         "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
+        "apis": "auth,crashlytics,database",
       }
     },
     "config": {
@@ -220,6 +223,24 @@ def filter_devices(devices, device_type):
   return list(filtered_value)  
 
 
+# TODO(sunmou): add auto_diff feature
+def filter_values_on_diff(parm_key, value, auto_diff):
+  return value
+
+
+def filterdesktop_os(platform):
+  os_platform_dict = {"windows-latest":"Windows", "macos-latest":"macOS", "ubuntu-latest":"Linux"}
+  filtered_value = filter(lambda os: os_platform_dict.get(os) in platform, os_platform_dict.keys())
+  return list(filtered_value)  
+
+
+def filter_mobile_platform(platform):
+  mobile_platform = ["Android", "iOS"]
+  filtered_value = filter(lambda p: p in platform, mobile_platform)
+  return list(filtered_value)  
+
+
+
 def print_value(value):
   """ Print Json formatted string that can be consumed in Github workflow."""
   # Eg: for lists,
@@ -235,11 +256,6 @@ def print_value(value):
   print(json.dumps(value))
 
 
-# TODO(sunmou): add auto_diff feature
-def filter_values_on_diff(parm_key, value, auto_diff):
-  return value
-
-
 def main():
   args = parse_cmdline_args()
   if args.unity_version:
@@ -251,6 +267,12 @@ def main():
 
   if args.device:
     print(TEST_DEVICES.get(args.parm_key).get("type"))
+    return 
+  if args.desktop_os:
+    print(filterdesktop_os(platform=args.parm_key))
+    return 
+  if args.mobile_platform:
+    print(filter_mobile_platform(platform=args.parm_key))
     return 
 
   if args.override:
@@ -269,7 +291,7 @@ def main():
     test_matrix = ""
   value = get_value(args.workflow, test_matrix, args.parm_key, args.config)
   if args.workflow == "integration_tests" and (args.parm_key == "android_device" or args.parm_key == "ios_device"):
-    value = filter_devices(value, args.device_type)
+    value = filter_devices(devices=value, device_type=args.device_type)
   if args.auto_diff:
     value = filter_values_on_diff(args.parm_key, value, args.auto_diff)
   print_value(value)
@@ -284,9 +306,11 @@ def parse_cmdline_args():
   parser.add_argument('-k', '--parm_key', required=True, help='Print the value of specified key from matrix or config maps.')
   parser.add_argument('-a', '--auto_diff', metavar='BRANCH', help='Compare with specified base branch to automatically set matrix options')
   parser.add_argument('-o', '--override', help='Override existing value with provided value')
-  parser.add_argument('-d', '--device', type=bool, default=False, help='Get the device type, used with -k $device')
-  parser.add_argument('-t', '--device_type', default=['real', 'virtual'], help='Test on which type of mobile devices')
-  parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version')
+  parser.add_argument('-d', '--device', type=bool, default=False, help='Get the device type. Used with "-k $device -d"')
+  parser.add_argument('-t', '--device_type', default=['real', 'virtual'], help='Test on which type of mobile devices. Used with "-k $device_type -t $mobile_test_on"')
+  parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version. Used with "-k $unity_setting -u $unity_major_version"')
+  parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
+  parser.add_argument('-mobile_platform', type=bool, default=False, help='Get mobile test platform. Use with "-k $build_platform -mobile_platform=1"')
   args = parser.parse_args()
   return args
 
