@@ -51,7 +51,7 @@ _LINUX = "Linux"
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "build_os": ["windows-latest"],
+      "build_os": ["macos-latest","windows-latest"],
       "unity_version": ["2019"],
       "android_device": ["android_target", "emulator_target"],
       "ios_device": ["ios_target", "simulator_target"],
@@ -62,10 +62,11 @@ PARAMETERS = {
       },
 
       EXPANDED_KEY: {
-        "build_os": ["windows-latest", "macos-latest"],
-        "unity_version": ["2020", "2019", "2018", "2017"],
+        "build_os": ["macos-latest"],
+        "unity_version": ["2020", "2019", "2018"],
         "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
         "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
+        "apis": "auth,crashlytics,database",
       }
     },
     "config": {
