@@ -119,7 +119,7 @@ jobs:
         echo "::set-output name=platform::$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests ${TEST_MATRIX_PARAM} -k platform -o "${{github.event.inputs.platforms}}" )"
         echo "::set-output name=matrix_desktop_os::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k "${{github.event.inputs.platforms}}" -desktop_os=1)"
         echo "::set-output name=matrix_mobile_platform::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k "${{github.event.inputs.platforms}}" -mobile_platform=1)"
-        echo "::set-output name=matrix_build_os::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k unity_version -o "${{github.event.inputs.build_os}}")"
+        echo "::set-output name=matrix_build_os::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k build_os -o "${{github.event.inputs.build_os}}")"
         echo "::set-output name=matrix_unity_versions::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k unity_version -o "${{github.event.inputs.unity_versions}}")"
         mobile_test_on=$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k mobile_test_on -o "${{github.event.inputs.mobile_test_on}}")
         echo "::set-output name=mobile_test_on::${mobile_test_on}"
