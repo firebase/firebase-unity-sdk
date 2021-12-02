@@ -11,6 +11,9 @@ on:
       skipIntegrationTests:
         description: 'skip integration tests?'
         default: 0
+      package_version_number:
+        description: "If need to package for certain version number, only use for release purpose"
+        default: 0
 
 jobs:
   package_sdks:
@@ -36,6 +39,19 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
+
+      - name: Name new branch
+        if: github.event.inputs.package_version_number != 0
+        run: |
+          date_str=$(date "+%Y%m%d-%H%M%S")
+          echo "NEW_BRANCH=${{env.branchPrefix}}${{github.event.inputs.package_version_number}}-${date_str}" >> $GITHUB_ENV
+
+      - name: Create new branch
+        if: github.event.inputs.package_version_number != 0
+        run: |
+          git remote update
+          git checkout -b "${NEW_BRANCH}"
+          echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
 
       # Fetch all the zip files from previous run
       - name: Fetch Desktop Artifacts
