@@ -66,7 +66,7 @@ PARAMETERS = {
         "unity_version": ["2020", "2019", "2018"],
         "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
         "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
-        "apis": "auth,crashlytics,database",
+        "apis": "crashlytics,database",
       }
     },
     "config": {
