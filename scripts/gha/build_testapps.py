@@ -112,7 +112,7 @@ from integration_testing import unity_commands
 from integration_testing import unity_finder
 from integration_testing import unity_version
 from integration_testing import xcodebuild
-from scripts.gha.print_matrix_configuration import UNITY_SETTINGS
+from print_matrix_configuration import UNITY_SETTINGS
 
 # Used in specifying whether xcodebuild should build for device or simulator
 _DEVICE_REAL = "real"
