@@ -484,10 +484,13 @@ def patch_android_env(unity_version):
     os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, "android-ndk-r19"))
     logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
   if major_version >= 2020:
-    # This is a bug from Unity: 
-    # https://issuetracker.unity3d.com/issues/android-android-build-fails-when-targeting-sdk-31-and-using-build-tools-31-dot-0-0
-    _run([os.environ["ANDROID_HOME"]+"/tools/bin/sdkmanager", "--uninstall", "build-tools;31.0.0"], check=False)
-    logging.info("Uninstall Android build tool 31.0.0")
+    try:
+      # This is a bug from Unity: 
+      # https://issuetracker.unity3d.com/issues/android-android-build-fails-when-targeting-sdk-31-and-using-build-tools-31-dot-0-0
+      _run([os.environ["ANDROID_HOME"]+"/tools/bin/sdkmanager", "--uninstall", "build-tools;31.0.0"], check=False)
+      logging.info("Uninstall Android build tool 31.0.0")
+    except Exception as e:
+      logging.info(str(e))
     
   os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
   os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
