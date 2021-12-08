@@ -2,3 +2,4 @@ absl-py
 attrs
 pyyaml
 requests
+PyGithub
