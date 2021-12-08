@@ -54,14 +54,10 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Step into Unity SDK Path
-        shell: bash
-        run: |
-          cd firebase-unity-sdk
-
       - name: Install python deps
         shell: bash
         run: |
+          cd firebase-unity-sdk
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
@@ -73,6 +69,7 @@ jobs:
       - name: Create new branch
         if: github.event.inputs.package_version_number != 0
         run: |
+          cd firebase-unity-sdk
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
@@ -80,6 +77,7 @@ jobs:
       - name: Update Unity SDK version and dependencies
         if: github.event.inputs.package_version_number != 0
         run: |
+          cd firebase-unity-sdk
           python build_package.py --unity_sdk_version=${{github.event.inputs.package_version_number}}
 
       # - name: Build Unity SDK
