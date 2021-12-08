@@ -55,7 +55,7 @@ jobs:
           python-version: 3.7
 
       - name: Step into Unity SDK Path
-        shall: bash
+        shell: bash
         run: |
           cd firebase-unity-sdk
 
