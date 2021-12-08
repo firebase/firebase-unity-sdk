@@ -74,6 +74,43 @@ jobs:
           cd firebase-unity-sdk
           python scripts/update_versions.py --unity_sdk_version=${{github.event.inputs.package_version_number}}
 
+      - name: Push branch if there are changes
+        id: push-branch
+        run: |
+          cd firebase-unity-sdk
+          if ! git update-index --refresh; then
+            date_str=$(date "+%a %b %d %Y")
+            commit_title="Update Unity SDK dependencies - ${date_str}"
+            commit_body=
+            if [[ -n '${{ github.event.inputs.comment }}' ]]; then
+              # If a comment was provided, start with that instead of blank.
+              commit_body='${{ github.event.inputs.comment }}
+
+            '
+            fi
+
+            commit_body="${commit_body}
+
+          > Created by [${{github.workflow}} workflow]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+            git config user.email "firebase-workflow-trigger-bot@google.com"
+            git config user.name "firebase-workflow-trigger-bot"
+            git config core.commentChar "%"  # so we can use # in git commit messages
+            git commit -a -m "${commit_title}
+
+          ${commit_body}"
+            echo "::set-output name=branch_pushed::1"
+            # Show changes in git log
+            git diff
+            # Push branch
+            git push --set-upstream origin "${NEW_BRANCH}"
+            # Create pull request
+            pr_number=$(python scripts/gha/create_pull_request.py --token ${{ steps.generate-token.outputs.token }} --head "${NEW_BRANCH}" --base "${{ github.event.inputs.baseBranch }}" --title "${commit_title}" --body "${commit_body}")
+            echo "::set-output name=created_pr_number::${pr_number}"
+          else
+            echo "::warning ::No changes detected, won't create pull request."
+            echo "::set-output name=branch_pushed::0"
+          fi
+
   trigger_build_sdks:
     needs: [update_versions]
     name: trigger-build-${{matrix.platform}}
