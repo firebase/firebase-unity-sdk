@@ -14,7 +14,7 @@ on:
 
 jobs:
   update_versions:
-    name: package-${{matrix.os}}
+    name: update-version-${{matrix.os}}
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
