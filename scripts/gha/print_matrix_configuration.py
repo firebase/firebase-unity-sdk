@@ -106,7 +106,7 @@ UNITY_SETTINGS = {
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]}
     },
     _LINUX: {
-      "version": "2019.4.32f1",
+      "version": "2019.4.33f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
     }
   },
