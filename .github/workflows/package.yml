@@ -113,6 +113,7 @@ jobs:
       - name: Push branch if there are changes
         id: push-branch
         run: |
+          cd firebase-unity-sdk
           if ! git update-index --refresh; then
             date_str=$(date "+%a %b %d %Y")
             commit_title="Update Unity SDK dependencies - ${date_str}"
