@@ -124,6 +124,8 @@ jobs:
             '
             fi
 
+            commit_body="${commit_body}
+
           > Created by [${{github.workflow}} workflow]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
             git config user.email "firebase-workflow-trigger-bot@google.com"
             git config user.name "firebase-workflow-trigger-bot"
