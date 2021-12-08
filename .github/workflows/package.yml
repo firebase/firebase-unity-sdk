@@ -11,9 +11,6 @@ on:
       skipIntegrationTests:
         description: 'skip integration tests?'
         default: 0
-      package_version_number:
-        description: "If need to package for certain version number, only use for release purpose"
-        default: 0
 
 jobs:
   package_sdks:
@@ -30,17 +27,8 @@ jobs:
       - name: Check out base branch
         uses: actions/checkout@v2.3.1
         with:
-          path: firebase-unity-sdk
           fetch-depth: 0
           ref: ${{ github.event.inputs.baseBranch }}
-      
-      - name: Checkout CPP Repo
-        uses: actions/checkout@v2
-        with:
-          repository: firebase/firebase-cpp-sdk
-          path: firebase-cpp-sdk
-          ref: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-          submodules: true
       
       - name: Get token for firebase-workflow-trigger
         uses: tibdex/github-app-token@v1
@@ -57,7 +45,6 @@ jobs:
       - name: Install python deps
         shell: bash
         run: |
-          cd firebase-unity-sdk
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
@@ -69,44 +56,31 @@ jobs:
       - name: Create new branch
         if: github.event.inputs.package_version_number != 0
         run: |
-          cd firebase-unity-sdk
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
 
-      - name: Update Unity SDK version and dependencies
-        if: github.event.inputs.package_version_number != 0
-        run: |
-          cd firebase-unity-sdk
-          python build_package.py --unity_sdk_version=${{github.event.inputs.package_version_number}}
+      # Fetch all the zip files from previous run
+      - name: Fetch Desktop Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: 'sdk_build.yml'
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          path: built_artifect
 
-      - name: Build Unity SDK
-        if: github.event.inputs.package_version_number != 0
-        run: |
-          cd firebase-unity-sdk
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w ios.yml
-
-      # # Fetch all the zip files from previous run
-      # - name: Fetch Desktop Artifacts
-      #   uses: dawidd6/action-download-artifact@v2
-      #   with:
-      #     workflow: 'sdk_build.yml'
-      #     run_id: ${{ github.event.inputs.downloadPreviousRun }}
-      #     path: built_artifect
-
-      # - name: Fetch iOS Artifacts
-      #   uses: dawidd6/action-download-artifact@v2
-      #   with:
-      #     workflow: 'ios.yml'
-      #     run_id: ${{ github.event.inputs.downloadPreviousRun }}
-      #     path: built_artifect
+      - name: Fetch iOS Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: 'ios.yml'
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          path: built_artifect
       
-      # - name: Fetch Android Artifacts
-      #   uses: dawidd6/action-download-artifact@v2
-      #   with:
-      #     workflow: 'android.yml'
-      #     run_id: ${{ github.event.inputs.downloadPreviousRun }}
-      #     path: built_artifect
+      - name: Fetch Android Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: 'android.yml'
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          path: built_artifect
 
       # - name: Update Guids Json
       #   if: github.event.inputs.package_version_number != 0
@@ -149,43 +123,42 @@ jobs:
             echo "::set-output name=branch_pushed::0"
           fi
 
+      - name: move zip files
+        run: |
+          cd built_artifect
+          find . -type f -name "*.zip" -exec mv {} . \;
+          ls -l
+          cd ..
 
-      # - name: move zip files
-      #   run: |
-      #     cd built_artifect
-      #     find . -type f -name "*.zip" -exec mv {} . \;
-      #     ls -l
-      #     cd ..
+      - name: Package unitypackage
+        run: |
+          python build_package.py --zip_dir=built_artifect
 
-      # - name: Package unitypackage
-      #   run: |
-      #     python build_package.py --zip_dir=built_artifect
+      - name: Listing output
+        run: |
+          ls -Rl
+        working-directory: output
 
-      # - name: Listing output
-      #   run: |
-      #     ls -Rl
-      #   working-directory: output
-
-      # - name: Upload Build unitypackage
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: firebase_unity_sdk
-      #     path: output
+      - name: Upload Build unitypackage
+        uses: actions/upload-artifact@v2
+        with:
+          name: firebase_unity_sdk
+          path: output
       
-      # - name: Package tgz
-      #   run: |
-      #     python build_package.py --zip_dir=built_artifect --output_upm=True --output=output_tgz
+      - name: Package tgz
+        run: |
+          python build_package.py --zip_dir=built_artifect --output_upm=True --output=output_tgz
 
-      # - name: Listing output tgz
-      #   run: |
-      #     ls -Rl
-      #   working-directory: output_tgz
+      - name: Listing output tgz
+        run: |
+          ls -Rl
+        working-directory: output_tgz
 
-      # - name: Upload Build tgz
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: firebase_unity_sdk_tgz
-      #     path: output_tgz
+      - name: Upload Build tgz
+        uses: actions/upload-artifact@v2
+        with:
+          name: firebase_unity_sdk_tgz
+          path: output_tgz
 
   trigger_integration_tests:
     # Trigger the integration_tests workflow.

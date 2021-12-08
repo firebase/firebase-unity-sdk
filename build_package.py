@@ -58,10 +58,6 @@ flags.DEFINE_string("script_folder", "unity_packer",
 flags.DEFINE_string("output", "output",
                     "Output folder for unitypackage.")
 
-flags.DEFINE_string("unity_sdk_version", None,
-                    "If None, use the version that reads from guid.json."
-                    "If not None, will check and upgrad cmake/firebase_unity_version.cmake")
-
 flags.DEFINE_boolean("output_upm", False, "Whether output packages as tgz for"
     "Unity Package Manager.")
 
@@ -83,27 +79,19 @@ def get_zip_files():
 
   return zip_file_paths
 
-def get_last_version(guids_file):
+def get_last_version():
   """Get the last version number in guids file if exists.
-
-    Args:
-      guids_file: the file to look the version in.
-
     Returns:
       version number.
   """
-  json_dict = None
-  with open(guids_file, "rt") as json_file:
-    try:
-      json_dict = json.load(json_file,
-                             object_pairs_hook=collections.OrderedDict)
-    except ValueError as error:
-      raise ValueError("Failed to load JSON file %s (%s)" % (guids_file,
-                                                             str(error)))
-  if json_dict:
-    key_list = list(json_dict.keys())
-    key_list.sort(key=lambda s: list(map(int, s.split('.'))))
-    return key_list[-1]
+  version_cmake_path = os.path.join(os.getcwd(), "cmake", "firebase_unity_version.cmake")
+  with open(version_cmake_path, "r") as f:
+    datafile = f.readlines()
+    for line in datafile:
+      if "FIREBASE_UNITY_SDK_VERSION" in line:
+        result = line.split()
+        return result[-1].strip("\"")
+  return None
 
 def find_pack_script():
   """Get the pack script either from intermediate build folder or download from unity-jar-resolver.
@@ -133,50 +121,6 @@ def find_pack_script():
     return script_path
   return None
 
-def get_latest_repo_tag(repo_url):
-  repo = Github().get_repo(repo_url)
-  tags = sorted(repo.get_tags(), key=lambda t: t.last_modified)
-  return tags[0].name
-
-def get_ios_pod_version_from_cpp():
-  pod_path = os.path.join(os.getcwd(), "..", "firebase-cpp-sdk", "ios_pod", "Podfile")
-  if not os.path.exists(pod_path):
-    return None
-  with open(pod_path, "r") as f:
-    datafile = f.readlines()
-    for line in datafile:
-      if 'Firebase/Core' in line:
-        result = line.split()
-        return result[-1].strip("\'")
-
-def update_unity_version(unity_sdk_version):
-  version_cmake_path = os.path.join(os.getcwd(), "cmake", "firebase_unity_version.cmake")
-  replacement = ""
-  with open(version_cmake_path, "r") as f:
-    datafile = f.readlines()
-    for line in datafile:
-      if "FIREBASE_UNITY_SDK_VERSION" in line:
-        newline = "set(FIREBASE_UNITY_SDK_VERSION \"" + unity_sdk_version + "\""
-        replacement = replacement + newline + "\n"
-      elif "FIREBASE_IOS_POD_VERSION" in line:
-        podversion = get_ios_pod_version_from_cpp()
-        newline = "set(FIREBASE_IOS_POD_VERSION \"" + podversion + "\""
-        replacement = replacement + newline + "\n"
-      elif "FIREBASE_UNITY_JAR_RESOLVER_VERSION" in line:
-        jar_version = get_latest_repo_tag('googlesamples/unity-jar-resolver')
-        jar_version = jar_version.lstrip("v") # jar resolver need to strip "v" from the tag
-        newline = "set(FIREBASE_UNITY_JAR_RESOLVER_VERSION \"" + jar_version + "\""
-        replacement = replacement + newline + "\n"
-      elif "FIREBASE_CPP_SDK_PRESET_VERSION" in line:
-        cpp_version = get_latest_repo_tag('firebase/firebase-cpp-sdk')
-        newline = "set(FIREBASE_CPP_SDK_PRESET_VERSION \"" + cpp_version + "\""
-        replacement = replacement + newline + "\n"
-      else:
-        replacement = replacement + line
-  
-  with open(version_cmake_path, "w") as fout:
-    fout.write(replacement)
-
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
@@ -191,13 +135,7 @@ def main(argv):
   guids_file_path = os.path.join(os.getcwd(), FLAGS.script_folder,
                                  FLAGS.guids_file)
 
-  last_version = None
-  if FLAGS.unity_sdk_version != None:
-    last_version = FLAGS.unity_sdk_version
-    update_unity_version(last_version)
-    return # testing
-  else:
-    last_version = get_last_version(guids_file_path)
+  last_version = get_last_version()
 
   zip_file_list = get_zip_files()
 
@@ -229,7 +167,6 @@ def main(argv):
     cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4")
 
   return subprocess.call(cmd_args)
-
 
 if __name__ == '__main__':
   app.run(main)
