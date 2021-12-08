@@ -57,7 +57,7 @@ jobs:
       - name: Install python deps
         shell: bash
         run: |
-          pip install -r scripts/gha/requirements.txt
+          pip install -r firebase-unity-sdk/scripts/gha/requirements.txt
 
       - name: Name new branch
         if: github.event.inputs.package_version_number != 0
