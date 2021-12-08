@@ -80,9 +80,11 @@ jobs:
           cd firebase-unity-sdk
           python build_package.py --unity_sdk_version=${{github.event.inputs.package_version_number}}
 
-      # - name: Build Unity SDK
-      #   if: github.event.inputs.package_version_number != 0
-      #   run: |
+      - name: Build Unity SDK
+        if: github.event.inputs.package_version_number != 0
+        run: |
+          cd firebase-unity-sdk
+          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w ios.yml
 
       # # Fetch all the zip files from previous run
       # - name: Fetch Desktop Artifacts
