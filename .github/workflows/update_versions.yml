@@ -172,4 +172,4 @@ jobs:
           set -e
           compose_new_branch=firebase-unity-sdk/${{ needs.update_versions.outputs.new_branch }}
           echo "New branch is: ${compose_new_branch}"
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b ${compose_new_branch}
+          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -p unity_branch ${{ needs.update_versions.outputs.new_branch }}
