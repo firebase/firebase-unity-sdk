@@ -18,6 +18,8 @@ on:
 jobs:
   update_versions:
     name: update-version-${{matrix.os}}
+    outputs:
+      new_branch: ${{ steps.name-branch.outputs.new_branch }}
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
