@@ -71,6 +71,7 @@ jobs:
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
+          echo "::set-output name=new_branch::${NEW_BRANCH}"
 
       - name: Update Unity SDK version and dependencies
         run: |
@@ -164,4 +165,4 @@ jobs:
             generate_report=(-p test_pull_request nightly-packaging)
           fi
           set -e
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b ${NEW_BRANCH}
+          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b ${{ needs.update_versions.outputs.new_branch }}
