@@ -171,4 +171,4 @@ jobs:
           fi
           set -e
           echo "New branch is: ${{ needs.update_versions.outputs.new_branch }}"
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b 'firebase-unity-sdk/${{ needs.update_versions.outputs.new_branch }}'
+          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b ${{ needs.update_versions.outputs.new_branch }}
