@@ -165,5 +165,7 @@ jobs:
             generate_report=(-p test_pull_request nightly-packaging)
           fi
           set -e
+          echo "Update Versions Outputs: ${{ needs.update_versions.outputs }} "
           echo "New branch is: ${{ needs.update_versions.outputs.new_branch }}"
+          echo "GITHUB_ENV is: $GITHUB_ENV"
           python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b ${{ needs.update_versions.outputs.new_branch }}
