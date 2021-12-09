@@ -167,5 +167,5 @@ jobs:
             generate_report=(-p test_pull_request nightly-packaging)
           fi
           set -e
-          echo "New branch is: ${{ jobs.update_versions.steps.name-branch.outputs.new_branch }}"
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b ${{ jobs.update_versions.steps.name-branch.outputs.new_branch }}
+          echo "New branch is: ${{ needs.update_versions.steps.name-branch.outputs.new_branch }}"
+          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b ${{ needs.update_versions.steps.name-branch.outputs.new_branch }}
