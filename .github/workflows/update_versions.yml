@@ -161,4 +161,4 @@ jobs:
             generate_report=(-p test_pull_request nightly-packaging)
           fi
           set -e
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -p test_packaged_sdk ${{ github.run_id }} -s 10 -A -v
+          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }}
