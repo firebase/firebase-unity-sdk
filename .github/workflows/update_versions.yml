@@ -115,7 +115,7 @@ jobs:
           fi
 
   trigger_build_sdks:
-    #needs: [update_versions]
+    needs: [update_versions]
     name: trigger-build-${{matrix.platform}}
     runs-on: ubuntu-latest
     strategy:
