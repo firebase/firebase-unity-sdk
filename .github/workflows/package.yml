@@ -51,20 +51,20 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
-        if: github.event.inputs.working_branch == None
+        if: github.event.inputs.working_branch == 'None'
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
           echo "NEW_BRANCH=${{env.branchPrefix}}${{github.event.inputs.package_version_number}}-${date_str}" >> $GITHUB_ENV
 
       - name: Create new branch
-        if: github.event.inputs.working_branch == None
+        if: github.event.inputs.working_branch == 'None'
         run: |
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
 
       - name: Checkout working branch
-        if: github.event.inputs.working_branch != None
+        if: github.event.inputs.working_branch != 'None'
         run: |
           git remote update
           git checkout ${{ github.event.inputs.working_branch }}
