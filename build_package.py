@@ -38,6 +38,7 @@ import subprocess
 import zipfile
 import shutil
 
+from github import Github
 from absl import app
 from absl import flags
 from absl import logging
@@ -78,27 +79,19 @@ def get_zip_files():
 
   return zip_file_paths
 
-def get_last_version(guids_file):
+def get_last_version():
   """Get the last version number in guids file if exists.
-
-    Args:
-      guids_file: the file to look the version in.
-
     Returns:
       version number.
   """
-  json_dict = None
-  with open(guids_file, "rt") as json_file:
-    try:
-      json_dict = json.load(json_file,
-                             object_pairs_hook=collections.OrderedDict)
-    except ValueError as error:
-      raise ValueError("Failed to load JSON file %s (%s)" % (guids_file,
-                                                             str(error)))
-  if json_dict:
-    key_list = list(json_dict.keys())
-    key_list.sort(key=lambda s: list(map(int, s.split('.'))))
-    return key_list[-1]
+  version_cmake_path = os.path.join(os.getcwd(), "cmake", "firebase_unity_version.cmake")
+  with open(version_cmake_path, "r") as f:
+    datafile = f.readlines()
+    for line in datafile:
+      if "FIREBASE_UNITY_SDK_VERSION" in line:
+        result = line.split()
+        return result[-1].strip("\"")
+  return None
 
 def find_pack_script():
   """Get the pack script either from intermediate build folder or download from unity-jar-resolver.
@@ -135,12 +128,15 @@ def main(argv):
   packer_script_path = find_pack_script()
   if packer_script_path == None:
     raise app.UsageError('Cannot find pack script. Please build the project first.')
-
+   
   packer_script_path = os.path.join(os.getcwd(), packer_script_path)
   config_file_path = os.path.join(os.getcwd(), FLAGS.script_folder,
                                   FLAGS.config_file)
   guids_file_path = os.path.join(os.getcwd(), FLAGS.script_folder,
                                  FLAGS.guids_file)
+
+  last_version = get_last_version()
+
   zip_file_list = get_zip_files()
 
   if not zip_file_list:
@@ -160,7 +156,7 @@ def main(argv):
       "--output_upm=" + str(FLAGS.output_upm),
   ]
   cmd_args.extend(["--assets_zip=" + zip_file for zip_file in zip_file_list])
-  last_version = get_last_version(guids_file_path)
+  
   if last_version:
     cmd_args.append("--plugins_version=" + last_version)
 
@@ -171,7 +167,6 @@ def main(argv):
     cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4")
 
   return subprocess.call(cmd_args)
-
 
 if __name__ == '__main__':
   app.run(main)

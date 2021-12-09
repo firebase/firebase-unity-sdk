@@ -8,13 +8,18 @@ on:
         description: 'CSV of VMs to run on'
         default: 'ubuntu-latest'
         required: true
+      baseBranch:
+        description: 'create the new branch from this base'
+        default: 'main'
       package_version_number:
         description: "The Unity SDK version to upgrade to"
         default: 8.6.0
 
 jobs:
   update_versions:
-    name: package-${{matrix.os}}
+    name: update-version-${{matrix.os}}
+    outputs:
+      new_branch: ${{ steps.name-branch.outputs.new_branch }}
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
@@ -39,9 +44,9 @@ jobs:
           ref: ${{ github.event.inputs.firebase_cpp_sdk_version }}
           submodules: true
       
-      - name: Get token for firebase-workflow-trigger
+      - name: Get token for creating PR 
         uses: tibdex/github-app-token@v1
-        id: generate-token
+        id: generate-pr-token
         with:
           app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
           private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
@@ -58,9 +63,12 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
+        id: name-branch
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
-          echo "NEW_BRANCH=${{env.branchPrefix}}${{github.event.inputs.package_version_number}}-${date_str}" >> $GITHUB_ENV
+          new_branch=version-${{github.event.inputs.package_version_number}}-${date_str}
+          echo "NEW_BRANCH=${new_branch}" >> $GITHUB_ENV
+          echo "::set-output name=new_branch::${new_branch}"
 
       - name: Create new branch
         run: |
@@ -68,6 +76,7 @@ jobs:
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
+          
 
       - name: Update Unity SDK version and dependencies
         run: |
@@ -104,7 +113,7 @@ jobs:
             # Push branch
             git push --set-upstream origin "${NEW_BRANCH}"
             # Create pull request
-            pr_number=$(python scripts/gha/create_pull_request.py --token ${{ steps.generate-token.outputs.token }} --head "${NEW_BRANCH}" --base "${{ github.event.inputs.baseBranch }}" --title "${commit_title}" --body "${commit_body}")
+            pr_number=$(python scripts/gha/create_pull_request.py --token ${{ steps.generate-pr-token.outputs.token }} --head "${NEW_BRANCH}" --base "${{ github.event.inputs.baseBranch }}" --title "${commit_title}" --body "${commit_body}")
             echo "::set-output name=created_pr_number::${pr_number}"
           else
             echo "::warning ::No changes detected, won't create pull request."
@@ -112,7 +121,7 @@ jobs:
           fi
 
   trigger_build_sdks:
-    needs: [update_versions]
+    needs: update_versions
     name: trigger-build-${{matrix.platform}}
     runs-on: ubuntu-latest
     strategy:
@@ -130,6 +139,9 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2.3.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.baseBranch }}
 
       - name: Setup python
         uses: actions/setup-python@v2
@@ -144,7 +156,7 @@ jobs:
         # This method is preferred over the "personal access token" solution, as the GitHub App's scope is limited to just
         # the firebase-cpp-sdk repository.
         uses: tibdex/github-app-token@v1
-        id: generate-token
+        id: generate-build-token
         with:
           app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
           private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
@@ -158,4 +170,6 @@ jobs:
             generate_report=(-p test_pull_request nightly-packaging)
           fi
           set -e
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w ${{ matrix.trigger_file }} -p test_packaged_sdk ${{ github.run_id }} -s 10 -A -v
+          compose_new_branch=firebase-unity-sdk/${{ needs.update_versions.outputs.new_branch }}
+          echo "New branch is: ${compose_new_branch}"
+          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -p unity_branch ${{ needs.update_versions.outputs.new_branch }}

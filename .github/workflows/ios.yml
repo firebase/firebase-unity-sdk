@@ -13,6 +13,9 @@ on:
         description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
         default: ''
         required: false
+      unity_branch:
+        description: 'Unity branch to build against, empty means current branch'
+        default: ''
 
 jobs:
   build_ios:
@@ -31,6 +34,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
+          ref: ${{ github.event.inputs.unity_branch }}
           
       - name: Checkout CPP Repo
         uses: actions/checkout@v2
