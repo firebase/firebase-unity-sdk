@@ -61,9 +61,11 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
+        id: name-branch
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
           echo "NEW_BRANCH=version-${{github.event.inputs.package_version_number}}-${date_str}" >> $GITHUB_ENV
+          echo "::set-output name=new_branch::${NEW_BRANCH}"
 
       - name: Create new branch
         run: |
@@ -71,7 +73,7 @@ jobs:
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
-          echo "::set-output name=new_branch::${NEW_BRANCH}"
+          
 
       - name: Update Unity SDK version and dependencies
         run: |
@@ -165,7 +167,5 @@ jobs:
             generate_report=(-p test_pull_request nightly-packaging)
           fi
           set -e
-          echo "Update Versions Outputs: ${{ needs.update_versions.outputs }} "
-          echo "New branch is: ${{ needs.update_versions.outputs.new_branch }}"
-          echo "GITHUB_ENV is: $GITHUB_ENV"
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b ${{ needs.update_versions.outputs.new_branch }}
+          echo "New branch is: ${{ jobs.update_versions.steps.name-branch.outputs.new_branch }}"
+          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -b ${{ jobs.update_versions.steps.name-branch.outputs.new_branch }}
