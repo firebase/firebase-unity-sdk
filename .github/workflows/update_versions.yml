@@ -8,6 +8,9 @@ on:
         description: 'CSV of VMs to run on'
         default: 'ubuntu-latest'
         required: true
+      baseBranch:
+        description: 'create the new branch from this base'
+        default: 'main'
       package_version_number:
         description: "The Unity SDK version to upgrade to"
         default: 8.6.0
