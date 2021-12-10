@@ -100,16 +100,10 @@ jobs:
           ls -l
           cd ..
 
-      - name: Get Missing Guids
-        id: missing-guids
-        run: |
-          missing_guids=$(python build_package.py --zip_dir=built_artifect)
-          echo "::set-output name=missing_guids::${missing_guids}"
-
-      - name: Update Guids Json
+      - name: Package unitypackage
         if: (steps.missing-guids.outputs.missing_guids)
         run: |
-          python %{{ steps.missing-guids.outputs.missing_guids }}
+          python build_package.py --zip_dir=built_artifect
 
       - name: Push branch if there are changes
         id: push-branch
@@ -147,11 +141,6 @@ jobs:
             echo "::warning ::No changes detected, won't create pull request."
             echo "::set-output name=branch_pushed::0"
           fi
-
-      - name: Package unitypackage
-        if: (steps.missing-guids.outputs.missing_guids)
-        run: |
-          python build_package.py --zip_dir=built_artifect
 
       - name: Listing output
         run: |
