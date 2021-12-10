@@ -11,6 +11,9 @@ on:
       skipIntegrationTests:
         description: 'skip integration tests?'
         default: 0
+      working_branch:
+        description: 'If already a working in progress release branch'
+        default: None
 
 jobs:
   package_sdks:
@@ -28,7 +31,7 @@ jobs:
         uses: actions/checkout@v2.3.1
         with:
           fetch-depth: 0
-          ref: ${{ github.event.inputs.baseBranch }}
+          ref: ${{ github.event.inputs.working_branch }}
       
       - name: Get token for firebase-workflow-trigger
         uses: tibdex/github-app-token@v1
@@ -48,17 +51,25 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
-        if: github.event.inputs.package_version_number != 0
+        if: github.event.inputs.working_branch == 'None'
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
           echo "NEW_BRANCH=${{env.branchPrefix}}${{github.event.inputs.package_version_number}}-${date_str}" >> $GITHUB_ENV
 
       - name: Create new branch
-        if: github.event.inputs.package_version_number != 0
+        if: github.event.inputs.working_branch == 'None'
         run: |
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
+
+      - name: Checkout working branch
+        if: github.event.inputs.working_branch != 'None'
+        run: |
+          git remote update
+          git checkout ${{ github.event.inputs.working_branch }}
+          echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
+          echo "NEW_BRANCH=${{ github.event.inputs.working_branch }}" >> $GITHUB_ENV
 
       # Fetch all the zip files from previous run
       - name: Fetch Desktop Artifacts
@@ -81,15 +92,36 @@ jobs:
           workflow: 'android.yml'
           run_id: ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
+      
+      - name: move zip files
+        run: |
+          cd built_artifect
+          find . -type f -name "*.zip" -exec mv {} . \;
+          ls -l
+          cd ..
 
-      # - name: Update Guids Json
-      #   if: github.event.inputs.package_version_number != 0
-      #   run: |
+      - name: Package unitypackage
+        run: |
+          python build_package.py --zip_dir=built_artifect
 
-      - name: Push branch if there are changes
+      - name: Commit Changes if there is any
+        run: |
+          if ! git update-index --refresh; then
+            git config user.email "firebase-workflow-trigger-bot@google.com"
+            git config user.name "firebase-workflow-trigger-bot"
+            git config core.commentChar "%"  # so we can use # in git commit messages
+            git commit -a -m "Update Guids ID"
+
+            # Show changes in git log
+            git diff
+            # Push branch
+            git push --set-upstream origin "${NEW_BRANCH}"
+          fi
+
+      - name: Create PR if there is None
+        if: github.event.inputs.working_branch == 'None'
         id: push-branch
         run: |
-          cd firebase-unity-sdk
           if ! git update-index --refresh; then
             date_str=$(date "+%a %b %d %Y")
             commit_title="Update Unity SDK dependencies - ${date_str}"
@@ -122,17 +154,6 @@ jobs:
             echo "::warning ::No changes detected, won't create pull request."
             echo "::set-output name=branch_pushed::0"
           fi
-
-      - name: move zip files
-        run: |
-          cd built_artifect
-          find . -type f -name "*.zip" -exec mv {} . \;
-          ls -l
-          cd ..
-
-      - name: Package unitypackage
-        run: |
-          python build_package.py --zip_dir=built_artifect
 
       - name: Listing output
         run: |

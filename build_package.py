@@ -165,8 +165,33 @@ def main(argv):
     cmd_args.append("--output_unitypackage=False")
   else:
     cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4")
+  
+  # Check if need to gen new guids
+  p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  output, error = p.communicate()
+  if p.returncode != 0:
+    error_str = str(error)
+    split_string = error_str.split("assets:")[-1]
+    split_string = split_string.rstrip("\\n\'")
+    print(split_string)
+    split_string = split_string.split(" ")
+    split_string = split_string[3:] # exclude first 3 lines
+    gen_guids_script_path = os.path.join(os.getcwd(), "gen_guids.py")
+    gen_cmd_args = [
+      sys.executable,
+      gen_guids_script_path,
+      "--guids_file=" + guids_file_path,
+      "--version=" + last_version,
+      "--generate_new_guids=True",
+    ]
+    for file in split_string:
+      file=file.strip("\"")
+      print(file)
+      gen_cmd_args.append(file)
+    subprocess.call(gen_cmd_args)
 
-  return subprocess.call(cmd_args)
+    # Need to package again if has that error
+    subprocess.call(cmd_args)
 
 if __name__ == '__main__':
   app.run(main)
