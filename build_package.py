@@ -61,8 +61,6 @@ flags.DEFINE_string("output", "output",
 flags.DEFINE_boolean("output_upm", False, "Whether output packages as tgz for"
     "Unity Package Manager.")
 
-flags.DEFINE_boolean("update_guids", False, "If true, update guids_file first.")
-
 def get_zip_files():
   """Get all zip files from FLAGS.zip_dir.
 
