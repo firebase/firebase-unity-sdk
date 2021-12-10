@@ -101,7 +101,6 @@ jobs:
           cd ..
 
       - name: Package unitypackage
-        if: (steps.missing-guids.outputs.missing_guids)
         run: |
           python build_package.py --zip_dir=built_artifect
 
