@@ -103,7 +103,7 @@ jobs:
       - name: Get Missing Guids
         id: missing-guids
         run: |
-          missing_guids=python build_package.py --zip_dir=built_artifect
+          missing_guids=$(python build_package.py --zip_dir=built_artifect)
           echo "::set-output name=missing_guids::${missing_guids}"
 
       - name: Update Guids Json
