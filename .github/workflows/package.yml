@@ -104,7 +104,22 @@ jobs:
         run: |
           python build_package.py --zip_dir=built_artifect
 
-      - name: Push branch if there are changes
+      - name: Commit Changes if there is any
+        run: |
+          if ! git update-index --refresh; then
+            git config user.email "firebase-workflow-trigger-bot@google.com"
+            git config user.name "firebase-workflow-trigger-bot"
+            git config core.commentChar "%"  # so we can use # in git commit messages
+            git commit -a -m "Update Guids ID"
+
+            # Show changes in git log
+            git diff
+            # Push branch
+            git push --set-upstream origin "${NEW_BRANCH}"
+          fi
+
+      - name: Create PR if there is None
+        if: github.event.inputs.working_branch == 'None'
         id: push-branch
         run: |
           if ! git update-index --refresh; then
