@@ -107,7 +107,7 @@ jobs:
           echo "::set-output name=missing_guids::${missing_guids}"
 
       - name: Update Guids Json
-        if: steps.missing-guids.outputs.missing_guids != ""
+        if: (steps.missing-guids.outputs.missing_guids)
         run: |
           python %{{ steps.missing-guids.outputs.missing_guids }}
 
