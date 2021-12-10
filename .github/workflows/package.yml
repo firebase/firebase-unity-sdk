@@ -12,7 +12,7 @@ on:
         description: 'skip integration tests?'
         default: 0
       working_branch:
-        description: 'If already a working in progress branch'
+        description: 'If already a working in progress release branch'
         default: None
 
 jobs:
