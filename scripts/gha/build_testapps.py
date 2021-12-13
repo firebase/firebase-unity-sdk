@@ -470,7 +470,8 @@ def build_testapp(dir_helper, api_config, ios_config, target):
 
 def patch_android_env(unity_version):
   major_version = int(unity_version.split(".")[0])
-  if major_version >= 2019:
+  # Set ndk env
+  if UNITY_SETTINGS[str(major_version)][get_desktop_platform()]["ndk"]:
     url = UNITY_SETTINGS[str(major_version)][get_desktop_platform()]["ndk"]
     logging.info("install ndk: %s", url)
     ndk_zip_path = "ndk_zip"
