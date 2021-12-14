@@ -85,11 +85,13 @@ UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {
       "version": "2020.3.22f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
     _MACOS: {
       "version": "2020.3.22f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
     _LINUX: {
       "version": "2020.3.22f1",
@@ -99,11 +101,13 @@ UNITY_SETTINGS = {
   "2019": {
     _WINDOWS: {
       "version": "2019.4.32f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
     _MACOS: {
       "version": "2019.4.32f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
     _LINUX: {
       "version": "2019.4.33f1",
@@ -113,11 +117,13 @@ UNITY_SETTINGS = {
   "2018": {
     _WINDOWS: {
       "version": "2018.4.36f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux"]}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux"]},
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-windows-x86_64.zip"
     },
     _MACOS: {
       "version": "2018.4.36f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux"]}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux"]},
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-darwin-x86_64.zip"
     },
     _LINUX: {
       "version": "2018.4.36f1",
@@ -127,11 +133,13 @@ UNITY_SETTINGS = {
   "2017": {
     _WINDOWS: {
       "version": "2017.4.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac"], "Linux": ["Linux"]}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac"], "Linux": ["Linux"]},
+      "ndk": ""
     },
     _MACOS: {
       "version": "2017.4.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]},
+      "ndk": ""
     },
     _LINUX: {
       "version": "2017.4.10f1",
