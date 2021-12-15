@@ -302,11 +302,11 @@ jobs:
         run: |
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
+            --u $( python scripts/gha/print_matrix_configuration.py -u ${{matrix.unity_version}} -k version ) \
             --p iOS \
             --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{matrix.os}}-${{ matrix.unity_version }}-all" \
-            --force_latest_runtime \
             --xcode_path testapps
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
