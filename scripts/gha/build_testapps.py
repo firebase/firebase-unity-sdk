@@ -282,7 +282,7 @@ def main(argv):
   timestamp = get_timestamp() if FLAGS.timestamp else ""
 
   testapps = validate_testapps(FLAGS.testapps, config.apis)
-  platforms = validate_platforms(FLAGS.platforms)
+  platforms = FLAGS.platforms
 
   output_root = os.path.join(root_output_dir, "testapps")
   failures = []
@@ -648,7 +648,7 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
         if os.path.isfile(path):
           shutil.copy(path, os.path.join(artifact_path, platform ,testapp))
         else:
-          dir_util.copy_tree(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)))
+          dir_util.copy_tree(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)), preserve_symlinks=1)
         break
 
 
@@ -855,14 +855,6 @@ def validate_testapps(apis, api_configs):
     if api not in api_configs:
       raise RuntimeError("Testapp given as flag not found in config: %s" % api)
   return apis
-
-
-def validate_platforms(platforms):
-  """Ensures platforms are valid."""
-  if _IOS in platforms and platform.system() != "Darwin":
-    logging.warning("iOS requested on non-Mac OS, which is not yet supported.")
-    platforms.remove(_IOS)
-  return platforms
 
 
 def get_desktop_platform():
