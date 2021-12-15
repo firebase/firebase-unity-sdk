@@ -274,7 +274,7 @@ jobs:
 
 
   build_iOS:
-    name: build-${{matrix.os}}-${{ matrix.unity_version }}-iOS
+    name: build-${{matrix.build_os}}-${{ matrix.unity_version }}-iOS
     runs-on: macos-latest
     if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && !cancelled()
     needs: [check_and_prepare, build]
