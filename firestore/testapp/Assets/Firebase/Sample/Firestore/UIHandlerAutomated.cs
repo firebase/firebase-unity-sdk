@@ -409,9 +409,10 @@ namespace Firebase.Sample.Firestore {
           }
 
           var remainingMilliseconds = 5000 - stopWatch.ElapsedMilliseconds;
-          Assert(String.Format("Timeout waiting for the list to reach a count of %d (count is %d)",
-                               minCount, list.Count),
-                 remainingMilliseconds >= 0);
+          Assert(
+              String.Format("Timeout waiting for the list to reach a count of {0} (count is {1})",
+                            minCount, list.Count),
+              remainingMilliseconds >= 0);
 
           Monitor.Wait(list, (int)remainingMilliseconds);
         }

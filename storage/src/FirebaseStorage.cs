@@ -427,6 +427,15 @@ namespace Firebase.Storage {
     }
 
     /// <summary>
+    ///   Returns a gs:// url to the Cloud Storage Bucket, or an empty string if this Storage was
+    ///   created with default parameters.
+    /// </summary>
+    public string Url() {
+      ThrowIfNull();
+      return storageInternal.Url;
+    }
+
+    /// <summary>
     ///   Creates a
     ///   <see cref="StorageReference" />
     ///   given a gs:// or https:// URL pointing to a Firebase
