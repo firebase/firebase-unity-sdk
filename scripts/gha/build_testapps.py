@@ -251,7 +251,7 @@ flags.DEFINE_string(
     " build log artifact is build-results-$artifact_name.log.")   
 
 flags.DEFINE_string(
-    "xcode_path", "testapps",
+    "xcode_path", "",
     "Build iOS teatspps with provided xcode_project."
     " This step can only be done on macOS machine.")  
 
