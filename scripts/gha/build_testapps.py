@@ -444,7 +444,7 @@ def build_testapp(dir_helper, api_config, ios_config, target):
       build_flags += ["-AppBuilderHelper.targetIosSdk", _IOS_SDK[device_type]]
       if not ios_config.use_unity_symlinks:
         build_flags.append("-AppBuilderHelper.noSymlinkLibraries")
-      if dir_helper.xcode_path.endswith(".xcodeproj"):
+      if dir_helper.xcode_name.endswith(".xcodeproj"):
         build_flags.append("-AppBuilderHelper.forceXcodeProject")
       # This script will automatically configure the generated xcode project
       dir_helper.copy_editor_script("XcodeCapabilities.cs")
