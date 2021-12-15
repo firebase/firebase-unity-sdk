@@ -308,7 +308,7 @@ public sealed class AppBuilderHelper {
   /// </summary>
   /// <returns>Returns 0 if and only if build succeeded.</returns>
   private static int BuildForIOS() {
-    string path = Path.Combine(outputDir, APP_NAME + "_xcode");
+    string path = Path.Combine(outputDir, APP_NAME + "_xcode_" + targetIosSdk);
     BuildPlayerOptions playerOptions = GetBuildOptions(BuildTarget.iOS, path);
     if (targetIosSdk == "device") {
       PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
