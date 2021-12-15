@@ -105,6 +105,7 @@ jobs:
       with:
         python-version: ${{ env.pythonVersion }}
     - name: Install python deps
+      timeout-minutes: 10
       run: pip install -r scripts/gha/requirements.txt
     - id: matrix_config
       run: |
@@ -157,8 +158,7 @@ jobs:
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
-        run: |
-          pip install -r scripts/gha/requirements.txt
+        run: pip install -r scripts/gha/requirements.txt
       - name: Install Unity
         timeout-minutes: 30
         shell: bash
@@ -273,6 +273,48 @@ jobs:
           fi
 
 
+  build_iOS:
+    name: build-${{matrix.os}}-${{ matrix.unity_version }}-iOS
+    runs-on: macos-latest
+    if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && !cancelled()
+    needs: [check_and_prepare, build]
+    strategy:
+      matrix:
+        build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
+        unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download Desktop integration tests artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          path: testapps
+          name: testapps-${{ matrix.build_os }}-${{ matrix.unity_version }}-xcode
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Install python deps
+        timeout-minutes: 10
+        run: pip install -r scripts/gha/requirements.txt
+      - name: Build iOS integration tests
+        timeout-minutes: 220
+        shell: bash
+        run: |
+          python scripts/gha/build_testapps.py \
+            --t ${{ needs.check_and_prepare.outputs.apis }} \
+            --p iOS \
+            --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
+            --output_directory "${{ github.workspace }}" \
+            --artifact_name "${{matrix.os}}-${{ matrix.unity_version }}-all" \
+            --force_latest_runtime \
+            --xcode_path testapps
+      - name: Upload iOS integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: testapps-${{matrix.os}}-${{ matrix.unity_version }}-iOS
+          path: testapps-${{matrix.os}}-${{ matrix.unity_version }}-all/iOS
+
+
   test_desktop:
     name: test-${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.os }}-desktop
     runs-on: ${{ matrix.os }}
@@ -300,8 +342,7 @@ jobs:
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
-        run: |
-          pip install -r scripts/gha/requirements.txt
+        run: pip install -r scripts/gha/requirements.txt
       - name: Run Desktop integration tests
         timeout-minutes: 30
         shell: bash
@@ -318,8 +359,8 @@ jobs:
           fi
 
   test_android:
-    name: test-${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.android }}-${{ matrix.mobile_test_on }}
-    runs-on: macos-11
+    name: test-${{ matrix.build_os }}-${{ matrix.unity_version }}-Android-${{ matrix.mobile_test_on }}
+    runs-on: macos-latest
     if: contains(needs.check_and_prepare.outputs.platform, 'Android') && !cancelled()
     needs: [check_and_prepare, build]
     strategy:
@@ -329,8 +370,7 @@ jobs:
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
         include:
           # TODO(sunmou): include test device that are currently working
-          - platform: "Android"
-            mobile_test_on: "real"
+          - mobile_test_on: "real"
     steps:
       - uses: actions/checkout@v2
         with:
@@ -346,9 +386,7 @@ jobs:
           python-version: '3.7'
       - name: Install python deps
         timeout-minutes: 10
-        shell: bash
-        run: |
-          pip install -r scripts/gha/requirements.txt
+        run: pip install -r scripts/gha/requirements.txt
       - name: Install Cloud SDK
         if: matrix.mobile_test_on == 'real'
         uses: google-github-actions/setup-gcloud@master
