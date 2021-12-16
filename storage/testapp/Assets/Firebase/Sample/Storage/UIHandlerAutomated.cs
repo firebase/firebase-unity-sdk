@@ -114,6 +114,7 @@ namespace Firebase.Sample.Storage {
         TestCreateDestroy,
         TestCreateDestroyRace,
         TestStorageReferenceNavigation,
+        TestUrl,
         TestGetReference,
         TestGetStorageInvalidUris,
         TestGetStorageWrongBucket,
@@ -342,6 +343,22 @@ namespace Firebase.Sample.Storage {
                FirebaseStorage.DefaultInstance.RootReference);
       AssertEq("childReference.Storage", childReference.Storage, FirebaseStorage.DefaultInstance);
 
+      return CompletedTask();
+    }
+
+    // Validate returning url for default and non-default storage objects.
+    Task TestUrl() {
+      DebugLog("TestUrl");
+      // Get the storage URL on the default app.
+      var expectedDefaultUrl = String.Format("gs://{0}", FirebaseApp.DefaultInstance.Options.StorageBucket);
+      var defaultUrl = FirebaseStorage.DefaultInstance.Url();
+      AssertEq("defaultUrl", defaultUrl, expectedDefaultUrl);
+
+      // Get the storage URL on a custom app.
+      var customApp = FirebaseApp.Create(new AppOptions { StorageBucket = "somebucket" }, "emptyapp");
+      var customStorage = FirebaseStorage.GetInstance(customApp, "gs://somebucket");
+      var customStorageUrl = customStorage.Url();
+      AssertEq("customStorageUrl", customStorageUrl, "gs://somebucket");
       return CompletedTask();
     }
 

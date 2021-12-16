@@ -163,15 +163,60 @@ Support
 
 Release Notes
 -------------
-### 8.5.0:
+### UNRELEASED
+- Changes
+    - Storage: Added a method to access the url of a storage instance.
+
+### 8.7.0:
+- Changes
+    - General (iOS): Fixed an intermittent crash on iOS 15 caused by
+      constructing C++ objects during Objective-C's `+load` method.
+      ([#706](https://github.com/firebase/firebase-cpp-sdk/pull/706))
+      ([#783](https://github.com/firebase/firebase-cpp-sdk/pull/783))
+    - Crashlytics (Android): Fixed a bug that prevented some Crashlytics session
+      files from being removed after the session ended. All session-specific
+      files are now properly cleaned up.
+      ([#737](https://github.com/firebase/firebase-cpp-sdk/issues/737))
+
+### 8.6.2:
 -   Changes
-    - General (iOS): iOS SDKs are now built using Xcode 13.0.0.
+    - Messaging (Android): Clean up callbacks on termination, to possibly fix
+      ANR issues in CheckAndFixDependenciesAsync
+      ([#1160](https://github.com/firebase/quickstart-unity/issues/1160)).
+
+### 8.6.1:
+-   Changes
+    - Crashlytics (Android): Updated the pinned dependency to fix a missing
+      method error
+      ([#1177](https://github.com/firebase/quickstart-unity/issues/1177)).
+
+### 8.6.0:
+-   Changes
+    - General (Android): Minimum SDK version is now 19.
+    - General: Variant double type now supports 64-bit while saving to json.
+      ([#1133](https://github.com/firebase/quickstart-unity/issues/1133)).
+    - Firestore: Released to general availability for Android and iOS (desktop
+      support remains in beta).
+    - Firestore (iOS): Fixed intermittent crashes and empty results when
+      retrieving the contents of a document.
+      ([#1171](https://github.com/firebase/quickstart-unity/issues/1171)).
+    - Firestore (iOS): Fixed intermittent "start after" query filters failing
+      to have any effects on the queries.
+    - Firestore (iOS): Fixed intermittent cases where specifying
+      ServerTimestampBehavior.Previous would return empty values instead of the
+      previous values.
     - Crashlytics: Improved crash reporting for Unity Android apps using the
       IL2CPP scripting backend. To display symbolicated IL2CPP stack traces in
       the Crashlytics console, Android customers will need to upload symbol
       files for their builds. See the [Getting Started with Crashlytics Unity]
       (https://firebase.google.com/docs/crashlytics/get-started?platform=unity)
-      Guild for more details.
+      Guide for more details.
+    - Messaging (Android): Fixed crash resulting in ANR on termination.
+      ([#1151](https://github.com/firebase/quickstart-unity/issues/1151)).
+
+### 8.5.0:
+-   Changes
+    - General (iOS): iOS SDKs are now built using Xcode 13.0.0.
     - Firestore: Fixed an issue where the `Equals()` and `GetHashCode()` methods
       of `DocumentSnapshot` would sometimes be inconsistent
       ([#8647](https://github.com/firebase/firebase-ios-sdk/pull/8647)).
