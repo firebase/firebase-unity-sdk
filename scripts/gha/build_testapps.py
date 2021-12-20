@@ -240,7 +240,7 @@ flags.DEFINE_bool(
     " be built without any dependency on Firebase.")
 
 flags.DEFINE_bool(
-    "enable_edm4u", True,
+    "enable_edm4u", False,
     "By default, the External Dependency Manager for Unity (EDM4U) is enabled."
     " By setting this flag to false, it will prevent it from running.")
 
@@ -364,8 +364,6 @@ def main(argv):
       # Free up space by removing unneeded Unity directory.
       if FLAGS.ci:
         shutil.rmtree(dir_helper.unity_project_dir)
-      else:
-        shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
       logging.info("END %s", build_desc)
 
   _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
