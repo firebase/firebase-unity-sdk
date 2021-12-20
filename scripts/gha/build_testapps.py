@@ -240,7 +240,7 @@ flags.DEFINE_bool(
     " be built without any dependency on Firebase.")
 
 flags.DEFINE_bool(
-    "enable_edm4u", False,
+    "enable_edm4u", True,
     "By default, the External Dependency Manager for Unity (EDM4U) is enabled."
     " By setting this flag to false, it will prevent it from running.")
 
@@ -409,8 +409,8 @@ def setup_unity_project(dir_helper, setup_options):
 
   if setup_options.enable_firebase:
     _enable_firebase_assemblies(dir_helper, arg_builder)
-  if setup_options.enable_edm4u:
-    _edm4u_update(dir_helper, arg_builder)
+  # if setup_options.enable_edm4u:
+  #   _edm4u_update(dir_helper, arg_builder)
 
   _copy_unity_assets(dir_helper, setup_options.testapp_file_filters)
   _add_menu_scene(dir_helper)
