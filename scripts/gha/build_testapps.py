@@ -373,8 +373,6 @@ def main(argv):
         # Free up space by removing unneeded Unity directory.
         if FLAGS.ci:
           shutil.rmtree(dir_helper.unity_project_dir)
-        else:
-          shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
         logging.info("END %s", build_desc)
 
   _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
@@ -420,8 +418,8 @@ def setup_unity_project(dir_helper, setup_options):
 
   if setup_options.enable_firebase:
     _enable_firebase_assemblies(dir_helper, arg_builder)
-  if setup_options.enable_edm4u:
-    _edm4u_update(dir_helper, arg_builder)
+  # if setup_options.enable_edm4u:
+  #   _edm4u_update(dir_helper, arg_builder)
 
   _copy_unity_assets(dir_helper, setup_options.testapp_file_filters)
   _add_menu_scene(dir_helper)
