@@ -309,10 +309,11 @@ jobs:
             --artifact_name "${{matrix.build_os}}-${{ matrix.unity_version }}-all" \
             --xcode_path testapps
       - name: Upload iOS integration tests artifact
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v2.2.2
         with:
-          name: testapps-${{matrix.os}}-${{ matrix.unity_version }}-iOS
-          path: testapps-${{matrix.os}}-${{ matrix.unity_version }}-all/iOS
+          name: testapps-${{matrix.build_os}}-${{ matrix.unity_version }}-iOS
+          path: testapps-${{matrix.build_os}}-${{ matrix.unity_version }}-all/iOS
 
 
   test_desktop:
@@ -412,6 +413,65 @@ jobs:
         shell: bash
         run: |
           cat testapps/test-results-${{ matrix.build_os }}-${{ matrix.unity_version }}-Android.log
+          if [[ "${{ job.status }}" != "success" ]]; then
+            exit 1
+          fi
+
+
+  test_iOS:
+    name: test-${{ matrix.build_os }}-${{ matrix.unity_version }}-iOS-${{ matrix.mobile_test_on }}
+    runs-on: macos-latest
+    if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && !cancelled()
+    needs: [check_and_prepare, build, build_iOS]
+    strategy:
+      fail-fast: false
+      matrix:
+        build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
+        unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
+        include:
+          # TODO(sunmou): include test device that are currently working
+          - mobile_test_on: "virtual"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{needs.check_and_prepare.outputs.github_ref}}
+      - name: Download iOS integration tests artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          path: testapps
+          name: testapps-${{ matrix.build_os }}-${{ matrix.unity_version }}-iOS
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Install python deps
+        timeout-minutes: 10
+        run: pip install -r scripts/gha/requirements.txt
+      - name: Install Cloud SDK
+        if: matrix.mobile_test_on == 'real'
+        uses: google-github-actions/setup-gcloud@master
+      - name: Run Mobile integration tests on Real Device via FTL
+        if: matrix.mobile_test_on == 'real'
+        timeout-minutes: 60
+        shell: bash
+        run: |
+          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+          python scripts/gha/test_lab.py --testapp_dir testapps \
+            --logfile_name "${{ matrix.build_os }}-${{ matrix.unity_version }}-iOS" \
+            --code_platform unity \
+            --key_file scripts/gha-encrypted/gcs_key_file.json
+      - name: Run Mobile integration tests on virtual device locally
+        timeout-minutes: 60
+        if: matrix.mobile_test_on == 'virtual'
+        run: |
+          python scripts/gha/test_simulator.py --testapp_dir testapps \
+            --logfile_name "${{ matrix.build_os }}-${{ matrix.unity_version }}-iOS" \
+            --ci
+      - name: Summarize test results
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          cat testapps/test-results-${{ matrix.build_os }}-${{ matrix.unity_version }}-iOS.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
