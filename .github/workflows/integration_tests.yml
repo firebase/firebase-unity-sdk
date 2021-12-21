@@ -308,6 +308,9 @@ jobs:
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{matrix.build_os}}-${{ matrix.unity_version }}-all" \
             --xcode_path testapps
+      - name: Test iOS integration tests artifact
+        shell: bash
+        run: |
           ls
           ls testapps-${{matrix.build_os}}-${{ matrix.unity_version }}-all
           ls testapps-${{matrix.build_os}}-${{ matrix.unity_version }}-all/iOS
