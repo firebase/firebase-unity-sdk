@@ -308,6 +308,9 @@ jobs:
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{matrix.build_os}}-${{ matrix.unity_version }}-all" \
             --xcode_path testapps
+          ls
+          ls testapps-${{matrix.build_os}}-${{ matrix.unity_version }}-all
+          ls testapps-${{matrix.build_os}}-${{ matrix.unity_version }}-all/iOS
       - name: Upload iOS integration tests artifact
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v2.2.2

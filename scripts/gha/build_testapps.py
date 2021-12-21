@@ -682,8 +682,8 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
         if os.path.isfile(path):
           shutil.copy(path, os.path.join(artifact_path, platform ,testapp))
         else:
-          # _run(["cp", "-R", path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path))])
-          dir_util.copy_tree(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)))
+          _run(["cp", "-R", path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path))])
+          dir_util.copy_tree(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)), preserve_symlinks=1)
         break
 
 
