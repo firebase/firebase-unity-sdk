@@ -229,7 +229,7 @@ flags.DEFINE_bool(
     " Enabled by default to significantly reduce disk space utilization.")
 
 flags.DEFINE_bool(
-    "force_xcode_project", False,
+    "force_xcode_project", True,
     "Force the iOS resolver to use a .xcodeproj instead of .xcworkspace."
     " This is only intended to be used to ensure this resolution type works.")
 
@@ -283,7 +283,11 @@ def main(argv):
 
   # Build iOS teatspps with provided xcode_project. This step can only be done on macOS machine.
   if FLAGS.xcode_path:
+    platforms = ["iOS"]
+    unity_versions = ["None"]
     output_dir = root_output_dir
+    _run(['chmod', '-R', '777', FLAGS.xcode_path])
+    failures = []
     for testapp in testapps:
       api_config = config.get_api(testapp)
       xcode_project_path = os.path.join(FLAGS.xcode_path,testapp)
@@ -295,7 +299,14 @@ def main(argv):
           use_unity_symlinks=FLAGS.use_unity_ios_symlinks)
       logging.info("BEGIN %s", xcode_project_path)
       for device_type in ios_config.ios_sdk:
-        run_xcodebuild(xcode_project_path, output_dir, "Unity-iPhone.xcodeproj", ios_config=ios_config, device_type = device_type)
+        try:
+          run_xcodebuild(xcode_project_path, output_dir, "Unity-iPhone.xcodeproj", ios_config=ios_config, device_type = device_type)
+        except (subprocess.SubprocessError, RuntimeError) as e:
+          failures.append(
+              Failure(
+                  description=xcode_project_path,
+                  error_message=str(e)))
+          logging.info(str(e))
       logging.info("END %s", xcode_project_path)
   else: 
     # Build teatspps from Unity project.
@@ -663,6 +674,7 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
     return
 
   for testapp in testapps:
+    logging.info("Collecting artifacts to: %s", os.path.join(artifact_path, platform ,testapp))
     os.makedirs(os.path.join(artifact_path, platform ,testapp))
   for path in testapp_paths:
     for testapp in testapps:
@@ -670,7 +682,8 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
         if os.path.isfile(path):
           shutil.copy(path, os.path.join(artifact_path, platform ,testapp))
         else:
-          dir_util.copy_tree(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)), preserve_symlinks=1)
+          _run(["cp", "-R", path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path))])
+          # dir_util.copy_tree(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)), preserve_symlinks=1)
         break
 
 

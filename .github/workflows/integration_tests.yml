@@ -306,7 +306,7 @@ jobs:
             --p iOS \
             --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
             --output_directory "${{ github.workspace }}" \
-            --artifact_name "${{matrix.os}}-${{ matrix.unity_version }}-all" \
+            --artifact_name "${{matrix.build_os}}-${{ matrix.unity_version }}-all" \
             --xcode_path testapps
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
