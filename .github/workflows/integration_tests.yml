@@ -279,6 +279,7 @@ jobs:
     if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && !cancelled()
     needs: [check_and_prepare, build]
     strategy:
+      fail-fast: false
       matrix:
         build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
@@ -302,7 +303,6 @@ jobs:
         run: |
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u $( python scripts/gha/print_matrix_configuration.py -u ${{matrix.unity_version}} -k version ) \
             --p iOS \
             --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
             --output_directory "${{ github.workspace }}" \
@@ -375,7 +375,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
-      - name: Download Desktop integration tests artifact
+      - name: Download Android integration tests artifact
         uses: actions/download-artifact@v2.0.8
         with:
           path: testapps

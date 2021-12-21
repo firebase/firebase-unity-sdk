@@ -279,94 +279,103 @@ def main(argv):
 
   # The config object contains all the configuration from the json file.
   config = config_reader.read_config(_fix_path(FLAGS.config_path))
-
-  # Dict of unity version -> full path to Unity binary.
-  version_path_map = get_version_path_map(
-      FLAGS.unity_versions, unity_folder_override)
-  unity_versions = update_unity_versions(version_path_map)
-  timestamp = get_timestamp() if FLAGS.timestamp else ""
-
   testapps = validate_testapps(FLAGS.testapps, config.apis)
-  platforms = FLAGS.platforms
 
-  output_root = os.path.join(root_output_dir, "testapps")
-  failures = []
-  for version in unity_versions:
-    runtime = get_runtime(version, FLAGS.force_latest_runtime)
-    output_dir = get_output_dir(output_root, str(version), runtime, timestamp)
-    logging.info("Output directory: %s", output_dir)
+  # Build iOS teatspps with provided xcode_project. This step can only be done on macOS machine.
+  if FLAGS.xcode_path:
+    output_dir = root_output_dir
     for testapp in testapps:
       api_config = config.get_api(testapp)
-      setup_options = _SetupOptions(
-          switch_to_latest=FLAGS.force_latest_runtime,
-          testapp_file_filters=config.skipped_testapp_files,
-          enable_firebase=FLAGS.enable_firebase,
-          enable_edm4u=FLAGS.enable_edm4u)
-      dir_helper = _DirectoryHelper.from_config(
-          root_dir=root_dir,
-          api_config=api_config,
-          unity_path=version_path_map[version],
-          output_dir=output_dir,
-          builder_dir=os.path.join(root_dir, config.builder_directory),
-          unity_plugins=_resolve_plugins(plugins_dir, api_config, runtime),
-          upm_packages=_resolve_upm_packages(use_local_packages, api_config),
-          xcode_name=get_xcode_name(version, FLAGS.force_xcode_project))
+      xcode_project_path = os.path.join(FLAGS.xcode_path,testapp)
       ios_config = _IosConfig(
           bundle_id=api_config.bundle_id,
           ios_sdk=FLAGS.ios_sdk,
           configuration=FLAGS.xcode_configuration,
           scheme="Unity-iPhone",
           use_unity_symlinks=FLAGS.use_unity_ios_symlinks)
-      build_desc = "{0}, .NET{1}, Unity{2}".format(
-          testapp, runtime, str(version))
-      logging.info("BEGIN %s", build_desc)
+      logging.info("BEGIN %s", xcode_project_path)
+      for device_type in ios_config.ios_sdk:
+        run_xcodebuild(xcode_project_path, output_dir, "Unity-iPhone.xcodeproj", ios_config=ios_config, device_type = device_type)
+      logging.info("END %s", xcode_project_path)
+  else: 
+    # Build teatspps from Unity project.
+    # Dict of unity version -> full path to Unity binary.
+    version_path_map = get_version_path_map(
+        FLAGS.unity_versions, unity_folder_override)
+    unity_versions = update_unity_versions(version_path_map)
+    timestamp = get_timestamp() if FLAGS.timestamp else ""
 
-      # Build iOS teatspps with provided xcode_project. 
-      # This step can only be done on macOS machine.
-      if FLAGS.xcode_path:
+    platforms = FLAGS.platforms
+
+    output_root = os.path.join(root_output_dir, "testapps")
+    failures = []
+    for version in unity_versions:
+      runtime = get_runtime(version, FLAGS.force_latest_runtime)
+      output_dir = get_output_dir(output_root, str(version), runtime, timestamp)
+      logging.info("Output directory: %s", output_dir)
+      for testapp in testapps:
+        api_config = config.get_api(testapp)
+        setup_options = _SetupOptions(
+            switch_to_latest=FLAGS.force_latest_runtime,
+            testapp_file_filters=config.skipped_testapp_files,
+            enable_firebase=FLAGS.enable_firebase,
+            enable_edm4u=FLAGS.enable_edm4u)
+        dir_helper = _DirectoryHelper.from_config(
+            root_dir=root_dir,
+            api_config=api_config,
+            unity_path=version_path_map[version],
+            output_dir=output_dir,
+            builder_dir=os.path.join(root_dir, config.builder_directory),
+            unity_plugins=_resolve_plugins(plugins_dir, api_config, runtime),
+            upm_packages=_resolve_upm_packages(use_local_packages, api_config),
+            xcode_name=get_xcode_name(version, FLAGS.force_xcode_project))
+        ios_config = _IosConfig(
+            bundle_id=api_config.bundle_id,
+            ios_sdk=FLAGS.ios_sdk,
+            configuration=FLAGS.xcode_configuration,
+            scheme="Unity-iPhone",
+            use_unity_symlinks=FLAGS.use_unity_ios_symlinks)
+        build_desc = "{0}, .NET{1}, Unity{2}".format(
+            testapp, runtime, str(version))
         logging.info("BEGIN %s", build_desc)
-        for device_type in ios_config.ios_sdk:
-          run_xcodebuild(xcode_path=os.path.join(FLAGS.xcode_path,testapp), dir_helper=dir_helper, ios_config=ios_config, device_type = device_type)
-        logging.info("END %s", build_desc)
-        continue
 
-      if _ANDROID in platforms:
-        patch_android_env(version)
-      try:
-        setup_unity_project(dir_helper, setup_options)
-      except (subprocess.SubprocessError, RuntimeError) as e:
-        failures.append(Failure(description=build_desc, error_message=str(e)))
-        logging.info(str(e))
-        continue  # If setup failed, don't try to build. Move to next testapp.
-      for p in platforms:
+        if _ANDROID in platforms:
+          patch_android_env(version)
         try:
-          if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
-            p = get_desktop_platform()
-          if p == _PLAYMODE:
-            perform_in_editor_tests(dir_helper)
-          else:
-            build_testapp(
-                dir_helper=dir_helper,
-                api_config=api_config,
-                ios_config=ios_config,
-                target=_BUILD_TARGET[p])
+          setup_unity_project(dir_helper, setup_options)
         except (subprocess.SubprocessError, RuntimeError) as e:
-          failures.append(
-              Failure(
-                  description=build_desc + " " + p,
-                  error_message=str(e)))
+          failures.append(Failure(description=build_desc, error_message=str(e)))
           logging.info(str(e))
-          # If there is an error, print out the log file.
-          log_file = dir_helper.make_log_path("build_" + _BUILD_TARGET[p])
-          logging.info(log_file)
-          with open(log_file, 'r') as f:
-            logging.info(f.read())
-      # Free up space by removing unneeded Unity directory.
-      if FLAGS.ci:
-        shutil.rmtree(dir_helper.unity_project_dir)
-      else:
-        shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
-      logging.info("END %s", build_desc)
+          continue  # If setup failed, don't try to build. Move to next testapp.
+        for p in platforms:
+          try:
+            if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
+              p = get_desktop_platform()
+            if p == _PLAYMODE:
+              perform_in_editor_tests(dir_helper)
+            else:
+              build_testapp(
+                  dir_helper=dir_helper,
+                  api_config=api_config,
+                  ios_config=ios_config,
+                  target=_BUILD_TARGET[p])
+          except (subprocess.SubprocessError, RuntimeError) as e:
+            failures.append(
+                Failure(
+                    description=build_desc + " " + p,
+                    error_message=str(e)))
+            logging.info(str(e))
+            # If there is an error, print out the log file.
+            log_file = dir_helper.make_log_path("build_" + _BUILD_TARGET[p])
+            logging.info(log_file)
+            with open(log_file, 'r') as f:
+              logging.info(f.read())
+        # Free up space by removing unneeded Unity directory.
+        if FLAGS.ci:
+          shutil.rmtree(dir_helper.unity_project_dir)
+        else:
+          shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
+        logging.info("END %s", build_desc)
 
   _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
 
@@ -476,7 +485,7 @@ def build_testapp(dir_helper, api_config, ios_config, target):
         logging.info(str(e))
       finally:
         if not FLAGS.ci:
-          run_xcodebuild(xcode_path=dir_helper.output_dir, dir_helper=dir_helper, ios_config=ios_config, device_type = device_type)
+          run_xcodebuild(dir_helper.output_dir, dir_helper.output_dir, dir_helper.xcode_name, ios_config=ios_config, device_type = device_type)
   else:
     if api_config.minify:
       build_flags += ["-AppBuilderHelper.minify", api_config.minify]
@@ -579,12 +588,12 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
         "Tests did not finish running. Log tail:\n" + results.summary)
 
 
-def run_xcodebuild(xcode_path, dir_helper, ios_config, device_type):
+def run_xcodebuild(xcode_path, output_dir, xcode_name, ios_config, device_type):
   """Uses xcode project generated by Unity to build an iOS binary."""
-  build_output_dir = os.path.join(dir_helper.output_dir, "ios_output_"+_IOS_SDK[device_type])
+  build_output_dir = os.path.join(output_dir, "ios_output_"+_IOS_SDK[device_type])
   _run(
       xcodebuild.get_args_for_build(
-          path=os.path.join(xcode_path, "testapp_xcode_"+_IOS_SDK[device_type], dir_helper.xcode_name),
+          path=os.path.join(xcode_path, "testapp_xcode_"+_IOS_SDK[device_type], xcode_name),
           scheme=ios_config.scheme,
           output_dir=build_output_dir,
           ios_sdk=_IOS_SDK[device_type],
