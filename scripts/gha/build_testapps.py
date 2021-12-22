@@ -300,7 +300,11 @@ def main(argv):
       logging.info("BEGIN %s", xcode_project_path)
       for device_type in ios_config.ios_sdk:
         try:
-          run_xcodebuild(xcode_project_path, output_dir, "Unity-iPhone.xcodeproj", ios_config=ios_config, device_type = device_type)
+          run_xcodebuild(xcode_path=xcode_project_path, 
+            output_dir=output_dir+testapp, 
+            xcode_name="Unity-iPhone.xcodeproj", 
+            ios_config=ios_config, 
+            device_type=device_type)
         except (subprocess.SubprocessError, RuntimeError) as e:
           failures.append(
               Failure(
@@ -674,7 +678,6 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
     return
 
   for testapp in testapps:
-    logging.info("Collecting artifacts to: %s", os.path.join(artifact_path, platform ,testapp))
     os.makedirs(os.path.join(artifact_path, platform ,testapp))
   for path in testapp_paths:
     for testapp in testapps:
