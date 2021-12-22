@@ -312,9 +312,11 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          ls
           ls testapps-${{matrix.build_os}}-${{ matrix.unity_version }}-all
+          echo "111"
           ls testapps-${{matrix.build_os}}-${{ matrix.unity_version }}-all/iOS
+          echo "111"
+          ls testapps-${{matrix.build_os}}-${{ matrix.unity_version }}-all/iOS/auth
       - name: Upload iOS integration tests artifact
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v2.2.2
