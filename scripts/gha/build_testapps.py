@@ -301,7 +301,7 @@ def main(argv):
       for device_type in ios_config.ios_sdk:
         try:
           run_xcodebuild(xcode_path=xcode_project_path, 
-            output_dir=os.path.join(output_dir, "ios_testapp", testapp), 
+            output_dir=os.path.join(output_dir, "ios_testapp", api_config.full_name), 
             xcode_name="Unity-iPhone.xcodeproj", 
             ios_config=ios_config, 
             device_type=device_type)
