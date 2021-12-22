@@ -309,6 +309,7 @@ jobs:
             --artifact_name "${{matrix.build_os}}-${{ matrix.unity_version }}-all" \
             --xcode_path testapps
       - name: Test iOS integration tests artifact
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           ls
