@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 #include "app/src/callback.h"
-#include "app/src/mutex.h"
+#include "app/src/include/firebase/internal/mutex.h"
 #include "storage/src/include/firebase/storage.h"
 
 // NOTE: We only define SWIGSTDCALL here so that this header can be built as
