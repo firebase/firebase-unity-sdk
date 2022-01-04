@@ -54,6 +54,7 @@
 #include <string>
 
 #include "app/src/include/firebase/internal/mutex.h"
+#include "app/src/log.h"
 
 namespace firebase {
 namespace messaging {
