@@ -82,7 +82,7 @@ public:
   // MessageReceived on the main thread.
   virtual void OnMessage(const firebase::messaging::Message& message) {
     QueueItem(&messages_, message);
-    LogDebug("queued message %s", message.message_id.c_str());
+    firebase::LogDebug("queued message %s", message.message_id.c_str());
     SendPendingEvents();
   }
 
@@ -91,7 +91,7 @@ public:
   // TokenReceived on the main thread.
   virtual void OnTokenReceived(const char* token) {
     QueueItem(&tokens_, std::string(token));
-    LogDebug("queued token %s", token);
+    firebase::LogDebug("queued token %s", token);
     SendPendingEvents();
   }
 
@@ -132,7 +132,7 @@ public:
     if (g_message_callback_enabled) {
       while (messages_.size()) {
         const Message &message = messages_.front();
-        LogDebug("sending message %s", message.message_id.c_str());
+        firebase::LogDebug("sending message %s", message.message_id.c_str());
         firebase::callback::AddCallback(
             new firebase::callback::Callback1<firebase::messaging::Message>(
                 message, MessageReceived));
@@ -142,7 +142,7 @@ public:
     if (g_token_callback_enabled) {
       while (tokens_.size()) {
         const std::string &token = tokens_.front();
-        LogDebug("sending token %s", token.c_str());
+        firebase::LogDebug("sending token %s", token.c_str());
         firebase::callback::AddCallback(
             new firebase::callback::CallbackString(
                 token.c_str(), TokenReceived));
