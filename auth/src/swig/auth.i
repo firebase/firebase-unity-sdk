@@ -50,7 +50,7 @@
 #include "app/src/callback.h"
 #include "app/src/cleanup_notifier.h"
 #include "app/src/log.h"
-#include "app/src/mutex.h"
+#include "app/src/include/firebase/internal/mutex.h"
 #include "app/memory/shared_ptr.h"
 #include "app/src/cpp_instance_manager.h"
 #include "auth/src/include/firebase/auth.h"

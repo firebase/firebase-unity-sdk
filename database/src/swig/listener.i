@@ -26,7 +26,7 @@ enum ChildChangeType {
 %}
 
 %{
-#include "app/src/mutex.h"
+#include "app/src/include/firebase/internal/mutex.h"
 
 namespace firebase {
 namespace database {
