@@ -94,7 +94,7 @@ UNITY_SETTINGS = {
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
     _LINUX: {
-      "version": "2020.3.22f1",
+      "version": "2020.3.25f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
     }
   },
