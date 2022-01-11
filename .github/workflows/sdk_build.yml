@@ -17,6 +17,9 @@ on:
       unity_branch:
         description: 'Unity branch to build against, empty means current branch'
         default: ''
+      cpp_branch:
+        description: 'CPP branch to build against, empty means current branch'
+        default: ''
 
 jobs:
   build_desktop:
@@ -55,6 +58,7 @@ jobs:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
           submodules: true
+          ref: ${{ github.event.inputs.cpp_branch }}
 
       - name: Support longpaths
         if: startsWith(matrix.os, 'windows')
