@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "0 9 * * *"  # 9am UTC = 1am PST / 2am PDT
 
+  pull_request:
+    types: [ labeled, closed ]
+
   workflow_dispatch:
     inputs:
       build_os:
@@ -41,6 +44,9 @@ on:
         description: 'Optional: Pull request # to build and test? (With optional commit hash, separated by a colon. Specify the FULL hash.)'
 
 env:
+  triggerLabelPrefix: "tests-requested: "
+  triggerLabelFull: "tests-requested: full"
+  triggerLabelQuick: "tests-requested: quick"
   pythonVersion: '3.7'
   artifactRetentionDays: 2
 
@@ -69,32 +75,69 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
     ### It sets "github_ref,trigger,pr_number,requested_tests" outputs to control the following jobs and steps
-    ### trigger value: manual_trigger, scheduled_trigger;
-    ### TODO: label_trigger, postsubmit_trigger, presubmit_trigger
+    ### trigger value: manual_trigger, scheduled_trigger, label_trigger, postsubmit_trigger
     - id: set_outputs
       run: |
         if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then 
-          echo "::set-output name=trigger::manual_trigger"
-          if [[ "${{ github.event.inputs.use_expanded_matrix }}" == "1" ]]; then
-            echo "::set-output name=requested_tests::expanded"
-          fi
-          if [[ -z "${{github.event.inputs.test_pull_request}}" ]]; then
-            # test_pull_request not specified
+          if [[ "${{ github.event.inputs.test_pull_request }}" != "nightly-packaging" ]]; then
+            # Triggered manually
+            echo "::set-output name=trigger::manual_trigger"
+            if [[ "${{ github.event.inputs.use_expanded_matrix }}" == "1" ]]; then
+              echo "::set-output name=requested_tests::expanded"
+            fi
+            if [[ -z "${{github.event.inputs.test_pull_request}}" ]]; then
+              # test_pull_request not specified
+              echo "::set-output name=github_ref::$GITHUB_SHA"
+            elif [[ "${{github.event.inputs.test_pull_request}}" == *:* ]]; then
+              # If specified as pr:commit_hash, split them.
+              echo "::set-output name=github_ref::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f2)"
+              echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
+            else
+              # Just the PR specified, use refs/pull/<number>/merge as the ref.
+              echo "::set-output name=github_ref::refs/pull/${{github.event.inputs.test_pull_request}}/merge"
+              echo "::set-output name=pr_number::${{ github.event.inputs.test_pull_request }}"
+            fi
+          elif [[ "${{ github.event.inputs.test_pull_request }}" == "nightly-packaging" ]]; then
+            # Triggered by scheduled packaging SDK workflow.
+            echo "::set-output name=trigger::scheduled_trigger"
             echo "::set-output name=github_ref::$GITHUB_SHA"
-          elif [[ "${{github.event.inputs.test_pull_request}}" == *:* ]]; then
-            # If specified as pr:commit_hash, split them.
-            echo "::set-output name=github_ref::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f2)"
-            echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
-          else
-            # Just the PR specified, use refs/pull/<number>/merge as the ref.
-            echo "::set-output name=github_ref::refs/pull/${{github.event.inputs.test_pull_request}}/merge"
-            echo "::set-output name=pr_number::${{ github.event.inputs.test_pull_request }}"
+            echo "::set-output name=requested_tests::expanded"
           fi
         elif [[ "${{ github.event_name }}" == "schedule" ]]; then
           echo "::set-output name=trigger::scheduled_trigger"
           echo "::set-output name=github_ref::$GITHUB_SHA"
           echo "::set-output name=requested_tests::expanded"
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "::set-output name=github_ref::$GITHUB_SHA"
+          if [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == "${{ env.triggerLabelPrefix }}"* ]]; then
+            echo "::set-output name=trigger::label_trigger"
+            echo "::set-output name=pr_number::${{ github.event.pull_request.number }}"
+            if [[ "${{ github.event.label.name }}" == "${{ env.triggerLabelQuick }}" ]]; then
+              echo "::set-output name=requested_tests::auto"
+            else
+              echo "::set-output name=requested_tests::expanded"
+            fi
+          elif [[ "${{ github.event.action }}" == "closed" && ${{ github.event.pull_request.merged == true }} ]]; then
+            echo "::set-output name=trigger::postsubmit_trigger"
+            echo "::set-output name=pr_number::${{ github.event.pull_request.number }}"
+            echo "::set-output name=requested_tests::auto"
+          fi
         fi
+    ### If it's not a defined trigger, cancel workflow
+    ### e.g. Triggered by non-"test-request" label; triggered by not merged PR close event.
+    - name: Cancel workflow
+      if: ${{ !steps.set_outputs.outputs.trigger }}
+      uses: andymckay/cancel-action@0.2
+    - name: Wait for workflow cancellation
+      if: ${{ !steps.set_outputs.outputs.trigger }} 
+      run: |
+        sleep 300
+        exit 1  # fail out if the cancellation above somehow failed.
+    - name: Cancel previous runs on the same PR
+      if: steps.set_outputs.outputs.trigger == 'label_trigger' 
+      uses: styfle/cancel-workflow-action@0.8.0
+      with:
+        access_token: ${{ github.token }}
     - uses: actions/checkout@v2
       with:
         ref: ${{steps.set_outputs.outputs.github_ref}}
@@ -111,6 +154,19 @@ jobs:
         if [[ "${{ steps.set_outputs.outputs.requested_tests }}" == "expanded" ]]; then 
           TEST_MATRIX_PARAM=-e=1
           echo "::warning ::Running on the expanded matrix"
+        elif [[ "${{ steps.set_outputs.outputs.requested_tests }}" == "minimal" ]]; then 
+          TEST_MATRIX_PARAM=-m=1
+          echo "::warning ::Running on the minimal matrix"
+        elif [[ "${{ steps.set_outputs.outputs.requested_tests }}" == "auto" ]]; then 
+          # auto-diff only apply when running in a PR. 
+          # diff against the PR's base. "git merge-base main branch_name" will give the common ancestor of both branches.
+          MERGE_BASE=$(git merge-base origin/${{github.event.pull_request.head.ref}} origin/${{github.event.pull_request.base.ref}} || true)
+          # If origin/<branch> is no longer valid, then just run all tests.
+          if [[ -n "${MERGE_BASE}" ]]; then
+            echo "::warning ::Auto-diff origin/${{github.event.pull_request.head.ref}}..${MERGE_BASE}"
+            git diff --name-only origin/${{github.event.pull_request.head.ref}}..${MERGE_BASE}
+            TEST_MATRIX_PARAM="--auto_diff origin/${{github.event.pull_request.head.ref}}..${MERGE_BASE}"
+          fi
         fi
 
         # To feed input into the job matrix, we first need to convert to a JSON
