@@ -284,6 +284,21 @@ jobs:
               --version ${{ matrix.unity_version }} \
               --logfile "testapps/release_license.log"
             cat testapps/release_license.log
+      - name: Prepare results summary artifact
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          if [ ! -f build-results-${{matrix.os}}-${{ matrix.unity_version }}-all.log.json ]; then
+            # No summary was created, make a placeholder one.
+            echo "__SUMMARY_MISSING__" > build-results-${{matrix.os}}-${{ matrix.unity_version }}-all.log.json
+          fi
+      - name: Upload build results artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: ${{ !cancelled() }}
+        with:
+          name: log-artifact
+          path: build-results-${{matrix.os}}-${{ matrix.unity_version }}-all*
+          retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Android integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'Android') && ${{ !cancelled() }}

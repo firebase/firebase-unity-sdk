@@ -99,6 +99,7 @@ import subprocess
 import time
 import requests
 import zipfile
+import json
 
 from absl import app
 from absl import flags
@@ -664,6 +665,13 @@ def _summarize_results(testapps, platforms, versions, failures, output_dir, arti
 
   logging.info(summary)
   test_validation.write_summary(output_dir, summary, file_name)
+
+  summary_json = {}
+  summary_json["type"] = "build"
+  summary_json["testapps"] = testapps
+  summary_json["errors"] = {failure.testapp:failure.error_message for failure in failures}
+  with open(os.path.join(output_dir, file_name+".json"), "a") as f:
+    f.write(json.dumps(summary_json, indent=2))
   return 1 if failures else 0
 
 
