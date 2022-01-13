@@ -159,15 +159,17 @@ jobs:
             echo "::set-output name=branch_pushed::0"
           fi
 
-      - name: Listing output
+      - name: Create Zip File
         run: |
-          ls -Rl
-        working-directory: output
+          cp docs/readme.md output/.
+          cp LICENSE output/.
+          ls -Rl output
+          zip -r firebase_unity_sdk.zip output
 
       - name: compute SDK hash
         shell: bash
         run: |
-          ${{ env.hashCommand }} --tag output/firebase_unity_sdk.zip > firebase_unity_sdk_hash.txt
+          ${{ env.hashCommand }} --tag firebase_unity_sdk.zip > firebase_unity_sdk_hash.txt
           echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
 
       - name: upload hash
@@ -179,8 +181,8 @@ jobs:
       - name: Upload Build unitypackage
         uses: actions/upload-artifact@v2
         with:
-          name: firebase_unity_sdk
-          path: output
+          name: firebase_unity_sdk.zip
+          path: firebase_unity_sdk.zip
       
       - name: Package tgz
         run: |
