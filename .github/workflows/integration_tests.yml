@@ -379,6 +379,26 @@ jobs:
         run: |
           python scripts/gha/desktop_tester.py --testapp_dir testapps \
             --logfile_name "${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.os }}-desktop"
+      - name: Prepare results summary artifact
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          if [ ! -f testapps/test-results-${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.os }}-desktop.log.json ]; then
+            mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.os }}-desktop.log.json
+          fi
+      - name: Upload Desktop test results artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: log-artifact
+          path: testapps/test-results-${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.os }}-desktop*
+          retention-days: ${{ env.artifactRetentionDays }}
+      - name: Download log artifacts
+        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        uses: actions/download-artifact@v2.0.8
+        with:
+          path: test_results
+          name: log-artifact
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
@@ -443,6 +463,26 @@ jobs:
           python scripts/gha/test_simulator.py --testapp_dir testapps \
             --logfile_name "${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.platform }}" \
             --ci
+      - name: Prepare results summary artifact
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          if [ ! -f testapps/test-results-${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.platform }}.log.json ]; then
+            mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.platform }}.log.json
+          fi
+      - name: Upload Desktop test results artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: log-artifact
+          path: testapps/test-results-${{ matrix.build_os }}-${{ matrix.unity_version }}-${{ matrix.platform }}*
+          retention-days: ${{ env.artifactRetentionDays }}
+      - name: Download log artifacts
+        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        uses: actions/download-artifact@v2.0.8
+        with:
+          path: test_results
+          name: log-artifact
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
