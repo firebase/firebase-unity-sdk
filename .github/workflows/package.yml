@@ -167,9 +167,8 @@ jobs:
       - name: compute SDK hash
         shell: bash
         run: |
-          ${{ env.hashCommand }} --tag firebase_unity_sdk.zip > firebase_unity_sdk_hash.txt
+          ${{ env.hashCommand }} --tag output/firebase_unity_sdk.zip > firebase_unity_sdk_hash.txt
           echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
-        working-directory: output
 
       - name: upload hash
         uses: actions/upload-artifact@v2.2.2
