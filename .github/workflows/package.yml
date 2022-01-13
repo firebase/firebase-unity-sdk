@@ -15,6 +15,10 @@ on:
         description: 'If already a working in progress release branch'
         default: None
 
+env:
+  # Use SHA256 for hashing files.
+  hashCommand: "sha256sum"
+
 jobs:
   package_sdks:
     name: package-${{matrix.os}}
@@ -159,6 +163,19 @@ jobs:
         run: |
           ls -Rl
         working-directory: output
+
+      - name: compute SDK hash
+        shell: bash
+        run: |
+          ${{ env.hashCommand }} --tag firebase_unity_sdk.zip > firebase_unity_sdk_hash.txt
+          echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
+        working-directory: output
+
+      - name: upload hash
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: firebase_unity_sdk_hash.txt
+          path: firebase_unity_sdk_hash.txt
 
       - name: Upload Build unitypackage
         uses: actions/upload-artifact@v2
