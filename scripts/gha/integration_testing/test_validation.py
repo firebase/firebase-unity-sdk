@@ -32,6 +32,7 @@ log is obtained instead, to help identify where the crash or timeout occurred.
 import datetime
 import os
 import re
+import json
 
 from absl import logging
 
