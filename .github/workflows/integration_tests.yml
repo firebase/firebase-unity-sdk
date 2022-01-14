@@ -334,6 +334,21 @@ jobs:
           name: testapps-${{matrix.os}}-${{ matrix.unity_version }}-windows-latest
           path: testapps-${{matrix.os}}-${{ matrix.unity_version }}-all/Windows
           retention-days: ${{ env.artifactRetentionDays }}
+      - name: Download log artifacts
+        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        uses: actions/download-artifact@v2.0.8
+        with:
+          path: test_results
+          name: log-artifact
+      - name: Update PR label and comment
+        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        run: |
+          python scripts/gha/it_workflow.py --stage progress \
+            --token ${{github.token}} \
+            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
+            --actor ${{github.actor}} \
+            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --run_id ${{github.run_id}}
       - name: Summarize build results
         if: ${{ !cancelled() }}
         shell: bash
@@ -399,6 +414,17 @@ jobs:
         with:
           path: test_results
           name: log-artifact
+      - name: Update PR label and comment
+        shell: bash
+        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        run: |
+          pushd ${{env.GCS_UPLOAD_DIR}}
+          python scripts/gha/it_workflow.py --stage progress \
+            --token ${{github.token}} \
+            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
+            --actor ${{github.actor}} \
+            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --run_id ${{github.run_id}}
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
@@ -483,6 +509,15 @@ jobs:
         with:
           path: test_results
           name: log-artifact
+      - name: Update PR label and comment
+        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        run: |
+          python scripts/gha/it_workflow.py --stage progress \
+            --token ${{github.token}} \
+            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
+            --actor ${{github.actor}} \
+            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --run_id ${{github.run_id}}
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
