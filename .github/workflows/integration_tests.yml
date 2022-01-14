@@ -185,10 +185,10 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         if: ${{ github.event.inputs.test_packaged_sdk != '' }}
         with:
-          name: 'firebase_unity_sdk'
+          name: 'firebase_unity_sdk.zip'
           workflow: 'packaging.yml'
           run_id: ${{ github.event.inputs.test_packaged_sdk }}
-          path: firebase_unity_sdk
+          
       - name: Build integration tests
         timeout-minutes: 220
         shell: bash
