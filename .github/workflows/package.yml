@@ -101,7 +101,10 @@ jobs:
         run: |
           cd built_artifect
           find . -type f -name "*.zip" -exec mv {} . \;
-          ls -l
+          find . -empty -type d -delete
+          ls -lR
+          find . -type f -name "*.zip" -exec unzip -l {} . \;
+          ls -lR
           cd ..
 
       - name: Package unitypackage
