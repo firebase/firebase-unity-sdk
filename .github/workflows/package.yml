@@ -103,7 +103,10 @@ jobs:
           find . -type f -name "*.zip" -exec mv {} . \;
           find . -empty -type d -delete
           ls -lR
-          find . -type f -name "*.zip" -exec unzip -l {} . \;
+          for zip_file in *.zip
+          do
+            unzip -l $zip_file
+          done
           ls -lR
           cd ..
 
