@@ -84,5 +84,5 @@ jobs:
       - name: Upload Build
         uses: actions/upload-artifact@v2
         with:
-          name: ios_unity
+          name: ios_unity/*.zip
           path: ios_unity/*.zip
