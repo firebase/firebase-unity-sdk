@@ -101,7 +101,13 @@ jobs:
         run: |
           cd built_artifect
           find . -type f -name "*.zip" -exec mv {} . \;
-          ls -l
+          find . -empty -type d -delete
+          ls -lR
+          for zip_file in *.zip
+          do
+            unzip -l $zip_file
+          done
+          ls -lR
           cd ..
 
       - name: Package unitypackage
@@ -161,10 +167,11 @@ jobs:
 
       - name: Create Zip File
         run: |
-          cp docs/readme.md output/.
-          cp LICENSE output/.
-          ls -Rl output
-          zip -r firebase_unity_sdk.zip output
+          mv output firebase_unity_sdk
+          cp docs/readme.md firebase_unity_sdk/.
+          cp LICENSE firebase_unity_sdk/.
+          ls -Rl firebase_unity_sdk
+          zip -r firebase_unity_sdk.zip firebase_unity_sdk
 
       - name: compute SDK hash
         shell: bash
