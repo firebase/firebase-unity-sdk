@@ -302,7 +302,10 @@ def main():
     value = filter_devices(devices=value, device_type=args.device_type)
   if args.auto_diff:
     value = filter_values_on_diff(args.parm_key, value, args.auto_diff)
-  print_value(value)
+  if args.config:
+    print(value)
+  else: 
+    print_value(value)
 
 
 def parse_cmdline_args():
