@@ -263,14 +263,10 @@ def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"
       summary_json["failures"][testapp]["ftl_links"].append(test.ftl_link)
     if hasattr(test, "raw_result_link") and test.raw_result_link:
       summary_json["failures"][testapp]["raw_result_links"].append(test.raw_result_link)
-    failed_tests = re.findall(r"\[  FAILED  \] (.+)[.](.+)", results.summary)
+    failed_tests = re.findall(r"Test (.+) failed!", results.summary)
     for failed_test in failed_tests:
-      failed_test = failed_test[0] + "." + failed_test[1]
-      pattern = fr'\[ RUN      \] {failed_test}(.*?)\[  FAILED  \] {failed_test}'
-      failure_log = re.search(pattern, test.logs, re.MULTILINE | re.DOTALL)
-      if failure_log:
-        summary_json["failures"][testapp]["failed_tests"][failed_test] = failure_log.group()
-        summary.append("\n%s FAILED:\n%s\n" % (failed_test, failure_log.group()))
+      summary_json["failures"][testapp]["failed_tests"][failed_test] = "See workflow log"
+      summary.append("\n%s FAILED\n" % (failed_test))
   summary_json["flakiness"] = {get_name(test.testapp_path):{"logs": [], "ftl_links": [], "raw_result_links": [], "flaky_tests": dict()} for (test, _) in flaky_testapps}
   for (test, results) in flaky_testapps:
     testapp = get_name(test.testapp_path)
@@ -279,14 +275,10 @@ def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"
       summary_json["flakiness"][testapp]["ftl_links"].append(test.ftl_link)
     if hasattr(test, "raw_result_link") and test.raw_result_link:
       summary_json["flakiness"][testapp]["raw_result_links"].append(test.raw_result_link)
-    flaky_tests = re.findall(r"\[  FAILED  \] (.+)[.](.+)", results.summary)
+    flaky_tests = re.findall(r"Test (.+) failed!", results.summary)
     for flaky_test in flaky_tests:
-      flaky_test = flaky_test[0] + "." + flaky_test[1]
-      pattern = fr'\[ RUN      \] {flaky_test}(.*?)\[  FAILED  \] {flaky_test}'
-      failure_log = re.search(pattern, test.logs, re.MULTILINE | re.DOTALL)
-      if failure_log:
-        summary_json["flakiness"][testapp]["flaky_tests"][flaky_test] = failure_log.group()
-        summary.append("\n%s FAILED:\n%s\n" % (flaky_test, failure_log.group()))
+      summary_json["flakiness"][testapp]["flaky_tests"][flaky_test] = "See workflow log"
+      summary.append("\n%s FAILED\n" % (flaky_test))
 
   with open(os.path.join(summary_dir, file_name+".json"), "a") as f:
     f.write(json.dumps(summary_json, indent=2))
@@ -325,7 +317,8 @@ def write_summary(testapp_dir, summary, file_name="summary.log"):
 
 def get_name(testapp_path):
   """Returns testapp api."""
-  return testapp_path.split(os.sep)[-2]
+  return testapp_path
+  # return testapp_path.split(os.sep)[-2]
 
 
 def _tail(text, n):
