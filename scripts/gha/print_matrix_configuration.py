@@ -249,7 +249,7 @@ def filter_mobile_platform(platform):
 
 
 
-def print_value(value):
+def print_value(value, config_parms_only=False):
   """ Print Json formatted string that can be consumed in Github workflow."""
   # Eg: for lists,
   # print(json.dumps) ->
@@ -260,8 +260,10 @@ def print_value(value):
   # Eg: for strings
   # print(json.dumps) -> "flame"
   # print(repr(json.dumps)) -> '"flame"'
-
-  print(json.dumps(value))
+  if config_parms_only:
+    print(value)
+  else:
+    print(json.dumps(value))
 
 
 def main():
@@ -288,7 +290,7 @@ def main():
     if not args.config:
       args.override = args.override.split(',')
 
-    print_value(args.override)
+    print_value(args.override, args.config)
     return
 
   if args.expanded:
@@ -302,10 +304,7 @@ def main():
     value = filter_devices(devices=value, device_type=args.device_type)
   if args.auto_diff:
     value = filter_values_on_diff(args.parm_key, value, args.auto_diff)
-  if args.config:
-    print(value)
-  else: 
-    print_value(value)
+  print_value(value, args.config)
 
 
 def parse_cmdline_args():
