@@ -247,6 +247,8 @@ def summarize_logs(dir, markdown=False, github_log=False):
           else:
             log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("flakiness", {}).setdefault("CRASH/TIMEOUT", []).append(configs)
 
+  logging.info("all_tested_configs: %s", all_tested_configs)
+
   if success_or_only_flakiness and not log_data:
     # No failures and no flakiness occurred, nothing to log.
     return (success_or_only_flakiness, None)
@@ -277,7 +279,7 @@ def get_configs_from_file_name(file_name, file_name_re):
   # Split the matrix name into components.
   configs = re.sub('-', ' ', configs).split()
   # Remove redundant components. e.g. "latest" in "windows-latest"
-  del configs[2]
+  if "latest" in configs: configs = [config for config in configs if config != "latest"]
   if "desktop" in configs: configs.remove("desktop")
   return configs
 
@@ -369,41 +371,38 @@ def reorganize_configs(configs):
 #     ['ubuntu', 'windows']
 #     -> ['2/3 os: ubuntu,windows': ]
 def combine_configs(error_configs, all_configs):
-  for (platform, configs_list) in error_configs.items():
+  for configs_list in error_configs.items():
     for i in range(len(configs_list)):
       for j in range(len(configs_list[i])):
-        configs_list[i][j] = combine_config(platform, configs_list[i][j], all_configs[platform][0][j], j)
+        configs_list[i][j] = combine_config(configs_list[i][j], all_configs[0][j], j)
   return error_configs
 
 
-def combine_config(platform, config, config_value, k):
+def combine_config(config, config_value, k):
   config_before_combination = config.copy()
-  logging.info("platform: %s; config: %s; config_value: %s", platform, config, config_value)
-  if k == 1 and platform in ("android", "ios", "tvos"):
-    # config_name = test_device here
-    k = -1
-  config_name = BUILD_CONFIGS[platform][k]
+  logging.info("config: %s; config_value: %s", config, config_value)
+  config_name = BUILD_CONFIGS[k]
   # if certain config failed for all values, add message "All *"
   if len(config_value) > 1 and len(config) == len(config_value):
     config = ["All %d %s" % (len(config_value), config_name)]
-  elif config_name == "ios_device":
-    ftl_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "real", config_value))
-    simulators = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "virtual", config_value))
-    if len(ftl_devices) > 1 and ftl_devices.issubset(set(config)):
-      config.insert(0, "All %d FTL Devices" % len(ftl_devices))
-      config = [x for x in config if (x not in ftl_devices)]
-    if len(simulators) > 1 and simulators.issubset(set(config)):
-      config.insert(0, "All %d Simulators" % len(simulators))
-      config = [x for x in config if (x not in simulators)]
-  elif config_name == "android_device":
-    ftl_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "real", config_value))
-    emulators = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "virtual", config_value))
-    if len(ftl_devices) > 1 and ftl_devices.issubset(set(config)):
-      config.insert(0, "All %d FTL Devices" % len(ftl_devices))
-      config = [x for x in config if (x not in ftl_devices)]
-    if len(emulators) > 1 and emulators.issubset(set(config)):
-      config.insert(0, "All %d Emulators" % len(emulators))
-      config = [x for x in config if (x not in emulators)]
+  # elif config_name == "ios_device":
+  #   ftl_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "real", config_value))
+  #   simulators = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "virtual", config_value))
+  #   if len(ftl_devices) > 1 and ftl_devices.issubset(set(config)):
+  #     config.insert(0, "All %d FTL Devices" % len(ftl_devices))
+  #     config = [x for x in config if (x not in ftl_devices)]
+  #   if len(simulators) > 1 and simulators.issubset(set(config)):
+  #     config.insert(0, "All %d Simulators" % len(simulators))
+  #     config = [x for x in config if (x not in simulators)]
+  # elif config_name == "android_device":
+  #   ftl_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "real", config_value))
+  #   emulators = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "virtual", config_value))
+  #   if len(ftl_devices) > 1 and ftl_devices.issubset(set(config)):
+  #     config.insert(0, "All %d FTL Devices" % len(ftl_devices))
+  #     config = [x for x in config if (x not in ftl_devices)]
+  #   if len(emulators) > 1 and emulators.issubset(set(config)):
+  #     config.insert(0, "All %d Emulators" % len(emulators))
+  #     config = [x for x in config if (x not in emulators)]
   # if certain config failed for more than 1 value but not all, add message "x/y" which means "x" out of "y" configs has errors.
   if len(config_value) > 1 and config_before_combination == config:
     config = ["%d/%d %s: %s" % (len(config), len(config_value), config_name, flat_config(config))]

@@ -148,6 +148,8 @@ UNITY_SETTINGS = {
   }
 }
 
+BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)"]
+
 TEST_DEVICES = {
   "android_min": {"type": "real", "model": "Nexus10", "version": "19"},
   "android_target": {"type": "real", "model": "blueline", "version": "28"},
