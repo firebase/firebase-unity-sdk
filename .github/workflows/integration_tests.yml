@@ -304,35 +304,35 @@ jobs:
         if: contains(needs.check_and_prepare.outputs.platform, 'Android') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-Android
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-all/Android
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Android
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-iOS
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-all/iOS
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/iOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'Linux') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-ubuntu-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-all/Linux
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload macOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'macOS') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-macos-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-all/macOS
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Windows integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'Windows') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-windows-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-all/Windows
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
