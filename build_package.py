@@ -169,7 +169,7 @@ def main(argv):
   p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   output, error = p.communicate()
   if p.returncode != 0:
-    logging.info("Generate new Guids")
+    logging.info("Generating new guids.")
     error_str = str(error)
     error_str = error_str.split("assets:")[-1]
     error_str = error_str.rstrip("\\n\'")
@@ -188,16 +188,13 @@ def main(argv):
       print(file)
       gen_cmd_args.append(file)
     subprocess.call(gen_cmd_args)
+
+    # Need to package again if has that error
+    subprocess.call(cmd_args)   
   else:
-    #error_list = str(error).split("\\n")
-    logging.info("No need to generate new Guids")
-
-  # Package with new guids
-  logging.info("Start Package")
-  if os.path.exists(output_folder):
-    shutil.rmtree(output_folder)
-  subprocess.call(cmd_args)
-
+    logging.info("No new guid generated.")
+    error_list = str(error).split("\\n")
+    logging.info("\n".join(error_list))
   logging.info("Packaging done for version %s", last_version)
 
 if __name__ == '__main__':
