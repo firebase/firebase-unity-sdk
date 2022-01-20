@@ -352,6 +352,7 @@ jobs:
           name: log-artifact
       - name: Update PR label and comment
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        shell: bash
         run: |
           python scripts/gha/it_workflow.py --stage progress \
             --token ${{github.token}} \
