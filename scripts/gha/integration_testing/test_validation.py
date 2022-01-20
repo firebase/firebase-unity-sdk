@@ -38,7 +38,7 @@ from absl import logging
 
 import attr
 
-from scripts.gha.print_matrix_configuration import PARAMETERS
+from print_matrix_configuration import PARAMETERS
 
 UNITY = "unity"
 CPP = "cpp"
