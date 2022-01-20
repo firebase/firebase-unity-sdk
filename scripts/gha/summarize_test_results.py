@@ -233,19 +233,22 @@ def summarize_logs(dir, markdown=False, github_log=False):
         log_data.setdefault(MISSING_LOG, {}).setdefault("test", {}).setdefault("errors", []).append(configs)
       else:
         log_reader_data = json.loads(log_text)
+        # logging.info("log_reader_data: %s", log_reader_data)
         for (testapp, _) in log_reader_data["errors"].items():
           success_or_only_flakiness = False
           log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("errors", []).append(configs)
         for (testapp, failures) in log_reader_data["failures"].items():
-          for (test, _) in failures["failed_tests"].items():
-            success_or_only_flakiness = False
-            log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("failures", {}).setdefault(test, []).append(configs)
+          log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("failures", []).append(configs)
+          # for (test, _) in failures["failed_tests"].items():
+          #   success_or_only_flakiness = False
+          #   log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("failures", {}).setdefault(test, []).append(configs)
         for (testapp, flakiness) in log_reader_data["flakiness"].items():
-          if flakiness["flaky_tests"].items():
-            for (test, _) in flakiness["flaky_tests"].items():
-              log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("flakiness", {}).setdefault(test, []).append(configs)
-          else:
-            log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("flakiness", {}).setdefault("CRASH/TIMEOUT", []).append(configs)
+          log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("flakiness", []).append(configs)
+          # if flakiness["flaky_tests"].items():
+          #   for (test, _) in flakiness["flaky_tests"].items():
+          #     log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("flakiness", {}).setdefault(test, []).append(configs)
+          # else:
+          #   log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("flakiness", {}).setdefault("CRASH/TIMEOUT", []).append(configs)
 
   logging.info("all_tested_configs: %s", all_tested_configs)
 
@@ -296,36 +299,35 @@ def reorganize_log(log_data, all_tested_configs):
     if errors.get("build"):
       reorganized_configs = reorganize_configs(errors.get("build"))
       combined_configs = combine_configs(reorganized_configs, all_tested_configs["build_configs"])
-      for (platform, configs) in combined_configs.items():
-        for config in configs:
-          all_configs = [["BUILD"], ["ERROR"], [CAPITALIZATIONS[platform]]]
-          all_configs.extend(config)
-          log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), [])
+      all_configs = [["BUILD"], ["ERROR"]]
+      all_configs.extend(combined_configs)
+      log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), [])
           
     if errors.get("test",{}).get("errors"):
       reorganized_configs = reorganize_configs(errors.get("test",{}).get("errors"))
       combined_configs = combine_configs(reorganized_configs, all_tested_configs["test_configs"])
-      for (platform, configs) in combined_configs.items():
-        for config in configs:
-          all_configs = [["TEST"], ["ERROR"], [CAPITALIZATIONS[platform]]]
-          all_configs.extend(config)
-          log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), [])
-    for (test, configs) in errors.get("test",{}).get("failures",{}).items():
-      reorganized_configs = reorganize_configs(configs)
+      all_configs = [["TEST"], ["ERROR"]]
+      all_configs.extend(combined_configs)
+      log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), [])
+    # for (test, configs) in errors.get("test",{}).get("failures",{}).items():
+    #   reorganized_configs = reorganize_configs(configs)
+    if errors.get("test",{}).get("failures"):
+      reorganized_configs = reorganize_configs(errors.get("test",{}).get("failures"))
       combined_configs = combine_configs(reorganized_configs, all_tested_configs["test_configs"])
-      for (platform, configs) in combined_configs.items():
-        for config in configs:
-          all_configs = [["TEST"], ["FAILURE"], [CAPITALIZATIONS[platform]]]
-          all_configs.extend(config)
-          log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), []).append(test)
-    for (test, configs) in errors.get("test",{}).get("flakiness",{}).items():
-      reorganized_configs = reorganize_configs(configs)
+      logging.info("combined_configs: %s", combined_configs)
+      all_configs = [["TEST"], ["FAILURE"]]
+      all_configs.extend(combined_configs)
+      log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), [])
+      # log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), []).append(test)
+    # for (test, configs) in errors.get("test",{}).get("flakiness",{}).items():
+    #   reorganized_configs = reorganize_configs(configs)
+    if errors.get("test",{}).get("flakiness"):
+      reorganized_configs = reorganize_configs(errors.get("test",{}).get("flakiness"))
       combined_configs = combine_configs(reorganized_configs, all_tested_configs["test_configs"])
-      for (platform, configs) in combined_configs.items():
-        for config in configs:
-          all_configs = [["TEST"], ["FLAKINESS"], [CAPITALIZATIONS[platform]]]
-          all_configs.extend(config)
-          log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), []).append(test)
+      all_configs = [["TEST"], ["FLAKINESS"]]
+      all_configs.extend(combined_configs)
+      log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), [])
+      # log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), []).append(test)
   
   return log_results
 
@@ -335,34 +337,15 @@ def reorganize_log(log_data, all_tested_configs):
 #     [['macos', 'simulator_min'], ['macos', 'simulator_target']]
 #     -> [[['macos'], ['simulator_min', 'simulator_target']]]
 def reorganize_configs(configs):
-  platform_configs = {}
-  for config in configs:
-    platform = config[0]
-    config = config[1:]
-    platform_configs.setdefault(platform, []).append(config)
+  reorganize_configs = []
+  for j in range(len(configs[0])):
+    reorganize_configs.append(set())
 
-  for (platform, configs_list) in platform_configs.items():
-    # combine kth config in configs
-    for k in range(len(configs_list[0])):
-      # once configs combined, keep the first config and remove the rest
-      remove_configs = []
-      for i in range(len(configs_list)):
-        # once configs combined, update the kth config
-        configk = []
-        configk.append(configs_list[i][k])
-        configs_i = configs_list[i][:k] + configs_list[i][k+1:]
-        for j in range(i+1, len(configs_list)):
-          if not contains(remove_configs, configs_list[j]):
-            configs_j = configs_list[j][:k] + configs_list[j][k+1:]
-            if equals(configs_i, configs_j):
-              remove_configs.append(configs_list[j])
-              configk.append(configs_list[j][k])
-        # configk = combine_config(configk, platform, k)
-        configs_list[i][k] = configk
-      for config in remove_configs:
-        configs_list.remove(config)
+  for i in range(len(configs)):
+    for j in range(len(configs[i])):
+      reorganize_configs[j].add(configs[i][j])
 
-  return platform_configs
+  return reorganize_configs
 
 # If possible, combine kth config to "All *"
 # e.g.
@@ -371,10 +354,9 @@ def reorganize_configs(configs):
 #     ['ubuntu', 'windows']
 #     -> ['2/3 os: ubuntu,windows': ]
 def combine_configs(error_configs, all_configs):
-  for configs_list in error_configs.items():
-    for i in range(len(configs_list)):
-      for j in range(len(configs_list[i])):
-        configs_list[i][j] = combine_config(configs_list[i][j], all_configs[0][j], j)
+  logging.info("error_configs: %s; all_configs: %s", error_configs, all_configs)
+  for i in range(len(error_configs)):
+    error_configs[i] = combine_config(error_configs[i], all_configs[i], i)
   return error_configs
 
 
@@ -407,7 +389,7 @@ def combine_config(config, config_value, k):
   if len(config_value) > 1 and config_before_combination == config:
     config = ["%d/%d %s: %s" % (len(config), len(config_value), config_name, flat_config(config))]
 
-  return config
+  return list(config)
 
 
 # Flat Config List and return it as a string
