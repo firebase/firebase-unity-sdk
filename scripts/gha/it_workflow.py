@@ -48,7 +48,7 @@ from absl import flags
 from absl import logging
 
 import github
-# import summarize_test_results as summarize
+import summarize_test_results as summarize
 
 _REPORT_LABEL = "nightly-testing"
 _REPORT_TITLE = "Nightly Integration Testing Report"
@@ -251,8 +251,7 @@ def _get_datetime():
 
 def _get_summary_table(token, run_id):
   """Test Result Report Body, which is failed test table with markdown format"""
-  return "TODO"
-#   return summarize.summarize_logs(dir=_LOG_OUTPUT_DIR, markdown=True)
+  return summarize.summarize_logs(dir=_LOG_OUTPUT_DIR, markdown=True)
 
 
 def _get_artifact_id(token, run_id, name):
