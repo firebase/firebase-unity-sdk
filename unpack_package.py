@@ -95,7 +95,7 @@ def unpack_one_package(script, product_path):
   output_file = os.path.join(output_path, dotnet_name+"_"+product_name+".txt")
   if os.path.exists(output_file):
     os.remove(output_file)
-  subprocess.run(["tree",unpack_folder,"-o", output_file])
+  subprocess.run(["tree","-h",unpack_folder,"-o", output_file])
   logging.info("%s is unpacked", product_path)
 
 def main(argv):

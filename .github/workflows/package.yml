@@ -15,6 +15,10 @@ on:
         description: 'If already a working in progress release branch'
         default: None
 
+env:
+  # Use SHA256 for hashing files.
+  hashCommand: "sha256sum"
+
 jobs:
   package_sdks:
     name: package-${{matrix.os}}
@@ -97,7 +101,13 @@ jobs:
         run: |
           cd built_artifect
           find . -type f -name "*.zip" -exec mv {} . \;
-          ls -l
+          find . -empty -type d -delete
+          ls -lR
+          for zip_file in *.zip
+          do
+            unzip -l $zip_file
+          done
+          ls -lR
           cd ..
 
       - name: Package unitypackage
@@ -155,16 +165,31 @@ jobs:
             echo "::set-output name=branch_pushed::0"
           fi
 
-      - name: Listing output
+      - name: Create Zip File
         run: |
-          ls -Rl
-        working-directory: output
+          mv output firebase_unity_sdk
+          cp docs/readme.md firebase_unity_sdk/.
+          cp LICENSE firebase_unity_sdk/.
+          ls -Rl firebase_unity_sdk
+          zip -r firebase_unity_sdk.zip firebase_unity_sdk
+
+      - name: compute SDK hash
+        shell: bash
+        run: |
+          ${{ env.hashCommand }} --tag firebase_unity_sdk.zip > firebase_unity_sdk_hash.txt
+          echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
+
+      - name: upload hash
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: firebase_unity_sdk_hash.txt
+          path: firebase_unity_sdk_hash.txt
 
       - name: Upload Build unitypackage
         uses: actions/upload-artifact@v2
         with:
-          name: firebase_unity_sdk
-          path: output
+          name: firebase_unity_sdk.zip
+          path: firebase_unity_sdk.zip
       
       - name: Package tgz
         run: |

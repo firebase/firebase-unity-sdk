@@ -55,7 +55,7 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
   else()
     set_target_properties(${shared_target}
       PROPERTIES
-        PREFIX "lib"
+        PREFIX ""
     )
   endif()
   

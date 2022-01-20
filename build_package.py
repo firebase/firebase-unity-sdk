@@ -163,12 +163,13 @@ def main(argv):
     cmd_args.append("--enabled_sections=build_dotnet4")
     cmd_args.append("--output_unitypackage=False")
   else:
-    cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4")
+    cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4 asset_package_only")
   
   # Check if need to gen new guids
   p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   output, error = p.communicate()
   if p.returncode != 0:
+    logging.info("Generating new guids.")
     error_str = str(error)
     error_str = error_str.split("assets:")[-1]
     error_str = error_str.rstrip("\\n\'")
@@ -191,6 +192,7 @@ def main(argv):
     # Need to package again if has that error
     subprocess.call(cmd_args)   
   else:
+    logging.info("No new guid generated.")
     error_list = str(error).split("\\n")
     logging.info("\n".join(error_list))
   logging.info("Packaging done for version %s", last_version)

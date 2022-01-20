@@ -251,16 +251,16 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         if: ${{ github.event.inputs.test_packaged_sdk != '' }}
         with:
-          name: 'firebase_unity_sdk'
+          name: 'firebase_unity_sdk.zip'
           workflow: 'packaging.yml'
           run_id: ${{ github.event.inputs.test_packaged_sdk }}
-          path: firebase_unity_sdk
+          
       - name: Build integration tests
         timeout-minutes: 220
         shell: bash
         run: |
           if [[ -n "${{ github.event.inputs.test_packaged_sdk }}" ]]; then
-            mv -v firebase_unity_sdk ~/Downloads/
+            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
           else
             if [[ -z "${{ github.event.inputs.sdk_url }}" ]];then
               sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.5.0.zip"
