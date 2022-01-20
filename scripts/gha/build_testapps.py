@@ -975,11 +975,11 @@ def _run(args, timeout=3000, capture_output=False, text=None, check=True):
 class Failure(object):
   """Holds context for the failure of a testapp to build/run."""
   testapp = attr.ib()
-  platform = attr.ib()
+  description = attr.ib()
   error_message = attr.ib()
 
   def describe(self):
-    return "%s, %s: %s" % (self.testapp, self.platform, self.error_message)
+    return "%s, %s: %s" % (self.testapp, self.description, self.error_message)
 
 
 @attr.s(frozen=True, eq=False)

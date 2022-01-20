@@ -48,7 +48,7 @@ from absl import flags
 from absl import logging
 
 import github
-# import summarize_test_results as summarize
+import summarize_test_results as summarize
 
 _REPORT_LABEL = "nightly-testing"
 _REPORT_TITLE = "Nightly Integration Testing Report"
@@ -184,7 +184,7 @@ def test_end(token, issue_number, actor, commit, run_id, new_token):
 def test_report(token, actor, commit, run_id, build_against):
   """Update (create if not exist) a Daily Report in Issue. 
   The Issue with title _REPORT_TITLE and label _REPORT_LABEL:
-  https://github.com/firebase/firebase-cpp-sdk/issues?q=is%3Aissue+label%3Anightly-testing
+  https://github.com/firebase/firebase-unity-sdk/issues?q=is%3Aissue+label%3Anightly-testing
   """
   issue_number = _get_issue_number(token, _REPORT_TITLE, _REPORT_LABEL)
   previous_comment = github.get_issue_body(token, issue_number)
@@ -240,7 +240,7 @@ def _get_description(actor, commit, run_id):
   """Test Result Report Title and description"""
   return ("Requested by @%s on commit %s\n" % (actor, commit) +
           "Last updated: %s \n" % _get_datetime() +
-          "**[View integration test log & download artifacts](https://github.com/firebase/firebase-cpp-sdk/actions/runs/%s)**\n" % run_id)
+          "**[View integration test log & download artifacts](https://github.com/firebase/firebase-unity-sdk/actions/runs/%s)**\n" % run_id)
 
 
 def _get_datetime():
@@ -251,8 +251,7 @@ def _get_datetime():
 
 def _get_summary_table(token, run_id):
   """Test Result Report Body, which is failed test table with markdown format"""
-  return "TODO"
-#   return summarize.summarize_logs(dir=_LOG_OUTPUT_DIR, markdown=True)
+  return summarize.summarize_logs(dir=_LOG_OUTPUT_DIR, markdown=True)
 
 
 def _get_artifact_id(token, run_id, name):
