@@ -99,6 +99,7 @@ import subprocess
 import time
 import requests
 import zipfile
+import json
 
 from absl import app
 from absl import flags
@@ -320,7 +321,7 @@ def main(argv):
       try:
         setup_unity_project(dir_helper, setup_options)
       except (subprocess.SubprocessError, RuntimeError) as e:
-        failures.append(Failure(description=build_desc, error_message=str(e)))
+        failures.append(Failure(testapp=testapp, description=build_desc, error_message=str(e)))
         logging.info(str(e))
         continue  # If setup failed, don't try to build. Move to next testapp.
       for p in platforms:
@@ -338,6 +339,7 @@ def main(argv):
         except (subprocess.SubprocessError, RuntimeError) as e:
           failures.append(
               Failure(
+                  testapp=testapp, 
                   description=build_desc + " " + p,
                   error_message=str(e)))
           logging.info(str(e))
@@ -664,6 +666,13 @@ def _summarize_results(testapps, platforms, versions, failures, output_dir, arti
 
   logging.info(summary)
   test_validation.write_summary(output_dir, summary, file_name)
+
+  summary_json = {}
+  summary_json["type"] = "build"
+  summary_json["testapps"] = testapps
+  summary_json["errors"] = {failure.testapp:failure.error_message for failure in failures}
+  with open(os.path.join(output_dir, file_name+".json"), "a") as f:
+    f.write(json.dumps(summary_json, indent=2))
   return 1 if failures else 0
 
 
@@ -965,11 +974,12 @@ def _run(args, timeout=3000, capture_output=False, text=None, check=True):
 @attr.s(frozen=True, eq=False)
 class Failure(object):
   """Holds context for the failure of a testapp to build/run."""
-  description = attr.ib()
+  testapp = attr.ib()
+  platform = attr.ib()
   error_message = attr.ib()
 
   def describe(self):
-    return "%s: %s" % (self.description, self.error_message)
+    return "%s, %s: %s" % (self.testapp, self.platform, self.error_message)
 
 
 @attr.s(frozen=True, eq=False)
