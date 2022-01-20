@@ -537,3 +537,59 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
+
+
+  summarize_results:
+    name: "summarize-results"
+    needs: [check_and_prepare, build, test_desktop, test_mobile]
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{needs.check_and_prepare.outputs.github_ref}}
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.pythonVersion }}
+      - name: Install python deps
+        run: pip install -r scripts/gha/requirements.txt
+      - name: Download log artifacts
+        uses: actions/download-artifact@v2.0.8
+        with:
+          path: test_results
+          name: log-artifact
+      # Use a different token to remove the "in-progress" label,
+      # to allow the removal to trigger the "Check Labels" workflow.
+      - name: Generate token for GitHub API
+        uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+      - name: Update PR label and comment
+        if: ${{ needs.check_and_prepare.outputs.pr_number }}
+        run: |
+          python scripts/gha/it_workflow.py --stage end \
+            --token ${{github.token}} \
+            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
+            --actor ${{github.actor}} \
+            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --run_id ${{github.run_id}} \
+            --new_token ${{steps.generate-token.outputs.token}}
+      - name: Update Daily Report
+        if: needs.check_and_prepare.outputs.trigger == 'scheduled_trigger'
+        run: |
+          if [[ "${{ github.event.inputs.test_pull_request }}" == "nightly-packaging" ]]; then
+            additional_flags=(--build_against sdk)
+          else
+            additional_flags=(--build_against repo)
+          fi
+          python scripts/gha/it_workflow.py --stage report \
+            --token ${{github.token}} \
+            --actor ${{github.actor}} \
+            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --run_id ${{github.run_id}} \
+            ${additional_flags[*]}
+      - name: Summarize results into GitHub log
+        run: python scripts/gha/summarize_test_results.py --dir test_results --github_log
