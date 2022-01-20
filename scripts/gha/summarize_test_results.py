@@ -337,6 +337,8 @@ def reorganize_log(log_data, all_tested_configs):
 #     [['macos', 'simulator_min'], ['macos', 'simulator_target']]
 #     -> [[['macos'], ['simulator_min', 'simulator_target']]]
 def reorganize_configs(configs):
+  if not configs: return configs
+
   reorganize_configs = []
   for j in range(len(configs[0])):
     reorganize_configs.append(set())

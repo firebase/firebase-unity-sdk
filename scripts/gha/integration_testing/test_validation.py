@@ -38,6 +38,8 @@ from absl import logging
 
 import attr
 
+from scripts.gha.print_matrix_configuration import PARAMETERS
+
 UNITY = "unity"
 CPP = "cpp"
 
@@ -317,8 +319,11 @@ def write_summary(testapp_dir, summary, file_name="summary.log"):
 
 def get_name(testapp_path):
   """Returns testapp api."""
+  testapps = PARAMETERS["integration_tests"]["config"]["apis"].split(",")
+  for testapp in testapps:
+    if testapp in testapp_path:
+      return testapp
   return testapp_path
-  # return testapp_path.split(os.sep)[-2]
 
 
 def _tail(text, n):
