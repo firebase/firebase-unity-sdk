@@ -182,6 +182,16 @@ jobs:
         echo "::set-output name=mobile_test_on::${mobile_test_on}"
         echo "::set-output name=android_device::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k android_device -t ${mobile_test_on} )"
         echo "::set-output name=ios_device::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k ios_device -t ${mobile_test_on} )"
+    - name: Update PR label and comment
+      if: steps.set_outputs.outputs.pr_number
+      run: |
+        #Add the in-progress label and remove any previous labels.
+        python scripts/gha/it_workflow.py --stage start \
+          --token ${{github.token}} \
+          --issue_number ${{steps.set_outputs.outputs.pr_number}} \
+          --actor ${{github.actor}} \
+          --commit ${{steps.set_outputs.outputs.github_ref}} \
+          --run_id ${{github.run_id}}
 
   build:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}
