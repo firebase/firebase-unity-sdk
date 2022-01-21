@@ -58,7 +58,7 @@ jobs:
       github_ref: ${{ steps.set_outputs.outputs.github_ref }}
       pr_number: ${{ steps.set_outputs.outputs.pr_number }}
       matrix_build_os: ${{ steps.matrix_config.outputs.matrix_build_os }}
-      matrix_build_platform: ${{ steps.matrix_config.outputs.matrix_build_os }}
+      matrix_build_platform: ${{ steps.matrix_config.outputs.matrix_build_platform }}
       matrix_unity_versions: ${{ steps.matrix_config.outputs.matrix_unity_versions }}
       matrix_desktop_os: ${{ steps.matrix_config.outputs.matrix_desktop_os }}
       matrix_mobile_platform: ${{ steps.matrix_config.outputs.matrix_mobile_platform }}
