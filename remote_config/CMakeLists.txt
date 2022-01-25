@@ -59,7 +59,6 @@ build_firebase_shared(
   FirebaseCppRemoteConfig
 )
 
-unity_pack_native(firebase_remote_config_swig)
 unity_pack_cs(firebase_remote_config_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

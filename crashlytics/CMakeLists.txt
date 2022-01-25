@@ -89,7 +89,6 @@ mono_add_library(firebase_crashlytics_cs
     FIREBASE_OPENSOURCE
 )
 
-unity_pack_native(firebase_crashlytics_swig)
 unity_pack_cs(firebase_crashlytics_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

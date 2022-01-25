@@ -57,7 +57,6 @@ build_firebase_shared(
   FirebaseCppMessaging
 )
 
-unity_pack_native(firebase_messaging_swig)
 unity_pack_cs(firebase_messaging_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

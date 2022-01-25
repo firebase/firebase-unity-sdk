@@ -19,6 +19,7 @@ include(build_shared)
 # Firebase Auth Swig input files
 set(firebase_auth_swig
   src/swig/auth.i
+  ${FIREBASE_SOURCE_DIR}/empty.cc
 )
 
 # Firebase Auth CSharp files
@@ -70,7 +71,6 @@ build_firebase_shared(
   FirebaseCppAuth
 )
 
-unity_pack_native(firebase_auth_swig)
 unity_pack_cs(firebase_auth_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

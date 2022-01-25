@@ -68,7 +68,6 @@ build_firebase_shared(
   FirebaseCppStorage
 )
 
-unity_pack_native(firebase_storage_swig)
 unity_pack_cs(firebase_storage_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

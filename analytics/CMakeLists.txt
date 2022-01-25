@@ -56,7 +56,6 @@ build_firebase_shared(
   FirebaseCppAnalytics
 )
 
-unity_pack_native(firebase_analytics_swig)
 unity_pack_cs(firebase_analytics_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

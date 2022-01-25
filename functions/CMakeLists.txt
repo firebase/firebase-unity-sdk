@@ -60,7 +60,6 @@ build_firebase_shared(
   FirebaseCppFunctions
 )
 
-unity_pack_native(firebase_functions_swig)
 unity_pack_cs(firebase_functions_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

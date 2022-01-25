@@ -148,7 +148,6 @@ build_firebase_shared(
   FirebaseCppFirestore
 )
 
-unity_pack_native(firebase_firestore_swig)
 unity_pack_cs(firebase_firestore_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

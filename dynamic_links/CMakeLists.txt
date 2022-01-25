@@ -68,7 +68,6 @@ build_firebase_shared(
   FirebaseCppDynamicLinks
 )
 
-unity_pack_native(firebase_dynamic_links_swig)
 unity_pack_cs(firebase_dynamic_links_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

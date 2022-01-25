@@ -74,7 +74,6 @@ build_firebase_shared(
   FirebaseCppDatabase
 )
 
-unity_pack_native(firebase_database_swig)
 unity_pack_cs(firebase_database_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
