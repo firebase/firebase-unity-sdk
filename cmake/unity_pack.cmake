@@ -232,10 +232,10 @@ function(unity_pack_native name)
 
   get_target_property(target_type ${name} TYPE)
 
-  # if(NOT "${target_type}" STREQUAL "SHARED_LIBRARY")
-  #   message("unity_pack_native ${target_type} not equal SHARED_LIBRARY, returned")
-  #   return()
-  # endif()
+  if(NOT "${target_type}" STREQUAL "SHARED_LIBRARY")
+    message("unity_pack_native ${target_type} not equal SHARED_LIBRARY, returned")
+    return()
+  endif()
 
   set(dll_dest "${UNITY_PACK_NATIVE_DIR}/")
 
@@ -258,7 +258,7 @@ function(unity_pack_native name)
       DESTINATION "${dll_dest}"
       COMPONENT "runtime"
     ARCHIVE
-      DESTINATION "${dll_dest}"
+      DESTINATION "${lib_dest}"
       COMPONENT "runtime"
   )
 

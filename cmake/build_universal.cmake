@@ -78,7 +78,17 @@ function(build_uni TARGET_LINK_LIB_NAMES PROJECT_LIST_HEADER_VARIABLE)
     ${FIREBASE_SYSTEM_DEPS}
   )
 
-  if(ANDROID)
+  if (MSVC)
+    target_link_options(firebase_app_uni
+      PRIVATE
+        "/WHOLEARCHIVE"
+    )
+  elseif (APPLE)
+    target_link_options(firebase_app_uni
+      PRIVATE
+        "-Wl,-all_load"
+    )
+  elseif (ANDROID)
     target_link_options(firebase_app_uni
       PRIVATE
         "-llog"
@@ -86,8 +96,14 @@ function(build_uni TARGET_LINK_LIB_NAMES PROJECT_LIST_HEADER_VARIABLE)
         "-Wl,--no-undefined"
         # Link against the static libc++, which is the default done by Gradle.
         "-static-libstdc++"
+        "-Wl,--whole-archive"
     )
-  endif()
+  else ()
+    target_link_options(firebase_app_uni
+      PRIVATE
+        "-Wl,--whole-archive"
+    )
+  endif ()
 
   unity_pack_native(firebase_app_uni)
 

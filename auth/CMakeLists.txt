@@ -19,7 +19,6 @@ include(build_shared)
 # Firebase Auth Swig input files
 set(firebase_auth_swig
   src/swig/auth.i
-  ${FIREBASE_SOURCE_DIR}/empty.cc
 )
 
 # Firebase Auth CSharp files
