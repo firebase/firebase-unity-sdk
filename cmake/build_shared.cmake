@@ -37,7 +37,7 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
   #   firebase_app
   # )
   
-  set(SHARED_TARGET_LINK_LIB_NAMES "firebase_${LIBRARY_NAME}" "firebase_${LIBRARY_NAME}_swig")
+  set(SHARED_TARGET_LINK_LIB_NAMES "firebase_${LIBRARY_NAME}_swig")
   message("SHARED_TARGET_LINK_LIB_NAMES is ${SHARED_TARGET_LINK_LIB_NAMES}")
 
   target_link_libraries(${shared_target}
