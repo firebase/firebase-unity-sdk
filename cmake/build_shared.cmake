@@ -29,7 +29,13 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
   
   add_library(${shared_target} SHARED
     ${FIREBASE_SOURCE_DIR}/empty.cc
+    $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}_swig>
   )
+
+  # add_dependencies(${shared_target}
+  #   firebase_${LIBRARY_NAME}
+  #   firebase_app
+  # )
   
   set(SHARED_TARGET_LINK_LIB_NAMES "firebase_${LIBRARY_NAME}" "firebase_${LIBRARY_NAME}_swig")
   message("SHARED_TARGET_LINK_LIB_NAMES is ${SHARED_TARGET_LINK_LIB_NAMES}")
@@ -37,6 +43,14 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
   target_link_libraries(${shared_target}
     ${SHARED_TARGET_LINK_LIB_NAMES}
   )
+
+  # target_include_directories(${shared_target}
+  #   PUBLIC
+  #     ${CMAKE_CURRENT_LIST_DIR}
+  #   PRIVATE
+  #     ${FIREBASE_CPP_SDK_DIR}
+  #     ${FIREBASE_UNITY_DIR}
+  # )
 
   # Update output name
   set_target_properties(${shared_target} 
@@ -70,17 +84,7 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
     )
   endif()
 
-  if (MSVC)
-    target_link_options(${shared_target}
-      PRIVATE
-        "/WHOLEARCHIVE"
-    )
-  elseif (APPLE)
-    target_link_options(${shared_target}
-      PRIVATE
-        "-Wl,-all_load"
-    )
-  elseif (ANDROID)
+  if(ANDROID)
     target_link_options(${shared_target}
       PRIVATE
         "-llog"
@@ -88,14 +92,8 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
         "-Wl,--no-undefined"
         # Link against the static libc++, which is the default done by Gradle.
         "-static-libstdc++"
-        "-Wl,--whole-archive"
     )
-  else ()
-    target_link_options(${shared_target}
-      PRIVATE
-        "-Wl,--whole-archive"
-    )
-  endif ()
+  endif()
   
   unity_pack_native(${shared_target})
 
