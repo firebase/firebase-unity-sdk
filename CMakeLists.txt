@@ -40,7 +40,7 @@ option(FIREBASE_INCLUDE_AUTH
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_CRASHLYTICS
        "Include the Firebase Crashlytics library."
-       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
+       OFF)
 option(FIREBASE_INCLUDE_DATABASE
        "Include the Firebase Realtime Database library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
