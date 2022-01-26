@@ -68,11 +68,15 @@ mono_add_library(firebase_database_cs
     firebase_database_swig
 )
 
+if(FIREBASE_IOS_BUILD)
+  ios_pack(firebase_lib_database libFirebaseCppDatabase DEPS firebase_database_swig)
+else()
 build_firebase_shared(
   database
   database
   FirebaseCppDatabase
 )
+endif()
 
 unity_pack_cs(firebase_database_cs)
 

@@ -61,11 +61,15 @@ mono_add_library(firebase_installations_cs
     firebase_installations_swig
 )
 
+if(FIREBASE_IOS_BUILD)
+  ios_pack(firebase_lib_installations libFirebaseCppInstallations DEPS firebase_installations_swig)
+else()
 build_firebase_shared(
   installations
   installations
   FirebaseCppInstallations
 )
+endif()
 
 unity_pack_cs(firebase_installations_cs)
 
