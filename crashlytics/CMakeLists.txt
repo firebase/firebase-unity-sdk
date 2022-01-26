@@ -93,8 +93,8 @@ if(FIREBASE_IOS_BUILD)
   ios_pack(firebase_lib_crashlytics libFirebaseCppCrashlytics DEPS firebase_crashlytics_swig)
 else()
 build_firebase_shared(
-  database
-  database
+  crashlytics
+  crashlytics
   FirebaseCppCrashlytics
 )
 endif()
