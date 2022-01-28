@@ -23,8 +23,7 @@ on:
         required: true
       apis:
         description: 'CSV of apis to build and test'
-        # TODO: firestore is excluded, because it fails to build on Unity 2017
-        default: 'analytics,auth,crashlytics,database,dynamic_links,functions,installations,messaging,remote_config,storage'
+        default: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
         required: true
       mobile_test_on:
         description: 'Run mobile tests on real and/or virtual devices? (separated by commas)'

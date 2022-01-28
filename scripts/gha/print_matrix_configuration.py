@@ -58,7 +58,6 @@ PARAMETERS = {
 
       MINIMAL_KEY: {
         "platform": ["Linux"],
-        "apis": "firestore"
       },
 
       EXPANDED_KEY: {
@@ -66,12 +65,11 @@ PARAMETERS = {
         "unity_version": ["2020", "2019", "2018"],
         "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
         "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
-        "apis": "crashlytics,database",
       }
     },
     "config": {
       "platform": "Windows,macOS,Linux",
-      "apis": "analytics,auth,crashlytics,database,dynamic_links,functions,installations,messaging,remote_config,storage",
+      "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
       "mobile_test_on": "real,virtual"
     }
   },
