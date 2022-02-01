@@ -51,20 +51,21 @@ _LINUX = "Linux"
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "build_os": ["macos-latest","windows-latest"],
+      "build_os": ["macos-latest"],
       "unity_version": ["2019"],
-      "android_device": ["android_target", "emulator_target"],
-      "ios_device": ["ios_target", "simulator_target"],
+        "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
 
       MINIMAL_KEY: {
         "platform": ["Linux"],
       },
 
       EXPANDED_KEY: {
-        "build_os": ["macos-latest"],
-        "unity_version": ["2020", "2019", "2018"],
-        "android_device": ["android_target", "android_latest", "emulator_target", "emulator_latest", "emulator_32bit"],
-        "ios_device": ["ios_min", "ios_target", "ios_latest", "simulator_min", "simulator_target", "simulator_latest"],
+        "build_os": ["macos-latest","windows-latest"],
+        "unity_version": ["2020", "2019", "2018", "2017"],
+        "mobile_device": ["android_target", "android_latest", 
+          "emulator_target", "emulator_latest", "emulator_32bit", 
+          "ios_min", "ios_target", "ios_latest", 
+          "simulator_min", "simulator_target", "simulator_latest"],
       }
     },
     "config": {
@@ -300,7 +301,7 @@ def main():
   else:
     test_matrix = ""
   value = get_value(args.workflow, test_matrix, args.parm_key, args.config)
-  if args.workflow == "integration_tests" and (args.parm_key == "android_device" or args.parm_key == "ios_device"):
+  if args.workflow == "integration_tests" and args.parm_key == "mobile_device":
     value = filter_devices(devices=value, device_type=args.device_type)
   if args.auto_diff:
     value = filter_values_on_diff(args.parm_key, value, args.auto_diff)
