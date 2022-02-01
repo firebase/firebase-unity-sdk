@@ -313,6 +313,11 @@ jobs:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-Android
           path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Android
           retention-days: ${{ env.artifactRetentionDays }}
+      - name: Delete Android integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(needs.check_and_prepare.outputs.platform, 'Android') && ${{ !cancelled() }}
+        shell: bash
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Android || true
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && ${{ !cancelled() }}
@@ -320,6 +325,11 @@ jobs:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-iOS
           path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/iOS
           retention-days: ${{ env.artifactRetentionDays }}
+      - name: Delete iOS integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && ${{ !cancelled() }}
+        shell: bash
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/iOS || true
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'Linux') && ${{ !cancelled() }}
@@ -327,6 +337,11 @@ jobs:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-ubuntu-latest
           path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
+      - name: Delete Linux integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(needs.check_and_prepare.outputs.platform, 'Linux') && ${{ !cancelled() }}
+        shell: bash
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Linux || true
       - name: Upload macOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'macOS') && ${{ !cancelled() }}
@@ -334,6 +349,11 @@ jobs:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-macos-latest
           path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
+      - name: Delete macOS integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(needs.check_and_prepare.outputs.platform, 'macOS') && ${{ !cancelled() }}
+        shell: bash
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/macOS || true
       - name: Upload Windows integration tests artifact
         uses: actions/upload-artifact@v2.2.2
         if: contains(needs.check_and_prepare.outputs.platform, 'Windows') && ${{ !cancelled() }}
@@ -341,6 +361,11 @@ jobs:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-windows-latest
           path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
+      - name: Delete Windows integration tests artifact
+        uses: actions/upload-artifact@v2.2.2
+        if: contains(needs.check_and_prepare.outputs.platform, 'Windows') && ${{ !cancelled() }}
+        shell: bash
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Windows || true
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
         uses: actions/download-artifact@v2.0.8
