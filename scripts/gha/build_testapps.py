@@ -756,7 +756,10 @@ def _copy_unity_assets(dir_helper, files_to_ignore):
     if any(name in copied_file for name in files_to_ignore):
       logging.info("Removing %s", copied_file)
       os.remove(copied_file)
-
+  if "firestore" in dest.lower():
+    logging.info("Removing firestore a) Tests b) Firebase/Editor/Builder.cs")
+    dir_util.remove_tree(os.path.join(dir_helper.unity_project_assets_dir, "Tests"))
+    os.remove(os.path.join(dir_helper.unity_project_assets_dir, "Firebase", "Editor", "Builder.cs"))
 
 # The menu scene will timeout to the automated version of the app,
 # while leaving an option in manual testing to select the manual version.
