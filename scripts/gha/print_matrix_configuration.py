@@ -62,10 +62,7 @@ PARAMETERS = {
       EXPANDED_KEY: {
         "build_os": ["macos-latest","windows-latest"],
         "unity_version": ["2020", "2019", "2018", "2017"],
-        "mobile_device": ["android_target", "android_latest", 
-          "emulator_target", "emulator_latest", "emulator_32bit", 
-          "ios_min", "ios_target", "ios_latest", 
-          "simulator_min", "simulator_target", "simulator_latest"],
+        "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
       }
     },
     "config": {
@@ -147,7 +144,7 @@ UNITY_SETTINGS = {
   }
 }
 
-BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)"]
+BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(s)"]
 
 TEST_DEVICES = {
   "android_min": {"type": "real", "model": "Nexus10", "version": "19"},
