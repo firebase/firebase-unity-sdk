@@ -66,7 +66,7 @@ PARAMETERS = {
       }
     },
     "config": {
-      "platform": "Windows,macOS,Linux",
+      "platform": "Windows,macOS,Linux,Android,iOS",
       "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
       "mobile_test_on": "real,virtual"
     }
