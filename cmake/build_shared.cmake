@@ -39,14 +39,6 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
     ${SHARED_TARGET_LINK_LIB_NAMES}
   )
 
-  # target_include_directories(${shared_target}
-  #   PUBLIC
-  #     ${CMAKE_CURRENT_LIST_DIR}
-  #   PRIVATE
-  #     ${FIREBASE_CPP_SDK_DIR}
-  #     ${FIREBASE_UNITY_DIR}
-  # )
-
   # Update output name
   set_target_properties(${shared_target} 
     PROPERTIES
