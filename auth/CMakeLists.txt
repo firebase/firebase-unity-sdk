@@ -65,13 +65,13 @@ mono_add_library(firebase_auth_cs
 )
 
 if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_auth libFirebaseCppAuth DEPS firebase_auth_swig)
+  ios_pack(firebase_lib_auth libFirebaseCppAuth DEPS firebase_auth firebase_auth_swig)
 else()
-build_firebase_shared(
-  auth
-  auth
-  FirebaseCppAuth
-)
+  build_firebase_shared(
+    auth
+    auth
+    FirebaseCppAuth
+  )
 endif()
 
 unity_pack_cs(firebase_auth_cs)

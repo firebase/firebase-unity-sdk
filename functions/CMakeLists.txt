@@ -55,7 +55,7 @@ mono_add_library(firebase_functions_cs
 )
 
 if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_functions libFirebaseCppFunctions DEPS firebase_functions_swig)
+  ios_pack(firebase_lib_functions libFirebaseCppFunctions DEPS firebase_functions firebase_functions_swig)
 else()
 build_firebase_shared(
   functions

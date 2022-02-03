@@ -52,7 +52,7 @@ mono_add_library(firebase_messaging_cs
 )
 
 if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_messaging libFirebaseCppMessaging DEPS firebase_messaging_swig)
+  ios_pack(firebase_lib_messaging libFirebaseCppMessaging DEPS firebase_messaging firebase_messaging_swig)
 else()
 build_firebase_shared(
   messaging

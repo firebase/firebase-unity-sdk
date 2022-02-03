@@ -51,7 +51,7 @@ mono_add_library(firebase_analytics_cs
 )
 
 if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_analytics libFirebaseCppAnalytics DEPS firebase_analytics_swig)
+  ios_pack(firebase_lib_analytics libFirebaseCppAnalytics DEPS firebase_analytics firebase_analytics_swig)
 else()
   build_firebase_shared(
     analytics

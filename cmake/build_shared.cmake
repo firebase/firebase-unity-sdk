@@ -29,16 +29,11 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
   
   add_library(${shared_target} SHARED
     ${FIREBASE_SOURCE_DIR}/empty.cc
+    $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}>
     $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}_swig>
   )
-
-  # add_dependencies(${shared_target}
-  #   firebase_${LIBRARY_NAME}
-  #   firebase_app
-  # )
   
-  set(SHARED_TARGET_LINK_LIB_NAMES "firebase_${LIBRARY_NAME}_swig")
-  message("SHARED_TARGET_LINK_LIB_NAMES is ${SHARED_TARGET_LINK_LIB_NAMES}")
+  set(SHARED_TARGET_LINK_LIB_NAMES "firebase_${LIBRARY_NAME}" "firebase_${LIBRARY_NAME}_swig")
 
   target_link_libraries(${shared_target}
     ${SHARED_TARGET_LINK_LIB_NAMES}

@@ -63,13 +63,13 @@ mono_add_library(firebase_dynamic_links_cs
 )
 
 if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_dynamic_links libFirebaseCppDynamicLinks DEPS firebase_dynamic_links_swig)
+  ios_pack(firebase_lib_dynamic_links libFirebaseCppDynamicLinks DEPS firebase_dynamic_links firebase_dynamic_links_swig)
 else()
-build_firebase_shared(
-  dynamic_links
-  dynamic-links
-  FirebaseCppDynamicLinks
-)
+  build_firebase_shared(
+    dynamic_links
+    dynamic-links
+    FirebaseCppDynamicLinks
+  )
 endif()
 
 unity_pack_cs(firebase_dynamic_links_cs)
