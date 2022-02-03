@@ -471,6 +471,7 @@ jobs:
       matrix:
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
         build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
+        platform: ${{ fromJson(needs.check_and_prepare.outputs.matrix_mobile_platform) }}
         mobile_device: ${{ fromJson(needs.check_and_prepare.outputs.mobile_device) }}
     steps:
       - uses: actions/checkout@v2
