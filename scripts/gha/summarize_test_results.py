@@ -284,6 +284,10 @@ def get_configs_from_file_name(file_name, file_name_re):
   # Remove redundant components. e.g. "latest" in "windows-latest"
   if "latest" in configs: configs = [config for config in configs if config != "latest"]
   if "desktop" in configs: configs.remove("desktop")
+  if "mobile" in configs: 
+    # Add mobile platform based on mobile test device
+    configs.insert(2, TEST_DEVICES.get(configs[2]).get("platform"))
+    configs.remove("mobile")
   return configs
 
 
@@ -369,25 +373,15 @@ def combine_config(config, config_value, k):
   # if certain config failed for all values, add message "All *"
   if len(config_value) > 1 and len(config) == len(config_value):
     config = ["All %d %s" % (len(config_value), config_name)]
-  # elif config_name == "ios_device":
-  #   ftl_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "real", config_value))
-  #   simulators = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "virtual", config_value))
-  #   if len(ftl_devices) > 1 and ftl_devices.issubset(set(config)):
-  #     config.insert(0, "All %d FTL Devices" % len(ftl_devices))
-  #     config = [x for x in config if (x not in ftl_devices)]
-  #   if len(simulators) > 1 and simulators.issubset(set(config)):
-  #     config.insert(0, "All %d Simulators" % len(simulators))
-  #     config = [x for x in config if (x not in simulators)]
-  # elif config_name == "android_device":
-  #   ftl_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "real", config_value))
-  #   emulators = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "virtual", config_value))
-  #   if len(ftl_devices) > 1 and ftl_devices.issubset(set(config)):
-  #     config.insert(0, "All %d FTL Devices" % len(ftl_devices))
-  #     config = [x for x in config if (x not in ftl_devices)]
-  #   if len(emulators) > 1 and emulators.issubset(set(config)):
-  #     config.insert(0, "All %d Emulators" % len(emulators))
-  #     config = [x for x in config if (x not in emulators)]
-  # if certain config failed for more than 1 value but not all, add message "x/y" which means "x" out of "y" configs has errors.
+  elif config_name == "Test Device(s)":
+    ftl_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "real", config_value))
+    virtual_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "virtual", config_value))
+    if len(ftl_devices) > 1 and ftl_devices.issubset(set(config)):
+      config.add("All %d FTL Devices" % len(ftl_devices))
+      config = [x for x in config if (x not in ftl_devices)]
+    if len(virtual_devices) > 1 and virtual_devices.issubset(set(config)):
+      config.add("All %d Virtual Devices" % len(virtual_devices))
+      config = [x for x in config if (x not in virtual_devices)]
   if len(config_value) > 1 and config_before_combination == config:
     config = ["%d/%d %s: %s" % (len(config), len(config_value), config_name, flat_config(config))]
 

@@ -64,6 +64,7 @@ import re
 
 from integration_testing import gcs
 from integration_testing import test_validation
+from print_matrix_configuration import TEST_DEVICES
 
 _ANDROID = "android"
 _IOS = "ios"
@@ -80,6 +81,10 @@ flags.DEFINE_enum(
 flags.DEFINE_string(
     "key_file", None, "Path to key file authorizing use of the GCS bucket.")
 flags.DEFINE_string(
+    "android_device", None,
+    "Model_id and API_level for desired device. See module docstring for details "
+    "on how to set the value. If none, will use android_model and android_version.")
+flags.DEFINE_string(
     "android_model", "blueline",
     "Model id for desired device. See module docstring for details on how"
     " to get this id. If none, will use FTL's default.")
@@ -87,6 +92,10 @@ flags.DEFINE_string(
     "android_api", "28",
     "API level for desired device. See module docstring for details on how"
     " to find available values. If none, will use FTL's default.")
+flags.DEFINE_string(
+    "ios_device", None,
+    "Model_id and IOS_version for desired device. See module docstring for details "
+    "on how to set the value. If none, will use ios_model and ios_version.")
 flags.DEFINE_string(
     "ios_model", "iphone8plus",
     "Model id for desired device. See module docstring for details on how"
@@ -113,8 +122,23 @@ def main(argv):
   if not os.path.exists(key_file_path):
     raise ValueError("Key file path does not exist: %s" % key_file_path)
 
-  android_device = Device(model=FLAGS.android_model, version=FLAGS.android_api)
-  ios_device = Device(model=FLAGS.ios_model, version=FLAGS.ios_version)
+  if FLAGS.android_device:
+    android_device_info = TEST_DEVICES.get(FLAGS.android_device)
+    if android_device_info:
+      android_device = Device(model=android_device_info.get("model"), version=android_device_info.get("version"))
+    else:
+      raise ValueError("Not a valid android device: %s" % FLAGS.android_device)
+  else:
+    android_device = Device(model=FLAGS.android_model, version=FLAGS.android_version)
+  
+  if FLAGS.ios_device:
+    ios_device_info = TEST_DEVICES.get(FLAGS.ios_device)
+    if ios_device_info:
+      ios_device = Device(model=ios_device_info.get("model"), version=ios_device_info.get("version"))
+    else:
+      raise ValueError("Not a valid android device: %s" % FLAGS.ios_device)
+  else:
+    ios_device = Device(model=FLAGS.ios_model, version=FLAGS.ios_version)
 
   has_ios = False
   testapps = []

@@ -147,19 +147,19 @@ UNITY_SETTINGS = {
 BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(s)"]
 
 TEST_DEVICES = {
-  "android_min": {"type": "real", "model": "Nexus10", "version": "19"},
-  "android_target": {"type": "real", "model": "blueline", "version": "28"},
-  "android_latest": {"type": "real", "model": "flame", "version": "29"},
-  "emulator_min": {"type": "virtual", "image": "system-images;android-18;google_apis;x86"},
-  "emulator_target": {"type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
-  "emulator_latest": {"type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
-  "emulator_32bit": {"type": "virtual", "image": "system-images;android-30;google_apis;x86"},
-  "ios_min": {"type": "real", "model": "iphone8", "version": "11.4"},
-  "ios_target": {"type": "real", "model": "iphone8plus", "version": "12.0"},
-  "ios_latest": {"type": "real", "model": "iphone11", "version": "13.6"},
-  "simulator_min": {"type": "virtual", "name": "iPhone 6", "version": "11.4"},
-  "simulator_target": {"type": "virtual", "name": "iPhone 8", "version": "12.0"},
-  "simulator_latest": {"type": "virtual", "name": "iPhone 11", "version": "14.4"},
+  "android_min": {"platform": "android", "type": "real", "model": "Nexus10", "version": "19"},
+  "android_target": {"platform": "android", "type": "real", "model": "blueline", "version": "28"},
+  "android_latest": {"platform": "android", "type": "real", "model": "flame", "version": "29"},
+  "emulator_min": {"platform": "android", "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
+  "emulator_target": {"platform": "android", "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
+  "emulator_latest": {"platform": "android", "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
+  "emulator_32bit": {"platform": "android", "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
+  "ios_min": {"platform": "ios", "type": "real", "model": "iphone8", "version": "11.4"},
+  "ios_target": {"platform": "ios", "type": "real", "model": "iphone8plus", "version": "12.0"},
+  "ios_latest": {"platform": "ios", "type": "real", "model": "iphone11", "version": "13.6"},
+  "simulator_min": {"platform": "ios", "type": "virtual", "name": "iPhone 6", "version": "11.4"},
+  "simulator_target": {"platform": "ios", "type": "virtual", "name": "iPhone 8", "version": "12.0"},
+  "simulator_latest": {"platform": "ios", "type": "virtual", "name": "iPhone 11", "version": "14.4"},
 }
 
 
