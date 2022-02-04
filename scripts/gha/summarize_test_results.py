@@ -250,8 +250,6 @@ def summarize_logs(dir, markdown=False, github_log=False):
           # else:
           #   log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("flakiness", {}).setdefault("CRASH/TIMEOUT", []).append(configs)
 
-  logging.info("all_tested_configs: %s", all_tested_configs)
-
   if success_or_only_flakiness and not log_data:
     # No failures and no flakiness occurred, nothing to log.
     return (success_or_only_flakiness, None)
@@ -260,7 +258,6 @@ def summarize_logs(dir, markdown=False, github_log=False):
   # log_results format:
   #   { testapps: {configs: [failed tests]} }
   all_tested_configs = reorganize_all_tested_configs(all_tested_configs)
-  logging.info("all_tested_configs: %s", all_tested_configs)
   log_results = reorganize_log(log_data, all_tested_configs)
   log_lines = []
   if markdown:
@@ -344,13 +341,16 @@ def reorganize_configs(configs):
   if not configs: return configs
 
   reorganize_configs = []
-  for j in range(len(configs[0])):
+  for j in range(len(BUILD_CONFIGS)):
     reorganize_configs.append(set())
 
   for i in range(len(configs)):
     for j in range(len(configs[i])):
       reorganize_configs[j].add(configs[i][j])
-
+  
+  # remove empty config
+  reorganize_configs = [config for config in reorganize_configs if config]
+  
   return reorganize_configs
 
 # If possible, combine kth config to "All *"
