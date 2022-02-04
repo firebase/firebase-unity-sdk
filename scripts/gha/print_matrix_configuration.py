@@ -37,6 +37,7 @@ python scripts/gha/print_matrix_configuration.py -c -w integration_tests
 
 import argparse
 import json
+import logging
 import platform
 
 
@@ -147,19 +148,19 @@ UNITY_SETTINGS = {
 BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(s)"]
 
 TEST_DEVICES = {
-  "android_min": {"platform": "android", "type": "real", "model": "Nexus10", "version": "19"},
-  "android_target": {"platform": "android", "type": "real", "model": "blueline", "version": "28"},
-  "android_latest": {"platform": "android", "type": "real", "model": "flame", "version": "29"},
-  "emulator_min": {"platform": "android", "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
-  "emulator_target": {"platform": "android", "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
-  "emulator_latest": {"platform": "android", "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
-  "emulator_32bit": {"platform": "android", "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
-  "ios_min": {"platform": "ios", "type": "real", "model": "iphone8", "version": "11.4"},
-  "ios_target": {"platform": "ios", "type": "real", "model": "iphone8plus", "version": "12.0"},
-  "ios_latest": {"platform": "ios", "type": "real", "model": "iphone11", "version": "13.6"},
-  "simulator_min": {"platform": "ios", "type": "virtual", "name": "iPhone 6", "version": "11.4"},
-  "simulator_target": {"platform": "ios", "type": "virtual", "name": "iPhone 8", "version": "12.0"},
-  "simulator_latest": {"platform": "ios", "type": "virtual", "name": "iPhone 11", "version": "14.4"},
+  "android_min": {"platform": "Android", "type": "real", "model": "Nexus10", "version": "19"},
+  "android_target": {"platform": "Android", "type": "real", "model": "blueline", "version": "28"},
+  "android_latest": {"platform": "Android", "type": "real", "model": "flame", "version": "29"},
+  "emulator_min": {"platform": "Android", "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
+  "emulator_target": {"platform": "Android", "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
+  "emulator_latest": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
+  "emulator_32bit": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
+  "ios_min": {"platform": "iOS", "type": "real", "model": "iphone8", "version": "11.4"},
+  "ios_target": {"platform": "iOS", "type": "real", "model": "iphone8plus", "version": "12.0"},
+  "ios_latest": {"platform": "iOS", "type": "real", "model": "iphone11", "version": "13.6"},
+  "simulator_min": {"platform": "iOS", "type": "virtual", "name": "iPhone 6", "version": "11.4"},
+  "simulator_target": {"platform": "iOS", "type": "virtual", "name": "iPhone 8", "version": "12.0"},
+  "simulator_latest": {"platform": "iOS", "type": "virtual", "name": "iPhone 11", "version": "14.4"},
 }
 
 
@@ -222,10 +223,12 @@ def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
                                                                 test_matrix))
 
 
-def filter_devices(devices, device_type):
+def filter_devices(devices, device_type, device_platform):
   """ Filter device by device_type
   """
-  filtered_value = filter(lambda device: TEST_DEVICES.get(device).get("type") in device_type, devices)
+  filtered_value = filter(lambda device: 
+                          TEST_DEVICES.get(device).get("type") in device_type 
+                          and TEST_DEVICES.get(device).get("platform") in device_platform, devices)
   return list(filtered_value)  
 
 
@@ -299,7 +302,7 @@ def main():
     test_matrix = ""
   value = get_value(args.workflow, test_matrix, args.parm_key, args.config)
   if args.workflow == "integration_tests" and args.parm_key == "mobile_device":
-    value = filter_devices(devices=value, device_type=args.device_type)
+    value = filter_devices(devices=value, device_type=args.device_type, device_platform=args.device_platform)
   if args.auto_diff:
     value = filter_values_on_diff(args.parm_key, value, args.auto_diff)
   print_value(value, args.config)
@@ -316,6 +319,7 @@ def parse_cmdline_args():
   parser.add_argument('-o', '--override', help='Override existing value with provided value')
   parser.add_argument('-d', '--device', action='store_true', help='Get the device type, used with -k $device')
   parser.add_argument('-t', '--device_type', default=['real', 'virtual'], help='Test on which type of mobile devices. Used with "-k $device_type -t $mobile_test_on"')
+  parser.add_argument('-p', '--device_platform', default=['Android', 'iOS'], help='Test on which type of mobile devices. Used with "-k $device_type -p $platform"')
   parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version. Used with "-k $unity_setting -u $unity_major_version"')
   parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
   parser.add_argument('-mobile_platform', type=bool, default=False, help='Get mobile test platform. Use with "-k $build_platform -mobile_platform=1"')
