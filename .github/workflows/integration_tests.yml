@@ -476,11 +476,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
-      - name: Download Desktop integration tests artifact
-        uses: actions/download-artifact@v2.0.8
-        with:
-          path: testapps
-          name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -490,14 +485,20 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-      - id: get-device-type
+      - id: device-info
         run: |
-          echo "::set-output name=device_type::$( python scripts/gha/print_matrix_configuration.py -d -k ${{ matrix.mobile_device }} )"
+          echo "::set-output name=device_type::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_tpye)"
+          echo "::set-output name=device_platform::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_platform)"
+      - name: Download Desktop integration tests artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          path: testapps
+          name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}
       - name: Install Cloud SDK
-        if: steps.get-device-type.outputs.device_type == 'real'
+        if: steps.device-info.outputs.device_type == 'real'
         uses: google-github-actions/setup-gcloud@master
       - name: Run Mobile integration tests on Real Device via FTL
-        if: steps.get-device-type.outputs.device_type == 'real'
+        if: steps.device-info.outputs.device_type == 'real'
         timeout-minutes: 60
         shell: bash
         run: |
@@ -510,7 +511,7 @@ jobs:
             --key_file scripts/gha-encrypted/gcs_key_file.json
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 60
-        if: steps.get-device-type.outputs.device_type == 'virtual'
+        if: steps.device-info.outputs.device_type == 'virtual'
         run: |
           python scripts/gha/test_simulator.py --testapp_dir testapps \
             --ios_device "${{ matrix.mobile_device }}" \

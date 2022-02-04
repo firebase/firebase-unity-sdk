@@ -276,8 +276,11 @@ def main():
       print(UNITY_SETTINGS[args.unity_version][get_os()].get(args.parm_key))
     return 
 
-  if args.device:
+  if args.get_device_type:
     print(TEST_DEVICES.get(args.parm_key).get("type"))
+    return 
+  if args.get_device_platform:
+    print(TEST_DEVICES.get(args.parm_key).get("platform"))
     return 
   if args.desktop_os:
     print(filterdesktop_os(platform=args.parm_key))
@@ -317,10 +320,11 @@ def parse_cmdline_args():
   parser.add_argument('-k', '--parm_key', required=True, help='Print the value of specified key from matrix or config maps.')
   parser.add_argument('-a', '--auto_diff', metavar='BRANCH', help='Compare with specified base branch to automatically set matrix options')
   parser.add_argument('-o', '--override', help='Override existing value with provided value')
-  parser.add_argument('-d', '--device', action='store_true', help='Get the device type, used with -k $device')
   parser.add_argument('-t', '--device_type', default=['real', 'virtual'], help='Test on which type of mobile devices. Used with "-k $device_type -t $mobile_test_on"')
   parser.add_argument('-p', '--device_platform', default=['Android', 'iOS'], help='Test on which type of mobile devices. Used with "-k $device_type -p $platform"')
   parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version. Used with "-k $unity_setting -u $unity_major_version"')
+  parser.add_argument('-get_device_type', action='store_true', help='Get the device type, used with -k $device')
+  parser.add_argument('-get_device_platform', action='store_true', help='Get the device platform, used with -k $device')
   parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
   parser.add_argument('-mobile_platform', type=bool, default=False, help='Get mobile test platform. Use with "-k $build_platform -mobile_platform=1"')
   args = parser.parse_args()
