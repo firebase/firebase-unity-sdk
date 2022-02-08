@@ -217,7 +217,7 @@ def _run_test_on_ftl(tests, tested_tests, retry=3):
   if retry > 1:
     failed_tests = []
     for test in tests:
-      result = test_validation.validate_results(test.logs, test_validation.CPP)
+      result = test_validation.validate_results(test.logs, test_validation.UNITY)
       if not result.complete or result.fails != 0:
         logging.info("Failure(s) occurred, testapp: %s" % test.testapp_path)
         failed_test = Test(
