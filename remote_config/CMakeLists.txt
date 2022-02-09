@@ -53,13 +53,16 @@ mono_add_library(firebase_remote_config_cs
     firebase_remote_config_swig
 )
 
+if(FIREBASE_IOS_BUILD)
+  ios_pack(firebase_lib_remote_config libFirebaseCppRemoteConfig DEPS firebase_remote_config firebase_remote_config_swig)
+else()
 build_firebase_shared(
   remote_config
   config
   FirebaseCppRemoteConfig
 )
+endif()
 
-unity_pack_native(firebase_remote_config_swig)
 unity_pack_cs(firebase_remote_config_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

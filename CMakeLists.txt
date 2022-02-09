@@ -40,7 +40,7 @@ option(FIREBASE_INCLUDE_AUTH
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_CRASHLYTICS
        "Include the Firebase Crashlytics library."
-       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
+       OFF)
 option(FIREBASE_INCLUDE_DATABASE
        "Include the Firebase Realtime Database library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
@@ -304,7 +304,7 @@ endif()
 
 if(FIREBASE_UNI_LIBRARY)
   if(FIREBASE_IOS_BUILD)
-    ios_pack(firebase_lib_uni libFirebaseCppApp DEPS ${TARGET_LINK_LIB_NAMES})
+    ios_pack(firebase_lib_uni libFirebaseCppApp DEPS "firebase_app" "firebase_app_swig" "flatbuffers")
   else()
     build_uni(
       "${TARGET_LINK_LIB_NAMES}"

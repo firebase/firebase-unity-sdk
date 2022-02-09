@@ -142,13 +142,16 @@ mono_add_library(firebase_firestore_cs
     firebase_firestore_swig
 )
 
-build_firebase_shared(
-  firestore
-  firestore
-  FirebaseCppFirestore
-)
+if(FIREBASE_IOS_BUILD)
+  ios_pack(firebase_lib_firestore libFirebaseCppFirestore DEPS firebase_firestore firebase_firestore_swig firebase_firestore_swig_cpp)
+else()
+  build_firebase_shared(
+    firestore
+    firestore
+    FirebaseCppFirestore
+  )
+endif()
 
-unity_pack_native(firebase_firestore_swig)
 unity_pack_cs(firebase_firestore_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
