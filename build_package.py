@@ -102,19 +102,19 @@ def find_pack_script():
   built_folder_ext = "_unity"
   built_folder_postion = os.path.join("external", "src", "google_unity_jar_resolver")
   built_folder = None
-  resolver_root_folder = None
+  resolver_root_folder = "unity-jar-resolver"
   for folder in os.listdir("."):
     if folder.endswith(built_folder_ext):
       built_folder = folder
       break
+  
   if built_folder != None:
     resolver_root_folder = os.path.join(built_folder, built_folder_postion)
-  else:
+  elif not os.path.exists(resolver_root_folder):
     git_clone_script = ["git", "clone",
       "--depth", "1",
       "https://github.com/googlesamples/unity-jar-resolver.git"]
     subprocess.call(git_clone_script)
-    resolver_root_folder = "unity-jar-resolver"
 
   if resolver_root_folder != None:
     script_path = os.path.join(resolver_root_folder, "source", "ExportUnityPackage", "export_unity_package.py")
@@ -138,7 +138,6 @@ def main(argv):
   last_version = get_last_version()
 
   zip_file_list = get_zip_files()
-
   if not zip_file_list:
     raise app.UsageError("No zip files to process.")
 
@@ -164,17 +163,17 @@ def main(argv):
     cmd_args.append("--enabled_sections=build_dotnet4")
     cmd_args.append("--output_unitypackage=False")
   else:
-    cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4")
+    cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4 asset_package_only")
   
   # Check if need to gen new guids
   p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   output, error = p.communicate()
   if p.returncode != 0:
+    logging.info("Generating new guids.")
     error_str = str(error)
-    split_string = error_str.split("assets:")[-1]
-    split_string = split_string.rstrip("\\n\'")
-    print(split_string)
-    split_string = split_string.split(" ")
+    error_str = error_str.split("assets:")[-1]
+    error_str = error_str.rstrip("\\n\'")
+    split_string = error_str.split(" ")
     split_string = split_string[3:] # exclude first 3 lines
     gen_guids_script_path = os.path.join(os.getcwd(), "gen_guids.py")
     gen_cmd_args = [
@@ -191,7 +190,12 @@ def main(argv):
     subprocess.call(gen_cmd_args)
 
     # Need to package again if has that error
-    subprocess.call(cmd_args)
+    subprocess.call(cmd_args)   
+  else:
+    logging.info("No new guid generated.")
+    error_list = str(error).split("\\n")
+    logging.info("\n".join(error_list))
+  logging.info("Packaging done for version %s", last_version)
 
 if __name__ == '__main__':
   app.run(main)

@@ -32,10 +32,13 @@ log is obtained instead, to help identify where the crash or timeout occurred.
 import datetime
 import os
 import re
+import json
 
 from absl import logging
 
 import attr
+
+from print_matrix_configuration import PARAMETERS
 
 UNITY = "unity"
 CPP = "cpp"
@@ -156,6 +159,7 @@ def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"
   successes = []
   failures = []
   errors = []
+  success_testapp_paths = set()
 
   for test in tests:
     results = validate_results(test.logs, platform)
@@ -166,6 +170,7 @@ def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"
       failures.append(test_result_pair)
     else:
       successes.append(test_result_pair)
+      success_testapp_paths.add(test.testapp_path)
 
   # First log the successes, then the failures and errors, then the summary.
   # This way, debugging will involve checking the summary at the bottom,
@@ -180,6 +185,11 @@ def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"
   for test, _ in errors:
     logging.info("%s didn't finish normally.\n%s", test.testapp_path, test.logs)
 
+  # Testapps that failed first, but succeed after retry. (max 3 retry)
+  flaky_testapps = []
+  failures_exclude_flakiness = []
+  errors_exclude_flakiness = []
+
   # The summary is much more terse, to minimize the time it takes to understand
   # what went wrong, without necessarily providing full debugging context.
   summary = []
@@ -190,7 +200,12 @@ def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"
   if errors:
     summary.append("\n%d TESTAPPS EXPERIENCED ERRORS:" % len(errors))
     for test, results in errors:
-      summary.append(test.testapp_path)
+      summary.append("\n%s:" % test.testapp_path)
+      if test.testapp_path in success_testapp_paths:
+        summary.append("THIS TESTAPP IS FLAKY")
+        flaky_testapps.append((test, results))
+      else:
+        errors_exclude_flakiness.append((test, results))
       if hasattr(test, "ftl_link") and test.ftl_link:
         summary.append("ftl_link: %s" % test.ftl_link)
       if hasattr(test, "raw_result_link") and test.raw_result_link:
@@ -204,7 +219,12 @@ def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"
   if failures:
     summary.append("\n%d TESTAPPS FAILED:" % len(failures))
     for test, results in failures:
-      summary.append(test.testapp_path)
+      summary.append("\n%s:" % test.testapp_path)
+      if test.testapp_path in success_testapp_paths:
+        summary.append("THIS TESTAPP IS FLAKY")
+        flaky_testapps.append((test, results))
+      else:
+        failures_exclude_flakiness.append((test, results))
       if hasattr(test, "ftl_link") and test.ftl_link:
         summary.append("ftl_link: %s" % test.ftl_link)
       if hasattr(test, "raw_result_link") and test.raw_result_link:
@@ -213,11 +233,66 @@ def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"
   summary.append(
       "%d TESTAPPS TOTAL: %d PASSES, %d FAILURES, %d ERRORS"
       % (len(tests), len(successes), len(failures), len(errors)))
+
+  if len(flaky_testapps) > 0 and len(flaky_testapps) == len(failures) + len(errors):
+    logging.info("All failures and errors are due to flakiness.")
+    summary.append("ALL THE FOLLOWING FAILURES AND ERRORS ARE DUE TO FLAKINESS:(")
+
+  # summary_json format:
+  #   { "type": "test",
+  #     "testapps": [testapp],
+  #     "errors": {testapp:{"logs": [error_log], "ftl_links": [ftl_link], "raw_result_links": [raw_result_link]}},
+  #     "failures": {testapp:{"logs": [error_log], "ftl_links": [ftl_link], "raw_result_links": [raw_result_link],
+  #                           "failed_tests": {failed_test: test_log}}},
+  #     "flakiness": {testapp:{"logs": [error_log], "ftl_links": [ftl_link], "raw_result_links": [raw_result_link],
+  #                           "flaky_tests": {flaky_test: test_log}}}}
+  summary_json = {}
+  summary_json["type"] = "test"
+  summary_json["testapps"] = [get_name(test.testapp_path) for test in tests]
+  summary_json["errors"] = {get_name(test.testapp_path):{"logs": [], "ftl_links": [], "raw_result_links": []} for (test, _) in errors_exclude_flakiness}
+  for (test, results) in errors_exclude_flakiness:
+    testapp = get_name(test.testapp_path)
+    summary_json["errors"][testapp]["logs"].append(results.summary)
+    if hasattr(test, "ftl_link") and test.ftl_link:
+      summary_json["errors"][testapp]["ftl_links"].append(test.ftl_link)
+    if hasattr(test, "raw_result_link") and test.raw_result_link:
+      summary_json["errors"][testapp]["raw_result_links"].append(test.raw_result_link)
+  summary_json["failures"] = {get_name(test.testapp_path):{"logs": [], "ftl_links": [], "raw_result_links": [], "failed_tests": dict()} for (test, _) in failures_exclude_flakiness}
+  for (test, results) in failures_exclude_flakiness:
+    testapp = get_name(test.testapp_path)
+    summary_json["failures"][testapp]["logs"].append(results.summary)
+    if hasattr(test, "ftl_link") and test.ftl_link:
+      summary_json["failures"][testapp]["ftl_links"].append(test.ftl_link)
+    if hasattr(test, "raw_result_link") and test.raw_result_link:
+      summary_json["failures"][testapp]["raw_result_links"].append(test.raw_result_link)
+    failed_tests = re.findall(r"Test (.+) failed!", results.summary)
+    for failed_test in failed_tests:
+      summary_json["failures"][testapp]["failed_tests"][failed_test] = "See workflow log"
+      summary.append("\n%s FAILED\n" % (failed_test))
+  summary_json["flakiness"] = {get_name(test.testapp_path):{"logs": [], "ftl_links": [], "raw_result_links": [], "flaky_tests": dict()} for (test, _) in flaky_testapps}
+  for (test, results) in flaky_testapps:
+    testapp = get_name(test.testapp_path)
+    summary_json["flakiness"][testapp]["logs"].append(results.summary)
+    if hasattr(test, "ftl_link") and test.ftl_link:
+      summary_json["flakiness"][testapp]["ftl_links"].append(test.ftl_link)
+    if hasattr(test, "raw_result_link") and test.raw_result_link:
+      summary_json["flakiness"][testapp]["raw_result_links"].append(test.raw_result_link)
+    flaky_tests = re.findall(r"Test (.+) failed!", results.summary)
+    for flaky_test in flaky_tests:
+      summary_json["flakiness"][testapp]["flaky_tests"][flaky_test] = "See workflow log"
+      summary.append("\n%s FAILED\n" % (flaky_test))
+
+  with open(os.path.join(summary_dir, file_name+".json"), "a") as f:
+    f.write(json.dumps(summary_json, indent=2))
+
   summary = "\n".join(summary)
-  logging.info(summary)
   write_summary(summary_dir, summary, file_name)
 
-  return 0 if len(tests) == len(successes) else 1
+  # success or only flakiness
+  if len(tests) == len(successes) or len(flaky_testapps) == len(failures) + len(errors):
+    return 0
+  else:
+    return 1
 
 
 def write_summary(testapp_dir, summary, file_name="summary.log"):
@@ -240,6 +315,15 @@ def write_summary(testapp_dir, summary, file_name="summary.log"):
     # to help keep track of when a given test was run.
     timestamp = datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
     f.write("\n%s\n%s\n" % (timestamp, summary))
+
+
+def get_name(testapp_path):
+  """Returns testapp api."""
+  testapps = PARAMETERS["integration_tests"]["config"]["apis"].split(",")
+  for testapp in testapps:
+    if testapp in testapp_path:
+      return testapp
+  return testapp_path
 
 
 def _tail(text, n):

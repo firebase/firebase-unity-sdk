@@ -65,7 +65,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Platform.dll",
-            "Firebase/Plugins/Firebase.Platform.dll.mdb",
+            "Firebase/Plugins/Firebase.Platform.pdb",
             "Firebase/Plugins/Google.MiniJson.dll"
           ]
         },
@@ -75,7 +75,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.App.dll",
-            "Firebase/Plugins/Firebase.App.dll.mdb"
+            "Firebase/Plugins/Firebase.App.pdb"
           ]
         },
         {
@@ -85,7 +85,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppApp.a",
             "Firebase/Plugins/iOS/Firebase.App.dll",
-            "Firebase/Plugins/iOS/Firebase.App.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.App.pdb"
           ]
         },
         {
@@ -94,7 +94,7 @@
           "labels": ["gvh_targets-editor"],
           "paths": [
             "Firebase/Editor/Firebase.Editor.dll",
-            "Firebase/Editor/Firebase.Editor.dll.mdb"
+            "Firebase/Editor/Firebase.Editor.pdb"
           ],
           "override_metadata_upm": {
             "PluginImporter": {
@@ -112,7 +112,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.TaskExtension.dll",
-            "Firebase/Plugins/Firebase.TaskExtension.dll.mdb"
+            "Firebase/Plugins/Firebase.TaskExtension.pdb"
           ]
         },
         {
@@ -187,7 +187,7 @@
         "manifest" : {
           "unity": "2017.1",
           "dependencies": {
-            "com.google.external-dependency-manager" : "1.2.168"
+            "com.google.external-dependency-manager" : "1.2.169"
           }
         }
       }
@@ -218,7 +218,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Analytics.dll",
-            "Firebase/Plugins/Firebase.Analytics.dll.mdb"
+            "Firebase/Plugins/Firebase.Analytics.pdb"
           ]
         },
         {
@@ -228,7 +228,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppAnalytics.a",
             "Firebase/Plugins/iOS/Firebase.Analytics.dll",
-            "Firebase/Plugins/iOS/Firebase.Analytics.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Analytics.pdb"
           ]
         },
         {
@@ -309,7 +309,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Auth.dll",
-            "Firebase/Plugins/Firebase.Auth.dll.mdb"
+            "Firebase/Plugins/Firebase.Auth.pdb"
           ]
         },
         {
@@ -319,7 +319,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppAuth.a",
             "Firebase/Plugins/iOS/Firebase.Auth.dll",
-            "Firebase/Plugins/iOS/Firebase.Auth.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Auth.pdb"
           ]
         },
         {
@@ -398,7 +398,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Crashlytics.dll",
-            "Firebase/Plugins/Firebase.Crashlytics.dll.mdb"
+            "Firebase/Plugins/Firebase.Crashlytics.pdb"
           ]
         },
         {
@@ -409,7 +409,7 @@
             "Plugins/iOS/Firebase/libCrashlyticsiOSWrapper.a",
             "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.a",
             "Firebase/Plugins/iOS/Firebase.Crashlytics.dll",
-            "Firebase/Plugins/iOS/Firebase.Crashlytics.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Crashlytics.pdb"
           ]
         },
         {
@@ -418,7 +418,7 @@
           "labels": ["gvh_targets-editor"],
           "paths": [
             "Firebase/Editor/Firebase.Crashlytics.Editor.dll",
-            "Firebase/Editor/Firebase.Crashlytics.Editor.dll.mdb"
+            "Firebase/Editor/Firebase.Crashlytics.Editor.pdb"
           ],
           "override_metadata_upm": {
             "PluginImporter": {
@@ -498,7 +498,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.DynamicLinks.dll",
-            "Firebase/Plugins/Firebase.DynamicLinks.dll.mdb"
+            "Firebase/Plugins/Firebase.DynamicLinks.pdb"
           ]
         },
         {
@@ -508,7 +508,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppDynamicLinks.a",
             "Firebase/Plugins/iOS/Firebase.DynamicLinks.dll",
-            "Firebase/Plugins/iOS/Firebase.DynamicLinks.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.DynamicLinks.pdb"
           ]
         },
         {
@@ -583,7 +583,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.RemoteConfig.dll",
-            "Firebase/Plugins/Firebase.RemoteConfig.dll.mdb"
+            "Firebase/Plugins/Firebase.RemoteConfig.pdb"
           ]
         },
         {
@@ -593,7 +593,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppRemoteConfig.a",
             "Firebase/Plugins/iOS/Firebase.RemoteConfig.dll",
-            "Firebase/Plugins/iOS/Firebase.RemoteConfig.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.RemoteConfig.pdb"
           ]
         },
         {
@@ -671,7 +671,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Messaging.dll",
-            "Firebase/Plugins/Firebase.Messaging.dll.mdb"
+            "Firebase/Plugins/Firebase.Messaging.pdb"
           ]
         },
         {
@@ -681,7 +681,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppMessaging.a",
             "Firebase/Plugins/iOS/Firebase.Messaging.dll",
-            "Firebase/Plugins/iOS/Firebase.Messaging.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Messaging.pdb"
           ]
         },
         {
@@ -690,7 +690,7 @@
           "labels": ["gvh_targets-editor"],
           "paths": [
             "Firebase/Editor/Firebase.Messaging.Editor.dll",
-            "Firebase/Editor/Firebase.Messaging.Editor.dll.mdb"
+            "Firebase/Editor/Firebase.Messaging.Editor.pdb"
           ],
           "override_metadata_upm": {
             "PluginImporter": {
@@ -779,7 +779,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Database.dll",
-            "Firebase/Plugins/Firebase.Database.dll.mdb"
+            "Firebase/Plugins/Firebase.Database.pdb"
           ]
         },
         {
@@ -789,7 +789,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppDatabase.a",
             "Firebase/Plugins/iOS/Firebase.Database.dll",
-            "Firebase/Plugins/iOS/Firebase.Database.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Database.pdb"
           ]
         },
         {
@@ -878,7 +878,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Functions.dll",
-            "Firebase/Plugins/Firebase.Functions.dll.mdb"
+            "Firebase/Plugins/Firebase.Functions.pdb"
           ]
         },
         {
@@ -888,7 +888,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppFunctions.a",
             "Firebase/Plugins/iOS/Firebase.Functions.dll",
-            "Firebase/Plugins/iOS/Firebase.Functions.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Functions.pdb"
           ]
         },
         {
@@ -964,7 +964,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Storage.dll",
-            "Firebase/Plugins/Firebase.Storage.dll.mdb"
+            "Firebase/Plugins/Firebase.Storage.pdb"
           ]
         },
         {
@@ -974,7 +974,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppStorage.a",
             "Firebase/Plugins/iOS/Firebase.Storage.dll",
-            "Firebase/Plugins/iOS/Firebase.Storage.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Storage.pdb"
           ]
         },
         {
@@ -983,7 +983,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Google.Sharpen.dll",
-            "Firebase/Plugins/Google.Sharpen.dll.mdb"
+            "Firebase/Plugins/Google.Sharpen.pdb"
           ]
         },
         {
@@ -1063,7 +1063,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Installations.dll",
-            "Firebase/Plugins/Firebase.Installations.dll.mdb"
+            "Firebase/Plugins/Firebase.Installations.pdb"
           ]
         },
         {
@@ -1073,7 +1073,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppInstallations.a",
             "Firebase/Plugins/iOS/Firebase.Installations.dll",
-            "Firebase/Plugins/iOS/Firebase.Installations.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Installations.pdb"
           ]
         },
         {
@@ -1151,7 +1151,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Performance.dll",
-            "Firebase/Plugins/Firebase.Performance.dll.mdb"
+            "Firebase/Plugins/Firebase.Performance.pdb"
           ]
         },
         {
@@ -1161,7 +1161,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppPerformance.a",
             "Firebase/Plugins/iOS/Firebase.Performance.dll",
-            "Firebase/Plugins/iOS/Firebase.Performance.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Performance.pdb"
           ]
         },
         {
@@ -1238,7 +1238,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Firestore.dll",
-            "Firebase/Plugins/Firebase.Firestore.dll.mdb"
+            "Firebase/Plugins/Firebase.Firestore.pdb"
           ]
         },
         {
@@ -1248,7 +1248,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppFirestore.a",
             "Firebase/Plugins/iOS/Firebase.Firestore.dll",
-            "Firebase/Plugins/iOS/Firebase.Firestore.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.Firestore.pdb"
           ]
         },
         {
@@ -1326,7 +1326,7 @@
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.TestLab.dll",
-            "Firebase/Plugins/Firebase.TestLab.dll.mdb"
+            "Firebase/Plugins/Firebase.TestLab.pdb"
           ]
         },
         {
@@ -1336,7 +1336,7 @@
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppTestlab.a",
             "Firebase/Plugins/iOS/Firebase.TestLab.dll",
-            "Firebase/Plugins/iOS/Firebase.TestLab.dll.mdb"
+            "Firebase/Plugins/iOS/Firebase.TestLab.pdb"
           ]
         },
         {
@@ -1353,7 +1353,7 @@
           "labels": ["gvh_targets-editor"],
           "paths": [
             "Firebase/Editor/Firebase.TestLab.Editor.dll",
-            "Firebase/Editor/Firebase.TestLab.Editor.dll.mdb"
+            "Firebase/Editor/Firebase.TestLab.Editor.pdb"
           ],
           "override_metadata_upm": {
             "PluginImporter": {

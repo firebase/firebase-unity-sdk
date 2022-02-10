@@ -37,6 +37,10 @@
             null, global::System.IntPtr.Zero);
       }
       global::System.GC.SuppressFinalize(this);
+#if SWIG_VERSION >= 0x040000
+      base.Dispose(disposing);
+#else
       base.Dispose();
+#endif
     }
    }

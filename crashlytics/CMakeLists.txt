@@ -89,7 +89,16 @@ mono_add_library(firebase_crashlytics_cs
     FIREBASE_OPENSOURCE
 )
 
-unity_pack_native(firebase_crashlytics_swig)
+if(FIREBASE_IOS_BUILD)
+  ios_pack(firebase_lib_crashlytics libFirebaseCppCrashlytics DEPS firebase_crashlytics firebase_crashlytics_swig)
+else()
+  build_firebase_shared(
+    crashlytics
+    crashlytics
+    FirebaseCppCrashlytics
+  )
+endif()
+
 unity_pack_cs(firebase_crashlytics_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

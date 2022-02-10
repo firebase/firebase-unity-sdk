@@ -99,6 +99,7 @@ import subprocess
 import time
 import requests
 import zipfile
+import json
 
 from absl import app
 from absl import flags
@@ -308,6 +309,7 @@ def main(argv):
         except (subprocess.SubprocessError, RuntimeError) as e:
           failures.append(
               Failure(
+                  testapp=testapp, 
                   description=xcode_project_path,
                   error_message=str(e)))
           logging.info(str(e))
@@ -359,7 +361,7 @@ def main(argv):
         try:
           setup_unity_project(dir_helper, setup_options)
         except (subprocess.SubprocessError, RuntimeError) as e:
-          failures.append(Failure(description=build_desc, error_message=str(e)))
+          failures.append(Failure(testapp=testapp, description=build_desc, error_message=str(e)))
           logging.info(str(e))
           continue  # If setup failed, don't try to build. Move to next testapp.
         for p in platforms:
@@ -683,10 +685,9 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
     for testapp in testapps:
       if config.get_api(testapp).full_name in path:
         if os.path.isfile(path):
-          shutil.copy(path, os.path.join(artifact_path, platform ,testapp))
+          shutil.move(path, os.path.join(artifact_path, platform ,testapp))
         else:
-          _run(["cp", "-R", path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path))])
-          dir_util.copy_tree(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)), preserve_symlinks=1)
+          shutil.move(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)), copy_function = shutil.copytree)
         break
 
 
@@ -709,6 +710,13 @@ def _summarize_results(testapps, platforms, versions, failures, output_dir, arti
 
   logging.info(summary)
   test_validation.write_summary(output_dir, summary, file_name)
+
+  summary_json = {}
+  summary_json["type"] = "build"
+  summary_json["testapps"] = testapps
+  summary_json["errors"] = {failure.testapp:failure.error_message for failure in failures}
+  with open(os.path.join(output_dir, file_name+".json"), "a") as f:
+    f.write(json.dumps(summary_json, indent=2))
   return 1 if failures else 0
 
 
@@ -792,7 +800,10 @@ def _copy_unity_assets(dir_helper, files_to_ignore):
     if any(name in copied_file for name in files_to_ignore):
       logging.info("Removing %s", copied_file)
       os.remove(copied_file)
-
+  if "firestore" in dest.lower():
+    logging.info("Removing firestore a) Tests b) Firebase/Editor/Builder.cs")
+    dir_util.remove_tree(os.path.join(dir_helper.unity_project_assets_dir, "Tests"))
+    os.remove(os.path.join(dir_helper.unity_project_assets_dir, "Firebase", "Editor", "Builder.cs"))
 
 # The menu scene will timeout to the automated version of the app,
 # while leaving an option in manual testing to select the manual version.
@@ -1002,11 +1013,12 @@ def _run(args, timeout=3000, capture_output=False, text=None, check=True):
 @attr.s(frozen=True, eq=False)
 class Failure(object):
   """Holds context for the failure of a testapp to build/run."""
+  testapp = attr.ib()
   description = attr.ib()
   error_message = attr.ib()
 
   def describe(self):
-    return "%s: %s" % (self.description, self.error_message)
+    return "%s, %s: %s" % (self.testapp, self.description, self.error_message)
 
 
 @attr.s(frozen=True, eq=False)

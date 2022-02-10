@@ -48,19 +48,18 @@ def find_unpack_script():
   built_folder_ext = "_unity"
   built_folder_postion = os.path.join("external", "src", "google_unity_jar_resolver")
   built_folder = None
-  resolver_root_folder = None
+  resolver_root_folder = "unity-jar-resolver"
   for folder in os.listdir("."):
     if folder.endswith(built_folder_ext):
       built_folder = folder
       break
   if built_folder != None:
     resolver_root_folder = os.path.join(built_folder, built_folder_postion)
-  else:
+  elif not os.path.exists(resolver_root_folder):
     git_clone_script = ["git", "clone",
       "--depth", "1",
       "https://github.com/googlesamples/unity-jar-resolver.git"]
     subprocess.call(git_clone_script)
-    resolver_root_folder = "unity-jar-resolver"
 
   if resolver_root_folder != None:
     script_path = os.path.join(resolver_root_folder, "source", "ImportUnityPackage", "import_unity_package.py")
@@ -96,7 +95,7 @@ def unpack_one_package(script, product_path):
   output_file = os.path.join(output_path, dotnet_name+"_"+product_name+".txt")
   if os.path.exists(output_file):
     os.remove(output_file)
-  subprocess.run(["tree",unpack_folder,"-o", output_file])
+  subprocess.run(["tree","-h",unpack_folder,"-o", output_file])
   logging.info("%s is unpacked", product_path)
 
 def main(argv):
