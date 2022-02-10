@@ -641,9 +641,9 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
     for testapp in testapps:
       if config.get_api(testapp).full_name in path:
         if os.path.isfile(path):
-          shutil.copy(path, os.path.join(artifact_path, platform ,testapp))
+          shutil.move(path, os.path.join(artifact_path, platform ,testapp))
         else:
-          dir_util.copy_tree(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)))
+          shutil.move(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)), copy_function = shutil.copytree)
         break
 
 
