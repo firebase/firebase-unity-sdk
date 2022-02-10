@@ -255,7 +255,8 @@ def filter_build_platform(platform):
   build_platform = []
   build_platform.extend(filter_mobile_platform(platform))
   desktop_platform = ','.join(list(filter(lambda p: p in platform, ["Windows", "macOS", "Linux"])))
-  build_platform.append(desktop_platform)
+  if desktop_platform:
+    build_platform.append(desktop_platform)
   return build_platform
 
 

@@ -389,7 +389,7 @@ jobs:
           fi
 
 
-  build_iOS:
+  build_ios:
     name: build-${{ matrix.unity_version }}-${{matrix.build_os}}-iOS
     runs-on: macos-latest
     if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && !cancelled()
@@ -509,7 +509,7 @@ jobs:
     name: test-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile
     runs-on: macos-11
     if: (contains(needs.check_and_prepare.outputs.platform, 'Android') || contains(needs.check_and_prepare.outputs.platform, 'iOS')) && !cancelled()
-    needs: [check_and_prepare, build]
+    needs: [check_and_prepare, build, build_ios]
     strategy:
       fail-fast: false
       matrix:
@@ -599,6 +599,8 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
+
+
   summarize_results:
     name: "summarize-results"
     needs: [check_and_prepare, build, test_desktop, test_mobile]
