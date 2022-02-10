@@ -95,7 +95,7 @@ function(generate_dependencies_xml module)
   if (NOT ${GEN_DEPS_SKIP_INSTALL})
     install(
       FILES "${OUT_FILE}"
-      DESTINATION "Assets/Firebase/Editor/"
+      DESTINATION "Firebase/Editor/"
     )
   endif()
 
