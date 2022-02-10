@@ -13,6 +13,10 @@ namespace Firebase.Sample {
     private Func<Task>[] tests = null;
     // The index of the currently running test.
     private int currentTestIndex = -1;
+    // List of exceptions thrown in the currently running test.
+    private List<Exception> testExceptions = new List<Exception>();
+    // Whether the currently running test is expected to fail.
+    private bool postTestIgnoredFailureCheckEnabled = true;
     // Name and index of the current running test function.
     public string CurrentTestDescription { get; private set; }
     // The Task that represents the currently running test.
@@ -57,6 +61,12 @@ namespace Firebase.Sample {
       Func<Task>[] testsToRun, Action<string> logFunc = null, string[] testNames = null) {
       TestLabManager testLabManager = InitializeTestLabManager();
       return new AutomatedTestRunner(testsToRun, testLabManager, logFunc, testNames);
+    }
+
+    public void FailTest(String reason) {
+      var e = new Exception(reason);
+      testExceptions.Add(e);
+      throw e;
     }
 
     /// <summary>
@@ -129,8 +139,18 @@ namespace Firebase.Sample {
                                   CurrentTestResult.Exception.Flatten().ToString()));
             ++failedTestsCount;
             failingTestDescriptions.Add(CurrentTestDescription);
+          } else if (postTestIgnoredFailureCheckEnabled && testExceptions.Count > 0) {
+            LogFunc(String.Format("Test {0} failed with {1} exception(s).\n\n",
+                                  CurrentTestDescription, testExceptions.Count.ToString()));
+            for (int i = 0; i < testExceptions.Count; ++i) {
+              LogFunc(String.Format("Exception message ({0}): {1}\n\n", (i + 1).ToString(),
+                                    testExceptions[i].ToString()));
+            }
+            ++failedTestsCount;
+            failingTestDescriptions.Add(CurrentTestDescription);
           } else {
-            // If the task was not faulted, assume it succeeded.
+            // If the task was not faulted and no exceptions have been recorded,
+            // assume it succeeded.
             LogFunc("Test " + CurrentTestDescription + " passed.");
             ++passedTestsCount;
           }
@@ -158,6 +178,8 @@ namespace Firebase.Sample {
 
     void StartNextTest() {
       CurrentTestResult = null;
+      postTestIgnoredFailureCheckEnabled = true;
+      testExceptions.Clear();
       ++currentTestIndex;
       if (currentTestIndex < tests.Length && tests[currentTestIndex] != null) {
         // Start running the next test.
@@ -178,6 +200,11 @@ namespace Firebase.Sample {
         }
         startTime = Time.time;
       }
+    }
+
+    // Informs the test runner that the currently running test contains expected assertion failures.
+    public void DisablePostTestIgnoredFailureCheck() {
+      postTestIgnoredFailureCheckEnabled = false;
     }
   }
 

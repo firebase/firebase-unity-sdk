@@ -99,7 +99,6 @@ mono_add_library(firebase_app_cs
     ${firebase_native_library}
 )
 
-unity_pack_native(firebase_app_swig)
 unity_pack_cs(firebase_app_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

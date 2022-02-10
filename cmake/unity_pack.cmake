@@ -224,14 +224,16 @@ endfunction()
 #  * Libraries are put into build arch folder
 #
 function(unity_pack_native name)
-
   if(NOT FIREBASE_PACK_NATIVE)
     return()
   endif()
 
+  message("unity_pack_native pack ${name}")
+
   get_target_property(target_type ${name} TYPE)
 
   if(NOT "${target_type}" STREQUAL "SHARED_LIBRARY")
+    message("unity_pack_native ${target_type} not equal SHARED_LIBRARY, returned")
     return()
   endif()
 
