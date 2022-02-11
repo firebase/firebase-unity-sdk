@@ -390,7 +390,7 @@ jobs:
 
 
   build_ios:
-    name: build-${{ matrix.unity_version }}-${{matrix.build_os}}-iOS
+    name: build-ios-${{ matrix.unity_version }}-${{matrix.build_os}}-iOS
     runs-on: macos-latest
     if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && !cancelled()
     needs: [check_and_prepare, build]
@@ -526,7 +526,6 @@ jobs:
           python-version: '3.7'
       - name: Install python deps
         timeout-minutes: 10
-        shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
       - id: device-info
@@ -541,12 +540,15 @@ jobs:
       - name: Install Cloud SDK
         if: steps.device-info.outputs.device_type == 'real'
         uses: google-github-actions/setup-gcloud@master
+      - name: Prepare for integration tests
+        if: steps.device-info.outputs.device_type == 'real'
+        timeout-minutes: 10
+        run: |
+          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Run Mobile integration tests on Real Device via FTL
         if: steps.device-info.outputs.device_type == 'real'
         timeout-minutes: 60
-        shell: bash
         run: |
-          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
           python scripts/gha/test_lab.py --testapp_dir testapps \
             --ios_device "${{ matrix.mobile_device }}" \
             --android_device "${{ matrix.mobile_device }}" \
@@ -564,7 +566,6 @@ jobs:
             --ci
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
-        shell: bash
         run: |
           if [ ! -f testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log.json ]; then
             mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log.json
@@ -593,7 +594,6 @@ jobs:
             --run_id ${{github.run_id}}
       - name: Summarize test results
         if: ${{ !cancelled() }}
-        shell: bash
         run: |
           cat testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log
           if [[ "${{ job.status }}" != "success" ]]; then
@@ -603,7 +603,7 @@ jobs:
 
   summarize_results:
     name: "summarize-results"
-    needs: [check_and_prepare, build, test_desktop, test_mobile]
+    needs: [check_and_prepare, build, build_ios, test_desktop, test_mobile]
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     steps:
