@@ -114,7 +114,7 @@ namespace Firebase.Editor {
             }
         }
 
-        private const string PYTHON_INTERPRETER = "python";
+        private const string PYTHON_INTERPRETER = "python3";
 
         /// <summary>
         /// Get the executable to run the script.
