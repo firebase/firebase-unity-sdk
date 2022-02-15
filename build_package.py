@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python2
 """Packages zip files from unity builds into unity packages.
 
 Takes packages produced from the unity sdk builds i.e.:

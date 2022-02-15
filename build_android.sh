@@ -80,7 +80,7 @@ mkdir -p android_build
 pushd android_build
 
 # Configure cmake with option value
-cmake .. ${CMAKE_OPTIONS} -DANDROID_ABI=armeabi-v7a
+cmake .. ${CMAKE_OPTIONS}
 check_exit_code $?
 
 # Build the SDK

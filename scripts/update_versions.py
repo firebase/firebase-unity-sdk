@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lint as: python2
 """Update the version numbers in cmake/firebase_unity_version.cmake.
 
 To use locally, make sure call following installation first.
