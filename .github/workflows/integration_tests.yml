@@ -57,6 +57,7 @@ jobs:
       github_ref: ${{ steps.set_outputs.outputs.github_ref }}
       pr_number: ${{ steps.set_outputs.outputs.pr_number }}
       matrix_build_os: ${{ steps.matrix_config.outputs.matrix_build_os }}
+      matrix_build_platform: ${{ steps.matrix_config.outputs.matrix_build_platform }}
       matrix_unity_versions: ${{ steps.matrix_config.outputs.matrix_unity_versions }}
       matrix_desktop_os: ${{ steps.matrix_config.outputs.matrix_desktop_os }}
       matrix_mobile_platform: ${{ steps.matrix_config.outputs.matrix_mobile_platform }}
@@ -174,6 +175,7 @@ jobs:
         echo "::set-output name=platform::${platform}"
         echo "::set-output name=matrix_desktop_os::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k "${platform}" -desktop_os=1)"
         echo "::set-output name=matrix_mobile_platform::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k "${platform}" -mobile_platform=1)"
+        echo "::set-output name=matrix_build_platform::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k "${platform}" -build_platform=1)"
         echo "::set-output name=matrix_build_os::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k build_os -o "${{github.event.inputs.build_os}}")"
         echo "::set-output name=matrix_unity_versions::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k unity_version -o "${{github.event.inputs.unity_versions}}")"
         mobile_test_on=$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k mobile_test_on -o "${{github.event.inputs.mobile_test_on}}")
@@ -191,7 +193,7 @@ jobs:
           --run_id ${{github.run_id}}
 
   build:
-    name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}
+    name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}
     runs-on: ${{matrix.os}}
     needs: check_and_prepare
     strategy:
@@ -199,6 +201,7 @@ jobs:
       matrix:
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
         os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
+        platform: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_platform) }}
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
       LC_ALL: en_US.UTF-8
@@ -227,7 +230,7 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/unity_installer.py --install \
-            --platforms ${{ needs.check_and_prepare.outputs.platform }} \
+            --platforms ${{ matrix.platform }} \
             --version ${{ matrix.unity_version }}
       - name: Activate Unity license
         timeout-minutes: 10
@@ -269,11 +272,11 @@ jobs:
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
             --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
-            --p ${{ needs.check_and_prepare.outputs.platform }} \
+            --p ${{ matrix.platform }} \
             --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
-            --artifact_name "${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}" \
+            --artifact_name "${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}" \
             --force_latest_runtime \
             --ci
       - name: Return Unity license
@@ -294,23 +297,23 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          if [ ! -f build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}.log.json ]; then
+          if [ ! -f build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}.log.json ]; then
             # No summary was created, make a placeholder one.
-            echo "__SUMMARY_MISSING__" > build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}.log.json
+            echo "__SUMMARY_MISSING__" > build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}.log.json
           fi
       - name: Upload build results artifact
         uses: actions/upload-artifact@v2.2.2
         if: ${{ !cancelled() }}
         with:
           name: log-artifact
-          path: build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}*
+          path: build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Android integration tests artifact
         uses: actions/upload-artifact@v2.2.2
-        if: contains(needs.check_and_prepare.outputs.platform, 'Android') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'Android') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-Android
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Android
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}/Android
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Android integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'Android') && ${{ !cancelled() }}
@@ -318,10 +321,10 @@ jobs:
         run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Android || true
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
-        if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'iOS') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-iOS
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/iOS
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}/iOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete iOS integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && ${{ !cancelled() }}
@@ -329,10 +332,10 @@ jobs:
         run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/iOS || true
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v2.2.2
-        if: contains(needs.check_and_prepare.outputs.platform, 'Linux') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'Linux') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-ubuntu-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Linux
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Linux integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'Linux') && ${{ !cancelled() }}
@@ -340,10 +343,10 @@ jobs:
         run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Linux || true
       - name: Upload macOS integration tests artifact
         uses: actions/upload-artifact@v2.2.2
-        if: contains(needs.check_and_prepare.outputs.platform, 'macOS') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'macOS') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-macos-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/macOS
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete macOS integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'macOS') && ${{ !cancelled() }}
@@ -351,10 +354,10 @@ jobs:
         run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/macOS || true
       - name: Upload Windows integration tests artifact
         uses: actions/upload-artifact@v2.2.2
-        if: contains(needs.check_and_prepare.outputs.platform, 'Windows') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'Windows') && ${{ !cancelled() }}
         with:
           name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-windows-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Windows
+          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform}}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Windows integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'Windows') && ${{ !cancelled() }}
@@ -380,7 +383,7 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}.log
+          cat build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi

@@ -68,6 +68,7 @@ PARAMETERS = {
     },
     "config": {
       "platform": "Windows,macOS,Linux,Android,iOS",
+      "apis": "analytics,auth,crashlytics,database,dynamic_links,functions,installations,messaging,remote_config,storage",
       "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
       "mobile_test_on": "real,virtual"
     }
@@ -249,6 +250,14 @@ def filter_mobile_platform(platform):
   return list(filtered_value)  
 
 
+def filter_build_platform(platform):
+  platform = platform.split(",")
+  build_platform = []
+  build_platform.extend(filter_mobile_platform(platform))
+  desktop_platform = ','.join(list(filter(lambda p: p in platform, ["Windows", "macOS", "Linux"])))
+  build_platform.append(desktop_platform)
+  return build_platform
+
 
 def print_value(value, config_parms_only=False):
   """ Print Json formatted string that can be consumed in Github workflow."""
@@ -287,6 +296,9 @@ def main():
     return 
   if args.mobile_platform:
     print(filter_mobile_platform(platform=args.parm_key))
+    return 
+  if args.build_platform:
+    print(filter_build_platform(platform=args.parm_key))
     return 
 
   if args.override:
@@ -327,6 +339,7 @@ def parse_cmdline_args():
   parser.add_argument('-get_device_platform', action='store_true', help='Get the device platform, used with -k $device')
   parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
   parser.add_argument('-mobile_platform', type=bool, default=False, help='Get mobile test platform. Use with "-k $build_platform -mobile_platform=1"')
+  parser.add_argument('-build_platform', type=bool, default=False, help='Get build platform. Use with "-k $build_platform -build_platform=1"')
   args = parser.parse_args()
   return args
 
