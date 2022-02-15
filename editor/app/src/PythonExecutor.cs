@@ -114,7 +114,34 @@ namespace Firebase.Editor {
             }
         }
 
-        private const string PYTHON_INTERPRETER = "python3";
+        private static string PYTHON_INTERPRETER
+        {
+            get
+            {
+                // Default using 'python'
+                string result = "python";
+
+                if (UnityEngine.SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX)
+                {
+                    // Currently Unity API return Fixed format, so just remove that part, may have better solution
+                    var versionCodeString = UnityEngine.SystemInfo.operatingSystem.Replace("Mac OS X ", "").Split('.').First();
+                    // Default is 10, due to before Big Sur is 10.x
+                    int versionCode = 10;
+                    if (int.TryParse(versionCodeString, out versionCode))
+                    {
+                        // If versionCode >= 12 means it is macOS Monterey, we can use python3 instead
+                        // Since after 12.3 there is no 'python' inside /usr/bin, Apple make it to two different files 'python3' and 'python2.7' (and 'python2.7' may be removed in future macOS release)
+                        if (versionCode >= 12)
+                        {
+                            result = "python3";
+                        }
+                    }
+                }
+
+                return result;
+            }
+        }
+
 
         /// <summary>
         /// Get the executable to run the script.
