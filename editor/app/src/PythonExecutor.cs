@@ -124,7 +124,7 @@ namespace Firebase.Editor {
                 if (UnityEngine.SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX)
                 {
                     // Currently Unity API return Fixed format, so just remove that part, may have better solution
-                    var versionCodeString = UnityEngine.SystemInfo.operatingSystem.Replace("Mac OS X ", "").Split('.').First();
+                    var versionCodeString = UnityEngine.SystemInfo.operatingSystem.Replace("Mac OS X ", "").Split('.')[0];
                     // Default is 10, due to before Big Sur is 10.x
                     int versionCode = 10;
                     if (int.TryParse(versionCodeString, out versionCode))
