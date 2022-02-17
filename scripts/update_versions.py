@@ -54,7 +54,7 @@ def get_ios_pod_version_from_cpp():
 
 ########## Android versions update #############################
 
-# Android gMaven repostiory from where we scan available Android packages
+# Android gMaven repository from where we scan available Android packages
 # and their versions
 GMAVEN_MASTER_INDEX = "https://dl.google.com/dl/android/maven2/master-index.xml"
 GMAVEN_GROUP_INDEX = "https://dl.google.com/dl/android/maven2/{0}/group-index.xml"
