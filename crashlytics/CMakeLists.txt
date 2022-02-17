@@ -14,6 +14,8 @@
 
 # CMake file for the firebase crashlytics library
 
+include(build_shared)
+
 # Only for unity builds
 if(NOT FIREBASE_INCLUDE_UNITY)
   return()
