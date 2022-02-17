@@ -67,6 +67,28 @@ target_compile_definitions(firebase_crashlytics
     -DINTERNAL_EXPERIMENTAL=1
 )
 
+# Generate the Proguard file
+if(ANDROID)
+  set(FIREBASE_CPP_CRASHLYTICS_PROGUARD ${CMAKE_CURRENT_BINARY_DIR}/crashlytics.pro
+      CACHE FILEPATH "Proguard file for Crashlytics" FORCE)
+
+  add_custom_command(
+    OUTPUT ${FIREBASE_CPP_CRASHLYTICS_PROGUARD}
+    COMMAND strings $<TARGET_FILE:firebase_crashlytics> |
+            grep %PG% |
+            sed -r 'sI/I.Ig' |
+            sed -r 's/%PG%/-keep,includedescriptorclasses public class /g'
+            > ${FIREBASE_CPP_CRASHLYTICS_PROGUARD}
+    DEPENDS firebase_crashlytics
+    COMMENT "Generating Crashlytics Proguard file."
+  )
+
+  add_custom_target(
+    FIREBASE_CPP_CRASHLYTICS_PROGUARD
+    DEPENDS ${FIREBASE_CPP_CRASHLYTICS_PROGUARD}
+  )
+endif()
+
 if(IOS)
  # Enable Automatic Reference Counting (ARC).
   set_property(
