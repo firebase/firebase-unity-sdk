@@ -81,7 +81,7 @@ EXIT /B %status%
   SET CMAKE_ARGS=%CMAKE_ARGS% -DFIREBASE_UNITY_BUILD_TESTS=ON
   SET CMAKE_ARGS=%CMAKE_ARGS% -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo
 
-  cmake .. -A x64 %CMAKE_ARGS% %~2
+  cmake .. -G "Visual Studio 16 2019" -A x64 %CMAKE_ARGS% %~2
 
   :: Check for errors, and return if there were any
   if %errorlevel% neq 0 (
