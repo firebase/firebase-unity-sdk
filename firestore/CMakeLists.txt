@@ -159,7 +159,7 @@ if (FIREBASE_INCLUDE_UNITY)
     IOS_DEPS
       "Firebase/Firestore"
     ANDROID_DEPS
-      ${FIREBASE_DATABASE_ANDROID_DEPS}
+      ${FIREBASE_FIRESTORE_ANDROID_DEPS}
     ANDROID_SPEC
       "firestore"
   )

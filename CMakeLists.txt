@@ -17,6 +17,7 @@
 # Higher CMake version needed for improvments in UseSwig.cmake and string join
 cmake_minimum_required (VERSION 3.13.4)
 set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_FLAGS "-fexceptions")
 
 # Turn on virtual folders for visual studio
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

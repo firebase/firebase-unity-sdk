@@ -36,7 +36,7 @@ Home brew can be used to install required dependencies:
 # https://github.com/protocolbuffers/protobuf/blob/master/kokoro/macos/prepare_build_macos_rc#L20
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 source $HOME/.rvm/scripts/rvm
-brew install cmake protobuf python2 mono swig@3
+brew install cmake protobuf python mono swig
 sudo chown -R $(whoami) /usr/local
 
 export PATH="/usr/local/opt/swig@3/bin:$PATH"
