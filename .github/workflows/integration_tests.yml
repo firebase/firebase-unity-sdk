@@ -124,10 +124,6 @@ jobs:
         fi
     ### If it's not a defined trigger, cancel workflow
     ### e.g. Triggered by non-"test-request" label; triggered by not merged PR close event.
-    - name: Test Trigger
-      run: |
-        echo ${{ steps.set_outputs.outputs.trigger }}
-        echo ${{ !steps.set_outputs.outputs.trigger }}
     - name: Cancel workflow
       if: ${{ !steps.set_outputs.outputs.trigger }}
       uses: andymckay/cancel-action@0.2
