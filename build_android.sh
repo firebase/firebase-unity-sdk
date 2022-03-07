@@ -17,7 +17,7 @@
 # Builds the Android version of the Firebase Unity SDK.
 
 help() {
-  echo "Usage: $(basename "$0") -a arch_list -c cmake_extra -m -h
+  echo "Usage: $(basename "$0") -a arch_list -c cmake_extra -d -h
 Builds the Android SDK, possibly merging multiple architectures.
 -a arch_list
   Space separated list of Android architectures to build for.
@@ -39,11 +39,11 @@ main() {
   local -a arch_list=(armeabi-v7a)
   local -a cmake_extra=
   local build_default=false
-  while getopts "a:c:mh" option "$@"; do
+  while getopts "a:c:dh" option "$@"; do
     case "${option}" in
       a ) arch_list="${OPTARG}";;
       c ) cmake_extra="${OPTARG}";;
-      m ) build_default=true;;
+      d ) build_default=true;;
       h ) help;;
       * ) help;;
     esac
