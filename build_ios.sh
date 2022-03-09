@@ -130,7 +130,7 @@ mkdir -p "$buildpath"
 pushd "$buildpath"
 
   # Configure cmake with option value
-  cmake -DCMAKE_TOOLCHAIN_FILE=${sourcepath}/cmake/unity_ios.cmake -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES .. ${CMAKE_OPTIONS} ${cmake_extra}
+  cmake $sourcepath -DCMAKE_TOOLCHAIN_FILE=${sourcepath}/cmake/unity_ios.cmake -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES ${CMAKE_OPTIONS} ${cmake_extra}
   check_exit_code $?
 
   # Build the SDK
