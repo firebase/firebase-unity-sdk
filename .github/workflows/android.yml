@@ -95,7 +95,7 @@ jobs:
       - name: Build SDK (Android)
         shell: bash
         run: |
-          ./build_android.sh
+          ./build_android.sh -d
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
