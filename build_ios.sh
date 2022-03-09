@@ -16,8 +16,83 @@
 #
 # Builds and runs the tests, meant to be used on a bash environment.
 
+usage(){
+    echo "Usage: $0 [options]
+ options:
+   -b, build path              default: ios_unity
+   -s, source path             default: .
+   -p, framework platform      default: ${SUPPORTED_PLATFORMS[@]}
+   -a, framework architecture  default: ${SUPPORTED_ARCHITECTURES[@]}
+ example: 
+   build_scripts/ios/build.sh -b ios_build -s . -a arm64"
+}
+
+set -e
+
+readonly SUPPORTED_PLATFORMS=(device) # simulator) only support device arch for now
+readonly SUPPORTED_ARCHITECTURES="arm64;armv7" #;x86_64;i386" only support device arch for now
+#readonly DEVICE_ARCHITECTURES="arm64;armv7" only support device arch for now
+#readonly SIMULATOR_ARCHITECTURES="arm64;x86_64;i386" only support device arch for now
+
+# build default value
+buildpath="ios_unity"
+sourcepath="."
+platforms=("${SUPPORTED_PLATFORMS[@]}")
+
 # Enable utf8 output
 export LANG=en_US.UTF-8
+
+# check options
+IFS=',' # split options on ',' characters
+while getopts ":b:s:a" opt; do
+    case $opt in
+        h)
+            usage
+            exit 0
+            ;;
+        b)
+            buildpath=$OPTARG
+            ;;
+        s)
+            sourcepath=$OPTARG
+            if [[ ! -d "${sourcepath}" ]]; then
+                echo "Source path ${sourcepath} not found."
+                exit 2
+            fi
+            ;;
+        p)
+            platforms=($OPTARG)
+            for platform in ${platforms[@]}; do
+                if [[ ! " ${SUPPORTED_PLATFORMS[@]} " =~ " ${platform} " ]]; then
+                    echo "invalid platform: ${platform}"
+                    echo "Supported platforms are: ${SUPPORTED_PLATFORMS[@]}"
+                    exit 2
+                fi
+            done
+            ;;
+        a)
+            architectures=($OPTARG)
+            for arch in ${architectures[@]}; do
+                if [[ ! " ${SUPPORTED_ARCHITECTURES[@]} " =~ " ${arch} " ]]; then
+                    echo "invalid architecture: ${arch}"
+                    echo "Supported architectures are: ${SUPPORTED_ARCHITECTURES[@]}"
+                    exit 2
+                fi
+            done
+            ;;
+        *)
+            echo "unknown parameter"
+            exit 2
+            ;;
+    esac
+done
+echo "*********************** Build Unity iOS SDK *******************************"
+echo "build path: ${buildpath}"
+echo "source path: ${sourcepath}"
+echo "build platforms: ${platforms[@]}"
+echo "***************************************************************************"
+sourcepath=$(cd ${sourcepath} && pwd)   #full path
+buildpath=$(mkdir -p ${buildpath} && cd ${buildpath} && pwd)    #full path
 
 # Stop display commands being run.
 set +x
@@ -42,23 +117,16 @@ CMAKE_OPTIONS="${CMAKE_OPTIONS} -DUNITY_ROOT_DIR=${UNITY_ROOT_DIR}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_UNITY_BUILD_TESTS=ON"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_CPP_BUILD_STUB_TESTS=ON" # enable a stub gtest target to get abseil-cpp working.
 
-printf "#################################################################\n"
-date
-printf "Building config 'unity' on platform 'ios' with option ''.\n"
-printf "#################################################################\n"
-
-DIR=ios_unity
-
 # Display commands being run.
 set -x
 
 # Make a directory to work in (if doesn't exist)
-mkdir -p "$DIR"
+mkdir -p "$buildpath"
 
-pushd "$DIR"
+pushd "$buildpath"
 
   # Configure cmake with option value
-  cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/unity_ios.cmake .. ${CMAKE_OPTIONS}
+  cmake -DCMAKE_TOOLCHAIN_FILE=${sourcepath}/cmake/unity_ios.cmake -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES .. ${CMAKE_OPTIONS}
   check_exit_code $?
 
   # Build the SDK
