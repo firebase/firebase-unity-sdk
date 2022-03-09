@@ -46,7 +46,7 @@ export LANG=en_US.UTF-8
 
 # check options
 IFS=',' # split options on ',' characters
-while getopts ":h:b:s:p:a:c" opt; do
+while getopts "hb:s:p:a:c:" opt; do
     case $opt in
         h)
             usage
@@ -132,7 +132,7 @@ mkdir -p "$buildpath"
 pushd "$buildpath"
 
   # Configure cmake with option value
-  cmake .. -DCMAKE_TOOLCHAIN_FILE=${sourcepath}/cmake/unity_ios.cmake -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES ${CMAKE_OPTIONS} ${cmake_extra}
+  cmake ${sourcepath} -DCMAKE_TOOLCHAIN_FILE=${sourcepath}/cmake/unity_ios.cmake -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES ${CMAKE_OPTIONS} ${cmake_extra}
   check_exit_code $?
 
   # Build the SDK
