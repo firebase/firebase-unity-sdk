@@ -46,7 +46,7 @@ export LANG=en_US.UTF-8
 
 # check options
 IFS=',' # split options on ',' characters
-while getopts ":b:s:a:c" opt; do
+while getopts ":h:b:s:p:a:c" opt; do
     case $opt in
         h)
             usage
