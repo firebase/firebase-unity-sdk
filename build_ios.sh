@@ -23,6 +23,7 @@ usage(){
    -s, source path             default: .
    -p, framework platform      default: ${SUPPORTED_PLATFORMS[@]}
    -a, framework architecture  default: ${SUPPORTED_ARCHITECTURES[@]}
+   -c, cmake extra             default: ""
  example: 
    build_scripts/ios/build.sh -b ios_build -s . -a arm64"
 }
@@ -38,13 +39,14 @@ readonly SUPPORTED_ARCHITECTURES="arm64;armv7" #;x86_64;i386" only support devic
 buildpath="ios_unity"
 sourcepath="."
 platforms=("${SUPPORTED_PLATFORMS[@]}")
+cmake_extra=""
 
 # Enable utf8 output
 export LANG=en_US.UTF-8
 
 # check options
 IFS=',' # split options on ',' characters
-while getopts ":b:s:a" opt; do
+while getopts ":b:s:a:c" opt; do
     case $opt in
         h)
             usage
@@ -80,6 +82,9 @@ while getopts ":b:s:a" opt; do
                 fi
             done
             ;;
+        c)
+            cmake_extra=$OPTARG
+            ;;
         *)
             echo "unknown parameter"
             exit 2
@@ -90,6 +95,7 @@ echo "*********************** Build Unity iOS SDK ******************************
 echo "build path: ${buildpath}"
 echo "source path: ${sourcepath}"
 echo "build platforms: ${platforms[@]}"
+echo "cmake extras: ${cmake_extra}"
 echo "***************************************************************************"
 sourcepath=$(cd ${sourcepath} && pwd)   #full path
 buildpath=$(mkdir -p ${buildpath} && cd ${buildpath} && pwd)    #full path
@@ -126,7 +132,7 @@ mkdir -p "$buildpath"
 pushd "$buildpath"
 
   # Configure cmake with option value
-  cmake -DCMAKE_TOOLCHAIN_FILE=${sourcepath}/cmake/unity_ios.cmake -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES .. ${CMAKE_OPTIONS}
+  cmake .. -DCMAKE_TOOLCHAIN_FILE=${sourcepath}/cmake/unity_ios.cmake -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES ${CMAKE_OPTIONS} ${cmake_extra}
   check_exit_code $?
 
   # Build the SDK
