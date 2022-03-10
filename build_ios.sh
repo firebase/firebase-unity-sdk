@@ -112,16 +112,13 @@ function check_exit_code {
  fi
 }
 
-CMAKE_OPTIONS=
+CMAKE_OPTIONS="-DFIREBASE_UNITY_BUILD_TESTS=ON"
+CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_CPP_BUILD_STUB_TESTS=ON" # enable a stub gtest target to get abseil-cpp working.
 
 if [ -d "../firebase-cpp-sdk" ]; then
   REAL_PATH=`python -c "import os; print(os.path.realpath('../firebase-cpp-sdk'))"`
-  CMAKE_OPTIONS="-DFIREBASE_CPP_SDK_DIR=$REAL_PATH "
+  CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_CPP_SDK_DIR=$REAL_PATH"
 fi
-
-CMAKE_OPTIONS="${CMAKE_OPTIONS} -DUNITY_ROOT_DIR=${UNITY_ROOT_DIR}"
-CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_UNITY_BUILD_TESTS=ON"
-CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_CPP_BUILD_STUB_TESTS=ON" # enable a stub gtest target to get abseil-cpp working.
 
 # Display commands being run.
 set -x
@@ -132,14 +129,15 @@ mkdir -p "$buildpath"
 pushd "$buildpath"
 
   # Configure cmake with option value
-  cmake ${sourcepath} -DCMAKE_TOOLCHAIN_FILE=${sourcepath}/cmake/unity_ios.cmake -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES ${CMAKE_OPTIONS} ${cmake_extra}
+  cmake $sourcepath \
+    -DCMAKE_TOOLCHAIN_FILE=$sourcepath/cmake/unity_ios.cmake \
+    -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES \
+    -DUNITY_ROOT_DIR=${UNITY_ROOT_DIR} \
+    $CMAKE_OPTIONS \
+    $cmake_extra
   check_exit_code $?
 
   # Build the SDK
-  # using make -j <nprocs> is having some issues where the build hangs
-  # and continues on pressing return only to stop sometime later.
-  # Disabling parallel builds for now.
-  # TODO: Enable parallel builds after finding the reason
   make
   check_exit_code $?
 
