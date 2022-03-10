@@ -112,7 +112,6 @@ function check_exit_code {
  fi
 }
 
-#CMAKE_OPTIONS="-DUNITY_ROOT_DIR=${UNITY_ROOT_DIR}"
 CMAKE_OPTIONS="-DFIREBASE_UNITY_BUILD_TESTS=ON"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_CPP_BUILD_STUB_TESTS=ON" # enable a stub gtest target to get abseil-cpp working.
 
