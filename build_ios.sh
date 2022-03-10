@@ -142,7 +142,7 @@ pushd "$buildpath"
   # and continues on pressing return only to stop sometime later.
   # Disabling parallel builds for now.
   # TODO: Enable parallel builds after finding the reason
-  make
+  make -j 8
   check_exit_code $?
 
   # Package build output into zip

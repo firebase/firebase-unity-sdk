@@ -128,7 +128,7 @@ main() {
     check_exit_code $?
 
     # Build the SDK
-    make
+    make -j 8
     check_exit_code $?
 
     # Package build output into zip
