@@ -238,6 +238,7 @@ def summarize_logs(dir, markdown=False, github_log=False):
           success_or_only_flakiness = False
           log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("errors", []).append(configs)
         for (testapp, failures) in log_reader_data["failures"].items():
+          success_or_only_flakiness = False
           log_data.setdefault(testapp, {}).setdefault("test", {}).setdefault("failures", []).append(configs)
           # for (test, _) in failures["failed_tests"].items():
           #   success_or_only_flakiness = False
@@ -360,7 +361,7 @@ def reorganize_configs(configs):
 #     ['ubuntu', 'windows']
 #     -> ['2/3 os: ubuntu,windows': ]
 def combine_configs(error_configs, all_configs):
-  logging.info("error_configs: %s; all_configs: %s", error_configs, all_configs)
+  # logging.info("error_configs: %s; all_configs: %s", error_configs, all_configs)
   for i in range(len(error_configs)):
     error_configs[i] = combine_config(error_configs[i], all_configs[i], i)
   return error_configs
@@ -368,7 +369,7 @@ def combine_configs(error_configs, all_configs):
 
 def combine_config(config, config_value, k):
   config_before_combination = config.copy()
-  logging.info("config: %s; config_value: %s", config, config_value)
+  # logging.info("config: %s; config_value: %s", config, config_value)
   config_name = BUILD_CONFIGS[k]
   # if certain config failed for all values, add message "All *"
   if len(config_value) > 1 and len(config) == len(config_value):
