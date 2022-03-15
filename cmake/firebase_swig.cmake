@@ -188,7 +188,7 @@ macro(firebase_swig_add_library name)
   endif()
 
   set(static_k_removal_override "")
-  if(name STREQUAL "firebase_analytics_swig") # hack for now, need to find better way to do special cases
+  if("${name}" STREQUAL "firebase_analytics_swig") # hack for now, need to find better way to do special cases
     set(static_k_removal_override "--static_k_removal=True")
   endif()
 
