@@ -209,7 +209,7 @@ jobs:
   trigger_integration_tests:
     # Trigger the integration_tests workflow.
     needs: [package_sdks]
-    if: (github.event.inputs.skipIntegrationTests == 0 || github.event.inputs.skipIntegrationTests == '') && !cancelled()
+    if: (github.event.inputs.skipIntegrationTests == 0 || github.event.inputs.skipIntegrationTests == '') && !cancelled() && !failure()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo

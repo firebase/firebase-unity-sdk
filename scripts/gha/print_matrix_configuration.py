@@ -67,9 +67,10 @@ PARAMETERS = {
       }
     },
     "config": {
-      "platform": "Windows,macOS,Linux,Android,iOS",
-      "apis": "analytics,auth,crashlytics,database,dynamic_links,functions,installations,messaging,remote_config,storage",
-      "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
+      "platform": "Windows,macOS,Linux,iOS",
+      # "platform": "Windows,macOS,Linux,Android,iOS",
+      "apis": "analytics,auth,crashlytics,database,functions,installations,remote_config",
+      # "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
       "mobile_test_on": "real,virtual"
     }
   },
