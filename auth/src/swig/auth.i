@@ -50,7 +50,7 @@
 #include "app/src/callback.h"
 #include "app/src/cleanup_notifier.h"
 #include "app/src/log.h"
-#include "app/src/mutex.h"
+#include "app/src/include/firebase/internal/mutex.h"
 #include "app/memory/shared_ptr.h"
 #include "app/src/cpp_instance_manager.h"
 #include "auth/src/include/firebase/auth.h"
@@ -437,6 +437,19 @@ static CppInstanceManager<Auth> g_auth_instances;
     return instance;
   }
 
+  %csmethodmodifiers LogHeartbeatInternal(App* app) "internal";
+  static void LogHeartbeatInternal(App* app) {
+    // Call the internal getter in order to trigger usage logging.
+    ::firebase::MutexLock lock(
+        ::firebase::auth::g_auth_instances.mutex());
+    firebase::auth::Auth* instance = firebase::auth::Auth::GetAuth(app);
+    // Future-proof against the possibility of the instance having no other
+    // references by incrementing and decrementing the reference counter so that
+    // memory can be freed if the reference count reaches zero.
+    ::firebase::auth::g_auth_instances.AddReference(instance);
+    ::firebase::auth::g_auth_instances.ReleaseReference(instance);
+  }
+
   // Release and decrement the reference count to a C++ instance
   %csmethodmodifiers ReleaseReferenceInternal(firebase::auth::Auth* instance) "internal";
   static void ReleaseReferenceInternal(firebase::auth::Auth* instance) {
@@ -522,7 +535,10 @@ static CppInstanceManager<Auth> g_auth_instances;
     lock (appCPtrToAuth) {
       System.IntPtr appCPtr = FirebaseApp.getCPtr(app).Handle;
       auth = ProxyFromAppCPtr(appCPtr);
-      if (auth != null) return auth;
+      if (auth != null) {
+        LogHeartbeatInternal(app);
+        return auth;
+      }
       InitResult init_result;
       FirebaseApp.TranslateDllNotFoundException(() => {
           auth = GetAuthInternal(app, out init_result);

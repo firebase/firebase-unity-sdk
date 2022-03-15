@@ -114,7 +114,45 @@ namespace Firebase.Editor {
             }
         }
 
-        private const string PYTHON_INTERPRETER = "python";
+        private static readonly string[] PYTHON_INTERPRETERS = {
+          "python", "python3", "python3.8","python3.7", "python2.7", "python2"
+        };
+
+        private static string s_pythonInterpreter = null;
+
+        private static void FindPythonInterpreter() {
+          // Run each entry in PYTHON_INTERPRETERS in sequence until we get one
+          // that succeeds.
+          foreach (string interpreter in PYTHON_INTERPRETERS) {
+            try {
+              CommandLine.Result result = CommandLine.Run(interpreter, "--version");
+              if (result.exitCode == 0) {
+                s_pythonInterpreter = interpreter;
+                // Found one, finished!
+                return;
+              }
+            }
+            catch(Exception e) {
+              // This one failed, ignore and move on to the next one.
+            }
+          }
+          // Fall back to the first option in case none worked, so this doesn't
+          // keep retrying.
+          Debug.LogError(
+              "Could not find a working python interpreter. " +
+              "Please make sure one of the following is in your PATH: " +
+              String.Join(" ", PYTHON_INTERPRETERS));
+          s_pythonInterpreter = PYTHON_INTERPRETERS[0];
+        }
+
+        private static string PythonInterpreter {
+          get {
+            if (s_pythonInterpreter == null) {
+              FindPythonInterpreter();
+            }
+            return s_pythonInterpreter;
+          }
+        }
 
         /// <summary>
         /// Get the executable to run the script.
@@ -122,7 +160,7 @@ namespace Firebase.Editor {
         public string Executable {
             get {
                 return Application.platform == RuntimePlatform.WindowsEditor ?
-                    ScriptPath : PYTHON_INTERPRETER;
+                    ScriptPath : PythonInterpreter;
             }
         }
 
@@ -132,7 +170,7 @@ namespace Firebase.Editor {
         /// <param name="arguments">List of arguments to pass to the script.</param>
         /// <returns>List of arguments to pass to the Executable to run the script.</returns>
         public IEnumerable<string> GetArguments(IEnumerable<string> arguments) {
-            if (Executable != PYTHON_INTERPRETER) return arguments;
+            if (Executable != PythonInterpreter) return arguments;
             var argsWithScript = new List<string>();
             argsWithScript.Add(String.Format("\"{0}\"", ScriptPath));
             argsWithScript.AddRange(arguments);
@@ -155,7 +193,7 @@ namespace Firebase.Editor {
         /// If execution fails on Windows 7/8, suggest potential remidies.
         /// </summary>
         private CommandLine.Result SuggestWorkaroundsOnFailure(CommandLine.Result result) {
-            if (result.exitCode != 0 && Executable != PYTHON_INTERPRETER) {
+            if (result.exitCode != 0 && Executable != PythonInterpreter) {
                 Debug.LogWarning(String.Format(DocRef.PythonScriptExecutionFailed, result.message,
                                                Executable));
             }
