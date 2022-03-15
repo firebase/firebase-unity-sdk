@@ -165,6 +165,8 @@ Release Notes
 -------------
 ### UNRELEASED
 - Changes
+    - General (Editor, macOS): Support non-default "python" executable names,
+      common in newer macOS versions.
     - Storage: Added a method to access the url of a storage instance.
 
 ### 8.7.0:
