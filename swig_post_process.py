@@ -56,9 +56,6 @@ flags.DEFINE_boolean('internal_visibility', True,
 
 class SWIGPostProcessingInterface(object):
   """An interface for objects that scrub code generated from SWIG."""
-  
-  def __str__(self) -> str:
-    return "SWIGPostProcessingInterface"
 
   def __call__(
       self, file_str, filename, iteration):  # pylint: disable=unused-argument
