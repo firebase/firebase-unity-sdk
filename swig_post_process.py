@@ -512,6 +512,7 @@ class StaticFunctionKInitRemoval(SWIGPostProcessingInterface):
                         line[match.end(2):]])
       output.append(line)
     return '\n'.join(output)
+    
 class DynamicToReinterpretCast(SWIGPostProcessingInterface):
   """Changes the use of dynamic_cast in SWIG generated code to reinterpret_cast.
 
