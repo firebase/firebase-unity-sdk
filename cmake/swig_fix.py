@@ -146,6 +146,7 @@ def get_transformations(namespace):
           swig_post_process.RenameAsyncMethods(),
           swig_post_process.RenameArgsFromSnakeToCamelCase(),
           swig_post_process.AddPInvokeAttribute(),
+          swig_post_process.StaticFunctionKInitRemoval(),
       ] + get_dll_import_transformation(),
   }
 
@@ -166,7 +167,7 @@ def main(argv):  # pylint: disable=unused-argument
     logging.warning('Empty input file "%s"', FLAGS.in_file)
     return 0
 
-  new_contents = swig_post_process.apply_post_process(contents, '', processes)
+  new_contents = swig_post_process.apply_post_process(contents, FLAGS.in_file, processes)
 
   with open(FLAGS.out_file, 'w') as out_file:
     out_file.write(new_contents)

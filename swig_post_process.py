@@ -56,6 +56,9 @@ flags.DEFINE_boolean('internal_visibility', True,
 
 class SWIGPostProcessingInterface(object):
   """An interface for objects that scrub code generated from SWIG."""
+  
+  def __str__(self) -> str:
+    return "SWIGPostProcessingInterface"
 
   def __call__(
       self, file_str, filename, iteration):  # pylint: disable=unused-argument
@@ -479,7 +482,39 @@ class InternalMethodsToInternalVisibility(SWIGPostProcessingInterface):
       output.append(line)
     return '\n'.join(output)
 
+class StaticFunctionKInitRemoval(SWIGPostProcessingInterface):
+  """Change static function or property that has k in the name initial.
 
+  Any function or property after "public static" and named as kXYZ will
+  be renamed to XYZ.
+  """
+
+  def __init__(self):
+    """Initialize the instance."""
+    self.static_function_regex = re.compile(
+        r'public static ([^ =]*) (k[^ =]*)')
+
+  def __call__(self, file_str, filename, iteration):
+    """Change static function or property that has k in the name initial.
+
+    Args:
+      file_str: This is a string containing the file contents to be processed.
+      filename: Unused.
+      iteration: Unused.
+
+    Returns:
+      Returns the modified file_str.
+    """
+    output = []
+    for line in file_str.splitlines():
+      match = self.static_function_regex.search(line)
+      if match:
+        function_name = match.groups()[1]
+        line = ''.join([line[:match.end(1)+1],
+                        function_name.replace('k', ''),
+                        line[match.end(2):]])
+      output.append(line)
+    return '\n'.join(output)
 class DynamicToReinterpretCast(SWIGPostProcessingInterface):
   """Changes the use of dynamic_cast in SWIG generated code to reinterpret_cast.
 
