@@ -47,6 +47,8 @@ flags.DEFINE_boolean('clear_in_file', False,
                      'Clear out in file once out file is written')
 flags.DEFINE_string('import_module', None,
                     'Change DllImport module to this value')
+flags.DEFINE_boolean('static_k_removal', False,
+                    'Whether to remove public static attributes k initial')
 
 
 def get_dll_import_transformation():
@@ -60,6 +62,20 @@ def get_dll_import_transformation():
 
   return [
       swig_post_process.PostProcessDllImport(FLAGS.import_module)
+  ]
+
+
+def get_static_k_removal_transformation():
+  """Gets the transforms to remove k initial for public static attribute
+  
+  Returns:
+    list of static k removal transformations.
+  """
+  if not FLAGS.static_k_removal:
+    return []
+
+  return [
+      swig_post_process.StaticFunctionKInitRemoval()
   ]
 
 
@@ -146,8 +162,8 @@ def get_transformations(namespace):
           swig_post_process.RenameAsyncMethods(),
           swig_post_process.RenameArgsFromSnakeToCamelCase(),
           swig_post_process.AddPInvokeAttribute(),
-          swig_post_process.StaticFunctionKInitRemoval(),
-      ] + get_dll_import_transformation(),
+      ] + get_dll_import_transformation()
+        + get_static_k_removal_transformation(),
   }
 
 

@@ -187,6 +187,11 @@ macro(firebase_swig_add_library name)
     set(import_module_override "")
   endif()
 
+  set(static_k_removal_override "")
+  if(name STREQUAL "firebase_analytics_swig") # hack for now, need to find better way to do special cases
+    set(static_k_removal_override "--static_k_removal=True")
+  endif()
+
   add_custom_command(
     OUTPUT ${UNITY_SWIG_CS_FIX_FILE}
     DEPENDS ${UNITY_SWIG_CS_GEN_FILE}
@@ -198,6 +203,7 @@ macro(firebase_swig_add_library name)
         --out_file=\"${UNITY_SWIG_CS_FIX_FILE}\"
         --namespace=${UNITY_SWIG_MODULE_OUT}
         ${import_module_override}
+        ${static_k_removal_override}
   )
 
   set(UNITY_SWIG_CPP_GEN_FILE ${swig_generated_file_fullname})
