@@ -21,6 +21,7 @@
 #include "app/src/assert.h"
 #include "app/src/cleanup_notifier.h"
 #include "app/src/include/firebase/app.h"
+#include "app/src/include/firebase/internal/mutex.h"
 #include "app/src/include/firebase/version.h"
 #include "app/src/log.h"
 #include "app/src/include/firebase/internal/mutex.h"

@@ -61,6 +61,20 @@ static CppInstanceManager<Installations> g_installations_instances;
     return instance;
   }
 
+  %csmethodmodifiers LogHeartbeatInternal(App* app) "internal";
+  static void LogHeartbeatInternal(App* app) {
+    // Call the internal getter in order to trigger usage logging.
+    ::firebase::MutexLock lock(
+        ::firebase::installations::g_installations_instances.mutex());
+    firebase::installations::Installations* instance =
+        firebase::installations::Installations::GetInstance(app);
+    // Future-proof against the possibility of the instance having no other
+    // references by incrementing and decrementing the reference counter so that
+    // memory can be freed if the reference count reaches zero.
+    ::firebase::installations::g_installations_instances.AddReference(instance);
+    ::firebase::installations::g_installations_instances.ReleaseReference(instance);
+  }
+
   %csmethodmodifiers ReleaseReferenceInternal(firebase::installations::Installations* instance) "internal";
   static void ReleaseReferenceInternal(
       firebase::installations::Installations* instance) {
@@ -145,7 +159,10 @@ static CppInstanceManager<Installations> g_installations_instances;
     lock (installationsByAppCPtr) {
       System.IntPtr appCPtr = FirebaseApp.getCPtr(app).Handle;
       installations = ProxyFromAppCPtr(appCPtr);
-      if (installations != null) return installations;
+      if (installations != null) {
+        LogHeartbeatInternal(app);
+        return installations;
+      }
       FirebaseApp.TranslateDllNotFoundException(() => {
           installations = GetInstallationsInternal(app);
         });
