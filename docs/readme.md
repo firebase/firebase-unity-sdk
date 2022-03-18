@@ -163,9 +163,31 @@ Support
 
 Release Notes
 -------------
-### UNRELEASED
+### 8.9.0
 - Changes
+    - General (Editor, macOS): Support non-default "python" executable names,
+      common in newer macOS versions.
+
+### 8.8.1
+- Changes
+    - General (iOS): Fixed additional issues on iOS 15 caused by early
+      initialization of Firebase iOS SDK.
+
+### 8.8.0
+- Changes
+    - General (iOS): Another possible fix for an intermittent crash on iOS 15
+      caused by constructing C++ objects during Objective-C's `+load` method.
     - Storage: Added a method to access the url of a storage instance.
+    - Crashlytics (Android): Updated internal Crashpad version to commit
+      `281ba7`. With this change, disabling tagged pointers is no longer
+      required, so the following can be removed from your manifest's
+      application tag: `android:allowNativeHeapPointerTagging=false`.
+    - Crashlytics (Android): Improved runtime efficiency of the
+      [`SetCustomKey` functions](/docs/crashlytics/customize-crash-reports?platform=unity#add-keys),
+      significantly reducing the number objects created and disk writes when
+      keys are updated frequently.
+    - Remote Config: Fixed an issue where the TimeSpan field of FetchDataAsync
+      was being used incorrectly.
 
 ### 8.7.0:
 - Changes
