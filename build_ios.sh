@@ -31,7 +31,7 @@ usage(){
 set -e
 
 readonly SUPPORTED_PLATFORMS=(device) # simulator) only support device arch for now
-readonly SUPPORTED_ARCHITECTURES="arm64;armv7" #;x86_64;i386" only support device arch for now
+readonly SUPPORTED_ARCHITECTURES="arm64;armv7;x86_64;i386" #arm64;armv7;x86_64;i386" only support device arch for now
 #readonly DEVICE_ARCHITECTURES="arm64;armv7" only support device arch for now
 #readonly SIMULATOR_ARCHITECTURES="arm64;x86_64;i386" only support device arch for now
 
@@ -132,6 +132,8 @@ pushd "$buildpath"
   cmake $sourcepath \
     -DCMAKE_TOOLCHAIN_FILE=$sourcepath/cmake/unity_ios.cmake \
     -DCMAKE_OSX_ARCHITECTURES=$SUPPORTED_ARCHITECTURES \
+    -DCMAKE_IOS_INSTALL_UNIVERSAL_LIBS=YES \
+    -DCMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH=NO \
     -DUNITY_ROOT_DIR=${UNITY_ROOT_DIR} \
     $CMAKE_OPTIONS \
     $cmake_extra
