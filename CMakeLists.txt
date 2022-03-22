@@ -31,13 +31,13 @@ option(FIREBASE_UNI_LIBRARY "Link all firebase libraries into one shared object"
 # Different options to enable/disable each library being included during
 # configuration.
 option(FIREBASE_INCLUDE_LIBRARY_DEFAULT
-       "Should each library be included by default." OFF)
+       "Should each library be included by default." ON)
 option(FIREBASE_INCLUDE_ANALYTICS
        "Include the Google Analytics for Firebase library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_AUTH
        "Include the Firebase Authentication library."
-       ON)
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_CRASHLYTICS
        "Include the Firebase Crashlytics library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
