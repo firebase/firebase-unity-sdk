@@ -499,7 +499,7 @@ jobs:
           name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}
       - name: Install Cloud SDK
         if: steps.device-info.outputs.device_type == 'real'
-        uses: google-github-actions/setup-gcloud@master
+        uses: google-github-actions/setup-gcloud@v0
       - name: Run Mobile integration tests on Real Device via FTL
         if: steps.device-info.outputs.device_type == 'real'
         timeout-minutes: 60
