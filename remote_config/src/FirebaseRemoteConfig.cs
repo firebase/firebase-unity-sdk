@@ -202,7 +202,7 @@ namespace Firebase.RemoteConfig {
     /// @returns A Task which can be used to determine with the fetch is complete.
     public System.Threading.Tasks.Task FetchAsync(TimeSpan cacheExpiration) {
       ThrowIfNull();
-      return remoteConfigInternal.FetchAsync((ulong)cacheExpiration.Seconds);
+      return remoteConfigInternal.FetchAsync((ulong)cacheExpiration.TotalSeconds);
     }
 
     /// @brief Sets the default values based on a string to object dictionary.
@@ -303,7 +303,9 @@ namespace Firebase.RemoteConfig {
 
     /// @brief The default cache expiration used by FetchAsync(), equal to 12 hours.
     public static TimeSpan DefaultCacheExpiration {
-      get { return new System.TimeSpan((long)RemoteConfigUtil.kDefaultCacheExpiration); }
+      get {
+        return System.TimeSpan.FromMilliseconds((long)RemoteConfigUtil.kDefaultCacheExpiration);
+      }
     }
 
     /// The default timeout used by FetchAsync(), equal to 30 seconds,
