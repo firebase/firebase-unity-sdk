@@ -158,10 +158,10 @@ TEST_DEVICES = {
   "emulator_latest": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
   "emulator_32bit": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
   "ios_min": {"platform": "iOS", "type": "real", "model": "iphone8", "version": "11.4"},
-  "ios_target": {"platform": "iOS", "type": "real", "model": "iphone8plus", "version": "12.0"},
+  "ios_target": {"platform": "iOS", "type": "real", "model": "iphone8", "version": "14.7"},
   "ios_latest": {"platform": "iOS", "type": "real", "model": "iphone11", "version": "13.6"},
   "simulator_min": {"platform": "iOS", "type": "virtual", "name": "iPhone 6", "version": "11.4"},
-  "simulator_target": {"platform": "iOS", "type": "virtual", "name": "iPhone 8", "version": "12.0"},
+  "simulator_target": {"platform": "iOS", "type": "virtual", "name": "iPhone 8", "version": "14.5"},
   "simulator_latest": {"platform": "iOS", "type": "virtual", "name": "iPhone 11", "version": "14.4"},
 }
 
