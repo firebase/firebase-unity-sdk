@@ -54,9 +54,31 @@ namespace Firebase.Sample.Messaging {
         MakeTest(TestGetTokenAsync),
         MakeTest(TestDeleteTokenAsync),
       };
+
+      string[] customTests = {
+        // Disable these tests on desktop, as desktop never receives a token, and so WaitForToken
+        // (called by all of these tests) stalls forever.
+#if (UNITY_IOS || UNITY_ANDROID)
+        "TestWaitForToken",
+#if !UNITY_IOS
+        // TODO(b/130674454) This test times out on iOS, disabling until fixed.
+        "TestSendPlaintextMessageToDevice",
+#endif // !UNITY_IOS
+        "TestSendJsonMessageToDevice",
+        "TestSendJsonMessageToSubscribedTopic",
+#else  // (UNITY_IOS || UNITY_ANDROID)
+        // Run a vacuous test. Should be removed if/when desktop platforms get a real test.
+        "TestDummy",
+#endif // (UNITY_IOS || UNITY_ANDROID)
+        // TODO(varconst): a more involved test to check that resubscribing works
+        "TestGetTokenAsync",
+        "TestDeleteTokenAsync",
+      };
+      
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
-        logFunc: DebugLog
+        logFunc: DebugLog,
+        testNames: customTests
       );
 
       base.Start();
@@ -151,18 +173,20 @@ namespace Firebase.Sample.Messaging {
 
     // Test GetTokenAsync
     IEnumerator TestGetTokenAsync(TaskCompletionSource<string> tcs) {
-      yield return StartCoroutine(WaitForToken());
+      //yield return FirebaseMessaging.GetTokenAsync();
       FirebaseMessaging.GetTokenAsync().ContinueWithOnMainThread(task => {
         tcs.SetResult(task.Result);
+        DebugLog("GetToken:"+task.Result);
       });
-
+      yield break;
     }
     // Test DeleteTokenAsync
     IEnumerator TestDeleteTokenAsync(TaskCompletionSource<string> tcs) {
-      yield return StartCoroutine(WaitForToken());
+      //yield return FirebaseMessaging.DeleteTokenAsync();
       FirebaseMessaging.DeleteTokenAsync().ContinueWithOnMainThread(task => {
         tcs.SetResult("DeleteTokenAsync completed");
       });
+      yield break;
     }
 
     // Sends the given message to targetDevice in plaintext format and gives back the message id iff
