@@ -74,7 +74,7 @@ namespace Firebase.Sample.Messaging {
         "TestGetTokenAsync",
         "TestDeleteTokenAsync",
       };
-      
+
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
         logFunc: DebugLog,
@@ -173,7 +173,6 @@ namespace Firebase.Sample.Messaging {
 
     // Test GetTokenAsync
     IEnumerator TestGetTokenAsync(TaskCompletionSource<string> tcs) {
-      //yield return FirebaseMessaging.GetTokenAsync();
       FirebaseMessaging.GetTokenAsync().ContinueWithOnMainThread(task => {
         tcs.SetResult(task.Result);
         DebugLog("GetToken:"+task.Result);
@@ -182,7 +181,6 @@ namespace Firebase.Sample.Messaging {
     }
     // Test DeleteTokenAsync
     IEnumerator TestDeleteTokenAsync(TaskCompletionSource<string> tcs) {
-      //yield return FirebaseMessaging.DeleteTokenAsync();
       FirebaseMessaging.DeleteTokenAsync().ContinueWithOnMainThread(task => {
         tcs.SetResult("DeleteTokenAsync completed");
       });
