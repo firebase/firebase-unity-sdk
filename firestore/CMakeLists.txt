@@ -99,6 +99,10 @@ firebase_swig_add_library(firebase_firestore_swig
     firebase_firestore_swig_cpp
 )
 
+target_compile_options(firebase_firestore PUBLIC -fexceptions)
+target_compile_options(firebase_firestore_swig_cpp PUBLIC -fexceptions)
+target_compile_options(firebase_firestore_swig PUBLIC -fexceptions)
+
 set(FIRESTORE_SOURCE_DIR ${PROJECT_BINARY_DIR}/bin/external/src/firestore)
 
 # Additional public headers come from the Firestore core
