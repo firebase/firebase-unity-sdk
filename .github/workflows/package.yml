@@ -8,11 +8,11 @@ on:
         description: 'CSV of VMs to run on'
         default: 'ubuntu-latest'
         required: true
-      ios_run_id:
+      ios_id:
         description: 'Run id to package ios from, default to last success build, None means don't pack'
-      android_run_id:
+      android_id:
         description: 'Run id to package android from, default to last success build, None means don't pack'
-      desktop_run_id:
+      desktop_id:
         description: 'Run id to package desktop from, default to last success build, None means don't pack'
       skipIntegrationTests:
         description: 'skip integration tests?'
@@ -84,27 +84,27 @@ jobs:
 
       # Fetch all the zip files from previous run
       - name: Fetch Desktop Artifacts
-        if: github.event.inputs.desktop_run_id != 'None'
+        if: github.event.inputs.desktop_id != 'None'
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'sdk_build.yml'
-          run_id: ${{ github.event.inputs.desktop_run_id }} || ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.desktop_id }} || ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
 
       - name: Fetch iOS Artifacts
-        if: github.event.inputs.ios_run_id != 'None'
+        if: github.event.inputs.ios_id != 'None'
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'ios.yml'
-          run_id: ${{ github.event.inputs.ios_run_id }} || ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.ios_id }} || ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
       
       - name: Fetch Android Artifacts
-        if: github.event.inputs.android_run_id != 'None'
+        if: github.event.inputs.android_id != 'None'
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'android.yml'
-          run_id: ${{ github.event.inputs.android_run_id }} || ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.android_id }} || ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
       
       - name: move zip files
