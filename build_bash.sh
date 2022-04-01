@@ -28,6 +28,52 @@ function check_exit_code {
  fi
 }
 
+usage() {
+    echo "Usage: $0 [options]
+ options:
+   -t, CMake target            default: ""
+   -c, cmake extra             default: ""
+ example: 
+   build_macos.sh or build_linux.sh -t auth,firestore -c -DCMAKE_BUILD_TYPE=Debug"
+}
+
+readonly SUPPORTED_TARGETS=(analytics auth database dynamic_links firestore functions installations messaging remote_config storage)
+
+# build default value
+build_target=""
+cmake_extra=""
+
+# Enable utf8 output
+export LANG=en_US.UTF-8
+
+# check options
+IFS=',' # split options on ',' characters
+while getopts "ht:c:" opt; do
+    case $opt in
+    h)
+        usage
+        exit 0
+        ;;
+    t)
+        build_target=($OPTARG)
+        for target in ${build_target[@]}; do
+            if [[ ! " ${SUPPORTED_TARGETS[@]} " =~ " ${target} " ]]; then
+                echo "invalid target: ${target}"
+                echo "Supported target are: ${SUPPORTED_TARGETS[@]}"
+                exit 2
+            fi
+        done
+        ;;
+    c)
+        cmake_extra=$OPTARG
+        ;;
+    *)
+        echo "unknown parameter"
+        exit 2
+        ;;
+    esac
+done
+
 CMAKE_OPTIONS=
 
 if [ -d "../firebase-cpp-sdk" ]; then
@@ -37,6 +83,15 @@ fi
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DUNITY_ROOT_DIR=${UNITY_ROOT_DIR}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_UNITY_BUILD_TESTS=ON"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_CPP_BUILD_STUB_TESTS=ON" # enable a stub gtest target to get abseil-cpp working.
+CMAKE_OPTIONS="${CMAKE_OPTIONS} ${cmake_extra}"
+
+if (( ${#build_target[@]} )); then
+  CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_INCLUDE_LIBRARY_DEFAULT=OFF"
+  for target in ${build_target[@]}; do
+    uppertarget=$(echo $target | tr '[:lower:]' '[:upper:]')
+    CMAKE_OPTIONS="${CMAKE_OPTIONS} -DFIREBASE_INCLUDE_$uppertarget=ON"
+  done
+fi
 
 # TODO: Fix mono build to not need unity deps
 build_options=(
@@ -50,11 +105,12 @@ for option in "${build_options[@]}" ; do
   NAME=${option%%:*}
   EXTRA_OPTIONS=${option#*:}
 
-  printf "#################################################################\n"
+  echo "*********************** Build $PLATFORM *******************************"
   date
-  printf "Building config '%s' on platform '%s' with option '%s'.\n" \
-    "$NAME" "$PLATFORM" "$EXTRA_OPTIONS"
-  printf "#################################################################\n"
+  echo "build target: ${build_target[@]}"
+  echo "cmake extras: ${cmake_extra}"
+  echo "extra options $EXTRA_OPTIONS" 
+  echo "***************************************************************************"
 
   DIR=${PLATFORM}_${NAME}
 
@@ -67,7 +123,7 @@ for option in "${build_options[@]}" ; do
   pushd "$DIR"
 
     # Configure cmake with option value
-    cmake .. ${CMAKE_OPTIONS} ${EXTRA_OPTIONS} "$@"
+    cmake .. ${CMAKE_OPTIONS} ${EXTRA_OPTIONS}
     check_exit_code $?
 
     # Build the SDK

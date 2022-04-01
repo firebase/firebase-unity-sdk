@@ -25,7 +25,7 @@ usage() {
    -a, framework architecture  default: ${SUPPORTED_ARCHITECTURES[@]}
    -c, cmake extra             default: ""
  example: 
-   build_scripts/ios/build.sh -b ios_build -s . -a arm64"
+   build_ios.sh -b ios_build -s . -a arm64"
 }
 
 set -e
