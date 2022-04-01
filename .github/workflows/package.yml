@@ -16,13 +16,13 @@ on:
         default: None
       ios_run:
         description: 'Run id to package ios from, empty means last success build, None means don't pack'
-        default: ""
+        default: ''
       android_run:
         description: 'Run id to package android from, empty means last success build, None means don't pack'
-        default: ""
+        default: ''
       desktop_run:
         description: 'Run id to package desktop from, empty means last success build, None means don't pack'
-        default: ""
+        default: ''
         
 
 env:
