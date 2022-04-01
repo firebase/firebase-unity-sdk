@@ -15,14 +15,11 @@ on:
         description: 'If already a working in progress release branch'
         default: 'None'
       ios_run_id:
-        description: 'Run id to package ios from, empty means last success build, None means don't pack'
-        default: ''
+        description: 'Run id to package ios from, default to last success build, None means don't pack'
       android_run_id:
-        description: 'Run id to package android from, empty means last success build, None means don't pack'
-        default: ''
+        description: 'Run id to package android from, default to last success build, None means don't pack'
       desktop_run_id:
-        description: 'Run id to package desktop from, empty means last success build, None means don't pack'
-        default: ''
+        description: 'Run id to package desktop from, default to last success build, None means don't pack'
         
 
 env:
