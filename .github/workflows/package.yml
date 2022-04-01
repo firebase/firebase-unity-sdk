@@ -4,7 +4,7 @@ name: Package SDKs
 on:
   workflow_dispatch:
     inputs:
-      runid_ios:
+      runid1:
         description: 'Run id to package ios from, default to last success build, None means don't pack'
       android_id:
         description: 'Run id to package android from, default to last success build, None means don't pack'
