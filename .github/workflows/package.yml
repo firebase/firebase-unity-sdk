@@ -14,6 +14,16 @@ on:
       working_branch:
         description: 'If already a working in progress release branch'
         default: None
+      ios_run:
+        description: 'Run id to package ios from, empty means last success build, None means don't pack'
+        default: ""
+      android_run:
+        description: 'Run id to package android from, empty means last success build, None means don't pack'
+        default: ""
+      desktop_run:
+        description: 'Run id to package desktop from, empty means last success build, None means don't pack'
+        default: ""
+        
 
 env:
   # Use SHA256 for hashing files.
@@ -77,24 +87,27 @@ jobs:
 
       # Fetch all the zip files from previous run
       - name: Fetch Desktop Artifacts
+        if: github.event.inputs.desktop_run != 'None'
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'sdk_build.yml'
-          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.desktop_run }} || ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
 
       - name: Fetch iOS Artifacts
+        if: github.event.inputs.ios_run != 'None'
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'ios.yml'
-          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.ios_run }} || ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
       
       - name: Fetch Android Artifacts
+        if: github.event.inputs.android_run != 'None'
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'android.yml'
-          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.android_run }} || ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
       
       - name: move zip files
