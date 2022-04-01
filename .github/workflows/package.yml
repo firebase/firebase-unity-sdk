@@ -4,16 +4,16 @@ name: Package SDKs
 on:
   workflow_dispatch:
     inputs:
-      operating_systems:
-        description: 'CSV of VMs to run on'
-        default: 'ubuntu-latest'
-        required: true
-      ios_id:
+      runid_ios:
         description: 'Run id to package ios from, default to last success build, None means don't pack'
       android_id:
         description: 'Run id to package android from, default to last success build, None means don't pack'
       desktop_id:
         description: 'Run id to package desktop from, default to last success build, None means don't pack'
+      operating_systems:
+        description: 'CSV of VMs to run on'
+        default: 'ubuntu-latest'
+        required: true
       skipIntegrationTests:
         description: 'skip integration tests?'
         default: 0
