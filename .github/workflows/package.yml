@@ -4,10 +4,6 @@ name: Package SDKs
 on:
   workflow_dispatch:
     inputs:
-      android_id:
-        description: 'Run id to package android from, default to last success build, None means don't pack'
-      desktop_id:
-        description: 'Run id to package desktop from, default to last success build, None means don't pack'
       operating_systems:
         description: 'CSV of VMs to run on'
         default: 'ubuntu-latest'
