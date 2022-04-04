@@ -62,13 +62,16 @@ mono_add_library(firebase_storage_cs
     firebase_storage_swig
 )
 
+if(FIREBASE_IOS_BUILD)
+  ios_pack(firebase_lib_storage libFirebaseCppStorage DEPS firebase_storage firebase_storage_swig)
+else()
 build_firebase_shared(
   storage
   storage
   FirebaseCppStorage
 )
+endif()
 
-unity_pack_native(firebase_storage_swig)
 unity_pack_cs(firebase_storage_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

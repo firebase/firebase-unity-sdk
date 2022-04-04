@@ -26,13 +26,20 @@ include(build_firebase_aar)
 function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
 
   set(shared_target "firebase_${LIBRARY_NAME}_shared")
+  
   add_library(${shared_target} SHARED
     ${FIREBASE_SOURCE_DIR}/empty.cc
+    $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}>
+    $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}_swig>
   )
+  
+  set(SHARED_TARGET_LINK_LIB_NAMES "firebase_${LIBRARY_NAME}" "firebase_${LIBRARY_NAME}_swig")
+
   target_link_libraries(${shared_target}
-    "firebase_${LIBRARY_NAME}_swig"
+    ${SHARED_TARGET_LINK_LIB_NAMES}
   )
 
+  # Update output name
   set_target_properties(${shared_target} 
     PROPERTIES
       OUTPUT_NAME "${OUTPUT_NAME}"
@@ -52,10 +59,26 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
         PREFIX "lib"
         SUFFIX ".a"
     )
+  elseif(ANDROID)
+    set_target_properties(${shared_target}
+      PROPERTIES
+        PREFIX "lib"
+    )
   else()
     set_target_properties(${shared_target}
       PROPERTIES
         PREFIX ""
+    )
+  endif()
+
+  if(ANDROID)
+    target_link_options(${shared_target}
+      PRIVATE
+        "-llog"
+        "-Wl,-z,defs"
+        "-Wl,--no-undefined"
+        # Link against the static libc++, which is the default done by Gradle.
+        "-static-libstdc++"
     )
   endif()
   

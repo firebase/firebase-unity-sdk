@@ -28,13 +28,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-2019, macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
           unity_version: ${{ github.event.inputs.unity_version }}
           build_dir: macos_unity
           unity_platform_name: macOS,iOS
-        - os: windows-latest
+        - os: windows-2019
           unity_version: ${{ github.event.inputs.unity_version }}
           build_dir: windows_unity
           unity_platform_name: Windows
@@ -125,6 +125,11 @@ jobs:
           echo "$(swig -swiglib)" >> $GITHUB_PATH
           swig -swiglib
           echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
+      
+      - name: Display Swig Version
+        shell: bash
+        run: |
+          swig -version
 
       - name: Build SDK (Linux)
         if: startsWith(matrix.os, 'ubuntu')

@@ -23,8 +23,8 @@
 #include <unordered_map>
 
 #include "app/src/assert.h"
-#include "app/src/log.h"
 #include "app/src/include/firebase/internal/mutex.h"
+#include "app/src/log.h"
 
 namespace firebase {
 

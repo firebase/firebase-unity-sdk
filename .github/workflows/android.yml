@@ -87,10 +87,15 @@ jobs:
         run: |
           echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{ github.event.inputs.unity_version }} -k unity_path )" >> $GITHUB_ENV
 
+      - name: Display Swig Version
+        shell: bash
+        run: |
+          swig -version
+
       - name: Build SDK (Android)
         shell: bash
         run: |
-          ./build_android.sh
+          ./build_android.sh -d
 
       - name: Upload Build
         uses: actions/upload-artifact@v2

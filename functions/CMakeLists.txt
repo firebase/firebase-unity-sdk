@@ -54,13 +54,16 @@ mono_add_library(firebase_functions_cs
     firebase_functions_swig
 )
 
+if(FIREBASE_IOS_BUILD)
+  ios_pack(firebase_lib_functions libFirebaseCppFunctions DEPS firebase_functions firebase_functions_swig)
+else()
 build_firebase_shared(
   functions
   functions
   FirebaseCppFunctions
 )
+endif()
 
-unity_pack_native(firebase_functions_swig)
 unity_pack_cs(firebase_functions_cs)
 
 if (FIREBASE_INCLUDE_UNITY)

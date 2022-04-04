@@ -19,6 +19,13 @@ if (CMAKE_INTERPROCEDURAL_OPTIMIZATION)
   set(ar_tool ${CMAKE_CXX_COMPILER_AR})
 endif()
 
+if(NOT CMAKE_LIBTOOL)
+  find_program(CMAKE_LIBTOOL NAMES libtool)
+endif()
+if(CMAKE_LIBTOOL)
+  set(CMAKE_LIBTOOL ${CMAKE_LIBTOOL} CACHE PATH "libtool executable")  
+endif()
+
 # Packs static libraries into one static library for ios and sets up the correct
 # install call for it
 #
@@ -49,7 +56,7 @@ macro(ios_pack name output_name)
       set(first false)
       string(APPEND content "cp $<TARGET_FILE:${dep}> ${TARGET_FILE}\n")
     else()
-      string(APPEND content "${ar_tool} -q $<TARGET_FILE:${dep}> ${TARGET_FILE}\n")
+      string(APPEND content "${CMAKE_LIBTOOL} -static -o ${TARGET_FILE} ${TARGET_FILE} $<TARGET_FILE:${dep}>\n")
     endif()
   endforeach()
 

@@ -304,7 +304,7 @@ endif()
 
 if(FIREBASE_UNI_LIBRARY)
   if(FIREBASE_IOS_BUILD)
-    ios_pack(firebase_lib_uni libFirebaseCppApp DEPS ${TARGET_LINK_LIB_NAMES})
+    ios_pack(firebase_lib_uni libFirebaseCppApp DEPS "firebase_app" "firebase_app_swig" "flatbuffers")
   else()
     build_uni(
       "${TARGET_LINK_LIB_NAMES}"

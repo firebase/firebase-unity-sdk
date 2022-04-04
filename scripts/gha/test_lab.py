@@ -42,28 +42,40 @@ following commands:
   gcloud firebase test android models list
   gcloud firebase test ios models list
 
-Note: you need the value in the MODEL_ID column, not MODEL_NAME. Examples:
+Note: you need the value in the MODEL_ID column, not MODEL_NAME. 
+Examples:
+Pixel2, API level 28:
+  --android_model Pixel2 --android_version 28
 
-Pixel 2, API level 28:
-  --android_model walleye --android_api 28
+iphone6s, OS 12.0:
+  --ios_model iphone6s --ios_version 12.0
 
-iPhone 8 Plus, OS 11.4:
-  --ios_model iphone8plus --ios_version 11.4
+Alternatively, to set a device, use the one of the values below:
+[android_min, android_target, android_latest]
+[ios_min, ios_target, ios_latest]
+These Device Information stored in TEST_DEVICES in print_matrix_configuration.py 
+Examples:
+Pixel2, API level 28:
+  --android_device android_target
+
+iphone6s, OS 12.0:
+  --ios_device ios_target
 
 """
 
 import os
 import subprocess
 import threading
+import re
 
 from absl import app
 from absl import flags
 from absl import logging
 import attr
-import re
 
 from integration_testing import gcs
 from integration_testing import test_validation
+from print_matrix_configuration import TEST_DEVICES
 
 _ANDROID = "android"
 _IOS = "ios"
@@ -80,27 +92,33 @@ flags.DEFINE_enum(
 flags.DEFINE_string(
     "key_file", None, "Path to key file authorizing use of the GCS bucket.")
 flags.DEFINE_string(
-    "android_model", "blueline",
+    "android_device", None,
+    "Model_id and API_level for desired device. See module docstring for details "
+    "on how to set the value. If none, will use android_model and android_version.")
+flags.DEFINE_string(
+    "android_model", None,
     "Model id for desired device. See module docstring for details on how"
     " to get this id. If none, will use FTL's default.")
 flags.DEFINE_string(
-    "android_api", "28",
+    "android_version", None,
     "API level for desired device. See module docstring for details on how"
     " to find available values. If none, will use FTL's default.")
 flags.DEFINE_string(
-    "ios_model", "iphone8plus",
+    "ios_device", None,
+    "Model_id and IOS_version for desired device. See module docstring for details "
+    "on how to set the value. If none, will use ios_model and ios_version.")
+flags.DEFINE_string(
+    "ios_model", None,
     "Model id for desired device. See module docstring for details on how"
     " to get this id. If none, will use FTL's default.")
 flags.DEFINE_string(
-    "ios_version", "12.0",
+    "ios_version", None,
     "iOS version for desired device. See module docstring for details on how"
     " to find available values. If none, will use FTL's default.")
-
 flags.DEFINE_string(
     "logfile_name", "ftl-test",
     "Create test log artifact test-results-$logfile_name.log."
-    " logfile will be created and placed in testapp_dir.")  
-
+    " logfile will be created and placed in testapp_dir.")   
 
 def main(argv):
   if len(argv) > 1:
@@ -113,8 +131,23 @@ def main(argv):
   if not os.path.exists(key_file_path):
     raise ValueError("Key file path does not exist: %s" % key_file_path)
 
-  android_device = Device(model=FLAGS.android_model, version=FLAGS.android_api)
-  ios_device = Device(model=FLAGS.ios_model, version=FLAGS.ios_version)
+  if FLAGS.android_device:
+    android_device_info = TEST_DEVICES.get(FLAGS.android_device)
+    if android_device_info:
+      android_device = Device(model=android_device_info.get("model"), version=android_device_info.get("version"))
+    else:
+      raise ValueError("Not a valid android device: %s" % FLAGS.android_device)
+  else:
+    android_device = Device(model=FLAGS.android_model, version=FLAGS.android_version)
+  
+  if FLAGS.ios_device:
+    ios_device_info = TEST_DEVICES.get(FLAGS.ios_device)
+    if ios_device_info:
+      ios_device = Device(model=ios_device_info.get("model"), version=ios_device_info.get("version"))
+    else:
+      raise ValueError("Not a valid android device: %s" % FLAGS.ios_device)
+  else:
+    ios_device = Device(model=FLAGS.ios_model, version=FLAGS.ios_version)
 
   has_ios = False
   testapps = []
@@ -154,13 +187,7 @@ def main(argv):
             results_dir=gcs_base_dir + "/" + name))
 
   logging.info("Sending testapps to FTL")
-  threads = []
-  for test in tests:
-    thread = threading.Thread(target=test.run)
-    threads.append(thread)
-    thread.start()
-  for thread in threads:
-    thread.join()
+  tests = _run_test_on_ftl(tests, [])
 
   # Useful diagnostic information to debug unexpected errors involving things
   # not being where they're supposed to be. This will show everything generated
@@ -172,8 +199,39 @@ def main(argv):
   return test_validation.summarize_test_results(
       tests, 
       code_platform, 
-      testapp_dir,
+      testapp_dir, 
       file_name="test-results-" + FLAGS.logfile_name + ".log")
+
+
+def _run_test_on_ftl(tests, tested_tests, retry=3):
+  threads = []
+  for test in tests:
+    logging.info("Start running testapp: %s" % test.testapp_path)
+    thread = threading.Thread(target=test.run)
+    threads.append(thread)
+    thread.start()
+    tested_tests.append(test)
+  for thread in threads:
+    thread.join()
+
+  if retry > 1:
+    failed_tests = []
+    for test in tests:
+      result = test_validation.validate_results(test.logs, test_validation.UNITY)
+      if not result.complete or result.fails != 0:
+        logging.info("Failure(s) occurred, testapp: %s" % test.testapp_path)
+        failed_test = Test(
+              device=test.device,
+              platform=test.platform,
+              testapp_path=test.testapp_path,
+              results_dir=test.results_dir + "retry")
+        failed_tests.append(failed_test)
+
+    if failed_tests:
+      logging.info("Failure(s) occurred, retrying test(s) on FTL.")
+      return _run_test_on_ftl(failed_tests, tested_tests, retry=retry-1)
+    
+  return tested_tests
 
 
 def _install_gcloud_beta():
@@ -240,6 +298,7 @@ class Test(object):
     raw_result_link = re.search(r'Raw results will be stored in your GCS bucket at \[(.*?)\]', result.stdout, re.DOTALL)
     if raw_result_link:
       self.raw_result_link = raw_result_link.group(1)
+
     self.logs = self._get_testapp_log_text_from_gcs()
     logging.info("Test result: %s", self.logs)
 
@@ -257,7 +316,7 @@ class Test(object):
         "--app", self.testapp_path,
         "--results-bucket", gcs.PROJECT_ID,
         "--results-dir", self.results_dir,
-        "--timeout", "300s"
+        "--timeout", "600s"
     ]
 
   def _get_testapp_log_text_from_gcs(self):
