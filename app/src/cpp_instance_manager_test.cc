@@ -16,6 +16,7 @@
 
 #include "app/src/cpp_instance_manager.h"
 
+#include <string>
 #include <thread>  //NOLINT
 
 #include "testing/base/public/gmock.h"
