@@ -99,10 +99,6 @@ firebase_swig_add_library(firebase_firestore_swig
     firebase_firestore_swig_cpp
 )
 
-target_compile_options(firebase_firestore PUBLIC -fexceptions)
-target_compile_options(firebase_firestore_swig_cpp PUBLIC -fexceptions)
-target_compile_options(firebase_firestore_swig PUBLIC -fexceptions)
-
 set(FIRESTORE_SOURCE_DIR ${PROJECT_BINARY_DIR}/bin/external/src/firestore)
 
 # Additional public headers come from the Firestore core
@@ -146,16 +142,13 @@ mono_add_library(firebase_firestore_cs
     firebase_firestore_swig
 )
 
-if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_firestore libFirebaseCppFirestore DEPS firebase_firestore firebase_firestore_swig firebase_firestore_swig_cpp)
-else()
-  build_firebase_shared(
-    firestore
-    firestore
-    FirebaseCppFirestore
-  )
-endif()
+build_firebase_shared(
+  firestore
+  firestore
+  FirebaseCppFirestore
+)
 
+unity_pack_native(firebase_firestore_swig)
 unity_pack_cs(firebase_firestore_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
@@ -163,7 +156,7 @@ if (FIREBASE_INCLUDE_UNITY)
     IOS_DEPS
       "Firebase/Firestore"
     ANDROID_DEPS
-      ${FIREBASE_FIRESTORE_ANDROID_DEPS}
+      ${FIREBASE_DATABASE_ANDROID_DEPS}
     ANDROID_SPEC
       "firestore"
   )

@@ -11,14 +11,6 @@ on:
       skipIntegrationTests:
         description: 'skip integration tests?'
         default: 0
-      working_branch:
-        description: 'If already a working in progress release branch'
-        default: 'None'
-        
-
-env:
-  # Use SHA256 for hashing files.
-  hashCommand: "sha256sum"
 
 jobs:
   package_sdks:
@@ -32,18 +24,8 @@ jobs:
         - os: ubuntu-latest
           package_dir: output
     steps:
-      - name: Check out base branch
+      - name: fetch SDK
         uses: actions/checkout@v2.3.1
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.inputs.working_branch }}
-      
-      - name: Get token for firebase-workflow-trigger
-        uses: tibdex/github-app-token@v1
-        id: generate-token
-        with:
-          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -55,145 +37,49 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
 
-      - name: Name new branch
-        if: github.event.inputs.working_branch == 'None'
-        run: |
-          date_str=$(date "+%Y%m%d-%H%M%S")
-          echo "NEW_BRANCH=${{env.branchPrefix}}${{github.event.inputs.package_version_number}}-${date_str}" >> $GITHUB_ENV
-
-      - name: Create new branch
-        if: github.event.inputs.working_branch == 'None'
-        run: |
-          git remote update
-          git checkout -b "${NEW_BRANCH}"
-          echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
-
-      - name: Checkout working branch
-        if: github.event.inputs.working_branch != 'None'
-        run: |
-          git remote update
-          git checkout ${{ github.event.inputs.working_branch }}
-          echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
-          echo "NEW_BRANCH=${{ github.event.inputs.working_branch }}" >> $GITHUB_ENV
-
       # Fetch all the zip files from previous run
       - name: Fetch Desktop Artifacts
-        if: github.event.inputs.desktop_id != 'None'
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'sdk_build.yml'
-          run_id: ${{ github.event.inputs.desktop_id }} || ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
 
       - name: Fetch iOS Artifacts
-        if: github.event.inputs.ios_id != 'None'
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'ios.yml'
-          run_id: ${{ github.event.inputs.ios_id }} || ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
       
       - name: Fetch Android Artifacts
-        if: github.event.inputs.android_id != 'None'
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'android.yml'
-          run_id: ${{ github.event.inputs.android_id }} || ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.downloadPreviousRun }}
           path: built_artifect
-      
+
       - name: move zip files
         run: |
           cd built_artifect
           find . -type f -name "*.zip" -exec mv {} . \;
-          find . -empty -type d -delete
-          ls -lR
-          for zip_file in *.zip
-          do
-            unzip -l $zip_file
-          done
-          ls -lR
+          ls -l
           cd ..
 
       - name: Package unitypackage
         run: |
           python build_package.py --zip_dir=built_artifect
 
-      - name: Commit Changes if there is any
+      - name: Listing output
         run: |
-          if ! git update-index --refresh; then
-            git config user.email "firebase-workflow-trigger-bot@google.com"
-            git config user.name "firebase-workflow-trigger-bot"
-            git config core.commentChar "%"  # so we can use # in git commit messages
-            git commit -a -m "Update Guids ID"
-
-            # Show changes in git log
-            git diff
-            # Push branch
-            git push --set-upstream origin "${NEW_BRANCH}"
-          fi
-
-      - name: Create PR if there is None
-        if: github.event.inputs.working_branch == 'None'
-        id: push-branch
-        run: |
-          if ! git update-index --refresh; then
-            date_str=$(date "+%a %b %d %Y")
-            commit_title="Update Unity SDK dependencies - ${date_str}"
-            commit_body=
-            if [[ -n '${{ github.event.inputs.comment }}' ]]; then
-              # If a comment was provided, start with that instead of blank.
-              commit_body='${{ github.event.inputs.comment }}
-
-            '
-            fi
-
-            commit_body="${commit_body}
-
-          > Created by [${{github.workflow}} workflow]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
-            git config user.email "firebase-workflow-trigger-bot@google.com"
-            git config user.name "firebase-workflow-trigger-bot"
-            git config core.commentChar "%"  # so we can use # in git commit messages
-            git commit -a -m "${commit_title}
-
-          ${commit_body}"
-            echo "::set-output name=branch_pushed::1"
-            # Show changes in git log
-            git diff
-            # Push branch
-            git push --set-upstream origin "${NEW_BRANCH}"
-            # Create pull request
-            pr_number=$(python scripts/gha/create_pull_request.py --token ${{ steps.generate-token.outputs.token }} --head "${NEW_BRANCH}" --base "${{ github.event.inputs.baseBranch }}" --title "${commit_title}" --body "${commit_body}")
-            echo "::set-output name=created_pr_number::${pr_number}"
-          else
-            echo "::warning ::No changes detected, won't create pull request."
-            echo "::set-output name=branch_pushed::0"
-          fi
-
-      - name: Create Zip File
-        run: |
-          mv output firebase_unity_sdk
-          cp docs/readme.md firebase_unity_sdk/.
-          cp LICENSE firebase_unity_sdk/.
-          ls -Rl firebase_unity_sdk
-          zip -r firebase_unity_sdk.zip firebase_unity_sdk
-
-      - name: compute SDK hash
-        shell: bash
-        run: |
-          ${{ env.hashCommand }} --tag firebase_unity_sdk.zip > firebase_unity_sdk_hash.txt
-          echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
-
-      - name: upload hash
-        uses: actions/upload-artifact@v2.2.2
-        with:
-          name: firebase_unity_sdk_hash.txt
-          path: firebase_unity_sdk_hash.txt
+          ls -Rl
+        working-directory: output
 
       - name: Upload Build unitypackage
         uses: actions/upload-artifact@v2
         with:
-          name: firebase_unity_sdk.zip
-          path: firebase_unity_sdk.zip
+          name: firebase_unity_sdk
+          path: output
       
       - name: Package tgz
         run: |
@@ -213,7 +99,7 @@ jobs:
   trigger_integration_tests:
     # Trigger the integration_tests workflow.
     needs: [package_sdks]
-    if: (github.event.inputs.skipIntegrationTests == 0 || github.event.inputs.skipIntegrationTests == '') && !cancelled() && !failure()
+    if: (github.event.inputs.skipIntegrationTests == 0 || github.event.inputs.skipIntegrationTests == '') && !cancelled()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
