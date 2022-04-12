@@ -156,7 +156,7 @@ def get_transformations(namespace):
           swig_post_process.SWIGEnumPostProcessing(),
           NamespaceCMethodsCMake(namespace),
           swig_post_process.ReplaceExceptionChecks(
-              'AppUtil', ['firebase/firestore/client/unity']),
+              'AppUtil', ['Firebase.Firestore.cs']),
           swig_post_process.FixSealedClasses(),
           swig_post_process.InternalMethodsToInternalVisibility(),
           swig_post_process.RenameAsyncMethods(),
