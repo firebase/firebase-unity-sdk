@@ -167,6 +167,11 @@ Release Notes
 - Changes
     - General (Editor, macOS): Support non-default "python" executable names,
       common in newer macOS versions.
+    - General (iOS): Fixed additional issues on iOS 15 caused by early
+      initialization of Firebase iOS SDK.
+    - Remote Config: Fixed default FetchAsync() timeout being too high.
+    - Storage (Desktop): Added retry logic to PutFileAsync, GetFileAsync, and
+      other operations.
 
 ### 8.8.1
 - Changes
