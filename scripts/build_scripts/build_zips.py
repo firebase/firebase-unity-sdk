@@ -86,6 +86,15 @@ flags.DEFINE_bool("clean_build", False, "Whether to clean the build folder")
 
 
 def get_build_path(platform, clean_build=False):
+  """Get the folder that cmake configure and build in.
+
+    Args:
+      platform: linux, macos, windows, ios, android.
+      clean_build: If True, delete the build folder and build from clean.
+
+    Returns:
+      The folder path to build sdk inside.
+  """
   platform_path = os.path.join(os.getcwd(), platform + "_unity")
   if os.path.exists(platform_path) and clean_build:
     shutil.rmtree(platform_path)
@@ -95,6 +104,13 @@ def get_build_path(platform, clean_build=False):
 
 
 def get_cpp_folder_args():
+  """Get the cmake args to pass in local Firebase C++ SDK folder.
+    If not found, will download from Firebase C++ git repo.
+    
+    Returns:
+      cmake args with the folder path of local Firebase C++ SDK. 
+      Empty string if not found.
+  """
   cpp_folder = os.path.join(os.getcwd(), "..", "firebase-cpp-sdk")
   if os.path.exists(cpp_folder):
     return "-DFIREBASE_CPP_SDK_DIR=" + os.path.realpath(cpp_folder)
@@ -103,6 +119,15 @@ def get_cpp_folder_args():
 
 
 def get_unity_engine_folder_args(unity_root):
+  """Get the cmake args to pass in Unity engine folder. If not passed in 
+     through the parameter, cmake will try to find using logic in 
+     cmake/FindUnity.cmake
+
+    Args:
+      unity_root: folder path of the Unity Engine.
+    Returns:
+      camke args with the folder path of Unity Engine. Empty string if not set.
+  """
   if unity_root and os.path.exists(unity_root):
     return "-DUNITY_ROOT_DIR=" + unity_root
   else:
@@ -110,6 +135,13 @@ def get_unity_engine_folder_args(unity_root):
 
 
 def get_targets_args(targets):
+  """Get the cmake args to pass in built targets of Firebase products.
+
+    Args:
+      targets: list of target names defined in SUPPORT_TARGETS.
+    Returns:
+      camke args included targets.
+  """
   result_args = []
   if targets:
     # check if all the entries are valid
@@ -130,6 +162,13 @@ def get_targets_args(targets):
 
 
 def get_ios_args(source_path):
+  """Get the cmake args for iOS platform specific.
+
+    Args:
+      source_path: root source folder to find toolchain file.
+    Returns:
+      camke args for iOS platform.
+  """
   result_args = []
   toolchain_path = os.path.join(source_path, "cmake", "unity_ios.cmake")
   # toolchain args is required
