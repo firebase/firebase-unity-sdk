@@ -1706,6 +1706,23 @@ namespace Firebase.Sample.Firestore {
       });
     }
 
+    /*
+    Anonymous authentication must be enabled for TestAuthIntegration to pass.
+    
+    Also, the following security rules are required for TestAuthIntegrationt to pass:
+    
+    rules_version='2'
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        match /{somePath=**}/{collection}/{document} {
+          allow read, write: if collection != 'private';
+        }
+        match /private/{document=**} {
+          allow read, write: if request.auth != null;
+        }
+      }
+    }
+    */
     Task TestAuthIntegration() {
       return Async(() => {
         var firebaseAuth = Firebase.Auth.FirebaseAuth.DefaultInstance;
