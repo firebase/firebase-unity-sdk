@@ -204,7 +204,7 @@ jobs:
         platform: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_platform) }}
         exclude:
           - os: windows-latest
-            node: "iOS"
+            platform: "iOS"
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
       LC_ALL: en_US.UTF-8
