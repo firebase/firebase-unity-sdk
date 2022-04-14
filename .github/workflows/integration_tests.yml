@@ -202,6 +202,9 @@ jobs:
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
         os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
         platform: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_platform) }}
+        exclude:
+          - os: windows-latest
+            node: "iOS"
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
       LC_ALL: en_US.UTF-8
@@ -475,6 +478,13 @@ jobs:
         unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
         build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
         mobile_device: ${{ fromJson(needs.check_and_prepare.outputs.mobile_device) }}
+        exclude:
+        # disable tests on android emualtor temporarily
+          - mobile_device: "emulator_latest"
+          - build_os: windows-latest
+            mobile_device: "ios_target"
+          - build_os: windows-latest
+            mobile_device: "simulator_target"
     steps:
       - uses: actions/checkout@v2
         with:
