@@ -78,9 +78,17 @@ namespace Firebase.Sample.DynamicLinks {
       // can't be relied upon.
       var expectedParams = extractUrlParams(expected);
 
+      DebugLog("Start of Expected Params");
+      foreach (var key in expectedParams.Keys) {
+        DebugLog(key + " -> " + expectedParams[key]);
+      }
+      DebugLog("End of Expected Params");
+
       var source = new TaskCompletionSource<string>();
       try {
-        var result = Uri.UnescapeDataString(CreateAndDisplayLongLink().ToString());
+        var resultString = CreateAndDisplayLongLink().ToString();
+        DebugLog("Got resultString of: " + resultString);
+        var result = Uri.UnescapeDataString(resultString);
         var resultHost = new Regex("/\\?").Split(result)[0];
         var sameHost = resultHost == urlHost;
         var resultParams = extractUrlParams(result);
