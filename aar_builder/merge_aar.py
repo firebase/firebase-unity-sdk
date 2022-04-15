@@ -60,7 +60,7 @@ def main(argv):
   if os.path.exists(output_aar_file) and os.path.isfile(output_aar_file):
     # remove the existing srcaar with the output name.
     os.remove(output_aar_file)
-  
+
   #shutil.make_archive(output_aar_file, 'zip', base_temp_dir)
   with zipfile.ZipFile(output_aar_file, "w", allowZip64=True) as zip_file:
     for current_root, folders, filenames in os.walk(base_temp_dir):

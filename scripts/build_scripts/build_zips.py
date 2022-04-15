@@ -421,7 +421,8 @@ def main(argv):
     logging.info("Build android with multiple architectures %s",
                  ",".join(g_mobile_target_architectures))
     # android multi architecture build is a bit different
-    make_android_multi_arch_build(cmake_setup_args, os.path.join(source_path, "aar_builder", "merge_aar.py"))
+    make_android_multi_arch_build(cmake_setup_args, os.path.join(
+        source_path, "aar_builder", "merge_aar.py"))
   else:
     subprocess.call(cmake_setup_args)
     subprocess.call("make")
