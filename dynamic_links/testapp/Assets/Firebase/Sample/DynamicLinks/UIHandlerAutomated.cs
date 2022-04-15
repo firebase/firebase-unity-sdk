@@ -105,7 +105,8 @@ namespace Firebase.Sample.DynamicLinks {
               differences.Add(String.Format(
                   "{0}: \n" +
                   "  Expected: {1}\n" +
-                  "  Actual: {2}", key, expectedParams[key], resultParams[key]));
+                  "  Actual: {2}", key, expectedParams[key],
+                  resultParams.ContainsKey(key) ? resultParams[key] : "(missing key)"));
             }
           }
           source.TrySetException(new Exception(String.Join("\n", differences.ToArray())));
