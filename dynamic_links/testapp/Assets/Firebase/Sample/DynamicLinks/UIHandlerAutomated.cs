@@ -64,12 +64,19 @@ namespace Firebase.Sample.DynamicLinks {
         return result;
       };
 
+      // Dynamic Links only uses the identifier on mobile and Apple platforms
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_TVOS || UNITY_ANDROID
+      string identifier = "com.google.FirebaseUnityDynamicLinksTestApp.dev";
+#else
+      string identifier = "";
+#endif
+
       // This is taken from the values given in UIHandler.
       var expected =
         urlHost + "/?afl=https://mysite/fallback&" +
-        "amv=12&apn=com.google.FirebaseUnityDynamicLinksTestApp.dev&at=abcdefg&ct=hijklmno&" +
-        "ibi=com.google.FirebaseUnityDynamicLinksTestApp.dev&ifl=https://mysite/fallback&imv=1.2.3&" +
-        "ipbi=com.google.FirebaseUnityDynamicLinksTestApp.dev&" +
+        "amv=12&apn=" + identifier + "&at=abcdefg&ct=hijklmno&" +
+        "ibi=" + identifier + "&ifl=https://mysite/fallback&imv=1.2.3&" +
+        "ipbi=" + identifier + "&" +
         "ipfl=https://mysite/fallbackipad&ius=mycustomscheme&link=https://google.com/abc&" +
         "pt=pq-rstuv&sd=My app is awesome!&si=https://mysite.com/someimage.jpg&st=My App!&" +
         "utm_campaign=mycampaign&utm_content=mycontent&utm_medium=mymedium&utm_source=mysource&" +
@@ -78,17 +85,9 @@ namespace Firebase.Sample.DynamicLinks {
       // can't be relied upon.
       var expectedParams = extractUrlParams(expected);
 
-      DebugLog("Start of Expected Params");
-      foreach (var key in expectedParams.Keys) {
-        DebugLog(key + " -> " + expectedParams[key]);
-      }
-      DebugLog("End of Expected Params");
-
       var source = new TaskCompletionSource<string>();
       try {
-        var resultString = CreateAndDisplayLongLink().ToString();
-        DebugLog("Got resultString of: " + resultString);
-        var result = Uri.UnescapeDataString(resultString);
+        var result = Uri.UnescapeDataString(CreateAndDisplayLongLink().ToString());
         var resultHost = new Regex("/\\?").Split(result)[0];
         var sameHost = resultHost == urlHost;
         var resultParams = extractUrlParams(result);
