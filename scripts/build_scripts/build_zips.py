@@ -21,13 +21,10 @@ Example usage:
 """
 import glob
 import os
-import re
 import shutil
 import subprocess
 import zipfile
 import tempfile
-import stat
-
 
 from absl import app, flags, logging
 
@@ -59,6 +56,7 @@ IOS_CONFIG_DICT = {
 ANDROID_SUPPORT_ARCHITECTURE = ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
 
 g_mobile_target_architectures = []
+g_cpp_sdk_realpath = ""
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string(
@@ -119,19 +117,11 @@ def get_cpp_folder_args(source_path):
       cmake args with the folder path of local Firebase C++ SDK. 
       Empty string if not found.
   """
+  global g_cpp_sdk_realpath
   cpp_folder = os.path.join(os.getcwd(), "..", "firebase-cpp-sdk")
   if os.path.exists(cpp_folder):
-    cpp_real_path = os.path.realpath(cpp_folder)
-
-    if is_android_build():
-      os.chdir(cpp_real_path)
-      gradle_args = [
-          "./gradlew"
-      ]
-      subprocess.call(gradle_args)
-      os.chdir(source_path)
-
-    return "-DFIREBASE_CPP_SDK_DIR=" + cpp_real_path
+    g_cpp_sdk_realpath = os.path.realpath(cpp_folder)
+    return "-DFIREBASE_CPP_SDK_DIR=" + g_cpp_sdk_realpath
   else:
     return ""
 
@@ -357,7 +347,8 @@ def make_android_multi_arch_build(cmake_args, merge_script):
       for filename in filenames:
         fullpath = os.path.join(current_root, filename)
         zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
-  logging.debug("Archived directory %s to %s", base_temp_dir, final_zip_path)
+  logging.info("Generated Android multi-arch (%s) zip %s",
+               ",".join(g_mobile_target_architectures), final_zip_path)
 
 
 def is_android_build():
@@ -387,6 +378,12 @@ def main(argv):
   source_path = os.getcwd()
   cmake_cpp_folder_args = get_cpp_folder_args(source_path)
   build_path = get_build_path(platform, FLAGS.clean_build)
+  if is_android_build() and g_cpp_sdk_realpath:
+    # For android build, if we find local cpp folder,
+    # We trigger the cpp android build first.
+    os.chdir(g_cpp_sdk_realpath)
+    subprocess.call("./gradlew")
+    os.chdir(source_path)
 
   os.chdir(build_path)
   cmake_setup_args = [

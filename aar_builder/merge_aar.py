@@ -15,16 +15,34 @@
 # limitations under the License.
 """Merge a list of srcaar files into one
 
+Single srcaar file usually looks like this
+├── AndroidManifest.xml
+├── R.txt
+├── classes.jar
+├── jni
+│   └── x86_64
+│       └── libFirebaseCppRemoteConfig.so
+├── proguard.txt
+└── res
+
+And a merged one will look like this
+├── AndroidManifest.xml
+├── R.txt
+├── classes.jar
+├── jni
+│   ├── armeabi-v7a
+│   │   └── libFirebaseCppRemoteConfig.so
+│   └── x86_64
+│       └── libFirebaseCppRemoteConfig.so
+├── proguard.txt
+└── res
 
 Example usage:
   python merge_aar.py --inputs=<srcaar1> --inputs=<srcaar2> --output=<srcaar output>
 """
 import os
-import stat
 import zipfile
 import tempfile
-import shutil
-import subprocess
 from absl import app, flags, logging
 
 FLAGS = flags.FLAGS
@@ -45,12 +63,16 @@ def main(argv):
   if len(input_srcaars) <= 1:
     raise app.UsageError(
         'Input srcaars needs more than 1 entry, currently only %d.'.format(len(input_srcaars)))
+  # temp folder to exact input srcaar files in
   base_temp_dir = tempfile.mkdtemp()
-
   for input in input_srcaars:
     if os.stat(input).st_size == 0:
+      # Ignore empty aar file
       logging.debug("input %s is empty.", input)
       continue
+    # Extacting each input srcaar files into the same temp folder
+    # For same files that already extracted from previous srcaar file,
+    # the extract operation will just keep one copy.
     with zipfile.ZipFile(input) as zip_aar:
       logging.debug("Extracting %s.", input)
       zip_aar.extractall(base_temp_dir)
@@ -61,7 +83,7 @@ def main(argv):
     # remove the existing srcaar with the output name.
     os.remove(output_aar_file)
 
-  #shutil.make_archive(output_aar_file, 'zip', base_temp_dir)
+  # Write the temp folder as the output srcaar file.
   with zipfile.ZipFile(output_aar_file, "w", allowZip64=True) as zip_file:
     for current_root, folders, filenames in os.walk(base_temp_dir):
       for folder in folders:
@@ -70,7 +92,7 @@ def main(argv):
       for filename in filenames:
         fullpath = os.path.join(current_root, filename)
         zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
-  logging.info("Archived directory %s to %s", base_temp_dir, output_aar_file)
+  logging.debug("Archived directory %s to %s", base_temp_dir, output_aar_file)
 
 
 if __name__ == '__main__':
