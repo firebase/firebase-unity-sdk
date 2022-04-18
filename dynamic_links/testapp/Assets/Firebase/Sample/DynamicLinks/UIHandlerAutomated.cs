@@ -64,12 +64,9 @@ namespace Firebase.Sample.DynamicLinks {
         return result;
       };
 
-      // Dynamic Links only uses the identifier on mobile and Apple platforms
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX || UNITY_IOS || UNITY_TVOS || UNITY_ANDROID
-      string identifier = "com.google.FirebaseUnityDynamicLinksTestApp.dev";
-#else
-      string identifier = "";
-#endif
+      // Dynamic Links uses the Application identifier for some of the fields.
+      // Note that on Windows and Linux desktop, this field will likely be empty.
+      string identifier = Application.identifier;
 
       // This is taken from the values given in UIHandler.
       var expected =
