@@ -64,12 +64,16 @@ namespace Firebase.Sample.DynamicLinks {
         return result;
       };
 
+      // Dynamic Links uses the Application identifier for some of the fields.
+      // Note that on Windows and Linux desktop, this field will likely be empty.
+      string identifier = Application.identifier;
+
       // This is taken from the values given in UIHandler.
       var expected =
         urlHost + "/?afl=https://mysite/fallback&" +
-        "amv=12&apn=com.google.FirebaseUnityDynamicLinksTestApp.dev&at=abcdefg&ct=hijklmno&" +
-        "ibi=com.google.FirebaseUnityDynamicLinksTestApp.dev&ifl=https://mysite/fallback&imv=1.2.3&" +
-        "ipbi=com.google.FirebaseUnityDynamicLinksTestApp.dev&" +
+        "amv=12&apn=" + identifier + "&at=abcdefg&ct=hijklmno&" +
+        "ibi=" + identifier + "&ifl=https://mysite/fallback&imv=1.2.3&" +
+        "ipbi=" + identifier + "&" +
         "ipfl=https://mysite/fallbackipad&ius=mycustomscheme&link=https://google.com/abc&" +
         "pt=pq-rstuv&sd=My app is awesome!&si=https://mysite.com/someimage.jpg&st=My App!&" +
         "utm_campaign=mycampaign&utm_content=mycontent&utm_medium=mymedium&utm_source=mysource&" +
@@ -105,7 +109,8 @@ namespace Firebase.Sample.DynamicLinks {
               differences.Add(String.Format(
                   "{0}: \n" +
                   "  Expected: {1}\n" +
-                  "  Actual: {2}", key, expectedParams[key], resultParams[key]));
+                  "  Actual: {2}", key, expectedParams[key],
+                  resultParams.ContainsKey(key) ? resultParams[key] : "(missing key)"));
             }
           }
           source.TrySetException(new Exception(String.Join("\n", differences.ToArray())));
