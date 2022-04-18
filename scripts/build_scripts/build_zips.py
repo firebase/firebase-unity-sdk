@@ -19,14 +19,14 @@
 Example usage:
   python build_zips.py --platform=macos --targets=auth --targets=firestore
 """
+import glob
 import os
-import re
-import subprocess
 import shutil
+import subprocess
+import zipfile
+import tempfile
 
-from absl import app
-from absl import flags
-from absl import logging
+from absl import app, flags, logging
 
 SUPPORT_PLATFORMS = ("linux", "macos", "windows", "ios", "android")
 SUPPORT_TARGETS = [
@@ -54,6 +54,9 @@ IOS_CONFIG_DICT = {
 }
 
 ANDROID_SUPPORT_ARCHITECTURE = ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
+
+g_mobile_target_architectures = []
+g_cpp_sdk_realpath = ""
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string(
@@ -103,17 +106,22 @@ def get_build_path(platform, clean_build=False):
   return platform_path
 
 
-def get_cpp_folder_args():
+def get_cpp_folder_args(source_path):
   """Get the cmake args to pass in local Firebase C++ SDK folder.
     If not found, will download from Firebase C++ git repo.
-    
+
+    Args:
+      source_path: root source folder cd back.
+
     Returns:
       cmake args with the folder path of local Firebase C++ SDK. 
       Empty string if not found.
   """
+  global g_cpp_sdk_realpath
   cpp_folder = os.path.join(os.getcwd(), "..", "firebase-cpp-sdk")
   if os.path.exists(cpp_folder):
-    return "-DFIREBASE_CPP_SDK_DIR=" + os.path.realpath(cpp_folder)
+    g_cpp_sdk_realpath = os.path.realpath(cpp_folder)
+    return "-DFIREBASE_CPP_SDK_DIR=" + g_cpp_sdk_realpath
   else:
     return ""
 
@@ -184,6 +192,7 @@ def get_ios_args(source_path):
   else:
     devices = SUPPORT_DEVICE
 
+  global g_mobile_target_architectures
   # check architecture input
   if (len(devices) > 1):
     archs_to_check = IOS_SUPPORT_ARCHITECTURE
@@ -195,13 +204,14 @@ def get_ios_args(source_path):
         raise app.UsageError(
             'Wrong architecture "{}" for device type {}, please pick from {}'.format(
                 arch, ",".join(devices), ",".join(archs_to_check)))
-    archs = FLAGS.architecture
+    g_mobile_target_architectures = FLAGS.architecture
   else:
-    archs = archs_to_check
+    g_mobile_target_architectures = archs_to_check
 
-  if len(archs) != len(IOS_SUPPORT_ARCHITECTURE):
+  if len(g_mobile_target_architectures) != len(IOS_SUPPORT_ARCHITECTURE):
     # Need to override only if the archs are not default
-    result_args.append("-DCMAKE_OSX_ARCHITECTURES=" + ";".join(archs))
+    result_args.append("-DCMAKE_OSX_ARCHITECTURES=" +
+                       ";".join(g_mobile_target_architectures))
 
   if len(devices) != len(SUPPORT_DEVICE):
     # Need to override if only passed in device or simulator
@@ -214,6 +224,149 @@ def get_ios_args(source_path):
   return result_args
 
 
+def get_android_args():
+  """Get the cmake args for android platform specific.
+
+    Returns:
+      camke args for android platform.
+  """
+  result_args = []
+  # get Android NDK path
+  system_android_ndk_home = os.getenv('ANDROID_NDK_HOME')
+  if system_android_ndk_home:
+    toolchain_path = os.path.join(
+        system_android_ndk_home, "build", "cmake", "android.toolchain.cmake")
+    result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_path)
+    logging.info("Use ANDROID_NDK_HOME(%s) cmake toolchain(%s)",
+                 system_android_ndk_home, toolchain_path)
+  else:
+    system_android_home = os.getenv('ANDROID_HOME')
+    if system_android_home:
+      toolchain_files = glob.glob(os.path.join(system_android_home,
+                                               "**", "build", "cmake", "android.toolchain.cmake"), recursive=True)
+      if toolchain_files:
+        result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_files[0])
+      logging.info("Use ANDROID_HOME(%s) cmake toolchain (%s)",
+                   system_android_home, toolchain_files[0])
+    else:
+      raise app.UsageError(
+          'Neither ANDROID_NDK_HOME nor ANDROID_HOME is set.')
+
+  # get architecture setup
+  global g_mobile_target_architectures
+  if FLAGS.architecture:
+    for arch in FLAGS.architecture:
+      if arch not in ANDROID_SUPPORT_ARCHITECTURE:
+        raise app.UsageError(
+            'Wrong architecture "{}", please pick from {}'.format(
+                arch, ",".join(ANDROID_SUPPORT_ARCHITECTURE)))
+    g_mobile_target_architectures = FLAGS.architecture
+  else:
+    g_mobile_target_architectures = ANDROID_SUPPORT_ARCHITECTURE
+
+  if len(g_mobile_target_architectures) == 1:
+    result_args.append("-DANDROID_ABI="+g_mobile_target_architectures[0])
+
+  result_args.append("-DFIREBASE_ANDROID_BUILD=true")
+  # android default to build release.
+  result_args.append("-DCMAKE_BUILD_TYPE=release")
+  return result_args
+
+
+def make_android_multi_arch_build(cmake_args, merge_script):
+  """Make android build for different architectures, and then combine them together
+    Args:
+      cmake_args: cmake arguments used to build each architecture.
+      merge_script: script path to merge the srcaar files.
+  """
+  global g_mobile_target_architectures
+  # build multiple archictures
+  current_folder = os.getcwd()
+  for arch in g_mobile_target_architectures:
+    if not os.path.exists(arch):
+      os.makedirs(arch)
+    os.chdir(arch)
+    cmake_args.append("-DANDROID_ABI="+arch)
+    subprocess.call(cmake_args)
+    subprocess.call("make")
+
+    cmake_pack_args = [
+        "cpack",
+        ".",
+    ]
+    subprocess.call(cmake_pack_args)
+    os.chdir(current_folder)
+
+  # merge them
+  zip_base_name = ""
+  srcarr_list = []
+  base_temp_dir = tempfile.mkdtemp()
+  for arch in g_mobile_target_architectures:
+    # find *Android.zip in subfolder architecture
+    arch_zip_path = glob.glob(os.path.join(arch, "*Android.zip"))
+    if not arch_zip_path:
+      logging.error("No *Android.zip generated for architecture %s", arch)
+      return
+    if not zip_base_name:
+      # first architecture, so extract to the final temp folder. The following
+      # srcaar files will merge to the ones in this folder.
+      zip_base_name = arch_zip_path[0]
+      with zipfile.ZipFile(zip_base_name) as zip_file:
+        zip_file.extractall(base_temp_dir)
+      srcarr_list.extend(glob.glob(os.path.join(
+          base_temp_dir, "**", "*.srcaar"), recursive=True))
+    else:
+      temporary_dir = tempfile.mkdtemp()
+      # from the second *Android.zip, we only need to extract *.srcaar files to operate the merge.
+      with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
+        for file in zip_file.namelist():
+          if file.endswith('.srcaar'):
+            zip_file.extract(file, temporary_dir)
+            logging.debug("Unpacked file %s from zip file %s to %s",
+                          file, arch_zip_path, temporary_dir)
+
+      for srcaar_file in srcarr_list:
+        srcaar_name = os.path.basename(srcaar_file)
+        matching_files = glob.glob(os.path.join(
+            temporary_dir, "**", "*"+srcaar_name), recursive=True)
+        if matching_files:
+          merge_args = [
+              "python",
+              merge_script,
+              "--inputs=" + srcaar_file,
+              "--inputs=" + matching_files[0],
+              "--output=" + srcaar_file,
+          ]
+          subprocess.call(merge_args)
+          logging.debug("merging %s to %s", matching_files[0], srcaar_file)
+
+  # achive the temp folder to the final firebase_unity-<version>-Android.zip
+  final_zip_path = os.path.join(current_folder, os.path.basename(zip_base_name))
+  with zipfile.ZipFile(final_zip_path, "w", allowZip64=True) as zip_file:
+    for current_root, _, filenames in os.walk(base_temp_dir):
+      for filename in filenames:
+        fullpath = os.path.join(current_root, filename)
+        zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
+  logging.info("Generated Android multi-arch (%s) zip %s",
+               ",".join(g_mobile_target_architectures), final_zip_path)
+
+
+def is_android_build():
+  """
+    Returns:
+      If the build platform is android
+  """
+  return FLAGS.platform == "android"
+
+
+def is_ios_build():
+  """
+    Returns:
+      If the build platform is ios
+  """
+  return FLAGS.platform == "ios"
+
+
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
@@ -222,15 +375,20 @@ def main(argv):
     raise app.UsageError('Wrong platform "{}", please pick from {}'.format(
         platform, ",".join(SUPPORT_PLATFORMS)))
 
-  cmake_cpp_folder_args = get_cpp_folder_args()
-  build_path = get_build_path(platform, FLAGS.clean_build)
-
   source_path = os.getcwd()
+  cmake_cpp_folder_args = get_cpp_folder_args(source_path)
+  build_path = get_build_path(platform, FLAGS.clean_build)
+  if is_android_build() and g_cpp_sdk_realpath:
+    # For android build, if we find local cpp folder,
+    # We trigger the cpp android build first.
+    os.chdir(g_cpp_sdk_realpath)
+    subprocess.call("./gradlew")
+    os.chdir(source_path)
 
   os.chdir(build_path)
   cmake_setup_args = [
       "cmake",
-      "..",
+      source_path,
       "-DFIREBASE_INCLUDE_UNITY=ON",
       "-DFIREBASE_UNITY_BUILD_TESTS=ON",
       "-DFIREBASE_CPP_BUILD_STUB_TESTS=ON",
@@ -249,19 +407,28 @@ def main(argv):
   if FLAGS.cmake_extras:
     cmake_setup_args.extend(FLAGS.cmake_extras)
 
-  if platform == "ios":
+  if is_ios_build():
     cmake_setup_args.extend(get_ios_args(source_path))
+  elif is_android_build():
+    cmake_setup_args.extend(get_android_args())
 
+  global g_mobile_target_architectures
   logging.info("cmake_setup_args is: " + " ".join(cmake_setup_args))
+  if is_android_build() and len(g_mobile_target_architectures) > 1:
+    logging.info("Build android with multiple architectures %s",
+                 ",".join(g_mobile_target_architectures))
+    # android multi architecture build is a bit different
+    make_android_multi_arch_build(cmake_setup_args, os.path.join(
+        source_path, "aar_builder", "merge_aar.py"))
+  else:
+    subprocess.call(cmake_setup_args)
+    subprocess.call("make")
 
-  subprocess.call(cmake_setup_args)
-  subprocess.call("make")
-
-  cmake_pack_args = [
-      "cpack",
-      ".",
-  ]
-  subprocess.call(cmake_pack_args)
+    cmake_pack_args = [
+        "cpack",
+        ".",
+    ]
+    subprocess.call(cmake_pack_args)
 
   os.chdir(source_path)
 
