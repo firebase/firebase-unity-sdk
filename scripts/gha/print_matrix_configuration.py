@@ -54,7 +54,7 @@ PARAMETERS = {
     "matrix": {
       "build_os": ["macos-latest"],
       "unity_version": ["2019"],
-        "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
+      "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
 
       MINIMAL_KEY: {
         "platform": ["Linux"],
