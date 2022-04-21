@@ -176,14 +176,8 @@ jobs:
       - name: compute SDK hash
         shell: bash
         run: |
-          ${{ env.hashCommand }} --tag firebase_unity_sdk.zip > firebase_unity_sdk_hash.txt
+          ${{ env.hashCommand }} --tag firebase_unity_sdk.zip >> firebase_unity_sdk_hash.txt
           echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
-
-      - name: upload hash
-        uses: actions/upload-artifact@v2.2.2
-        with:
-          name: firebase_unity_sdk_hash.txt
-          path: firebase_unity_sdk_hash.txt
 
       - name: Upload Build unitypackage
         uses: actions/upload-artifact@v2
@@ -200,11 +194,27 @@ jobs:
           ls -Rl
         working-directory: output_tgz
 
+      - name: compute SDK hash for tgz files
+        shell: bash
+        run: |
+          tgz_files_list=$(find -type f -name '*.tgz')
+          for tgz_file in "${tgz_files_list[@]}"; do
+            ${{ env.hashCommand }} --tag ${tgz_file} >> ../firebase_unity_sdk_hash.txt
+          done
+          echo "::warning update sha txt \n ::$(cat ../firebase_unity_sdk_hash.txt)"
+        working-directory: output_tgz
+
       - name: Upload Build tgz
         uses: actions/upload-artifact@v2
         with:
           name: firebase_unity_sdk_tgz
           path: output_tgz
+
+      - name: upload hash
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: firebase_unity_sdk_hash.txt
+          path: firebase_unity_sdk_hash.txt
 
   trigger_integration_tests:
     # Trigger the integration_tests workflow.
