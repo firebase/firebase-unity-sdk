@@ -205,9 +205,7 @@ jobs:
         run: |
           tgz_files_list=$(find -type f -name '*.tgz')
           for tgz_file in "${tgz_files_list[@]}"; do
-            # Get the path to the new srcaar that matches the original
-            tgz_file_name=$(basename ${tgz_file})
-            ${{ env.hashCommand }} --tag ${tgz_file_name} > firebase_unity_sdk_hash.txt
+            ${{ env.hashCommand }} --tag ${tgz_file} > firebase_unity_sdk_hash.txt
             echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
           done
         working-directory: output_tgz
