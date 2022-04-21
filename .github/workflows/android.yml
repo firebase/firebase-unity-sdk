@@ -95,10 +95,10 @@ jobs:
       - name: Build SDK (Android)
         shell: bash
         run: |
-          ./build_android.sh -d
+          python scripts/build_scripts/build_zips.py --platform=android
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
         with:
-          name: android_build
-          path: android_build/*.zip
+          name: android_unity
+          path: android_unity/*.zip
