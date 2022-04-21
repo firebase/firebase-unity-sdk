@@ -176,7 +176,7 @@ jobs:
       - name: compute SDK hash
         shell: bash
         run: |
-          ${{ env.hashCommand }} --tag firebase_unity_sdk.zip > firebase_unity_sdk_hash.txt
+          ${{ env.hashCommand }} --tag firebase_unity_sdk.zip >> firebase_unity_sdk_hash.txt
           echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
 
       - name: upload hash
@@ -205,7 +205,7 @@ jobs:
         run: |
           tgz_files_list=$(find -type f -name '*.tgz')
           for tgz_file in "${tgz_files_list[@]}"; do
-            ${{ env.hashCommand }} --tag ${tgz_file} > firebase_unity_sdk_hash.txt
+            ${{ env.hashCommand }} --tag ${tgz_file} >> firebase_unity_sdk_hash.txt
             echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
           done
         working-directory: output_tgz
