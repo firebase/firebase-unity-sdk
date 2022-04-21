@@ -31,6 +31,12 @@ flags.mark_flag_as_required("architecture")
 flags.DEFINE_string("proguard_file", None,
                     "Location of the proguard file to include in the aar")
 flags.mark_flag_as_required("proguard_file")
+flags.DEFINE_string("android_manifest", None,
+                    "Location of the AndroidManifest.xml file to include " +
+                    "in the aar. A default is used if not provided.")
+flags.DEFINE_string("classes_jar", None,
+                    "Location of the classes.jar file to include " + 
+                    "in the aar. A default is used if not provided.")
 
 
 def main(unused_argv):
@@ -44,6 +50,14 @@ def main(unused_argv):
   proguard_file = os.path.normcase(FLAGS.proguard_file)
 
   file_dir = os.path.dirname(os.path.realpath(__file__))
+
+  # Use the default or custom AndroidManifest.xml and classes.jar
+  android_manifest_file = os.path.join(file_dir, "AndroidManifest.xml")
+  if FLAGS.android_manifest:
+    android_manifest_file = os.path.normcase(FLAGS.android_manifest)
+  classes_jar_file = os.path.join(file_dir, "classes.jar")
+  if FLAGS.classes_jar:
+    classes_jar_file = os.path.normcase(FLAGS.classes_jar)
 
   # Delete the aar file, if it already exists
   if os.path.exists(output_file):
@@ -65,9 +79,8 @@ def main(unused_argv):
 
   with zipfile.ZipFile(output_file, "w") as myzip:
     # Write the generic base files that are required in an aar file.
-    myzip.write(
-        os.path.join(file_dir, "AndroidManifest.xml"), "AndroidManifest.xml")
-    myzip.write(os.path.join(file_dir, "classes.jar"), "classes.jar")
+    myzip.write(android_manifest_file, "AndroidManifest.xml")
+    myzip.write(classes_jar_file, "classes.jar")
     myzip.write(os.path.join(file_dir, "R.txt"), "R.txt")
     myzip.writestr("res/", "")
     # Write the provided library to the proper architecture, and proguard file.

@@ -58,6 +58,10 @@ build_firebase_shared(
   messaging
   messaging
   FirebaseCppMessaging
+  ANDROID_MANIFEST
+    "${CMAKE_CURRENT_LIST_DIR}/AndroidManifest.xml"
+  CLASSES_JAR
+    "${CMAKE_CURRENT_LIST_DIR}/activity/classes.jar"
 )
 endif()
 

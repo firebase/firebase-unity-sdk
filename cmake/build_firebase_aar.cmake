@@ -24,8 +24,16 @@ include(build_aar)
 #  ARTIFACT_NAME: The name to use in the artifact id.
 #  LIBRARY_TARGET: The target that outputs the shared libary to include.
 #  PROGUARD_TARGET: The target that outputs the proguard file.
+#
+# Optional Args:
+#  ANDROID_MANIFEST: The custom AndroidManifest file to include.
+#  CLASSES_JAR: The custom classes.jar file to include.
 function(build_firebase_aar LIBRARY_NAME ARTIFACT_NAME LIBRARY_TARGET
                             PROGUARD_TARGET)
+  # Parse the additional arguments
+  set(single ANDROID_MANIFEST CLASSES_JAR)
+  cmake_parse_arguments(FIREBASE_AAR_ARGS "" "${single}" "" ${ARGN})
+
   # Set the variables expected by the templates
   set(ARTIFACT_ID "firebase-${ARTIFACT_NAME}-unity")
   set(VERSION "${FIREBASE_UNITY_SDK_VERSION}")
@@ -35,5 +43,9 @@ function(build_firebase_aar LIBRARY_NAME ARTIFACT_NAME LIBRARY_TARGET
     ${PROGUARD_TARGET}
     ${ARTIFACT_ID}
     ${VERSION}
+    ANDROID_MANIFEST
+      ${FIREBASE_AAR_ARGS_ANDROID_MANIFEST}
+    CLASSES_JAR
+      ${FIREBASE_AAR_ARGS_CLASSES_JAR}
   )
 endfunction()
