@@ -200,8 +200,8 @@ jobs:
           tgz_files_list=$(find -type f -name '*.tgz')
           for tgz_file in "${tgz_files_list[@]}"; do
             ${{ env.hashCommand }} --tag ${tgz_file} >> ../firebase_unity_sdk_hash.txt
-            echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
           done
+          echo "::warning update sha txt \n ::$(cat ../firebase_unity_sdk_hash.txt)"
         working-directory: output_tgz
 
       - name: Upload Build tgz
