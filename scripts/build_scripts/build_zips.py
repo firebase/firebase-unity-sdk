@@ -25,6 +25,7 @@ import shutil
 import subprocess
 import zipfile
 import tempfile
+import sys
 
 from absl import app, flags, logging
 
@@ -350,6 +351,17 @@ def make_android_multi_arch_build(cmake_args, merge_script):
   logging.info("Generated Android multi-arch (%s) zip %s",
                ",".join(g_mobile_target_architectures), final_zip_path)
 
+def get_windows_args():
+  """Get the cmake args for windows platform specific.
+
+    Returns:
+      camke args for windows platform.
+  """
+  result_args = []
+  result_args.append('-G \"Visual Studio 16 2019\"')
+  result_args.append('-A x64') # TODO flexibily for x32
+  result_args.append("-DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=%s" % sys.executable)
+  return result_args    
 
 def is_android_build():
   """
@@ -365,6 +377,13 @@ def is_ios_build():
       If the build platform is ios
   """
   return FLAGS.platform == "ios"
+
+def is_windows_build():
+  """
+    Returns:
+      If the build platform is windows
+  """
+  return FLAGS.platform == "windows"
 
 
 def main(argv):
@@ -411,6 +430,8 @@ def main(argv):
     cmake_setup_args.extend(get_ios_args(source_path))
   elif is_android_build():
     cmake_setup_args.extend(get_android_args())
+  elif is_windows_build():
+    cmake_setup_args.extend(get_windows_args())
 
   global g_mobile_target_architectures
   logging.info("cmake_setup_args is: " + " ".join(cmake_setup_args))
