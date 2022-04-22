@@ -114,8 +114,9 @@ namespace Firebase.Editor {
             }
         }
 
+        // Just 'python' might prompt the user for input, so try that last
         private static readonly string[] PYTHON_INTERPRETERS = {
-          "python", "python3", "python3.8","python3.7", "python2.7", "python2"
+          "python3", "python3.8","python3.7", "python2.7", "python2", "python"
         };
 
         private static string s_pythonInterpreter = null;

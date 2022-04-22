@@ -157,7 +157,7 @@ main() {
         unzip -q -d "${unzip_dir}" "${zip_name}"
 
         # Get the list of srcaar files, to merge into later
-        srcaar_list=$(find ${unzip_dir} -type f -name '*.srcaar')
+        srcaar_list=($(find ${unzip_dir} -type f -name '*.srcaar'))
         zip_basename=$(basename ${zip_name})
       else
         # Unzip the other architectures into a different temp directory
