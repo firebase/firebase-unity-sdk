@@ -23,7 +23,15 @@ include(build_firebase_aar)
 #  LIBRARY_NAME: The name of the library, used to determine the targets.
 #  ARTIFACT_NAME: The name used to generate the artifact id used by the srcaar.
 #  OUTPUT_NAME: The output name to use for the shared library
+#
+# Optional Args:
+#  ANDROID_MANIFEST: The custom AndroidManifest file to include.
+#  CLASSES_JAR: The custom classes.jar file to include.
 function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
+
+  set(single ANDROID_MANIFEST CLASSES_JAR)
+  # Parse the arguments
+  cmake_parse_arguments(FIREBASE_SHARED_ARGS "" "${single}" "" ${ARGN})
 
   set(shared_target "firebase_${LIBRARY_NAME}_shared")
   
@@ -93,6 +101,10 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
       ${ARTIFACT_NAME}
       ${shared_target}
       "FIREBASE_CPP_${UPPER_BASENAME}_PROGUARD"
+      ANDROID_MANIFEST
+        ${FIREBASE_SHARED_ARGS_ANDROID_MANIFEST}
+      CLASSES_JAR
+        ${FIREBASE_SHARED_ARGS_CLASSES_JAR}
     )
   endif()
 
