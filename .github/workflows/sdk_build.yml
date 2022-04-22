@@ -158,7 +158,9 @@ jobs:
           # ./build_windows_x64.bat ${{ github.event.inputs.additional_cmake_flags }} TODO convert to python script
           mkdir ${{ matrix.build_dir }}
           pushd ${{ matrix.build_dir }}
-          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${UNITY_ROOT_DIR}" -DSWIG_DIR="${SWIG_DIR}" ${{ github.event.inputs.additional_cmake_flags }}
+          PYTHON_PATH=$(python -c "import sys; print(sys.executable)")
+          echo PYTHON_PATH is ${PYTHON_PATH}
+          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${UNITY_ROOT_DIR}" -DSWIG_DIR="${SWIG_DIR}" -DFIREBASE_PYTHON_HOST_EXECUTABLE="FILEPATH=${PYTHON_PATH}" ${{ github.event.inputs.additional_cmake_flags }}
           echo "=-=-=-=-=-=-=-=-="
           echo "Start Build"
           echo "=-=-=-=-=-=-=-=-="
