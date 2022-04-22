@@ -164,7 +164,7 @@ jobs:
       - name: get latest cpp release with tag
         id: latestrelease
         run: |
-          echo "::set-output name=releasetag::$(curl -s https://github.com/firebase/firebase-cpp-sdk/tags | jq '.tag_name' | sed 's/\"//g')"
+          echo "::set-output name=releasetag::$(curl -s https://github.com/firebase/firebase-cpp-sdk/releases/latest | jq '.tag' | sed 's/\"//g')"
       - name: confirm release tag
         run: |
           echo latest cpp release version is: ${{ steps.latestrelease.outputs.releasetag }}
@@ -184,4 +184,8 @@ jobs:
           set -e
           compose_new_branch=firebase-unity-sdk/${{ needs.update_versions.outputs.new_branch }}
           echo "New branch is: ${compose_new_branch}"
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -p unity_branch ${{ needs.update_versions.outputs.new_branch }} -p firebase_cpp_sdk_version ${{ steps.latestrelease.outputs.releasetag }}
+          python scripts/gha/trigger_workflow.py \
+            -t ${{ steps.generate-build-token.outputs.token }} \
+            -w ${{ matrix.trigger_file }} \
+            -p unity_branch ${{ needs.update_versions.outputs.new_branch }} \
+            -p firebase_cpp_sdk_version ${{ steps.latestrelease.outputs.releasetag }}
