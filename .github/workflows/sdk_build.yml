@@ -36,17 +36,17 @@ jobs:
         os: [windows-2019, macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
-          if: contains(${{ github.event.inputs.target_platforms }}, 'macos') 
+          if: contains('${{ github.event.inputs.target_platforms }}', 'macos') 
           unity_version: ${{ github.event.inputs.unity_version }}
           build_dir: macos_unity
           unity_platform_name: macOS,iOS
         - os: windows-2019
-          if: contains(${{ github.event.inputs.target_platforms }}, 'windows') 
+          if: contains('${{ github.event.inputs.target_platforms }}', 'windows') 
           unity_version: ${{ github.event.inputs.unity_version }}
           build_dir: windows_unity
           unity_platform_name: Windows
         - os: ubuntu-latest
-          if: contains(${{ github.event.inputs.target_platforms }}, 'linux') 
+          if: contains('${{ github.event.inputs.target_platforms }}', 'linux') 
           unity_version: ${{ github.event.inputs.unity_version }}
           build_dir: linux_unity
           unity_platform_name: Linux
