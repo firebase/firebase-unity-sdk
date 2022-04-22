@@ -161,6 +161,18 @@ jobs:
           app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
           private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
 
+      - name: get latest cpp release with tag
+        id: latestrelease
+        run: |
+          echo "::set-output name=releasetag::$(curl -s https://github.com/firebase/firebase-cpp-sdk/tags | jq '.tag_name' | sed 's/\"//g')"
+      - name: confirm release tag
+        run: |
+          echo latest cpp release version is: ${{ steps.latestrelease.outputs.releasetag }}
+      - name: tagcheckout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ steps.latestrelease.outputs.releasetag }}
+
       - name: Use GitHub API to start workflow
         shell: bash
         run: |
@@ -172,4 +184,4 @@ jobs:
           set -e
           compose_new_branch=firebase-unity-sdk/${{ needs.update_versions.outputs.new_branch }}
           echo "New branch is: ${compose_new_branch}"
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -p unity_branch ${{ needs.update_versions.outputs.new_branch }}
+          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-build-token.outputs.token }} -w ${{ matrix.trigger_file }} -p unity_branch ${{ needs.update_versions.outputs.new_branch }} cpp_branch ${{ steps.latestrelease.outputs.releasetag }}
