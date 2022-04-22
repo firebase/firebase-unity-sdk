@@ -95,7 +95,7 @@ jobs:
       - name: Build SDK (Android)
         shell: bash
         run: |
-          python scripts/build_scripts/build_zips.py --platform=android
+          python scripts/build_scripts/build_zips.py --platform=android --unity_root=$UNITY_ROOT_DIR
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
