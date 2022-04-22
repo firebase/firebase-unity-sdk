@@ -21,9 +21,6 @@ on:
         description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
         default: ''
         required: false
-      # cpp_branch:
-      #   description: 'CPP branch to build against, empty means current branch'
-      #   default: ''
 
 jobs:
   build_desktop:
