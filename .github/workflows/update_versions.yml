@@ -164,7 +164,7 @@ jobs:
       - name: get latest cpp release with tag
         id: latestrelease
         run: |
-          echo "::set-output name=releasetag::$(curl -s https://github.com/firebase/firebase-cpp-sdk/releases/latest | jq '.tag' | sed 's/\"//g')"
+          echo "::set-output name=releasetag::$(basename $(curl --silent "https://github.com/firebase/firebase-cpp-sdk/releases/latest" grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'))"
       - name: confirm release tag
         run: |
           echo latest cpp release version is: ${{ steps.latestrelease.outputs.releasetag }}
