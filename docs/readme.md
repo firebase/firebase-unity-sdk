@@ -163,6 +163,10 @@ Support
 
 Release Notes
 -------------
+### Unreleased
+- Changes
+    - General (Editor, macOS): Fix an issue when finding "python" executable.
+
 ### 8.9.0
 - Changes
     - General (Editor, macOS): Support non-default "python" executable names,
