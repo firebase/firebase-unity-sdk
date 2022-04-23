@@ -271,6 +271,7 @@ def get_android_args():
   result_args.append("-DFIREBASE_ANDROID_BUILD=true")
   # android default to build release.
   result_args.append("-DCMAKE_BUILD_TYPE=release")
+  result_args.append("-DANDROID_STL=c++_shared")
   return result_args
 
 
