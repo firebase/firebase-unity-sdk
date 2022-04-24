@@ -88,6 +88,10 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
         # Link against the static libc++, which is the default done by Gradle.
         "-static-libstdc++"
     )
+    add_custom_command(TARGET ${shared_target} POST_BUILD
+      COMMAND "${ANDROID_TOOLCHAIN_PREFIX}strip" -g -S -d --strip-debug --verbose
+      "lib${OUTPUT_NAME}.so"
+      COMMENT "Strip debug symbols done on final binary. lib${OUTPUT_NAME}.so")
   endif()
   
   unity_pack_native(${shared_target})
