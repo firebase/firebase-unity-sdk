@@ -87,6 +87,10 @@ function(build_uni TARGET_LINK_LIB_NAMES PROJECT_LIST_HEADER_VARIABLE)
         # Link against the static libc++, which is the default done by Gradle.
         "-static-libstdc++"
     )
+    add_custom_command(TARGET firebase_app_uni POST_BUILD
+      COMMAND "${ANDROID_TOOLCHAIN_PREFIX}strip" -g -S -d --strip-debug --verbose
+      "lib${FIREBASE_APP_UNI_VERSIONED}.so"
+      COMMENT "Strip debug symbols done on final binary. lib${FIREBASE_APP_UNI_VERSIONED}.so")
   endif()
 
   unity_pack_native(firebase_app_uni)
