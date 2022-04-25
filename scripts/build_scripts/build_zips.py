@@ -270,6 +270,9 @@ def get_android_args():
   result_args.append("-DFIREBASE_ANDROID_BUILD=true")
   # android default to build release.
   result_args.append("-DCMAKE_BUILD_TYPE=release")
+  # Turn on optimization for size
+  result_args.append("-DCMAKE_C_FLAGS=-Oz")
+  result_args.append("-DCMAKE_CXX_FLAGS=-Oz")
   return result_args
 
 
