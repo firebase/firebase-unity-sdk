@@ -150,6 +150,14 @@ else()
     firestore
     FirebaseCppFirestore
   )
+
+  target_include_directories(firebase_firestore_shared
+    PUBLIC
+      ${FIRESTORE_SOURCE_DIR}/Firestore/core/include
+      ${FIRESTORE_SOURCE_DIR}/Firestore/Protos/nanopb
+    PRIVATE
+      ${FIRESTORE_SOURCE_DIR}
+  )
 endif()
 
 unity_pack_cs(firebase_firestore_cs)
