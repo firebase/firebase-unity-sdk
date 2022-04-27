@@ -258,5 +258,8 @@ macro(firebase_swig_add_library name)
   )
 
   set(${name}_gen_src ${UNITY_SWIG_CS_FIX_FILE})
+  # Set a variable so that the C++ file can be referenced elsewhere
+  set(${name}_gen_cpp_src ${UNITY_SWIG_CPP_FIX_FILE})
+  set(${name}_gen_cpp_src ${UNITY_SWIG_CPP_FIX_FILE} PARENT_SCOPE)
 
 endmacro()
