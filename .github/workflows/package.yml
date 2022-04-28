@@ -13,7 +13,12 @@ on:
         default: 0
       working_branch:
         description: 'If already a working in progress release branch'
-        default: None
+      download_ios_run:
+        description: 'run id for ios.yml'
+      download_android_run:
+        description: 'run id for android.yml'
+      download_desktop_run:
+        description: 'run id for sdk_build.yml'
 
 env:
   # Use SHA256 for hashing files.
@@ -55,20 +60,20 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
-        if: github.event.inputs.working_branch == 'None'
+        if: "${{ github.event.inputs.working_branch }}" == ""
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
           echo "NEW_BRANCH=${{env.branchPrefix}}${{github.event.inputs.package_version_number}}-${date_str}" >> $GITHUB_ENV
 
       - name: Create new branch
-        if: github.event.inputs.working_branch == 'None'
+        if: "${{ github.event.inputs.working_branch }}" == ""
         run: |
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
 
       - name: Checkout working branch
-        if: github.event.inputs.working_branch != 'None'
+        if: "${{ github.event.inputs.working_branch }}" != ""
         run: |
           git remote update
           git checkout ${{ github.event.inputs.working_branch }}
@@ -129,7 +134,7 @@ jobs:
           fi
 
       - name: Create PR if there is None
-        if: github.event.inputs.working_branch == 'None'
+        if: "${{ github.event.inputs.working_branch }}" == ""
         id: push-branch
         run: |
           if ! git update-index --refresh; then
