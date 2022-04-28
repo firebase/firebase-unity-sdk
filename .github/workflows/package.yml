@@ -10,7 +10,7 @@ on:
         required: true
       skipIntegrationTests:
         description: 'skip integration tests?'
-        default: '0'
+        default: 0
         required: false
       working_branch:
         description: 'If already a working in progress release branch'
@@ -75,13 +75,13 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
-        if: github.event.inputs.working_branch == ''
+        if: github.event.inputs.working_branch == 'New'
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
           echo "NEW_BRANCH=${{env.branchPrefix}}${{github.event.inputs.package_version_number}}-${date_str}" >> $GITHUB_ENV
 
       - name: Create new branch
-        if: github.event.inputs.working_branch == ''
+        if: github.event.inputs.working_branch == 'New'
         run: |
           git remote update
           git checkout -b "${NEW_BRANCH}"
@@ -149,7 +149,7 @@ jobs:
           fi
 
       - name: Create PR if there is None
-        if: github.event.inputs.working_branch == ''
+        if: github.event.inputs.working_branch == 'New'
         id: push-branch
         run: |
           if ! git update-index --refresh; then
