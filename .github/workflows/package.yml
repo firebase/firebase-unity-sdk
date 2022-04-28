@@ -12,6 +12,10 @@ on:
         description: 'skip integration tests?'
         default: 0
         required: false
+      create_new_branch:
+        description: 'If we need to create new branch to package guids update. 0 means no creation and 1 means create. If working_branch set, will ignore this value. '
+        default: 0
+        required: false
       working_branch:
         description: 'If already a working in progress release branch'
         required: false
@@ -46,6 +50,7 @@ jobs:
         run: |
           echo operation_system: ${{ github.event.inputs.operating_systems }}
           echo skipIntegrationTests: ${{ github.event.inputs.skipIntegrationTests }}
+          echo create_new_branch: ${{ github.event.inputs.create_new_branch }}
           echo working_branch: ${{ github.event.inputs.working_branch }}
           echo download_ios_run: ${{ github.event.inputs.download_ios_run }}
           echo download_android_run: ${{ github.event.inputs.download_android_run }}
@@ -75,13 +80,13 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
-        if: github.event.inputs.working_branch == 'New'
+        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == '1'
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
-          echo "NEW_BRANCH=${{env.branchPrefix}}${{github.event.inputs.package_version_number}}-${date_str}" >> $GITHUB_ENV
+          echo "NEW_BRANCH=new_branch-${date_str}" >> $GITHUB_ENV
 
       - name: Create new branch
-        if: github.event.inputs.working_branch == 'New'
+        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == '1'
         run: |
           git remote update
           git checkout -b "${NEW_BRANCH}"
@@ -100,21 +105,21 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'sdk_build.yml'
-          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.download_desktop_run }}
           path: built_artifect
 
       - name: Fetch iOS Artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'ios.yml'
-          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.download_ios_run }}
           path: built_artifect
       
       - name: Fetch Android Artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: 'android.yml'
-          run_id: ${{ github.event.inputs.downloadPreviousRun }}
+          run_id: ${{ github.event.inputs.download_android_run }}
           path: built_artifect
       
       - name: move zip files
@@ -149,7 +154,7 @@ jobs:
           fi
 
       - name: Create PR if there is None
-        if: github.event.inputs.working_branch == 'New'
+        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == '1'
         id: push-branch
         run: |
           if ! git update-index --refresh; then
