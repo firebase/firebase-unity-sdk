@@ -177,3 +177,5 @@ set_property(TARGET firebase_firestore_cs
   PROPERTY FOLDER
   "Firebase ${FIREBASE_PLATFORM_NAME}"
 )
+
+add_subdirectory(test)
