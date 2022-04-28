@@ -163,9 +163,11 @@ Support
 
 Release Notes
 -------------
-### Unreleased
+### 8.10.0
 - Changes
     - General (Editor, macOS): Fix an issue when finding "python" executable.
+    - General : Firebase Unity SDK starts to build using Unity 2019,
+      and releases from git repo.
 
 ### 8.9.0
 - Changes

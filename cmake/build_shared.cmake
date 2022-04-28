@@ -35,13 +35,25 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
 
   set(shared_target "firebase_${LIBRARY_NAME}_shared")
   
-  add_library(${shared_target} SHARED
-    ${FIREBASE_SOURCE_DIR}/empty.cc
-    $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}>
-    $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}_swig>
-  )
-  
-  set(SHARED_TARGET_LINK_LIB_NAMES "firebase_${LIBRARY_NAME}" "firebase_${LIBRARY_NAME}_swig")
+  if(FIREBASE_IOS_BUILD OR NOT FIREBASE_UNI_LIBRARY)
+    # On iOS, we want to include all the symbols in the library
+    add_library(${shared_target} SHARED
+      ${FIREBASE_SOURCE_DIR}/empty.cc
+      $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}>
+      $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}_swig>
+    )
+
+    set(SHARED_TARGET_LINK_LIB_NAMES "firebase_${LIBRARY_NAME}" "firebase_${LIBRARY_NAME}_swig")
+  else()
+    # On other platforms, we only want the symbols from the
+    # generated swig C++ file, and then linked against the
+    # universal library, which has the symbols we need
+    add_library(${shared_target} SHARED
+      ${firebase_${LIBRARY_NAME}_swig_gen_cpp_src}
+    )
+
+    set(SHARED_TARGET_LINK_LIB_NAMES "firebase_app_uni")
+  endif()
 
   target_link_libraries(${shared_target}
     ${SHARED_TARGET_LINK_LIB_NAMES}
