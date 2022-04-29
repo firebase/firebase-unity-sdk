@@ -28,6 +28,9 @@ on:
       download_desktop_run:
         description: 'run id for sdk_build.yml'
         required: false
+      release_label:
+        description: 'If the package is intened to run for a release, put <version>-RC## for label'
+        required: false
 
 env:
   # Use SHA256 for hashing files.
@@ -35,7 +38,7 @@ env:
 
 jobs:
   package_sdks:
-    name: package-${{matrix.os}}
+    name: package-${{matrix.os}}-${{github.event.inputs.release_label}}
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false
