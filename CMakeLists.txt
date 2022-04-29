@@ -130,16 +130,13 @@ enable_language(C)
 enable_language(CXX)
 
 if(NOT MSVC AND NOT APPLE)
-  # Linux-specific option.
-  if (FIREBASE_LINUX_USE_CXX11_ABI)
-    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=1)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=1")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=1")
-  else()
-    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
-  endif()
+  # The Linux Unity Editor seems to require using the CXX11 ABI for Firestore,
+  # so we turn the option on, and set the flag to true for the C++ SDK to pick
+  # it up as well.
+  add_definitions(-D_GLIBCXX_USE_CXX11_ABI=1)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=1")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=1")
+  set(FIREBASE_LINUX_USE_CXX11_ABI TRUE)
 endif()
 
 if(NOT ANDROID AND NOT IOS)
