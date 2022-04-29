@@ -83,6 +83,7 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
     set_target_properties(${shared_target}
       PROPERTIES
         PREFIX "lib"
+        # SUFFIX default is ".so"
     )
   else()
     set_target_properties(${shared_target}

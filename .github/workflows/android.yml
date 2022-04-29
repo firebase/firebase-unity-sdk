@@ -18,6 +18,7 @@ on:
 
 jobs:
   build_android:
+    name: build-android-macos-${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     runs-on: macos-latest
     strategy:
       fail-fast: false

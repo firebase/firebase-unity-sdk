@@ -24,7 +24,7 @@ on:
 
 jobs:
   build_desktop:
-    name: build-desktop-${{matrix.os}}-${{matrix.unity_version}}
+    name: build-desktop-${{matrix.os}}-${{matrix.unity_version}}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: false

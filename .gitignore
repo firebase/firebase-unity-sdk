@@ -22,6 +22,8 @@ gcs_key_file.json
 *_unity/
 *_unity_seperate/
 *_unity_separate/
+output/
+output_unpack*/
 
 # Windows ignore
 vcpkg
