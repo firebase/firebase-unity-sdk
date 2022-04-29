@@ -162,7 +162,7 @@ def main(argv):
     cmd_args.append("--enabled_sections=build_dotnet4")
     cmd_args.append("--output_unitypackage=False")
   else:
-    cmd_args.append("--enabled_sections=build_dotnet4 asset_package_only")
+    cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4 asset_package_only")
   
   # Check if need to gen new guids
   p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

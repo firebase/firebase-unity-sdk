@@ -17,23 +17,14 @@ on:
       unity_branch:
         description: 'Unity branch to build against, empty means current branch'
         default: ''
-        required: false
-      firebase_cpp_sdk_version:
-        description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
+      cpp_branch:
+        description: 'CPP branch to build against, empty means current branch'
         default: ''
-        required: false
-      target_platforms:
-        description: 'Target platforms to build SDK on.'
-        default: 'macos,linux,windows'
-        required: false
 
 jobs:
   build_desktop:
     name: build-desktop-${{matrix.os}}-${{matrix.unity_version}}
     runs-on: ${{matrix.os}}
-    if: (startsWith(matrix.os, 'ubuntu') && contains('${{ github.event.inputs.target_platforms }}', 'linux')) ||
-        (startsWith(matrix.os, 'macos') && contains('${{ github.event.inputs.target_platforms }}', 'macos')) ||
-        (startsWith(matrix.os, 'windows') && contains('${{ github.event.inputs.target_platforms }}', 'windows'))
     strategy:
       fail-fast: false
       matrix:
@@ -67,7 +58,7 @@ jobs:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
           submodules: true
-          ref: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+          ref: ${{ github.event.inputs.cpp_branch }}
 
       - name: Support longpaths
         if: startsWith(matrix.os, 'windows')
@@ -153,22 +144,22 @@ jobs:
           ./build_macos.sh ${{ github.event.inputs.additional_cmake_flags }}
 
       - name: Build SDK (Windows)
-        if: startsWith(matrix.os, 'windows') 
+        if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
-          python scripts/build_scripts/build_zips.py --platform=windows --unity_root=$UNITY_ROOT_DIR --cmake_extras='-DSWIG_DIR=\"$SWIG_DIR\"'
-          # mkdir ${{ matrix.build_dir }}
-          # pushd ${{ matrix.build_dir }}
-          # cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${UNITY_ROOT_DIR}" -DSWIG_DIR="${SWIG_DIR}" -DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=C:/hostedtoolcache/windows/Python/3.7.9/x64/python.exe ${{ github.event.inputs.additional_cmake_flags }}
-          # echo "=-=-=-=-=-=-=-=-="
-          # echo "Start Build"
-          # echo "=-=-=-=-=-=-=-=-="
-          # cmake --build .  --config Release
-          # echo "=-=-=-=-=-=-=-=-="
-          # echo "Start Package"
-          # echo "=-=-=-=-=-=-=-=-="
-          # cpack .
-          # popd
+          # ./build_windows_x64.bat ${{ github.event.inputs.additional_cmake_flags }} TODO convert to python script
+          mkdir ${{ matrix.build_dir }}
+          pushd ${{ matrix.build_dir }}
+          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${UNITY_ROOT_DIR}" -DSWIG_DIR="${SWIG_DIR}" ${{ github.event.inputs.additional_cmake_flags }}
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Build"
+          echo "=-=-=-=-=-=-=-=-="
+          cmake --build .  --config Release
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Package"
+          echo "=-=-=-=-=-=-=-=-="
+          cpack .
+          popd
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
