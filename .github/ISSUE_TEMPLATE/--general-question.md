@@ -23,5 +23,6 @@ template_path=.github/ISSUE_TEMPLATE/--general-question.md
   * Platform you are using the Unity editor on: _____ (Mac, Windows, or Linux)
   * Platform you are targeting: _____ (iOS, Android, and/or desktop)
   * Scripting Runtime: _____ (Mono, and/or IL2CPP)
+  * Pre-built SDK from the [website](https://firebase.google.com/download/unity) or open-source from this repo: _____
 
 ### [REQUIRED] Please describe the question here:
