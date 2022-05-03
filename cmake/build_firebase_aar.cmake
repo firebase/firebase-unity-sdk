@@ -47,5 +47,7 @@ function(build_firebase_aar LIBRARY_NAME ARTIFACT_NAME LIBRARY_TARGET
       ${FIREBASE_AAR_ARGS_ANDROID_MANIFEST}
     CLASSES_JAR
       ${FIREBASE_AAR_ARGS_CLASSES_JAR}
+    MANIFEST_PACKAGE_NAME
+      "com.google.firebase.unity.${LIBRARY_NAME}"
   )
 endfunction()
