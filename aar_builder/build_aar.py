@@ -69,17 +69,15 @@ def main(unused_argv):
   temp_dir = tempfile.mkdtemp()
   patched_manifest = shutil.copy(android_manifest_file, temp_dir)
   if FLAGS.manifest_package_name:
-    manifest_lines = []
-    with open(patched_manifest, "r+") as file:
-      contents = file.read()
+    with open(patched_manifest, "r") as new_file:
+      contents = new_file.read()
 
-      package_re = re.compile(r'package=".+"')
-      re.sub(r'package=".+"',
-             r'package="%s"' % FLAGS.manifest_package_name,
-             contents)
+    contents = re.sub('package=".+"',
+                      'package="%s"' % FLAGS.manifest_package_name,
+                    contents)
 
-      file.truncate(0)
-      file.write(contents)
+    with open(patched_manifest, "w") as new_file:
+      new_file.write(contents)
 
   # Delete the aar file, if it already exists
   if os.path.exists(output_file):
@@ -101,7 +99,7 @@ def main(unused_argv):
 
   with zipfile.ZipFile(output_file, "w") as myzip:
     # Write the generic base files that are required in an aar file.
-    myzip.write(android_manifest_file, "AndroidManifest.xml")
+    myzip.write(patched_manifest, "AndroidManifest.xml")
     myzip.write(classes_jar_file, "classes.jar")
     myzip.write(os.path.join(file_dir, "R.txt"), "R.txt")
     myzip.writestr("res/", "")
