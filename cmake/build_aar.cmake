@@ -52,7 +52,7 @@ function(build_aar LIBRARY_NAME LIBRARY_TARGET PROGUARD_TARGET
       "--proguard_file=${${PROGUARD_TARGET}}"
       "--android_manifest=${BUILD_AAR_ARGS_ANDROID_MANIFEST}"
       "--classes_jar=${BUILD_AAR_ARGS_CLASSES_JAR}"
-      "--manifest_package_name="${BUILD_AAR_ARGS_MANIFEST_PACKAGE_NAME}"
+      "--manifest_package_name=${BUILD_AAR_ARGS_MANIFEST_PACKAGE_NAME}"
     DEPENDS
       "${LIBRARY_TARGET}"
       "${PROGUARD_TARGET}"
