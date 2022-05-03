@@ -13,6 +13,9 @@
 # limitations under the License.
 """Combines some base files and the given files into an aar file."""
 
+import re
+import shutil
+import tempfile
 import os
 import zipfile
 from absl import app
@@ -37,6 +40,8 @@ flags.DEFINE_string("android_manifest", None,
 flags.DEFINE_string("classes_jar", None,
                     "Location of the classes.jar file to include " + 
                     "in the aar. A default is used if not provided.")
+flags.DEFINE_string("manifest_package_name", None,
+                    "Package name to overwrite the AndroidManifest with.")
 
 
 def main(unused_argv):
@@ -58,6 +63,23 @@ def main(unused_argv):
   classes_jar_file = os.path.join(file_dir, "classes.jar")
   if FLAGS.classes_jar:
     classes_jar_file = os.path.normcase(FLAGS.classes_jar)
+
+  # Edit the AndroidManifest file, replacing the package name
+  # with the provided one
+  temp_dir = tempfile.mkdtemp()
+  patched_manifest = shutil.copy(android_manifest_file, temp_dir)
+  if FLAGS.manifest_package_name:
+    manifest_lines = []
+    with open(patched_manifest, "r+") as file:
+      contents = file.read()
+
+      package_re = re.compile(r'package=".+"')
+      re.sub(r'package=".+"',
+             r'package="%s"' % FLAGS.manifest_package_name,
+             contents)
+
+      file.truncate(0)
+      file.write(contents)
 
   # Delete the aar file, if it already exists
   if os.path.exists(output_file):

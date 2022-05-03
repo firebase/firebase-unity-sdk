@@ -33,10 +33,11 @@ set(MAVEN_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/maven.template)
 # Optional Args:
 #  ANDROID_MANIFEST: The custom AndroidManifest file to include.
 #  CLASSES_JAR: The custom classes.jar file to include.
+#  MANIFEST_PACKAGE_NAME: Package name to overwrite the AndroidManifest with.
 function(build_aar LIBRARY_NAME LIBRARY_TARGET PROGUARD_TARGET
                    ARTIFACT_ID VERSION)
   # Parse the additional arguments
-  set(single ANDROID_MANIFEST CLASSES_JAR)
+  set(single ANDROID_MANIFEST CLASSES_JAR MANIFEST_PACKAGE_NAME)
   cmake_parse_arguments(BUILD_AAR_ARGS "" "${single}" "" ${ARGN})
 
   set(AAR_NAME "${ARTIFACT_ID}-${VERSION}")
@@ -51,6 +52,7 @@ function(build_aar LIBRARY_NAME LIBRARY_TARGET PROGUARD_TARGET
       "--proguard_file=${${PROGUARD_TARGET}}"
       "--android_manifest=${BUILD_AAR_ARGS_ANDROID_MANIFEST}"
       "--classes_jar=${BUILD_AAR_ARGS_CLASSES_JAR}"
+      "--manifest_package_name="${BUILD_AAR_ARGS_MANIFEST_PACKAGE_NAME}"
     DEPENDS
       "${LIBRARY_TARGET}"
       "${PROGUARD_TARGET}"
