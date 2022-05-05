@@ -393,6 +393,7 @@ def is_windows_build():
 
 def main(argv):
   if len(argv) > 1:
+    logging.info("Extra argv are: %s", ",".join(argv))
     raise app.UsageError('Too many command-line arguments.')
   platform = FLAGS.platform
   if platform not in SUPPORT_PLATFORMS:
