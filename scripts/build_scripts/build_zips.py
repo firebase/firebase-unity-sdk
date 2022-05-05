@@ -413,11 +413,19 @@ def main(argv):
   os.chdir(build_path)
   cmake_setup_args = [
       "cmake",
-      source_path,
-      "-DFIREBASE_INCLUDE_UNITY=ON",
-      "-DFIREBASE_UNITY_BUILD_TESTS=ON",
-      "-DFIREBASE_CPP_BUILD_STUB_TESTS=ON",
+      source_path
   ]
+
+  if is_windows_build():
+    # windows args need to happen right after target path
+    cmake_setup_args.extend(get_windows_args())
+
+
+  cmake_setup_args.extend([   
+    "-DFIREBASE_INCLUDE_UNITY=ON",
+    "-DFIREBASE_UNITY_BUILD_TESTS=ON",
+    "-DFIREBASE_CPP_BUILD_STUB_TESTS=ON",
+  ])
 
   unity_root_args = get_unity_engine_folder_args(FLAGS.unity_root)
   if unity_root_args:
@@ -438,8 +446,6 @@ def main(argv):
     cmake_setup_args.extend(get_ios_args(source_path))
   elif is_android_build():
     cmake_setup_args.extend(get_android_args())
-  elif is_windows_build():
-    cmake_setup_args.extend(get_windows_args())
 
   global g_mobile_target_architectures
   logging.info("cmake_setup_args is: " + " ".join(cmake_setup_args))
