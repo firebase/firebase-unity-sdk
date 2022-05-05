@@ -148,7 +148,9 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
-          python scripts/build_scripts/build_zips.py --platform=windows --unity_root=$UNITY_ROOT_DIR --swig_dir="${SWIG_DIR//\\//}"
+          swig_dir_slash_fix=${SWIG_DIR//\\//}
+          echo swig_dir_slash_fix is $swig_dir_slash_fix
+          python scripts/build_scripts/build_zips.py --platform=windows --unity_root=$UNITY_ROOT_DIR --swig_dir=$swig_dir_slash_fix
           # ./build_windows_x64.bat ${{ github.event.inputs.additional_cmake_flags }} TODO convert to python script
           # mkdir ${{ matrix.build_dir }}
           # pushd ${{ matrix.build_dir }}
