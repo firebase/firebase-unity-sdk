@@ -363,7 +363,7 @@ def get_windows_args():
       camke args for windows platform.
   """
   result_args = []
-  result_args.append('-G \"Visual Studio 16 2019\"')
+  result_args.append('-G \'Visual Studio 16 2019\'')
   result_args.append('-A x64') # TODO flexibily for x32
   result_args.append("-DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=%s" % sys.executable)
   return result_args    
@@ -419,7 +419,6 @@ def main(argv):
   if is_windows_build():
     # windows args need to happen right after target path
     cmake_setup_args.extend(get_windows_args())
-
 
   cmake_setup_args.extend([   
     "-DFIREBASE_INCLUDE_UNITY=ON",
