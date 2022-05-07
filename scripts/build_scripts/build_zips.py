@@ -56,7 +56,9 @@ IOS_CONFIG_DICT = {
 
 ANDROID_SUPPORT_ARCHITECTURE = ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
 
-g_mobile_target_architectures = []
+MACOS_SUPPORT_ARCHITECTURE = ["x86_64", "arm64"]
+
+g_target_architectures = []
 g_cpp_sdk_realpath = ""
 
 FLAGS = flags.FLAGS
@@ -80,14 +82,16 @@ flags.DEFINE_multi_string(
     "architecture", None, "Which architectures in build on.\n"
     "For iOS device ({}).\n"
     "For iOS simulator ({}).\n"
-    "For android ({}).".format(",".join(IOS_CONFIG_DICT["device"]["architecture"]),
+    "For android ({}).\n"
+    "For MacOS".format(",".join(IOS_CONFIG_DICT["device"]["architecture"]),
                                ",".join(
         IOS_CONFIG_DICT["simulator"]["architecture"]),
-        ",".join(ANDROID_SUPPORT_ARCHITECTURE)))
+        ",".join(ANDROID_SUPPORT_ARCHITECTURE),
+        ",".join(MACOS_SUPPORT_ARCHITECTURE)))
 flags.DEFINE_multi_string('cmake_extras', None,
                           "Any extra arguments wants to pass into cmake.")
 flags.DEFINE_bool("clean_build", False, "Whether to clean the build folder")
-
+flags.DEFINE_bool("use_boringssl", False, "Build with BoringSSL instead of openSSL.")
 
 def get_build_path(platform, clean_build=False):
   """Get the folder that cmake configure and build in.
@@ -193,7 +197,7 @@ def get_ios_args(source_path):
   else:
     devices = SUPPORT_DEVICE
 
-  global g_mobile_target_architectures
+  global g_target_architectures
   # check architecture input
   if (len(devices) > 1):
     archs_to_check = IOS_SUPPORT_ARCHITECTURE
@@ -205,14 +209,14 @@ def get_ios_args(source_path):
         raise app.UsageError(
             'Wrong architecture "{}" for device type {}, please pick from {}'.format(
                 arch, ",".join(devices), ",".join(archs_to_check)))
-    g_mobile_target_architectures = FLAGS.architecture
+    g_target_architectures = FLAGS.architecture
   else:
-    g_mobile_target_architectures = archs_to_check
+    g_target_architectures = archs_to_check
 
-  if len(g_mobile_target_architectures) != len(IOS_SUPPORT_ARCHITECTURE):
+  if len(g_target_architectures) != len(IOS_SUPPORT_ARCHITECTURE):
     # Need to override only if the archs are not default
     result_args.append("-DCMAKE_OSX_ARCHITECTURES=" +
-                       ";".join(g_mobile_target_architectures))
+                       ";".join(g_target_architectures))
 
   if len(devices) != len(SUPPORT_DEVICE):
     # Need to override if only passed in device or simulator
@@ -254,19 +258,19 @@ def get_android_args():
           'Neither ANDROID_NDK_HOME nor ANDROID_HOME is set.')
 
   # get architecture setup
-  global g_mobile_target_architectures
+  global g_target_architectures
   if FLAGS.architecture:
     for arch in FLAGS.architecture:
       if arch not in ANDROID_SUPPORT_ARCHITECTURE:
         raise app.UsageError(
             'Wrong architecture "{}", please pick from {}'.format(
                 arch, ",".join(ANDROID_SUPPORT_ARCHITECTURE)))
-    g_mobile_target_architectures = FLAGS.architecture
+    g_target_architectures = FLAGS.architecture
   else:
-    g_mobile_target_architectures = ANDROID_SUPPORT_ARCHITECTURE
+    g_target_architectures = ANDROID_SUPPORT_ARCHITECTURE
 
-  if len(g_mobile_target_architectures) == 1:
-    result_args.append("-DANDROID_ABI="+g_mobile_target_architectures[0])
+  if len(g_target_architectures) == 1:
+    result_args.append("-DANDROID_ABI="+g_target_architectures[0])
 
   result_args.append("-DFIREBASE_ANDROID_BUILD=true")
   # android default to build release.
@@ -281,10 +285,10 @@ def make_android_multi_arch_build(cmake_args, merge_script):
       cmake_args: cmake arguments used to build each architecture.
       merge_script: script path to merge the srcaar files.
   """
-  global g_mobile_target_architectures
+  global g_target_architectures
   # build multiple archictures
   current_folder = os.getcwd()
-  for arch in g_mobile_target_architectures:
+  for arch in g_target_architectures:
     if not os.path.exists(arch):
       os.makedirs(arch)
     os.chdir(arch)
@@ -303,7 +307,7 @@ def make_android_multi_arch_build(cmake_args, merge_script):
   zip_base_name = ""
   srcarr_list = []
   base_temp_dir = tempfile.mkdtemp()
-  for arch in g_mobile_target_architectures:
+  for arch in g_target_architectures:
     # find *Android.zip in subfolder architecture
     arch_zip_path = glob.glob(os.path.join(arch, "*Android.zip"))
     if not arch_zip_path:
@@ -350,19 +354,120 @@ def make_android_multi_arch_build(cmake_args, merge_script):
         fullpath = os.path.join(current_root, filename)
         zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
   logging.info("Generated Android multi-arch (%s) zip %s",
-               ",".join(g_mobile_target_architectures), final_zip_path)
+               ",".join(g_target_architectures), final_zip_path)
 
 def get_windows_args():
   """Get the cmake args for windows platform specific.
 
     Returns:
-      camke args for windows platform.
+      cmake args for windows platform.
   """
   result_args = []
   result_args.append('-G \"Visual Studio 16 2019\"')
   result_args.append('-A x64') # TODO flexibily for x32
   result_args.append("-DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=%s" % sys.executable)
-  return result_args    
+  return result_args
+
+def get_macos_args():
+  """Get the cmake args for macos platform specific.
+
+    Returns:
+      cmake args for macos platform.
+  """
+  result_args = []
+  global g_target_architectures
+  # get architecture setup global g_target_architectures
+  if FLAGS.architecture:
+    for arch in FLAGS.architecture:
+      if arch not in MACOS_SUPPORT_ARCHITECTURE:
+        raise app.UsageError(
+            'Wrong architecture "{}", please pick from {}'.format(
+                arch, ",".join(MACOS_SUPPORT_ARCHITECTURE)))
+    g_target_architectures = FLAGS.architecture
+  else:
+    # Default to selecting none, as it will likely only be able to build the local architecture.
+    g_target_architectures = []
+  if len(g_target_architectures) == 1:
+    result_args.append('-DCMAKE_OSX_ARCHITECTURES='+g_target_architectures[0])
+  
+  return result_args
+
+def make_macos_multi_arch_build(cmake_args):
+  """Make macos build for different architectures, and then combine them together
+    Args:
+      cmake_args: cmake arguments used to build each architecture.
+  """
+  global g_target_architectures
+  # build multiple architectures
+  current_folder = os.getcwd()
+  for arch in g_target_architectures:
+    if not os.path.exists(arch):
+      os.makedirs(arch)
+    os.chdir(arch)
+    cmake_args.append('-DCMAKE_OSX_ARCHITECTURES='+arch)
+    subprocess.call(cmake_args)
+    subprocess.call("make")
+
+    cmake_pack_args = [
+        "cpack",
+        ".",
+    ]
+    subprocess.call(cmake_pack_args)
+    os.chdir(current_folder)
+  
+  # Merge the different zip files together, using lipo on the bundle files
+  zip_base_name = ""
+  bundle_list = []
+  base_temp_dir = tempfile.mkdtemp()
+  for arch in g_target_architectures:
+    # find *Darwin.zip in subfolder architecture
+    arch_zip_path = glob.glob(os.path.join(arch, "*Darwin.zip"))
+    if not arch_zip_path:
+      logging.error("No *Darwin.zip generated for architecture %s", arch)
+      return
+    if not zip_base_name:
+      # first architecture, so extract to the final temp folder. The following
+      # bundle files will merge to the ones in this folder.
+      zip_base_name = arch_zip_path[0]
+      with zipfile.ZipFile(zip_base_name) as zip_file:
+        zip_file.extractall(base_temp_dir)
+      bundle_list.extend(glob.glob(os.path.join(
+          base_temp_dir, "**", "*.bundle"), recursive=True))
+    else:
+      temporary_dir = tempfile.mkdtemp()
+      # from the second *Darwin.zip, we only need to extract *.bundle files to operate the merge.
+      with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
+        for file in zip_file.namelist():
+          if file.endswith('.bundle'):
+            zip_file.extract(file, temporary_dir)
+            logging.debug("Unpacked file %s from zip file %s to %s",
+                          file, arch_zip_path, temporary_dir)
+
+      for bundle_file in bundle_list:
+        bundle_name = os.path.basename(bundle_file)
+        matching_files = glob.glob(os.path.join(
+            temporary_dir, "**", "*"+bundle_name), recursive=True)
+        if matching_files:
+          merge_args = [
+              "lipo",
+              bundle_file,
+              matching_files[0],
+              "-create",
+              "-output",
+              bundle_file,
+          ]
+          subprocess.call(merge_args)
+          logging.debug("merging %s to %s", matching_files[0], bundle_file)
+
+  # achive the temp folder to the final firebase_unity-<version>-Darwin.zip
+  final_zip_path = os.path.join(current_folder, os.path.basename(zip_base_name))
+  with zipfile.ZipFile(final_zip_path, "w", allowZip64=True) as zip_file:
+    for current_root, _, filenames in os.walk(base_temp_dir):
+      for filename in filenames:
+        fullpath = os.path.join(current_root, filename)
+        zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
+  logging.info("Generated Darwin (MacOS) multi-arch (%s) zip %s",
+               ",".join(g_target_architectures), final_zip_path)
 
 def is_android_build():
   """
@@ -385,6 +490,13 @@ def is_windows_build():
       If the build platform is windows
   """
   return FLAGS.platform == "windows"
+
+def is_macos_build():
+  """
+    Returns:
+      If the build platform is macos
+  """
+  return FLAGS.platform == "macos"
 
 
 def main(argv):
@@ -427,21 +539,30 @@ def main(argv):
   if FLAGS.cmake_extras:
     cmake_setup_args.extend(FLAGS.cmake_extras)
 
+  if FLAGS.use_boringssl:
+    cmake_setup_args.append("-DFIREBASE_USE_BORINGSSL=ON")
+
   if is_ios_build():
     cmake_setup_args.extend(get_ios_args(source_path))
   elif is_android_build():
     cmake_setup_args.extend(get_android_args())
   elif is_windows_build():
     cmake_setup_args.extend(get_windows_args())
+  elif is_macos_build():
+    cmake_setup_args.extend(get_macos_args())
 
-  global g_mobile_target_architectures
+  global g_target_architectures
   logging.info("cmake_setup_args is: " + " ".join(cmake_setup_args))
-  if is_android_build() and len(g_mobile_target_architectures) > 1:
+  if is_android_build() and len(g_target_architectures) > 1:
     logging.info("Build android with multiple architectures %s",
-                 ",".join(g_mobile_target_architectures))
+                 ",".join(g_target_architectures))
     # android multi architecture build is a bit different
     make_android_multi_arch_build(cmake_setup_args, os.path.join(
         source_path, "aar_builder", "merge_aar.py"))
+  elif is_macos_build() and len(g_target_architectures) > 1:
+    logging.info("Build macos with multiple architectures %s",
+                 ",".join(g_target_architectures))
+    make_macos_multi_arch_build(cmake_setup_args)
   else:
     subprocess.call(cmake_setup_args)
     subprocess.call("make")

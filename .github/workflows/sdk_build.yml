@@ -142,7 +142,7 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         shell: bash
         run: |
-          ./build_macos.sh ${{ github.event.inputs.additional_cmake_flags }}
+          python scripts/build_scripts/build_zips.py --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --cmake_extras="${{ github.event.inputs.additional_cmake_flags }}"
 
       - name: Build SDK (Windows)
         if: startsWith(matrix.os, 'windows')
