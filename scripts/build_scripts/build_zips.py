@@ -25,6 +25,7 @@ import shutil
 import subprocess
 import zipfile
 import tempfile
+import threading
 import sys
 
 from absl import app, flags, logging
@@ -278,30 +279,44 @@ def get_android_args():
   result_args.append("-DANDROID_STL=c++_shared")
   return result_args
 
+def make_android_arch(arch, cmake_args):
+  """Make android build for the given architecture.
+     Assumed to be called from the build directory.
+
+    Args:
+      arch: The android architecture to build for.
+      cmake_args: Additional cmake arguments to use.
+  """
+  if not os.path.exists(arch):
+    os.makedirs(arch)
+  build_dir = os.path.join(os.getcwd(), arch)
+  cmake_args.append("-DANDROID_ABI="+arch)
+  subprocess.call(cmake_args, cwd=build_dir)
+  subprocess.call("make", cwd=build_dir)
+
+  cmake_pack_args = [
+      "cpack",
+      ".",
+  ]
+  subprocess.call(cmake_pack_args, cwd=build_dir)
 
 def make_android_multi_arch_build(cmake_args, merge_script):
-  """Make android build for different architectures, and then combine them together
+  """Make android build for different architectures, and then combine them together.
+
     Args:
       cmake_args: cmake arguments used to build each architecture.
       merge_script: script path to merge the srcaar files.
   """
   global g_target_architectures
   # build multiple archictures
-  current_folder = os.getcwd()
+  threads = []
   for arch in g_target_architectures:
-    if not os.path.exists(arch):
-      os.makedirs(arch)
-    os.chdir(arch)
-    cmake_args.append("-DANDROID_ABI="+arch)
-    subprocess.call(cmake_args)
-    subprocess.call("make")
+    t = threading.Thread(target=make_android_arch, args=(arch, cmake_args))
+    t.start()
+    threads.append(t)
 
-    cmake_pack_args = [
-        "cpack",
-        ".",
-    ]
-    subprocess.call(cmake_pack_args)
-    os.chdir(current_folder)
+  for t in threads:
+    t.join()
 
   # merge them
   zip_base_name = ""
@@ -392,28 +407,39 @@ def get_macos_args():
   
   return result_args
 
+def make_macos_arch(arch, cmake_args):
+  """Make the macos build for the given architecture.
+     Assumed to be called from the build directory.
+
+    Args:
+      arch: The architecture to build for.
+      cmake_args: Additional cmake arguments to use.
+  """
+  if not os.path.exists(arch):
+    os.makedirs(arch)
+  build_dir = os.path.join(os.getcwd(), arch)
+  cmake_args.append('-DCMAKE_OSX_ARCHITECTURES='+arch)
+  subprocess.call(cmake_args, cwd=build_dir)
+  subprocess.call('make', cwd=build_dir)
+  subprocess.call(['cpack', '.'], cwd=build_dir)
+
 def make_macos_multi_arch_build(cmake_args):
   """Make macos build for different architectures, and then combine them together
+
     Args:
       cmake_args: cmake arguments used to build each architecture.
   """
   global g_target_architectures
   # build multiple architectures
   current_folder = os.getcwd()
+  threads = []
   for arch in g_target_architectures:
-    if not os.path.exists(arch):
-      os.makedirs(arch)
-    os.chdir(arch)
-    cmake_args.append('-DCMAKE_OSX_ARCHITECTURES='+arch)
-    subprocess.call(cmake_args)
-    subprocess.call("make", "-j")
+    t = threading.Thread(target=make_macos_arch, args=(arch, cmake_args))
+    t.start()
+    threads.append(t)
 
-    cmake_pack_args = [
-        "cpack",
-        ".",
-    ]
-    subprocess.call(cmake_pack_args)
-    os.chdir(current_folder)
+  for t in threads:
+    t.join()
   
   # Merge the different zip files together, using lipo on the bundle files
   zip_base_name = ""
@@ -520,9 +546,7 @@ def main(argv):
   if is_android_build() and g_cpp_sdk_realpath:
     # For android build, if we find local cpp folder,
     # We trigger the cpp android build first.
-    os.chdir(g_cpp_sdk_realpath)
-    subprocess.call("./gradlew")
-    os.chdir(source_path)
+    subprocess.call("./gradlew", cwd=g_cpp_sdk_realpath)
 
   os.chdir(build_path)
   cmake_setup_args = [
@@ -572,11 +596,7 @@ def main(argv):
     make_macos_multi_arch_build(cmake_setup_args)
   else:
     subprocess.call(cmake_setup_args)
-    # Ideally they should all use multi jobs, but some of the platforms currently fail 
-    if is_linux_build() or is_macos_build():
-      subprocess.call("make", "-j")
-    else:
-      subprocess.call("make")
+    subprocess.call("make")
 
     cmake_pack_args = [
         "cpack",
