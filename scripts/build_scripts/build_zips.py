@@ -498,6 +498,13 @@ def is_macos_build():
   """
   return FLAGS.platform == "macos"
 
+def is_linux_build():
+  """
+    Returns:
+      If the build platform is linux
+  """
+  return FLAGS.platform == "linux"
+
 
 def main(argv):
   if len(argv) > 1:
@@ -565,7 +572,11 @@ def main(argv):
     make_macos_multi_arch_build(cmake_setup_args)
   else:
     subprocess.call(cmake_setup_args)
-    subprocess.call("make")
+    # Ideally they should all use multi jobs, but some of the platforms currently fail 
+    if is_linux_build() or is_macos_build():
+      subprocess.call("make", "-j")
+    else:
+      subprocess.call("make")
 
     cmake_pack_args = [
         "cpack",
