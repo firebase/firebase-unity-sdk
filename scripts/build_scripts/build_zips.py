@@ -84,7 +84,7 @@ flags.DEFINE_multi_string(
     "For iOS device ({}).\n"
     "For iOS simulator ({}).\n"
     "For android ({}).\n"
-    "For MacOS".format(",".join(IOS_CONFIG_DICT["device"]["architecture"]),
+    "For MacOS ({})".format(",".join(IOS_CONFIG_DICT["device"]["architecture"]),
                                ",".join(
         IOS_CONFIG_DICT["simulator"]["architecture"]),
         ",".join(ANDROID_SUPPORT_ARCHITECTURE),
