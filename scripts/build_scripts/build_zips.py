@@ -406,7 +406,7 @@ def make_macos_multi_arch_build(cmake_args):
     os.chdir(arch)
     cmake_args.append('-DCMAKE_OSX_ARCHITECTURES='+arch)
     subprocess.call(cmake_args)
-    subprocess.call("make")
+    subprocess.call("make", "-j")
 
     cmake_pack_args = [
         "cpack",
