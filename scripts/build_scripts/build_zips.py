@@ -456,7 +456,11 @@ def main(argv):
         source_path, "aar_builder", "merge_aar.py"))
   else:
     subprocess.call(cmake_setup_args)
-    subprocess.call("make")
+    if is_windows_build():
+      # no make command in windows
+      subprocess.call("cmake --build .  --config Release")
+    else:
+      subprocess.call("make")
 
     cmake_pack_args = [
         "cpack",
