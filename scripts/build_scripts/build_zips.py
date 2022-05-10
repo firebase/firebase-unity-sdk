@@ -279,27 +279,6 @@ def get_android_args():
   result_args.append("-DANDROID_STL=c++_shared")
   return result_args
 
-def make_android_arch(arch, cmake_args):
-  """Make android build for the given architecture.
-     Assumed to be called from the build directory.
-
-    Args:
-      arch: The android architecture to build for.
-      cmake_args: Additional cmake arguments to use.
-  """
-  if not os.path.exists(arch):
-    os.makedirs(arch)
-  build_dir = os.path.join(os.getcwd(), arch)
-  cmake_args.append("-DANDROID_ABI="+arch)
-  subprocess.call(cmake_args, cwd=build_dir)
-  subprocess.call("make", cwd=build_dir)
-
-  cmake_pack_args = [
-      "cpack",
-      ".",
-  ]
-  subprocess.call(cmake_pack_args, cwd=build_dir)
-
 def make_android_multi_arch_build(cmake_args, merge_script):
   """Make android build for different architectures, and then combine them together.
 
@@ -308,15 +287,21 @@ def make_android_multi_arch_build(cmake_args, merge_script):
       merge_script: script path to merge the srcaar files.
   """
   global g_target_architectures
+  current_folder = os.getcwd()
   # build multiple archictures
-  threads = []
   for arch in g_target_architectures:
-    t = threading.Thread(target=make_android_arch, args=(arch, cmake_args))
-    t.start()
-    threads.append(t)
+    if not os.path.exists(arch):
+      os.makedirs(arch)
+    build_dir = os.path.join(current_folder, arch)
+    cmake_args.append("-DANDROID_ABI="+arch)
+    subprocess.call(cmake_args, cwd=build_dir)
+    subprocess.call("make", cwd=build_dir)
 
-  for t in threads:
-    t.join()
+    cmake_pack_args = [
+      "cpack",
+      ".",
+    ]
+    subprocess.call(cmake_pack_args, cwd=build_dir)
 
   # merge them
   zip_base_name = ""
