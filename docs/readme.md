@@ -163,6 +163,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - General (Editor, macOS): Add support for Apple Silicon chips.
+
 ### 8.10.1
 - Changes
     - General (Android): Fix an issue when building with mainTemplate.gradle.
