@@ -98,14 +98,6 @@ If you import another Firebase plugin:
   `Assets > Play Services Resolver > Version Handler > Update`
   to enable the correct DLLs for your project.
 
-### Unity 2017.2 Networking
-
-Realtime Database creates TLS network connections using the .NET networking
-stack.  TLS functionality is broken in Unity 2017.2 when using .NET 4.6 causing
-the Realtime Database plugin to fail in editor and on desktop.  There is no
-workaround for this issue, you have to use a different version of Unity, for
-example 2017.1 or 2017.3.
-
 
 ### Unity 4 workarounds
 
@@ -163,9 +155,16 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 9.0.0
 - Changes
+    - General: Minimum supported editor version is now Unity 2018.
     - General (Editor, macOS): Add support for Apple Silicon chips.
+    - General (iOS): Firebase Unity on iOS is now built using Xcode 13.3.1.
+    - Analytics: Removed deprecated event names and parameters.
+    - Realtime Database (Desktop): Fixed a bug handling server timestamps
+      on 32-bit CPUs.
+    - Storage (Desktop): Set Content-Type HTTP header when uploading with
+      custom metadata.
 
 ### 8.10.1
 - Changes
