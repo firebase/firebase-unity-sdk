@@ -29,7 +29,7 @@ jobs:
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
       U3D_PASSWORD: ""
-      xcodeVersion: "12.4"
+      xcodeVersion: "13.3.1"
   
     steps:
       - name: Checkout Unity Repo
