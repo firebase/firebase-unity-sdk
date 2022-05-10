@@ -68,10 +68,10 @@ flags.DEFINE_string(
     'unity_root', None,
     "The root dir for Unity Engine. If not set, cmake will try to guess in the default unity installation location."
 )
-flags.DEFINE_string(
-    'swig_dir', None,
-    "The folder where swig is installed."
-)
+# flags.DEFINE_string(
+#     'swig_dir', None,
+#     "The folder where swig is installed."
+# )
 flags.DEFINE_multi_string(
     "targets", None,
     ("Target product to includes in the build. List items pick from"
@@ -431,8 +431,8 @@ def main(argv):
     cmake_setup_args.append(unity_root_args)
   if cmake_cpp_folder_args:
     cmake_setup_args.append(cmake_cpp_folder_args)
-  if FLAGS.swig_dir:
-    cmake_setup_args.append("-DSWIG_DIR="+FLAGS.swig_dir)
+  # if FLAGS.swig_dir:
+  #   cmake_setup_args.append("-DSWIG_DIR="+FLAGS.swig_dir)
 
   target_arg_list = get_targets_args(FLAGS.targets)
   if target_arg_list:
@@ -457,7 +457,7 @@ def main(argv):
   else:
     subprocess.call(cmake_setup_args)
     if is_windows_build():
-      # no make command in windows
+      # no make command in windows. TODO make config passable
       subprocess.call("cmake --build .  --config Release")
     else:
       subprocess.call("make")
