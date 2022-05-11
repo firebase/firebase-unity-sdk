@@ -15,62 +15,62 @@
 # This file defines the Android dependencies needed by all the modules.
 
 set(FIREBASE_APP_ANDROID_DEPS
-    "com.google.firebase:firebase-common:20.1.0"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-common:20.1.1"
+    "com.google.firebase:firebase-analytics:21.0.0"
     "com.google.android.gms:play-services-base:18.0.1"
 )
 
 set(FIREBASE_ANALYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_AUTH_ANDROID_DEPS
     "com.google.firebase:firebase-auth:21.0.3"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:18.2.9"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-crashlytics-ndk:18.2.10"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_DATABASE_ANDROID_DEPS
-    "com.google.firebase:firebase-database:20.0.4"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-database:20.0.5"
+    "com.google.firebase:firebase-analytics:21.0.0"
     "com.google.android.gms:play-services-base:18.0.1"
 )
 
 set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
     "com.google.firebase:firebase-dynamic-links:21.0.1"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:24.1.1"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-firestore:24.1.2"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_FUNCTIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-functions:20.0.2"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-functions:20.1.0"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
     "com.google.firebase:firebase-installations:17.0.1"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_MESSAGING_ANDROID_DEPS
-    "com.google.firebase:firebase-messaging:23.0.3"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-messaging:23.0.4"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
-    "com.google.firebase:firebase-config:21.0.2"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-config:21.1.0"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_STORAGE_ANDROID_DEPS
     "com.google.firebase:firebase-storage:20.0.1"
-    "com.google.firebase:firebase-analytics:20.1.2"
+    "com.google.firebase:firebase-analytics:21.0.0"
 )
