@@ -508,7 +508,7 @@ class StaticFunctionKInitRemoval(SWIGPostProcessingInterface):
       if match:
         function_name = match.groups()[1]
         line = ''.join([line[:match.end(1)+1],
-                        function_name.replace('k', ''),
+                        function_name.replace('k', '', 1),
                         line[match.end(2):]])
       output.append(line)
     return '\n'.join(output)
