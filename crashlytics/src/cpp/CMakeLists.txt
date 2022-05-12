@@ -101,6 +101,12 @@ if(IOS)
     POD_NAMES
       FirebaseCrashlytics
   )
+  # The Crashlytics cocoapod can use a unique path that does not match the pattern used by
+  # other Firebase cocoapods, so add the path explicitly here.
+  target_include_directories(firebase_crashlytics
+    PUBLIC
+      ${FIREBASE_POD_DIR}/Pods/FirebaseCrashlytics/Crashlytics/Crashlytics/Public/FirebaseCrashlytics
+  )
 
   # Crashlytics pods use 'iOS' dir instead of 'Frameworks' dir
   symlink_pod_headers(firebase_crashlytics Crashlytics CrashlyticsiOS

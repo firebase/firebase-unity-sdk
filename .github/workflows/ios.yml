@@ -20,7 +20,7 @@ on:
 jobs:
   build_ios:
     name: build-ios-macos-${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
-    runs-on: macos-latest
+    runs-on: macos-12
     strategy:
       fail-fast: false
 
@@ -29,7 +29,7 @@ jobs:
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
       U3D_PASSWORD: ""
-      xcodeVersion: "12.4"
+      xcodeVersion: "13.3.1"
   
     steps:
       - name: Checkout Unity Repo

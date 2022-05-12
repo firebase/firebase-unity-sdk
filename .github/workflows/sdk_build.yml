@@ -136,33 +136,33 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         shell: bash
         run: |
-          ./build_linux.sh ${{ github.event.inputs.additional_cmake_flags }}
+          ./build_linux.sh -DFIREBASE_USE_BORINGSSL=ON ${{ github.event.inputs.additional_cmake_flags }}
 
       - name: Build SDK (MacOS)
         if: startsWith(matrix.os, 'macos')
         shell: bash
         run: |
-          ./build_macos.sh ${{ github.event.inputs.additional_cmake_flags }}
+          python scripts/build_scripts/build_zips.py --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --cmake_extras="${{ github.event.inputs.additional_cmake_flags }}"
 
       - name: Build SDK (Windows)
         if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
-          swig_dir_slash_fix=${SWIG_DIR//\\//}
-          python scripts/build_scripts/build_zips.py --platform=windows --unity_root="$UNITY_ROOT_DIR" --cmake_extras='-DSWIG_DIR=$swig_dir_slash_fix'
+          # swig_dir_slash_fix=${SWIG_DIR//\\//}
+          # python scripts/build_scripts/build_zips.py --platform=windows --unity_root="$UNITY_ROOT_DIR" --cmake_extras='-DSWIG_DIR=$swig_dir_slash_fix'
           # ./build_windows_x64.bat ${{ github.event.inputs.additional_cmake_flags }} TODO convert to python script
-          # mkdir ${{ matrix.build_dir }}
-          # pushd ${{ matrix.build_dir }}
-          # cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${UNITY_ROOT_DIR}" -DSWIG_DIR="${SWIG_DIR}" -DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=C:/hostedtoolcache/windows/Python/3.7.9/x64/python.exe ${{ github.event.inputs.additional_cmake_flags }}
-          # echo "=-=-=-=-=-=-=-=-="
-          # echo "Start Build"
-          # echo "=-=-=-=-=-=-=-=-="
-          # cmake --build .  --config Release
-          # echo "=-=-=-=-=-=-=-=-="
-          # echo "Start Package"
-          # echo "=-=-=-=-=-=-=-=-="
-          # cpack .
-          # popd
+          mkdir ${{ matrix.build_dir }}
+          pushd ${{ matrix.build_dir }}
+          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${UNITY_ROOT_DIR}" -DSWIG_DIR="${SWIG_DIR}" -DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=C:/hostedtoolcache/windows/Python/3.7.9/x64/python.exe -DFIREBASE_USE_BORINGSSL=ON ${{ github.event.inputs.additional_cmake_flags }}
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Build"
+          echo "=-=-=-=-=-=-=-=-="
+          cmake --build .  --config Release
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Package"
+          echo "=-=-=-=-=-=-=-=-="
+          cpack .
+          popd
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
