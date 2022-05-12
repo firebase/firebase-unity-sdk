@@ -71,10 +71,6 @@ flags.DEFINE_string(
     'unity_root', None,
     "The root dir for Unity Engine. If not set, cmake will try to guess in the default unity installation location."
 )
-# flags.DEFINE_string(
-#     'swig_dir', None,
-#     "The folder where swig is installed."
-# )
 flags.DEFINE_multi_string(
     "targets", None,
     ("Target product to includes in the build. List items pick from"
@@ -523,7 +519,6 @@ def is_linux_build():
 
 def main(argv):
   if len(argv) > 1:
-    logging.info("Extra argv are: %s", ",".join(argv))
     raise app.UsageError('Too many command-line arguments.')
   platform = FLAGS.platform
   if platform not in SUPPORT_PLATFORMS:
@@ -559,8 +554,6 @@ def main(argv):
     cmake_setup_args.append(unity_root_args)
   if cmake_cpp_folder_args:
     cmake_setup_args.append(cmake_cpp_folder_args)
-  # if FLAGS.swig_dir:
-  #   cmake_setup_args.append("-DSWIG_DIR="+FLAGS.swig_dir)
 
   target_arg_list = get_targets_args(FLAGS.targets)
   if target_arg_list:
