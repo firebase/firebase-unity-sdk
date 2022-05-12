@@ -72,13 +72,18 @@ if(ANDROID)
   set(FIREBASE_CPP_CRASHLYTICS_PROGUARD ${CMAKE_CURRENT_BINARY_DIR}/crashlytics.pro
       CACHE FILEPATH "Proguard file for Crashlytics" FORCE)
 
+  # The Crashlytics NDK symbols aren't properly caught by the usual strings logic,
+  # so we explicitly append it at the end.
   add_custom_command(
     OUTPUT ${FIREBASE_CPP_CRASHLYTICS_PROGUARD}
     COMMAND strings $<TARGET_FILE:firebase_crashlytics> |
             grep %PG% |
             sed -r 'sI/I.Ig' |
-            sed -r 's/%PG%/-keep,includedescriptorclasses public class /g'
-            > ${FIREBASE_CPP_CRASHLYTICS_PROGUARD}
+            sed -r 's/%PG%/-keep,includedescriptorclasses public class /g' |
+            sed -r 'sI\$\$I { *\; }Ig'
+            > ${FIREBASE_CPP_CRASHLYTICS_PROGUARD} &&
+            echo '-keep class com.google.firebase.crashlytics.ndk.** { *\; }'
+            >> ${FIREBASE_CPP_CRASHLYTICS_PROGUARD}
     DEPENDS firebase_crashlytics
     COMMENT "Generating Crashlytics Proguard file."
   )
