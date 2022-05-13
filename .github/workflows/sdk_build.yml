@@ -136,7 +136,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         shell: bash
         run: |
-          ./build_linux.sh ${{ github.event.inputs.additional_cmake_flags }}
+          ./build_linux.sh -DFIREBASE_USE_BORINGSSL=ON ${{ github.event.inputs.additional_cmake_flags }}
 
       - name: Build SDK (MacOS)
         if: startsWith(matrix.os, 'macos')
