@@ -64,7 +64,7 @@ jobs:
 
       - name: Install Unity installer (U3D)
         shell: bash
-        run: gem install u3d -v 1.2.3
+        run: gem install u3d
 
       - name: Install python deps
         shell: bash
