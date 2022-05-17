@@ -216,7 +216,7 @@ jobs:
         timeout-minutes: 10
         shell: bash
         run: |
-          gem install u3d -v 1.2.3
+          gem install u3d
           u3d available
           u3d available -u ${{ matrix.unity_version }} -p
       - name: Setup python
