@@ -218,7 +218,7 @@ jobs:
         run: |
           gem install u3d
           u3d available
-          u3d available -u ${{ matrix.unity_version }} -p
+          # u3d available -u ${{ matrix.unity_version }} -p
       - name: Setup python
         uses: actions/setup-python@v2
         with:
