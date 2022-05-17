@@ -73,7 +73,7 @@ jobs:
 
       - name: Install Unity installer (U3D)
         shell: bash
-        run: gem install u3d
+        run: gem install u3d -v 1.2.3
 
       - name: Setup python
         uses: actions/setup-python@v2
