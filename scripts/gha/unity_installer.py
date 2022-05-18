@@ -163,9 +163,10 @@ def install_unity(unity_version, platforms):
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
   package_list = UNITY_SETTINGS[unity_version][os]["packages"][_DEFALUT]
-  for p in platforms:
-    if UNITY_SETTINGS[unity_version][os]["packages"][p]:
-      package_list.extend(UNITY_SETTINGS[unity_version][os]["packages"][p])
+  if platforms:
+    for p in platforms:
+      if UNITY_SETTINGS[unity_version][os]["packages"][p]:
+        package_list.extend(UNITY_SETTINGS[unity_version][os]["packages"][p])
   package_csv = ",".join(filter(None.__ne__, package_list))
 
   u3d = find_u3d()
