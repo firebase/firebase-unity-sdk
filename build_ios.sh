@@ -137,7 +137,8 @@ if [[ " ${platforms[@]} " =~ " simulator " ]]; then
     if [ "$osx_sysroot" == "" ]; then
         osx_sysroot=${SIMULATOR_OSX_SYSROOT}
     else
-        osx_sysroot="${osx_sysroot};${SIMULATOR_OSX_SYSROOT}"
+        # We want this to be empty when building for both
+        osx_sysroot=""
     fi
     if [ "$xcode_platforms" == "" ]; then
         xcode_platforms="-${SIMULATOR_OSX_SYSROOT}"
@@ -193,11 +194,14 @@ mkdir -p "$buildpath"
 
 pushd "$buildpath"
 
+if [ "$osx_sysroot" != "" ]; then
+    CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_OSX_SYSROOT=$osx_sysroot"
+fi
+
 # Configure cmake with option value
 cmake $sourcepath \
     -DCMAKE_TOOLCHAIN_FILE=$sourcepath/cmake/unity_ios.cmake \
     -DCMAKE_OSX_ARCHITECTURES=$cmake_archs \
-    -DCMAKE_OSX_SYSROOT=$osx_sysroot \
     -DCMAKE_XCODE_EFFECTIVE_PLATFORMS=$xcode_platforms \
     -DIOS_PLATFORM_LOCATION=$ios_location \
     -DUNITY_ROOT_DIR=${UNITY_ROOT_DIR} \

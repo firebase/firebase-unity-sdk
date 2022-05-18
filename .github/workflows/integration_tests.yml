@@ -210,15 +210,17 @@ jobs:
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
       U3D_PASSWORD: ""
+      # Disable checking for U3D updates, since it is buggy
+      U3D_SKIP_UPDATE_CHECK: 1
     steps:
       - uses: actions/checkout@v2
       - name: Install Unity installer (U3D)
         timeout-minutes: 10
         shell: bash
         run: |
-          gem install u3d
+          gem install u3d -v 1.2.3
           u3d available
-          u3d available -u ${{ matrix.unity_version }} -p
+          # u3d available -u ${{ matrix.unity_version }} -p
       - name: Setup python
         uses: actions/setup-python@v2
         with:

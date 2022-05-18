@@ -48,6 +48,8 @@ jobs:
         LC_ALL: en_US.UTF-8
         LANG: en_US.UTF-8
         U3D_PASSWORD: ""
+        # Disable checking for U3D updates, since it is buggy
+        U3D_SKIP_UPDATE_CHECK: 1
     steps:
       - uses: actions/checkout@v2
         with:
@@ -73,7 +75,7 @@ jobs:
 
       - name: Install Unity installer (U3D)
         shell: bash
-        run: gem install u3d
+        run: gem install u3d -v 1.2.3
 
       - name: Setup python
         uses: actions/setup-python@v2
@@ -136,7 +138,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         shell: bash
         run: |
-          ./build_linux.sh ${{ github.event.inputs.additional_cmake_flags }}
+          ./build_linux.sh -DFIREBASE_USE_BORINGSSL=ON ${{ github.event.inputs.additional_cmake_flags }}
 
       - name: Build SDK (MacOS)
         if: startsWith(matrix.os, 'macos')
@@ -148,6 +150,8 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
+          # swig_dir_slash_fix=${SWIG_DIR//\\//}
+          # python scripts/build_scripts/build_zips.py --platform=windows --unity_root="$UNITY_ROOT_DIR" --cmake_extras='-DSWIG_DIR=$swig_dir_slash_fix'
           # ./build_windows_x64.bat ${{ github.event.inputs.additional_cmake_flags }} TODO convert to python script
           mkdir ${{ matrix.build_dir }}
           pushd ${{ matrix.build_dir }}
