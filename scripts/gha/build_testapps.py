@@ -145,7 +145,8 @@ _BUILD_TARGET = {
   _IOS: "iOS",
   _WINDOWS: "Win64",
   _MACOS: "OSXUniversal",
-  _LINUX: "Linux64"
+  _LINUX: "Linux64",
+  _PLAYMODE: "Playmode"
 }
 
 _SUPPORTED_PLATFORMS = (
@@ -352,7 +353,7 @@ def main(argv):
       if FLAGS.ci:
         shutil.rmtree(dir_helper.unity_project_dir)
       else:
-        shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
+        shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"), ignore_errors=True)
       logging.info("END %s", build_desc)
 
   _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
@@ -531,7 +532,7 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
       dir_helper.unity_path,
       dir_helper.unity_project_dir,
       shared_args=["-batchmode", "-nographics", "-accept-apiupdate"])
-  log = dir_helper.make_log_path("editor_tests")
+  log = dir_helper.make_log_path("build_Playmode")
   arg_builder.set_log_file(log)
   run_args = arg_builder.get_args_for_method("InEditorRunner.EditorRun")
   dir_helper.copy_editor_script("InEditorRunner.cs")
