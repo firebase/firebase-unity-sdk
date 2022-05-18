@@ -364,7 +364,7 @@ def get_windows_args():
       cmake args for windows platform.
   """
   result_args = []
-  result_args.append('-G \"Visual Studio 16 2019\"')
+  result_args.append('-G Visual Studio 16 2019')
   result_args.append('-A x64') # TODO flexibily for x32
   result_args.append("-DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=%s" % sys.executable)
   return result_args
@@ -537,14 +537,21 @@ def main(argv):
   os.chdir(build_path)
   cmake_setup_args = [
       "cmake",
-      source_path,
-      "-DFIREBASE_INCLUDE_UNITY=ON",
-      "-DFIREBASE_UNITY_BUILD_TESTS=ON",
-      "-DFIREBASE_CPP_BUILD_STUB_TESTS=ON",
+      source_path
   ]
   
   if FLAGS.verbose:
     cmake_setup_args.append('-DCMAKE_VERBOSE_MAKEFILE=1')
+
+  if is_windows_build():
+    # windows args need to happen right after target path
+    cmake_setup_args.extend(get_windows_args())
+
+  cmake_setup_args.extend([   
+    "-DFIREBASE_INCLUDE_UNITY=ON",
+    "-DFIREBASE_UNITY_BUILD_TESTS=ON",
+    "-DFIREBASE_CPP_BUILD_STUB_TESTS=ON",
+  ])
 
   unity_root_args = get_unity_engine_folder_args(FLAGS.unity_root)
   if unity_root_args:
@@ -566,8 +573,6 @@ def main(argv):
     cmake_setup_args.extend(get_ios_args(source_path))
   elif is_android_build():
     cmake_setup_args.extend(get_android_args())
-  elif is_windows_build():
-    cmake_setup_args.extend(get_windows_args())
   elif is_macos_build():
     cmake_setup_args.extend(get_macos_args())
 
@@ -585,7 +590,11 @@ def main(argv):
     make_macos_multi_arch_build(cmake_setup_args)
   else:
     subprocess.call(cmake_setup_args)
-    subprocess.call("make")
+    if is_windows_build():
+      # no make command in windows. TODO make config passable
+      subprocess.call("cmake --build .  --config Release")
+    else:
+      subprocess.call("make")
 
     cmake_pack_args = [
         "cpack",
