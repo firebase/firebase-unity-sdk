@@ -160,10 +160,10 @@ Release Notes
     - General: Minimum supported editor version is now Unity 2018.
     - General (Editor, macOS): Add support for Apple Silicon chips.
     - General (iOS): Firebase Unity on iOS is now built using Xcode 13.3.1.
+    - General (iOS): Fixed crash when running on iPhoneOS 12 and older.
     - Analytics: Removed deprecated event names and parameters.
     - Crashlytics (Android): Fixed a bug with missing symbols when enabling
       minification via proguard.
-    - Messaging (iOS): Fixed crash when running on iPhoneOS 12 and older.
     - Realtime Database (Desktop): Fixed a bug handling server timestamps
       on 32-bit CPUs.
     - Storage (Desktop): Set Content-Type HTTP header when uploading with
