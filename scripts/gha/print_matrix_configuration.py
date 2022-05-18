@@ -81,12 +81,12 @@ PARAMETERS = {
 UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {
-      "version": "2020.3.22f1",
+      "version": "2020.3.34f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
     _MACOS: {
-      "version": "2020.3.22f1",
+      "version": "2020.3.34f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
@@ -97,12 +97,12 @@ UNITY_SETTINGS = {
   },
   "2019": {
     _WINDOWS: {
-      "version": "2019.4.32f1",
+      "version": "2019.4.39f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
     _MACOS: {
-      "version": "2019.4.32f1",
+      "version": "2019.4.39f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
