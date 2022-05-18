@@ -137,7 +137,8 @@ if [[ " ${platforms[@]} " =~ " simulator " ]]; then
     if [ "$osx_sysroot" == "" ]; then
         osx_sysroot=${SIMULATOR_OSX_SYSROOT}
     else
-        osx_sysroot="${osx_sysroot};${SIMULATOR_OSX_SYSROOT}"
+        # We want this to be empty when building for both
+        osx_sysroot=""
     fi
     if [ "$xcode_platforms" == "" ]; then
         xcode_platforms="-${SIMULATOR_OSX_SYSROOT}"
