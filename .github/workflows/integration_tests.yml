@@ -393,7 +393,7 @@ jobs:
 
 
   test_playmode:
-    name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}
+    name: test-${{ matrix.unity_version }}-${{matrix.os}}-Playmode
     runs-on: ${{matrix.os}}
     needs: check_and_prepare
     strategy:
@@ -429,7 +429,6 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/unity_installer.py --install \
-            --platforms ${{ matrix.platform }} \
             --version ${{ matrix.unity_version }}
       - name: Activate Unity license
         timeout-minutes: 10
