@@ -163,6 +163,7 @@ Release Notes
     - Analytics: Removed deprecated event names and parameters.
     - Crashlytics (Android): Fixed a bug with missing symbols when enabling
       minification via proguard.
+    - Messaging (iOS): Fixed crash when running on iPhoneOS 12 and older.
     - Realtime Database (Desktop): Fixed a bug handling server timestamps
       on 32-bit CPUs.
     - Storage (Desktop): Set Content-Type HTTP header when uploading with

@@ -16,7 +16,10 @@ message(STATUS "gcc found at: ${CMAKE_C_COMPILER}")
 message(STATUS "g++ found at: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Using iOS SDK: ${CMAKE_OSX_SYSROOT}")
 
-set(CMAKE_OSX_SYSROOT "iphoneos;iphonesimulator")
+set(CMAKE_SYSTEM_NAME "iOS")
+# In order to build for both device and simulator, this needs to be empty,
+# or the CMAKE_OSX_DEPLOYMENT_TARGET setting below is not handled correctly.
+set(CMAKE_OSX_SYSROOT "")
 set(CMAKE_OSX_ARCHITECTURES "arm64;armv7;x86_64;i386" CACHE STRING "")
 set(CMAKE_XCODE_EFFECTIVE_PLATFORMS "-iphoneos;-iphonesimulator")
 set(IOS_PLATFORM_LOCATION "iPhoneOS.platform;iPhoneSimulator.platform")
@@ -25,6 +28,7 @@ set(CMAKE_IOS_INSTALL_UNIVERSAL_LIBS "YES")
 set(CMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO")
 set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO")
 set(CMAKE_XCODE_ATTRIBUTE_ENABLE_BITCODE "YES")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "8.0" CACHE STRING "")
 
 # skip TRY_COMPILE checks
 set(CMAKE_CXX_COMPILER_WORKS TRUE)
