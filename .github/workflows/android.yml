@@ -27,6 +27,8 @@ jobs:
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
       U3D_PASSWORD: ""
+      # Disable checking for U3D updates, since it is buggy
+      U3D_SKIP_UPDATE_CHECK: 1
       CCACHE_DIR: ${{ github.workspace }}/ccache_dir
   
     steps:
@@ -71,7 +73,7 @@ jobs:
 
       - name: Install Unity installer (U3D)
         shell: bash
-        run: gem install u3d
+        run: gem install u3d -v 1.2.3
 
       - name: Install python deps
         shell: bash
