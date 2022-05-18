@@ -194,11 +194,14 @@ mkdir -p "$buildpath"
 
 pushd "$buildpath"
 
+if [ "$osx_sysroot" != "" ]; then
+    CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_OSX_SYSROOT=$osx_sysroot"
+fi
+
 # Configure cmake with option value
 cmake $sourcepath \
     -DCMAKE_TOOLCHAIN_FILE=$sourcepath/cmake/unity_ios.cmake \
     -DCMAKE_OSX_ARCHITECTURES=$cmake_archs \
-    -DCMAKE_OSX_SYSROOT=$osx_sysroot \
     -DCMAKE_XCODE_EFFECTIVE_PLATFORMS=$xcode_platforms \
     -DIOS_PLATFORM_LOCATION=$ios_location \
     -DUNITY_ROOT_DIR=${UNITY_ROOT_DIR} \
