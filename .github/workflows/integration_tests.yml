@@ -455,7 +455,7 @@ jobs:
           workflow: 'packaging.yml'
           run_id: ${{ github.event.inputs.test_packaged_sdk }}
           
-      - name: Build integration tests
+      - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
           if [[ -n "${{ github.event.inputs.test_packaged_sdk }}" ]]; then
@@ -518,7 +518,7 @@ jobs:
             --actor ${{github.actor}} \
             --commit ${{needs.check_and_prepare.outputs.github_ref}} \
             --run_id ${{github.run_id}}
-      - name: Summarize build results
+      - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
         run: |
