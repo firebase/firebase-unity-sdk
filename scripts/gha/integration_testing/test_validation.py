@@ -321,7 +321,7 @@ def get_name(testapp_path):
   """Returns testapp api."""
   testapps = PARAMETERS["integration_tests"]["config"]["apis"].split(",")
   for testapp in testapps:
-    if testapp in testapp_path.lower():
+    if testapp.replace("_", "") in testapp_path.lower():
       return testapp
   return testapp_path
 
