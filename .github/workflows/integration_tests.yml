@@ -190,6 +190,7 @@ jobs:
           --actor ${{github.actor}} \
           --commit ${{steps.set_outputs.outputs.github_ref}} \
           --run_id ${{github.run_id}}
+
   build:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}
     runs-on: ${{matrix.os}}
@@ -473,7 +474,7 @@ jobs:
             --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
-            --artifact_name "${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode" \
+            --artifact_name "${{ matrix.unity_version }}-${{matrix.os}}-Playmode" \
             --force_latest_runtime \
             --ci
       - name: Return Unity license
@@ -494,16 +495,16 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          if [ ! -f test-results-${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode.log.json ]; then
+          if [ ! -f test-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode.log.json ]; then
             # No summary was created, make a placeholder one.
-            echo "__SUMMARY_MISSING__" > test-results-${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode.log.json
+            echo "__SUMMARY_MISSING__" > test-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode.log.json
           fi
       - name: Upload test results artifact
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
         with:
           name: log-artifact
-          path: test-results-${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode*
+          path: test-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Update PR label and comment
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
@@ -519,10 +520,11 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat test-results-${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode.log
+          cat test-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
+
   test_desktop:
     name: test-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}-desktop
     runs-on: ${{ matrix.os }}
@@ -699,6 +701,7 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
+  
   summarize_results:
     name: "summarize-results"
     needs: [check_and_prepare, build, test_playmode, test_desktop, test_mobile]
