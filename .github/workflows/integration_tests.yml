@@ -193,6 +193,7 @@ jobs:
   build:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}
     runs-on: ${{matrix.os}}
+    if: !contains(needs.check_and_prepare.outputs.matrix_build_platform, '[]')
     needs: check_and_prepare
     strategy:
       fail-fast: false
