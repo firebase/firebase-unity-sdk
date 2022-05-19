@@ -94,6 +94,7 @@ from distutils import dir_util
 import glob
 import os
 import platform
+import stat
 import shutil
 import subprocess
 import time
@@ -351,9 +352,9 @@ def main(argv):
             logging.info(f.read())
       # Free up space by removing unneeded Unity directory.
       if FLAGS.ci:
-        shutil.rmtree(dir_helper.unity_project_dir)
+        _rm_dir_safe(dir_helper.unity_project_dir)
       else:
-        shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"), ignore_errors=True)
+        _rm_dir_safe(os.path.join(dir_helper.unity_project_dir, "Library"))
       logging.info("END %s", build_desc)
 
   _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
@@ -620,7 +621,7 @@ def _collect_integration_tests(config, testapps, root_output_dir, output_dir, ar
   artifact_path = os.path.join(root_output_dir, testapps_artifact_dir)
   logging.info("Collecting artifacts to: %s", artifact_path)
   try:
-    shutil.rmtree(artifact_path)
+    _rm_dir_safe(artifact_path)
   except OSError as e:
     logging.warning("Failed to remove directory:\n%s", e.strerror)
 
@@ -955,6 +956,24 @@ def update_unity_versions(version_path_map, log=logging.error):
   if not valid_versions:
     raise RuntimeError("None of the specified versions of Unity were found.")
   return valid_versions
+
+
+def _handle_readonly_file(func, path, excinfo):
+  """Function passed into shutil.rmtree to handle Access Denied error"""
+  os.chmod(path, stat.S_IWRITE)
+  func(path)  # will re-throw if a different error occurrs
+
+
+def _rm_dir_safe(directory_path):
+  """Removes directory at given path. No error if dir doesn't exist."""
+  logging.info("Deleting %s...", directory_path)
+  try:
+    shutil.rmtree(directory_path, onerror=_handle_readonly_file)
+  except OSError as e:
+    # There are two known cases where this can happen:
+    # The directory doesn't exist (FileNotFoundError)
+    # A file in the directory is open in another process (PermissionError)
+    logging.warning("Failed to remove directory:\n%s", e.strerror)
 
 
 def _fix_path(path):
