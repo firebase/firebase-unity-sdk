@@ -368,9 +368,11 @@ def main(argv):
         _rm_dir_safe(os.path.join(dir_helper.unity_project_dir, "Library"))
       logging.info("END %s", build_desc)
 
+  playmode_passes = True
+  build_passes = True
   if _PLAYMODE in platforms:
     platforms.remove(_PLAYMODE)
-    test_validation.summarize_test_results(
+    playmode_passes = test_validation.summarize_test_results(
       playmode_tests, 
       test_validation.UNITY, 
       root_output_dir, 
@@ -378,13 +380,15 @@ def main(argv):
     
   if platforms:
     _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
-    return _summarize_build_results(
+    build_passes = _summarize_build_results(
         testapps=testapps,
         platforms=platforms,
         versions=unity_versions,
         failures=failures,
         output_dir=root_output_dir, 
         artifact_name=FLAGS.artifact_name)
+  
+  return (playmode_passes and build_passes)
 
 
 def setup_unity_project(dir_helper, setup_options):
