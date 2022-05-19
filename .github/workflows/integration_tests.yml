@@ -391,6 +391,7 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
+
   test_playmode:
     name: test-${{ matrix.unity_version }}-${{matrix.os}}-Playmode
     runs-on: ${{matrix.os}}
@@ -599,6 +600,7 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
+
   test_mobile:
     name: test-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile
     runs-on: macos-11
@@ -701,7 +703,7 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
-  
+
   summarize_results:
     name: "summarize-results"
     needs: [check_and_prepare, build, test_playmode, test_desktop, test_mobile]
