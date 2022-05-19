@@ -266,6 +266,13 @@ flags.register_validator(
     " c can be a combination of digits and letters.")
 
 
+@attr.s(frozen=False, eq=False)
+class Test(object):
+  """Holds data related to the testing of one testapp."""
+  testapp_path = attr.ib()
+  logs = attr.ib()
+
+
 def main(argv):
   del argv  # Unused.
 
@@ -288,6 +295,7 @@ def main(argv):
   platforms = validate_platforms(FLAGS.platforms)
 
   output_root = os.path.join(root_output_dir, "testapps")
+  playmode_tests = []
   failures = []
   for version in unity_versions:
     runtime = get_runtime(version, FLAGS.force_latest_runtime)
@@ -331,7 +339,8 @@ def main(argv):
           if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
             p = get_desktop_platform()
           if p == _PLAYMODE:
-            perform_in_editor_tests(dir_helper)
+            logs = perform_in_editor_tests(dir_helper)
+            playmode_tests.append(Test(testapp_path=dir_helper.unity_project_dir, logs=logs))
           else:
             build_testapp(
                 dir_helper=dir_helper,
@@ -359,13 +368,22 @@ def main(argv):
 
   _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
 
-  return _summarize_results(
-      testapps=testapps,
-      platforms=platforms,
-      versions=unity_versions,
-      failures=failures,
-      output_dir=root_output_dir, 
-      artifact_name=FLAGS.artifact_name)
+  if _PLAYMODE in platforms:
+    platforms.remove(_PLAYMODE)
+    test_validation.summarize_test_results(
+      playmode_tests, 
+      test_validation.UNITY, 
+      output_dir, 
+      file_name="test-results-" + FLAGS.artifact_name + ".log")
+    
+  if platforms:
+    return _summarize_build_results(
+        testapps=testapps,
+        platforms=platforms,
+        versions=unity_versions,
+        failures=failures,
+        output_dir=root_output_dir, 
+        artifact_name=FLAGS.artifact_name)
 
 
 def setup_unity_project(dir_helper, setup_options):
@@ -556,7 +574,7 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
   open_process.kill()
   logging.info("Finished running playmode tests")
 
-  results = test_validation.validate_results_unity(text)
+  results = test_validation.validate_results(text, test_validation.UNITY)
   if results.complete:
     if results.passes and not results.fails:  # Success
       logging.info(results.summary)
@@ -565,6 +583,8 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
   else:  # Generally caused by timeout or crash
     raise RuntimeError(
         "Tests did not finish running. Log tail:\n" + results.summary)
+
+  return text
 
 
 def run_xcodebuild(dir_helper, ios_config, device_type):
@@ -649,7 +669,7 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
         break
 
 
-def _summarize_results(testapps, platforms, versions, failures, output_dir, artifact_name):
+def _summarize_build_results(testapps, platforms, versions, failures, output_dir, artifact_name):
   """Logs a readable summary of the results of the build."""
   file_name = "build-results-" + artifact_name + ".log"
   summary = []

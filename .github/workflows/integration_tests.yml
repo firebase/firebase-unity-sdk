@@ -495,16 +495,16 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          if [ ! -f build-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode.log.json ]; then
+          if [ ! -f test-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode.log.json ]; then
             # No summary was created, make a placeholder one.
-            echo "__SUMMARY_MISSING__" > build-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode.log.json
+            echo "__SUMMARY_MISSING__" > test-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode.log.json
           fi
       - name: Upload test results artifact
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
         with:
           name: log-artifact
-          path: build-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode*
+          path: test-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Update PR label and comment
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
@@ -520,7 +520,7 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat build-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode.log
+          cat test-results-${{ matrix.unity_version }}-${{matrix.os}}-Playmode.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
