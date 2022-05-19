@@ -348,6 +348,8 @@ def main(argv):
                 ios_config=ios_config,
                 target=_BUILD_TARGET[p])
         except (subprocess.SubprocessError, RuntimeError) as e:
+          if p == _PLAYMODE:
+            playmode_tests.append(Test(testapp_path=dir_helper.unity_project_dir, logs=str(e)))
           failures.append(
               Failure(
                   testapp=testapp, 
@@ -366,17 +368,16 @@ def main(argv):
         _rm_dir_safe(os.path.join(dir_helper.unity_project_dir, "Library"))
       logging.info("END %s", build_desc)
 
-  _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
-
   if _PLAYMODE in platforms:
     platforms.remove(_PLAYMODE)
     test_validation.summarize_test_results(
       playmode_tests, 
       test_validation.UNITY, 
-      output_dir, 
+      root_output_dir, 
       file_name="test-results-" + FLAGS.artifact_name + ".log")
     
   if platforms:
+    _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
     return _summarize_build_results(
         testapps=testapps,
         platforms=platforms,
