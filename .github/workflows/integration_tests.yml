@@ -18,8 +18,8 @@ on:
         default: 'macos-latest'
         required: true
       platforms:
-        description: 'CSV of Android,iOS,Windows,macOS,Linux'
-        default: 'Android,iOS,Windows,macOS,Linux'
+        description: 'CSV of Android,iOS,Windows,macOS,Linux,Playmode'
+        default: 'Android,iOS,Windows,macOS,Linux,Playmode'
         required: true
       apis:
         description: 'CSV of apis to build and test'
@@ -167,7 +167,6 @@ jobs:
             TEST_MATRIX_PARAM="--auto_diff origin/${{github.event.pull_request.head.ref}}..${MERGE_BASE}"
           fi
         fi
-
         # To feed input into the job matrix, we first need to convert to a JSON
         # list. Then we can use fromJson to define the field in the matrix for the tests job.
         echo "::set-output name=apis::$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k apis -o "${{github.event.inputs.apis}}" ${TEST_MATRIX_PARAM} )"
@@ -191,7 +190,6 @@ jobs:
           --actor ${{github.actor}} \
           --commit ${{steps.set_outputs.outputs.github_ref}} \
           --run_id ${{github.run_id}}
-
   build:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}
     runs-on: ${{matrix.os}}
@@ -392,8 +390,139 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
-
-
+  test_playmode:
+    name: test-${{ matrix.unity_version }}-${{matrix.os}}-Playmode
+    runs-on: ${{matrix.os}}
+    if: contains(needs.check_and_prepare.outputs.platform, 'Playmode') && !cancelled()
+    needs: check_and_prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
+        os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
+    env:
+      # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+      U3D_PASSWORD: ""
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Unity installer (U3D)
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          gem install u3d
+          u3d available
+          # u3d available -u ${{ matrix.unity_version }} -p
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Install python deps
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+      - name: Install Unity
+        timeout-minutes: 30
+        shell: bash
+        run: |
+          python scripts/gha/unity_installer.py --install \
+            --version ${{ matrix.unity_version }}
+      - name: Activate Unity license
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          python scripts/gha/unity_installer.py --activate_license \
+            --version ${{ matrix.unity_version }}  \
+            --username "${{ secrets.UNITY_USERNAME }}" \
+            --password "${{ secrets.UNITY_PASSWORD }}" \
+            --serial_ids "${{ secrets.SERIAL_ID }}" \
+            --logfile "testapps/activate_license.log"
+      - name: Prepare for integration tests
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+      - name: Fetch prebuilt packaged SDK from previous run
+        uses: dawidd6/action-download-artifact@v2
+        if: ${{ github.event.inputs.test_packaged_sdk != '' }}
+        with:
+          name: 'firebase_unity_sdk.zip'
+          workflow: 'packaging.yml'
+          run_id: ${{ github.event.inputs.test_packaged_sdk }}
+          
+      - name: Build integration tests
+        shell: bash
+        run: |
+          if [[ -n "${{ github.event.inputs.test_packaged_sdk }}" ]]; then
+            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          else
+            if [[ -z "${{ github.event.inputs.sdk_url }}" ]];then
+              sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_8.7.0.zip"
+            else
+              sdk_url=${{ github.event.inputs.sdk_url }}
+            fi
+            curl ${sdk_url} -o ~/Downloads/firebase_unity_sdk.zip
+            unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
+          fi
+          python scripts/gha/build_testapps.py \
+            --t ${{ needs.check_and_prepare.outputs.apis }} \
+            --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
+            --p Playmode \
+            --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
+            --plugin_dir ~/Downloads/firebase_unity_sdk \
+            --output_directory "${{ github.workspace }}" \
+            --artifact_name "${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode" \
+            --force_latest_runtime \
+            --ci
+      - name: Return Unity license
+        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
+        if: always()
+        # Retry at most 3 times when Return Unity license fails.
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          shell: bash
+          command: |
+            python scripts/gha/unity_installer.py --release_license \
+              --version ${{ matrix.unity_version }} \
+              --logfile "testapps/release_license.log"
+            cat testapps/release_license.log
+      - name: Prepare results summary artifact
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          if [ ! -f test-results-${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode.log.json ]; then
+            # No summary was created, make a placeholder one.
+            echo "__SUMMARY_MISSING__" > test-results-${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode.log.json
+          fi
+      - name: Upload test results artifact
+        uses: actions/upload-artifact@v3
+        if: ${{ !cancelled() }}
+        with:
+          name: log-artifact
+          path: test-results-${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode*
+          retention-days: ${{ env.artifactRetentionDays }}
+      - name: Update PR label and comment
+        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        shell: bash
+        run: |
+          python scripts/gha/it_workflow.py --stage progress \
+            --token ${{github.token}} \
+            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
+            --actor ${{github.actor}} \
+            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --run_id ${{github.run_id}}
+      - name: Summarize build results
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          cat test-results-${{ matrix.unity_version }}-${{matrix.os}}-${{matrix.os}}-Playmode.log
+          if [[ "${{ job.status }}" != "success" ]]; then
+            exit 1
+          fi
   test_desktop:
     name: test-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}-desktop
     runs-on: ${{ matrix.os }}
@@ -468,7 +597,6 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
-
   test_mobile:
     name: test-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile
     runs-on: macos-11
@@ -571,11 +699,9 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
-
-
   summarize_results:
     name: "summarize-results"
-    needs: [check_and_prepare, build, test_desktop, test_mobile]
+    needs: [check_and_prepare, build, test_playmode, test_desktop, test_mobile]
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     steps:

@@ -14,22 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Fetch and print Github workflow matrix values for a given configuration.
-
 This script holds the configurations (standard, expanded) for all of our
 Github worklows and prints a string in the format that can be easily parsed
 in Github workflows.
-
 Usage examples:
 # Query value for matrix (default) parameter "unity_version".
 python scripts/gha/print_matrix_configuration.py -k unity_version
-
 # Override the value for "unity_version" for "integration_tests"
 python scripts/gha/print_matrix_configuration.py -w integration_tests
         -o my_custom_unity_version -k unity_version
-
 # Query value for config parameter "apis" for "integration_tests" workflow.
 python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k apis
-
 # Override the value for config parameters "apis" for integration_tests
 python scripts/gha/print_matrix_configuration.py -c -w integration_tests
         -o my_custom_api -k apis
@@ -67,7 +62,7 @@ PARAMETERS = {
       }
     },
     "config": {
-      "platform": "Windows,macOS,Linux,Android,iOS",
+      "platform": "Windows,macOS,Linux,Android,iOS,Playmode",
       "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
       "mobile_test_on": "real"
     }
@@ -189,17 +184,14 @@ def get_unity_path(version):
 
 def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
   """ Fetch value from configuration
-
   Args:
       workflow (str): Key corresponding to the github workflow.
       test_matrix (str): Use EXPANDED_KEY or MINIMAL_KEY configuration for the workflow?
       parm_key (str): Exact key name to fetch from configuration.
       config_parms_only (bool): Search in config blocks if True, else matrix
                                 blocks.
-
   Raises:
       KeyError: Raised if given key is not found in configuration.
-
   Returns:
       (str|list): Matched value for the given key.
   """
@@ -253,8 +245,10 @@ def filter_build_platform(platform):
   platform = platform.split(",")
   build_platform = []
   build_platform.extend(filter_mobile_platform(platform))
+  # testapps from different desktop platforms are built in one job.
   desktop_platform = ','.join(list(filter(lambda p: p in platform, ["Windows", "macOS", "Linux"])))
-  build_platform.append(desktop_platform)
+  if desktop_platform:
+    build_platform.append(desktop_platform)
   return build_platform
 
 
