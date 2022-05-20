@@ -58,13 +58,7 @@ jobs:
           os: ubuntu-latest
           reuse_action: ./.github/workflows/build_linux.yml
           unity_platform_name: Linux
-    env:
-        # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
-        LC_ALL: en_US.UTF-8
-        LANG: en_US.UTF-8
-        U3D_PASSWORD: ""
-        # Disable checking for U3D updates, since it is buggy
-        U3D_SKIP_UPDATE_CHECK: 1
+
     steps:
       # - name: Check platform
       #   if: ${{ matrix.platform }} in ${{ github.event.inputs.platform }}
