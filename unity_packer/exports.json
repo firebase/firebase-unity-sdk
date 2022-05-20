@@ -185,7 +185,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1",
+          "unity": "2018.1",
           "dependencies": {
             "com.google.external-dependency-manager" : "1.2.171"
           }
@@ -296,7 +296,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -385,7 +385,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -485,7 +485,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -570,7 +570,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -658,7 +658,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -766,7 +766,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -865,7 +865,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -951,7 +951,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -1050,7 +1050,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -1137,7 +1137,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -1225,7 +1225,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -1312,7 +1312,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     },
@@ -1401,7 +1401,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2017.1"
+          "unity": "2018.1"
         }
       }
     }

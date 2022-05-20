@@ -60,9 +60,11 @@ set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
     "com.google.firebase:firebase-analytics:21.0.0"
 )
 
+# iid is needed by messaging to avoid a conflict with functions
 set(FIREBASE_MESSAGING_ANDROID_DEPS
     "com.google.firebase:firebase-messaging:23.0.4"
     "com.google.firebase:firebase-analytics:21.0.0"
+    "com.google.firebase:firebase-iid:21.1.0"
 )
 
 set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
