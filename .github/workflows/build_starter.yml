@@ -43,7 +43,7 @@ jobs:
           reuse_action: ./.github/workflows/build_android.yml
           unity_platform_name: Android
         - platform: ios
-          os: macos-latest
+          os: macos-12
           reuse_action: ./.github/workflows/build_ios.yml
           unity_platform_name: iOS
         - platform: macos
@@ -69,11 +69,52 @@ jobs:
       # - name: Check platform
       #   if: ${{ matrix.platform }} in ${{ github.event.inputs.platform }}
 
-      - uses: ${{ matrix.reuse_action }}
+      - name: Build android
+        uses:  ./.github/workflows/build_android.yml
         with:
           unity_version: ${{ github.event.inputs.unity_branch }}
           firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
           unity_branch: ${{ github.event.inputs.unity_branch }}
           apis: ${{ github.event.inputs.apis }}
-          unity_platform_name: ${{ matrix.unity_platform_name }}
+          unity_platform_name: Android
+          additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+      
+      - name: Build ios
+        uses:  ./.github/workflows/build_ios.yml
+        with:
+          unity_version: ${{ github.event.inputs.unity_branch }}
+          firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+          unity_branch: ${{ github.event.inputs.unity_branch }}
+          apis: ${{ github.event.inputs.apis }}
+          unity_platform_name: iOS
+          additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+
+      - name: Build linux
+        uses:  ./.github/workflows/build_linux.yml
+        with:
+          unity_version: ${{ github.event.inputs.unity_branch }}
+          firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+          unity_branch: ${{ github.event.inputs.unity_branch }}
+          apis: ${{ github.event.inputs.apis }}
+          unity_platform_name: Linux
+          additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+
+      - name: Build macos
+        uses:  ./.github/workflows/build_macos.yml
+        with:
+          unity_version: ${{ github.event.inputs.unity_branch }}
+          firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+          unity_branch: ${{ github.event.inputs.unity_branch }}
+          apis: ${{ github.event.inputs.apis }}
+          unity_platform_name: macOS,iOS
+          additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+
+      - name: Build windows
+        uses:  ./.github/workflows/build_windows.yml
+        with:
+          unity_version: ${{ github.event.inputs.unity_branch }}
+          firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+          unity_branch: ${{ github.event.inputs.unity_branch }}
+          apis: ${{ github.event.inputs.apis }}
+          unity_platform_name: Windows
           additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
