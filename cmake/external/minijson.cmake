@@ -27,6 +27,8 @@ ExternalProject_Add(
 
   PREFIX ${PROJECT_BINARY_DIR}
 
+  PATCH_COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/google_minijson.patch
+
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""

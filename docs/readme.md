@@ -155,6 +155,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - General: Added a missing namespace to the Google.MiniJson.dll.
+
 ### 9.0.0
 - Changes
     - General: Minimum supported editor version is now Unity 2018.
