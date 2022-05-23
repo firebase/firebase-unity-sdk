@@ -67,7 +67,7 @@ PARAMETERS = {
       }
     },
     "config": {
-      "platform": "Windows,macOS,Linux,Android,iOS",
+      "platform": "Windows,macOS,Linux,Android,iOS,Playmode",
       "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
       "mobile_test_on": "real"
     }
@@ -253,8 +253,10 @@ def filter_build_platform(platform):
   platform = platform.split(",")
   build_platform = []
   build_platform.extend(filter_mobile_platform(platform))
+  # testapps from different desktop platforms are built in one job.
   desktop_platform = ','.join(list(filter(lambda p: p in platform, ["Windows", "macOS", "Linux"])))
-  build_platform.append(desktop_platform)
+  if desktop_platform:
+    build_platform.append(desktop_platform)
   return build_platform
 
 

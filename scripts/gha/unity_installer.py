@@ -45,6 +45,7 @@ MacOS: /Applications/Unity_{version}/Unity.app/Contents/MacOS/Unity
 
 
 (2) License activation:
+
   unity_installer.py --activate_license --version 2017.3.1f1 \
     --license_file ~/license.txt --logfile activate.log
 
@@ -163,9 +164,10 @@ def install_unity(unity_version, platforms):
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
   package_list = UNITY_SETTINGS[unity_version][os]["packages"][_DEFALUT]
-  for p in platforms:
-    if UNITY_SETTINGS[unity_version][os]["packages"][p]:
-      package_list.extend(UNITY_SETTINGS[unity_version][os]["packages"][p])
+  if platforms:
+    for p in platforms:
+      if UNITY_SETTINGS[unity_version][os]["packages"][p]:
+        package_list.extend(UNITY_SETTINGS[unity_version][os]["packages"][p])
   package_csv = ",".join(filter(None.__ne__, package_list))
 
   u3d = find_u3d()
