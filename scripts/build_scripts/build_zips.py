@@ -75,6 +75,12 @@ flags.DEFINE_multi_string(
     "targets", None,
     ("Target product to includes in the build. List items pick from"
      "({})".format(",".join(SUPPORT_TARGETS))))
+flags.DEFINE_string(
+    "apis", None,
+    ("One single string that has multiple targets combined with ','. \n"
+     "Usage example is --apis=auth,firestore,remote_config. \n"
+     "Exclusive with parameter targets. List items pick from"
+     "({})".format(",".join(SUPPORT_TARGETS))))
 flags.DEFINE_multi_string(
     "device", None,
     "To build on device or simulator. If not set, built on both. Only take affect for ios and android build"
@@ -558,8 +564,17 @@ def main(argv):
     cmake_setup_args.append(unity_root_args)
   if cmake_cpp_folder_args:
     cmake_setup_args.append(cmake_cpp_folder_args)
-
-  target_arg_list = get_targets_args(FLAGS.targets)
+  
+  if FLAGS.apis and FLAGS.targets:
+    raise app.UsageError('Parameter apis and targets are exclusive, please only pick one.')
+  
+  api_target_list = []
+  if FLAGS.apis:
+    api_target_list = FLAGS.apis.split(',')
+  elif FLAGS.targets:
+    api_target_list = FLAGS.targets
+  target_arg_list = get_targets_args(api_target_list)
+  
   if target_arg_list:
     cmake_setup_args.extend(target_arg_list)
 

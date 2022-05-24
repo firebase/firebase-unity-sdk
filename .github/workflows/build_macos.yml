@@ -117,7 +117,7 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64
+          python scripts/build_scripts/build_zips.py --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --apis=${{ inputs.apis }}
 
       - name: Upload Build
         uses: actions/upload-artifact@v2

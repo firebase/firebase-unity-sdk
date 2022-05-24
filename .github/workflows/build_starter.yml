@@ -36,7 +36,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       platform: ${{ steps.set_outputs.outputs.platform }}
-      apis: ${{ steps.set_outputs.outputs.apis }}
     steps:
       - uses: actions/checkout@v2
         with:
