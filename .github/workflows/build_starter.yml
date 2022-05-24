@@ -28,6 +28,8 @@ on:
         description: 'Additional flags to pass into CMake'
         default: ''
         required: false
+env:
+  pythonVersion: '3.7'
 
 jobs:
   check_and_prepare:
@@ -36,6 +38,17 @@ jobs:
       platform: ${{ steps.set_outputs.outputs.platform }}
       apis: ${{ steps.set_outputs.outputs.apis }}
     steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.unity_branch }}
+          fetch-depth: 0
+          submodules: false
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.pythonVersion }}
+      - name: Install python deps
+        run: pip install -r scripts/gha/requirements.txt
       - id: set_outputs
         run: |
           platform=$( python scripts/gha/print_matrix_configuration.py -c -w build_unity_sdks -k platform -o "${{github.event.inputs.platforms}}" )
