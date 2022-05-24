@@ -18,7 +18,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Firebase.Database.Internal;
-using MiniJSON;
+using Google.MiniJSON;
 
 namespace Firebase.Database {
   /// <summary>
