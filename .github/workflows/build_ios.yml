@@ -105,7 +105,7 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --platform=iOS --unity_root=$UNITY_ROOT_DIR
+          python scripts/build_scripts/build_zips.py --platform=ios --unity_root=$UNITY_ROOT_DIR
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
