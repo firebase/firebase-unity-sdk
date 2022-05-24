@@ -8,32 +8,26 @@ on:
         description: 'Unity version'
         default: '2019'
         required: true
-        type: string
       firebase_cpp_sdk_version:
         description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
         default: ''
         required: false
-        type: string
       unity_branch:
         description: 'Unity branch to build against, empty means current branch'
         default: ''
-        type: string
       platforms:
         description: 'CSV of Android,iOS,Windows,macOS,Linux'
         default: 'Android,iOS,Windows,macOS,Linux'
         required: true
-        type: string
       apis:
         description: 'CSV of apis to build and test'
         default: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
         required: true
-        type: string
       # Additional CMake flags to use
       additional_cmake_flags:
         description: 'Additional flags to pass into CMake'
         default: ''
         required: false
-        type: string
 
 jobs:
   build_android:
