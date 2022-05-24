@@ -116,6 +116,7 @@ jobs:
       - name: Build SDK (Windows)
         shell: bash
         run: |
+          # TODO add handling cmake_extras
           swig_dir_slash_fix=${SWIG_DIR//\\//}
           python scripts/build_scripts/build_zips.py --platform=windows --unity_root="$UNITY_ROOT_DIR" --cmake_extras='-DSWIG_DIR=$swig_dir_slash_fix'
 

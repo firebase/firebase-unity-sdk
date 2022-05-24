@@ -104,7 +104,8 @@ jobs:
       - name: Build SDK (iOS)
         shell: bash
         run: |
-          python scripts/build_scripts/build_zips.py --platform=iOS --unity_root=$UNITY_ROOT_DIR --extra_cmakes=${{ inputs.additional_cmake_flags }}
+          # TODO add handling cmake_extras
+          python scripts/build_scripts/build_zips.py --platform=iOS --unity_root=$UNITY_ROOT_DIR
 
       - name: Upload Build
         uses: actions/upload-artifact@v2

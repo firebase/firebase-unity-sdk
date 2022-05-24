@@ -110,7 +110,8 @@ jobs:
       - name: Build SDK (Linux)
         shell: bash
         run: |
-          python scripts/build_scripts/build_zips.py --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR --extra_cmakes=${{ inputs.additional_cmake_flags }}
+          # TODO add handling cmake_extras
+          python scripts/build_scripts/build_zips.py --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR
 
       - name: Upload Build
         uses: actions/upload-artifact@v2

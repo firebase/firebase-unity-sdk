@@ -116,7 +116,8 @@ jobs:
       - name: Build SDK (MacOS)
         shell: bash
         run: |
-          python scripts/build_scripts/build_zips.py --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --cmake_extras="${{ inputs.additional_cmake_flags }}"
+          # TODO add handling cmake_extras
+          python scripts/build_scripts/build_zips.py --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
