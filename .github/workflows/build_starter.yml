@@ -60,6 +60,10 @@ jobs:
           unity_platform_name: Linux
 
     steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+          ref: ${{ github.event.inputs.unity_branch }}
       # - name: Check platform
       #   if: ${{ matrix.platform }} in ${{ github.event.inputs.platform }}
 
