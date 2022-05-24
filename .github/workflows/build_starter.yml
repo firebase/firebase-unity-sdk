@@ -34,7 +34,7 @@ jobs:
     name: build-android-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_android.yml
     with:
-      unity_version: ${{ github.event.inputs.unity_branch }}
+      unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ github.event.inputs.unity_branch }}
       apis: ${{ github.event.inputs.apis }}
@@ -45,7 +45,7 @@ jobs:
     name: build-ios-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_ios.yml
     with:
-      unity_version: ${{ github.event.inputs.unity_branch }}
+      unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ github.event.inputs.unity_branch }}
       apis: ${{ github.event.inputs.apis }}
@@ -56,7 +56,7 @@ jobs:
     name: build-linux-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_linux.yml
     with:
-      unity_version: ${{ github.event.inputs.unity_branch }}
+      unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ github.event.inputs.unity_branch }}
       apis: ${{ github.event.inputs.apis }}
@@ -67,7 +67,7 @@ jobs:
     name: build-macos-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_macos.yml
     with:
-      unity_version: ${{ github.event.inputs.unity_branch }}
+      unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ github.event.inputs.unity_branch }}
       apis: ${{ github.event.inputs.apis }}
@@ -78,7 +78,7 @@ jobs:
     name: build-windows-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_windows.yml
     with:
-      unity_version: ${{ github.event.inputs.unity_branch }}
+      unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ github.event.inputs.unity_branch }}
       apis: ${{ github.event.inputs.apis }}
