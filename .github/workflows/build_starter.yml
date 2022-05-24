@@ -64,7 +64,7 @@ jobs:
       #   if: ${{ matrix.platform }} in ${{ github.event.inputs.platform }}
 
       - name: Build android
-        uses: ./.github/workflows/build_android.yml@main
+        uses: firebase/firebase-unity-sdk/.github/workflows/build_android.yml@main
         with:
           unity_version: ${{ github.event.inputs.unity_branch }}
           firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
@@ -74,7 +74,7 @@ jobs:
           additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
       
       - name: Build ios
-        uses: ./.github/workflows/build_ios.yml@main
+        uses: firebase/firebase-unity-sdk/.github/workflows/build_ios.yml@main
         with:
           unity_version: ${{ github.event.inputs.unity_branch }}
           firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
@@ -84,7 +84,7 @@ jobs:
           additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
 
       - name: Build linux
-        uses: ./.github/workflows/build_linux.yml@main
+        uses: firebase/firebase-unity-sdk/.github/workflows/build_linux.yml@main
         with:
           unity_version: ${{ github.event.inputs.unity_branch }}
           firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
@@ -94,7 +94,7 @@ jobs:
           additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
 
       - name: Build macos
-        uses: ./.github/workflows/build_macos.yml@main
+        uses: firebase/firebase-unity-sdk/.github/workflows/build_macos.yml@main
         with:
           unity_version: ${{ github.event.inputs.unity_branch }}
           firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
@@ -104,7 +104,7 @@ jobs:
           additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
 
       - name: Build windows
-        uses:  ./.github/workflows/build_windows.yml@main
+        uses: firebase/firebase-unity-sdk/.github/workflows/build_windows.yml@main
         with:
           unity_version: ${{ github.event.inputs.unity_branch }}
           firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
