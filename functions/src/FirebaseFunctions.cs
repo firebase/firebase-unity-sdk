@@ -222,6 +222,26 @@ namespace Firebase.Functions {
     }
 
     /// <summary>
+    ///   Creates a
+    ///   <see cref="HttpsCallableReference" />
+    ///   given a URL.
+    /// </summary>
+    public HttpsCallableReference GetHttpsCallableFromURL(string url) {
+      ThrowIfNull();
+      return new HttpsCallableReference(this, functionsInternal.GetHttpsCallableFromURL(url));
+    }
+
+    /// <summary>
+    ///   Creates a
+    ///   <see cref="HttpsCallableReference" />
+    ///   given a URL.
+    /// </summary>
+    public HttpsCallableReference GetHttpsCallableFromURL(Uri url) {
+      ThrowIfNull();
+      return GetHttpsCallableFromURL(url.ToString());
+    }
+
+    /// <summary>
     ///   Sets an origin of a Cloud Functions Emulator instance to use.
     /// </summary>
     public void UseFunctionsEmulator(string origin) {
