@@ -94,6 +94,7 @@ from distutils import dir_util
 import glob
 import os
 import platform
+import stat
 import shutil
 import subprocess
 import time
@@ -145,7 +146,8 @@ _BUILD_TARGET = {
   _IOS: "iOS",
   _WINDOWS: "Win64",
   _MACOS: "OSXUniversal",
-  _LINUX: "Linux64"
+  _LINUX: "Linux64",
+  _PLAYMODE: "Playmode"
 }
 
 _SUPPORTED_PLATFORMS = (
@@ -264,6 +266,13 @@ flags.register_validator(
     " c can be a combination of digits and letters.")
 
 
+@attr.s(frozen=False, eq=False)
+class Test(object):
+  """Holds data related to the testing of one testapp."""
+  testapp_path = attr.ib()
+  logs = attr.ib()
+
+
 def main(argv):
   del argv  # Unused.
 
@@ -286,6 +295,7 @@ def main(argv):
   platforms = validate_platforms(FLAGS.platforms)
 
   output_root = os.path.join(root_output_dir, "testapps")
+  playmode_tests = []
   failures = []
   for version in unity_versions:
     runtime = get_runtime(version, FLAGS.force_latest_runtime)
@@ -329,7 +339,8 @@ def main(argv):
           if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
             p = get_desktop_platform()
           if p == _PLAYMODE:
-            perform_in_editor_tests(dir_helper)
+            logs = perform_in_editor_tests(dir_helper)
+            playmode_tests.append(Test(testapp_path=dir_helper.unity_project_dir, logs=logs))
           else:
             build_testapp(
                 dir_helper=dir_helper,
@@ -337,6 +348,8 @@ def main(argv):
                 ios_config=ios_config,
                 target=_BUILD_TARGET[p])
         except (subprocess.SubprocessError, RuntimeError) as e:
+          if p == _PLAYMODE:
+            playmode_tests.append(Test(testapp_path=dir_helper.unity_project_dir, logs=str(e)))
           failures.append(
               Failure(
                   testapp=testapp, 
@@ -350,20 +363,32 @@ def main(argv):
             logging.info(f.read())
       # Free up space by removing unneeded Unity directory.
       if FLAGS.ci:
-        shutil.rmtree(dir_helper.unity_project_dir)
+        _rm_dir_safe(dir_helper.unity_project_dir)
       else:
-        shutil.rmtree(os.path.join(dir_helper.unity_project_dir, "Library"))
+        _rm_dir_safe(os.path.join(dir_helper.unity_project_dir, "Library"))
       logging.info("END %s", build_desc)
 
-  _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
-
-  return _summarize_results(
-      testapps=testapps,
-      platforms=platforms,
-      versions=unity_versions,
-      failures=failures,
-      output_dir=root_output_dir, 
-      artifact_name=FLAGS.artifact_name)
+  playmode_passes = True
+  build_passes = True
+  if _PLAYMODE in platforms:
+    platforms.remove(_PLAYMODE)
+    playmode_passes = test_validation.summarize_test_results(
+      playmode_tests, 
+      test_validation.UNITY, 
+      root_output_dir, 
+      file_name="test-results-" + FLAGS.artifact_name + ".log")
+    
+  if platforms:
+    _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
+    build_passes = _summarize_build_results(
+        testapps=testapps,
+        platforms=platforms,
+        versions=unity_versions,
+        failures=failures,
+        output_dir=root_output_dir, 
+        artifact_name=FLAGS.artifact_name)
+  
+  return (playmode_passes and build_passes)
 
 
 def setup_unity_project(dir_helper, setup_options):
@@ -531,7 +556,7 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
       dir_helper.unity_path,
       dir_helper.unity_project_dir,
       shared_args=["-batchmode", "-nographics", "-accept-apiupdate"])
-  log = dir_helper.make_log_path("editor_tests")
+  log = dir_helper.make_log_path("build_Playmode")
   arg_builder.set_log_file(log)
   run_args = arg_builder.get_args_for_method("InEditorRunner.EditorRun")
   dir_helper.copy_editor_script("InEditorRunner.cs")
@@ -554,7 +579,7 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
   open_process.kill()
   logging.info("Finished running playmode tests")
 
-  results = test_validation.validate_results_unity(text)
+  results = test_validation.validate_results(text, test_validation.UNITY)
   if results.complete:
     if results.passes and not results.fails:  # Success
       logging.info(results.summary)
@@ -563,6 +588,8 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
   else:  # Generally caused by timeout or crash
     raise RuntimeError(
         "Tests did not finish running. Log tail:\n" + results.summary)
+
+  return text
 
 
 def run_xcodebuild(dir_helper, ios_config, device_type):
@@ -619,7 +646,7 @@ def _collect_integration_tests(config, testapps, root_output_dir, output_dir, ar
   artifact_path = os.path.join(root_output_dir, testapps_artifact_dir)
   logging.info("Collecting artifacts to: %s", artifact_path)
   try:
-    shutil.rmtree(artifact_path)
+    _rm_dir_safe(artifact_path)
   except OSError as e:
     logging.warning("Failed to remove directory:\n%s", e.strerror)
 
@@ -647,7 +674,7 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
         break
 
 
-def _summarize_results(testapps, platforms, versions, failures, output_dir, artifact_name):
+def _summarize_build_results(testapps, platforms, versions, failures, output_dir, artifact_name):
   """Logs a readable summary of the results of the build."""
   file_name = "build-results-" + artifact_name + ".log"
   summary = []
@@ -954,6 +981,24 @@ def update_unity_versions(version_path_map, log=logging.error):
   if not valid_versions:
     raise RuntimeError("None of the specified versions of Unity were found.")
   return valid_versions
+
+
+def _handle_readonly_file(func, path, excinfo):
+  """Function passed into shutil.rmtree to handle Access Denied error"""
+  os.chmod(path, stat.S_IWRITE)
+  func(path)  # will re-throw if a different error occurrs
+
+
+def _rm_dir_safe(directory_path):
+  """Removes directory at given path. No error if dir doesn't exist."""
+  logging.info("Deleting %s...", directory_path)
+  try:
+    shutil.rmtree(directory_path, onerror=_handle_readonly_file)
+  except OSError as e:
+    # There are two known cases where this can happen:
+    # The directory doesn't exist (FileNotFoundError)
+    # A file in the directory is open in another process (PermissionError)
+    logging.warning("Failed to remove directory:\n%s", e.strerror)
 
 
 def _fix_path(path):
