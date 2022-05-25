@@ -54,6 +54,12 @@ namespace Firebase.Sample.Functions {
         FunctionsErrorCode.Internal);
       yield return new TestCase("explicitErrorTest", null, null,
         FunctionsErrorCode.OutOfRange);
+
+      // Test calling via Url
+      string projectId = FirebaseApp.DefaultInstance.Options.ProjectId;
+      yield return new TestCaseWithURL("scalarTest via Url",
+        new System.Uri("https://us-central1-" + projectId + ".cloudfunctions.net/scalarTest"),
+        17, 76L);
     }
 
     protected override void Start() {
