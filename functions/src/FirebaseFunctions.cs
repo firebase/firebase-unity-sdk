@@ -212,9 +212,7 @@ namespace Firebase.Functions {
     }
 
     /// <summary>
-    ///   Creates a
-    ///   <see cref="HttpsCallableReference" />
-    ///   given a name.
+    ///   Creates a <see cref="HttpsCallableReference" /> given a name.
     /// </summary>
     public HttpsCallableReference GetHttpsCallable(string name) {
       ThrowIfNull();
@@ -222,9 +220,7 @@ namespace Firebase.Functions {
     }
 
     /// <summary>
-    ///   Creates a
-    ///   <see cref="HttpsCallableReference" />
-    ///   given a URL.
+    ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
     public HttpsCallableReference GetHttpsCallableFromURL(string url) {
       ThrowIfNull();
@@ -232,9 +228,7 @@ namespace Firebase.Functions {
     }
 
     /// <summary>
-    ///   Creates a
-    ///   <see cref="HttpsCallableReference" />
-    ///   given a URL.
+    ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
     public HttpsCallableReference GetHttpsCallableFromURL(Uri url) {
       ThrowIfNull();
