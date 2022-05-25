@@ -117,8 +117,20 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          swig_dir_slash_fix=${SWIG_DIR//\\//}
-          python scripts/build_scripts/build_zips.py --platform=windows --unity_root="$UNITY_ROOT_DIR" --cmake_extras='-DSWIG_DIR=$swig_dir_slash_fix' --apis=${{ inputs.apis }}
+          # swig_dir_slash_fix=${SWIG_DIR//\\//}
+          # python scripts/build_scripts/build_zips.py --platform=windows --unity_root="$UNITY_ROOT_DIR" --cmake_extras='-DSWIG_DIR=$swig_dir_slash_fix' --apis=${{ inputs.apis }}
+          mkdir windows_unity
+          pushd windows_unity
+          cmake .. -G "Visual Studio 16 2019" -A x64 -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" -DUNITY_ROOT_DIR="${UNITY_ROOT_DIR}" -DSWIG_DIR="${SWIG_DIR}" -DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=C:/hostedtoolcache/windows/Python/3.7.9/x64/python.exe ${{ github.event.inputs.additional_cmake_flags }}
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Build"
+          echo "=-=-=-=-=-=-=-=-="
+          cmake --build .  --config Release
+          echo "=-=-=-=-=-=-=-=-="
+          echo "Start Package"
+          echo "=-=-=-=-=-=-=-=-="
+          cpack .
+          popd
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
