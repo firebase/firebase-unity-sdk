@@ -100,6 +100,7 @@ flags.DEFINE_multi_string('cmake_extras', None,
 flags.DEFINE_bool("clean_build", False, "Whether to clean the build folder")
 flags.DEFINE_bool("use_boringssl", False, "Build with BoringSSL instead of openSSL.")
 flags.DEFINE_bool("verbose", False, "If verbose, cmake build with DCMAKE_VERBOSE_MAKEFILE=1")
+flags.DEFINE_string("swig_dir", None, "If pass in swig dir directly rather than find swig by cmake")
 
 def get_build_path(platform, clean_build=False):
   """Get the folder that cmake configure and build in.
@@ -574,6 +575,9 @@ def main(argv):
   elif FLAGS.targets:
     api_target_list = FLAGS.targets
   target_arg_list = get_targets_args(api_target_list)
+
+  if FLAGS.swig_dir:
+    cmake_setup_args.append("-DSWIG_DIR="+FLAGS.swig_dir)
   
   if target_arg_list:
     cmake_setup_args.extend(target_arg_list)
