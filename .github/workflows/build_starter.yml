@@ -28,87 +28,94 @@ on:
         description: 'Additional flags to pass into CMake'
         default: ''
         required: false
+env:
+  pythonVersion: '3.7'
 
 jobs:
-  build_sdks:
-    name: build-${{matrix.platform}}-${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
-    runs-on: ${{matrix.os}}
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [android, ios, macos, windows, linux]
-        include:
-        - platform: android
-          os: macos-latest
-          reuse_action: ./.github/workflows/build_android.yml
-          unity_platform_name: Android
-        - platform: ios
-          os: macos-12
-          reuse_action: ./.github/workflows/build_ios.yml
-          unity_platform_name: iOS
-        - platform: macos
-          os: macos-latest
-          reuse_action: ./.github/workflows/build_macos.yml
-          unity_platform_name: macOS,iOS
-        - platform: windows
-          os: windows-2019
-          reuse_action: ./.github/workflows/build_windows.yml
-          unity_platform_name: Windows
-        - platform: linux
-          os: ubuntu-latest
-          reuse_action: ./.github/workflows/build_linux.yml
-          unity_platform_name: Linux
-
+  check_and_prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      platform: ${{ steps.set_outputs.outputs.platform }}
     steps:
-      # - name: Check platform
-      #   if: ${{ matrix.platform }} in ${{ github.event.inputs.platform }}
-
-      - name: Build android
-        uses:  ./.github/workflows/build_android.yml
+      - uses: actions/checkout@v2
         with:
-          unity_version: ${{ github.event.inputs.unity_branch }}
-          firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-          unity_branch: ${{ github.event.inputs.unity_branch }}
-          apis: ${{ github.event.inputs.apis }}
-          unity_platform_name: Android
-          additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+          ref: ${{ github.event.inputs.unity_branch }}
+          fetch-depth: 0
+          submodules: false
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.pythonVersion }}
+      - name: Install python deps
+        run: pip install -r scripts/gha/requirements.txt
+      - id: set_outputs
+        run: |
+          platform=$( python scripts/gha/print_matrix_configuration.py -c -w build_unity_sdks -k platform -o "${{github.event.inputs.platforms}}" )
+          echo "::set-output name=platform::${platform}"
+        
       
-      - name: Build ios
-        uses:  ./.github/workflows/build_ios.yml
-        with:
-          unity_version: ${{ github.event.inputs.unity_branch }}
-          firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-          unity_branch: ${{ github.event.inputs.unity_branch }}
-          apis: ${{ github.event.inputs.apis }}
-          unity_platform_name: iOS
-          additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
 
-      - name: Build linux
-        uses:  ./.github/workflows/build_linux.yml
-        with:
-          unity_version: ${{ github.event.inputs.unity_branch }}
-          firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-          unity_branch: ${{ github.event.inputs.unity_branch }}
-          apis: ${{ github.event.inputs.apis }}
-          unity_platform_name: Linux
-          additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+  build_android:
+    name: build-android-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    uses: ./.github/workflows/build_android.yml
+    needs: check_and_prepare
+    if: contains(needs.check_and_prepare.outputs.platform, 'Android')
+    with:
+      unity_version: ${{ github.event.inputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      unity_branch: ${{ github.event.inputs.unity_branch }}
+      apis: ${{ github.event.inputs.apis }}
+      unity_platform_name: Android
+      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+  
+  build_ios:
+    name: build-ios-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    uses: ./.github/workflows/build_ios.yml
+    needs: check_and_prepare
+    if: contains(needs.check_and_prepare.outputs.platform, 'iOS')
+    with:
+      unity_version: ${{ github.event.inputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      unity_branch: ${{ github.event.inputs.unity_branch }}
+      apis: ${{ github.event.inputs.apis }}
+      unity_platform_name: iOS
+      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
 
-      - name: Build macos
-        uses:  ./.github/workflows/build_macos.yml
-        with:
-          unity_version: ${{ github.event.inputs.unity_branch }}
-          firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-          unity_branch: ${{ github.event.inputs.unity_branch }}
-          apis: ${{ github.event.inputs.apis }}
-          unity_platform_name: macOS,iOS
-          additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+  build_linux:
+    name: build-linux-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    uses: ./.github/workflows/build_linux.yml
+    needs: check_and_prepare
+    if: contains(needs.check_and_prepare.outputs.platform, 'Linux')
+    with:
+      unity_version: ${{ github.event.inputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      unity_branch: ${{ github.event.inputs.unity_branch }}
+      apis: ${{ github.event.inputs.apis }}
+      unity_platform_name: Linux
+      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
 
-      - name: Build windows
-        uses:  ./.github/workflows/build_windows.yml
-        with:
-          unity_version: ${{ github.event.inputs.unity_branch }}
-          firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-          unity_branch: ${{ github.event.inputs.unity_branch }}
-          apis: ${{ github.event.inputs.apis }}
-          unity_platform_name: Windows
-          additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+  build_macos:
+    name: build-macos-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    uses: ./.github/workflows/build_macos.yml
+    needs: check_and_prepare
+    if: contains(needs.check_and_prepare.outputs.platform, 'macOS')
+    with:
+      unity_version: ${{ github.event.inputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      unity_branch: ${{ github.event.inputs.unity_branch }}
+      apis: ${{ github.event.inputs.apis }}
+      unity_platform_name: macOS,iOS
+      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+
+  build_windows:
+    name: build-windows-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    uses: ./.github/workflows/build_windows.yml
+    needs: check_and_prepare
+    if: contains(needs.check_and_prepare.outputs.platform, 'Windows')
+    with:
+      unity_version: ${{ github.event.inputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      unity_branch: ${{ github.event.inputs.unity_branch }}
+      apis: ${{ github.event.inputs.apis }}
+      unity_platform_name: Windows
+      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
