@@ -37,7 +37,7 @@ on:
 
 jobs:
   build_android:
-    name: build-android-macos-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
+    name: build-android-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
     runs-on: macos-latest
     strategy:
       fail-fast: false
