@@ -22,6 +22,9 @@ on:
       working_branch:
         description: 'If already a working in progress release branch'
         required: false
+      release_label:
+        description: 'If the package is intended to run for a release, put <version>-RC## for label'
+        required: false
       download_ios_run:
         description: 'run id for ios.yml or build_starter.yml, search for ios_unity output'
         required: false
@@ -36,9 +39,6 @@ on:
         required: false
       download_windows_run:
         description: 'run id for sdk_build.yml or build_starter.yml, search for windows_unity output'
-        required: false
-      release_label:
-        description: 'If the package is intended to run for a release, put <version>-RC## for label'
         required: false
 
 
@@ -56,12 +56,16 @@ jobs:
       - name: Print out inputs
         shell: bash
         run: |
+          echo use_new_build: ${{ github.event.inputs.use_new_build }}
           echo skipIntegrationTests: ${{ github.event.inputs.skipIntegrationTests }}
           echo create_new_branch: ${{ github.event.inputs.create_new_branch }}
+          echo release_label: ${{ github.event.inputs.release_label }}
           echo working_branch: ${{ github.event.inputs.working_branch }}
           echo download_ios_run: ${{ github.event.inputs.download_ios_run }}
           echo download_android_run: ${{ github.event.inputs.download_android_run }}
-          echo download_desktop_run: ${{ github.event.inputs.download_desktop_run }}
+          echo download_linux_run: ${{ github.event.inputs.download_linux_run }}
+          echo download_macos_run: ${{ github.event.inputs.download_macos_run }}
+          echo download_windows_run: ${{ github.event.inputs.download_windows_run }}
 
       - name: Check out base branch
         uses: actions/checkout@v2.3.1
