@@ -37,9 +37,9 @@ on:
         default: true
         type: boolean
         required: true
-      should_trigger_test:
-        description: 'If we want to trigger integration test'
-        default: true
+      skipIntegrationTests:
+        description: 'If we want to skip integration test'
+        default: false
         type: boolean
         required: true
 
@@ -136,7 +136,7 @@ jobs:
   trigger_package:
     name: package ${{ github.event.inputs.release_label }}
     needs: [build_android, build_ios, build_linux, build_macos, build_windows]
-    if: (github.event.inputs.should_trigger_package == true) && !cancelled() && !failure()
+    if: (github.event.inputs.should_trigger_package == 'true') && !cancelled() && !failure()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
@@ -162,9 +162,14 @@ jobs:
       shell: bash
       run: |
         pip install -r scripts/gha/requirements.txt
-        if [[ "${{ github.event_name }}" == "schedule" ]]; then
-          # reuse flag --test_pull_request=nightly-packaging to generate report
-          generate_report=(-p test_pull_request nightly-packaging)
-        fi
         set -e
-        python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w package.yml -p test_packaged_sdk ${{ github.run_id }} -s 10 -A -v
+        python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w package.yml -p \
+          use_new_build true \
+          release_label ${{ github.event.inputs.release_label }} \
+          skipIntegrationTests ${{ github.event.inputs.skipIntegrationTests }} \
+          download_android_run ${{ github.run_id }} \
+          download_ios_run ${{ github.run_id }} \
+          download_linux_run ${{ github.run_id }} \
+          download_macos_run ${{ github.run_id }} \
+          download_windows_run ${{ github.run_id }} \
+          -s 10 -A -v
