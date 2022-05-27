@@ -4,15 +4,21 @@ name: Package SDKs
 on:
   workflow_dispatch:
     inputs:
+      use_new_build:
+        description: 'Check if this package grabs artifacts from new build workflow'
+        default: false
+        required: true
+        type: boolean
       skipIntegrationTests:
         description: 'skip integration tests?'
         default: false
         required: false
         type: boolean
       create_new_branch:
-        description: 'If we need to create new branch to package guids update. 0 means no creation and 1 means create. If working_branch set, will ignore this value. '
-        default: 0
+        description: 'Check if we need to create new branch to package guids update. If working_branch set, will ignore this value. '
+        default: false
         required: false
+        type: boolean
       working_branch:
         description: 'If already a working in progress release branch'
         required: false
@@ -34,11 +40,7 @@ on:
       release_label:
         description: 'If the package is intended to run for a release, put <version>-RC## for label'
         required: false
-      use_new_build:
-        description: 'Whether this package grabs artifacts from new build workflow or old one'
-        default: false
-        required: true
-        type: boolean
+
 
 env:
   # Use SHA256 for hashing files.
@@ -85,13 +87,13 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
-        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == '1'
+        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == true
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
           echo "NEW_BRANCH=new_branch-${date_str}" >> $GITHUB_ENV
 
       - name: Create new branch
-        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == '1'
+        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == true
         run: |
           git remote update
           git checkout -b "${NEW_BRANCH}"
@@ -229,7 +231,7 @@ jobs:
           fi
 
       - name: Create PR if there is None
-        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == '1'
+        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == true
         id: push-branch
         run: |
           if ! git update-index --refresh; then
