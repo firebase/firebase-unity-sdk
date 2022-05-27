@@ -4,14 +4,11 @@ name: Package SDKs
 on:
   workflow_dispatch:
     inputs:
-      operating_systems:
-        description: 'CSV of VMs to run on'
-        default: 'ubuntu-latest'
-        required: true
       skipIntegrationTests:
         description: 'skip integration tests?'
-        default: 0
+        default: false
         required: false
+        type: boolean
       create_new_branch:
         description: 'If we need to create new branch to package guids update. 0 means no creation and 1 means create. If working_branch set, will ignore this value. '
         default: 0
@@ -20,17 +17,28 @@ on:
         description: 'If already a working in progress release branch'
         required: false
       download_ios_run:
-        description: 'run id for ios.yml'
+        description: 'run id for ios.yml or build_starter.yml, search for ios_unity output'
         required: false
       download_android_run:
-        description: 'run id for android.yml'
+        description: 'run id for android.yml or build_starter.yml, search for android_unity output'
         required: false
-      download_desktop_run:
-        description: 'run id for sdk_build.yml'
+      download_linux_run:
+        description: 'run id for sdk_build.yml or build_starter.yml, search for linux_unity output'
+        required: false
+      download_macos_run:
+        description: 'run id for sdk_build.yml or build_starter.yml, search for macos_unity output'
+        required: false
+      download_windows_run:
+        description: 'run id for sdk_build.yml or build_starter.yml, search for windows_unity output'
         required: false
       release_label:
         description: 'If the package is intended to run for a release, put <version>-RC## for label'
         required: false
+      use_new_build:
+        description: 'Whether this package grabs artifacts from new build workflow or old one'
+        default: false
+        required: true
+        type: boolean
 
 env:
   # Use SHA256 for hashing files.
@@ -38,20 +46,14 @@ env:
 
 jobs:
   package_sdks:
-    name: package-${{matrix.os}}-${{github.event.inputs.release_label}}
-    runs-on: ${{matrix.os}}
+    name: package-${{github.event.inputs.release_label}}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        include:
-        - os: ubuntu-latest
-          package_dir: output
     steps:
       - name: Print out inputs
         shell: bash
         run: |
-          echo operation_system: ${{ github.event.inputs.operating_systems }}
           echo skipIntegrationTests: ${{ github.event.inputs.skipIntegrationTests }}
           echo create_new_branch: ${{ github.event.inputs.create_new_branch }}
           echo working_branch: ${{ github.event.inputs.working_branch }}
@@ -103,26 +105,96 @@ jobs:
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
           echo "NEW_BRANCH=${{ github.event.inputs.working_branch }}" >> $GITHUB_ENV
 
-      # Fetch all the zip files from previous run
-      - name: Fetch Desktop Artifacts
+      # Fetch all the zip files from previous run (OLD)
+      - name: Fetch iOS Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
-        with:
-          workflow: 'sdk_build.yml'
-          run_id: ${{ github.event.inputs.download_desktop_run }}
-          path: built_artifect
-
-      - name: Fetch iOS Artifacts
-        uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == false
         with:
           workflow: 'ios.yml'
           run_id: ${{ github.event.inputs.download_ios_run }}
+          name: ios_unity
           path: built_artifect
       
-      - name: Fetch Android Artifacts
+      - name: Fetch Android Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == false
         with:
           workflow: 'android.yml'
           run_id: ${{ github.event.inputs.download_android_run }}
+          name: android_unity
+          path: built_artifect
+
+      - name: Fetch Linux Artifacts (OLD)
+        uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == false
+        with:
+          workflow: 'sdk_build.yml'
+          run_id: ${{ github.event.inputs.download_linux_run }}
+          name: linux_unity
+          path: built_artifect
+
+      - name: Fetch MacOS Artifacts (OLD)
+        uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == false
+        with:
+          workflow: 'sdk_build.yml'
+          run_id: ${{ github.event.inputs.download_macos_run }}
+          name: macos_unity
+          path: built_artifect
+
+      - name: Fetch Windows Artifacts (OLD)
+        uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == false
+        with:
+          workflow: 'sdk_build.yml'
+          run_id: ${{ github.event.inputs.download_windows_run }}
+          name: windows_unity
+          path: built_artifect
+
+      # Fetch all the zip files from previous run (NEW)
+      - name: Fetch Android Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == true
+        with:
+          workflow: 'build_starter.yml'
+          run_id: ${{ github.event.inputs.download_android_run }}
+          name: android_unity
+          path: built_artifect
+
+      - name: Fetch iOS Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == true
+        with:
+          workflow: 'build_starter.yml'
+          run_id: ${{ github.event.inputs.download_ios_run }}
+          name: ios_unity
+          path: built_artifect
+      
+      - name: Fetch Linux Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == true
+        with:
+          workflow: 'build_starter.yml'
+          run_id: ${{ github.event.inputs.download_linux_run }}
+          name: linux_unity
+          path: built_artifect
+
+      - name: Fetch MacOS Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == true
+        with:
+          workflow: 'build_starter.yml'
+          run_id: ${{ github.event.inputs.download_macos_run }}
+          name: macos_unity
+          path: built_artifect
+      
+      - name: Fetch Windows Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        if: github.event.inputs.use_new_build == true
+        with:
+          workflow: 'build_starter.yml'
+          run_id: ${{ github.event.inputs.download_windows_run }}
+          name: windows_unity
           path: built_artifect
       
       - name: move zip files
@@ -247,7 +319,7 @@ jobs:
   trigger_integration_tests:
     # Trigger the integration_tests workflow.
     needs: [package_sdks]
-    if: (github.event.inputs.skipIntegrationTests == 0 || github.event.inputs.skipIntegrationTests == '') && !cancelled() && !failure()
+    if: (github.event.inputs.skipIntegrationTests == true) && !cancelled() && !failure()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
