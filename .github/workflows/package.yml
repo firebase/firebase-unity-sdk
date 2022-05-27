@@ -114,7 +114,7 @@ jobs:
       # Fetch all the zip files from previous run (OLD)
       - name: Fetch iOS Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == false
+        if: (github.event.inputs.use_new_build == false)
         with:
           workflow: 'ios.yml'
           run_id: ${{ github.event.inputs.download_ios_run }}
