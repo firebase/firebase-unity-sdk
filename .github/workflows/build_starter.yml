@@ -163,13 +163,13 @@ jobs:
       run: |
         pip install -r scripts/gha/requirements.txt
         set -e
-        python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w package.yml -p \
-          use_new_build true \
-          release_label ${{ github.event.inputs.release_label }} \
-          skipIntegrationTests ${{ github.event.inputs.skipIntegrationTests }} \
-          download_android_run ${{ github.run_id }} \
-          download_ios_run ${{ github.run_id }} \
-          download_linux_run ${{ github.run_id }} \
-          download_macos_run ${{ github.run_id }} \
-          download_windows_run ${{ github.run_id }} \
+        python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w package.yml \
+          -p use_new_build true \
+          -p release_label ${{ github.event.inputs.release_label }} \
+          -p skipIntegrationTests ${{ github.event.inputs.skipIntegrationTests }} \
+          -p download_android_run ${{ github.run_id }} \
+          -p download_ios_run ${{ github.run_id }} \
+          -p download_linux_run ${{ github.run_id }} \
+          -p download_macos_run ${{ github.run_id }} \
+          -p download_windows_run ${{ github.run_id }} \
           -s 10 -A -v
