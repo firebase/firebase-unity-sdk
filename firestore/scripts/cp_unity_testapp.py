@@ -152,7 +152,6 @@ class FlagsParser:
     self.google_service_info_plist_file: Optional[pathlib.Path] = None
     self.android_package_name: Optional[str] = None
     self.apple_developer_team_id: Optional[str] = None
-    self.hardlink_cs_files: Optional[bool] = None
 
   @dataclasses.dataclass(frozen=True)
   class ParsedFlags:
@@ -179,7 +178,7 @@ class FlagsParser:
       google_service_info_plist_file = self.google_service_info_plist_file,
       android_package_name = self.android_package_name,
       apple_developer_team_id = self.apple_developer_team_id,
-      hardlink_cs_files = self.hardlink_cs_files,
+      hardlink_cs_files = FLAG_HARDLINK_CS_FILES.value,
     )
 
   def _load_defaults_file(self) -> None:
@@ -232,7 +231,6 @@ class FlagsParser:
       self.apple_developer_team_id = FLAG_APPLE_DEVELOPER_TEAM_ID.value
 
     self._log_using_flag_from_command_line(FLAG_HARDLINK_CS_FILES)
-    self.hardlink_cs_files = FLAG_HARDLINK_CS_FILES.value
 
   @classmethod
   def _log_using_flag_from_command_line(cls, flag: flags.Flag) -> None:
