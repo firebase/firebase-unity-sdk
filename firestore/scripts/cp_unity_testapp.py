@@ -94,6 +94,15 @@ FLAG_APPLE_DEVELOPER_TEAM_ID = flags.DEFINE_string(
     "will need to be manually set in Xcode.",
 )
 
+FLAG_HARDLINK_CS_FILES = flags.DEFINE_boolean(
+  name="hardlink",
+  default=False,
+  help="Instead of copying the .cs source files, hardlink them. This can be "
+    "useful when developing the C# code for the testapp itself, as changes "
+    "to those files will be instantly reflected both in the destination "
+    "Unity project and the GitHub repository."
+)
+
 
 def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
@@ -118,6 +127,7 @@ def main(argv: Sequence[str]) -> None:
     google_service_info_plist_file=flags.google_service_info_plist_file,
     android_package_name=flags.android_package_name,
     apple_developer_team_id=flags.apple_developer_team_id,
+    hardlink_cs_files=flags.hardlink_cs_files,
   )
 
   try:
@@ -152,6 +162,7 @@ class FlagsParser:
     google_service_info_plist_file: Optional[pathlib.Path]
     android_package_name: Optional[str]
     apple_developer_team_id: Optional[str]
+    hardlink_cs_files: bool
 
   def parse(self) -> ParsedFlags:
     self._load_defaults_file()
@@ -167,6 +178,7 @@ class FlagsParser:
       google_service_info_plist_file = self.google_service_info_plist_file,
       android_package_name = self.android_package_name,
       apple_developer_team_id = self.apple_developer_team_id,
+      hardlink_cs_files = FLAG_HARDLINK_CS_FILES.value,
     )
 
   def _load_defaults_file(self) -> None:
@@ -217,6 +229,8 @@ class FlagsParser:
     if FLAG_APPLE_DEVELOPER_TEAM_ID.value:
       self._log_using_flag_from_command_line(FLAG_APPLE_DEVELOPER_TEAM_ID)
       self.apple_developer_team_id = FLAG_APPLE_DEVELOPER_TEAM_ID.value
+
+    self._log_using_flag_from_command_line(FLAG_HARDLINK_CS_FILES)
 
   @classmethod
   def _log_using_flag_from_command_line(cls, flag: flags.Flag) -> None:
@@ -278,6 +292,7 @@ class UnityTestappCopier:
     google_service_info_plist_file: Optional[pathlib.Path],
     android_package_name: Optional[str],
     apple_developer_team_id: Optional[str],
+    hardlink_cs_files: bool,
   ) -> None:
     self.git_repo_dir = git_repo_dir
     self.dest_dir_2017 = dest_dir_2017
@@ -286,6 +301,7 @@ class UnityTestappCopier:
     self.google_service_info_plist_file = google_service_info_plist_file
     self.android_package_name = android_package_name
     self.apple_developer_team_id = apple_developer_team_id
+    self.hardlink_cs_files = hardlink_cs_files
 
   def run(self) -> None:
     something_done = False
@@ -349,15 +365,23 @@ class UnityTestappCopier:
       project_settings_file = dest_dir / "ProjectSettings" / "ProjectSettings.asset"
       self._update_unity_app_info(project_settings_file, android_package_name, bundle_id)
 
-  @classmethod
-  def _copy_file(cls, src_file: pathlib.Path, dest_file: pathlib.Path) -> None:
-    logging.info("Copying %s to %s", src_file, dest_file)
-    shutil.copy(src_file, dest_file)
+  # A drop-in replacement for `shutil.copy()` that creates hard links for some files
+  # if hardlink_cs_files=True was specified to __init__().
+  def _copy(self, src, dst, *, follow_symlinks=True):
+    if self.hardlink_cs_files and str(src).endswith(".cs"):
+      src_file = pathlib.Path(src)
+      dst_file = pathlib.Path(dst)
+      src_file.link_to(dst_file)
+    else:
+      shutil.copy(src, dst, follow_symlinks=follow_symlinks)
 
-  @classmethod
-  def _copy_tree(cls, src_dir: pathlib.Path, dest_dir: pathlib.Path) -> None:
+  def _copy_file(self, src_file: pathlib.Path, dest_file: pathlib.Path) -> None:
+    logging.info("Copying %s to %s", src_file, dest_file)
+    self._copy(src_file, dest_file)
+
+  def _copy_tree(self, src_dir: pathlib.Path, dest_dir: pathlib.Path) -> None:
     logging.info("Copying %s to %s", src_dir, dest_dir)
-    shutil.copytree(src_dir, dest_dir)
+    shutil.copytree(src_dir, dest_dir, copy_function=self._copy)
 
   @classmethod
   def _rmtree(cls, dir_path: pathlib.Path) -> None:
