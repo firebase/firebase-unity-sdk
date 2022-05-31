@@ -155,6 +155,7 @@ class FlagsParser:
 
   def parse(self) -> ParsedFlags:
     self._load_defaults_file()
+    self._load_flag_values()
     return self._to_parsed_flags()
 
   def _to_parsed_flags(self) -> ParsedFlags:
@@ -193,6 +194,33 @@ class FlagsParser:
     if current_flag is not None:
       raise self.DefaultsFileParseError(
         f"line {line_number}: expected line after this line: {line}")
+
+  def _load_flag_values(self) -> None:
+    if FLAG_GIT_REPO_DIR.value:
+      self._log_using_flag_from_command_line(FLAG_GIT_REPO_DIR)
+      self.git_repo_dir = pathlib.Path(FLAG_GIT_REPO_DIR.value)
+    if FLAG_DEST_DIR_2017.value:
+      self._log_using_flag_from_command_line(FLAG_DEST_DIR_2017)
+      self.dest_dir_2017 = pathlib.Path(FLAG_DEST_DIR_2017.value)
+    if FLAG_DEST_DIR_2020.value:
+      self._log_using_flag_from_command_line(FLAG_DEST_DIR_2020)
+      self.dest_dir_2020 = pathlib.Path(FLAG_DEST_DIR_2017.value)
+    if FLAG_GOOGLE_SERVICES_JSON_FILE.value:
+      self._log_using_flag_from_command_line(FLAG_GOOGLE_SERVICES_JSON_FILE)
+      self.google_services_json_file = pathlib.Path(FLAG_GOOGLE_SERVICES_JSON_FILE.value)
+    if FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE.value:
+      self._log_using_flag_from_command_line(FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE)
+      self.google_service_info_plist_file = pathlib.Path(FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE.value)
+    if FLAG_ANDROID_PACKAGE_NAME.value:
+      self._log_using_flag_from_command_line(FLAG_ANDROID_PACKAGE_NAME)
+      self.android_package_name = FLAG_ANDROID_PACKAGE_NAME.value
+    if FLAG_APPLE_DEVELOPER_TEAM_ID.value:
+      self._log_using_flag_from_command_line(FLAG_APPLE_DEVELOPER_TEAM_ID)
+      self.apple_developer_team_id = FLAG_APPLE_DEVELOPER_TEAM_ID.value
+
+  @classmethod
+  def _log_using_flag_from_command_line(cls, flag: flags.Flag) -> None:
+    logging.info("Using flag from command line: --%s=%s", flag.name, flag.value)
 
   @classmethod
   def _flag_from_flag_name(cls, flag_name: str) -> Optional[flags.Flag]:
@@ -363,7 +391,11 @@ class UnityTestappCopier:
     if self.android_package_name is None:
       package_name = package_names[0]
     elif self.android_package_name not in package_names:
-      raise self.Error(f"Android package name {self.android_package_name} not found in {file_path}")
+      raise self.Error(
+        f"Android package name {self.android_package_name} not found in {file_path}; "
+        f"consider instead using one of the following {len(package_names)} package "
+        f"names that were found: "
+        + ", ".join(sorted(package_names)))
     else:
       package_name = self.android_package_name
 
