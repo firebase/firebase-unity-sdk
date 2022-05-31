@@ -204,7 +204,7 @@ class FlagsParser:
       self.dest_dir_2017 = pathlib.Path(FLAG_DEST_DIR_2017.value)
     if FLAG_DEST_DIR_2020.value:
       self._log_using_flag_from_command_line(FLAG_DEST_DIR_2020)
-      self.dest_dir_2020 = pathlib.Path(FLAG_DEST_DIR_2017.value)
+      self.dest_dir_2020 = pathlib.Path(FLAG_DEST_DIR_2020.value)
     if FLAG_GOOGLE_SERVICES_JSON_FILE.value:
       self._log_using_flag_from_command_line(FLAG_GOOGLE_SERVICES_JSON_FILE)
       self.google_services_json_file = pathlib.Path(FLAG_GOOGLE_SERVICES_JSON_FILE.value)
