@@ -165,7 +165,7 @@ jobs:
         pip install -r scripts/gha/requirements.txt
         set -e
         python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w package.yml \
-          -p use_new_build true \
+          -p use_new_build '1' \
           -p release_label ${{ github.event.inputs.release_label }} \
           -p skipIntegrationTests ${{ github.event.inputs.skipIntegrationTests }} \
           -p download_android_run ${{ github.run_id }} \
