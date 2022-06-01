@@ -6,14 +6,12 @@ on:
     inputs:
       use_new_build:
         description: 'Check if this package grabs artifacts from new build workflow'
-        default: false
+        default: '0'
         required: true
-        type: boolean
       skipIntegrationTests:
         description: 'skip integration tests?'
-        default: false
+        default: '0'
         required: false
-        type: boolean
       create_new_branch:
         description: 'Check if we need to create new branch to package guids update. If working_branch set, will ignore this value. '
         default: false
@@ -107,7 +105,7 @@ jobs:
       # Fetch all the zip files from previous run (OLD)
       - name: Fetch iOS Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'false'
+        if: github.event.inputs.use_new_build == '0'
         with:
           workflow: 'ios.yml'
           run_id: ${{ github.event.inputs.download_ios_run }}
@@ -116,7 +114,7 @@ jobs:
       
       - name: Fetch Android Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'false'
+        if: github.event.inputs.use_new_build == '0'
         with:
           workflow: 'android.yml'
           run_id: ${{ github.event.inputs.download_android_run }}
@@ -125,7 +123,7 @@ jobs:
 
       - name: Fetch Linux Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'false'
+        if: github.event.inputs.use_new_build == '0'
         with:
           workflow: 'sdk_build.yml'
           run_id: ${{ github.event.inputs.download_linux_run }}
@@ -134,7 +132,7 @@ jobs:
 
       - name: Fetch MacOS Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'false'
+        if: github.event.inputs.use_new_build == '0'
         with:
           workflow: 'sdk_build.yml'
           run_id: ${{ github.event.inputs.download_macos_run }}
@@ -153,7 +151,7 @@ jobs:
       # Fetch all the zip files from previous run (NEW)
       - name: Fetch Android Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'true'
+        if: github.event.inputs.use_new_build == '1'
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_android_run }}
@@ -162,7 +160,7 @@ jobs:
 
       - name: Fetch iOS Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'true'
+        if: github.event.inputs.use_new_build == '1'
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_ios_run }}
@@ -171,7 +169,7 @@ jobs:
       
       - name: Fetch Linux Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'true'
+        if: github.event.inputs.use_new_build == '1'
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_linux_run }}
@@ -180,7 +178,7 @@ jobs:
 
       - name: Fetch MacOS Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'true'
+        if: github.event.inputs.use_new_build == '1'
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_macos_run }}
@@ -189,7 +187,7 @@ jobs:
       
       - name: Fetch Windows Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'true'
+        if: github.event.inputs.use_new_build == '1'
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_windows_run }}
@@ -318,7 +316,7 @@ jobs:
   trigger_integration_tests:
     # Trigger the integration_tests workflow.
     needs: [package_sdks]
-    if: (github.event.inputs.skipIntegrationTests == 'false') && !cancelled() && !failure()
+    if: (github.event.inputs.skipIntegrationTests == '0') && !cancelled() && !failure()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo

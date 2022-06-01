@@ -41,8 +41,7 @@ on:
         required: true
       skipIntegrationTests:
         description: 'If we want to skip integration test'
-        default: false
-        type: boolean
+        default: '0'
         required: true
 
 env:
