@@ -94,6 +94,15 @@ FLAG_APPLE_DEVELOPER_TEAM_ID = flags.DEFINE_string(
     "will need to be manually set in Xcode.",
 )
 
+FLAG_HARDLINK_CS_FILES = flags.DEFINE_boolean(
+  name="hardlink",
+  default=False,
+  help="Instead of copying the .cs source files, hardlink them. This can be "
+    "useful when developing the C# code for the testapp itself, as changes "
+    "to those files will be instantly reflected both in the destination "
+    "Unity project and the GitHub repository."
+)
+
 
 def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
@@ -118,6 +127,7 @@ def main(argv: Sequence[str]) -> None:
     google_service_info_plist_file=flags.google_service_info_plist_file,
     android_package_name=flags.android_package_name,
     apple_developer_team_id=flags.apple_developer_team_id,
+    hardlink_cs_files=flags.hardlink_cs_files,
   )
 
   try:
@@ -152,9 +162,11 @@ class FlagsParser:
     google_service_info_plist_file: Optional[pathlib.Path]
     android_package_name: Optional[str]
     apple_developer_team_id: Optional[str]
+    hardlink_cs_files: bool
 
   def parse(self) -> ParsedFlags:
     self._load_defaults_file()
+    self._load_flag_values()
     return self._to_parsed_flags()
 
   def _to_parsed_flags(self) -> ParsedFlags:
@@ -166,6 +178,7 @@ class FlagsParser:
       google_service_info_plist_file = self.google_service_info_plist_file,
       android_package_name = self.android_package_name,
       apple_developer_team_id = self.apple_developer_team_id,
+      hardlink_cs_files = FLAG_HARDLINK_CS_FILES.value,
     )
 
   def _load_defaults_file(self) -> None:
@@ -193,6 +206,35 @@ class FlagsParser:
     if current_flag is not None:
       raise self.DefaultsFileParseError(
         f"line {line_number}: expected line after this line: {line}")
+
+  def _load_flag_values(self) -> None:
+    if FLAG_GIT_REPO_DIR.value:
+      self._log_using_flag_from_command_line(FLAG_GIT_REPO_DIR)
+      self.git_repo_dir = pathlib.Path(FLAG_GIT_REPO_DIR.value)
+    if FLAG_DEST_DIR_2017.value:
+      self._log_using_flag_from_command_line(FLAG_DEST_DIR_2017)
+      self.dest_dir_2017 = pathlib.Path(FLAG_DEST_DIR_2017.value)
+    if FLAG_DEST_DIR_2020.value:
+      self._log_using_flag_from_command_line(FLAG_DEST_DIR_2020)
+      self.dest_dir_2020 = pathlib.Path(FLAG_DEST_DIR_2020.value)
+    if FLAG_GOOGLE_SERVICES_JSON_FILE.value:
+      self._log_using_flag_from_command_line(FLAG_GOOGLE_SERVICES_JSON_FILE)
+      self.google_services_json_file = pathlib.Path(FLAG_GOOGLE_SERVICES_JSON_FILE.value)
+    if FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE.value:
+      self._log_using_flag_from_command_line(FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE)
+      self.google_service_info_plist_file = pathlib.Path(FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE.value)
+    if FLAG_ANDROID_PACKAGE_NAME.value:
+      self._log_using_flag_from_command_line(FLAG_ANDROID_PACKAGE_NAME)
+      self.android_package_name = FLAG_ANDROID_PACKAGE_NAME.value
+    if FLAG_APPLE_DEVELOPER_TEAM_ID.value:
+      self._log_using_flag_from_command_line(FLAG_APPLE_DEVELOPER_TEAM_ID)
+      self.apple_developer_team_id = FLAG_APPLE_DEVELOPER_TEAM_ID.value
+
+    self._log_using_flag_from_command_line(FLAG_HARDLINK_CS_FILES)
+
+  @classmethod
+  def _log_using_flag_from_command_line(cls, flag: flags.Flag) -> None:
+    logging.info("Using flag from command line: --%s=%s", flag.name, flag.value)
 
   @classmethod
   def _flag_from_flag_name(cls, flag_name: str) -> Optional[flags.Flag]:
@@ -250,6 +292,7 @@ class UnityTestappCopier:
     google_service_info_plist_file: Optional[pathlib.Path],
     android_package_name: Optional[str],
     apple_developer_team_id: Optional[str],
+    hardlink_cs_files: bool,
   ) -> None:
     self.git_repo_dir = git_repo_dir
     self.dest_dir_2017 = dest_dir_2017
@@ -258,6 +301,7 @@ class UnityTestappCopier:
     self.google_service_info_plist_file = google_service_info_plist_file
     self.android_package_name = android_package_name
     self.apple_developer_team_id = apple_developer_team_id
+    self.hardlink_cs_files = hardlink_cs_files
 
   def run(self) -> None:
     something_done = False
@@ -321,15 +365,23 @@ class UnityTestappCopier:
       project_settings_file = dest_dir / "ProjectSettings" / "ProjectSettings.asset"
       self._update_unity_app_info(project_settings_file, android_package_name, bundle_id)
 
-  @classmethod
-  def _copy_file(cls, src_file: pathlib.Path, dest_file: pathlib.Path) -> None:
-    logging.info("Copying %s to %s", src_file, dest_file)
-    shutil.copy(src_file, dest_file)
+  # A drop-in replacement for `shutil.copy()` that creates hard links for some files
+  # if hardlink_cs_files=True was specified to __init__().
+  def _copy(self, src, dst, *, follow_symlinks=True):
+    if self.hardlink_cs_files and str(src).endswith(".cs"):
+      src_file = pathlib.Path(src)
+      dst_file = pathlib.Path(dst)
+      src_file.link_to(dst_file)
+    else:
+      shutil.copy(src, dst, follow_symlinks=follow_symlinks)
 
-  @classmethod
-  def _copy_tree(cls, src_dir: pathlib.Path, dest_dir: pathlib.Path) -> None:
+  def _copy_file(self, src_file: pathlib.Path, dest_file: pathlib.Path) -> None:
+    logging.info("Copying %s to %s", src_file, dest_file)
+    self._copy(src_file, dest_file)
+
+  def _copy_tree(self, src_dir: pathlib.Path, dest_dir: pathlib.Path) -> None:
     logging.info("Copying %s to %s", src_dir, dest_dir)
-    shutil.copytree(src_dir, dest_dir)
+    shutil.copytree(src_dir, dest_dir, copy_function=self._copy)
 
   @classmethod
   def _rmtree(cls, dir_path: pathlib.Path) -> None:
@@ -363,7 +415,11 @@ class UnityTestappCopier:
     if self.android_package_name is None:
       package_name = package_names[0]
     elif self.android_package_name not in package_names:
-      raise self.Error(f"Android package name {self.android_package_name} not found in {file_path}")
+      raise self.Error(
+        f"Android package name {self.android_package_name} not found in {file_path}; "
+        f"consider instead using one of the following {len(package_names)} package "
+        f"names that were found: "
+        + ", ".join(sorted(package_names)))
     else:
       package_name = self.android_package_name
 

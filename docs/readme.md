@@ -158,6 +158,8 @@ Release Notes
 ### Upcoming
 - Changes
     - General: Added a missing namespace to the Google.MiniJson.dll.
+    - Functions: Add a new method `GetHttpsCallableFromURL`, to create callables
+      with URLs other than cloudfunctions.net.
 
 ### 9.0.0
 - Changes
