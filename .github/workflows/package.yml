@@ -72,13 +72,6 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.inputs.working_branch }}
-      
-      - name: Get token for firebase-workflow-trigger
-        uses: tibdex/github-app-token@v1
-        id: generate-token
-        with:
-          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
 
       - name: Setup Python
         uses: actions/setup-python@v2
