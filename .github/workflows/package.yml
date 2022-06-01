@@ -14,9 +14,8 @@ on:
         required: false
       create_new_branch:
         description: 'Check if we need to create new branch to package guids update. If working_branch set, will ignore this value. '
-        default: false
+        default: '0'
         required: false
-        type: boolean
       working_branch:
         description: 'If already a working in progress release branch'
         required: false
@@ -82,13 +81,13 @@ jobs:
           pip install -r scripts/gha/requirements.txt
 
       - name: Name new branch
-        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == 'true'
+        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == '1'
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
           echo "NEW_BRANCH=new_branch-${date_str}" >> $GITHUB_ENV
 
       - name: Create new branch
-        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == 'true'
+        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == '1'
         run: |
           git remote update
           git checkout -b "${NEW_BRANCH}"
@@ -226,7 +225,7 @@ jobs:
           fi
 
       - name: Create PR if there is None
-        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == 'true'
+        if: github.event.inputs.working_branch == '' && github.event.inputs.create_new_branch == '1'
         id: push-branch
         run: |
           if ! git update-index --refresh; then
