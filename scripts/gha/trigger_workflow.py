@@ -47,11 +47,6 @@ def main():
 
   json_params = {}
   for param in args.param:
-    # param_value = param[1]
-    # if param_value == 'true' or param_value == 'True' or param_value == '1':
-    #   param_value = True
-    # elif param_value == 'false' or param_value == 'False' or param_value == '0':
-    #   param_value = False
     json_params[param[0]] = param[1]
   if args.verbose or args.dryrun:
     print(f'request_url: {github.GITHUB_API_URL}/actions/workflows/{args.workflow}/dispatches')
