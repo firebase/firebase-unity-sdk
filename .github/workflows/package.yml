@@ -114,6 +114,7 @@ jobs:
       - name: Fetch Android Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == '0'
+        continue-on-error: true
         with:
           workflow: 'android.yml'
           run_id: ${{ github.event.inputs.download_android_run }}
@@ -123,6 +124,7 @@ jobs:
       - name: Fetch Linux Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == '0'
+        continue-on-error: true
         with:
           workflow: 'sdk_build.yml'
           run_id: ${{ github.event.inputs.download_linux_run }}
@@ -132,6 +134,7 @@ jobs:
       - name: Fetch MacOS Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == '0'
+        continue-on-error: true
         with:
           workflow: 'sdk_build.yml'
           run_id: ${{ github.event.inputs.download_macos_run }}
@@ -141,6 +144,7 @@ jobs:
       - name: Fetch Windows Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == 'false'
+        continue-on-error: true
         with:
           workflow: 'sdk_build.yml'
           run_id: ${{ github.event.inputs.download_windows_run }}
@@ -151,6 +155,7 @@ jobs:
       - name: Fetch Android Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == '1'
+        continue-on-error: true
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_android_run }}
@@ -160,6 +165,7 @@ jobs:
       - name: Fetch iOS Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == '1'
+        continue-on-error: true
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_ios_run }}
@@ -169,6 +175,7 @@ jobs:
       - name: Fetch Linux Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == '1'
+        continue-on-error: true
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_linux_run }}
@@ -178,6 +185,7 @@ jobs:
       - name: Fetch MacOS Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == '1'
+        continue-on-error: true
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_macos_run }}
@@ -187,6 +195,7 @@ jobs:
       - name: Fetch Windows Artifacts (NEW)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == '1'
+        continue-on-error: true
         with:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.download_windows_run }}
