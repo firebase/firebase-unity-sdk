@@ -119,105 +119,48 @@ jobs:
             echo "::set-output name=macos_yml::'sdk_build.yml'"
             echo "::set-output name=windows_yml::'sdk_build.yml'"
           fi
-
-      # Fetch all the zip files from previous run (OLD)
-      - name: Fetch iOS Artifacts (OLD)
+      
+      - name: Fetch Android Artifacts
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == '0'
+        continue-on-error: true
+        with:
+          workflow: ${{ steps.set-fetch-workflow.outputs.android_yml }}
+          run_id: ${{ github.event.inputs.download_android_run }}
+          name: android_unity
+          path: built_artifect
+      
+      - name: Fetch iOS Artifacts
+        uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
         with:
           workflow: ${{ steps.set-fetch-workflow.outputs.ios_yml }}
           run_id: ${{ github.event.inputs.download_ios_run }}
           name: ios_unity
           path: built_artifect
-      
-      - name: Fetch Android Artifacts (OLD)
-        uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == '0'
-        continue-on-error: true
-        with:
-          workflow: 'android.yml'
-          run_id: ${{ github.event.inputs.download_android_run }}
-          name: android_unity
-          path: built_artifect
 
-      - name: Fetch Linux Artifacts (OLD)
+      - name: Fetch Linux Artifacts
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == '0'
         continue-on-error: true
         with:
-          workflow: 'sdk_build.yml'
+          workflow: ${{ steps.set-fetch-workflow.outputs.linux_yml }}
           run_id: ${{ github.event.inputs.download_linux_run }}
           name: linux_unity
           path: built_artifect
 
-      - name: Fetch MacOS Artifacts (OLD)
+      - name: Fetch MacOS Artifacts
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == '0'
         continue-on-error: true
         with:
-          workflow: 'sdk_build.yml'
+          workflow: ${{ steps.set-fetch-workflow.outputs.macos_yml }}
           run_id: ${{ github.event.inputs.download_macos_run }}
           name: macos_unity
           path: built_artifect
 
-      - name: Fetch Windows Artifacts (OLD)
+      - name: Fetch Windows Artifacts
         uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == 'false'
         continue-on-error: true
         with:
-          workflow: 'sdk_build.yml'
-          run_id: ${{ github.event.inputs.download_windows_run }}
-          name: windows_unity
-          path: built_artifect
-
-      # Fetch all the zip files from previous run (NEW)
-      - name: Fetch Android Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == '1'
-        continue-on-error: true
-        with:
-          workflow: 'build_starter.yml'
-          run_id: ${{ github.event.inputs.download_android_run }}
-          name: android_unity
-          path: built_artifect
-
-      - name: Fetch iOS Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == '1'
-        continue-on-error: true
-        with:
-          workflow: ${{ steps.set-fetch-workflow.outputs.ios_yml }}
-          run_id: ${{ github.event.inputs.download_ios_run }}
-          name: ios_unity
-          path: built_artifect
-      
-      - name: Fetch Linux Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == '1'
-        continue-on-error: true
-        with:
-          workflow: 'build_starter.yml'
-          run_id: ${{ github.event.inputs.download_linux_run }}
-          name: linux_unity
-          path: built_artifect
-
-      - name: Fetch MacOS Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == '1'
-        continue-on-error: true
-        with:
-          workflow: 'build_starter.yml'
-          run_id: ${{ github.event.inputs.download_macos_run }}
-          name: macos_unity
-          path: built_artifect
-      
-      - name: Fetch Windows Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        if: github.event.inputs.use_new_build == '1'
-        continue-on-error: true
-        with:
-          workflow: 'build_starter.yml'
+          workflow: ${{ steps.set-fetch-workflow.outputs.windows_yml }}
           run_id: ${{ github.event.inputs.download_windows_run }}
           name: windows_unity
           path: built_artifect
