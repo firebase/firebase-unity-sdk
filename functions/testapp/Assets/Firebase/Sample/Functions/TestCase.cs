@@ -40,10 +40,16 @@ namespace Firebase.Sample.Functions {
       ExpectedError = expectedError;
     }
 
+    // Returns the CallableReference to be used by the test. Overridable to allow
+    // different ways to generate the CallableReference.
+    public virtual HttpsCallableReference GetReference(FirebaseFunctions functions) {
+      return functions.GetHttpsCallable(Name);
+    }
+
     // Runs the given test and returns whether it passed.
     public Task RunAsync(FirebaseFunctions functions,
         Utils.Reporter reporter) {
-      var func = functions.GetHttpsCallable(Name);
+      var func = GetReference(functions);
       return func.CallAsync(Input).ContinueWithOnMainThread((task) => {
         if (ExpectedError == FunctionsErrorCode.None) {
           // We expected no error.
@@ -80,6 +86,23 @@ namespace Firebase.Sample.Functions {
         reporter(String.Format("  Got expected error {0}: {1}", e.ErrorCode,
           e.Message));
       });
+    }
+  }
+
+  // TestCase that uses a URL to call the function directly.
+  public class TestCaseWithURL : TestCase {
+    // The URL of the function to call
+    System.Uri URL { get; set; }
+
+    public TestCaseWithURL(string name, System.Uri url, object input, object expectedResult,
+        FunctionsErrorCode expectedError = FunctionsErrorCode.None)
+          : base(name, input, expectedResult, expectedError) {
+            URL = url;
+        }
+
+    // Generate the CallableReference using the URL
+    public override HttpsCallableReference GetReference(FirebaseFunctions functions) {
+      return functions.GetHttpsCallableFromURL(URL);
     }
   }
 }

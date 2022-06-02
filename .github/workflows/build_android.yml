@@ -8,30 +8,36 @@ on:
         description: 'Unity version'
         default: '2019'
         required: true
+        type: string
       firebase_cpp_sdk_version:
         description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
         default: ''
         required: false
+        type: string
       unity_branch:
         description: 'Unity branch to build against, empty means current branch'
         default: ''
+        type: string
       apis:
         description: 'CSV of apis to build and test'
         default: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
         required: true
+        type: string
       unity_platform_name:
         description: 'The platform name Unity should install with'
         default: ''
         required: true
+        type: string
       # Additional CMake flags to use
       additional_cmake_flags:
         description: 'Additional flags to pass into CMake'
         default: ''
         required: false
+        type: string
 
 jobs:
   build_android:
-    name: build-android-macos-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    name: build-android-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
     runs-on: macos-latest
     strategy:
       fail-fast: false
@@ -49,14 +55,14 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
-          ref: ${{ github.event.inputs.unity_branch }}
+          ref: ${{ inputs.unity_branch }}
           
       - name: Checkout CPP Repo
         uses: actions/checkout@v2
         with:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
-          ref: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+          ref: ${{ inputs.firebase_cpp_sdk_version }}
           submodules: true
 
       - uses: ruby/setup-ruby@v1
@@ -96,12 +102,12 @@ jobs:
       - name: Install Unity
         shell: bash
         run: |
-          python scripts/gha/unity_installer.py --install --platforms ${{ github.event.inputs.unity_platform_name }} --version ${{ github.event.inputs.unity_version }}
+          python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
       
       - name: Setup Unity path
         shell: bash
         run: |
-          echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{ github.event.inputs.unity_version }} -k unity_path )" >> $GITHUB_ENV
+          echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{ inputs.unity_version }} -k unity_path )" >> $GITHUB_ENV
 
       - name: Display Swig Version
         shell: bash
@@ -111,7 +117,8 @@ jobs:
       - name: Build SDK (Android)
         shell: bash
         run: |
-          python scripts/build_scripts/build_zips.py --platform=android --unity_root=$UNITY_ROOT_DIR --extra_cmakes=${{ github.event.inputs.additional_cmake_flags }}
+          # TODO add handling cmake_extras
+          python scripts/build_scripts/build_zips.py --platform=android --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
 
       - name: Upload Build
         uses: actions/upload-artifact@v2
