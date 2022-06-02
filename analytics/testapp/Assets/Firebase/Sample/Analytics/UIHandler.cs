@@ -59,6 +59,8 @@ namespace Firebase.Sample.Analytics {
     void InitializeFirebase() {
       DebugLog("Enabling data collection.");
       FirebaseAnalytics.SetAnalyticsCollectionEnabled(true);
+      DebugLog("Initiate on-device conversion measurement.");
+      FirebaseAnalytics.InitiateOnDeviceConversionMeasurementWithEmailAddress("test@testemail.com");
 
       DebugLog("Set user properties.");
       // Set the user's sign up method.
