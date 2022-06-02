@@ -158,6 +158,8 @@ Release Notes
 ### Upcoming
 - Changes
     - General: Added a missing namespace to the Google.MiniJson.dll.
+    - Analytics (iOS): Added InitiateOnDeviceConversionMeasurementWithEmail function to facilitate the
+      [on-device conversion measurement](https://support.google.com/google-ads/answer/12119136) API.
 
 ### 9.0.0
 - Changes
