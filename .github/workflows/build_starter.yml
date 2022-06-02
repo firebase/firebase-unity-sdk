@@ -147,6 +147,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
+    
+    - name: Install python deps
+      shell: bash
+      run: |
+        pip install -r scripts/gha/requirements.txt
     - name: Generate token for GitHub API
       # This step is necessary because the existing GITHUB_TOKEN cannot be used inside one workflow to trigger another.
       # 
@@ -162,7 +167,6 @@ jobs:
     - name: Use GitHub API to start workflow
       shell: bash
       run: |
-        pip install -r scripts/gha/requirements.txt
         set -e
         python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w package.yml \
           -p use_new_build '1' \

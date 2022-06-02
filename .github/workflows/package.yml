@@ -101,12 +101,31 @@ jobs:
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
           echo "NEW_BRANCH=${{ github.event.inputs.working_branch }}" >> $GITHUB_ENV
 
+      - name: Set Fetch Workflow name
+        id: set-fetch-workflow
+        shell: bash
+        run: |
+          if [[ "${{ github.event.inputs.use_new_build }}" == "1" ]]; then
+            # all use build_starter.yml
+            echo "::set-output name=android_yml::'build_starter.yml'"
+            echo "::set-output name=ios_yml::'build_starter.yml'"
+            echo "::set-output name=linux_yml::'build_starter.yml'"
+            echo "::set-output name=macos_yml::'build_starter.yml'"
+            echo "::set-output name=windows_yml::'build_starter.yml'"
+          else
+            echo "::set-output name=android_yml::'android.yml'"
+            echo "::set-output name=ios_yml::'ios.yml'"
+            echo "::set-output name=linux_yml::'sdk_build.yml'"
+            echo "::set-output name=macos_yml::'sdk_build.yml'"
+            echo "::set-output name=windows_yml::'sdk_build.yml'"
+          fi
+
       # Fetch all the zip files from previous run (OLD)
       - name: Fetch iOS Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         if: github.event.inputs.use_new_build == '0'
         with:
-          workflow: 'ios.yml'
+          workflow: ${{ steps.set-fetch-workflow.outputs.ios_yml }}
           run_id: ${{ github.event.inputs.download_ios_run }}
           name: ios_unity
           path: built_artifect
@@ -167,7 +186,7 @@ jobs:
         if: github.event.inputs.use_new_build == '1'
         continue-on-error: true
         with:
-          workflow: 'build_starter.yml'
+          workflow: ${{ steps.set-fetch-workflow.outputs.ios_yml }}
           run_id: ${{ github.event.inputs.download_ios_run }}
           name: ios_unity
           path: built_artifect
