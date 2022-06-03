@@ -151,6 +151,7 @@ jobs:
       download_linux_run: ${{ github.run_id }}
       download_macos_run: ${{ github.run_id }}
       download_windows_run: ${{ github.run_id }}
+    secrets: inherit
   
   # trigger_package:
   #   name: package ${{ github.event.inputs.release_label }}
