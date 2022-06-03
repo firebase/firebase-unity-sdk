@@ -143,7 +143,7 @@ jobs:
     uses: ./.github/workflows/package.yml
     if: (github.event.inputs.should_trigger_package == 'true') && !cancelled() && !failure()
     with:
-      use_new_build: '1'
+      triggered_by_callable: true
       release_label: ${{ github.event.inputs.release_label }}
       skipIntegrationTests: ${{ github.event.inputs.skipIntegrationTests }}
       download_android_run: ${{ github.run_id }}
