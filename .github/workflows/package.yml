@@ -47,11 +47,6 @@ on:
         description: 'run id for sdk_build.yml or build_starter.yml, search for windows_unity output'
         required: false
         type: string
-    # secrets:
-    #   WORKFLOW_TRIGGER_APP_ID:
-    #     required: true
-    #   WORKFLOW_TRIGGER_APP_PRIVATE_KEY:
-    #     required: true
 
   workflow_dispatch:
     inputs:
