@@ -4,33 +4,40 @@ name: Package SDKs
 on:
   workflow_dispatch:
     inputs:
-      operating_systems:
-        description: 'CSV of VMs to run on'
-        default: 'ubuntu-latest'
+      use_new_build:
+        description: 'Check if this package grabs artifacts from new build workflow'
+        default: '0'
         required: true
       skipIntegrationTests:
         description: 'skip integration tests?'
-        default: 0
+        default: '0'
         required: false
       create_new_branch:
-        description: 'If we need to create new branch to package guids update. 0 means no creation and 1 means create. If working_branch set, will ignore this value. '
-        default: 0
+        description: 'Check if we need to create new branch to package guids update. If working_branch set, will ignore this value. '
+        default: '0'
         required: false
       working_branch:
         description: 'If already a working in progress release branch'
         required: false
-      download_ios_run:
-        description: 'run id for ios.yml'
-        required: false
-      download_android_run:
-        description: 'run id for android.yml'
-        required: false
-      download_desktop_run:
-        description: 'run id for sdk_build.yml'
-        required: false
       release_label:
         description: 'If the package is intended to run for a release, put <version>-RC## for label'
         required: false
+      download_ios_run:
+        description: 'run id for ios.yml or build_starter.yml, search for ios_unity output'
+        required: false
+      download_android_run:
+        description: 'run id for android.yml or build_starter.yml, search for android_unity output'
+        required: false
+      download_linux_run:
+        description: 'run id for sdk_build.yml or build_starter.yml, search for linux_unity output'
+        required: false
+      download_macos_run:
+        description: 'run id for sdk_build.yml or build_starter.yml, search for macos_unity output'
+        required: false
+      download_windows_run:
+        description: 'run id for sdk_build.yml or build_starter.yml, search for windows_unity output'
+        required: false
+
 
 env:
   # Use SHA256 for hashing files.
@@ -38,39 +45,30 @@ env:
 
 jobs:
   package_sdks:
-    name: package-${{matrix.os}}-${{github.event.inputs.release_label}}
-    runs-on: ${{matrix.os}}
+    name: package-${{github.event.inputs.release_label}}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        include:
-        - os: ubuntu-latest
-          package_dir: output
     steps:
       - name: Print out inputs
         shell: bash
         run: |
-          echo operation_system: ${{ github.event.inputs.operating_systems }}
+          echo use_new_build: ${{ github.event.inputs.use_new_build }}
           echo skipIntegrationTests: ${{ github.event.inputs.skipIntegrationTests }}
           echo create_new_branch: ${{ github.event.inputs.create_new_branch }}
+          echo release_label: ${{ github.event.inputs.release_label }}
           echo working_branch: ${{ github.event.inputs.working_branch }}
           echo download_ios_run: ${{ github.event.inputs.download_ios_run }}
           echo download_android_run: ${{ github.event.inputs.download_android_run }}
-          echo download_desktop_run: ${{ github.event.inputs.download_desktop_run }}
+          echo download_linux_run: ${{ github.event.inputs.download_linux_run }}
+          echo download_macos_run: ${{ github.event.inputs.download_macos_run }}
+          echo download_windows_run: ${{ github.event.inputs.download_windows_run }}
 
       - name: Check out base branch
         uses: actions/checkout@v2.3.1
         with:
           fetch-depth: 0
           ref: ${{ github.event.inputs.working_branch }}
-      
-      - name: Get token for firebase-workflow-trigger
-        uses: tibdex/github-app-token@v1
-        id: generate-token
-        with:
-          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -103,26 +101,68 @@ jobs:
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
           echo "NEW_BRANCH=${{ github.event.inputs.working_branch }}" >> $GITHUB_ENV
 
-      # Fetch all the zip files from previous run
-      - name: Fetch Desktop Artifacts
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          workflow: 'sdk_build.yml'
-          run_id: ${{ github.event.inputs.download_desktop_run }}
-          path: built_artifect
-
-      - name: Fetch iOS Artifacts
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          workflow: 'ios.yml'
-          run_id: ${{ github.event.inputs.download_ios_run }}
-          path: built_artifect
+      - name: Set Fetch Workflow name
+        id: set-fetch-workflow
+        shell: bash
+        run: |
+          if [[ "${{ github.event.inputs.use_new_build }}" == "1" ]]; then
+            # all use build_starter.yml
+            echo "::set-output name=android_yml::'build_starter.yml'"
+            echo "::set-output name=ios_yml::'build_starter.yml'"
+            echo "::set-output name=linux_yml::'build_starter.yml'"
+            echo "::set-output name=macos_yml::'build_starter.yml'"
+            echo "::set-output name=windows_yml::'build_starter.yml'"
+          else
+            echo "::set-output name=android_yml::'android.yml'"
+            echo "::set-output name=ios_yml::'ios.yml'"
+            echo "::set-output name=linux_yml::'sdk_build.yml'"
+            echo "::set-output name=macos_yml::'sdk_build.yml'"
+            echo "::set-output name=windows_yml::'sdk_build.yml'"
+          fi
       
       - name: Fetch Android Artifacts
         uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
         with:
-          workflow: 'android.yml'
+          workflow: ${{ steps.set-fetch-workflow.outputs.android_yml }}
           run_id: ${{ github.event.inputs.download_android_run }}
+          name: android_unity
+          path: built_artifect
+      
+      - name: Fetch iOS Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        with:
+          workflow: ${{ steps.set-fetch-workflow.outputs.ios_yml }}
+          run_id: ${{ github.event.inputs.download_ios_run }}
+          name: ios_unity
+          path: built_artifect
+
+      - name: Fetch Linux Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        with:
+          workflow: ${{ steps.set-fetch-workflow.outputs.linux_yml }}
+          run_id: ${{ github.event.inputs.download_linux_run }}
+          name: linux_unity
+          path: built_artifect
+
+      - name: Fetch MacOS Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        with:
+          workflow: ${{ steps.set-fetch-workflow.outputs.macos_yml }}
+          run_id: ${{ github.event.inputs.download_macos_run }}
+          name: macos_unity
+          path: built_artifect
+
+      - name: Fetch Windows Artifacts
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        with:
+          workflow: ${{ steps.set-fetch-workflow.outputs.windows_yml }}
+          run_id: ${{ github.event.inputs.download_windows_run }}
+          name: windows_unity
           path: built_artifect
       
       - name: move zip files
@@ -247,7 +287,7 @@ jobs:
   trigger_integration_tests:
     # Trigger the integration_tests workflow.
     needs: [package_sdks]
-    if: (github.event.inputs.skipIntegrationTests == 0 || github.event.inputs.skipIntegrationTests == '') && !cancelled() && !failure()
+    if: (github.event.inputs.skipIntegrationTests == '0') && !cancelled() && !failure()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
