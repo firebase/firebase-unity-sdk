@@ -95,6 +95,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+    outputs:
+      skipIntegrationTests: ${{ steps.decide_input.outputs.skipIntegrationTests }}
     steps:
       - name: Decide inputs
         id: decide_input
@@ -376,7 +378,7 @@ jobs:
   trigger_integration_tests:
     # Trigger the integration_tests workflow.
     needs: [package_sdks]
-    if: (jobs.package_sdks.steps.decide_inputs.outputs.skipIntegrationTests == '0') && !cancelled() && !failure()
+    if: (needs.package_sdks.outputs.skipIntegrationTests == '0') && !cancelled() && !failure()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
