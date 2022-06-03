@@ -213,6 +213,7 @@ jobs:
       
       - name: Fetch Android Artifacts
         uses: dawidd6/action-download-artifact@v2
+        if: inputs.triggered_by_callable=='false'
         continue-on-error: true
         with:
           workflow: ${{ steps.set-fetch-workflow.outputs.android_yml }}
@@ -222,6 +223,7 @@ jobs:
       
       - name: Fetch iOS Artifacts
         uses: dawidd6/action-download-artifact@v2
+        if: inputs.triggered_by_callable=='false'
         continue-on-error: true
         with:
           workflow: ${{ steps.set-fetch-workflow.outputs.ios_yml }}
@@ -231,6 +233,7 @@ jobs:
 
       - name: Fetch Linux Artifacts
         uses: dawidd6/action-download-artifact@v2
+        if: inputs.triggered_by_callable=='false'
         continue-on-error: true
         with:
           workflow: ${{ steps.set-fetch-workflow.outputs.linux_yml }}
@@ -240,6 +243,7 @@ jobs:
 
       - name: Fetch MacOS Artifacts
         uses: dawidd6/action-download-artifact@v2
+        if: inputs.triggered_by_callable=='false'
         continue-on-error: true
         with:
           workflow: ${{ steps.set-fetch-workflow.outputs.macos_yml }}
@@ -249,6 +253,7 @@ jobs:
 
       - name: Fetch Windows Artifacts
         uses: dawidd6/action-download-artifact@v2
+        if: inputs.triggered_by_callable=='false'
         continue-on-error: true
         with:
           workflow: ${{ steps.set-fetch-workflow.outputs.windows_yml }}
@@ -258,6 +263,11 @@ jobs:
       
       - name: move zip files
         run: |
+          if [ ! -d "built_artifect" ]; then
+            mkdir built_artifect
+            find . -type f -name "*.zip" -exec cp {} built_artifect \;
+          fi
+          ls built_artifect
           cd built_artifect
           find . -type f -name "*.zip" -exec mv {} . \;
           find . -empty -type d -delete
