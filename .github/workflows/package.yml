@@ -2,6 +2,52 @@
 name: Package SDKs
 
 on:
+  workflow_call:
+    inputs:
+      use_new_build:
+        description: 'Check if this package grabs artifacts from new build workflow'
+        default: '0'
+        required: true
+        type: string
+      skipIntegrationTests:
+        description: 'skip integration tests?'
+        default: '0'
+        required: false
+        type: string
+      create_new_branch:
+        description: 'Check if we need to create new branch to package guids update. If working_branch set, will ignore this value. '
+        default: '0'
+        required: false
+        type: string
+      working_branch:
+        description: 'If already a working in progress release branch'
+        required: false
+        type: string
+      release_label:
+        description: 'If the package is intended to run for a release, put <version>-RC## for label'
+        required: false
+        type: string
+      download_ios_run:
+        description: 'run id for ios.yml or build_starter.yml, search for ios_unity output'
+        required: false
+        type: string
+      download_android_run:
+        description: 'run id for android.yml or build_starter.yml, search for android_unity output'
+        required: false
+        type: string
+      download_linux_run:
+        description: 'run id for sdk_build.yml or build_starter.yml, search for linux_unity output'
+        required: false
+        type: string
+      download_macos_run:
+        description: 'run id for sdk_build.yml or build_starter.yml, search for macos_unity output'
+        required: false
+        type: string
+      download_windows_run:
+        description: 'run id for sdk_build.yml or build_starter.yml, search for windows_unity output'
+        required: false
+        type: string
+
   workflow_dispatch:
     inputs:
       use_new_build:
