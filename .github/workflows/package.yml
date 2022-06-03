@@ -27,24 +27,8 @@ on:
         description: 'If the package is intended to run for a release, put <version>-RC## for label'
         required: false
         type: string
-      download_ios_run:
-        description: 'run id for ios.yml or build_starter.yml, search for ios_unity output'
-        required: false
-        type: string
-      download_android_run:
-        description: 'run id for android.yml or build_starter.yml, search for android_unity output'
-        required: false
-        type: string
-      download_linux_run:
-        description: 'run id for sdk_build.yml or build_starter.yml, search for linux_unity output'
-        required: false
-        type: string
-      download_macos_run:
-        description: 'run id for sdk_build.yml or build_starter.yml, search for macos_unity output'
-        required: false
-        type: string
-      download_windows_run:
-        description: 'run id for sdk_build.yml or build_starter.yml, search for windows_unity output'
+      build_run_id:
+        description: 'run id for build_starter.yml, search for all output'
         required: false
         type: string
 
@@ -109,11 +93,11 @@ jobs:
             echo "::set-output name=create_new_branch::${{ inputs.create_new_branch }}"
             echo "::set-output name=release_label::${{ inputs.release_label }}"
             echo "::set-output name=working_branch::${{ inputs.working_branch }}"
-            echo "::set-output name=download_android_run::${{ inputs.download_android_run }}"
-            echo "::set-output name=download_ios_run::${{ inputs.download_ios_run }}"
-            echo "::set-output name=download_linux_run::${{ inputs.download_linux_run }}"
-            echo "::set-output name=download_macos_run::${{ inputs.download_macos_run }}"
-            echo "::set-output name=download_windows_run::${{ inputs.download_windows_run }}"
+            echo "::set-output name=download_android_run::${{ inputs.build_run_id }}"
+            echo "::set-output name=download_ios_run::${{ inputs.build_run_id }}"
+            echo "::set-output name=download_linux_run::${{ inputs.build_run_id }}"
+            echo "::set-output name=download_macos_run::${{ inputs.build_run_id }}"
+            echo "::set-output name=download_windows_run::${{ inputs.build_run_id }}"
           else
             echo "::set-output name=use_new_build::${{ github.event.inputs.use_new_build }}"
             echo "::set-output name=skipIntegrationTests::${{ github.event.inputs.skipIntegrationTests }}"
