@@ -158,6 +158,7 @@ Release Notes
 ### Upcoming
 - Changes
     - General: Added a missing namespace to the Google.MiniJson.dll.
+    - General (iOS): Fix an issue with bitcode not being enabled correctly.
     - Functions: Add a new method `GetHttpsCallableFromURL`, to create callables
       with URLs other than cloudfunctions.net.
     - Analytics (iOS): Added InitiateOnDeviceConversionMeasurementWithEmail function to facilitate the

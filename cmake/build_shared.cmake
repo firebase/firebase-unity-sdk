@@ -79,6 +79,12 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
         PREFIX "lib"
         SUFFIX ".a"
     )
+
+    # Enable Automatic Reference Counting (ARC) and Bitcode.
+    target_compile_options(${shared_target}
+                           PUBLIC "-fobjc-arc" "-fembed-bitcode")
+    target_link_libraries(${shared_target}
+                          PUBLIC "-fembed-bitcode")
   elseif(ANDROID)
     set_target_properties(${shared_target}
       PROPERTIES
