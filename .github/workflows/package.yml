@@ -210,7 +210,7 @@ jobs:
       - name: Fetch Android Artifacts
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable=='false'
+        if: inputs.triggered_by_callable==false
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.android_yml }}
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
@@ -221,7 +221,7 @@ jobs:
       - name: Fetch iOS Artifacts
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable=='false'
+        if: inputs.triggered_by_callable==false
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.ios_yml }}
           run_id: ${{ steps.decide_input.outputs.download_ios_run }}
@@ -232,7 +232,7 @@ jobs:
       - name: Fetch Linux Artifacts
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable=='false'
+        if: inputs.triggered_by_callable==false
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.linux_yml }}
           run_id: ${{ steps.decide_input.outputs.download_linux_run }}
@@ -243,7 +243,7 @@ jobs:
       - name: Fetch MacOS Artifacts
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable=='false'
+        if: inputs.triggered_by_callable==false
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.macos_yml }}
           run_id: ${{ steps.decide_input.outputs.download_macos_run }}
@@ -254,7 +254,7 @@ jobs:
       - name: Fetch Windows Artifacts
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable=='false'
+        if: inputs.triggered_by_callable==false
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.windows_yml }}
           run_id: ${{ steps.decide_input.outputs.download_windows_run }}
@@ -265,7 +265,7 @@ jobs:
       # If called by build_start.xml, ignore name search, just grab all artifact exists
       - name: Fetch All
         uses: dawidd6/action-download-artifact@v2
-        if: inputs.triggered_by_callable=='true'
+        if: inputs.triggered_by_callable==true
         with:
           workflow: build_starter.yml
           run_id: ${{ inputs.build_run_id }}
