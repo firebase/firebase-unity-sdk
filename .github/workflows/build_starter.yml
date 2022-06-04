@@ -32,6 +32,11 @@ on:
         description: 'Additional flags to pass into CMake'
         default: ''
         required: false
+      release_version:
+        description: 'If the package is intended to run for a release, put <version> number like 9.1.0'
+        default: 'NoVersion'
+        type: string
+        required: true
       release_label:
         description: 'If the package is intended to run for a release, put <version>-RC## for label'
         default: 'NoneRelease'
