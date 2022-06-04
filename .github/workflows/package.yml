@@ -215,7 +215,7 @@ jobs:
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
           name: android_unity
           path: built_artifect
-          workflow_conclusion: ${{ steps.set_fetch_workflow.outputs.workflow_conclusion }}
+          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
       
       - name: Fetch iOS Artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -225,7 +225,7 @@ jobs:
           run_id: ${{ steps.decide_input.outputs.download_ios_run }}
           name: ios_unity
           path: built_artifect
-          workflow_conclusion: ${{ steps.set_fetch_workflow.outputs.workflow_conclusion }}
+          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       - name: Fetch Linux Artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -235,7 +235,7 @@ jobs:
           run_id: ${{ steps.decide_input.outputs.download_linux_run }}
           name: linux_unity
           path: built_artifect
-          workflow_conclusion: ${{ steps.set_fetch_workflow.outputs.workflow_conclusion }}
+          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       - name: Fetch MacOS Artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -245,7 +245,7 @@ jobs:
           run_id: ${{ steps.decide_input.outputs.download_macos_run }}
           name: macos_unity
           path: built_artifect
-          workflow_conclusion: ${{ steps.set_fetch_workflow.outputs.workflow_conclusion }}
+          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       - name: Fetch Windows Artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -255,7 +255,7 @@ jobs:
           run_id: ${{ steps.decide_input.outputs.download_windows_run }}
           name: windows_unity
           path: built_artifect
-          workflow_conclusion: ${{ steps.set_fetch_workflow.outputs.workflow_conclusion }}
+          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
       
       - name: move zip files
         run: |
