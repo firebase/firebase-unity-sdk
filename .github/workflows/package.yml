@@ -177,7 +177,7 @@ jobs:
           echo "NEW_BRANCH=${{ steps.decide_input.outputs.working_branch }}" >> $GITHUB_ENV
 
       - name: Set Fetch Workflow name
-        id: set-fetch-workflow
+        id: set_fetch_workflow
         shell: bash
         run: |
           if [[ "${{ steps.decide_input.outputs.use_new_build }}" == "1" ]]; then
@@ -194,12 +194,21 @@ jobs:
             echo "::set-output name=macos_yml::'sdk_build.yml'"
             echo "::set-output name=windows_yml::'sdk_build.yml'"
           fi
+
+      - name: Print Fetch Workflow name
+        shell: bash
+        run: |
+          echo android_yml: ${{ steps.set_fetch_workflow.outputs.android_yml }}
+          echo ios_yml: ${{ steps.set_fetch_workflow.outputs.ios_yml }}
+          echo linux_yml: ${{ steps.set_fetch_workflow.outputs.linux_yml }}
+          echo macos_yml: ${{ steps.set_fetch_workflow.outputs.macos_yml }}
+          echo windows_yml: ${{ steps.set_fetch_workflow.outputs.windows_yml }}
       
       - name: Fetch Android Artifacts
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
         with:
-          workflow: ${{ steps.set-fetch-workflow.outputs.android_yml }}
+          workflow: ${{ steps.set_fetch_workflow.outputs.android_yml }}
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
           name: android_unity
           path: built_artifect
@@ -208,7 +217,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
         with:
-          workflow: ${{ steps.set-fetch-workflow.outputs.ios_yml }}
+          workflow: ${{ steps.set_fetch_workflow.outputs.ios_yml }}
           run_id: ${{ steps.decide_input.outputs.download_ios_run }}
           name: ios_unity
           path: built_artifect
@@ -217,7 +226,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
         with:
-          workflow: ${{ steps.set-fetch-workflow.outputs.linux_yml }}
+          workflow: ${{ steps.set_fetch_workflow.outputs.linux_yml }}
           run_id: ${{ steps.decide_input.outputs.download_linux_run }}
           name: linux_unity
           path: built_artifect
@@ -226,7 +235,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
         with:
-          workflow: ${{ steps.set-fetch-workflow.outputs.macos_yml }}
+          workflow: ${{ steps.set_fetch_workflow.outputs.macos_yml }}
           run_id: ${{ steps.decide_input.outputs.download_macos_run }}
           name: macos_unity
           path: built_artifect
@@ -235,7 +244,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
         with:
-          workflow: ${{ steps.set-fetch-workflow.outputs.windows_yml }}
+          workflow: ${{ steps.set_fetch_workflow.outputs.windows_yml }}
           run_id: ${{ steps.decide_input.outputs.download_windows_run }}
           name: windows_unity
           path: built_artifect
