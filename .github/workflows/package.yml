@@ -215,7 +215,7 @@ jobs:
           workflow: ${{ steps.set_fetch_workflow.outputs.android_yml }}
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
           name: android_unity
-          path: built_artifect
+          path: built_artifact
           workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
       
       - name: Fetch iOS Artifacts
@@ -226,7 +226,7 @@ jobs:
           workflow: ${{ steps.set_fetch_workflow.outputs.ios_yml }}
           run_id: ${{ steps.decide_input.outputs.download_ios_run }}
           name: ios_unity
-          path: built_artifect
+          path: built_artifact
           workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       - name: Fetch Linux Artifacts
@@ -237,7 +237,7 @@ jobs:
           workflow: ${{ steps.set_fetch_workflow.outputs.linux_yml }}
           run_id: ${{ steps.decide_input.outputs.download_linux_run }}
           name: linux_unity
-          path: built_artifect
+          path: built_artifact
           workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       - name: Fetch MacOS Artifacts
@@ -248,7 +248,7 @@ jobs:
           workflow: ${{ steps.set_fetch_workflow.outputs.macos_yml }}
           run_id: ${{ steps.decide_input.outputs.download_macos_run }}
           name: macos_unity
-          path: built_artifect
+          path: built_artifact
           workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       - name: Fetch Windows Artifacts
@@ -259,22 +259,19 @@ jobs:
           workflow: ${{ steps.set_fetch_workflow.outputs.windows_yml }}
           run_id: ${{ steps.decide_input.outputs.download_windows_run }}
           name: windows_unity
-          path: built_artifect
+          path: built_artifact
           workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
-      - name: Fetch All
-        uses: dawidd6/action-download-artifact@v2
+      - name: Fetch All in build_starter
+        uses: actions/download-artifact@v3
         if: inputs.triggered_by_callable==true
         with:
-          workflow: build_starter.yml
-          #run_id: ${{ inputs.build_run_id }}
-          path: built_artifect
-          workflow_conclusion: in_progress
+          path: built_artifact
       
       - name: move zip files
         run: |
-          cd built_artifect
+          cd built_artifact
           find . -type f -name "*.zip" -exec mv {} . \;
           find . -empty -type d -delete
           ls -lR
@@ -287,7 +284,7 @@ jobs:
 
       - name: Package unitypackage
         run: |
-          python build_package.py --zip_dir=built_artifect
+          python build_package.py --zip_dir=built_artifact
 
       - name: Commit Changes if there is any
         run: |
@@ -362,7 +359,7 @@ jobs:
       
       - name: Package tgz
         run: |
-          python build_package.py --zip_dir=built_artifect --output_upm=True --output=output_tgz
+          python build_package.py --zip_dir=built_artifact --output_upm=True --output=output_tgz
 
       - name: Listing output tgz
         run: |
