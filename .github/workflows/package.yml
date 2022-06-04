@@ -180,7 +180,7 @@ jobs:
         id: set_fetch_workflow
         shell: bash
         run: |
-          if [[ "${{ steps.decide_input.outputs.use_new_build }}" == "1" ]]; then
+          if [[ "${{ steps.decide_input.outputs.use_new_build }}" == "'1'" ]]; then
             # all use build_starter.yml
             echo "::set-output name=android_yml::'build_starter.yml'"
             echo "::set-output name=ios_yml::'build_starter.yml'"
