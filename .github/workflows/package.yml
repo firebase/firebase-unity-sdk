@@ -186,7 +186,7 @@ jobs:
         with:
           workflow: android.yml
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
-          name: android_unity.zip
+          name: android_unity
           path: built_artifact
       
       - name: Fetch iOS Artifacts (OLD)
@@ -196,7 +196,7 @@ jobs:
         with:
           workflow: ios.yml
           run_id: ${{ steps.decide_input.outputs.download_ios_run }}
-          name: ios_unity.zip
+          name: ios_unity
           path: built_artifact
 
       - name: Fetch Linux Artifacts (OLD)
@@ -206,7 +206,7 @@ jobs:
         with:
           workflow: sdk_build.yml
           run_id: ${{ steps.decide_input.outputs.download_linux_run }}
-          name: linux_unity.zip
+          name: linux_unity
           path: built_artifact
 
       - name: Fetch MacOS Artifacts (OLD)
@@ -216,7 +216,7 @@ jobs:
         with:
           workflow: sdk_build.yml
           run_id: ${{ steps.decide_input.outputs.download_macos_run }}
-          name: macos_unity.zip
+          name: macos_unity
           path: built_artifact
 
       - name: Fetch Windows Artifacts (OLD)
@@ -226,7 +226,7 @@ jobs:
         with:
           workflow: sdk_build.yml
           run_id: ${{ steps.decide_input.outputs.download_windows_run }}
-          name: windows_unity.zip
+          name: windows_unity
           path: built_artifact
 
       - name: Fetch Android Artifacts (NEW)
@@ -236,7 +236,7 @@ jobs:
         with:
           workflow: build_starter.yml
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
-          name: android_unity.zip
+          name: android_unity
           path: built_artifact
       
       - name: Fetch iOS Artifacts (NEW)
@@ -246,7 +246,7 @@ jobs:
         with:
           workflow: build_starter.yml
           run_id: ${{ steps.decide_input.outputs.download_ios_run }}
-          name: ios_unity.zip
+          name: ios_unity
           path: built_artifact
 
       - name: Fetch Linux Artifacts (NEW)
@@ -256,7 +256,7 @@ jobs:
         with:
           workflow: build_starter.yml
           run_id: ${{ steps.decide_input.outputs.download_linux_run }}
-          name: linux_unity.zip
+          name: linux_unity
           path: built_artifact
 
       - name: Fetch MacOS Artifacts (NEW)
@@ -266,7 +266,7 @@ jobs:
         with:
           workflow: build_starter.yml
           run_id: ${{ steps.decide_input.outputs.download_macos_run }}
-          name: macos_unity.zip
+          name: macos_unity
           path: built_artifact
 
       - name: Fetch Windows Artifacts (NEW)
@@ -276,7 +276,7 @@ jobs:
         with:
           workflow: build_starter.yml
           run_id: ${{ steps.decide_input.outputs.download_windows_run }}
-          name: windows_unity.zip
+          name: windows_unity
           path: built_artifact
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
