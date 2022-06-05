@@ -214,9 +214,8 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.android_yml }}
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
-          name: android_unity*
+          name: android_unity.zip
           path: built_artifact
-          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
       
       - name: Fetch iOS Artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -225,9 +224,8 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.ios_yml }}
           run_id: ${{ steps.decide_input.outputs.download_ios_run }}
-          name: ios_unity*
+          name: ios_unity.zip
           path: built_artifact
-          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       - name: Fetch Linux Artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -236,9 +234,8 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.linux_yml }}
           run_id: ${{ steps.decide_input.outputs.download_linux_run }}
-          name: linux_unity*
+          name: linux_unity.zip
           path: built_artifact
-          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       - name: Fetch MacOS Artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -247,9 +244,8 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.macos_yml }}
           run_id: ${{ steps.decide_input.outputs.download_macos_run }}
-          name: macos_unity*
+          name: macos_unity.zip
           path: built_artifact
-          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       - name: Fetch Windows Artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -258,9 +254,8 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.windows_yml }}
           run_id: ${{ steps.decide_input.outputs.download_windows_run }}
-          name: windows_unity*
+          name: windows_unity.zip
           path: built_artifact
-          workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
       - name: Fetch All in build_starter
