@@ -178,84 +178,105 @@ jobs:
           git checkout ${{ steps.decide_input.outputs.working_branch }}
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
           echo "NEW_BRANCH=${{ steps.decide_input.outputs.working_branch }}" >> $GITHUB_ENV
-
-      - name: Set Fetch Workflow name
-        id: set_fetch_workflow
-        shell: bash
-        run: |
-          if [[ "${{ steps.decide_input.outputs.use_new_build }}" == "'1'" ]]; then
-            # all use build_starter.yml
-            echo "::set-output name=android_yml::'build_starter.yml'"
-            echo "::set-output name=ios_yml::'build_starter.yml'"
-            echo "::set-output name=linux_yml::'build_starter.yml'"
-            echo "::set-output name=macos_yml::'build_starter.yml'"
-            echo "::set-output name=windows_yml::'build_starter.yml'"
-          else
-            echo "::set-output name=android_yml::'./.github/workflows/android.yml'"
-            echo "::set-output name=ios_yml::'ios.yml'"
-            echo "::set-output name=linux_yml::'sdk_build.yml'"
-            echo "::set-output name=macos_yml::'sdk_build.yml'"
-            echo "::set-output name=windows_yml::'sdk_build.yml'"
-          fi
-
-      - name: Print Fetch Workflow name
-        shell: bash
-        run: |
-          echo android_yml: ${{ steps.set_fetch_workflow.outputs.android_yml }}
-          echo ios_yml: ${{ steps.set_fetch_workflow.outputs.ios_yml }}
-          echo linux_yml: ${{ steps.set_fetch_workflow.outputs.linux_yml }}
-          echo macos_yml: ${{ steps.set_fetch_workflow.outputs.macos_yml }}
-          echo windows_yml: ${{ steps.set_fetch_workflow.outputs.windows_yml }}
       
-      - name: Fetch Android Artifacts
+      - name: Fetch Android Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable==false
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
         with:
-          workflow: ${{ steps.set_fetch_workflow.outputs.android_yml }}
-          #workflow: android.yml
+          workflow: android.yml
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
-          #name: android_unity.zip
+          name: android_unity.zip
           path: built_artifact
       
-      - name: Fetch iOS Artifacts
+      - name: Fetch iOS Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable==false
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
         with:
-          workflow: ${{ steps.set_fetch_workflow.outputs.ios_yml }}
+          workflow: ios.yml
           run_id: ${{ steps.decide_input.outputs.download_ios_run }}
-          #name: ios_unity.zip
+          name: ios_unity.zip
           path: built_artifact
 
-      - name: Fetch Linux Artifacts
+      - name: Fetch Linux Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable==false
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
         with:
-          workflow: ${{ steps.set_fetch_workflow.outputs.linux_yml }}
+          workflow: sdk_build.yml
           run_id: ${{ steps.decide_input.outputs.download_linux_run }}
-          #name: linux_unity.zip
+          name: linux_unity.zip
           path: built_artifact
 
-      - name: Fetch MacOS Artifacts
+      - name: Fetch MacOS Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable==false
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
         with:
-          workflow: ${{ steps.set_fetch_workflow.outputs.macos_yml }}
+          workflow: sdk_build.yml
           run_id: ${{ steps.decide_input.outputs.download_macos_run }}
-          #name: macos_unity.zip
+          name: macos_unity.zip
           path: built_artifact
 
-      - name: Fetch Windows Artifacts
+      - name: Fetch Windows Artifacts (OLD)
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
-        if: inputs.triggered_by_callable==false
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
         with:
-          workflow: ${{ steps.set_fetch_workflow.outputs.windows_yml }}
+          workflow: sdk_build.yml
           run_id: ${{ steps.decide_input.outputs.download_windows_run }}
-          #name: windows_unity.zip
+          name: windows_unity.zip
+          path: built_artifact
+
+      - name: Fetch Android Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
+        with:
+          workflow: build_starter.yml
+          run_id: ${{ steps.decide_input.outputs.download_android_run }}
+          name: android_unity.zip
+          path: built_artifact
+      
+      - name: Fetch iOS Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
+        with:
+          workflow: build_starter.yml
+          run_id: ${{ steps.decide_input.outputs.download_ios_run }}
+          name: ios_unity.zip
+          path: built_artifact
+
+      - name: Fetch Linux Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
+        with:
+          workflow: build_starter.yml
+          run_id: ${{ steps.decide_input.outputs.download_linux_run }}
+          name: linux_unity.zip
+          path: built_artifact
+
+      - name: Fetch MacOS Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
+        with:
+          workflow: build_starter.yml
+          run_id: ${{ steps.decide_input.outputs.download_macos_run }}
+          name: macos_unity.zip
+          path: built_artifact
+
+      - name: Fetch Windows Artifacts (NEW)
+        uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
+        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
+        with:
+          workflow: build_starter.yml
+          run_id: ${{ steps.decide_input.outputs.download_windows_run }}
+          name: windows_unity.zip
           path: built_artifact
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
