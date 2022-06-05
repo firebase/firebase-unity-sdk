@@ -191,7 +191,7 @@ jobs:
             echo "::set-output name=macos_yml::'build_starter.yml'"
             echo "::set-output name=windows_yml::'build_starter.yml'"
           else
-            echo "::set-output name=android_yml::'android.yml'"
+            echo "::set-output name=android_yml::'./.github/workflows/android.yml'"
             echo "::set-output name=ios_yml::'ios.yml'"
             echo "::set-output name=linux_yml::'sdk_build.yml'"
             echo "::set-output name=macos_yml::'sdk_build.yml'"
@@ -212,8 +212,8 @@ jobs:
         continue-on-error: true
         if: inputs.triggered_by_callable==false
         with:
-          #workflow: ${{ steps.set_fetch_workflow.outputs.android_yml }}
-          workflow: android.yml
+          workflow: ${{ steps.set_fetch_workflow.outputs.android_yml }}
+          #workflow: android.yml
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
           #name: android_unity.zip
           path: built_artifact
