@@ -214,7 +214,7 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.android_yml }}
           run_id: ${{ steps.decide_input.outputs.download_android_run }}
-          name: android_unity.zip
+          #name: android_unity.zip
           path: built_artifact
       
       - name: Fetch iOS Artifacts
@@ -224,7 +224,7 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.ios_yml }}
           run_id: ${{ steps.decide_input.outputs.download_ios_run }}
-          name: ios_unity.zip
+          #name: ios_unity.zip
           path: built_artifact
 
       - name: Fetch Linux Artifacts
@@ -234,7 +234,7 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.linux_yml }}
           run_id: ${{ steps.decide_input.outputs.download_linux_run }}
-          name: linux_unity.zip
+          #name: linux_unity.zip
           path: built_artifact
 
       - name: Fetch MacOS Artifacts
@@ -244,7 +244,7 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.macos_yml }}
           run_id: ${{ steps.decide_input.outputs.download_macos_run }}
-          name: macos_unity.zip
+          #name: macos_unity.zip
           path: built_artifact
 
       - name: Fetch Windows Artifacts
@@ -254,7 +254,7 @@ jobs:
         with:
           workflow: ${{ steps.set_fetch_workflow.outputs.windows_yml }}
           run_id: ${{ steps.decide_input.outputs.download_windows_run }}
-          name: windows_unity.zip
+          #name: windows_unity.zip
           path: built_artifact
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
