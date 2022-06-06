@@ -60,10 +60,20 @@ jobs:
         run: |
           if [[ "${{ inputs.triggered_by_callable }}" == "true" ]]; then
             # Triggered by callable
-            echo "::set-output name=base_branch::${{ inputs.base_branch }}"
+            if [[ "${{ inputs.base_branch }}" == "" ]]; then
+              echo "::set-output name=base_branch::${{ github.ref }}"
+            else
+              echo "::set-output name=base_branch::${{ inputs.base_branch }}"
+            fi
+            
             echo "::set-output name=package_version_number::${{ inputs.package_version_number }}" 
             echo "::set-output name=cpp_release_version::${{ inputs.cpp_release_version }}" 
           else
+            if [[ "${{ github.event.inputs.base_branch }}" == "" ]]; then
+              echo "::set-output name=base_branch::${{ github.ref }}"
+            else
+              echo "::set-output name=base_branch::${{ github.event.inputs.base_branch }}"
+            fi
             echo "::set-output name=base_branch::${{ github.event.inputs.base_branch }}"
             echo "::set-output name=package_version_number::${{ github.event.inputs.package_version_number }}"
             echo "::set-output name=cpp_release_version::${{ github.event.inputs.cpp_release_version }}" 
