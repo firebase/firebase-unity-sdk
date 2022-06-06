@@ -2,46 +2,102 @@
 name: Update Versions
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      operating_systems:
-        description: 'CSV of VMs to run on'
-        default: 'ubuntu-latest'
+      triggered_by_callable:
+        description: 'Check if this package grabs artifacts from new build workflow'
+        default: false
         required: true
-      baseBranch:
+        type: boolean
+      base_branch:
         description: 'create the new branch from this base'
         default: 'main'
+        type: string
+        required: true
       package_version_number:
         description: "The Unity SDK version to upgrade to"
         default: 8.6.0
+        type: string
+        required: true
+      cpp_release_version:
+        description: "The CPP SDK version to update against"
+        default: 9.1.0
+        type: string
+        required: true
+    outputs:
+      new_branch:
+        description: "The branch update version created"
+        value: ${{ jobs.update_versions.outputs.new_branch }}
+
+  workflow_dispatch:
+    inputs:
+      base_branch:
+        description: 'create the new branch from this base'
+        default: 'main'
+        required: true
+      package_version_number:
+        description: "The Unity SDK version to upgrade to"
+        default: 9.1.0
+        required: true
+      cpp_release_version:
+        description: "The CPP SDK version to update against"
+        default: 9.1.0
+        required: true
 
 jobs:
   update_versions:
-    name: update-version-${{matrix.os}}
+    name: update-version
     outputs:
       new_branch: ${{ steps.name-branch.outputs.new_branch }}
-    runs-on: ${{matrix.os}}
+      cpp_release_version: ${{ steps.decide_input.outputs.cpp_release_version }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        include:
-        - os: ubuntu-latest
-          package_dir: output
     steps:
+      - name: Decide inputs
+        id: decide_input
+        shell: bash
+        run: |
+          if [[ "${{ inputs.triggered_by_callable }}" == "true" ]]; then
+            # Triggered by callable
+            if [[ "${{ inputs.base_branch }}" == "" ]]; then
+              echo "::set-output name=base_branch::${{ github.ref }}"
+            else
+              echo "::set-output name=base_branch::${{ inputs.base_branch }}"
+            fi
+            
+            echo "::set-output name=package_version_number::${{ inputs.package_version_number }}" 
+            echo "::set-output name=cpp_release_version::${{ inputs.cpp_release_version }}" 
+          else
+            if [[ "${{ github.event.inputs.base_branch }}" == "" ]]; then
+              echo "::set-output name=base_branch::${{ github.ref }}"
+            else
+              echo "::set-output name=base_branch::${{ github.event.inputs.base_branch }}"
+            fi
+            echo "::set-output name=base_branch::${{ github.event.inputs.base_branch }}"
+            echo "::set-output name=package_version_number::${{ github.event.inputs.package_version_number }}"
+            echo "::set-output name=cpp_release_version::${{ github.event.inputs.cpp_release_version }}" 
+          fi
+
+      - name: Print inputs
+        shell: bash
+        run: |
+          echo triggered_by_callable: ${{ inputs.triggered_by_callable }}
+          echo base_branch: ${{ steps.decide_input.outputs.base_branch }}
+          echo package_version_number: ${{ steps.decide_input.outputs.package_version_number }}
+          echo cpp_release_version: ${{ steps.decide_input.outputs.cpp_release_version }}
+
       - name: Check out base branch
         uses: actions/checkout@v2.3.1
         with:
           path: firebase-unity-sdk
           fetch-depth: 0
-          ref: ${{ github.event.inputs.baseBranch }}
       
       - name: Checkout CPP Repo
         uses: actions/checkout@v2
         with:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
-          ref: ${{ github.event.inputs.firebase_cpp_sdk_version }}
           submodules: true
       
       - name: Get token for creating PR 
@@ -66,7 +122,7 @@ jobs:
         id: name-branch
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
-          new_branch=release-${{github.event.inputs.package_version_number}}-${date_str}
+          new_branch=release-${{ steps.decide_input.outputs.package_version_number }}-${date_str}
           echo "NEW_BRANCH=${new_branch}" >> $GITHUB_ENV
           echo "::set-output name=new_branch::${new_branch}"
 
@@ -76,12 +132,11 @@ jobs:
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
-          
 
       - name: Update Unity SDK version and dependencies
         run: |
           cd firebase-unity-sdk
-          python scripts/update_versions.py --unity_sdk_version=${{github.event.inputs.package_version_number}}
+          python scripts/update_versions.py --unity_sdk_version=${{ steps.decide_input.outputs.package_version_number }}
 
       - name: Push branch if there are changes
         id: push-branch
@@ -113,7 +168,7 @@ jobs:
             # Push branch
             git push --set-upstream origin "${NEW_BRANCH}"
             # Create pull request
-            pr_number=$(python scripts/gha/create_pull_request.py --token ${{ steps.generate-pr-token.outputs.token }} --head "${NEW_BRANCH}" --base "${{ github.event.inputs.baseBranch }}" --title "${commit_title}" --body "${commit_body}")
+            pr_number=$(python scripts/gha/create_pull_request.py --token ${{ steps.generate-pr-token.outputs.token }} --head "${NEW_BRANCH}" --base "${{ steps.decide_input.outputs.base_branch }}" --title "${commit_title}" --body "${commit_body}")
             echo "::set-output name=created_pr_number::${pr_number}"
           else
             echo "::warning ::No changes detected, won't create pull request."
@@ -124,6 +179,7 @@ jobs:
     needs: update_versions
     name: trigger-build-${{matrix.platform}}
     runs-on: ubuntu-latest
+    if: inputs.triggered_by_callable==false
     strategy:
       fail-fast: false
       matrix:
@@ -141,7 +197,7 @@ jobs:
         uses: actions/checkout@v2.3.1
         with:
           fetch-depth: 0
-          ref: ${{ github.event.inputs.baseBranch }}
+          ref: ${{ needs.update_versions.outputs.new_branch }}
 
       - name: Setup python
         uses: actions/setup-python@v2
@@ -161,14 +217,6 @@ jobs:
           app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
           private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
 
-      - name: get latest cpp release with tag
-        id: cpprelease
-        run: |
-          echo "::set-output name=release_tag::$(basename $(curl --silent "https://github.com/firebase/firebase-cpp-sdk/releases/latest" grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'))"
-      - name: confirm release tag
-        run: |
-          echo latest cpp release version is: ${{ steps.cpprelease.outputs.release_tag }}
-
       - name: Use GitHub API to start workflow
         shell: bash
         run: |
@@ -184,4 +232,4 @@ jobs:
             -t ${{ steps.generate-build-token.outputs.token }} \
             -w ${{ matrix.trigger_file }} \
             -p unity_branch ${{ needs.update_versions.outputs.new_branch }} \
-            -p firebase_cpp_sdk_version ${{ steps.cpprelease.outputs.release_tag }}
+            -p firebase_cpp_sdk_version ${{ needs.update_versions.outputs.cpp_release_version }}
