@@ -80,7 +80,7 @@ jobs:
           echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
   
   update_versions:
-    uses: ./.github/workflows/update_versions.xml
+    uses: ./.github/workflows/update_versions.yml
     needs: check_and_prepare
     if: (github.event.inputs.release_version!='NoVersion')
     with:
