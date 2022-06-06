@@ -19,6 +19,11 @@ on:
         default: 8.6.0
         type: string
         required: true
+      cpp_release_version:
+        description: "The CPP SDK version to update against"
+        default: 9.1.0
+        type: string
+        required: true
     outputs:
       new_branch:
         description: "The branch update version created"
@@ -32,7 +37,11 @@ on:
         required: true
       package_version_number:
         description: "The Unity SDK version to upgrade to"
-        default: 8.6.0
+        default: 9.1.0
+        required: true
+      cpp_release_version:
+        description: "The CPP SDK version to update against"
+        default: 9.1.0
         required: true
 
 jobs:
@@ -40,6 +49,7 @@ jobs:
     name: update-version
     outputs:
       new_branch: ${{ steps.name-branch.outputs.new_branch }}
+      cpp_release_version: ${{ steps.decide_input.outputs.cpp_release_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -52,9 +62,11 @@ jobs:
             # Triggered by callable
             echo "::set-output name=base_branch::${{ inputs.base_branch }}"
             echo "::set-output name=package_version_number::${{ inputs.package_version_number }}" 
+            echo "::set-output name=cpp_release_version::${{ inputs.cpp_release_version }}" 
           else
             echo "::set-output name=base_branch::${{ github.event.inputs.base_branch }}"
             echo "::set-output name=package_version_number::${{ github.event.inputs.package_version_number }}"
+            echo "::set-output name=cpp_release_version::${{ github.event.inputs.cpp_release_version }}" 
           fi
 
       - name: Print inputs
@@ -63,6 +75,7 @@ jobs:
           echo triggered_by_callable: ${{ inputs.triggered_by_callable }}
           echo base_branch: ${{ steps.decide_input.outputs.base_branch }}
           echo package_version_number: ${{ steps.decide_input.outputs.package_version_number }}
+          echo cpp_release_version: ${{ steps.decide_input.outputs.cpp_release_version }}
 
       - name: Check out base branch
         uses: actions/checkout@v2.3.1
@@ -194,14 +207,6 @@ jobs:
           app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
           private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
 
-      - name: get latest cpp release with tag
-        id: cpprelease
-        run: |
-          echo "::set-output name=release_tag::$(basename $(curl --silent "https://github.com/firebase/firebase-cpp-sdk/releases/latest" grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'))"
-      - name: confirm release tag
-        run: |
-          echo latest cpp release version is: ${{ steps.cpprelease.outputs.release_tag }}
-
       - name: Use GitHub API to start workflow
         shell: bash
         run: |
@@ -217,4 +222,4 @@ jobs:
             -t ${{ steps.generate-build-token.outputs.token }} \
             -w ${{ matrix.trigger_file }} \
             -p unity_branch ${{ needs.update_versions.outputs.new_branch }} \
-            -p firebase_cpp_sdk_version ${{ steps.cpprelease.outputs.release_tag }}
+            -p firebase_cpp_sdk_version ${{ needs.update_versions.outputs.cpp_release_version }}

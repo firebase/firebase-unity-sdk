@@ -42,6 +42,11 @@ on:
         default: 'NA'
         type: string
         required: true
+      cpp_release_version:
+        description: "The CPP SDK version to release against"
+        default: 9.1.0
+        type: string
+        required: true
       should_trigger_package:
         description: 'If we want to trigger package process'
         default: true
@@ -87,6 +92,7 @@ jobs:
       triggered_by_callable: true
       base_branch: ${{ github.event.inputs.unity_branch }}
       package_version_number: ${{ github.event.inputs.release_version }}
+      cpp_release_version: ${{ github.event.inputs.cpp_release_version }}
     secrets: inherit
 
   decide_build_branch:
