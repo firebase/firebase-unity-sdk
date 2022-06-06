@@ -84,6 +84,7 @@ jobs:
     needs: check_and_prepare
     if: (github.event.inputs.release_version!='NoVersion')
     with:
+      triggered_by_callable: true
       base_branch: ${{ github.event.inputs.unity_branch }}
       package_version_number: ${{ github.event.inputs.release_version }}
 
