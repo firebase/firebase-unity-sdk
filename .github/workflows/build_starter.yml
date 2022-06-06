@@ -87,6 +87,7 @@ jobs:
       triggered_by_callable: true
       base_branch: ${{ github.event.inputs.unity_branch }}
       package_version_number: ${{ github.event.inputs.release_version }}
+    secrets: inherit
 
   decide_build_branch:
     needs: update_versions
