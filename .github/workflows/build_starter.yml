@@ -37,9 +37,9 @@ on:
         default: 'NoVersion'
         type: string
         required: true
-      release_label:
-        description: 'If the package is intended to run for a release, put <version>-RC## for label'
-        default: 'NoneRelease'
+      rc_index:
+        description: 'If the package is intended to run for a release, put RC## for label'
+        default: 'NA'
         type: string
         required: true
       should_trigger_package:
@@ -60,6 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       platform: ${{ steps.set_outputs.outputs.platform }}
+      release_label: ${{ steps.set_outputs.outputs.release_label }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -74,18 +75,42 @@ jobs:
         run: pip install -r scripts/gha/requirements.txt
       - id: set_outputs
         run: |
-          platform=$( python scripts/gha/print_matrix_configuration.py -c -w build_unity_sdks -k platform -o "${{github.event.inputs.platforms}}" )
+          platform=$( python scripts/gha/print_matrix_configuration.py -c -w build_unity_sdks -k platform -o "${{ github.event.inputs.platforms }}" )
           echo "::set-output name=platform::${platform}"
+          echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
+  
+  update_versions:
+    uses: ./.github/workflows/update_versions.xml
+    needs: check_and_prepare
+    if: (github.event.inputs.release_version!='NoVersion')
+    with:
+      base_branch: ${{ github.event.inputs.unity_branch }}
+      package_version_number: ${{ github.event.inputs.release_version }}
+
+  decide_build_branch:
+    needs: update_versions
+    runs-on: ubuntu-latest
+    outputs: 
+      build_branch: ${{ steps.decide_branch.outputs.branch }}
+    steps:
+      - id: decide_branch
+        run: |
+          if [[ "${{ github.event.inputs.release_version }}" == "'NoVersion'" ]]; then
+            # Triggered by callable
+            echo "::set-output name=branch::${{ github.event.inputs.unity_branch }}"
+          else
+            echo "::set-output name=branch::${{ needs.update_versions.outputs.new_branch }}"
+          fi
 
   build_android:
     name: build-android-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_android.yml
-    needs: check_and_prepare
+    needs: [check_and_prepare, decide_build_branch]
     if: contains(needs.check_and_prepare.outputs.platform, 'Android')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-      unity_branch: ${{ github.event.inputs.unity_branch }}
+      unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
       apis: ${{ github.event.inputs.apis }}
       unity_platform_name: Android
       additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
@@ -93,12 +118,12 @@ jobs:
   build_ios:
     name: build-ios-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_ios.yml
-    needs: check_and_prepare
+    needs: [check_and_prepare, decide_build_branch]
     if: contains(needs.check_and_prepare.outputs.platform, 'iOS')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-      unity_branch: ${{ github.event.inputs.unity_branch }}
+      unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
       apis: ${{ github.event.inputs.apis }}
       unity_platform_name: iOS
       additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
@@ -106,12 +131,12 @@ jobs:
   build_linux:
     name: build-linux-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_linux.yml
-    needs: check_and_prepare
+    needs: [check_and_prepare, decide_build_branch]
     if: contains(needs.check_and_prepare.outputs.platform, 'Linux')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-      unity_branch: ${{ github.event.inputs.unity_branch }}
+      unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
       apis: ${{ github.event.inputs.apis }}
       unity_platform_name: Linux
       additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
@@ -119,7 +144,7 @@ jobs:
   build_macos:
     name: build-macos-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_macos.yml
-    needs: check_and_prepare
+    needs: [check_and_prepare, decide_build_branch]
     if: contains(needs.check_and_prepare.outputs.platform, 'macOS')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
@@ -132,24 +157,25 @@ jobs:
   build_windows:
     name: build-windows-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_windows.yml
-    needs: check_and_prepare
+    needs: [check_and_prepare, decide_build_branch]
     if: contains(needs.check_and_prepare.outputs.platform, 'Windows')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-      unity_branch: ${{ github.event.inputs.unity_branch }}
+      unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
       apis: ${{ github.event.inputs.apis }}
       unity_platform_name: Windows
       additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
 
   trigger_reusable_package:
-    name: package ${{ github.event.inputs.release_label }}
-    needs: [build_android, build_ios, build_linux, build_macos, build_windows]
+    name: package ${{ needs.check_and_prepare.outputs.release_label }}
+    needs: [build_android, build_ios, build_linux, build_macos, build_windows, decide_build_branch]
     uses: ./.github/workflows/package.yml
     if: (github.event.inputs.should_trigger_package == 'true') && !cancelled() && !failure()
     with:
       triggered_by_callable: true
-      release_label: ${{ github.event.inputs.release_label }}
+      release_label: ${{ needs.check_and_prepare.outputs.release_label }}
       skipIntegrationTests: ${{ github.event.inputs.skipIntegrationTests }}
       build_run_id: ${{ github.run_id }}
+      working_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
     secrets: inherit

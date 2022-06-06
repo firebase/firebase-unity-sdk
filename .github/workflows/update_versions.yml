@@ -19,6 +19,10 @@ on:
         default: 8.6.0
         type: string
         required: true
+    outputs:
+      new_branch:
+        description: "The branch update version created"
+        value: ${{ jobs.update_versions.outputs.new_branch }}
 
   workflow_dispatch:
     inputs:
@@ -65,7 +69,6 @@ jobs:
         with:
           path: firebase-unity-sdk
           fetch-depth: 0
-          ref: ${{ steps.decide_input.outputs.base_branch }}
       
       - name: Checkout CPP Repo
         uses: actions/checkout@v2
@@ -153,6 +156,7 @@ jobs:
     needs: update_versions
     name: trigger-build-${{matrix.platform}}
     runs-on: ubuntu-latest
+    if: inputs.triggered_by_callable==false
     strategy:
       fail-fast: false
       matrix:
