@@ -155,7 +155,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 9.1.0
 - Changes
     - General: Added a missing namespace to the Google.MiniJson.dll.
     - General (iOS): Fix an issue with bitcode not being enabled correctly.
