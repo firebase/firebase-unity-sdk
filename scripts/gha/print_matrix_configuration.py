@@ -83,12 +83,12 @@ UNITY_SETTINGS = {
     _WINDOWS: {
       "version": "2020.3.34f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r21e-windows-x86_64.zip"
     },
     _MACOS: {
       "version": "2020.3.34f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r21e-darwin-x86_64.zip"
     },
     _LINUX: {
       "version": "2020.3.29f1",
@@ -99,12 +99,12 @@ UNITY_SETTINGS = {
     _WINDOWS: {
       "version": "2019.4.39f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r21e-windows-x86_64.zip"
     },
     _MACOS: {
       "version": "2019.4.39f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r21e-darwin-x86_64.zip"
     },
     _LINUX: {
       "version": "2019.4.39f1",
@@ -115,12 +115,12 @@ UNITY_SETTINGS = {
     _WINDOWS: {
       "version": "2018.4.36f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-windows-x86_64.zip"
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r21e-windows-x86_64.zip"
     },
     _MACOS: {
       "version": "2018.4.36f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-darwin-x86_64.zip"
+      "ndk": "https://dl.google.com/android/repository/android-ndk-r21e-darwin-x86_64.zip"
     },
     _LINUX: {
       "version": "2018.3.0f2",
