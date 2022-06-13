@@ -78,6 +78,10 @@ jobs:
           platform=$( python scripts/gha/print_matrix_configuration.py -c -w config -k platform -o "${{ github.event.inputs.platforms }}" )
           echo "::set-output name=platform::${platform}"
           echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
+      - name: Print output
+        run: |
+          echo outputs.platform : ${{ steps.set_outputs.outputs.platform }}
+          echo outputs.release_label : ${{ steps.set_outputs.outputs.release_label }}
   
   update_versions:
     uses: ./.github/workflows/update_versions.yml
