@@ -114,7 +114,7 @@ jobs:
     name: build-android-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_android.yml
     needs: [check_and_prepare, decide_build_branch]
-    if: contains(needs.check_and_prepare.outputs.platform, 'Android')
+    if: always() && contains(needs.check_and_prepare.outputs.platform, 'Android')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
@@ -127,7 +127,7 @@ jobs:
     name: build-ios-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_ios.yml
     needs: [check_and_prepare, decide_build_branch]
-    if: contains(needs.check_and_prepare.outputs.platform, 'iOS')
+    if: always() && contains(needs.check_and_prepare.outputs.platform, 'iOS')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
@@ -140,7 +140,7 @@ jobs:
     name: build-linux-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_linux.yml
     needs: [check_and_prepare, decide_build_branch]
-    if: contains(needs.check_and_prepare.outputs.platform, 'Linux')
+    if: always() && contains(needs.check_and_prepare.outputs.platform, 'Linux')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
@@ -153,7 +153,7 @@ jobs:
     name: build-macos-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_macos.yml
     needs: [check_and_prepare, decide_build_branch]
-    if: contains(needs.check_and_prepare.outputs.platform, 'macOS')
+    if: always() && contains(needs.check_and_prepare.outputs.platform, 'macOS')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
@@ -166,7 +166,7 @@ jobs:
     name: build-windows-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_windows.yml
     needs: [check_and_prepare, decide_build_branch]
-    if: contains(needs.check_and_prepare.outputs.platform, 'Windows')
+    if: always() && contains(needs.check_and_prepare.outputs.platform, 'Windows')
     with:
       unity_version: ${{ github.event.inputs.unity_version }}
       firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
