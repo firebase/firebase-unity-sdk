@@ -85,11 +85,9 @@ class CppInstanceManager {
   CppInstanceManager& operator=(CppInstanceManager&&) = delete;
 
   /// @brief Increase the reference count by 1.
-  /// @return Reference count after increment.
+  /// @return Reference count after increment. Return -1 if invalid instance.
   int AddReference(InstanceClass* instance) {
-    FIREBASE_DEV_ASSERT_MESSAGE(instance,
-                                "Null pointer is passed to AddReference<%s>().",
-                                typeid(InstanceClass).name());
+    if (!instance) return -1;
     MutexLock lock(manager_mutex_);
     auto it = container_.find(instance);
     if (it != container_.end()) {

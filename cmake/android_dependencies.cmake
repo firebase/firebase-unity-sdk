@@ -25,12 +25,12 @@ set(FIREBASE_ANALYTICS_ANDROID_DEPS
 )
 
 set(FIREBASE_AUTH_ANDROID_DEPS
-    "com.google.firebase:firebase-auth:21.0.3"
+    "com.google.firebase:firebase-auth:21.0.5"
     "com.google.firebase:firebase-analytics:21.0.0"
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:18.2.10"
+    "com.google.firebase:firebase-crashlytics-ndk:18.2.11"
     "com.google.firebase:firebase-analytics:21.0.0"
 )
 
@@ -62,7 +62,7 @@ set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
 
 # iid is needed by messaging to avoid a conflict with functions
 set(FIREBASE_MESSAGING_ANDROID_DEPS
-    "com.google.firebase:firebase-messaging:23.0.4"
+    "com.google.firebase:firebase-messaging:23.0.5"
     "com.google.firebase:firebase-analytics:21.0.0"
     "com.google.firebase:firebase-iid:21.1.0"
 )

@@ -87,8 +87,8 @@ jobs:
         id: cache_ndk
         uses: actions/cache@v2
         with:
-          path: /tmp/android-ndk-r16b
-          key: android-ndk-${{ matrix.os }}-r16b
+          path: /tmp/android-ndk-r21e
+          key: android-ndk-${{ matrix.os }}-r21e
 
       - name: Install Unity installer (U3D)
         shell: bash

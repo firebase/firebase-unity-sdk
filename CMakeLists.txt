@@ -234,7 +234,7 @@ endif()
 
 # Includes platform which needs to be invoked first
 add_subdirectory(app)
-set(TARGET_LINK_LIB_NAMES "firebase_app" "firebase_app_swig" "flatbuffers")
+set(TARGET_LINK_LIB_NAMES "firebase_app" "firebase_app_swig")
 set(PROJECT_LIST_HEADER "#define PROJECT_LIST(X)")
 list(APPEND PROJECT_LIST_HEADER "  X(App)")
 
@@ -301,7 +301,7 @@ endif()
 
 if(FIREBASE_UNI_LIBRARY)
   if(FIREBASE_IOS_BUILD)
-    ios_pack(firebase_lib_uni libFirebaseCppApp DEPS "firebase_app" "firebase_app_swig" "flatbuffers")
+    ios_pack(firebase_lib_uni libFirebaseCppApp DEPS "firebase_app" "firebase_app_swig")
   else()
     build_uni(
       "${TARGET_LINK_LIB_NAMES}"
