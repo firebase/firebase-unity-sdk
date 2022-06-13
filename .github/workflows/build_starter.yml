@@ -75,7 +75,7 @@ jobs:
         run: pip install -r scripts/gha/requirements.txt
       - id: set_outputs
         run: |
-          platform=$( python scripts/gha/print_matrix_configuration.py -c -w build_unity_sdks -k platform -o "${{ github.event.inputs.platforms }}" )
+          platform=$( python scripts/gha/print_matrix_configuration.py -c -w config -k platform -o "${{ github.event.inputs.platforms }}" )
           echo "::set-output name=platform::${platform}"
           echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
   
