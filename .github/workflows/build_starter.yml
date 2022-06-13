@@ -93,6 +93,7 @@ jobs:
   decide_build_branch:
     needs: update_versions
     runs-on: ubuntu-latest
+    if: always()
     outputs: 
       build_branch: ${{ steps.decide_branch.outputs.branch }}
     steps:
