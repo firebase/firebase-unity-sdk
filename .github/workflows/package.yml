@@ -304,6 +304,7 @@ jobs:
           python build_package.py --zip_dir=built_artifact
 
       - name: Commit Changes if there is any
+        if: steps.decide_input.outputs.working_branch != '' || steps.decide_input.outputs.create_new_branch == '1'
         run: |
           if ! git update-index --refresh; then
             git config user.email "firebase-workflow-trigger-bot@google.com"
@@ -318,7 +319,7 @@ jobs:
           fi
 
       - name: Create PR if there is None
-        if: steps.decide_input.outputs.working_branch == '' && steps.decide_input.outputs.create_new_branch == '1'
+        if: steps.decide_input.outputs.working_branch != '' || steps.decide_input.outputs.create_new_branch == '1'
         id: push-branch
         run: |
           if ! git update-index --refresh; then
