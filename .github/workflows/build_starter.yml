@@ -75,9 +75,15 @@ jobs:
         run: pip install -r scripts/gha/requirements.txt
       - id: set_outputs
         run: |
-          platform=$( python scripts/gha/print_matrix_configuration.py -c -w config -k platform -o "${{ github.event.inputs.platforms }}" )
-          echo "::set-output name=platform::${platform}"
-          echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            platform=$( python scripts/gha/print_matrix_configuration.py -c -w config -k platform -o "${{ github.event.inputs.platforms }}" )
+            echo "::set-output name=platform::${platform}"
+            echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
+          else
+            echo "::set-output name=platform::'Android,iOS,Windows,macOS,Linux'"
+            echo "::set-output name=release_label::nightly-$(date "+%Y%m%d-%H%M%S")"
+          fi
+          
       - name: Print output
         run: |
           echo outputs.platform : ${{ steps.set_outputs.outputs.platform }}
