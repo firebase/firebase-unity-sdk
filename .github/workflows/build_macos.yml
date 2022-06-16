@@ -122,7 +122,7 @@ jobs:
       - name: Check zip file
         shell: bash
         run: |
-          if [ -f "macos_unity/*.zip" ]; then
+          if [ -f macos_unity/*.zip ]; then
             echo "macos_unity zip created."
           else
             echo "Fail to create macos_unity zip."

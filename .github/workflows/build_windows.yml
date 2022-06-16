@@ -122,7 +122,7 @@ jobs:
       - name: Check zip file
         shell: bash
         run: |
-          if [ -f "windows_unity/*.zip" ]; then
+          if [ -f windows_unity/*.zip ]; then
             echo "windows_unity zip created."
           else
             echo "Fail to create windows_unity zip."

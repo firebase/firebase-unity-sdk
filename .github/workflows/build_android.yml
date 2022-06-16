@@ -123,7 +123,7 @@ jobs:
       - name: Check zip file
         shell: bash
         run: |
-          if [ -f "android_unity/*.zip" ]; then
+          if [ -f android_unity/*.zip ]; then
             echo "android_unity zip created."
           else
             echo "Fail to create android_unity zip."
