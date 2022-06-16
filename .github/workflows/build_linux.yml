@@ -116,7 +116,7 @@ jobs:
       - name: Check zip file
         shell: bash
         run: |
-          if [ -f "linux_unity/*.zip" ]; then
+          if [ -f linux_unity/*.zip ]; then
             echo "linux_unity zip created."
           else
             echo "Fail to create linux_unity zip."
