@@ -118,9 +118,9 @@ jobs:
     if: (steps.set_outputs.outputs.release_version!='NoVersion')
     with:
       triggered_by_callable: true
-      base_branch: ${{ steps.set_outputs.outputs.unity_branch }}
-      package_version_number: ${{ steps.set_outputs.outputs.release_version }}
-      cpp_release_version: ${{ steps.set_outputs.outputs.firebase_cpp_sdk_version }}
+      base_branch: ${{ needs.check_and_prepare.outputs.unity_branch }}
+      package_version_number: ${{ needs.check_and_prepare.outputs.release_version }}
+      cpp_release_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
     secrets: inherit
 
   decide_build_branch:
