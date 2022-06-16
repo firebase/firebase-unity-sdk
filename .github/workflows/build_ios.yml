@@ -107,6 +107,16 @@ jobs:
           # TODO add handling cmake_extras
           python scripts/build_scripts/build_zips.py --platform=ios --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
 
+      - name: Check zip file
+        shell: bash
+        run: |
+          if [ -f ios_unity/*.zip ]; then
+            echo "ios_unity zip created."
+          else
+            echo "Fail to create ios_unity zip."
+            exit 1
+          fi
+
       - name: Upload Build
         uses: actions/upload-artifact@v2
         with:

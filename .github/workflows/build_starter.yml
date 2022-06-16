@@ -61,6 +61,14 @@ jobs:
     outputs:
       platform: ${{ steps.set_outputs.outputs.platform }}
       release_label: ${{ steps.set_outputs.outputs.release_label }}
+      unity_version: ${{ steps.set_outputs.outputs.unity_version }}
+      apis: ${{ steps.set_outputs.outputs.apis }}
+      release_version: ${{ steps.set_outputs.outputs.release_version }}
+      should_trigger_package: ${{ steps.set_outputs.outputs.should_trigger_package }}
+      skipIntegrationTests: ${{ steps.set_outputs.outputs.skipIntegrationTests }}
+      firebase_cpp_sdk_version: ${{ steps.set_outputs.outputs.firebase_cpp_sdk_version }}
+      unity_branch: ${{ steps.set_outputs.outputs.unity_branch }}
+      additional_cmake_flags: ${{ steps.set_outputs.outputs.additional_cmake_flags }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -79,9 +87,24 @@ jobs:
             platform=$( python scripts/gha/print_matrix_configuration.py -c -w config -k platform -o "${{ github.event.inputs.platforms }}" )
             echo "::set-output name=platform::${platform}"
             echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
+            echo "::set-output name=release_version::${{ github.event.inputs.release_version }}"
+            echo "::set-output name=apis::${{ github.event.inputs.apis }}"
+            echo "::set-output name=unity_version::${{ github.event.inputs.unity_version }}"
+            echo "::set-output name=should_trigger_package::${{ github.event.inputs.should_trigger_package }}"
+            echo "::set-output name=skipIntegrationTests::${{ github.event.inputs.skipIntegrationTests }}"
+            echo "::set-output name=unity_branch::${{ github.event.inputs.unity_branch }}"
+            echo "::set-output name=additional_cmake_flags::${{ github.event.inputs.unity_branch }}"
           else
             echo "::set-output name=platform::'Android,iOS,Windows,macOS,Linux'"
             echo "::set-output name=release_label::nightly-$(date "+%Y%m%d-%H%M%S")"
+            echo "::set-output name=release_version::'NoVersion'"
+            echo "::set-output name=apis::'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'"
+            echo "::set-output name=unity_version::'2019'"
+            echo "::set-output name=should_trigger_package::true"
+            echo "::set-output name=skipIntegrationTests::'0'"
+            echo "::set-output name=firebase_cpp_sdk_version::''"
+            echo "::set-output name=unity_branch::''"
+            echo "::set-output name=additional_cmake_flags::''"
           fi
           
       - name: Print output
@@ -92,16 +115,16 @@ jobs:
   update_versions:
     uses: ./.github/workflows/update_versions.yml
     needs: check_and_prepare
-    if: (github.event.inputs.release_version!='NoVersion')
+    if: (needs.check_and_prepare.outputs.release_version!='NoVersion')
     with:
       triggered_by_callable: true
-      base_branch: ${{ github.event.inputs.unity_branch }}
-      package_version_number: ${{ github.event.inputs.release_version }}
-      cpp_release_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      base_branch: ${{ needs.check_and_prepare.outputs.unity_branch }}
+      package_version_number: ${{ needs.check_and_prepare.outputs.release_version }}
+      cpp_release_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
     secrets: inherit
 
   decide_build_branch:
-    needs: update_versions
+    needs: [check_and_prepare,update_versions]
     runs-on: ubuntu-latest
     if: always()
     outputs: 
@@ -109,87 +132,87 @@ jobs:
     steps:
       - id: decide_branch
         run: |
-          if [[ "${{ github.event.inputs.release_version }}" == "'NoVersion'" ]]; then
+          if [[ "${{ needs.check_and_prepare.outputs.release_version }}" == "'NoVersion'" ]]; then
             # Triggered by callable
-            echo "::set-output name=branch::${{ github.event.inputs.unity_branch }}"
+            echo "::set-output name=branch::${{ needs.check_and_prepare.outputs.unity_branch }}"
           else
             echo "::set-output name=branch::${{ needs.update_versions.outputs.new_branch }}"
           fi
 
   build_android:
-    name: build-android-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    name: build-android-unity${{ needs.check_and_prepare.outputs.unity_version }}-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_android.yml
     needs: [check_and_prepare, decide_build_branch]
     if: always() && contains(needs.check_and_prepare.outputs.platform, 'Android')
     with:
-      unity_version: ${{ github.event.inputs.unity_version }}
-      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      unity_version: ${{ needs.check_and_prepare.outputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
-      apis: ${{ github.event.inputs.apis }}
+      apis: ${{ needs.check_and_prepare.outputs.apis }}
       unity_platform_name: Android
-      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+      additional_cmake_flags: ${{ needs.check_and_prepare.outputs.additional_cmake_flags }}
   
   build_ios:
-    name: build-ios-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    name: build-ios-unity${{ needs.check_and_prepare.outputs.unity_version }}-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_ios.yml
     needs: [check_and_prepare, decide_build_branch]
     if: always() && contains(needs.check_and_prepare.outputs.platform, 'iOS')
     with:
-      unity_version: ${{ github.event.inputs.unity_version }}
-      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      unity_version: ${{needs.check_and_prepare.outputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
-      apis: ${{ github.event.inputs.apis }}
+      apis: ${{ needs.check_and_prepare.outputs.apis }}
       unity_platform_name: iOS
-      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+      additional_cmake_flags: ${{ needs.check_and_prepare.outputs.additional_cmake_flags }}
 
   build_linux:
-    name: build-linux-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    name: build-linux-unity${{ needs.check_and_prepare.outputs.unity_version }}-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_linux.yml
     needs: [check_and_prepare, decide_build_branch]
     if: always() && contains(needs.check_and_prepare.outputs.platform, 'Linux')
     with:
-      unity_version: ${{ github.event.inputs.unity_version }}
-      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      unity_version: ${{ needs.check_and_prepare.outputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
-      apis: ${{ github.event.inputs.apis }}
+      apis: ${{ needs.check_and_prepare.outputs.apis }}
       unity_platform_name: Linux
-      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+      additional_cmake_flags: ${{ needs.check_and_prepare.outputs.additional_cmake_flags }}
 
   build_macos:
-    name: build-macos-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    name: build-macos-unity${{ needs.check_and_prepare.outputs.unity_version }}-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_macos.yml
     needs: [check_and_prepare, decide_build_branch]
     if: always() && contains(needs.check_and_prepare.outputs.platform, 'macOS')
     with:
-      unity_version: ${{ github.event.inputs.unity_version }}
-      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
-      unity_branch: ${{ github.event.inputs.unity_branch }}
-      apis: ${{ github.event.inputs.apis }}
+      unity_version: ${{ needs.check_and_prepare.outputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
+      unity_branch: ${{ needs.check_and_prepare.outputs.unity_branch }}
+      apis: ${{ needs.check_and_prepare.outputs.apis }}
       unity_platform_name: macOS,iOS
-      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+      additional_cmake_flags: ${{ needs.check_and_prepare.outputs.additional_cmake_flags }}
 
   build_windows:
-    name: build-windows-unity${{ github.event.inputs.unity_version }}-CPP${{ github.event.inputs.firebase_cpp_sdk_version }}
+    name: build-windows-unity${{ needs.check_and_prepare.outputs.unity_version }}-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_windows.yml
     needs: [check_and_prepare, decide_build_branch]
     if: always() && contains(needs.check_and_prepare.outputs.platform, 'Windows')
     with:
-      unity_version: ${{ github.event.inputs.unity_version }}
-      firebase_cpp_sdk_version: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+      unity_version: ${{ needs.check_and_prepare.outputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
-      apis: ${{ github.event.inputs.apis }}
+      apis: ${{ needs.check_and_prepare.outputs.apis }}
       unity_platform_name: Windows
-      additional_cmake_flags: ${{ github.event.inputs.additional_cmake_flags }}
+      additional_cmake_flags: ${{ needs.check_and_prepare.outputs.additional_cmake_flags }}
 
   trigger_reusable_package:
     name: package ${{ needs.check_and_prepare.outputs.release_label }}
     needs: [build_android, build_ios, build_linux, build_macos, build_windows, decide_build_branch]
     uses: ./.github/workflows/package.yml
-    if: (github.event.inputs.should_trigger_package == 'true') && !cancelled() && !failure()
+    if: (needs.check_and_prepare.outputs.should_trigger_package == 'true') && !cancelled() && !failure()
     with:
       triggered_by_callable: true
       release_label: ${{ needs.check_and_prepare.outputs.release_label }}
-      skipIntegrationTests: ${{ github.event.inputs.skipIntegrationTests }}
+      skipIntegrationTests: ${{ needs.check_and_prepare.outputs.skipIntegrationTests }}
       build_run_id: ${{ github.run_id }}
       working_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
     secrets: inherit

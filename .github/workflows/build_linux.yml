@@ -112,6 +112,16 @@ jobs:
         run: |
           # TODO add handling cmake_extras
           python scripts/build_scripts/build_zips.py --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
+      
+      - name: Check zip file
+        shell: bash
+        run: |
+          if [ -f linux_unity/*.zip ]; then
+            echo "linux_unity zip created."
+          else
+            echo "Fail to create linux_unity zip."
+            exit 1
+          fi
 
       - name: Upload Build
         uses: actions/upload-artifact@v2

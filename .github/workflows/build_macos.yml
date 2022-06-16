@@ -119,6 +119,16 @@ jobs:
           # TODO add handling cmake_extras
           python scripts/build_scripts/build_zips.py --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --apis=${{ inputs.apis }}
 
+      - name: Check zip file
+        shell: bash
+        run: |
+          if [ -f macos_unity/*.zip ]; then
+            echo "macos_unity zip created."
+          else
+            echo "Fail to create macos_unity zip."
+            exit 1
+          fi
+
       - name: Upload Build
         uses: actions/upload-artifact@v2
         with:
