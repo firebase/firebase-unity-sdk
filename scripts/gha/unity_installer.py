@@ -171,6 +171,7 @@ def install_unity(unity_version, platforms):
   package_csv = ",".join(filter(None.__ne__, package_list))
 
   u3d = find_u3d()
+  run([u3d, "available", "-u", unity_version], check=False)
   run([u3d, "available", "-u", unity_full_version, "-p"], check=False)
   run([u3d, "install", "--trace",
        "--verbose", unity_full_version,
