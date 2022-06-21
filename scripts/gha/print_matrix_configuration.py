@@ -107,7 +107,7 @@ UNITY_SETTINGS = {
       "ndk": "https://dl.google.com/android/repository/android-ndk-r21e-darwin-x86_64.zip"
     },
     _LINUX: {
-      "version": "2019.4.39f1",
+      "version": "2019.4.40f1",
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
     }
   },
@@ -127,22 +127,6 @@ UNITY_SETTINGS = {
       "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
     }
   },
-  "2017": {
-    _WINDOWS: {
-      "version": "2017.4.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac"], "Linux": ["Linux"]},
-      "ndk": ""
-    },
-    _MACOS: {
-      "version": "2017.4.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": None, "Linux": ["Linux"]},
-      "ndk": ""
-    },
-    _LINUX: {
-      "version": "2017.4.10f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows"], "macOS": ["Mac"], "Linux": None}
-    }
-  }
 }
 
 BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(s)"]

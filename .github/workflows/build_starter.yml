@@ -97,20 +97,28 @@ jobs:
           else
             echo "::set-output name=platform::'Android,iOS,Windows,macOS,Linux'"
             echo "::set-output name=release_label::nightly-$(date "+%Y%m%d-%H%M%S")"
-            echo "::set-output name=release_version::'NoVersion'"
+            echo "::set-output name=release_version::NoVersion"
             echo "::set-output name=apis::'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'"
-            echo "::set-output name=unity_version::'2019'"
+            echo "::set-output name=unity_version::2019"
             echo "::set-output name=should_trigger_package::true"
-            echo "::set-output name=skipIntegrationTests::'0'"
-            echo "::set-output name=firebase_cpp_sdk_version::''"
-            echo "::set-output name=unity_branch::''"
-            echo "::set-output name=additional_cmake_flags::''"
+            echo "::set-output name=skipIntegrationTests::0"
+            echo "::set-output name=firebase_cpp_sdk_version::"
+            echo "::set-output name=unity_branch::"
+            echo "::set-output name=additional_cmake_flags::"
           fi
           
       - name: Print output
         run: |
           echo outputs.platform : ${{ steps.set_outputs.outputs.platform }}
           echo outputs.release_label : ${{ steps.set_outputs.outputs.release_label }}
+          echo outputs.release_version : ${{ steps.set_outputs.outputs.release_version }}
+          echo outputs.apis : ${{ steps.set_outputs.outputs.apis }}
+          echo outputs.unity_version : ${{ steps.set_outputs.outputs.unity_version }}
+          echo outputs.should_trigger_package : ${{ steps.set_outputs.outputs.should_trigger_package }}
+          echo outputs.skipIntegrationTests : ${{ steps.set_outputs.outputs.skipIntegrationTests }}
+          echo outputs.firebase_cpp_sdk_version : ${{ steps.set_outputs.outputs.firebase_cpp_sdk_version }}
+          echo outputs.unity_branch : ${{ steps.set_outputs.outputs.unity_branch }}
+          echo outputs.additional_cmake_flags : ${{ steps.set_outputs.outputs.additional_cmake_flags }}
   
   update_versions:
     uses: ./.github/workflows/update_versions.yml
