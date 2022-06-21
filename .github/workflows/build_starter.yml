@@ -83,7 +83,7 @@ jobs:
         run: pip install -r scripts/gha/requirements.txt
       - id: set_outputs
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
             platform=$( python scripts/gha/print_matrix_configuration.py -c -w config -k platform -o "${{ github.event.inputs.platforms }}" )
             echo "::set-output name=platform::${platform}"
             echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
@@ -111,6 +111,14 @@ jobs:
         run: |
           echo outputs.platform : ${{ steps.set_outputs.outputs.platform }}
           echo outputs.release_label : ${{ steps.set_outputs.outputs.release_label }}
+          echo outputs.release_version : ${{ steps.set_outputs.outputs.release_version }}
+          echo outputs.apis : ${{ steps.set_outputs.outputs.apis }}
+          echo outputs.unity_version : ${{ steps.set_outputs.outputs.unity_version }}
+          echo outputs.should_trigger_package : ${{ steps.set_outputs.outputs.should_trigger_package }}
+          echo outputs.skipIntegrationTests : ${{ steps.set_outputs.outputs.skipIntegrationTests }}
+          echo outputs.firebase_cpp_sdk_version : ${{ steps.set_outputs.outputs.firebase_cpp_sdk_version }}
+          echo outputs.unity_branch : ${{ steps.set_outputs.outputs.unity_branch }}
+          echo outputs.additional_cmake_flags : ${{ steps.set_outputs.outputs.additional_cmake_flags }}
   
   update_versions:
     uses: ./.github/workflows/update_versions.yml
