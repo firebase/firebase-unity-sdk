@@ -83,7 +83,7 @@ jobs:
         run: pip install -r scripts/gha/requirements.txt
       - id: set_outputs
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
             platform=$( python scripts/gha/print_matrix_configuration.py -c -w config -k platform -o "${{ github.event.inputs.platforms }}" )
             echo "::set-output name=platform::${platform}"
             echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
@@ -97,7 +97,7 @@ jobs:
           else
             echo "::set-output name=platform::'Android,iOS,Windows,macOS,Linux'"
             echo "::set-output name=release_label::nightly-$(date "+%Y%m%d-%H%M%S")"
-            echo "::set-output name=release_version::'NoVersion'"
+            echo "::set-output name=release_version::NoVersion"
             echo "::set-output name=apis::'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'"
             echo "::set-output name=unity_version::'2019'"
             echo "::set-output name=should_trigger_package::true"
@@ -123,7 +123,7 @@ jobs:
   update_versions:
     uses: ./.github/workflows/update_versions.yml
     needs: check_and_prepare
-    if: (${{ needs.check_and_prepare.outputs.release_version }} != 'NoVersion')
+    if: (needs.check_and_prepare.outputs.release_version!='NoVersion')
     with:
       triggered_by_callable: true
       base_branch: ${{ needs.check_and_prepare.outputs.unity_branch }}
