@@ -123,7 +123,7 @@ jobs:
   update_versions:
     uses: ./.github/workflows/update_versions.yml
     needs: check_and_prepare
-    if: (needs.check_and_prepare.outputs.release_version!='NoVersion')
+    if: (${{ needs.check_and_prepare.outputs.release_version }} != 'NoVersion')
     with:
       triggered_by_callable: true
       base_branch: ${{ needs.check_and_prepare.outputs.unity_branch }}
