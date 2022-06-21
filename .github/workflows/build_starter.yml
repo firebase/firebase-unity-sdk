@@ -99,12 +99,12 @@ jobs:
             echo "::set-output name=release_label::nightly-$(date "+%Y%m%d-%H%M%S")"
             echo "::set-output name=release_version::NoVersion"
             echo "::set-output name=apis::'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'"
-            echo "::set-output name=unity_version::'2019'"
+            echo "::set-output name=unity_version::2019"
             echo "::set-output name=should_trigger_package::true"
-            echo "::set-output name=skipIntegrationTests::'0'"
-            echo "::set-output name=firebase_cpp_sdk_version::''"
-            echo "::set-output name=unity_branch::''"
-            echo "::set-output name=additional_cmake_flags::''"
+            echo "::set-output name=skipIntegrationTests::0"
+            echo "::set-output name=firebase_cpp_sdk_version::"
+            echo "::set-output name=unity_branch::"
+            echo "::set-output name=additional_cmake_flags::"
           fi
           
       - name: Print output
