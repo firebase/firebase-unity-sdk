@@ -214,7 +214,7 @@ jobs:
 
   trigger_reusable_package:
     name: package ${{ needs.check_and_prepare.outputs.release_label }}
-    needs: [build_android, build_ios, build_linux, build_macos, build_windows, decide_build_branch]
+    needs: [check_and_prepare, build_android, build_ios, build_linux, build_macos, build_windows, decide_build_branch]
     uses: ./.github/workflows/package.yml
     if: (needs.check_and_prepare.outputs.should_trigger_package == 'true') && !cancelled() && !failure()
     with:
