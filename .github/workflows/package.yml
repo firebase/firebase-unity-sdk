@@ -91,6 +91,8 @@ jobs:
       fail-fast: false
     outputs:
       skipIntegrationTests: ${{ steps.decide_input.outputs.skipIntegrationTests }}
+      platforms: ${{ steps.decide_input.outputs.platforms }}
+      apis: ${{ steps.decide_input.outputs.apis }}
     steps:
       - name: Decide inputs
         id: decide_input
@@ -460,8 +462,8 @@ jobs:
           -t ${{ steps.generate-token.outputs.token }} \
           -w integration_tests.yml \
           -p test_packaged_sdk ${{ github.run_id }} \
-          -p platforms ${{ steps.decide_input.outputs.platforms }} \
-          -p apis ${{ steps.decide_input.outputs.apis }} \
+          -p platforms ${{ needs.package_sdks.outputs.platforms }} \
+          -p apis ${{ needs.package_sdks.outputs.apis }} \
           -s 10 -A -v
        
     
