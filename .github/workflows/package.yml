@@ -77,16 +77,6 @@ on:
       download_windows_run:
         description: 'run id for sdk_build.yml or build_starter.yml, search for windows_unity output'
         required: false
-      platforms:
-        description: 'CSV of Android,iOS,Windows,macOS,Linux,Playmode'
-        default: 'Android,iOS,Windows,macOS,Linux,Playmode'
-        required: true
-        type: string
-      apis:
-        description: 'CSV of apis to build and test'
-        default: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
-        required: true
-        type: string
 
 
 env:
@@ -133,8 +123,8 @@ jobs:
             echo "::set-output name=download_linux_run::${{ github.event.inputs.download_linux_run }}"
             echo "::set-output name=download_macos_run::${{ github.event.inputs.download_macos_run }}"
             echo "::set-output name=download_windows_run::${{ github.event.inputs.download_windows_run }}"
-            echo "::set-output name=platforms::${{ github.event.inputs.platforms }}"
-            echo "::set-output name=apis::${{ github.event.inputs.apis }}"
+            echo "::set-output name=platforms::Android,iOS,Windows,macOS,Linux,Playmode"
+            echo "::set-output name=apis::analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage"
           fi
 
       - name: Print inputs
