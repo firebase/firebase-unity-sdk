@@ -31,6 +31,16 @@ on:
         description: 'run id for build_starter.yml, search for all output'
         required: false
         type: string
+      platforms:
+        description: 'CSV of Android,iOS,Windows,macOS,Linux,Playmode'
+        default: 'Android,iOS,Windows,macOS,Linux,Playmode'
+        required: true
+        type: string
+      apis:
+        description: 'CSV of apis to build and test'
+        default: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
+        required: true
+        type: string
 
   workflow_dispatch:
     inputs:
@@ -67,6 +77,16 @@ on:
       download_windows_run:
         description: 'run id for sdk_build.yml or build_starter.yml, search for windows_unity output'
         required: false
+      platforms:
+        description: 'CSV of Android,iOS,Windows,macOS,Linux,Playmode'
+        default: 'Android,iOS,Windows,macOS,Linux,Playmode'
+        required: true
+        type: string
+      apis:
+        description: 'CSV of apis to build and test'
+        default: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
+        required: true
+        type: string
 
 
 env:
@@ -99,6 +119,8 @@ jobs:
             echo "::set-output name=download_linux_run::${{ inputs.build_run_id }}"
             echo "::set-output name=download_macos_run::${{ inputs.build_run_id }}"
             echo "::set-output name=download_windows_run::${{ inputs.build_run_id }}"
+            echo "::set-output name=platforms::${{ inputs.platforms }}"
+            echo "::set-output name=apis::${{ inputs.apis }}"
           else
             echo "::set-output name=use_new_build::${{ github.event.inputs.use_new_build }}"
             echo "::set-output name=workflow_conclusion::success"
@@ -111,6 +133,8 @@ jobs:
             echo "::set-output name=download_linux_run::${{ github.event.inputs.download_linux_run }}"
             echo "::set-output name=download_macos_run::${{ github.event.inputs.download_macos_run }}"
             echo "::set-output name=download_windows_run::${{ github.event.inputs.download_windows_run }}"
+            echo "::set-output name=platforms::${{ github.event.inputs.platforms }}"
+            echo "::set-output name=apis::${{ github.event.inputs.apis }}"
           fi
 
       - name: Print inputs
@@ -128,6 +152,8 @@ jobs:
           echo download_linux_run: ${{ steps.decide_input.outputs.download_linux_run }}
           echo download_macos_run: ${{ steps.decide_input.outputs.download_macos_run }}
           echo download_windows_run: ${{ steps.decide_input.outputs.download_windows_run }}
+          echo platforms: ${{ steps.decide_input.outputs.platforms }}"
+          echo apis: ${{ steps.decide_input.outputs.apis }}"
 
       - name: Check out base branch
         uses: actions/checkout@v2.3.1
@@ -440,6 +466,12 @@ jobs:
           generate_report=(-p test_pull_request nightly-packaging)
         fi
         set -e
-        python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} -w integration_tests.yml -p test_packaged_sdk ${{ github.run_id }} -s 10 -A -v
+        python scripts/gha/trigger_workflow.py \
+          -t ${{ steps.generate-token.outputs.token }} \
+          -w integration_tests.yml \
+          -p test_packaged_sdk ${{ github.run_id }} \
+          -p platforms ${{ steps.decide_input.outputs.platforms }} \
+          -p apis ${{ steps.decide_input.outputs.apis }} \
+          -s 10 -A -v
        
     
