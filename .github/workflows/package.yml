@@ -465,5 +465,3 @@ jobs:
           -p platforms ${{ needs.package_sdks.outputs.platforms }} \
           -p apis ${{ needs.package_sdks.outputs.apis }} \
           -s 10 -A -v
-       
-    
