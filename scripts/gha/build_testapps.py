@@ -91,6 +91,7 @@ in the same directory as this script.
 
 import datetime
 from distutils import dir_util
+from genericpath import isdir
 import glob
 import os
 import platform
@@ -509,8 +510,16 @@ def patch_android_env(unity_version):
         fd.write(chunk)
     with zipfile.ZipFile(ndk_zip_path, 'r') as zip_ref:
         zip_ref.extractall(ndk_path)
-    os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, "android-ndk-r19"))
-    logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+    ndk_direct_folder = ""
+    for subfolder in os.listdir(ndk_path):
+      if subfolder.startswith("android-ndk-") and os.isdir(subfolder):
+        ndk_direct_folder = subfolder
+        break
+    if ndk_direct_folder:
+      os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, ndk_direct_folder))
+      logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+    else:
+      logging.warning("No valid android folder unzipped from url %s, ANDROID_NDK_HOME not overwritten", url) 
   if major_version >= 2020:
     try:
       # This is a bug from Unity: 
