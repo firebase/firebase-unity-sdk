@@ -319,7 +319,7 @@ jobs:
 
       - name: Package unitypackage
         run: |
-          python build_package.py --zip_dir=built_artifact
+          python scripts/build_scripts/build_package.py --zip_dir=built_artifact
 
       - name: Commit Changes if there is any
         if: steps.decide_input.outputs.working_branch != '' || steps.decide_input.outputs.create_new_branch == '1'
@@ -395,7 +395,7 @@ jobs:
       
       - name: Package tgz
         run: |
-          python build_package.py --zip_dir=built_artifact --output_upm=True --output=output_tgz
+          python scripts/build_scripts/build_package.py --zip_dir=built_artifact --output_upm=True --output=output_tgz
 
       - name: Listing output tgz
         run: |

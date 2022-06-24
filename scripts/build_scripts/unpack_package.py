@@ -18,7 +18,7 @@
 """Unpack Unity SDK package file.
 
 Example usage:
-  python unpack_package.py --folder=<sdk folder 1>
+  python scripts/build_scripts/unpack_package.py --folder=<sdk folder 1>
 """
 
 import os

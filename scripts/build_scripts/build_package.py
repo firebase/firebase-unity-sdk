@@ -27,17 +27,14 @@ And converts them into unity packages i.e.:
   * ...
 
 Example usage:
-  python build_package.py --zip_dir=<assets_zip_dir>
+  python scripts/build_scripts/build_package.py --zip_dir=<assets_zip_dir>
 """
-import collections
-import json
 import os
 import sys
 import subprocess
 import zipfile
 import shutil
 
-from github import Github
 from absl import app
 from absl import flags
 from absl import logging
@@ -174,7 +171,7 @@ def main(argv):
     error_str = error_str.rstrip("\\n\'")
     split_string = error_str.split(" ")
     split_string = split_string[3:] # exclude first 3 lines
-    gen_guids_script_path = os.path.join(os.getcwd(), "gen_guids.py")
+    gen_guids_script_path = os.path.join(os.getcwd(), "scripts", "build_scripts", "gen_guids.py")
     gen_cmd_args = [
       sys.executable,
       gen_guids_script_path,

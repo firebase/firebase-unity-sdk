@@ -20,8 +20,8 @@ directories to your PATH as needed.
 
 - [CMake](https://cmake.org/) version 3.13.3, or newer.
 - [Mono](https://www.mono-project.com/) version 5 or newer.
-- [Unity](https://unity.com/) version 5 or newer.
-- [Swig3](http://www.swig.org/) version 3.0.6 or newer (Not version 4 though).
+- [Unity](https://unity.com/) version 2019 or newer.
+- [Swig](http://www.swig.org/) version 4 or newer.
 
 ### Prerequisites for Windows
 On windows, to work around path length issues with google unity resolver enable
@@ -38,8 +38,6 @@ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/
 source $HOME/.rvm/scripts/rvm
 brew install cmake protobuf python mono swig
 sudo chown -R $(whoami) /usr/local
-
-export PATH="/usr/local/opt/swig@3/bin:$PATH"
 ```
 
 ## Building

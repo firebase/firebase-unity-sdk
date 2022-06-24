@@ -23,14 +23,14 @@ testapps<timestamp>/<unity_version>-NET<runtime>/<API>, in a directory
 specified by a flag (home directory, by default).
 
 Build these two testapps for the two given Unity versions:
-$ build_testapps.py --t auth,storage --u 2017.4.37f1
+$ build_testapps.py --t auth,storage --u 2019.4.39f1
 
 Build auth for 2017.4, using the latest .NET runtime (4.6). Normally the
 default runtime for that version of Unity will be used.
-$ build_testapps.py --t auth --u 2017.4.37f1 --force_latest_runtime
+$ build_testapps.py --t auth --u 2019.4.39f1 --force_latest_runtime
 
-Build all APIs for 2017.4.37f1.
-$ build_testapps.py --u 2017.4.37f1
+Build all APIs for 2019.4.39f1.
+$ build_testapps.py --u 2019.4.39f1
 
 IN-EDITOR TESTING:
 
@@ -173,7 +173,7 @@ flags.DEFINE_list(
     short_name="t")
 
 flags.DEFINE_list(
-    "unity_versions", "2017.4.37f1",
+    "unity_versions", "2019.4.39f1",
     "Unity versions to build against. Must match the folder name in your"
     " applications directory or Unity Hub subdirectory.",
     short_name="u")
