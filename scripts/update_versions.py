@@ -34,7 +34,8 @@ from absl import logging
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("unity_sdk_version", None,
-                    "Required, will check and upgrade cmake/firebase_unity_version.cmake")
+                    "Required, will check and upgrade cmake/firebase_unity_version.cmake",
+                    short_name="u")
 
 def get_latest_repo_tag(repo_url):
   repo = Github().get_repo(repo_url)
@@ -200,6 +201,19 @@ def update_unity_version(unity_sdk_version):
   with open(version_cmake_path, "w") as fout:
     fout.write(replacement)
 
+def update_readme(unity_sdk_version):
+  readme_path = os.path.join(os.getcwd(), "docs", "readme.md")
+  replacement = ""
+  with open(readme_path, "r") as f:
+    replacement = f.read()
+    if "### Upcoming Release" in replacement:
+      replacement = replacement.replace("### Upcoming Release", "### "+unity_sdk_version)
+    else:
+      logging.warning("No upcoming release defined in docs/readme.md")
+
+  with open(readme_path, "w") as fout:
+    fout.write(replacement)
+
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
@@ -209,6 +223,7 @@ def main(argv):
     
   update_unity_version(FLAGS.unity_sdk_version)
   update_android_deps()
+  update_readme(FLAGS.unity_sdk_version)
 
 if __name__ == '__main__':
   app.run(main)

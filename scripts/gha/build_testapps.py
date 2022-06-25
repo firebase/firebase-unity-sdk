@@ -23,14 +23,14 @@ testapps<timestamp>/<unity_version>-NET<runtime>/<API>, in a directory
 specified by a flag (home directory, by default).
 
 Build these two testapps for the two given Unity versions:
-$ build_testapps.py --t auth,storage --u 2017.4.37f1
+$ build_testapps.py --t auth,storage --u 2019.4.39f1
 
 Build auth for 2017.4, using the latest .NET runtime (4.6). Normally the
 default runtime for that version of Unity will be used.
-$ build_testapps.py --t auth --u 2017.4.37f1 --force_latest_runtime
+$ build_testapps.py --t auth --u 2019.4.39f1 --force_latest_runtime
 
-Build all APIs for 2017.4.37f1.
-$ build_testapps.py --u 2017.4.37f1
+Build all APIs for 2019.4.39f1.
+$ build_testapps.py --u 2019.4.39f1
 
 IN-EDITOR TESTING:
 
@@ -91,6 +91,7 @@ in the same directory as this script.
 
 import datetime
 from distutils import dir_util
+from genericpath import isdir
 import glob
 import os
 import platform
@@ -173,7 +174,7 @@ flags.DEFINE_list(
     short_name="t")
 
 flags.DEFINE_list(
-    "unity_versions", "2017.4.37f1",
+    "unity_versions", "2019.4.39f1",
     "Unity versions to build against. Must match the folder name in your"
     " applications directory or Unity Hub subdirectory.",
     short_name="u")
@@ -509,8 +510,16 @@ def patch_android_env(unity_version):
         fd.write(chunk)
     with zipfile.ZipFile(ndk_zip_path, 'r') as zip_ref:
         zip_ref.extractall(ndk_path)
-    os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, "android-ndk-r19"))
-    logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+    ndk_direct_folder = ""
+    for subfolder in os.listdir(ndk_path):
+      if subfolder.startswith("android-ndk-"):
+        ndk_direct_folder = subfolder
+        break
+    if ndk_direct_folder:
+      os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, ndk_direct_folder))
+      logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+    else:
+      logging.warning("No valid android folder unzipped from url %s, ANDROID_NDK_HOME not overwritten", url) 
   if major_version >= 2020:
     try:
       # This is a bug from Unity: 
