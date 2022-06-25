@@ -512,7 +512,7 @@ def patch_android_env(unity_version):
         zip_ref.extractall(ndk_path)
     ndk_direct_folder = ""
     for subfolder in os.listdir(ndk_path):
-      if subfolder.startswith("android-ndk-") and os.isdir(subfolder):
+      if subfolder.startswith("android-ndk-") and os.path.isdir(subfolder):
         ndk_direct_folder = subfolder
         break
     if ndk_direct_folder:
