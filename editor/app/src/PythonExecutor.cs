@@ -137,12 +137,16 @@ namespace Firebase.Editor {
               // This one failed, ignore and move on to the next one.
             }
           }
+          // Only log an error for non-Windows platform, since Windows can use
+          // an executable instead of the python interpreter.
+          if (Application.platform != RuntimePlatform.WindowsEditor) {
+            Debug.LogError(
+                "Could not find a working python interpreter. " +
+                "Please make sure one of the following is in your PATH: " +
+                String.Join(" ", PYTHON_INTERPRETERS));
+          }
           // Fall back to the first option in case none worked, so this doesn't
           // keep retrying.
-          Debug.LogError(
-              "Could not find a working python interpreter. " +
-              "Please make sure one of the following is in your PATH: " +
-              String.Join(" ", PYTHON_INTERPRETERS));
           s_pythonInterpreter = PYTHON_INTERPRETERS[0];
         }
 
