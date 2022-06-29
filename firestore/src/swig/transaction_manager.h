@@ -198,6 +198,7 @@ class TransactionManager {
   // If `Dispose()` has been invoked, or the `Firestore` instance has been
   // destroyed, then this method will immediately return an invalid `Future`.
   Future<void> RunTransaction(int32_t callback_id,
+                              TransactionOptions options,
                               TransactionCallbackFn callback);
 
  private:

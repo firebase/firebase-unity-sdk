@@ -78,6 +78,7 @@ set(firebase_firestore_src
   src/Source.cs
   src/Timestamp.cs
   src/Transaction.cs
+  src/TransactionOptions.cs
   src/TransactionManager.cs
   src/UnknownPropertyHandling.cs
   src/ValueDeserializer.cs

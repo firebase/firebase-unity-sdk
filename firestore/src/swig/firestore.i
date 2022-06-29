@@ -411,6 +411,13 @@ SWIG_CREATE_PROXY(firebase::firestore::LoadBundleTaskProgress);
 %rename("%s") firebase::firestore::LoadBundleTaskProgress::state;
 %include "firestore/src/include/firebase/firestore/load_bundle_task_progress.h"
 
+// Generate a C# wrapper for TransactionOptions.
+SWIG_CREATE_PROXY(firebase::firestore::TransactionOptions);
+%rename("%s") firebase::firestore::TransactionOptions::TransactionOptions;
+%rename("%s") firebase::firestore::TransactionOptions::max_attempts;
+%rename("%s") firebase::firestore::TransactionOptions::set_max_attempts;
+%include "firestore/src/include/firebase/firestore/transaction_options.h"
+
 // Generate a C# wrapper for Firestore. Comes last because it refers to multiple
 // other classes (e.g. `CollectionReference`).
 SWIG_CREATE_PROXY(firebase::firestore::Firestore);

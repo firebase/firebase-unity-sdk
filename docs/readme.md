@@ -155,6 +155,12 @@ Support
 
 Release Notes
 -------------
+### 9.2.0
+- Changes
+    - Firestore: Added `TransactionOptions` to control how many times a
+      transaction will retry commits before failing
+      ([#318](https://github.com/firebase/firebase-unity-sdk/pull/318)).
+
 ### 9.1.0
 - Changes
     - General: Added a missing namespace to the Google.MiniJson.dll.
