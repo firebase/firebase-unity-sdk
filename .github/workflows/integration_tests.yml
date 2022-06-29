@@ -255,8 +255,10 @@ jobs:
         if: ${{ github.event.inputs.test_packaged_sdk != '0' }}
         with:
           name: 'firebase_unity_sdk.zip'
+          workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.test_packaged_sdk }}
       - name: Build integration tests
+        timeout-minutes: 180
         shell: bash
         run: |
           if [[ "${{ github.event.inputs.test_packaged_sdk }}" != "0" ]]; then
@@ -444,8 +446,8 @@ jobs:
         if: ${{ github.event.inputs.test_packaged_sdk != '0' }}
         with:
           name: 'firebase_unity_sdk.zip'
-          run_id: ${{ github.event.inputs.test_packaged_sdk }}
-          
+          workflow: 'build_starter.yml'
+          run_id: ${{ github.event.inputs.test_packaged_sdk }}  
       - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
