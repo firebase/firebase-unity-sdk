@@ -252,7 +252,6 @@ jobs:
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Fetch prebuilt packaged SDK from previous run
         uses: dawidd6/action-download-artifact@v2
-        if: ${{ github.event.inputs.test_packaged_sdk != '0' }}
         with:
           name: 'firebase_unity_sdk.zip'
           workflow: 'build_starter.yml'
@@ -261,13 +260,7 @@ jobs:
         timeout-minutes: 180
         shell: bash
         run: |
-          if [[ "${{ github.event.inputs.test_packaged_sdk }}" != "0" ]]; then
-            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
-          else
-            sdk_url="https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_9.1.0.zip"
-            curl ${sdk_url} -o ~/Downloads/firebase_unity_sdk.zip
-            unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
-          fi
+          unzip -q firebase_unity_sdk.zip -d ~/Downloads/
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
             --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
