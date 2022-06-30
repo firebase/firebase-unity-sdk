@@ -300,7 +300,7 @@ jobs:
         python scripts/gha/trigger_workflow.py \
           -t ${{ steps.generate-token.outputs.token }} \
           -w integration_tests.yml \
-          -p test_packaged_sdk ${{ github.run_id }} \
+          -p packaged_sdk_run_id ${{ github.run_id }} \
           -p platforms ${{ needs.package_sdks.outputs.platforms }} \
           -p apis ${{ needs.package_sdks.outputs.apis }} \
           -s 10 -A -v
