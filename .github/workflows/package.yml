@@ -4,11 +4,6 @@ name: Package SDKs
 on:
   workflow_call:
     inputs:
-      triggered_by_callable:
-        description: 'Check if this package grabs artifacts from new build workflow'
-        default: false
-        required: true
-        type: boolean
       skipIntegrationTests:
         description: 'skip integration tests?'
         default: '0'
@@ -42,42 +37,6 @@ on:
         required: true
         type: string
 
-  workflow_dispatch:
-    inputs:
-      use_new_build:
-        description: 'Check if this package grabs artifacts from new build workflow'
-        default: '0'
-        required: true
-      skipIntegrationTests:
-        description: 'skip integration tests?'
-        default: '0'
-        required: false
-      create_new_branch:
-        description: 'Check if we need to create new branch to package guids update. If working_branch set, will ignore this value. '
-        default: '0'
-        required: false
-      working_branch:
-        description: 'If already a working in progress release branch'
-        required: false
-      release_label:
-        description: 'If the package is intended to run for a release, put <version>-RC## for label'
-        required: false
-      download_ios_run:
-        description: 'run id for ios.yml or build_starter.yml, search for ios_unity output'
-        required: false
-      download_android_run:
-        description: 'run id for android.yml or build_starter.yml, search for android_unity output'
-        required: false
-      download_linux_run:
-        description: 'run id for sdk_build.yml or build_starter.yml, search for linux_unity output'
-        required: false
-      download_macos_run:
-        description: 'run id for sdk_build.yml or build_starter.yml, search for macos_unity output'
-        required: false
-      download_windows_run:
-        description: 'run id for sdk_build.yml or build_starter.yml, search for windows_unity output'
-        required: false
-
 
 env:
   # Use SHA256 for hashing files.
@@ -98,42 +57,23 @@ jobs:
         id: decide_input
         shell: bash
         run: |
-          if [[ "${{ inputs.triggered_by_callable }}" == "true" ]]; then
-            # Triggered by callable
-            echo "::set-output name=use_new_build::'1'"
-            echo "::set-output name=workflow_conclusion::in_progress" 
-            echo "::set-output name=skipIntegrationTests::${{ inputs.skipIntegrationTests }}"
-            echo "::set-output name=create_new_branch::${{ inputs.create_new_branch }}"
-            echo "::set-output name=release_label::${{ inputs.release_label }}"
-            echo "::set-output name=working_branch::${{ inputs.working_branch }}"
-            echo "::set-output name=download_android_run::${{ inputs.build_run_id }}"
-            echo "::set-output name=download_ios_run::${{ inputs.build_run_id }}"
-            echo "::set-output name=download_linux_run::${{ inputs.build_run_id }}"
-            echo "::set-output name=download_macos_run::${{ inputs.build_run_id }}"
-            echo "::set-output name=download_windows_run::${{ inputs.build_run_id }}"
-            echo "::set-output name=platforms::${{ inputs.platforms }}"
-            echo "::set-output name=apis::${{ inputs.apis }}"
-          else
-            echo "::set-output name=use_new_build::${{ github.event.inputs.use_new_build }}"
-            echo "::set-output name=workflow_conclusion::success"
-            echo "::set-output name=skipIntegrationTests::${{ github.event.inputs.skipIntegrationTests }}"
-            echo "::set-output name=create_new_branch::${{ github.event.inputs.create_new_branch }}"
-            echo "::set-output name=release_label::${{ github.event.inputs.release_label }}"
-            echo "::set-output name=working_branch::${{ github.event.inputs.working_branch }}"
-            echo "::set-output name=download_android_run::${{ github.event.inputs.download_android_run }}"
-            echo "::set-output name=download_ios_run::${{ github.event.inputs.download_ios_run }}"
-            echo "::set-output name=download_linux_run::${{ github.event.inputs.download_linux_run }}"
-            echo "::set-output name=download_macos_run::${{ github.event.inputs.download_macos_run }}"
-            echo "::set-output name=download_windows_run::${{ github.event.inputs.download_windows_run }}"
-            echo "::set-output name=platforms::Android,iOS,Windows,macOS,Linux,Playmode"
-            echo "::set-output name=apis::analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage"
-          fi
+          # Triggered by callable
+          echo "::set-output name=workflow_conclusion::in_progress" 
+          echo "::set-output name=skipIntegrationTests::${{ inputs.skipIntegrationTests }}"
+          echo "::set-output name=create_new_branch::${{ inputs.create_new_branch }}"
+          echo "::set-output name=release_label::${{ inputs.release_label }}"
+          echo "::set-output name=working_branch::${{ inputs.working_branch }}"
+          echo "::set-output name=download_android_run::${{ inputs.build_run_id }}"
+          echo "::set-output name=download_ios_run::${{ inputs.build_run_id }}"
+          echo "::set-output name=download_linux_run::${{ inputs.build_run_id }}"
+          echo "::set-output name=download_macos_run::${{ inputs.build_run_id }}"
+          echo "::set-output name=download_windows_run::${{ inputs.build_run_id }}"
+          echo "::set-output name=platforms::${{ inputs.platforms }}"
+          echo "::set-output name=apis::${{ inputs.apis }}"
 
       - name: Print inputs
         shell: bash
         run: |
-          echo triggered_by_callable: ${{ inputs.triggered_by_callable }}
-          echo use_new_build: ${{ steps.decide_input.outputs.use_new_build }}
           echo workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
           echo skipIntegrationTests: ${{ steps.decide_input.outputs.skipIntegrationTests }}
           echo create_new_branch: ${{ steps.decide_input.outputs.create_new_branch }}
@@ -196,111 +136,10 @@ jobs:
           git checkout ${{ steps.decide_input.outputs.working_branch }}
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
           echo "NEW_BRANCH=${{ steps.decide_input.outputs.working_branch }}" >> $GITHUB_ENV
-      
-      - name: Fetch Android Artifacts (OLD)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
-        with:
-          workflow: android.yml
-          run_id: ${{ steps.decide_input.outputs.download_android_run }}
-          name: android_unity
-          path: built_artifact
-      
-      - name: Fetch iOS Artifacts (OLD)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
-        with:
-          workflow: ios.yml
-          run_id: ${{ steps.decide_input.outputs.download_ios_run }}
-          name: ios_unity
-          path: built_artifact
-
-      - name: Fetch Linux Artifacts (OLD)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
-        with:
-          workflow: sdk_build.yml
-          run_id: ${{ steps.decide_input.outputs.download_linux_run }}
-          name: linux_unity
-          path: built_artifact
-
-      - name: Fetch MacOS Artifacts (OLD)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
-        with:
-          workflow: sdk_build.yml
-          run_id: ${{ steps.decide_input.outputs.download_macos_run }}
-          name: macos_unity
-          path: built_artifact
-
-      - name: Fetch Windows Artifacts (OLD)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='0')
-        with:
-          workflow: sdk_build.yml
-          run_id: ${{ steps.decide_input.outputs.download_windows_run }}
-          name: windows_unity
-          path: built_artifact
-
-      - name: Fetch Android Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
-        with:
-          workflow: build_starter.yml
-          run_id: ${{ steps.decide_input.outputs.download_android_run }}
-          name: android_unity
-          path: built_artifact
-      
-      - name: Fetch iOS Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
-        with:
-          workflow: build_starter.yml
-          run_id: ${{ steps.decide_input.outputs.download_ios_run }}
-          name: ios_unity
-          path: built_artifact
-
-      - name: Fetch Linux Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
-        with:
-          workflow: build_starter.yml
-          run_id: ${{ steps.decide_input.outputs.download_linux_run }}
-          name: linux_unity
-          path: built_artifact
-
-      - name: Fetch MacOS Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
-        with:
-          workflow: build_starter.yml
-          run_id: ${{ steps.decide_input.outputs.download_macos_run }}
-          name: macos_unity
-          path: built_artifact
-
-      - name: Fetch Windows Artifacts (NEW)
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        if: (inputs.triggered_by_callable==false) && (steps.decide_input.outputs.use_new_build=='1')
-        with:
-          workflow: build_starter.yml
-          run_id: ${{ steps.decide_input.outputs.download_windows_run }}
-          name: windows_unity
-          path: built_artifact
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
       - name: Fetch All in build_starter
         uses: actions/download-artifact@v3
-        if: inputs.triggered_by_callable==true
         with:
           path: built_artifact
       
@@ -461,7 +300,7 @@ jobs:
         python scripts/gha/trigger_workflow.py \
           -t ${{ steps.generate-token.outputs.token }} \
           -w integration_tests.yml \
-          -p test_packaged_sdk ${{ github.run_id }} \
+          -p packaged_sdk_run_id ${{ github.run_id }} \
           -p platforms ${{ needs.package_sdks.outputs.platforms }} \
           -p apis ${{ needs.package_sdks.outputs.apis }} \
           -s 10 -A -v
