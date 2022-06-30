@@ -69,6 +69,7 @@ jobs:
           ruby-version: 3.0.2
 
       - name: Install Unity installer (U3D)
+        timeout-minutes: 10
         shell: bash
         run: gem install u3d -v 1.2.3
 
@@ -95,6 +96,7 @@ jobs:
           sudo apt install openssl
 
       - name: Install Unity
+        timeout-minutes: 15
         shell: bash
         run: |
           python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
@@ -108,6 +110,7 @@ jobs:
           echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
 
       - name: Build SDK (Linux)
+        timeout-minutes: 90
         shell: bash
         run: |
           # TODO add handling cmake_extras

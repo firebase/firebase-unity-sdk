@@ -83,6 +83,7 @@ jobs:
           cd ..
 
       - name: Install Unity installer (U3D)
+        timeout-minutes: 10
         shell: bash
         run: gem install u3d -v 1.2.3
 
@@ -92,6 +93,7 @@ jobs:
           pip install -r scripts/gha/requirements.txt
       
       - name: Install Unity
+        timeout-minutes: 15
         shell: bash
         run: |
           python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
@@ -102,6 +104,7 @@ jobs:
           echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{ inputs.unity_version }} -k unity_path )" >> $GITHUB_ENV
 
       - name: Build SDK (iOS)
+        timeout-minutes: 90
         shell: bash
         run: |
           # TODO add handling cmake_extras

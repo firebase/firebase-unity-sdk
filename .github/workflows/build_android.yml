@@ -104,6 +104,7 @@ jobs:
           echo "ANDROID_NDK_HOME=/tmp/android-ndk-r21e" >> $GITHUB_ENV
 
       - name: Install Unity installer (U3D)
+        timeout-minutes: 10
         shell: bash
         run: gem install u3d -v 1.2.3
 
@@ -113,6 +114,7 @@ jobs:
           pip install -r scripts/gha/requirements.txt
       
       - name: Install Unity
+        timeout-minutes: 15
         shell: bash
         run: |
           python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
@@ -128,6 +130,7 @@ jobs:
           swig -version
 
       - name: Build SDK (Android)
+        timeout-minutes: 90
         shell: bash
         run: |
           # TODO add handling cmake_extras
