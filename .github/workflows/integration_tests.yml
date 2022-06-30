@@ -213,12 +213,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Unity installer (U3D)
-        timeout-minutes: 10
-        shell: bash
-        run: |
-          gem install u3d -v 1.2.3
-          u3d available
-          # u3d available -u ${{ matrix.unity_version }} -p
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          shell: bash
+          command:  |
+            gem install u3d -v 1.2.3
+            u3d available
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -229,12 +231,15 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - name: Install Unity
-        timeout-minutes: 30
-        shell: bash
-        run: |
-          python scripts/gha/unity_installer.py --install \
-            --platforms ${{ matrix.platform }} \
-            --version ${{ matrix.unity_version }}
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          shell: bash
+          command:  |
+            python scripts/gha/unity_installer.py --install \
+              --platforms ${{ matrix.platform }} \
+              --version ${{ matrix.unity_version }}
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash
@@ -398,12 +403,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Unity installer (U3D)
-        timeout-minutes: 10
-        shell: bash
-        run: |
-          gem install u3d
-          u3d available
-          # u3d available -u ${{ matrix.unity_version }} -p
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          shell: bash
+          command:  |
+            gem install u3d
+            u3d available
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -414,11 +421,14 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - name: Install Unity
-        timeout-minutes: 30
-        shell: bash
-        run: |
-          python scripts/gha/unity_installer.py --install \
-            --version ${{ matrix.unity_version }}
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          shell: bash
+          command:  |
+            python scripts/gha/unity_installer.py --install \
+              --version ${{ matrix.unity_version }}
       - name: Activate Unity license
         timeout-minutes: 10
         shell: bash

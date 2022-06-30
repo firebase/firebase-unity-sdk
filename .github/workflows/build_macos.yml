@@ -69,9 +69,12 @@ jobs:
           ruby-version: 3.0.2
 
       - name: Install Unity installer (U3D)
-        timeout-minutes: 10
-        shell: bash
-        run: gem install u3d -v 1.2.3
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          shell: bash
+          command: gem install u3d -v 1.2.3
 
       - name: Setup python
         uses: actions/setup-python@v2
@@ -102,10 +105,13 @@ jobs:
           echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
 
       - name: Install Unity
-        timeout-minutes: 15
-        shell: bash
-        run: |
-          python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          shell: bash
+          command:  |
+            python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
 
       - name: Setup Unity path
         shell: bash
