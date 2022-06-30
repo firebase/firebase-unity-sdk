@@ -221,7 +221,6 @@ jobs:
     uses: ./.github/workflows/package.yml
     if: (needs.check_and_prepare.outputs.should_trigger_package == 'true') && !cancelled() && !failure()
     with:
-      triggered_by_callable: true
       release_label: ${{ needs.check_and_prepare.outputs.release_label }}
       skipIntegrationTests: ${{ needs.check_and_prepare.outputs.skipIntegrationTests }}
       build_run_id: ${{ github.run_id }}
