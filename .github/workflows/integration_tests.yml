@@ -73,20 +73,23 @@ jobs:
         if [[ "${{ github.event.inputs.test_pull_request }}" == *"label-quick-packaging" ]]; then
           # Triggered by packaging SDK workflow.
           echo "::set-output name=trigger::label_trigger"
-          echo "::set-output name=github_ref::$GITHUB_SHA"
-          echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
+          pr_number = $(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)
+          echo "::set-output name=github_ref::github_ref::refs/pull/${{pr_number}}/merge"
+          echo "::set-output name=pr_number::${{pr_number}}"
           echo "::set-output name=requested_tests::auto"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == *"label-full-packaging" ]]; then
           # Triggered by packaging SDK workflow.
           echo "::set-output name=trigger::label_trigger"
-          echo "::set-output name=github_ref::$GITHUB_SHA"
-          echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
+          pr_number = $(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)
+          echo "::set-output name=github_ref::github_ref::refs/pull/${{pr_number}}/merge"
+          echo "::set-output name=pr_number::${{pr_number}}"
           echo "::set-output name=requested_tests::expanded"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == *"pr-close-packaging" ]]; then
           # Triggered by packaging SDK workflow.
           echo "::set-output name=trigger::postsubmit_trigger"
-          echo "::set-output name=github_ref::$GITHUB_SHA"
-          echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
+          pr_number = $(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)
+          echo "::set-output name=github_ref::github_ref::refs/pull/${{pr_number}}/merge"
+          echo "::set-output name=pr_number::${{pr_number}}"
           echo "::set-output name=requested_tests::auto"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == "nightly-packaging" ]]; then
           # Triggered by packaging SDK workflow.
