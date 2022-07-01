@@ -110,9 +110,9 @@ jobs:
             if [[ "${{ github.event_name }}" == "schedule" ]]; then
               echo "::set-output name=runIntegrationTests::nightly-packaging"
             elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              if [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == ""tests-requested: quick"" ]]; then
+              if [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == "tests-requested: quick" ]]; then
                 echo "::set-output name=runIntegrationTests::${{ github.event.pull_request.number }}:label-quick-packaging"
-              elif [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == ""tests-requested: full"" ]]; then
+              elif [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == "tests-requested: full" ]]; then
                 echo "::set-output name=runIntegrationTests::${{ github.event.pull_request.number }}:label-full-packaging"
               elif [[ "${{ github.event.action }}" == "closed" && "${{ github.event.pull_request.merged == true}}" == "true"  ]]; then
                 echo "::set-output name=runIntegrationTests::${{ github.event.pull_request.number }}:pr-close-packaging"
