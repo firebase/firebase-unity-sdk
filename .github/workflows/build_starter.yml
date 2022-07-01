@@ -144,6 +144,7 @@ jobs:
           echo outputs.firebase_cpp_sdk_version : ${{ steps.set_outputs.outputs.firebase_cpp_sdk_version }}
           echo outputs.unity_branch : ${{ steps.set_outputs.outputs.unity_branch }}
           echo outputs.additional_cmake_flags : ${{ steps.set_outputs.outputs.additional_cmake_flags }}
+          echo branch_name : ${{ github.ref_name }}
   
   update_versions:
     uses: ./.github/workflows/update_versions.yml

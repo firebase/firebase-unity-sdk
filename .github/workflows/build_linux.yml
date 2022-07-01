@@ -84,6 +84,7 @@ jobs:
       - name: Install prerequisites
         shell: bash
         run: |
+          echo branch_name : ${{ github.ref_name }}
           echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
           cd firebase-cpp-sdk
           python scripts/gha/install_prereqs_desktop.py
