@@ -50,9 +50,9 @@ on:
         default: true
         type: boolean
         required: true
-      skipIntegrationTests:
-        description: 'If we want to skip integration test'
-        default: '0'
+      runIntegrationTests:
+        description: 'run integration tests? (0 will not run integrations)'
+        default: '1'
         required: true
 
 env:
@@ -68,7 +68,7 @@ jobs:
       apis: ${{ steps.set_outputs.outputs.apis }}
       release_version: ${{ steps.set_outputs.outputs.release_version }}
       should_trigger_package: ${{ steps.set_outputs.outputs.should_trigger_package }}
-      skipIntegrationTests: ${{ steps.set_outputs.outputs.skipIntegrationTests }}
+      runIntegrationTests: ${{ steps.set_outputs.outputs.runIntegrationTests }}
       firebase_cpp_sdk_version: ${{ steps.set_outputs.outputs.firebase_cpp_sdk_version }}
       unity_branch: ${{ steps.set_outputs.outputs.unity_branch }}
       additional_cmake_flags: ${{ steps.set_outputs.outputs.additional_cmake_flags }}
@@ -94,7 +94,7 @@ jobs:
             echo "::set-output name=apis::${{ github.event.inputs.apis }}"
             echo "::set-output name=unity_version::${{ github.event.inputs.unity_version }}"
             echo "::set-output name=should_trigger_package::${{ github.event.inputs.should_trigger_package }}"
-            echo "::set-output name=skipIntegrationTests::${{ github.event.inputs.skipIntegrationTests }}"
+            echo "::set-output name=runIntegrationTests::${{ github.event.inputs.runIntegrationTests }}"
             echo "::set-output name=unity_branch::${{ github.event.inputs.unity_branch }}"
             echo "::set-output name=additional_cmake_flags::${{ github.event.inputs.unity_branch }}"
           else
@@ -104,11 +104,33 @@ jobs:
             echo "::set-output name=apis::'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'"
             echo "::set-output name=unity_version::2019"
             echo "::set-output name=should_trigger_package::true"
-            echo "::set-output name=skipIntegrationTests::0"
             echo "::set-output name=firebase_cpp_sdk_version::"
             echo "::set-output name=unity_branch::"
             echo "::set-output name=additional_cmake_flags::"
+            if [[ "${{ github.event_name }}" == "schedule" ]]; then
+              echo "::set-output name=runIntegrationTests::nightly-packaging"
+            elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              if [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == ""tests-requested: quick"" ]]; then
+                echo "::set-output name=runIntegrationTests::${{ github.event.pull_request.number }}:label-quick-packaging"
+              elif [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == ""tests-requested: full"" ]]; then
+                echo "::set-output name=runIntegrationTests::${{ github.event.pull_request.number }}:label-full-packaging"
+              elif [[ "${{ github.event.action }}" == "closed" && "${{ github.event.pull_request.merged == true}}" == "true"  ]]; then
+                echo "::set-output name=runIntegrationTests::${{ github.event.pull_request.number }}:pr-close-packaging"
+              else
+                echo "::set-output name=invalid_trigger::1"
+              fi
+            else
+              echo "::set-output name=invalid_trigger::1"
+            fi
           fi
+      - name: Cancel workflow
+        if: ${{ steps.set_outputs.outputs.invalid_trigger }}
+        uses: andymckay/cancel-action@0.2
+      - name: Wait for workflow cancellation
+        if: ${{ steps.set_outputs.outputs.invalid_trigger }} 
+        run: |
+          sleep 300
+          exit 1  # fail out if the cancellation above somehow failed.
           
       - name: Print output
         run: |
@@ -118,7 +140,7 @@ jobs:
           echo outputs.apis : ${{ steps.set_outputs.outputs.apis }}
           echo outputs.unity_version : ${{ steps.set_outputs.outputs.unity_version }}
           echo outputs.should_trigger_package : ${{ steps.set_outputs.outputs.should_trigger_package }}
-          echo outputs.skipIntegrationTests : ${{ steps.set_outputs.outputs.skipIntegrationTests }}
+          echo outputs.runIntegrationTests : ${{ steps.set_outputs.outputs.runIntegrationTests }}
           echo outputs.firebase_cpp_sdk_version : ${{ steps.set_outputs.outputs.firebase_cpp_sdk_version }}
           echo outputs.unity_branch : ${{ steps.set_outputs.outputs.unity_branch }}
           echo outputs.additional_cmake_flags : ${{ steps.set_outputs.outputs.additional_cmake_flags }}
@@ -222,7 +244,7 @@ jobs:
     if: (needs.check_and_prepare.outputs.should_trigger_package == 'true') && !cancelled() && !failure()
     with:
       release_label: ${{ needs.check_and_prepare.outputs.release_label }}
-      skipIntegrationTests: ${{ needs.check_and_prepare.outputs.skipIntegrationTests }}
+      runIntegrationTests: ${{ needs.check_and_prepare.outputs.runIntegrationTests }}
       build_run_id: ${{ github.run_id }}
       working_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
       platforms: ${{ needs.check_and_prepare.outputs.platform }}

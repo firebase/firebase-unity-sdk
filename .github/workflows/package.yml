@@ -4,10 +4,10 @@ name: Package SDKs
 on:
   workflow_call:
     inputs:
-      skipIntegrationTests:
-        description: 'skip integration tests?'
+      runIntegrationTests:
+        description: 'run integration tests?'
         default: '0'
-        required: false
+        required: true
         type: string
       create_new_branch:
         description: 'Check if we need to create new branch to package guids update. If working_branch set, will ignore this value. '
@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
     outputs:
-      skipIntegrationTests: ${{ steps.decide_input.outputs.skipIntegrationTests }}
+      runIntegrationTests: ${{ steps.decide_input.outputs.runIntegrationTests }}
       platforms: ${{ steps.decide_input.outputs.platforms }}
       apis: ${{ steps.decide_input.outputs.apis }}
     steps:
@@ -59,7 +59,7 @@ jobs:
         run: |
           # Triggered by callable
           echo "::set-output name=workflow_conclusion::in_progress" 
-          echo "::set-output name=skipIntegrationTests::${{ inputs.skipIntegrationTests }}"
+          echo "::set-output name=runIntegrationTests::${{ inputs.runIntegrationTests }}"
           echo "::set-output name=create_new_branch::${{ inputs.create_new_branch }}"
           echo "::set-output name=release_label::${{ inputs.release_label }}"
           echo "::set-output name=working_branch::${{ inputs.working_branch }}"
@@ -75,7 +75,7 @@ jobs:
         shell: bash
         run: |
           echo workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
-          echo skipIntegrationTests: ${{ steps.decide_input.outputs.skipIntegrationTests }}
+          echo runIntegrationTests: ${{ steps.decide_input.outputs.runIntegrationTests }}
           echo create_new_branch: ${{ steps.decide_input.outputs.create_new_branch }}
           echo release_label: ${{ steps.decide_input.outputs.release_label }}
           echo working_branch: ${{ steps.decide_input.outputs.working_branch }}
@@ -266,7 +266,7 @@ jobs:
   trigger_integration_tests:
     # Trigger the integration_tests workflow.
     needs: [package_sdks]
-    if: (needs.package_sdks.outputs.skipIntegrationTests == '0') && !cancelled() && !failure()
+    if: (needs.package_sdks.outputs.runIntegrationTests != '0') && !cancelled() && !failure()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
@@ -292,10 +292,6 @@ jobs:
       shell: bash
       run: |
         pip install -r scripts/gha/requirements.txt
-        if [[ "${{ github.event_name }}" == "schedule" ]]; then
-          # reuse flag --test_pull_request=nightly-packaging to generate report
-          generate_report=(-p test_pull_request nightly-packaging)
-        fi
         set -e
         python scripts/gha/trigger_workflow.py \
           -t ${{ steps.generate-token.outputs.token }} \
@@ -303,4 +299,5 @@ jobs:
           -p packaged_sdk_run_id ${{ github.run_id }} \
           -p platforms ${{ needs.package_sdks.outputs.platforms }} \
           -p apis ${{ needs.package_sdks.outputs.apis }} \
+          -p test_pull_request ${{ needs.package_sdks.outputs.runIntegrationTests }} \
           -s 10 -A -v
