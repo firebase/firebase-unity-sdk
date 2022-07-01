@@ -72,8 +72,12 @@ jobs:
           ruby-version: 3.0.2
 
       - name: Install Unity installer (U3D)
-        shell: bash
-        run: gem install u3d -v 1.2.3
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          shell: bash
+          command: gem install u3d -v 1.2.3
 
       - name: Setup python
         uses: actions/setup-python@v2
@@ -101,9 +105,13 @@ jobs:
           choco install openssl -r
 
       - name: Install Unity
-        shell: bash
-        run: |
-          python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
+        uses: nick-invision/retry@v2
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          shell: bash
+          command: |
+            python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
 
       - name: Setup Unity path
         shell: bash
@@ -114,6 +122,7 @@ jobs:
           echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
       
       - name: Build SDK (Windows)
+        timeout-minutes: 90
         shell: bash
         run: |
           # TODO add handling cmake_extras
