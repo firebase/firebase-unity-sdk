@@ -293,8 +293,7 @@ jobs:
       run: |
         pip install -r scripts/gha/requirements.txt
         set -e
-        python scripts/gha/trigger_workflow.py \
-          -t ${{ steps.generate-token.outputs.token }} \
+        python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} \
           -w integration_tests.yml \
           -p packaged_sdk_run_id ${{ github.run_id }} \
           -p platforms ${{ needs.package_sdks.outputs.platforms }} \

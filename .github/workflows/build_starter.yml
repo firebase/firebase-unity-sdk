@@ -23,8 +23,8 @@ on:
         default: ''
         required: false
       platforms:
-        description: 'CSV of Android,iOS,Windows,macOS,Linux'
-        default: 'Android,iOS,Windows,macOS,Linux'
+        description: 'Test Platforms of Android,iOS,Windows,macOS,Linux,Playmode'
+        default: 'Android,iOS,Windows,macOS,Linux,Playmode'
         required: true
       apis:
         description: 'CSV of apis to build and test'
