@@ -71,27 +71,32 @@ jobs:
     - id: set_outputs
       run: |
         if [[ "${{ github.event.inputs.test_pull_request }}" == *"label-quick-packaging" ]]; then
-          # Triggered by packaging SDK workflow.
+          # Triggered by build_starter SDK workflow.
           echo "::set-output name=trigger::label_trigger"
           echo "::set-output name=requested_tests::auto"
           echo "::set-output name=github_ref::${{github.sha}}"
           echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == *"label-full-packaging" ]]; then
-          # Triggered by packaging SDK workflow.
+          # Triggered by build_starter SDK workflow.
           echo "::set-output name=trigger::label_trigger"
           echo "::set-output name=requested_tests::expanded"
           echo "::set-output name=github_ref::${{github.sha}}"
           echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == *"pr-close-packaging" ]]; then
-          # Triggered by packaging SDK workflow.
+          # Triggered by build_starter SDK workflow.
           echo "::set-output name=trigger::postsubmit_trigger"
           echo "::set-output name=requested_tests::auto"
           echo "::set-output name=github_ref::${{github.sha}}"
           echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == "nightly-packaging" ]]; then
-          # Triggered by packaging SDK workflow.
+          # Triggered by build_starter SDK workflow.
           echo "::set-output name=trigger::scheduled_trigger"
           echo "::set-output name=requested_tests::expanded"
+          echo "::set-output name=github_ref::${{github.sha}}"
+        elif [[ "${{ github.event.inputs.test_pull_request }}" == "1" ]]; then
+          # Triggered by build_starter SDK workflow.
+          echo "::set-output name=trigger::manual_trigger"
+          echo "::set-output name=requested_tests::auto"
           echo "::set-output name=github_ref::${{github.sha}}"
         else
           # Triggered manually

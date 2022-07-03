@@ -6,7 +6,7 @@ on:
     inputs:
       runIntegrationTests:
         description: 'run integration tests?'
-        default: '0'
+        default: '1'
         required: true
         type: string
       create_new_branch:
