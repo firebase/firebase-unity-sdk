@@ -265,13 +265,16 @@ jobs:
       with:
         app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
         private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+    - name: Get branch name
+      id: branch-name
+      uses: tj-actions/branch-names@v5.4
     - name: Use GitHub API to start workflow
       shell: bash
       run: |
         pip install -r scripts/gha/requirements.txt
         set -e
         python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} \
-          -b ${{ github.ref_name }} \
+          -b ${{ steps.branch-name.outputs.current_branch }} \
           -w integration_tests.yml \
           -p packaged_sdk_run_id ${{ github.run_id }} \
           -p platforms ${{ inputs.platforms }} \

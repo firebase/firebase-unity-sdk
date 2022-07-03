@@ -73,29 +73,26 @@ jobs:
         if [[ "${{ github.event.inputs.test_pull_request }}" == *"label-quick-packaging" ]]; then
           # Triggered by packaging SDK workflow.
           echo "::set-output name=trigger::label_trigger"
-          pr_number = $(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)
-          echo "::set-output name=github_ref::github_ref::refs/pull/${{pr_number}}/merge"
-          echo "::set-output name=pr_number::${{pr_number}}"
           echo "::set-output name=requested_tests::auto"
+          echo "::set-output name=github_ref::${{github.event.pull_request.head.sha}}"
+          echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == *"label-full-packaging" ]]; then
           # Triggered by packaging SDK workflow.
           echo "::set-output name=trigger::label_trigger"
-          pr_number = $(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)
-          echo "::set-output name=github_ref::github_ref::refs/pull/${{pr_number}}/merge"
-          echo "::set-output name=pr_number::${{pr_number}}"
           echo "::set-output name=requested_tests::expanded"
+          echo "::set-output name=github_ref::${{github.event.pull_request.head.sha}}"
+          echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == *"pr-close-packaging" ]]; then
           # Triggered by packaging SDK workflow.
           echo "::set-output name=trigger::postsubmit_trigger"
-          pr_number = $(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)
-          echo "::set-output name=github_ref::github_ref::refs/pull/${{pr_number}}/merge"
-          echo "::set-output name=pr_number::${{pr_number}}"
           echo "::set-output name=requested_tests::auto"
+          echo "::set-output name=github_ref::${{github.event.pull_request.head.sha}}"
+          echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == "nightly-packaging" ]]; then
           # Triggered by packaging SDK workflow.
           echo "::set-output name=trigger::scheduled_trigger"
-          echo "::set-output name=github_ref::$GITHUB_SHA"
           echo "::set-output name=requested_tests::expanded"
+          echo "::set-output name=github_ref::${{github.event.pull_request.head.sha}}"
         else
           # Triggered manually
           echo "::set-output name=trigger::manual_trigger"
@@ -104,7 +101,7 @@ jobs:
           fi
           if [[ -z "${{github.event.inputs.test_pull_request}}" ]]; then
             # test_pull_request not specified
-            echo "::set-output name=github_ref::$GITHUB_SHA"
+            echo "::set-output name=github_ref::${{github.sha}}"
           elif [[ "${{github.event.inputs.test_pull_request}}" == *:* ]]; then
             # If specified as pr:commit_hash, split them.
             echo "::set-output name=github_ref::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f2)"
