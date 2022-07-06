@@ -244,7 +244,7 @@ jobs:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.packaged_sdk_run_id }}
       - name: Build integration tests
-        timeout-minutes: 180
+        timeout-minutes: 240
         shell: bash
         run: |
           unzip -q firebase_unity_sdk.zip -d ~/Downloads/
