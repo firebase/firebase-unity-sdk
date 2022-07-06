@@ -4,10 +4,10 @@ name: Package SDKs
 on:
   workflow_call:
     inputs:
-      skipIntegrationTests:
-        description: 'skip integration tests?'
-        default: '0'
-        required: false
+      runIntegrationTests:
+        description: 'run integration tests?'
+        default: '1'
+        required: true
         type: string
       create_new_branch:
         description: 'Check if we need to create new branch to package guids update. If working_branch set, will ignore this value. '
@@ -48,50 +48,27 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-    outputs:
-      skipIntegrationTests: ${{ steps.decide_input.outputs.skipIntegrationTests }}
-      platforms: ${{ steps.decide_input.outputs.platforms }}
-      apis: ${{ steps.decide_input.outputs.apis }}
     steps:
-      - name: Decide inputs
-        id: decide_input
-        shell: bash
-        run: |
-          # Triggered by callable
-          echo "::set-output name=workflow_conclusion::in_progress" 
-          echo "::set-output name=skipIntegrationTests::${{ inputs.skipIntegrationTests }}"
-          echo "::set-output name=create_new_branch::${{ inputs.create_new_branch }}"
-          echo "::set-output name=release_label::${{ inputs.release_label }}"
-          echo "::set-output name=working_branch::${{ inputs.working_branch }}"
-          echo "::set-output name=download_android_run::${{ inputs.build_run_id }}"
-          echo "::set-output name=download_ios_run::${{ inputs.build_run_id }}"
-          echo "::set-output name=download_linux_run::${{ inputs.build_run_id }}"
-          echo "::set-output name=download_macos_run::${{ inputs.build_run_id }}"
-          echo "::set-output name=download_windows_run::${{ inputs.build_run_id }}"
-          echo "::set-output name=platforms::${{ inputs.platforms }}"
-          echo "::set-output name=apis::${{ inputs.apis }}"
-
       - name: Print inputs
         shell: bash
         run: |
-          echo workflow_conclusion: ${{ steps.decide_input.outputs.workflow_conclusion }}
-          echo skipIntegrationTests: ${{ steps.decide_input.outputs.skipIntegrationTests }}
-          echo create_new_branch: ${{ steps.decide_input.outputs.create_new_branch }}
-          echo release_label: ${{ steps.decide_input.outputs.release_label }}
-          echo working_branch: ${{ steps.decide_input.outputs.working_branch }}
-          echo download_android_run: ${{ steps.decide_input.outputs.download_android_run }}
-          echo download_ios_run: ${{ steps.decide_input.outputs.download_ios_run }}
-          echo download_linux_run: ${{ steps.decide_input.outputs.download_linux_run }}
-          echo download_macos_run: ${{ steps.decide_input.outputs.download_macos_run }}
-          echo download_windows_run: ${{ steps.decide_input.outputs.download_windows_run }}
-          echo platforms: ${{ steps.decide_input.outputs.platforms }}"
-          echo apis: ${{ steps.decide_input.outputs.apis }}"
+          echo runIntegrationTests: ${{ inputs.runIntegrationTests }}
+          echo create_new_branch: ${{ inputs.create_new_branch }}
+          echo release_label: ${{ inputs.release_label }}
+          echo working_branch: ${{ inputs.working_branch }}
+          echo download_android_run: ${{ inputs.download_android_run }}
+          echo download_ios_run: ${{ inputs.download_ios_run }}
+          echo download_linux_run: ${{ inputs.download_linux_run }}
+          echo download_macos_run: ${{ inputs.download_macos_run }}
+          echo download_windows_run: ${{ inputs.download_windows_run }}
+          echo platforms: ${{ inputs.platforms }}"
+          echo apis: ${{ inputs.apis }}"
 
       - name: Check out base branch
         uses: actions/checkout@v2.3.1
         with:
           fetch-depth: 0
-          ref: ${{ steps.decide_input.outputs.working_branch }}
+          ref: ${{ inputs.working_branch }}
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -117,25 +94,25 @@ jobs:
           private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
 
       - name: Name new branch
-        if: steps.decide_input.outputs.working_branch == '' && steps.decide_input.outputs.create_new_branch == '1'
+        if: inputs.working_branch == '' && inputs.create_new_branch == '1'
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
           echo "NEW_BRANCH=new_branch-${date_str}" >> $GITHUB_ENV
 
       - name: Create new branch
-        if: steps.decide_input.outputs.working_branch == '' && steps.decide_input.outputs.create_new_branch == '1'
+        if: inputs.working_branch == '' && inputs.create_new_branch == '1'
         run: |
           git remote update
           git checkout -b "${NEW_BRANCH}"
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
 
       - name: Checkout working branch
-        if: steps.decide_input.outputs.working_branch != ''
+        if: inputs.working_branch != ''
         run: |
           git remote update
-          git checkout ${{ steps.decide_input.outputs.working_branch }}
+          git checkout ${{ inputs.working_branch }}
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
-          echo "NEW_BRANCH=${{ steps.decide_input.outputs.working_branch }}" >> $GITHUB_ENV
+          echo "NEW_BRANCH=${{ inputs.working_branch }}" >> $GITHUB_ENV
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
       - name: Fetch All in build_starter
@@ -161,7 +138,7 @@ jobs:
           python scripts/build_scripts/build_package.py --zip_dir=built_artifact
 
       - name: Commit Changes if there is any
-        if: steps.decide_input.outputs.working_branch != '' || steps.decide_input.outputs.create_new_branch == '1'
+        if: inputs.working_branch != '' || inputs.create_new_branch == '1'
         run: |
           if ! git update-index --refresh; then
             git config user.email "firebase-workflow-trigger-bot@google.com"
@@ -176,7 +153,7 @@ jobs:
           fi
 
       - name: Create PR if there is None
-        if: steps.decide_input.outputs.working_branch != '' || steps.decide_input.outputs.create_new_branch == '1'
+        if: inputs.working_branch != '' || inputs.create_new_branch == '1'
         id: push-branch
         run: |
           if ! git update-index --refresh; then
@@ -266,7 +243,7 @@ jobs:
   trigger_integration_tests:
     # Trigger the integration_tests workflow.
     needs: [package_sdks]
-    if: (needs.package_sdks.outputs.skipIntegrationTests == '0') && !cancelled() && !failure()
+    if: (inputs.runIntegrationTests != '0') && !cancelled() && !failure()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
@@ -288,19 +265,19 @@ jobs:
       with:
         app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
         private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+    - name: Get branch name
+      id: branch-name
+      uses: tj-actions/branch-names@v5.4
     - name: Use GitHub API to start workflow
       shell: bash
       run: |
         pip install -r scripts/gha/requirements.txt
-        if [[ "${{ github.event_name }}" == "schedule" ]]; then
-          # reuse flag --test_pull_request=nightly-packaging to generate report
-          generate_report=(-p test_pull_request nightly-packaging)
-        fi
         set -e
-        python scripts/gha/trigger_workflow.py \
-          -t ${{ steps.generate-token.outputs.token }} \
+        python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} \
+          -b ${{ steps.branch-name.outputs.current_branch }} \
           -w integration_tests.yml \
           -p packaged_sdk_run_id ${{ github.run_id }} \
-          -p platforms ${{ needs.package_sdks.outputs.platforms }} \
-          -p apis ${{ needs.package_sdks.outputs.apis }} \
+          -p platforms ${{ inputs.platforms }} \
+          -p apis ${{ inputs.apis }} \
+          -p test_pull_request ${{ inputs.runIntegrationTests }} \
           -s 10 -A -v

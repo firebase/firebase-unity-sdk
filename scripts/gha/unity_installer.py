@@ -83,7 +83,7 @@ from absl import logging
 from print_matrix_configuration import UNITY_SETTINGS
 
 
-FLAGS = flags.FLAGS
+_CMD_TIMEOUT = 600
 
 _DEFALUT = "Default"
 _ANDROID = "Android"
@@ -92,6 +92,8 @@ _WINDOWS = "Windows"
 _MACOS = "macOS"
 _LINUX = "Linux"
 _SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _WINDOWS, _MACOS, _LINUX)
+
+FLAGS = flags.FLAGS
 
 # These are the three actions supported by the tool.
 flags.DEFINE_bool(
@@ -258,9 +260,10 @@ def get_unity_path(version):
     raise RuntimeError("Only Windows and MacOS are supported.")
 
 
-def run(args, check=True):
+def run(args, check=True, timeout=_CMD_TIMEOUT):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
-  subprocess.run(args=args, check=check)
+  logging.info("run cmd: %s", " ".join(args))
+  subprocess.run(args=args, check=check, timeout=timeout)
 
 
 if __name__ == "__main__":
