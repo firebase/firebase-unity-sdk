@@ -103,6 +103,12 @@ endif()
 
 unity_pack_cs(firebase_crashlytics_cs)
 
+# Crashlytics has a special file to prevent il2cpp from stripping symbols.
+unity_pack_file(
+  "link.xml"
+  PACK_PATH "Firebase/Plugins/Crashlytics"
+)
+
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Crashlytics
     IOS_DEPS
