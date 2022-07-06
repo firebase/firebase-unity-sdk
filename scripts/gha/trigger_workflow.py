@@ -67,12 +67,10 @@ def main():
   workflows = github.list_workflows(args.token, args.workflow, args.branch)
   run_id = 0
   if "workflow_runs" in workflows:
-    branch_sha = subprocess.check_output(['git', 'rev-parse', args.branch]).decode('utf-8').rstrip('\n')
     for workflow in workflows['workflow_runs']:
       # Use a heuristic to get the new workflow's run ID.
-      # Must match the branch name and commit sha, and be queued/in progress.
+      # Must match the branch name, and be queued/in progress.
       if (workflow['status'] in ('queued', 'in_progress') and
-          workflow['head_sha'] == branch_sha and
           workflow['head_branch'] == args.branch):
         run_id = workflow['id']
         break
