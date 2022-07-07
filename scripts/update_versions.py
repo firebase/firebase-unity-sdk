@@ -190,7 +190,7 @@ def update_unity_version(unity_sdk_version):
         newline = "set(FIREBASE_UNITY_JAR_RESOLVER_VERSION \"" + jar_version + "\""
         replacement = replacement + newline + "\n"
       elif "FIREBASE_CPP_SDK_PRESET_VERSION" in line:
-        cpp_version = get_latest_repo_tag('firebase/firebase-cpp-sdk')
+        cpp_version = "97b34aa964a4db5da6b4b42e450cacac9d17b39a"
         newline = "set(FIREBASE_CPP_SDK_PRESET_VERSION \"" + cpp_version + "\""
         replacement = replacement + newline + "\n"
       else:

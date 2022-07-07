@@ -27,7 +27,7 @@ set(FIREBASE_UNITY_JAR_RESOLVER_VERSION "1.2.172"
 )
 
 # https://github.com/firebase/firebase-cpp-sdk
-set(FIREBASE_CPP_SDK_PRESET_VERSION "v9.2.0"
+set(FIREBASE_CPP_SDK_PRESET_VERSION "97b34aa964a4db5da6b4b42e450cacac9d17b39a"
    CACHE STRING
   "Version tag of Firebase CPP SDK to download (if no local or not passed in) and use (no trailing .0)"
 )
