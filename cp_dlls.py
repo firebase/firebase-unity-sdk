@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 %s <src_dir> <dest_dir> [dest_dir2, [dest_dir3, ...]] [flags]
 

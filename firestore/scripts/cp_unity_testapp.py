@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Copies the Unity Firestore testapp from the Firebase Unity SDK GitHub repository
 into another directory and tweaks its structure and configuration to suit local
