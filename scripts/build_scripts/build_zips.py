@@ -373,7 +373,6 @@ def get_windows_args():
   result_args = []
   result_args.append('-G Visual Studio 16 2019')
   result_args.append('-A x64') # TODO flexibily for x32
-  result_args.append("-DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=%s" % sys.executable)
   return result_args
 
 def get_macos_args():
@@ -558,6 +557,7 @@ def main(argv):
     "-DFIREBASE_INCLUDE_UNITY=ON",
     "-DFIREBASE_UNITY_BUILD_TESTS=ON",
     "-DFIREBASE_CPP_BUILD_STUB_TESTS=ON",
+    "-DFIREBASE_PYTHON_EXECUTABLE:FILEPATH=%s" % sys.executable,
   ])
 
   unity_root_args = get_unity_engine_folder_args(FLAGS.unity_root)
