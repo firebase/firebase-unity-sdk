@@ -105,6 +105,8 @@ namespace Firebase.Sample.Firestore {
         TestTransactionsInParallel,
         // Waiting for all retries is slow, so we usually leave this test disabled.
         // TestTransactionMaxRetryFailure,
+        TestTransactionOptions,
+        TestTransactionWithExplicitMaxAttempts,
         TestSetOptions,
         TestCanTraverseCollectionsAndDocuments,
         TestCanTraverseCollectionAndDocumentParents,
@@ -1096,6 +1098,43 @@ namespace Firebase.Sample.Firestore {
       });
     }
 
+    Task TestTransactionOptions() {
+      return Async(() => {
+        // Verify the initial values of a newly-created TransactionOptions object.
+        {
+          var options = new TransactionOptions();
+          AssertEq(options.MaxAttempts, 5);
+        }
+
+        // Verify that setting TransactionOptions.MaxAttempts works.
+        {
+          var options = new TransactionOptions();
+          options.MaxAttempts = 1;
+          AssertEq(options.MaxAttempts, 1);
+          options.MaxAttempts = 42;
+          AssertEq(options.MaxAttempts, 42);
+          options.MaxAttempts = Int32.MaxValue;
+          AssertEq(options.MaxAttempts, Int32.MaxValue);
+        }
+
+        // Verify that setting TransactionOptions.MaxAttempts throws on invalid value.
+        {
+          var options = new TransactionOptions();
+          AssertException(typeof(ArgumentException), () => { options.MaxAttempts = 0; });
+          AssertException(typeof(ArgumentException), () => { options.MaxAttempts = -1; });
+          AssertException(typeof(ArgumentException), () => { options.MaxAttempts = -42; });
+          AssertException(typeof(ArgumentException), () => { options.MaxAttempts = Int32.MinValue; });
+        }
+
+        // Verify that TransactionOptions.ToString() returns the right value.
+        {
+          var options = new TransactionOptions();
+          options.MaxAttempts = 42;
+          AssertEq(options.ToString(), "TransactionOptions{MaxAttempts=42}");
+        }
+      });
+    }
+
     // Tests the overload of RunTransactionAsync() where the update function returns a non-generic
     // Task object.
     Task TestTransactionWithNonGenericTask() {
@@ -1436,6 +1475,28 @@ namespace Firebase.Sample.Firestore {
       });
     }
 
+    Task TestTransactionWithExplicitMaxAttempts() {
+      return Async(() => {
+        var options = new TransactionOptions();
+        options.MaxAttempts = 3;
+        int numAttempts = 0;
+        DocumentReference doc = TestDocument();
+
+        Task txnTask = db.RunTransactionAsync(options, transaction => {
+          numAttempts++;
+          return transaction.GetSnapshotAsync(doc).ContinueWith(snapshot => {
+            // Queue a write via the transaction.
+            transaction.Set(doc, TestData(0));
+            // But also write the document (out-of-band) so the transaction is retried.
+            return doc.SetAsync(TestData(numAttempts));
+          }).Unwrap();
+        });
+
+        AssertTaskFaults(txnTask, FirestoreError.FailedPrecondition);
+        AssertEq(numAttempts, 3);
+      });
+    }
+
     Task TestTransactionMaxRetryFailure() {
       return Async(() => {
         int retries = 0;
@@ -1708,9 +1769,9 @@ namespace Firebase.Sample.Firestore {
 
     /*
     Anonymous authentication must be enabled for TestAuthIntegration to pass.
-    
+
     Also, the following security rules are required for TestAuthIntegrationt to pass:
-    
+
     rules_version='2'
     service cloud.firestore {
       match /databases/{database}/documents {

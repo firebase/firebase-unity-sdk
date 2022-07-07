@@ -177,6 +177,7 @@ class TransactionManagerInternal
   }
 
   Future<void> RunTransaction(int32_t callback_id,
+                              TransactionOptions options,
                               TransactionCallbackFn callback_fn) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (is_disposed_) {
@@ -184,16 +185,17 @@ class TransactionManagerInternal
     }
 
     auto shared_this = shared_from_this();
-    return firestore_->RunTransaction([shared_this, callback_id, callback_fn](
-                                          Transaction& transaction,
-                                          std::string& error_message) {
-      if (shared_this->ExecuteCallback(callback_id, callback_fn, transaction)) {
-        return Error::kErrorOk;
-      } else {
-        // Return a non-retryable error code.
-        return Error::kErrorInvalidArgument;
+    return firestore_->RunTransaction(
+      options,
+      [shared_this, callback_id, callback_fn](Transaction& transaction, std::string& error_message) {
+        if (shared_this->ExecuteCallback(callback_id, callback_fn, transaction)) {
+          return Error::kErrorOk;
+        } else {
+          // Return a non-retryable error code.
+          return Error::kErrorInvalidArgument;
+        }
       }
-    });
+    );
   }
 
  private:
@@ -271,14 +273,15 @@ void TransactionManager::Dispose() {
 }
 
 Future<void> TransactionManager::RunTransaction(
-    int32_t callback_id, TransactionCallbackFn callback_fn) {
+    int32_t callback_id, TransactionOptions options,
+    TransactionCallbackFn callback_fn) {
   // Make a local copy of `internal_` since it could be reset asynchronously
   // by a call to `Dispose()`.
   std::shared_ptr<TransactionManagerInternal> internal_local = internal_;
   if (!internal_local) {
     return {};
   }
-  return internal_local->RunTransaction(callback_id, callback_fn);
+  return internal_local->RunTransaction(callback_id, options, callback_fn);
 }
 
 void TransactionCallback::OnCompletion(bool callback_successful) {
