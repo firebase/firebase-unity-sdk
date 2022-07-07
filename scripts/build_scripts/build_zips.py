@@ -345,7 +345,7 @@ def make_android_multi_arch_build(cmake_args, merge_script):
             temporary_dir, "**", "*"+srcaar_name), recursive=True)
         if matching_files:
           merge_args = [
-              "python",
+              sys.executable,
               merge_script,
               "--inputs=" + srcaar_file,
               "--inputs=" + matching_files[0],
