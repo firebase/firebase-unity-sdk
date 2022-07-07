@@ -45,7 +45,9 @@ function(build_aar LIBRARY_NAME LIBRARY_TARGET PROGUARD_TARGET
 
   add_custom_command(
     OUTPUT "${OUTPUT_AAR}"
-    COMMAND python "${FIREBASE_SOURCE_DIR}/aar_builder/build_aar.py"
+    COMMAND
+      "${FIREBASE_PYTHON_EXECUTABLE}"
+      "${FIREBASE_SOURCE_DIR}/aar_builder/build_aar.py"
       "--output_file=${OUTPUT_AAR}"
       "--library_file=$<TARGET_FILE:${LIBRARY_TARGET}>"
       "--architecture=${ANDROID_ABI}"

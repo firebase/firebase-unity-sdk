@@ -88,6 +88,24 @@ if (NOT FIREBASE_ANDROID_STL STREQUAL "")
   set(ANDROID_STL ${FIREBASE_ANDROID_STL})
 endif()
 
+if(${CMAKE_VERSION} VERSION_LESS "3.12")
+  include(FindPythonInterp)
+  set(DEFAULT_FIREBASE_PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE}")
+else()
+  find_package(Python3 COMPONENTS Interpreter REQUIRED)
+  set(DEFAULT_FIREBASE_PYTHON_EXECUTABLE "${Python3_EXECUTABLE}")
+endif()
+
+set(
+  FIREBASE_PYTHON_EXECUTABLE
+  "${DEFAULT_FIREBASE_PYTHON_EXECUTABLE}"
+  CACHE
+  FILEPATH
+  "The Python interpreter to use, such as one from a venv"
+)
+
+message(STATUS "Using FIREBASE_PYTHON_EXECUTABLE: ${FIREBASE_PYTHON_EXECUTABLE}")
+
 # UseSWIG generates standard target names.
 cmake_policy(SET CMP0078 NEW)
 
