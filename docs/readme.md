@@ -157,6 +157,7 @@ Release Notes
 -------------
 ### 9.2.0
 - Changes
+    - Crashlytics: Fix requiring user code to reference Crashlytics when using il2cpp.
     - Firestore: Added `TransactionOptions` to control how many times a
       transaction will retry commits before failing
       ([#318](https://github.com/firebase/firebase-unity-sdk/pull/318)).
