@@ -74,7 +74,7 @@ namespace Firebase.Sample.Storage {
     // Path to non-existant file.
     private string NON_EXISTANT_FILE_PATH = "this_is_a/path_to_a/non_existant_file.txt";
     // Time to wait before canceling an operation.
-    private float CANCELATION_DELAY_SECONDS = 0.2f;
+    private float CANCELATION_DELAY_SECONDS = 0.1f;
 
     // Content type for text file uploads
     const string ContentTypePlainText = "text/plain";
@@ -242,6 +242,26 @@ namespace Firebase.Sample.Storage {
         taskCompletionSource.SetException(exception);
       }
       return taskCompletionSource.Task;
+    }
+
+    private Task RetryFlakyTest(Func<Task> testToRun, int attempts = 3) {
+      Task toReturn = null;
+      for (int i = 0; i < attempts; i++) {
+        if (i > 0) {
+          DebugLog("Retrying a Flaky Test, Attempt #" + i);
+        }
+        try {
+          toReturn = testToRun();
+          if (!toReturn.IsFaulted) {
+            return toReturn;
+          }
+        } catch (Exception e) {
+          if (i == attempts - 1) {
+            throw e;
+          }
+        }
+      }
+      return toReturn;
     }
 
     // Make sure it's possible to create and tear down storage instances.
@@ -778,25 +798,31 @@ namespace Firebase.Sample.Storage {
 
     // Start uploading from a byte array and cancel the upload.
     Task TestUploadBytesWithCancelation() {
-      var task = UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
-                                           MetadataTestMode.Both, UploadBytes, ValidateTaskCanceled);
-      CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS);
-      return task;
+      return RetryFlakyTest(() => {
+        var task = UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
+                                             MetadataTestMode.Both, UploadBytes, ValidateTaskCanceled);
+        CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS);
+        return task;
+      });
     }
 
     // Start uploading with a stream and cancel the upload.
     Task TestUploadStreamWithCancelation() {
-      var task = UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
-                                           MetadataTestMode.Both, UploadStream, ValidateTaskCanceled);
-      CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS);
-      return task;
+      return RetryFlakyTest(() => {
+        var task = UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
+                                            MetadataTestMode.Both, UploadStream, ValidateTaskCanceled);
+        CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS);
+        return task;
+      });
     }
 
     // Start uploading from a file and cancel the upload.
     Task TestUploadFromFileWithCancelation() {
-      var task = UploadFromFileToPath(LARGE_FILE_PATH, LARGE_FILE_CONTENTS, ValidateTaskCanceled);
-      CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS);
-      return task;
+      return RetryFlakyTest(() => {
+        var task = UploadFromFileToPath(LARGE_FILE_PATH, LARGE_FILE_CONTENTS, ValidateTaskCanceled);
+        CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS);
+        return task;
+      });
     }
 
     // Upload small file and retrieve a download URL.
@@ -998,9 +1024,9 @@ namespace Firebase.Sample.Storage {
 
     // Upload a large file, start downloading then cancel.
     Task TestUploadLargeFileAndDownloadWithCancelation() {
-      return UploadAndDownloadAsByteArray(
+      return RetryFlakyTest(() => UploadAndDownloadAsByteArray(
           LARGE_FILE_PATH, LARGE_FILE_CONTENTS, ValidateTaskCanceled,
-          predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); });
+          predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); }));
     }
 
     // Validate the result of a stream download operation.
@@ -1060,9 +1086,9 @@ namespace Firebase.Sample.Storage {
 
     // Upload a large file, start downloading using a stream callback then cancel.
     Task TestUploadLargeFileAndDownloadUsingStreamCallbackWithCancelation() {
-      return UploadAndDownloadUsingStreamCallback(
+      return RetryFlakyTest(() => UploadAndDownloadUsingStreamCallback(
           LARGE_FILE_PATH, LARGE_FILE_CONTENTS, ValidateTaskCanceled,
-          predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); });
+          predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); }));
     }
 
     // Validate the result of a file download operation.
@@ -1134,9 +1160,9 @@ namespace Firebase.Sample.Storage {
 
     // Upload a large file, start to download to a file then cancel.
     Task TestUploadLargeFileAndDownloadToFileWithCancelation() {
-      return UploadAndDownloadToFile(
+      return RetryFlakyTest(() => UploadAndDownloadToFile(
           LARGE_FILE_PATH, LARGE_FILE_CONTENTS, ValidateTaskCanceled,
-          predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); });
+          predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); }));
     }
 
     // TODO(smiles): Upload and attempt to partially download a file.
