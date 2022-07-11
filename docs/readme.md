@@ -161,6 +161,11 @@ Release Notes
     - Firestore: Added `TransactionOptions` to control how many times a
       transaction will retry commits before failing
       ([#318](https://github.com/firebase/firebase-unity-sdk/pull/318)).
+    - Database (Desktop): If the app data directory doesn't exist, create it.
+      This fixes an issue with disk persistence on Linux.
+    - Messaging (Android): Make sure all the resources are closed in
+      `RegistrationIntentService`.
+      ([#973](https://github.com/firebase/firebase-cpp-sdk/issues/973)).
 
 ### 9.1.0
 - Changes
