@@ -182,5 +182,5 @@ jobs:
             # Triggered by callable
             echo "::set-output name=new_branch::${{ steps.name-branch.outputs.new_branch }}"
           else
-            echo "::set-output name=new_branch::''"
+            echo "::set-output name=new_branch::"
           fi
