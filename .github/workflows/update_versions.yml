@@ -48,7 +48,7 @@ jobs:
   update_versions:
     name: update-version
     outputs:
-      new_branch: ${{ steps.name-branch.outputs.new_branch }}
+      new_branch: ${{ steps.decide-output.outputs.new_branch }}
       cpp_release_version: ${{ steps.decide_input.outputs.cpp_release_version }}
     runs-on: ubuntu-latest
     strategy:
@@ -173,4 +173,14 @@ jobs:
           else
             echo "::warning ::No changes detected, won't create pull request."
             echo "::set-output name=branch_pushed::0"
+          fi
+
+      - name: Decide output
+        id: decide-output
+        run: |
+          if [[ "${{ steps.push-branch.outputs.branch_pushed }}" == "1" ]]; then
+            # Triggered by callable
+            echo "::set-output name=new_branch::${{ steps.name-branch.outputs.new_branch }}"
+          else
+            echo "::set-output name=new_branch::''"
           fi

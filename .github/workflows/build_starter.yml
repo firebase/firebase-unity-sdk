@@ -219,7 +219,7 @@ jobs:
     with:
       unity_version: ${{ needs.check_and_prepare.outputs.unity_version }}
       firebase_cpp_sdk_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
-      unity_branch: ${{ needs.check_and_prepare.outputs.unity_branch }}
+      unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
       apis: ${{ needs.check_and_prepare.outputs.apis }}
       unity_platform_name: macOS,iOS
       additional_cmake_flags: ${{ needs.check_and_prepare.outputs.additional_cmake_flags }}
