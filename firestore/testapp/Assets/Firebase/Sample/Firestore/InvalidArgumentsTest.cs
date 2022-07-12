@@ -171,6 +171,14 @@ namespace Firebase.Sample.Firestore {
             name = "FirebaseFirestore_RunTransactionAsync_WithTypeParameter_NullCallback",
             action = FirebaseFirestore_RunTransactionAsync_WithTypeParameter_NullCallback
           },
+          new InvalidArgumentsTestCase {
+            name = "FirebaseFirestore_RunTransactionAsync_WithoutTypeParameter_WithOptions_NullCallback",
+            action = FirebaseFirestore_RunTransactionAsync_WithoutTypeParameter_WithOptions_NullCallback
+          },
+          new InvalidArgumentsTestCase {
+            name = "FirebaseFirestore_RunTransactionAsync_WithTypeParameter_WithOptions_NullCallback",
+            action = FirebaseFirestore_RunTransactionAsync_WithTypeParameter_WithOptions_NullCallback
+          },
           new InvalidArgumentsTestCase { name = "FirebaseFirestoreSettings_Host_Null",
                                          action = FirebaseFirestoreSettings_Host_Null },
           new InvalidArgumentsTestCase { name = "FirebaseFirestoreSettings_Host_EmptyString",
@@ -691,6 +699,36 @@ namespace Firebase.Sample.Firestore {
         UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
                               () => handler.db.RunTransactionAsync<object>(null));
+    }
+
+    private static void FirebaseFirestore_RunTransactionAsync_WithoutTypeParameter_WithOptions_NullCallback(
+        UIHandlerAutomated handler) {
+      var options = new TransactionOptions();
+      handler.AssertException(typeof(ArgumentNullException),
+                              () => handler.db.RunTransactionAsync(options, null));
+    }
+
+    private static void FirebaseFirestore_RunTransactionAsync_WithTypeParameter_WithOptions_NullCallback(
+        UIHandlerAutomated handler) {
+      var options = new TransactionOptions();
+      handler.AssertException(typeof(ArgumentNullException),
+                              () => handler.db.RunTransactionAsync<object>(options, null));
+    }
+
+    private static void FirebaseFirestore_RunTransactionAsync_WithoutTypeParameter_WithOptions_NullOptions(
+        UIHandlerAutomated handler) {
+      DocumentReference doc = handler.TestDocument();
+      handler.AssertException(typeof(ArgumentNullException),
+          () => handler.db.RunTransactionAsync(null, tx => tx.GetSnapshotAsync(doc)));
+    }
+
+    private static void FirebaseFirestore_RunTransactionAsync_WithTypeParameter_WithOptions_NullOptions(
+        UIHandlerAutomated handler) {
+      DocumentReference doc = handler.TestDocument();
+      handler.AssertException(typeof(ArgumentNullException),
+          () => handler.db.RunTransactionAsync<object>(null, tx => tx.GetSnapshotAsync(doc)
+              .ContinueWith(snapshot => new object()))
+      );
     }
 
     private static void FirebaseFirestoreSettings_Host_Null(UIHandlerAutomated handler) {
