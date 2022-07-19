@@ -139,6 +139,7 @@ def main(argv):
     raise app.UsageError("Too many command-line arguments.")
 
   if FLAGS.install:
+    uninstall_unity(FLAGS.version)
     install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
@@ -178,6 +179,17 @@ def install_unity(unity_version, platforms):
   run([u3d, "install", "--trace",
        "--verbose", unity_full_version,
        "-p", package_csv])
+  logging.info("Finished installing Unity.")
+
+
+def uninstall_unity(unity_version):
+  """Uninstalls Unity and build supports (packages)."""
+  # Cleaning up installed Unity.
+  os = get_os()
+  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+
+  u3d = find_u3d()
+  run([u3d, "install", "--trace", "--verbose", unity_full_version], check=False)
   logging.info("Finished installing Unity.")
 
 
