@@ -200,7 +200,6 @@ jobs:
           shell: bash
           command:  |
             gem install u3d -v 1.2.3
-            u3d available
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -396,7 +395,6 @@ jobs:
           shell: bash
           command:  |
             gem install u3d -v 1.2.3
-            u3d available
       - name: Setup python
         uses: actions/setup-python@v2
         with:
