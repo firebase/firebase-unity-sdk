@@ -30,6 +30,7 @@ endif()
 set(CPACK_GENERATOR "ZIP")
 set(CPACK_PACKAGE_VERSION "${FIREBASE_UNITY_SDK_VERSION}")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0) # DO NOT pack the root directory.
+set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 
 include(CPack)
 
@@ -362,5 +363,29 @@ function(unity_pack_folder folder)
   install(
     DIRECTORY ${folder}
     DESTINATION ${UNITY_PACK_PACK_PATH}
+  )
+endfunction()
+
+# Packs files intended for documentation, under the documentation component
+#
+# unity_pack_documentation_sources(<name>
+#                 DOCUMENTATION_SOURCES
+# )
+#
+# Args:
+#  name: Name of the subfolder to put it under
+#  DOCUMENTATION_SOURCES: Files to package
+#
+function(unity_pack_documentation_sources name)
+  set(multi DOCUMENTATION_SOURCES)
+  cmake_parse_arguments(UNITY_PACK "" "" "${multi}" ${ARGN})
+
+  message(WARNING "Documentation Packaging: ${UNITY_PACK_DOCUMENTATION_SOURCES}")
+
+  install(
+    FILES ${UNITY_PACK_DOCUMENTATION_SOURCES}
+    DESTINATION ${name}
+    COMPONENT documentation
+    EXCLUDE_FROM_ALL
   )
 endfunction()
