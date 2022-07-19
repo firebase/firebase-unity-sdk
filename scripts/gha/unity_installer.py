@@ -68,7 +68,7 @@ X4-XXXX-XXXX-XXXX-XXXX
 
 
 (3) License release:
-  unity_installer.py --release_license --version 2017.3.1f1 --logfile return.log
+  unity_installer.py --release_license --version 2019 --logfile return.log
 
 """
 
@@ -109,7 +109,7 @@ flags.DEFINE_bool(
     "release_license", False,
     "Release an activated Unity license. Supply --version and --logfile.")
 
-flags.DEFINE_string("version", None, "Version string, e.g. 2017.3.1f1")
+flags.DEFINE_string("version", None, "Major version string, e.g. 2018")
 flags.DEFINE_string("license_file", None, "Path to the license file.")
 flags.DEFINE_string("username", None, "username for a Unity account.")
 flags.DEFINE_string("password", None, "password for that Unity account.")
