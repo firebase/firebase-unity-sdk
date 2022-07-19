@@ -192,14 +192,16 @@ jobs:
       U3D_SKIP_UPDATE_CHECK: 1
     steps:
       - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.2
       - name: Install Unity installer (U3D)
         uses: nick-invision/retry@v2
         with:
           timeout_minutes: 10
           max_attempts: 3
           shell: bash
-          command:  |
-            gem install u3d -v 1.2.3
+          command: gem install u3d -v 1.2.3
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -215,7 +217,7 @@ jobs:
           timeout_minutes: 30
           max_attempts: 3
           shell: bash
-          command:  |
+          command: |
             python scripts/gha/unity_installer.py --install \
               --platforms ${{ matrix.platform }} \
               --version ${{ matrix.unity_version }}
@@ -387,14 +389,16 @@ jobs:
       U3D_PASSWORD: ""
     steps:
       - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.2
       - name: Install Unity installer (U3D)
         uses: nick-invision/retry@v2
         with:
           timeout_minutes: 10
           max_attempts: 3
           shell: bash
-          command:  |
-            gem install u3d -v 1.2.3
+          command: gem install u3d -v 1.2.3
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -410,7 +414,7 @@ jobs:
           timeout_minutes: 15
           max_attempts: 3
           shell: bash
-          command:  |
+          command: |
             python scripts/gha/unity_installer.py --install \
               --version ${{ matrix.unity_version }}
       - name: Activate Unity license
