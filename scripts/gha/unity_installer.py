@@ -178,8 +178,6 @@ def install_unity(unity_version, platforms):
   run([u3d, "install", "--trace",
        "--verbose", unity_full_version,
        "-p", package_csv])
-  # This will list what u3d has installed. For debugging purposes.
-  run([u3d, "list"], check=False)
   logging.info("Finished installing Unity.")
 
 
