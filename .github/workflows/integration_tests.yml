@@ -5,9 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       packaged_sdk_run_id:
-        description: 'run # of "Firebase Unity SDK build" workflow'
-        default: '0'
-        required: true
+        description: 'run # of "Firebase Unity SDK build" workflow. (If Leave it empty, the latest released Unity SDK will be used.)'
       unity_versions:
         description: 'Unity version'
         default: '2019'
@@ -238,6 +236,7 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Fetch prebuilt packaged SDK from previous run
+        if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
         uses: dawidd6/action-download-artifact@v2
         with:
           name: 'firebase_unity_sdk.zip'
@@ -247,7 +246,12 @@ jobs:
         timeout-minutes: 240
         shell: bash
         run: |
-          unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
+            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          else
+            curl -L "https://firebase.google.com/download/unity" -o ~/Downloads/firebase_unity_sdk.zip
+            unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
+          fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
             --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
@@ -427,15 +431,21 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Fetch prebuilt packaged SDK from previous run
+        if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
         uses: dawidd6/action-download-artifact@v2
         with:
           name: 'firebase_unity_sdk.zip'
           workflow: 'build_starter.yml'
-          run_id: ${{ github.event.inputs.packaged_sdk_run_id }}  
+          run_id: ${{ github.event.inputs.packaged_sdk_run_id }} 
       - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
-          unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
+            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          else
+            curl -L "https://firebase.google.com/download/unity" -o ~/Downloads/firebase_unity_sdk.zip
+            unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
+          fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
             --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
