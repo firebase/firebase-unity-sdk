@@ -189,8 +189,8 @@ def uninstall_unity(unity_version):
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
 
   u3d = find_u3d()
-  run([u3d, "install", "--trace", "--verbose", unity_full_version], check=False)
-  logging.info("Finished installing Unity.")
+  run([u3d, "uninstall", "--trace", unity_full_version], check=False)
+  logging.info("Finished uninstalling Unity.")
 
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
