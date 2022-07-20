@@ -41,6 +41,7 @@ on:
 env:
   # Use SHA256 for hashing files.
   hashCommand: "sha256sum"
+  default_apis: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
 
 jobs:
   package_sdks:
@@ -49,6 +50,20 @@ jobs:
     strategy:
       fail-fast: false
     steps:
+      - name: Check input
+        id: check-input
+        shell: bash
+        run: |
+          IFS=',' read -r -a input_apis <<< ${{ inputs.apis }}
+          IFS=',' read -r -a default_apis <<< ${{ env.default_apis }}
+          if [[ ${#input_apis[@]} == ${#default_apis[@]} ]]; then
+            echo "::set-output name=package_for_checks::1"
+            echo "::set-output name=package_apis::'--apis=${{ inputs.apis }}'"
+          else
+            echo "::set-output name=package_for_checks::0"
+            echo "::set-output name=package_apis::"
+          fi
+
       - name: Print inputs
         shell: bash
         run: |
@@ -62,7 +77,9 @@ jobs:
           echo download_macos_run: ${{ inputs.download_macos_run }}
           echo download_windows_run: ${{ inputs.download_windows_run }}
           echo platforms: ${{ inputs.platforms }}"
-          echo apis: ${{ inputs.apis }} default is: ${{ inputs.apis.default }}
+          echo apis: ${{ inputs.apis }}
+          echo is the package for checks: ${{ steps.check-input.outputs.package_for_checks }}
+          echo package_apis: ${{ steps.check-input.outputs.package_apis }}
 
       - name: Check out base branch
         uses: actions/checkout@v2.3.1
@@ -135,7 +152,7 @@ jobs:
 
       - name: Package unitypackage
         run: |
-          python scripts/build_scripts/build_package.py --zip_dir=built_artifact
+          python scripts/build_scripts/build_package.py --zip_dir=built_artifact ${{ steps.check-input.outputs.package_apis }}
 
       - name: Commit Changes if there is any
         if: inputs.working_branch != '' || inputs.create_new_branch == '1'
@@ -210,15 +227,18 @@ jobs:
           path: firebase_unity_sdk.zip
       
       - name: Package tgz
+        if: ${{ steps.check-input.outputs.package_apis }} == 1
         run: |
           python scripts/build_scripts/build_package.py --zip_dir=built_artifact --output_upm=True --output=output_tgz
 
       - name: Listing output tgz
+        if: ${{ steps.check-input.outputs.package_apis }} == 1
         run: |
           ls -Rl
         working-directory: output_tgz
 
       - name: compute SDK hash for tgz files
+        if: ${{ steps.check-input.outputs.package_apis }} == 1
         shell: bash
         run: |
           tgz_files_list=$(find -type f -name '*.tgz')
@@ -229,6 +249,7 @@ jobs:
         working-directory: output_tgz
 
       - name: Upload Build tgz
+        if: ${{ steps.check-input.outputs.package_apis }} == 1
         uses: actions/upload-artifact@v2
         with:
           name: firebase_unity_sdk_tgz

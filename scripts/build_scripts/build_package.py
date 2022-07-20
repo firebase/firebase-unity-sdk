@@ -39,12 +39,18 @@ from absl import app
 from absl import flags
 from absl import logging
 
+
+SUPPORT_TARGETS = [
+    "analytics", "auth", "crashlytics", "database", "dynamic_links",
+    "firestore", "functions", "installations", "messaging", "remote_config",
+    "storage"
+]
+
 FLAGS = flags.FLAGS
 flags.DEFINE_string('zip_dir', None,
                     'Directory of zip files from build output to package')
 flags.DEFINE_string("config_file", "exports.json",
-                    ("Config file that describes how to "
-                     "pack the unity assets."))
+                    ("Config file that describes how to pack the unity assets."))
 flags.DEFINE_string("guids_file", "guids.json",
                     "Json file with stable guids cache.")
 
@@ -55,9 +61,13 @@ flags.DEFINE_string("output", "output",
                     "Output folder for unitypackage.")
 
 flags.DEFINE_boolean("output_upm", False, "Whether output packages as tgz for"
-    "Unity Package Manager.")
+                     "Unity Package Manager.")
 
-flags.DEFINE_multi_string("targets", None, "which firebase products to pack, only for debug use")
+flags.DEFINE_string("apis", None, "which firebase products to pack, if not"
+                    "set means package all. Value should be items in [{}],"
+                    "connected with ',', eg 'auth,firestore'".format(
+                        ",".join(SUPPORT_TARGETS)))
+
 
 def get_zip_files():
   """Get all zip files from FLAGS.zip_dir.
@@ -77,12 +87,14 @@ def get_zip_files():
 
   return zip_file_paths
 
+
 def get_last_version():
   """Get the last version number in guids file if exists.
     Returns:
       version number.
   """
-  version_cmake_path = os.path.join(os.getcwd(), "cmake", "firebase_unity_version.cmake")
+  version_cmake_path = os.path.join(
+      os.getcwd(), "cmake", "firebase_unity_version.cmake")
   with open(version_cmake_path, "r") as f:
     datafile = f.readlines()
     for line in datafile:
@@ -91,6 +103,7 @@ def get_last_version():
         return result[-1].strip("\"")
   return None
 
+
 def find_pack_script():
   """Get the pack script either from intermediate build folder or download from unity-jar-resolver.
 
@@ -98,30 +111,33 @@ def find_pack_script():
       path of the pack script. None if not found.
   """
   built_folder_ext = "_unity"
-  built_folder_postion = os.path.join("external", "src", "google_unity_jar_resolver")
+  built_folder_postion = os.path.join(
+      "external", "src", "google_unity_jar_resolver")
   built_folder = None
   resolver_root_folder = "unity-jar-resolver"
   for folder in os.listdir("."):
     if folder.endswith(built_folder_ext):
       built_folder = folder
       break
-  
+
   if built_folder != None:
     resolver_root_folder = os.path.join(built_folder, built_folder_postion)
   elif not os.path.exists(resolver_root_folder):
     git_clone_script = ["git", "clone",
-      "--depth", "1",
-      "https://github.com/googlesamples/unity-jar-resolver.git"]
+                        "--depth", "1",
+                        "https://github.com/googlesamples/unity-jar-resolver.git"]
     subprocess.call(git_clone_script)
 
   if resolver_root_folder != None:
-    script_path = os.path.join(resolver_root_folder, "source", "ExportUnityPackage", "export_unity_package.py")
+    script_path = os.path.join(
+        resolver_root_folder, "source", "ExportUnityPackage", "export_unity_package.py")
     return script_path
   return None
 
+
 def _debug_create_target_package(target, packer_script_path, guids_file_path, output_folder, zip_file_list, last_version):
   debug_config_path = os.path.join(os.getcwd(), FLAGS.script_folder, "debug_single_export_json",
-                                  target+".json")  
+                                   target+".json")
   debug_cmd_args = [
       sys.executable,
       packer_script_path,
@@ -131,11 +147,13 @@ def _debug_create_target_package(target, packer_script_path, guids_file_path, ou
       "--output_dir=" + output_folder,
       "--output_upm=False",
   ]
-  debug_cmd_args.extend(["--assets_zip=" + zip_file for zip_file in zip_file_list])
+  debug_cmd_args.extend(
+      ["--assets_zip=" + zip_file for zip_file in zip_file_list])
   debug_cmd_args.append("--enabled_sections=build_dotnet4 asset_package_only")
   debug_cmd_args.append("--plugins_version=" + last_version)
   subprocess.call(debug_cmd_args)
   logging.info("Debug Packaging done for target %s", target)
+
 
 def main(argv):
   if len(argv) > 1:
@@ -143,8 +161,9 @@ def main(argv):
 
   packer_script_path = find_pack_script()
   if packer_script_path == None:
-    raise app.UsageError('Cannot find pack script. Please build the project first.')
-   
+    raise app.UsageError(
+        'Cannot find pack script. Please build the project first.')
+
   packer_script_path = os.path.join(os.getcwd(), packer_script_path)
   guids_file_path = os.path.join(os.getcwd(), FLAGS.script_folder,
                                  FLAGS.guids_file)
@@ -159,11 +178,18 @@ def main(argv):
   if os.path.exists(output_folder):
     shutil.rmtree(output_folder)
 
-  if FLAGS.targets:
+  if FLAGS.apis:
     # This should only happen for debug purpose, to create packages for certain products
     # Codes below should not run
-    for target in FLAGS.targets:
-      _debug_create_target_package(target, packer_script_path, guids_file_path, output_folder, zip_file_list, last_version)
+    api_list = FLAGS.apis.split(",")
+    if not set(api_list).issubset(set(SUPPORT_TARGETS)):
+      raise app.UsageError("apis parameter error, Value should be items in [{}],"
+                           "connected with ',', eg 'auth,firestore'".format(
+                               ",".join(SUPPORT_TARGETS)))
+
+    for target in api_list:
+      _debug_create_target_package(
+          target, packer_script_path, guids_file_path, output_folder, zip_file_list, last_version)
     return
 
   config_file_path = os.path.join(os.getcwd(), FLAGS.script_folder,
@@ -178,7 +204,7 @@ def main(argv):
       "--output_upm=" + str(FLAGS.output_upm),
   ]
   cmd_args.extend(["--assets_zip=" + zip_file for zip_file in zip_file_list])
-  
+
   if last_version:
     cmd_args.append("--plugins_version=" + last_version)
 
@@ -186,8 +212,9 @@ def main(argv):
     cmd_args.append("--enabled_sections=build_dotnet4")
     cmd_args.append("--output_unitypackage=False")
   else:
-    cmd_args.append("--enabled_sections=build_dotnet3 build_dotnet4 asset_package_only")
-  
+    cmd_args.append(
+        "--enabled_sections=build_dotnet3 build_dotnet4 asset_package_only")
+
   # Check if need to gen new guids
   p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   output, error = p.communicate()
@@ -197,17 +224,18 @@ def main(argv):
     error_str = error_str.split("assets:")[-1]
     error_str = error_str.rstrip("\\n\'")
     split_string = error_str.split(" ")
-    split_string = split_string[3:] # exclude first 3 lines
-    gen_guids_script_path = os.path.join(os.getcwd(), "scripts", "build_scripts", "gen_guids.py")
+    split_string = split_string[3:]  # exclude first 3 lines
+    gen_guids_script_path = os.path.join(
+        os.getcwd(), "scripts", "build_scripts", "gen_guids.py")
     gen_cmd_args = [
-      sys.executable,
-      gen_guids_script_path,
-      "--guids_file=" + guids_file_path,
-      "--version=" + last_version,
-      "--generate_new_guids=True",
+        sys.executable,
+        gen_guids_script_path,
+        "--guids_file=" + guids_file_path,
+        "--version=" + last_version,
+        "--generate_new_guids=True",
     ]
     for file in split_string:
-      file=file.strip("\"")
+      file = file.strip("\"")
       print(file)
       gen_cmd_args.append(file)
     subprocess.call(gen_cmd_args)
@@ -219,6 +247,7 @@ def main(argv):
     error_list = str(error).split("\\n")
     logging.info("\n".join(error_list))
   logging.info("Packaging done for version %s", last_version)
+
 
 if __name__ == '__main__':
   app.run(main)
