@@ -380,8 +380,6 @@ function(unity_pack_documentation_sources name)
   set(multi DOCUMENTATION_SOURCES)
   cmake_parse_arguments(UNITY_PACK "" "" "${multi}" ${ARGN})
 
-  message(WARNING "Documentation Packaging: ${UNITY_PACK_DOCUMENTATION_SOURCES}")
-
   install(
     FILES ${UNITY_PACK_DOCUMENTATION_SOURCES}
     DESTINATION ${name}
