@@ -68,7 +68,7 @@ X4-XXXX-XXXX-XXXX-XXXX
 
 
 (3) License release:
-  unity_installer.py --release_license --version 2017.3.1f1 --logfile return.log
+  unity_installer.py --release_license --version 2019 --logfile return.log
 
 """
 
@@ -83,7 +83,7 @@ from absl import logging
 from print_matrix_configuration import UNITY_SETTINGS
 
 
-_CMD_TIMEOUT = 600
+_CMD_TIMEOUT = 900
 
 _DEFALUT = "Default"
 _ANDROID = "Android"
@@ -109,7 +109,7 @@ flags.DEFINE_bool(
     "release_license", False,
     "Release an activated Unity license. Supply --version and --logfile.")
 
-flags.DEFINE_string("version", None, "Version string, e.g. 2017.3.1f1")
+flags.DEFINE_string("version", None, "Major version string, e.g. 2018")
 flags.DEFINE_string("license_file", None, "Path to the license file.")
 flags.DEFINE_string("username", None, "username for a Unity account.")
 flags.DEFINE_string("password", None, "password for that Unity account.")
@@ -139,6 +139,7 @@ def main(argv):
     raise app.UsageError("Too many command-line arguments.")
 
   if FLAGS.install:
+    uninstall_unity(FLAGS.version)
     install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
@@ -179,6 +180,17 @@ def install_unity(unity_version, platforms):
        "--verbose", unity_full_version,
        "-p", package_csv])
   logging.info("Finished installing Unity.")
+
+
+def uninstall_unity(unity_version):
+  """Uninstalls Unity and build supports (packages)."""
+  # Cleaning up installed Unity.
+  os = get_os()
+  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+
+  u3d = find_u3d()
+  run([u3d, "uninstall", "--trace", unity_full_version], check=False)
+  logging.info("Finished uninstalling Unity.")
 
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
