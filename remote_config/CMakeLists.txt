@@ -79,6 +79,7 @@ endif()
 unity_pack_documentation_sources(remote_config
   DOCUMENTATION_SOURCES
     ${firebase_remote_config_src}
+    ${firebase_remote_config_swig_gen_src}
 )
 
 set_property(TARGET firebase_remote_config_cs

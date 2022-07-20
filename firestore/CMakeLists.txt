@@ -27,6 +27,7 @@ set(firebase_firestore_src_documented
   src/CollectionReference.cs
   src/DocumentChange.cs
   src/DocumentReference.cs
+  src/DocumentSnapshot.cs
   src/FieldPath.cs
   src/FieldValue.cs
   src/FirebaseFirestore.cs
@@ -81,7 +82,6 @@ set(firebase_firestore_src
   src/BuildStubs.cs
   src/ConverterRegistry.cs
   src/DeserializationContext.cs
-  src/DocumentSnapshot.cs
   src/FirestoreConverter.cs
   src/ListenerRegistrationMap.cs
   src/MonoPInvokeCallbackAttribute.cs

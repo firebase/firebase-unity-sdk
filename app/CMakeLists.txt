@@ -121,6 +121,7 @@ unity_pack_documentation_sources(app
   DOCUMENTATION_SOURCES
     ${firebase_app_src_documented}
     ${firebase_app_swig_gen_src}
+    task_extension/TaskExtension.cs
 )
 
 set_property(TARGET firebase_app_cs
