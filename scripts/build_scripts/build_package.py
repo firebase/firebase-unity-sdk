@@ -57,6 +57,8 @@ flags.DEFINE_string("output", "output",
 flags.DEFINE_boolean("output_upm", False, "Whether output packages as tgz for"
     "Unity Package Manager.")
 
+flags.DEFINE_multi_string("targets", None, "which firebase products to pack, only for debug use")
+
 def get_zip_files():
   """Get all zip files from FLAGS.zip_dir.
 
@@ -117,6 +119,24 @@ def find_pack_script():
     return script_path
   return None
 
+def _debug_create_target_package(target, packer_script_path, guids_file_path, output_folder, zip_file_list, last_version):
+  debug_config_path = os.path.join(os.getcwd(), FLAGS.script_folder, "debug_single_export_json",
+                                  target+".json")  
+  debug_cmd_args = [
+      sys.executable,
+      packer_script_path,
+      "--assets_dir=" + FLAGS.zip_dir,
+      "--config_file=" + debug_config_path,
+      "--guids_file=" + guids_file_path,
+      "--output_dir=" + output_folder,
+      "--output_upm=False",
+  ]
+  debug_cmd_args.extend(["--assets_zip=" + zip_file for zip_file in zip_file_list])
+  debug_cmd_args.append("--enabled_sections=build_dotnet4 asset_package_only")
+  debug_cmd_args.append("--plugins_version=" + last_version)
+  subprocess.call(debug_cmd_args)
+  logging.info("Debug Packaging done for target %s", target)
+
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
@@ -126,8 +146,6 @@ def main(argv):
     raise app.UsageError('Cannot find pack script. Please build the project first.')
    
   packer_script_path = os.path.join(os.getcwd(), packer_script_path)
-  config_file_path = os.path.join(os.getcwd(), FLAGS.script_folder,
-                                  FLAGS.config_file)
   guids_file_path = os.path.join(os.getcwd(), FLAGS.script_folder,
                                  FLAGS.guids_file)
 
@@ -141,6 +159,15 @@ def main(argv):
   if os.path.exists(output_folder):
     shutil.rmtree(output_folder)
 
+  if FLAGS.targets:
+    # This should only happen for debug purpose, to create packages for certain products
+    # Codes below should not run
+    for target in FLAGS.targets:
+      _debug_create_target_package(target, packer_script_path, guids_file_path, output_folder, zip_file_list, last_version)
+    return
+
+  config_file_path = os.path.join(os.getcwd(), FLAGS.script_folder,
+                                  FLAGS.config_file)
   cmd_args = [
       sys.executable,
       packer_script_path,
@@ -186,7 +213,7 @@ def main(argv):
     subprocess.call(gen_cmd_args)
 
     # Need to package again if has that error
-    subprocess.call(cmd_args)   
+    subprocess.call(cmd_args)
   else:
     logging.info("No new guid generated.")
     error_list = str(error).split("\\n")
