@@ -83,7 +83,7 @@ from absl import logging
 from print_matrix_configuration import UNITY_SETTINGS
 
 
-_CMD_TIMEOUT = 600
+_CMD_TIMEOUT = 900
 
 _DEFALUT = "Default"
 _ANDROID = "Android"
