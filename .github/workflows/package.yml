@@ -62,7 +62,7 @@ jobs:
           echo download_macos_run: ${{ inputs.download_macos_run }}
           echo download_windows_run: ${{ inputs.download_windows_run }}
           echo platforms: ${{ inputs.platforms }}"
-          echo apis: ${{ inputs.apis }}" default is: ${{ inputs.apis.default }}"
+          echo apis: ${{ inputs.apis }} default is: ${{ inputs.apis.default }}
 
       - name: Check out base branch
         uses: actions/checkout@v2.3.1
