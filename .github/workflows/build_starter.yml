@@ -98,7 +98,7 @@ jobs:
             echo "::set-output name=unity_branch::${{ github.event.inputs.unity_branch }}"
             echo "::set-output name=additional_cmake_flags::${{ github.event.inputs.unity_branch }}"
           else
-            echo "::set-output name=platform::'Android,iOS,Windows,macOS,Linux'"
+            echo "::set-output name=platform::'Android,iOS,Windows,macOS,Linux,Playmode'"
             echo "::set-output name=release_label::nightly-$(date "+%Y%m%d-%H%M%S")"
             echo "::set-output name=release_version::NoVersion"
             echo "::set-output name=apis::'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'"
