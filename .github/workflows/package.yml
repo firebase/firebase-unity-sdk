@@ -77,7 +77,7 @@ jobs:
           echo download_macos_run: ${{ inputs.download_macos_run }}
           echo download_windows_run: ${{ inputs.download_windows_run }}
           echo platforms: ${{ inputs.platforms }}"
-          echo apis: ${{ inputs.apis }}
+          echo apis: ${{ inputs.apis }}"
           echo is the package for checks: ${{ steps.check-input.outputs.package_for_checks }}
           echo package_apis: ${{ steps.check-input.outputs.package_apis }}
 
