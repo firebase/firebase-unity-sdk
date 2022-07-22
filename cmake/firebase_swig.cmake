@@ -142,6 +142,7 @@ macro(firebase_swig_add_library name)
     file(GLOB_RECURSE cpp_header_files "${directory}/*.h")
     list(APPEND all_cpp_header_files ${cpp_header_files})
   endforeach()
+  message(WARNING "Found Cpp header files: ${all_cpp_header_files}")
 
   set_property(TARGET ${name} PROPERTY SWIG_GENERATED_INCLUDE_DIRECTORIES
     ${FIREBASE_CPP_SDK_DIR}
@@ -207,7 +208,8 @@ macro(firebase_swig_add_library name)
         --input=\"${all_cpp_header_files}\"
         --output=\"${UNITY_SWIG_CS_GEN_FILE}\"
         --namespace_prefix=\"Firebase\"
-      && python
+    COMMAND
+      python
         ${FIREBASE_SWIG_FIX_PY}
         --language=csharp
         --in_file=\"${UNITY_SWIG_CS_GEN_FILE}\"
