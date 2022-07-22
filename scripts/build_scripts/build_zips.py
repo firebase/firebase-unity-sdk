@@ -625,7 +625,9 @@ def main(argv):
     subprocess.call(cmake_setup_args)
     if is_windows_build():
       # no make command in windows. TODO make config passable
+      subprocess.call("cmake --build . --target help")
       subprocess.call("cmake --build .  --config Release")
+      subprocess.call("find .")
     else:
       subprocess.call("make")
 
