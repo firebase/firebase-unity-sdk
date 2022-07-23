@@ -142,7 +142,6 @@ macro(firebase_swig_add_library name)
     file(GLOB_RECURSE cpp_header_files "${directory}/*.h")
     list(APPEND all_cpp_header_files ${cpp_header_files})
   endforeach()
-  message(WARNING "Found Cpp header files: ${all_cpp_header_files}")
 
   set_property(TARGET ${name} PROPERTY SWIG_GENERATED_INCLUDE_DIRECTORIES
     ${FIREBASE_CPP_SDK_DIR}
