@@ -58,7 +58,7 @@ jobs:
           IFS=',' read -r -a default_apis <<< "${{ env.default_apis }}"
           echo input_api number is: ${#input_apis[@]}
           echo default_api number is: ${#default_apis[@]}
-          if [[ ${#input_apis[@]} == ${#default_apis[@]} ]]; then
+          if [[ ${#input_apis[@]} != ${#default_apis[@]} ]]; then
             echo "::set-output name=package_for_checks::1"
             echo "::set-output name=package_apis::'--apis=${{ inputs.apis }}'"
           else
