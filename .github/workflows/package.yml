@@ -54,8 +54,8 @@ jobs:
         id: check-input
         shell: bash
         run: |
-          IFS=',' read -r -a input_apis <<< ${{ inputs.apis }}
-          IFS=',' read -r -a default_apis <<< ${{ env.default_apis }}
+          IFS=',' read -r -a input_apis <<< "${{ inputs.apis }}"
+          IFS=',' read -r -a default_apis <<< "${{ env.default_apis }}"
           echo input_api number is: ${#input_apis[@]}
           echo default_api number is: ${#default_apis[@]}
           if [[ ${#input_apis[@]} == ${#default_apis[@]} ]]; then
