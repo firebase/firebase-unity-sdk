@@ -21,8 +21,8 @@ set(firebase_storage_swig
   src/swig/storage.i
 )
 
-# Firebase Storage CSharp files
-set(firebase_storage_src
+# Firebase Storage CSharp files that should be included in reference docs
+set(firebase_storage_src_documented
   src/DownloadState.cs
   src/FirebaseStorage.cs
   src/MetadataChange.cs
@@ -31,6 +31,11 @@ set(firebase_storage_src
   src/StorageProgress.cs
   src/StorageReference.cs
   src/UploadState.cs
+)
+
+# Firebase Storage CSharp files
+set(firebase_storage_src
+  ${firebase_storage_src_documented}
   src/internal/ModuleLogger.cs
   src/internal/Preconditions.cs
   src/internal/TransferState.cs
@@ -84,6 +89,11 @@ if (FIREBASE_INCLUDE_UNITY)
       "storage"
   )
 endif()
+
+unity_pack_documentation_sources(storage
+  DOCUMENTATION_SOURCES
+    ${firebase_storage_src}
+)
 
 set_property(TARGET firebase_storage_cs
   PROPERTY FOLDER

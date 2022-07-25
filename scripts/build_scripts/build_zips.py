@@ -101,6 +101,7 @@ flags.DEFINE_bool("clean_build", False, "Whether to clean the build folder")
 flags.DEFINE_bool("use_boringssl", False, "Build with BoringSSL instead of openSSL.")
 flags.DEFINE_bool("verbose", False, "If verbose, cmake build with DCMAKE_VERBOSE_MAKEFILE=1")
 flags.DEFINE_string("swig_dir", None, "If pass in swig dir directly rather than find swig by cmake")
+flags.DEFINE_bool("gen_documentation_zip", False, "Also generate a zip file containing files to document")
 
 def get_build_path(platform, clean_build=False):
   """Get the folder that cmake configure and build in.
@@ -488,6 +489,19 @@ def make_macos_multi_arch_build(cmake_args):
   logging.info("Generated Darwin (MacOS) multi-arch (%s) zip %s",
                ",".join(g_target_architectures), final_zip_path)
 
+def gen_documentation_zip():
+  """If the flag was enabled, builds the zip file containing source files to document.
+  """
+  if not FLAGS.gen_documentation_zip:
+    return
+  cpack_args = [
+    'cpack',
+    '-D', 'CPACK_COMPONENTS_ALL=documentation',
+    '-D', 'CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE=ON',
+    '-D', 'CPACK_ARCHIVE_FILE_NAME=documentation_sources'
+  ]
+  subprocess.call(cpack_args)
+
 def is_android_build():
   """
     Returns:
@@ -620,6 +634,7 @@ def main(argv):
         ".",
     ]
     subprocess.call(cmake_pack_args)
+    gen_documentation_zip()
 
   os.chdir(source_path)
 

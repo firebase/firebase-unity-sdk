@@ -28,9 +28,14 @@ set(firebase_crashlytics_swig
   src/swig/crashlytics.i
 )
 
+# Firebase Crashlytics CSharp files that should be included in reference docs
+set(firebase_crashlytics_src_documented
+  src/Crashlytics.cs
+)
+
 # Firebase Crashlytics CSharp files
 set(firebase_crashlytics_src
-  src/Crashlytics.cs
+  ${firebase_crashlytics_src_documented}
   src/ExceptionHandler.cs
   src/Impl.cs
   src/LoggedException.cs
@@ -119,6 +124,11 @@ if (FIREBASE_INCLUDE_UNITY)
       "crashlytics"
   )
 endif()
+
+unity_pack_documentation_sources(crashlytics
+  DOCUMENTATION_SOURCES
+    ${firebase_crashlytics_src_documented}
+)
 
 set_property(TARGET firebase_crashlytics_cs
   PROPERTY FOLDER
