@@ -135,7 +135,7 @@ jobs:
 
       - name: Package unitypackage
         run: |
-          python scripts/build_scripts/build_package.py --zip_dir=built_artifact
+          python scripts/build_scripts/build_package.py --zip_dir=built_artifact --ignore_files=documentation_sources.zip
 
       - name: Commit Changes if there is any
         if: inputs.working_branch != '' || inputs.create_new_branch == '1'

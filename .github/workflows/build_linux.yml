@@ -120,15 +120,21 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
+          python scripts/build_scripts/build_zips.py --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }} ----gen_documentation_zip
       
-      - name: Check zip file
+      - name: Check zip files
         shell: bash
         run: |
-          if [ -f linux_unity/*.zip ]; then
+          if [ -f linux_unity/*Linux.zip ]; then
             echo "linux_unity zip created."
           else
             echo "Fail to create linux_unity zip."
+            exit 1
+          fi
+          if [ -f linux_unity/documentation_sources.zip ]; then
+            echo "documentation_sources zip created."
+          else
+            echo "Fail to create documentation_sources zip."
             exit 1
           fi
 
@@ -136,4 +142,10 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: linux_unity
-          path: linux_unity/*.zip
+          path: linux_unity/*Linux.zip
+
+      - name: Upload Documentation Sources
+        uses: actions/upload-artifact@v2
+        with:
+          name: documentation_sources.zip
+          path: linux_unity/documentation_sources.zip
