@@ -1,5 +1,5 @@
 # Workflow to handle building the Unity SDK on linux
-name: Build linux Reuse
+name: Build linux (SubWorkflow)
 
 on:
   workflow_call:
