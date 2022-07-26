@@ -71,7 +71,7 @@ def get_zip_files():
 
   zip_file_paths = []
   for zip_file in os.listdir(FLAGS.zip_dir):
-    if (FLAGS.ignore_files and zip_file in FLAGS.ignore_files)
+    if (FLAGS.ignore_files and zip_file in FLAGS.ignore_files):
       continue
     zip_path = os.path.join(os.getcwd(), FLAGS.zip_dir, zip_file)
     if zipfile.is_zipfile(zip_path):
