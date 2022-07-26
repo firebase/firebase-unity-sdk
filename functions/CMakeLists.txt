@@ -77,6 +77,12 @@ if (FIREBASE_INCLUDE_UNITY)
   )
 endif()
 
+unity_pack_documentation_sources(functions
+  DOCUMENTATION_SOURCES
+    ${firebase_functions_src}
+    ${firebase_functions_swig_gen_src}
+)
+
 set_property(TARGET firebase_functions_cs
   PROPERTY FOLDER
   "Firebase ${FIREBASE_PLATFORM_NAME}"

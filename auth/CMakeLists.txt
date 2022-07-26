@@ -87,6 +87,12 @@ if (FIREBASE_INCLUDE_UNITY)
   )
 endif()
 
+unity_pack_documentation_sources(auth
+  DOCUMENTATION_SOURCES
+    ${firebase_auth_src}
+    ${firebase_auth_swig_gen_src}
+)
+
 set_property(TARGET firebase_auth_cs
   PROPERTY FOLDER
   "Firebase ${FIREBASE_PLATFORM_NAME}"

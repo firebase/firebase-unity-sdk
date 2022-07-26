@@ -39,13 +39,18 @@ set(firebase_app_swig
   src/swig/app.i
 )
 
-# Firebase App CSharp files
-set(firebase_app_src
+# Firebase App CSharp files that should be included in reference docs
+set(firebase_app_src_documented
   src/AppOptions.cs
   src/DependencyStatus.cs
-  src/ErrorMessages.cs
   src/FirebaseException.cs
   src/InitializationException.cs
+)
+
+# Firebase App CSharp files
+set(firebase_app_src
+  ${firebase_app_src_documented}
+  src/ErrorMessages.cs
   src/LogUtil.cs
   src/VariantExtension.cs
   src/TaskCompletionSourceCompat.cs
@@ -111,6 +116,13 @@ if (FIREBASE_INCLUDE_UNITY)
       "app"
   )
 endif()
+
+unity_pack_documentation_sources(app
+  DOCUMENTATION_SOURCES
+    ${firebase_app_src_documented}
+    ${firebase_app_swig_gen_src}
+    task_extension/TaskExtension.cs
+)
 
 set_property(TARGET firebase_app_cs
   PROPERTY FOLDER

@@ -18,6 +18,44 @@ using System.Collections.Generic;
 
 namespace Firebase.Auth {
 
+/// @brief Use phone number text messages to authenticate.
+///
+/// Allows developers to use the phone number and SMS verification codes
+/// to authenticate a user.
+///
+/// The verification flow results in a Credential that can be used to,
+/// * Sign in to an existing phone number account/sign up with a new
+///   phone number
+/// * Link a phone number to a current user. This provider will be added to
+///   the user.
+/// * Update a phone number on an existing user.
+/// * Re-authenticate an existing user. This may be needed when a sensitive
+///   operation requires the user to be recently logged in.
+///
+/// Possible verification flows:
+/// (1) User manually enters verification code.
+///     - App calls @ref VerifyPhoneNumber.
+///     - Web verification page is displayed to user where they may need to
+///       solve a CAPTCHA. [iOS only].
+///     - Auth server sends the verification code via SMS to the provided
+///       phone number. App receives verification id via @ref CodeSent.
+///     - User receives SMS and enters verification code in app's GUI.
+///     - App uses user's verification code to call
+///       @ref PhoneAuthProvider::GetCredential.
+///
+/// (2) SMS is automatically retrieved (Android only).
+///     - App calls @ref VerifyPhoneNumber with `timeout_ms` > 0.
+///     - Auth server sends the verification code via SMS to the provided
+///       phone number.
+///     - SMS arrives and is automatically retrieved by the operating system.
+///       Credential is automatically created and passed to the app via
+///       @ref VerificationCompleted.
+///
+/// (3) Phone number is instantly verified (Android only).
+///     - App calls @ref VerifyPhoneNumber.
+///     - The operating system validates the phone number without having to
+///       send an SMS. Credential is automatically created and passed to
+///       the app via @ref VerificationCompleted.
 public sealed class PhoneAuthProvider : global::System.IDisposable {
   /// Maximum value of `autoVerifyTimeOutMs` in @ref VerifyPhoneNumber.
   /// @ref VerifyPhoneNumber will automatically clamp values to this amount.

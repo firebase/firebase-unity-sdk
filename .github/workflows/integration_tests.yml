@@ -5,9 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       packaged_sdk_run_id:
-        description: 'run # of "Firebase Unity SDK build" workflow'
-        default: '0'
-        required: true
+        description: 'run # of "Firebase Unity SDK build" workflow. (If Leave it empty, the latest released Unity SDK will be used.)'
       unity_versions:
         description: 'Unity version'
         default: '2019'
@@ -194,15 +192,16 @@ jobs:
       U3D_SKIP_UPDATE_CHECK: 1
     steps:
       - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.2
       - name: Install Unity installer (U3D)
         uses: nick-invision/retry@v2
         with:
           timeout_minutes: 10
           max_attempts: 3
           shell: bash
-          command:  |
-            gem install u3d -v 1.2.3
-            u3d available
+          command: gem install u3d -v 1.2.3
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -218,7 +217,7 @@ jobs:
           timeout_minutes: 30
           max_attempts: 3
           shell: bash
-          command:  |
+          command: |
             python scripts/gha/unity_installer.py --install \
               --platforms ${{ matrix.platform }} \
               --version ${{ matrix.unity_version }}
@@ -238,6 +237,7 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Fetch prebuilt packaged SDK from previous run
+        if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
         uses: dawidd6/action-download-artifact@v2
         with:
           name: 'firebase_unity_sdk.zip'
@@ -247,7 +247,12 @@ jobs:
         timeout-minutes: 240
         shell: bash
         run: |
-          unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
+            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          else
+            curl -L "https://firebase.google.com/download/unity" -o ~/Downloads/firebase_unity_sdk.zip
+            unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
+          fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
             --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
@@ -382,17 +387,20 @@ jobs:
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
       U3D_PASSWORD: ""
+      # Disable checking for U3D updates, since it is buggy
+      U3D_SKIP_UPDATE_CHECK: 1
     steps:
       - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.2
       - name: Install Unity installer (U3D)
         uses: nick-invision/retry@v2
         with:
           timeout_minutes: 10
           max_attempts: 3
           shell: bash
-          command:  |
-            gem install u3d
-            u3d available
+          command: gem install u3d -v 1.2.3
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -405,10 +413,10 @@ jobs:
       - name: Install Unity
         uses: nick-invision/retry@v2
         with:
-          timeout_minutes: 15
+          timeout_minutes: 20
           max_attempts: 3
           shell: bash
-          command:  |
+          command: |
             python scripts/gha/unity_installer.py --install \
               --version ${{ matrix.unity_version }}
       - name: Activate Unity license
@@ -427,15 +435,21 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Fetch prebuilt packaged SDK from previous run
+        if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
         uses: dawidd6/action-download-artifact@v2
         with:
           name: 'firebase_unity_sdk.zip'
           workflow: 'build_starter.yml'
-          run_id: ${{ github.event.inputs.packaged_sdk_run_id }}  
+          run_id: ${{ github.event.inputs.packaged_sdk_run_id }} 
       - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
-          unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
+            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          else
+            curl -L "https://firebase.google.com/download/unity" -o ~/Downloads/firebase_unity_sdk.zip
+            unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
+          fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
             --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \

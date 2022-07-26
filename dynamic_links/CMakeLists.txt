@@ -85,6 +85,12 @@ if (FIREBASE_INCLUDE_UNITY)
   )
 endif()
 
+unity_pack_documentation_sources(dynamic_links
+  DOCUMENTATION_SOURCES
+    ${firebase_dynamic_links_src}
+    ${firebase_dynamic_links_swig_gen_src}
+)
+
 set_property(TARGET firebase_dynamic_links_cs
   PROPERTY FOLDER
   "Firebase ${FIREBASE_PLATFORM_NAME}"
