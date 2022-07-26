@@ -147,5 +147,5 @@ jobs:
       - name: Upload Documentation Sources
         uses: actions/upload-artifact@v2
         with:
-          name: documentation_sources.zip
+          name: documentation_sources
           path: linux_unity/documentation_sources.zip
