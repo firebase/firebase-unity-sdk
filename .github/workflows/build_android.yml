@@ -1,5 +1,5 @@
 # Workflow to handle building the Unity SDK on android
-name: Build Android Reuse
+name: Build Android (SubWorkflow)
 
 on:
   workflow_call:
