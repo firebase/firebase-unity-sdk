@@ -57,8 +57,6 @@ flags.DEFINE_string("output", "output",
 flags.DEFINE_boolean("output_upm", False, "Whether output packages as tgz for"
     "Unity Package Manager.")
 
-flags.DEFINE_multi_string("ignore_files", None, "File names to ignore")
-
 def get_zip_files():
   """Get all zip files from FLAGS.zip_dir.
 
@@ -71,8 +69,6 @@ def get_zip_files():
 
   zip_file_paths = []
   for zip_file in os.listdir(FLAGS.zip_dir):
-    if (FLAGS.ignore_files and zip_file in FLAGS.ignore_files):
-      continue
     zip_path = os.path.join(os.getcwd(), FLAGS.zip_dir, zip_file)
     if zipfile.is_zipfile(zip_path):
       zip_file_paths.append(zip_path)

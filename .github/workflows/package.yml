@@ -123,7 +123,7 @@ jobs:
       - name: move zip files
         run: |
           cd built_artifact
-          find . -type f -name "*.zip" -exec mv {} . \;
+          find . -type f \( -name "*.zip" ! -name "documentation_sources*" \) -exec mv {} . \;
           find . -empty -type d -delete
           ls -lR
           for zip_file in *.zip
@@ -135,7 +135,7 @@ jobs:
 
       - name: Package unitypackage
         run: |
-          python scripts/build_scripts/build_package.py --zip_dir=built_artifact --ignore_files=documentation_sources.zip
+          python scripts/build_scripts/build_package.py --zip_dir=built_artifact
 
       - name: Commit Changes if there is any
         if: inputs.working_branch != '' || inputs.create_new_branch == '1'
