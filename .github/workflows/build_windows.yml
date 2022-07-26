@@ -1,5 +1,5 @@
 # Workflow to handle building the Unity SDK on windows
-name: Build windows Reuse
+name: Build windows (SubWorkflow)
 
 on:
   workflow_call:
