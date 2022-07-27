@@ -18,7 +18,7 @@
 export config for each product.
 
 Example usage:
-  python scripts/build_scripts/unpack_package.py --folder=<sdk folder 1>
+  python scripts/build_scripts/create_debug_export.py
 """
 
 import os
