@@ -123,7 +123,7 @@ jobs:
       - name: move zip files
         run: |
           cd built_artifact
-          find . -type f -name "*.zip" -exec mv {} . \;
+          find . -type f \( -name "*.zip" ! -name "documentation_sources*" \) -exec mv {} . \;
           find . -empty -type d -delete
           ls -lR
           for zip_file in *.zip
