@@ -157,7 +157,7 @@ Release Notes
 -------------
 ### 9.3.0
 - Changes
-    - General (Android,Linux): Fixed a concurrency bug where waiting for an
+    - General (Android, Linux): Fixed a concurrency bug where waiting for an
       event with a timeout could occasionally return prematurely, as if the
       timeout had occurred
       ([#1021](https://github.com/firebase/firebase-cpp-sdk/pull/1021)).
