@@ -294,12 +294,12 @@ def main(argv):
 
   testapps = validate_testapps(FLAGS.testapps, config.apis)
   platforms = validate_platforms(FLAGS.platforms)
-  if _ANDROID in platforms:
-    patch_android_env(version)
   output_root = os.path.join(root_output_dir, "testapps")
   playmode_tests = []
   failures = []
   for version in unity_versions:
+    if _ANDROID in platforms:
+      patch_android_env(version)
     runtime = get_runtime(version, FLAGS.force_latest_runtime)
     output_dir = get_output_dir(output_root, str(version), runtime, timestamp)
     logging.info("Output directory: %s", output_dir)
