@@ -294,7 +294,8 @@ def main(argv):
 
   testapps = validate_testapps(FLAGS.testapps, config.apis)
   platforms = validate_platforms(FLAGS.platforms)
-
+  if _ANDROID in platforms:
+    patch_android_env(version)
   output_root = os.path.join(root_output_dir, "testapps")
   playmode_tests = []
   failures = []
@@ -327,8 +328,6 @@ def main(argv):
       build_desc = "{0}, .NET{1}, Unity{2}".format(
           testapp, runtime, str(version))
       logging.info("BEGIN %s", build_desc)
-      if _ANDROID in platforms:
-        patch_android_env(version)
       try:
         setup_unity_project(dir_helper, setup_options)
       except (subprocess.SubprocessError, RuntimeError) as e:
