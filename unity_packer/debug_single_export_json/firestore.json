@@ -266,7 +266,7 @@
       "export": 0
     },
     {
-      "name": "FirebaseAuth.unitypackage",
+      "name": "FirebaseFirestore.unitypackage",
       "imports": [
         {
           "importer": "PluginImporter",
@@ -277,8 +277,8 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/Firebase.Auth.dll",
-            "Firebase/Plugins/Firebase.Auth.pdb"
+            "Firebase/Plugins/Firebase.Firestore.dll",
+            "Firebase/Plugins/Firebase.Firestore.pdb"
           ]
         },
         {
@@ -288,16 +288,16 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAuth.a",
-            "Firebase/Plugins/iOS/Firebase.Auth.dll",
-            "Firebase/Plugins/iOS/Firebase.Auth.pdb"
+            "Plugins/iOS/Firebase/libFirebaseCppFirestore.a",
+            "Firebase/Plugins/iOS/Firebase.Firestore.dll",
+            "Firebase/Plugins/iOS/Firebase.Firestore.pdb"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/AuthDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-auth-unity/"
+            "Firebase/Editor/FirestoreDependencies.xml",
+            "Firebase/m2repository/com/google/firebase/firebase-firestore-unity/"
           ]
         },
         {
@@ -308,13 +308,7 @@
           ],
           "cpu": "x86_64",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppAuth*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/FirebaseAuth*_manifest.txt"
+            "Firebase/Plugins/x86_64/FirebaseCppFirestore*"
           ]
         },
         {
@@ -323,7 +317,7 @@
             "samples"
           ],
           "paths": [
-            "Firebase/Sample/Auth/"
+            "Firebase/Sample/Firestore/"
           ]
         },
         {
@@ -333,39 +327,41 @@
             "documentation"
           ],
           "paths": [
-            "Firebase/Editor/AuthReadme.md"
+            "Firebase/Editor/FirestoreReadme.md"
           ]
         }
       ],
       "includes": [
-        "FirebaseApp.unitypackage",
-        "SampleCommon.unitypackage"
+        "FirebaseApp.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
-      "readme": "Firebase/Editor/AuthReadme.md",
+      "readme": "Firebase/Editor/FirestoreReadme.md",
       "changelog": "Firebase/Editor/readme.md",
       "license": "Firebase/Editor/LICENSE",
-      "documentation": "Firebase/Editor/AuthReadme.md",
+      "documentation": "Firebase/Editor/FirestoreReadme.md",
       "common_manifest": {
-        "name": "com.google.firebase.auth",
-        "display_name": "Firebase Authentication",
+        "name": "com.google.firebase.firestore",
+        "display_name": "Cloud Firestore",
         "description": [
-          "Easily sign-in and authenticate players.\n\n",
-          "Sign-in players using any identity provider with Firebase ",
-          "Authentication. It supports email and password, phone ",
-          "authentication, Facebook, Google, Twitter, and more. ",
-          "Out-of-the-box, you get a secure, end-to-end identity solution."
+          "Store and sync game data at global scale.\n\n",
+          "Cloud Firestore is a flexible NoSQL document database that lets ",
+          "you easily store, sync, and query data for your games - at global ",
+          "scale.\n\n",
+          "Firestore supports a million players connected simultaneously with ",
+          "a guaranteed uptime of 5 nines for multi-region instances. That's ",
+          "less than 5 minutes of downtime a year!\n\n",
+          "With Cloud Firestore, your players can access and make changes to ",
+          "their data at any time, even when they're offline."
         ],
         "keywords": [
           "Google",
           "Firebase",
-          "Auth",
-          "Authentication",
-          "FirebaseAuth"
+          "Firestore",
+          "Cloud"
         ],
         "author": {
           "name": "Google LLC",
-          "url": "https://firebase.google.com/docs/auth/unity/start"
+          "url": "https://firebase.google.com/docs/firestore"
         }
       },
       "export_upm": 1,

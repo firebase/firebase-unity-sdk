@@ -266,7 +266,7 @@
       "export": 0
     },
     {
-      "name": "FirebaseAuth.unitypackage",
+      "name": "FirebaseCrashlytics.unitypackage",
       "imports": [
         {
           "importer": "PluginImporter",
@@ -277,8 +277,8 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/Firebase.Auth.dll",
-            "Firebase/Plugins/Firebase.Auth.pdb"
+            "Firebase/Plugins/Firebase.Crashlytics.dll",
+            "Firebase/Plugins/Firebase.Crashlytics.pdb"
           ]
         },
         {
@@ -288,42 +288,50 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAuth.a",
-            "Firebase/Plugins/iOS/Firebase.Auth.dll",
-            "Firebase/Plugins/iOS/Firebase.Auth.pdb"
+            "Plugins/iOS/Firebase/libCrashlyticsiOSWrapper.a",
+            "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.a",
+            "Firebase/Plugins/iOS/Firebase.Crashlytics.dll",
+            "Firebase/Plugins/iOS/Firebase.Crashlytics.pdb"
           ]
         },
         {
-          "importer": "DefaultImporter",
+          "importer": "PluginImporter",
+          "platforms": [],
+          "labels": [
+            "gvh_targets-editor"
+          ],
           "paths": [
-            "Firebase/Editor/AuthDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-auth-unity/"
-          ]
+            "Firebase/Editor/Firebase.Crashlytics.Editor.dll",
+            "Firebase/Editor/Firebase.Crashlytics.Editor.pdb"
+          ],
+          "override_metadata_upm": {
+            "PluginImporter": {
+              "platformData": {
+                "Editor": {
+                  "enabled": 1
+                }
+              }
+            }
+          }
         },
         {
           "importer": "PluginImporter",
           "platforms": [
             "Editor",
-            "Standalone"
+            "Standalone",
+            "Android",
+            "iOS"
           ],
-          "cpu": "x86_64",
+          "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppAuth*"
+            "Firebase/Plugins/Crashlytics/link.xml"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/FirebaseAuth*_manifest.txt"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "sections": [
-            "samples"
-          ],
-          "paths": [
-            "Firebase/Sample/Auth/"
+            "Firebase/Editor/CrashlyticsDependencies.xml",
+            "Firebase/m2repository/com/google/firebase/firebase-crashlytics-unity/"
           ]
         },
         {
@@ -333,7 +341,7 @@
             "documentation"
           ],
           "paths": [
-            "Firebase/Editor/AuthReadme.md"
+            "Firebase/Editor/CrashlyticsReadme.md"
           ]
         }
       ],
@@ -342,30 +350,33 @@
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
-      "readme": "Firebase/Editor/AuthReadme.md",
+      "readme": "Firebase/Editor/CrashlyticsReadme.md",
       "changelog": "Firebase/Editor/readme.md",
       "license": "Firebase/Editor/LICENSE",
-      "documentation": "Firebase/Editor/AuthReadme.md",
+      "documentation": "Firebase/Editor/CrashlyticsReadme.md",
       "common_manifest": {
-        "name": "com.google.firebase.auth",
-        "display_name": "Firebase Authentication",
+        "name": "com.google.firebase.crashlytics",
+        "display_name": "Firebase Crashlytics",
         "description": [
-          "Easily sign-in and authenticate players.\n\n",
-          "Sign-in players using any identity provider with Firebase ",
-          "Authentication. It supports email and password, phone ",
-          "authentication, Facebook, Google, Twitter, and more. ",
-          "Out-of-the-box, you get a secure, end-to-end identity solution."
+          "Prioritize and fix stability issues faster.\n\n",
+          "Firebase Crashlytics helps you track, prioritize, and fix ",
+          "stability issues that erode game quality, in realtime. Spend less ",
+          "time triaging and troubleshooting crashes and more time building ",
+          "game content and features that delight players.\n\n",
+          "Crashlytics also sends realtime alerts for new issues, regressed ",
+          "issues, and burgeoning issues that might require immediate ",
+          "attention to ensure you never miss a critical crash no matter ",
+          "where you are."
         ],
         "keywords": [
           "Google",
           "Firebase",
-          "Auth",
-          "Authentication",
-          "FirebaseAuth"
+          "Crashlytics",
+          "Fabric"
         ],
         "author": {
           "name": "Google LLC",
-          "url": "https://firebase.google.com/docs/auth/unity/start"
+          "url": "https://firebase.google.com/docs/crashlytics/unity/start"
         }
       },
       "export_upm": 1,

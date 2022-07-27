@@ -266,7 +266,7 @@
       "export": 0
     },
     {
-      "name": "FirebaseAuth.unitypackage",
+      "name": "FirebaseInstallations.unitypackage",
       "imports": [
         {
           "importer": "PluginImporter",
@@ -277,8 +277,8 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/Firebase.Auth.dll",
-            "Firebase/Plugins/Firebase.Auth.pdb"
+            "Firebase/Plugins/Firebase.Installations.dll",
+            "Firebase/Plugins/Firebase.Installations.pdb"
           ]
         },
         {
@@ -288,16 +288,16 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAuth.a",
-            "Firebase/Plugins/iOS/Firebase.Auth.dll",
-            "Firebase/Plugins/iOS/Firebase.Auth.pdb"
+            "Plugins/iOS/Firebase/libFirebaseCppInstallations.a",
+            "Firebase/Plugins/iOS/Firebase.Installations.dll",
+            "Firebase/Plugins/iOS/Firebase.Installations.pdb"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/AuthDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-auth-unity/"
+            "Firebase/Editor/InstallationsDependencies.xml",
+            "Firebase/m2repository/com/google/firebase/firebase-installations-unity/"
           ]
         },
         {
@@ -308,13 +308,7 @@
           ],
           "cpu": "x86_64",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppAuth*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/FirebaseAuth*_manifest.txt"
+            "Firebase/Plugins/x86_64/FirebaseCppInstallations*"
           ]
         },
         {
@@ -323,7 +317,7 @@
             "samples"
           ],
           "paths": [
-            "Firebase/Sample/Auth/"
+            "Firebase/Sample/Installations/"
           ]
         },
         {
@@ -333,7 +327,7 @@
             "documentation"
           ],
           "paths": [
-            "Firebase/Editor/AuthReadme.md"
+            "Firebase/Editor/InstallationsReadme.md"
           ]
         }
       ],
@@ -342,30 +336,31 @@
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
-      "readme": "Firebase/Editor/AuthReadme.md",
+      "readme": "Firebase/Editor/InstallationsReadme.md",
       "changelog": "Firebase/Editor/readme.md",
       "license": "Firebase/Editor/LICENSE",
-      "documentation": "Firebase/Editor/AuthReadme.md",
+      "documentation": "Firebase/Editor/InstallationsReadme.md",
       "common_manifest": {
-        "name": "com.google.firebase.auth",
-        "display_name": "Firebase Authentication",
+        "name": "com.google.firebase.installations",
+        "display_name": "Firebase Installations",
         "description": [
-          "Easily sign-in and authenticate players.\n\n",
-          "Sign-in players using any identity provider with Firebase ",
-          "Authentication. It supports email and password, phone ",
-          "authentication, Facebook, Google, Twitter, and more. ",
-          "Out-of-the-box, you get a secure, end-to-end identity solution."
+          "The Firebase installations service (FIS) provides a Firebase ",
+          "installation ID (FID) for each installed instance of a Firebase ",
+          "app. The Firebase installation ID is used internally by Firebase ",
+          "services such as In-App Messaging or Remote Config without ",
+          "requiring developers to interact directly with the FIS API. Using ",
+          "this API, a developer can delete a Firebase installation and the ",
+          "data tied to it, target specific app installations, and retrieve ",
+          "installation auth tokens."
         ],
         "keywords": [
           "Google",
           "Firebase",
-          "Auth",
-          "Authentication",
-          "FirebaseAuth"
+          "Installations"
         ],
         "author": {
           "name": "Google LLC",
-          "url": "https://firebase.google.com/docs/auth/unity/start"
+          "url": "https://firebase.google.com/docs/reference/unity/namespace/firebase/installations"
         }
       },
       "export_upm": 1,

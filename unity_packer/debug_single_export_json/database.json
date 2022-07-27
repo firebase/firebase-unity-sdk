@@ -266,7 +266,7 @@
       "export": 0
     },
     {
-      "name": "FirebaseAuth.unitypackage",
+      "name": "FirebaseDatabase.unitypackage",
       "imports": [
         {
           "importer": "PluginImporter",
@@ -277,8 +277,8 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/Firebase.Auth.dll",
-            "Firebase/Plugins/Firebase.Auth.pdb"
+            "Firebase/Plugins/Firebase.Database.dll",
+            "Firebase/Plugins/Firebase.Database.pdb"
           ]
         },
         {
@@ -288,16 +288,16 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAuth.a",
-            "Firebase/Plugins/iOS/Firebase.Auth.dll",
-            "Firebase/Plugins/iOS/Firebase.Auth.pdb"
+            "Plugins/iOS/Firebase/libFirebaseCppDatabase.a",
+            "Firebase/Plugins/iOS/Firebase.Database.dll",
+            "Firebase/Plugins/iOS/Firebase.Database.pdb"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/AuthDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-auth-unity/"
+            "Firebase/Editor/DatabaseDependencies.xml",
+            "Firebase/m2repository/com/google/firebase/firebase-database-unity/"
           ]
         },
         {
@@ -308,13 +308,22 @@
           ],
           "cpu": "x86_64",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppAuth*"
+            "Firebase/Plugins/x86_64/FirebaseCppDatabase*"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/FirebaseAuth*_manifest.txt"
+            "Firebase/Editor/FirebaseDatabase*_manifest.txt"
+          ]
+        },
+        {
+          "labels": [
+            "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/Http/link.xml"
           ]
         },
         {
@@ -323,7 +332,7 @@
             "samples"
           ],
           "paths": [
-            "Firebase/Sample/Auth/"
+            "Firebase/Sample/Database/"
           ]
         },
         {
@@ -333,39 +342,44 @@
             "documentation"
           ],
           "paths": [
-            "Firebase/Editor/AuthReadme.md"
+            "Firebase/Editor/DatabaseReadme.md"
           ]
         }
       ],
+      "exclude_paths": [
+        "Firebase/Sample/Auth/.*"
+      ],
       "includes": [
-        "FirebaseApp.unitypackage",
+        "FirebaseAuth.unitypackage",
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
-      "readme": "Firebase/Editor/AuthReadme.md",
+      "readme": "Firebase/Editor/DatabaseReadme.md",
       "changelog": "Firebase/Editor/readme.md",
       "license": "Firebase/Editor/LICENSE",
-      "documentation": "Firebase/Editor/AuthReadme.md",
+      "documentation": "Firebase/Editor/DatabaseReadme.md",
       "common_manifest": {
-        "name": "com.google.firebase.auth",
-        "display_name": "Firebase Authentication",
+        "name": "com.google.firebase.database",
+        "display_name": "Firebase Realtime Database",
         "description": [
-          "Easily sign-in and authenticate players.\n\n",
-          "Sign-in players using any identity provider with Firebase ",
-          "Authentication. It supports email and password, phone ",
-          "authentication, Facebook, Google, Twitter, and more. ",
-          "Out-of-the-box, you get a secure, end-to-end identity solution."
+          "Store and sync data in near-realtime.\n\n",
+          "Realtime Database is a cloud-hosted NoSQL database that lets you ",
+          "store and sync JSON data in near-realtime. It's optimized for very ",
+          "rapid syncing of small amounts of data.\n\n",
+          "When your players go offline, the Realtime Database SDKs use local ",
+          "cache on the device to serve and store changes. When the device ",
+          "comes online, the local data is automatically synchronized so ",
+          "people can keep playing your game from where they left off."
         ],
         "keywords": [
           "Google",
           "Firebase",
-          "Auth",
-          "Authentication",
-          "FirebaseAuth"
+          "Database",
+          "Realtime"
         ],
         "author": {
           "name": "Google LLC",
-          "url": "https://firebase.google.com/docs/auth/unity/start"
+          "url": "https://firebase.google.com/docs/database/unity/start"
         }
       },
       "export_upm": 1,

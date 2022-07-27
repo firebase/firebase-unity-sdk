@@ -266,7 +266,7 @@
       "export": 0
     },
     {
-      "name": "FirebaseAuth.unitypackage",
+      "name": "FirebaseFunctions.unitypackage",
       "imports": [
         {
           "importer": "PluginImporter",
@@ -277,8 +277,8 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/Firebase.Auth.dll",
-            "Firebase/Plugins/Firebase.Auth.pdb"
+            "Firebase/Plugins/Firebase.Functions.dll",
+            "Firebase/Plugins/Firebase.Functions.pdb"
           ]
         },
         {
@@ -288,16 +288,16 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAuth.a",
-            "Firebase/Plugins/iOS/Firebase.Auth.dll",
-            "Firebase/Plugins/iOS/Firebase.Auth.pdb"
+            "Plugins/iOS/Firebase/libFirebaseCppFunctions.a",
+            "Firebase/Plugins/iOS/Firebase.Functions.dll",
+            "Firebase/Plugins/iOS/Firebase.Functions.pdb"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/AuthDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-auth-unity/"
+            "Firebase/Editor/FunctionsDependencies.xml",
+            "Firebase/m2repository/com/google/firebase/firebase-functions-unity/"
           ]
         },
         {
@@ -308,13 +308,7 @@
           ],
           "cpu": "x86_64",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppAuth*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/FirebaseAuth*_manifest.txt"
+            "Firebase/Plugins/x86_64/FirebaseCppFunctions*"
           ]
         },
         {
@@ -323,7 +317,7 @@
             "samples"
           ],
           "paths": [
-            "Firebase/Sample/Auth/"
+            "Firebase/Sample/Functions/"
           ]
         },
         {
@@ -333,7 +327,7 @@
             "documentation"
           ],
           "paths": [
-            "Firebase/Editor/AuthReadme.md"
+            "Firebase/Editor/FunctionsReadme.md"
           ]
         }
       ],
@@ -342,30 +336,31 @@
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
-      "readme": "Firebase/Editor/AuthReadme.md",
+      "readme": "Firebase/Editor/FunctionsReadme.md",
       "changelog": "Firebase/Editor/readme.md",
       "license": "Firebase/Editor/LICENSE",
-      "documentation": "Firebase/Editor/AuthReadme.md",
+      "documentation": "Firebase/Editor/FunctionsReadme.md",
       "common_manifest": {
-        "name": "com.google.firebase.auth",
-        "display_name": "Firebase Authentication",
+        "name": "com.google.firebase.functions",
+        "display_name": "Cloud Functions for Firebase",
         "description": [
-          "Easily sign-in and authenticate players.\n\n",
-          "Sign-in players using any identity provider with Firebase ",
-          "Authentication. It supports email and password, phone ",
-          "authentication, Facebook, Google, Twitter, and more. ",
-          "Out-of-the-box, you get a secure, end-to-end identity solution."
+          "Run your mobile backend code without managing servers.\n\n",
+          "With Cloud Functions, you can write and deploy code to our servers ",
+          "that automatically responds (i.e. executes) to events in your game.\n\n",
+          "This way, your game logic is fully insulated from the client so ",
+          "you can be sure its functions are private and can't be reverse ",
+          "engineered. Cloud Functions also automatically scales up computing ",
+          "resources to match the usage patterns of your game."
         ],
         "keywords": [
           "Google",
           "Firebase",
-          "Auth",
-          "Authentication",
-          "FirebaseAuth"
+          "Functions",
+          "Cloud"
         ],
         "author": {
           "name": "Google LLC",
-          "url": "https://firebase.google.com/docs/auth/unity/start"
+          "url": "https://firebase.google.com/docs/functions"
         }
       },
       "export_upm": 1,

@@ -266,7 +266,7 @@
       "export": 0
     },
     {
-      "name": "FirebaseAuth.unitypackage",
+      "name": "FirebaseStorage.unitypackage",
       "imports": [
         {
           "importer": "PluginImporter",
@@ -277,8 +277,8 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/Firebase.Auth.dll",
-            "Firebase/Plugins/Firebase.Auth.pdb"
+            "Firebase/Plugins/Firebase.Storage.dll",
+            "Firebase/Plugins/Firebase.Storage.pdb"
           ]
         },
         {
@@ -288,16 +288,30 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAuth.a",
-            "Firebase/Plugins/iOS/Firebase.Auth.dll",
-            "Firebase/Plugins/iOS/Firebase.Auth.pdb"
+            "Plugins/iOS/Firebase/libFirebaseCppStorage.a",
+            "Firebase/Plugins/iOS/Firebase.Storage.dll",
+            "Firebase/Plugins/iOS/Firebase.Storage.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/Google.Sharpen.dll",
+            "Firebase/Plugins/Google.Sharpen.pdb"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/AuthDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-auth-unity/"
+            "Firebase/Editor/StorageDependencies.xml",
+            "Firebase/m2repository/com/google/firebase/firebase-storage-unity/"
           ]
         },
         {
@@ -308,13 +322,13 @@
           ],
           "cpu": "x86_64",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppAuth*"
+            "Firebase/Plugins/x86_64/FirebaseCppStorage*"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/FirebaseAuth*_manifest.txt"
+            "Firebase/Editor/FirebaseStorage*_manifest.txt"
           ]
         },
         {
@@ -323,7 +337,7 @@
             "samples"
           ],
           "paths": [
-            "Firebase/Sample/Auth/"
+            "Firebase/Sample/Storage/"
           ]
         },
         {
@@ -333,39 +347,42 @@
             "documentation"
           ],
           "paths": [
-            "Firebase/Editor/AuthReadme.md"
+            "Firebase/Editor/StorageReadme.md"
           ]
         }
       ],
+      "exclude_paths": [
+        "Firebase/Sample/Auth/.*"
+      ],
       "includes": [
-        "FirebaseApp.unitypackage",
+        "FirebaseAuth.unitypackage",
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
-      "readme": "Firebase/Editor/AuthReadme.md",
+      "readme": "Firebase/Editor/StorageReadme.md",
       "changelog": "Firebase/Editor/readme.md",
       "license": "Firebase/Editor/LICENSE",
-      "documentation": "Firebase/Editor/AuthReadme.md",
+      "documentation": "Firebase/Editor/StorageReadme.md",
       "common_manifest": {
-        "name": "com.google.firebase.auth",
-        "display_name": "Firebase Authentication",
+        "name": "com.google.firebase.storage",
+        "display_name": "Cloud Storage for Firebase",
         "description": [
-          "Easily sign-in and authenticate players.\n\n",
-          "Sign-in players using any identity provider with Firebase ",
-          "Authentication. It supports email and password, phone ",
-          "authentication, Facebook, Google, Twitter, and more. ",
-          "Out-of-the-box, you get a secure, end-to-end identity solution."
+          "Store and serve game content with ease.\n\n",
+          "With Cloud Storage, you can easily store and serve large binary ",
+          "objects, such as screenshots, replays, or game assets, and ",
+          "effortlessly grow from prototype to production.\n\n",
+          "Through an integration with Firebase Authentication, you can use ",
+          "our declarative security model to control access and keep data safe."
         ],
         "keywords": [
           "Google",
           "Firebase",
-          "Auth",
-          "Authentication",
-          "FirebaseAuth"
+          "Storage",
+          "Cloud"
         ],
         "author": {
           "name": "Google LLC",
-          "url": "https://firebase.google.com/docs/auth/unity/start"
+          "url": "https://firebase.google.com/docs/storage/unity/start"
         }
       },
       "export_upm": 1,

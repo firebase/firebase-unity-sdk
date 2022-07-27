@@ -266,7 +266,7 @@
       "export": 0
     },
     {
-      "name": "FirebaseAuth.unitypackage",
+      "name": "FirebaseDynamicLinks.unitypackage",
       "imports": [
         {
           "importer": "PluginImporter",
@@ -277,8 +277,8 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/Firebase.Auth.dll",
-            "Firebase/Plugins/Firebase.Auth.pdb"
+            "Firebase/Plugins/Firebase.DynamicLinks.dll",
+            "Firebase/Plugins/Firebase.DynamicLinks.pdb"
           ]
         },
         {
@@ -288,16 +288,16 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAuth.a",
-            "Firebase/Plugins/iOS/Firebase.Auth.dll",
-            "Firebase/Plugins/iOS/Firebase.Auth.pdb"
+            "Plugins/iOS/Firebase/libFirebaseCppDynamicLinks.a",
+            "Firebase/Plugins/iOS/Firebase.DynamicLinks.dll",
+            "Firebase/Plugins/iOS/Firebase.DynamicLinks.pdb"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/AuthDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-auth-unity/"
+            "Firebase/Editor/DynamicLinksDependencies.xml",
+            "Firebase/m2repository/com/google/firebase/firebase-dynamic-links-unity/"
           ]
         },
         {
@@ -308,13 +308,7 @@
           ],
           "cpu": "x86_64",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppAuth*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/FirebaseAuth*_manifest.txt"
+            "Firebase/Plugins/x86_64/FirebaseCppDynamicLinks*"
           ]
         },
         {
@@ -323,7 +317,7 @@
             "samples"
           ],
           "paths": [
-            "Firebase/Sample/Auth/"
+            "Firebase/Sample/DynamicLinks/"
           ]
         },
         {
@@ -333,7 +327,7 @@
             "documentation"
           ],
           "paths": [
-            "Firebase/Editor/AuthReadme.md"
+            "Firebase/Editor/DynamicLinksReadme.md"
           ]
         }
       ],
@@ -342,30 +336,29 @@
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
-      "readme": "Firebase/Editor/AuthReadme.md",
+      "readme": "Firebase/Editor/DynamicLinksReadme.md",
       "changelog": "Firebase/Editor/readme.md",
       "license": "Firebase/Editor/LICENSE",
-      "documentation": "Firebase/Editor/AuthReadme.md",
+      "documentation": "Firebase/Editor/DynamicLinksReadme.md",
       "common_manifest": {
-        "name": "com.google.firebase.auth",
-        "display_name": "Firebase Authentication",
+        "name": "com.google.firebase.dynamic-links",
+        "display_name": "Firebase Dynamic Links",
         "description": [
-          "Easily sign-in and authenticate players.\n\n",
-          "Sign-in players using any identity provider with Firebase ",
-          "Authentication. It supports email and password, phone ",
-          "authentication, Facebook, Google, Twitter, and more. ",
-          "Out-of-the-box, you get a secure, end-to-end identity solution."
+          "Deep link potential players to the right place inside your game.\n\n",
+          "Dynamic Links are smart URLs that allow you to send existing and ",
+          "potential players to any location within your game. They survive ",
+          "the game install process, so even new players see the content ",
+          "they're looking for when they open the game for the first time. ",
+          "Dynamic Links are free forever, for any scale."
         ],
         "keywords": [
           "Google",
           "Firebase",
-          "Auth",
-          "Authentication",
-          "FirebaseAuth"
+          "Dynamic Links"
         ],
         "author": {
           "name": "Google LLC",
-          "url": "https://firebase.google.com/docs/auth/unity/start"
+          "url": "https://firebase.google.com/docs/dynamic-links"
         }
       },
       "export_upm": 1,
