@@ -248,10 +248,7 @@ namespace Firebase.Firestore {
     /// be invoked on the main thread.</param>
     /// <returns>A task which completes when the transaction has committed.</returns>
     public Task RunTransactionAsync(Func<Transaction, Task> callback) {
-      Preconditions.CheckNotNull(callback, nameof(callback));
-      // Just pass through to the overload where the callback returns a Task<T>.
-      return RunTransactionAsync(transaction =>
-                                     Util.MapResult<object>(callback(transaction), null));
+      return RunTransactionAsync(new TransactionOptions(), callback);
     }
 
     /// <summary>
@@ -276,8 +273,65 @@ namespace Firebase.Firestore {
     /// <returns>A task which completes when the transaction has committed. The result of the task
     /// then contains the result of the callback.</returns>
     public Task<T> RunTransactionAsync<T>(Func<Transaction, Task<T>> callback) {
+      return RunTransactionAsync(new TransactionOptions(), callback);
+    }
+
+    /// <summary>
+    /// Runs a transaction asynchronously, with an asynchronous callback that returns a value.
+    /// The specified callback is executed for a newly-created transaction.
+    /// </summary>
+    /// <remarks>
+    /// <para><c>RunTransactionAsync</c> executes the given callback on the main thread and then
+    /// attempts to commit the changes applied within the transaction. If any document read within
+    /// the transaction has changed, the <paramref name="callback"/> will be retried. If it fails to
+    /// commit after the maximum number of attempts specified in the given <c>TransactionOptions</c>
+    /// object, the transaction will fail.</para>
+    ///
+    /// <para>The maximum number of writes allowed in a single transaction is 500, but note that
+    /// each usage of <see cref="FieldValue.ServerTimestamp"/>, <c>FieldValue.ArrayUnion</c>,
+    /// <c>FieldValue.ArrayRemove</c>, or <c>FieldValue.Increment</c> inside a transaction counts as
+    /// an additional write.</para>
+    /// </remarks>
+    ///
+    /// <typeparam name="T">The result type of the callback.</typeparam>
+    /// <param name="options">The transaction options for controlling execution. Must not be
+    /// <c>null</c>.</param>
+    /// <param name="callback">The callback to execute. Must not be <c>null</c>. The callback will
+    /// be invoked on the main thread.</param>
+    /// <returns>A task which completes when the transaction has committed. The result of the task
+    /// then contains the result of the callback.</returns>
+    public Task<T> RunTransactionAsync<T>(TransactionOptions options, Func<Transaction, Task<T>> callback) {
+      Preconditions.CheckNotNull(options, nameof(options));
       Preconditions.CheckNotNull(callback, nameof(callback));
-      return WithFirestoreProxy(proxy => _transactionManager.RunTransactionAsync(callback));
+      return WithFirestoreProxy(proxy => _transactionManager.RunTransactionAsync(options, callback));
+    }
+
+    /// <summary>
+    /// Runs a transaction asynchronously, with an asynchronous callback that doesn't return a
+    /// value. The specified callback is executed for a newly-created transaction.
+    /// </summary>
+    /// <remarks>
+    /// <para><c>RunTransactionAsync</c> executes the given callback on the main thread and then
+    /// attempts to commit the changes applied within the transaction. If any document read within
+    /// the transaction has changed, the <paramref name="callback"/> will be retried. If it fails to
+    /// commit after the maximum number of attempts specified in the given <c>TransactionOptions</c>
+    /// object, the transaction will fail.</para>
+    ///
+    /// <para>The maximum number of writes allowed in a single transaction is 500, but note that
+    /// each usage of <see cref="FieldValue.ServerTimestamp"/>, <c>FieldValue.ArrayUnion</c>,
+    /// <c>FieldValue.ArrayRemove</c>, or <c>FieldValue.Increment</c> inside a transaction counts as
+    /// an additional write.</para>
+    /// </remarks>
+    /// <param name="options">The transaction options for controlling execution. Must not be
+    /// <c>null</c>.</param>
+    /// <param name="callback">The callback to execute. Must not be <c>null</c>. The callback will
+    /// be invoked on the main thread.</param>
+    /// <returns>A task which completes when the transaction has committed.</returns>
+    public Task RunTransactionAsync(TransactionOptions options, Func<Transaction, Task> callback) {
+      Preconditions.CheckNotNull(options, nameof(options));
+      Preconditions.CheckNotNull(callback, nameof(callback));
+      // Just pass through to the overload where the callback returns a Task<T>.
+      return RunTransactionAsync(options, transaction => Util.MapResult<object>(callback(transaction), null));
     }
 
     private static SnapshotsInSyncCallbackMap snapshotsInSyncCallbacks = new SnapshotsInSyncCallbackMap();

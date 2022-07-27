@@ -21,8 +21,44 @@ set(firebase_firestore_swig
   src/swig/firestore.i
 )
 
+# Firebase Firestore CSharp files that should be included in reference docs
+set(firebase_firestore_src_documented
+  src/Blob.cs
+  src/CollectionReference.cs
+  src/DocumentChange.cs
+  src/DocumentReference.cs
+  src/DocumentSnapshot.cs
+  src/FieldPath.cs
+  src/FieldValue.cs
+  src/FirebaseFirestore.cs
+  src/FirebaseFirestoreSettings.cs
+  src/FirestoreDataAttribute.cs
+  src/FirestoreDocumentIdAttribute.cs
+  src/FirestoreEnumNameConverter.cs
+  src/FirestoreError.cs
+  src/FirestoreException.cs
+  src/FirestorePropertyAttribute.cs
+  src/GeoPoint.cs
+  src/ListenerRegistration.cs
+  src/LoadBundleTaskProgress.cs
+  src/MetadataChanges.cs
+  src/Query.cs
+  src/QuerySnapshot.cs
+  src/ServerTimestampAttribute.cs
+  src/ServerTimestampBehavior.cs
+  src/SetOptions.cs
+  src/SnapshotMetadata.cs
+  src/Source.cs
+  src/Timestamp.cs
+  src/Transaction.cs
+  src/TransactionOptions.cs
+  src/UnknownPropertyHandling.cs
+  src/WriteBatch.cs
+)
+
 # Firebase Firestore CSharp files
 set(firebase_firestore_src
+  ${firebase_firestore_src_documented}
   src/Converters/AnonymousTypeConverter.cs
   src/Converters/ArrayConverter.cs
   src/Converters/AttributedIdAssigner.cs
@@ -43,46 +79,16 @@ set(firebase_firestore_src
   src/internal/Hash.cs
   src/internal/Preconditions.cs
   src/internal/Util.cs
-  src/Blob.cs
   src/BuildStubs.cs
-  src/CollectionReference.cs
   src/ConverterRegistry.cs
   src/DeserializationContext.cs
-  src/DocumentChange.cs
-  src/DocumentReference.cs
-  src/DocumentSnapshot.cs
-  src/FieldPath.cs
-  src/FieldValue.cs
-  src/FirebaseFirestore.cs
-  src/FirebaseFirestoreSettings.cs
   src/FirestoreConverter.cs
-  src/FirestoreDataAttribute.cs
-  src/FirestoreDocumentIdAttribute.cs
-  src/FirestoreEnumNameConverter.cs
-  src/FirestoreError.cs
-  src/FirestoreException.cs
-  src/FirestorePropertyAttribute.cs
-  src/GeoPoint.cs
-  src/ListenerRegistration.cs
   src/ListenerRegistrationMap.cs
-  src/LoadBundleTaskProgress.cs
-  src/MetadataChanges.cs
   src/MonoPInvokeCallbackAttribute.cs
-  src/Query.cs
-  src/QuerySnapshot.cs
   src/SerializationContext.cs
-  src/ServerTimestampAttribute.cs
-  src/ServerTimestampBehavior.cs
-  src/SetOptions.cs
-  src/SnapshotMetadata.cs
-  src/Source.cs
-  src/Timestamp.cs
-  src/Transaction.cs
   src/TransactionManager.cs
-  src/UnknownPropertyHandling.cs
   src/ValueDeserializer.cs
   src/ValueSerializer.cs
-  src/WriteBatch.cs
 )
 
 add_subdirectory(src/swig)
@@ -172,6 +178,11 @@ if (FIREBASE_INCLUDE_UNITY)
       "firestore"
   )
 endif()
+
+unity_pack_documentation_sources(firestore
+  DOCUMENTATION_SOURCES
+    ${firebase_firestore_src_documented}
+)
 
 set_property(TARGET firebase_firestore_cs
   PROPERTY FOLDER

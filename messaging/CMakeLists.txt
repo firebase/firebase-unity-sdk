@@ -78,6 +78,12 @@ if (FIREBASE_INCLUDE_UNITY)
   )
 endif()
 
+unity_pack_documentation_sources(messaging
+  DOCUMENTATION_SOURCES
+    ${firebase_messaging_src}
+    ${firebase_messaging_swig_gen_src}
+)
+
 set_property(TARGET firebase_messaging_cs
   PROPERTY FOLDER
   "Firebase ${FIREBASE_PLATFORM_NAME}"

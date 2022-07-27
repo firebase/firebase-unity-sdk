@@ -1,5 +1,5 @@
 # Workflow to handle building the Unity SDK on iOS
-name: Build iOS Reuse
+name: Build iOS (SubWorkflow)
 
 on:
   workflow_call:

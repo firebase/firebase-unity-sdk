@@ -68,7 +68,7 @@ X4-XXXX-XXXX-XXXX-XXXX
 
 
 (3) License release:
-  unity_installer.py --release_license --version 2017.3.1f1 --logfile return.log
+  unity_installer.py --release_license --version 2019 --logfile return.log
 
 """
 
@@ -83,7 +83,7 @@ from absl import logging
 from print_matrix_configuration import UNITY_SETTINGS
 
 
-FLAGS = flags.FLAGS
+_CMD_TIMEOUT = 900
 
 _DEFALUT = "Default"
 _ANDROID = "Android"
@@ -92,6 +92,8 @@ _WINDOWS = "Windows"
 _MACOS = "macOS"
 _LINUX = "Linux"
 _SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _WINDOWS, _MACOS, _LINUX)
+
+FLAGS = flags.FLAGS
 
 # These are the three actions supported by the tool.
 flags.DEFINE_bool(
@@ -107,7 +109,7 @@ flags.DEFINE_bool(
     "release_license", False,
     "Release an activated Unity license. Supply --version and --logfile.")
 
-flags.DEFINE_string("version", None, "Version string, e.g. 2017.3.1f1")
+flags.DEFINE_string("version", None, "Major version string, e.g. 2018")
 flags.DEFINE_string("license_file", None, "Path to the license file.")
 flags.DEFINE_string("username", None, "username for a Unity account.")
 flags.DEFINE_string("password", None, "password for that Unity account.")
@@ -137,6 +139,7 @@ def main(argv):
     raise app.UsageError("Too many command-line arguments.")
 
   if FLAGS.install:
+    uninstall_unity(FLAGS.version)
     install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
@@ -176,9 +179,18 @@ def install_unity(unity_version, platforms):
   run([u3d, "install", "--trace",
        "--verbose", unity_full_version,
        "-p", package_csv])
-  # This will list what u3d has installed. For debugging purposes.
-  run([u3d, "list"], check=False)
   logging.info("Finished installing Unity.")
+
+
+def uninstall_unity(unity_version):
+  """Uninstalls Unity and build supports (packages)."""
+  # Cleaning up installed Unity.
+  os = get_os()
+  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+
+  u3d = find_u3d()
+  run([u3d, "uninstall", "--trace", unity_full_version], check=False)
+  logging.info("Finished uninstalling Unity.")
 
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
@@ -258,9 +270,10 @@ def get_unity_path(version):
     raise RuntimeError("Only Windows and MacOS are supported.")
 
 
-def run(args, check=True):
+def run(args, check=True, timeout=_CMD_TIMEOUT):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
-  subprocess.run(args=args, check=check)
+  logging.info("run cmd: %s", " ".join(args))
+  subprocess.run(args=args, check=check, timeout=timeout)
 
 
 if __name__ == "__main__":

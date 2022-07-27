@@ -28,9 +28,14 @@ set(firebase_crashlytics_swig
   src/swig/crashlytics.i
 )
 
+# Firebase Crashlytics CSharp files that should be included in reference docs
+set(firebase_crashlytics_src_documented
+  src/Crashlytics.cs
+)
+
 # Firebase Crashlytics CSharp files
 set(firebase_crashlytics_src
-  src/Crashlytics.cs
+  ${firebase_crashlytics_src_documented}
   src/ExceptionHandler.cs
   src/Impl.cs
   src/LoggedException.cs
@@ -103,6 +108,12 @@ endif()
 
 unity_pack_cs(firebase_crashlytics_cs)
 
+# Crashlytics has a special file to prevent il2cpp from stripping symbols.
+unity_pack_file(
+  "link.xml"
+  PACK_PATH "Firebase/Plugins/Crashlytics"
+)
+
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Crashlytics
     IOS_DEPS
@@ -113,6 +124,11 @@ if (FIREBASE_INCLUDE_UNITY)
       "crashlytics"
   )
 endif()
+
+unity_pack_documentation_sources(crashlytics
+  DOCUMENTATION_SOURCES
+    ${firebase_crashlytics_src_documented}
+)
 
 set_property(TARGET firebase_crashlytics_cs
   PROPERTY FOLDER

@@ -1,5 +1,5 @@
 # Workflow to handle building the Unity SDK on macOS
-name: Build macOS Reuse
+name: Build macOS (SubWorkflow)
 
 on:
   workflow_call:

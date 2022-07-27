@@ -155,6 +155,25 @@ Support
 
 Release Notes
 -------------
+### 9.3.0
+- Changes
+    - General (Android,Linux): Fixed a concurrency bug where waiting for an
+      event with a timeout could occasionally return prematurely, as if the
+      timeout had occurred
+      ([#1021](https://github.com/firebase/firebase-cpp-sdk/pull/1021)).
+
+### 9.2.0
+- Changes
+    - Crashlytics: Fix requiring user code to reference Crashlytics when using il2cpp.
+    - Firestore: Added `TransactionOptions` to control how many times a
+      transaction will retry commits before failing
+      ([#318](https://github.com/firebase/firebase-unity-sdk/pull/318)).
+    - Database (Desktop): If the app data directory doesn't exist, create it.
+      This fixes an issue with disk persistence on Linux.
+    - Messaging (Android): Make sure all the resources are closed in
+      `RegistrationIntentService`.
+      ([#973](https://github.com/firebase/firebase-cpp-sdk/issues/973)).
+
 ### 9.1.0
 - Changes
     - General: Added a missing namespace to the Google.MiniJson.dll.
