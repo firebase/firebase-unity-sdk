@@ -51,13 +51,15 @@ jobs:
       fail-fast: false
     steps:
       - name: Check input
+        # This check the apis input. It detect whether the package is only asking for subset of
+        # of the products, like auth,firestore only etc. If the input apis are less than the
+        # default_apis env attribute, we determine this package only package subset and for 
+        # check up purpose only.
         id: check-input
         shell: bash
         run: |
           IFS=',' read -r -a input_apis <<< "${{ inputs.apis }}"
           IFS=',' read -r -a default_apis <<< "${{ env.default_apis }}"
-          echo input_api number is: ${#input_apis[@]}
-          echo default_api number is: ${#default_apis[@]}
           if [[ ${#input_apis[@]} != ${#default_apis[@]} ]]; then
             echo "::set-output name=package_for_checks::1"
             echo "::set-output name=package_apis::'--apis=${{ inputs.apis }}'"
