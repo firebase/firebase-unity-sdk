@@ -1,0 +1,396 @@
+{
+  "packages": [
+    {
+      "name": "FirebaseApp.unitypackage",
+      "imports": [
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS"
+          ],
+          "cpu": "AnyCPU",
+          "sections": [
+            "dotnet3"
+          ],
+          "paths": [
+            "Parse/Plugins/Unity.Compat.dll",
+            "Parse/Plugins/Unity.Tasks.dll",
+            "Parse/Plugins/dotNet45/Unity.Compat.dll",
+            "Parse/Plugins/dotNet45/Unity.Tasks.dll"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS"
+          ],
+          "cpu": "AnyCPU",
+          "sections": [
+            "dotnet4"
+          ],
+          "override_metadata": {
+            "PluginImporter": {
+              "platformData": {
+                "Any": {
+                  "enabled": 0
+                },
+                "Editor": {
+                  "enabled": 0
+                }
+              }
+            }
+          },
+          "paths": [
+            "Parse/Plugins/Unity.Compat.dll",
+            "Parse/Plugins/Unity.Tasks.dll"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS"
+          ],
+          "cpu": "AnyCPU",
+          "sections": [
+            "dotnet4"
+          ],
+          "override_metadata": {
+            "PluginImporter": {
+              "platformData": {
+                "Any": {
+                  "enabled": 1
+                },
+                "Editor": {
+                  "enabled": 1
+                }
+              }
+            }
+          },
+          "paths": [
+            "Parse/Plugins/dotNet45/Unity.Compat.dll",
+            "Parse/Plugins/dotNet45/Unity.Tasks.dll"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/Firebase.Platform.dll",
+            "Firebase/Plugins/Firebase.Platform.pdb",
+            "Firebase/Plugins/Google.MiniJson.dll"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/Firebase.App.dll",
+            "Firebase/Plugins/Firebase.App.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "iOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/iOS/Firebase/libFirebaseCppApp.a",
+            "Firebase/Plugins/iOS/Firebase.App.dll",
+            "Firebase/Plugins/iOS/Firebase.App.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [],
+          "labels": [
+            "gvh_targets-editor"
+          ],
+          "paths": [
+            "Firebase/Editor/Firebase.Editor.dll",
+            "Firebase/Editor/Firebase.Editor.pdb"
+          ],
+          "override_metadata_upm": {
+            "PluginImporter": {
+              "platformData": {
+                "Editor": {
+                  "enabled": 1
+                }
+              }
+            }
+          }
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/Firebase.TaskExtension.dll",
+            "Firebase/Plugins/Firebase.TaskExtension.pdb"
+          ]
+        },
+        {
+          "importer": "DefaultImporter",
+          "paths": [
+            "Editor Default Resources/",
+            "Firebase/Editor/generate_xml_from_google_services_json.exe",
+            "Firebase/Editor/generate_xml_from_google_services_json.py",
+            "Firebase/Editor/network_request.exe",
+            "Firebase/Editor/network_request.py",
+            "Firebase/Editor/AppDependencies.xml",
+            "Firebase/m2repository/com/google/firebase/firebase-app-unity/"
+          ]
+        },
+        {
+          "importer": "DefaultImporter",
+          "sections": [
+            "documentation"
+          ],
+          "paths": [
+            "Firebase/Editor/readme.md",
+            "Firebase/Editor/LICENSE"
+          ]
+        },
+        {
+          "importer": "DefaultImporter",
+          "sections": [
+            "asset_package_only"
+          ],
+          "paths": [
+            "ExternalDependencyManager/"
+          ]
+        },
+        {
+          "importer": "DefaultImporter",
+          "sections": [
+            "internal"
+          ],
+          "paths": [
+            "Firebase/Editor/InternalArtifactReposDependencies.xml"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
+          "cpu": "x86_64",
+          "paths": [
+            "Firebase/Plugins/x86_64/FirebaseCppApp*"
+          ]
+        },
+        {
+          "labels": [
+            "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/link.xml"
+          ]
+        }
+      ],
+      "export": 0,
+      "readme": "Firebase/Editor/readme.md",
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/readme.md",
+      "common_manifest": {
+        "name": "com.google.firebase.app",
+        "display_name": "Firebase App (Core)",
+        "description": [
+          "Firebase App is the core library every Firebase package depends on."
+        ],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "FirebaseApp",
+          "App"
+        ],
+        "author": {
+          "name": "Google LLC",
+          "url": "https://firebase.google.com/docs/unity/setup"
+        }
+      },
+      "export_upm": 1,
+      "upm_package_config": {
+        "manifest": {
+          "unity": "2018.1",
+          "dependencies": {
+            "com.google.external-dependency-manager": "1.2.172"
+          }
+        }
+      }
+    },
+    {
+      "name": "SampleCommon.unitypackage",
+      "imports": [
+        {
+          "sections": [
+            "samples"
+          ],
+          "importer": "DefaultImporter",
+          "paths": [
+            "Firebase/Sample/CONTRIBUTING.md",
+            "Firebase/Sample/GuiSkin.guiskin",
+            "Firebase/Sample/LICENSE",
+            "Firebase/Sample/readme.md"
+          ]
+        }
+      ],
+      "export": 0
+    },
+    {
+      "name": "FirebaseRemoteConfig.unitypackage",
+      "imports": [
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/Firebase.RemoteConfig.dll",
+            "Firebase/Plugins/Firebase.RemoteConfig.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "iOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/iOS/Firebase/libFirebaseCppRemoteConfig.a",
+            "Firebase/Plugins/iOS/Firebase.RemoteConfig.dll",
+            "Firebase/Plugins/iOS/Firebase.RemoteConfig.pdb"
+          ]
+        },
+        {
+          "importer": "DefaultImporter",
+          "paths": [
+            "Firebase/Editor/RemoteConfigDependencies.xml",
+            "Firebase/m2repository/com/google/firebase/firebase-config-unity/"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
+          "cpu": "x86_64",
+          "paths": [
+            "Firebase/Plugins/x86_64/FirebaseCppRemoteConfig*"
+          ]
+        },
+        {
+          "importer": "DefaultImporter",
+          "paths": [
+            "Firebase/Editor/FirebaseRemoteConfig*_manifest.txt"
+          ]
+        },
+        {
+          "importer": "DefaultImporter",
+          "sections": [
+            "samples"
+          ],
+          "paths": [
+            "Firebase/Sample/RemoteConfig/"
+          ]
+        },
+        {
+          "importer": "DefaultImporter",
+          "sections": [
+            "samples",
+            "documentation"
+          ],
+          "paths": [
+            "Firebase/Editor/RemoteConfigReadme.md"
+          ]
+        }
+      ],
+      "includes": [
+        "FirebaseApp.unitypackage",
+        "SampleCommon.unitypackage"
+      ],
+      "manifest_path": "Firebase/Editor",
+      "readme": "Firebase/Editor/RemoteConfigReadme.md",
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/RemoteConfigReadme.md",
+      "common_manifest": {
+        "name": "com.google.firebase.remote-config",
+        "display_name": "Firebase Remote Config",
+        "description": [
+          "Customize your game on the fly.\n\n",
+          "Remote Config lets you dynamically change the behavior and ",
+          "appearance of your game right from the Firebase console so you can ",
+          "deliver personalized experiences to players - without waiting for ",
+          "app store approval."
+        ],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Remote",
+          "Config",
+          "Remote Config"
+        ],
+        "author": {
+          "name": "Google LLC",
+          "url": "https://firebase.google.com/docs/remote-config/use-config-unity"
+        }
+      },
+      "export_upm": 1,
+      "upm_package_config": {
+        "manifest": {
+          "unity": "2018.1"
+        }
+      }
+    }
+  ],
+  "builds": [
+    {
+      "name": "dotnet4",
+      "sections": [
+        "build_dotnet4"
+      ],
+      "enabled_sections": [
+        "dotnet4"
+      ],
+      "package_name_replacements": [
+        {
+          "match": "^(Firebase.*unitypackage)$",
+          "replacement": "dotnet4/\\1"
+        }
+      ]
+    }
+  ]
+}
