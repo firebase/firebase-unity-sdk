@@ -179,8 +179,7 @@ def main(argv):
     shutil.rmtree(output_folder)
 
   if FLAGS.apis:
-    # This should only happen for debug purpose, to create packages for certain products
-    # Codes below should not run
+    # If told to only build a subset, package just those products and exit early.
     api_list = FLAGS.apis.split(",")
     if not set(api_list).issubset(set(SUPPORT_TARGETS)):
       raise app.UsageError("apis parameter error, Value should be items in [{}],"

@@ -53,8 +53,7 @@ jobs:
       - name: Check input
         # This check the apis input. It detect whether the package is only asking for subset of
         # of the products, like auth,firestore only etc. If the input apis are less than the
-        # default_apis env attribute, we determine this package only package subset and for 
-        # check up purpose only.
+        # default_apis env attribute, we package only the provided apis, for test purposes only.
         id: check-input
         shell: bash
         run: |
