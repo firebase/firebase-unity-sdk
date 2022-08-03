@@ -527,6 +527,16 @@ def patch_android_env(unity_version):
       logging.info("Uninstall Android build tool 31.0.0")
     except Exception as e:
       logging.info(str(e))
+
+  try:
+    # The platform android-33 includes libraries that were built with Java 11, and require a newer version of gradle
+    # than Unity comes with. Note this only happens when using minification.
+    # If this continues to be a problem, this logic might need to be smarter, to remove all versions newer than 32,
+    # but currently the GitHub runners have 33 as their max.
+    logging.info("Uninstall Android platform android-33")
+    _run([os.environ["ANDROID_HOME"]+"/tools/bin/sdkmanager", "--uninstall", "platforms;android-33"], check=False)
+  except Exception as e:
+    logging.info(str(e))
     
   os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
   os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
