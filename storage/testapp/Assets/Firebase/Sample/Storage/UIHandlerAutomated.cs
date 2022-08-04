@@ -135,6 +135,11 @@ namespace Firebase.Sample.Storage {
         TestUploadFromFileWithCancelation,
         TestUploadSmallFileGetDownloadUrl,
         TestGetDownloadUrlNonExistantFile,
+        // FLAKY ?
+        TestUploadSmallFileGetMetadata,
+        TestUploadSmallFileGetMetadata,
+        TestUploadSmallFileGetMetadata,
+        TestUploadSmallFileGetMetadata,
         TestUploadSmallFileGetMetadata,
         TestGetMetadataNonExistantFile,
         TestUploadSmallFileAndDelete,
@@ -143,6 +148,11 @@ namespace Firebase.Sample.Storage {
         TestUploadSmallFileAndDownload,
         TestUploadSmallFileAndDownloadWithProgressExceptions,
         TestUploadLargeFileAndDownload,
+        // FLAKY ?
+        TestUploadLargeFileAndDownloadWithCancelation,
+        TestUploadLargeFileAndDownloadWithCancelation,
+        TestUploadLargeFileAndDownloadWithCancelation,
+        TestUploadLargeFileAndDownloadWithCancelation,
         TestUploadLargeFileAndDownloadWithCancelation,
         TestUploadSmallFileAndDownloadUsingStreamCallback,
         TestUploadLargeFileAndDownloadUsingStreamCallback,
@@ -834,11 +844,13 @@ namespace Firebase.Sample.Storage {
     // Upload small file and retrieve metadata.
     Task TestUploadSmallFileGetMetadata() {
       return TestUploadBytesSmallFile().ContinueWithOnMainThread((task) => {
-        return ToTask(GetMetadata()).ContinueWithOnMainThread((metadataTask) => {
-          if (metadataTask.IsCanceled || metadataTask.IsFaulted)
-            return metadataTask;
-          ValidateMetadata(((Task<StorageMetadata>)previousTask).Result, false, null);
-          return CompletedTask();
+        Task.Delay(1000).ContinueWithOnMainThread(t => {
+          return ToTask(GetMetadata()).ContinueWithOnMainThread((metadataTask) => {
+            if (metadataTask.IsCanceled || metadataTask.IsFaulted)
+              return metadataTask;
+            ValidateMetadata(((Task<StorageMetadata>)previousTask).Result, false, null);
+            return CompletedTask();
+          });
         });
       }).Unwrap();
     }
