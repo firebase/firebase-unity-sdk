@@ -844,14 +844,14 @@ namespace Firebase.Sample.Storage {
     // Upload small file and retrieve metadata.
     Task TestUploadSmallFileGetMetadata() {
       return TestUploadBytesSmallFile().ContinueWithOnMainThread((task) => {
-        Task.Delay(1000).ContinueWithOnMainThread(t => {
+        return Task.Delay(1000).ContinueWithOnMainThread(t => {
           return ToTask(GetMetadata()).ContinueWithOnMainThread((metadataTask) => {
             if (metadataTask.IsCanceled || metadataTask.IsFaulted)
               return metadataTask;
             ValidateMetadata(((Task<StorageMetadata>)previousTask).Result, false, null);
             return CompletedTask();
           });
-        });
+        }).Unwrap();
       }).Unwrap();
     }
 
