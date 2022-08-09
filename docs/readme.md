@@ -155,6 +155,10 @@ Support
 
 Release Notes
 -------------
+### 9.4.0
+- Changes
+    - General: Updated Firebase C++ SDK dependencies to v9.4.0.
+
 ### 9.3.0
 - Changes
     - General (Android, Linux): Fixed a concurrency bug where waiting for an
