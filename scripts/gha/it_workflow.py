@@ -51,7 +51,7 @@ import github
 import summarize_test_results as summarize
 
 _REPORT_LABEL = "nightly-testing"
-_REPORT_TITLE = "Nightly Integration Testing Report"
+_REPORT_TITLE = "[Unity] Nightly Integration Testing Report"
 
 _LABEL_TRIGGER_FULL = "tests-requested: full"
 _LABEL_TRIGGER_QUICK = "tests-requested: quick"
