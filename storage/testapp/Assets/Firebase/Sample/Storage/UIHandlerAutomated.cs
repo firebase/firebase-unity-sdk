@@ -100,21 +100,19 @@ namespace Firebase.Sample.Storage {
     // When set to true, each download or upload callback will throw an exception.
     private bool throwExceptionsInProgressCallbacks = false;
 
-    Task RetryTest(Func<Task> test) {
-      return async () => {
-        int failed = 0;
-        for (int i = 0; i < 5; i++) {
-          try {
-            await test();
-          } catch (Exception e) {
-            DebugLog("Failed? " + e);
-            failed++;
-          }
+    async Task RetryTest(Func<Task> test) {
+      int failed = 0;
+      for (int i = 0; i < 5; i++) {
+        try {
+          await test();
+        } catch (Exception e) {
+          DebugLog("Failed? " + e);
+          failed++;
         }
-        if (failed > 0) {
-          throw new Exception("RetryTest: " + test + " failed " + failed + " times.");
-        }
-      };
+      }
+      if (failed > 0) {
+        throw new Exception("RetryTest: " + test + " failed " + failed + " times.");
+      }
     }
 
     protected override void Start() {
