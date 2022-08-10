@@ -79,13 +79,6 @@ namespace Firebase.Sample.Storage {
     // Content type for text file uploads
     const string ContentTypePlainText = "text/plain";
 
-    // Whether the test is validating behavior of the pure C# (old) implementation or the new C++
-    // backed implementation.
-    // The pure C# implementation has some poorly documented and in some cases broken behavior.
-    // When this is true the test will validate the behavior of the pure C# implementation,
-    // even though it's wrong.
-    private bool oldImplementationCompatibility;
-
     // Expected total file size in bytes during upload / download.
     private int expectedFileSize;
     // Expected storage reference during upload / download.
@@ -107,6 +100,23 @@ namespace Firebase.Sample.Storage {
     // When set to true, each download or upload callback will throw an exception.
     private bool throwExceptionsInProgressCallbacks = false;
 
+    Task RetryTest(Func<Task> test) {
+      return async () => {
+        int failed = 0;
+        for (int i = 0; i < 5; i++) {
+          try {
+            await test();
+          } catch (Exception e) {
+            DebugLog("Failed? " + e);
+            failed++;
+          }
+        }
+        if (failed > 0) {
+          throw new Exception("RetryTest: " + test + " failed " + failed + " times.");
+        }
+      };
+    }
+
     protected override void Start() {
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
@@ -124,6 +134,7 @@ namespace Firebase.Sample.Storage {
         TestUploadBytesSmallFileWithNonCustomOnlyMetadata,
         TestUploadBytesSmallFileWithCustomOnlyMetadata,
         TestUploadBytesSmallFileWithBothMetadata,
+        // FLAKY ? (Windows)
         TestUploadBytesSmallFileThenUpdateMetadata,
         TestUploadStreamLargeFile,
         TestUploadStreamSmallFile,
@@ -137,25 +148,23 @@ namespace Firebase.Sample.Storage {
         TestGetDownloadUrlNonExistantFile,
         // FLAKY ?
         TestUploadSmallFileGetMetadata,
-        TestUploadSmallFileGetMetadata,
-        TestUploadSmallFileGetMetadata,
-        TestUploadSmallFileGetMetadata,
-        TestUploadSmallFileGetMetadata,
         TestGetMetadataNonExistantFile,
         TestUploadSmallFileAndDelete,
         TestDeleteNonExistantFile,
         TestDownloadNonExistantFile,
+        // FLAKY ? (Linux)
         TestUploadSmallFileAndDownload,
+        // FLAKY ? (Linux)
         TestUploadSmallFileAndDownloadWithProgressExceptions,
+        // FLAKY ? (Linux)
         TestUploadLargeFileAndDownload,
-        // FLAKY ?
+        // FLAKY ? (Playmode, Windows)
         TestUploadLargeFileAndDownloadWithCancelation,
-        TestUploadLargeFileAndDownloadWithCancelation,
-        TestUploadLargeFileAndDownloadWithCancelation,
-        TestUploadLargeFileAndDownloadWithCancelation,
-        TestUploadLargeFileAndDownloadWithCancelation,
+        // FLAKY ? (Linux)
         TestUploadSmallFileAndDownloadUsingStreamCallback,
+        // FLAKY ? (iOS Sim)
         TestUploadLargeFileAndDownloadUsingStreamCallback,
+        // FLAKY ? (Mac, Linux, Windows)
         TestUploadLargeFileAndDownloadUsingStreamCallbackWithCancelation,
         TestUploadSmallFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFile,
@@ -186,10 +195,6 @@ namespace Firebase.Sample.Storage {
       }
       builder.Append(FILE_LINE.Substring(0, partialLineLength));
       LARGE_FILE_CONTENTS = builder.ToString();
-
-      oldImplementationCompatibility = Type.GetType(
-        "Firebase.Storage.FirebaseStorageInternal, Firebase.Storage, Version=1.0.0.0, " +
-        "Culture=neutral") == null;
 
       UIEnabled = false;
       base.Start();
@@ -435,13 +440,7 @@ namespace Firebase.Sample.Storage {
 
     // Current time in the time zone reported by the StorageMetadata object.
     private DateTime MetadataTimeZoneNow() {
-      if (oldImplementationCompatibility) {
-        // The C# implementation StorageMetadata times in the current time zone rather than UTC which
-        // is used by other implementations.
-        return DateTime.Now;
-      } else {
-        return DateTime.UtcNow;
-      }
+      return DateTime.UtcNow;
     }
 
     // Ensure the uploaded / downloaded file metadata matches expectations.
@@ -581,43 +580,43 @@ namespace Firebase.Sample.Storage {
 
     // Upload large file and ensure returned metadata is valid after upload.
     Task TestUploadBytesLargeFile() {
-      return UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS, MetadataTestMode.Both,
-                                       UploadBytes, ValidateUploadSuccessfulNotFile);
+      return RetryTest(() => { return UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS, MetadataTestMode.Both,
+                                       UploadBytes, ValidateUploadSuccessfulNotFile); });
     }
 
     // Upload small file and ensure returned metadata is valid after upload.
     Task TestUploadBytesSmallFile() {
-      return UploadToPathUsingDelegate(SMALL_FILE_PATH, SMALL_FILE_CONTENTS, MetadataTestMode.Both,
-                                       UploadBytes, ValidateUploadSuccessfulNotFile);
+      return RetryTest(() => { return UploadToPathUsingDelegate(SMALL_FILE_PATH, SMALL_FILE_CONTENTS, MetadataTestMode.Both,
+                                       UploadBytes, ValidateUploadSuccessfulNotFile); });
     }
 
     Task TestUploadBytesSmallFileWithNoMetadata() {
-      return UploadToPathUsingDelegate(METADATA_TEST_FILE_PATH, SMALL_FILE_CONTENTS,
+      return RetryTest(() => { return UploadToPathUsingDelegate(METADATA_TEST_FILE_PATH, SMALL_FILE_CONTENTS,
                                        MetadataTestMode.None, UploadBytes,
-                                       ValidateUploadSuccessfulNotFile);
+                                       ValidateUploadSuccessfulNotFile); });
     }
 
     Task TestUploadBytesSmallFileWithNonCustomOnlyMetadata() {
-      return UploadToPathUsingDelegate(METADATA_TEST_FILE_PATH, SMALL_FILE_CONTENTS,
+      return RetryTest(() => { return UploadToPathUsingDelegate(METADATA_TEST_FILE_PATH, SMALL_FILE_CONTENTS,
                                        MetadataTestMode.NonCustomOnly, UploadBytes,
-                                       ValidateUploadSuccessfulNotFile);
+                                       ValidateUploadSuccessfulNotFile); });
     }
 
     Task TestUploadBytesSmallFileWithCustomOnlyMetadata() {
-      return UploadToPathUsingDelegate(METADATA_TEST_FILE_PATH, SMALL_FILE_CONTENTS,
+      return RetryTest(() => { return UploadToPathUsingDelegate(METADATA_TEST_FILE_PATH, SMALL_FILE_CONTENTS,
                                        MetadataTestMode.CustomOnly, UploadBytes,
-                                       ValidateUploadSuccessfulNotFile);
+                                       ValidateUploadSuccessfulNotFile); });
     }
 
     Task TestUploadBytesSmallFileWithBothMetadata() {
-      return UploadToPathUsingDelegate(METADATA_TEST_FILE_PATH, SMALL_FILE_CONTENTS,
+      return RetryTest(() => { return UploadToPathUsingDelegate(METADATA_TEST_FILE_PATH, SMALL_FILE_CONTENTS,
                                        MetadataTestMode.Both, UploadBytes,
-                                       ValidateUploadSuccessfulNotFile);
+                                       ValidateUploadSuccessfulNotFile); });
     }
 
     // Upload small file and update metadata after upload.
     Task TestUploadBytesSmallFileThenUpdateMetadata() {
-      return TestUploadBytesSmallFile().ContinueWithOnMainThread((task) => {
+      return RetryTest(() => { return TestUploadBytesSmallFile().ContinueWithOnMainThread((task) => {
         var metadataChange = new MetadataChange {
           CacheControl = "no-transform",
           ContentDisposition = "attachment; filename=\"helloworld.txt\"",
@@ -663,18 +662,19 @@ namespace Firebase.Sample.Storage {
                 return metadataTask;
               }).Unwrap();
       }).Unwrap();
+      });
     }
 
     // Upload large file using stream and ensure returned metadata is valid after upload.
     Task TestUploadStreamLargeFile() {
-      return UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS, MetadataTestMode.Both,
-                                       UploadStream, ValidateUploadSuccessfulNotFile);
+      return RetryTest(() => { return UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS, MetadataTestMode.Both,
+                                       UploadStream, ValidateUploadSuccessfulNotFile); });
     }
 
     // Upload small file using stream and ensure returned metadata is valid after upload.
     Task TestUploadStreamSmallFile() {
-      return UploadToPathUsingDelegate(SMALL_FILE_PATH, SMALL_FILE_CONTENTS, MetadataTestMode.Both,
-                                       UploadStream, ValidateUploadSuccessfulNotFile);
+      return RetryTest(() => { return UploadToPathUsingDelegate(SMALL_FILE_PATH, SMALL_FILE_CONTENTS, MetadataTestMode.Both,
+                                       UploadStream, ValidateUploadSuccessfulNotFile); });
     }
 
     // Write contents to a local file relative to the persistent data path.
@@ -706,51 +706,36 @@ namespace Firebase.Sample.Storage {
       }).Unwrap();
     }
 
-    // The old C# implementation does not support file URIs so workaround the broken behavior.
-    protected override string PathToPersistentDataPathUriString(string filename) {
-      if (oldImplementationCompatibility) {
-        if (filename.StartsWith(UIHandler.UriFileScheme)) {
-          return filename.Substring(UIHandler.UriFileScheme.Length);
-        }
-        return Path.Combine(persistentDataPath, filename);
-      }
-      return base.PathToPersistentDataPathUriString(filename);
-    }
-
     // Upload from large file and ensure returned metadata is valid after upload.
     Task TestUploadFromFileLargeFile() {
-      return UploadFromFileToPath(LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
-                                  ValidateUploadSuccessfulFile);
+      return RetryTest(() => { return UploadFromFileToPath(LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
+                                  ValidateUploadSuccessfulFile); });
     }
 
     // Upload from small file and ensure returned metadata is valid after upload.
     Task TestUploadFromFileSmallFile() {
-      return UploadFromFileToPath(SMALL_FILE_PATH, SMALL_FILE_CONTENTS,
-                                  ValidateUploadSuccessfulFile);
+      return RetryTest(() => { return UploadFromFileToPath(SMALL_FILE_PATH, SMALL_FILE_CONTENTS,
+                                  ValidateUploadSuccessfulFile); });
     }
 
     // Try uploading from a file that doesn't exist.
     // The old C# implementation throws an exception on an internal thread when presented with an
     // invalid filename which can't be caught by the application or in this case, this test case.
     Task TestUploadFromNonExistantFile() {
-      if (oldImplementationCompatibility) {
-        return CompletedTask();  // TODO: Re-evaluate this
-      } else {
-        storageLocation = SMALL_FILE_PATH;
-        expectedStorageReference = GetStorageReference();
-        localFilename = Path.GetFileName(NON_EXISTANT_FILE_PATH);
-        var expectedLocalPath = PathToPersistentDataPathUriString(localFilename);
-        return ToTask(UploadFromFile()).ContinueWithOnMainThread((task) => {
-          var uploadTask = previousTask;
-          Assert("uploadTask.IsFaulted", uploadTask.IsFaulted);
-          var fileNotFoundException =
-            (new List<Exception>(uploadTask.Exception.InnerExceptions))[0] as FileNotFoundException;
-          Assert("fileNotFoundException", fileNotFoundException != null);
-          AssertEq("fileNotFoundException.FileName", fileNotFoundException.FileName,
-                   expectedLocalPath);
-          return CompletedTask();
-        }).Unwrap();
-      }
+      storageLocation = SMALL_FILE_PATH;
+      expectedStorageReference = GetStorageReference();
+      localFilename = Path.GetFileName(NON_EXISTANT_FILE_PATH);
+      var expectedLocalPath = PathToPersistentDataPathUriString(localFilename);
+      return ToTask(UploadFromFile()).ContinueWithOnMainThread((task) => {
+        var uploadTask = previousTask;
+        Assert("uploadTask.IsFaulted", uploadTask.IsFaulted);
+        var fileNotFoundException =
+          (new List<Exception>(uploadTask.Exception.InnerExceptions))[0] as FileNotFoundException;
+        Assert("fileNotFoundException", fileNotFoundException != null);
+        AssertEq("fileNotFoundException.FileName", fileNotFoundException.FileName,
+                  expectedLocalPath);
+        return CompletedTask();
+      }).Unwrap();
     }
 
     // Coroutine method which cancels an operation after waiting cancelationDelay seconds or until the
@@ -788,29 +773,36 @@ namespace Firebase.Sample.Storage {
 
     // Start uploading from a byte array and cancel the upload.
     Task TestUploadBytesWithCancelation() {
+      return RetryTest(() => { 
       var task = UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
                                            MetadataTestMode.Both, UploadBytes, ValidateTaskCanceled);
       CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS);
       return task;
+      });
     }
 
     // Start uploading with a stream and cancel the upload.
     Task TestUploadStreamWithCancelation() {
+      return RetryTest(() => { 
       var task = UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
                                            MetadataTestMode.Both, UploadStream, ValidateTaskCanceled);
       CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS);
       return task;
+      });
     }
 
     // Start uploading from a file and cancel the upload.
     Task TestUploadFromFileWithCancelation() {
+      return RetryTest(() => { 
       var task = UploadFromFileToPath(LARGE_FILE_PATH, LARGE_FILE_CONTENTS, ValidateTaskCanceled);
       CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS);
       return task;
+      });
     }
 
     // Upload small file and retrieve a download URL.
     Task TestUploadSmallFileGetDownloadUrl() {
+      return RetryTest(() => { 
       return TestUploadBytesSmallFile().ContinueWithOnMainThread((task) => {
         return GetStorageReference().GetDownloadUrlAsync().ContinueWithOnMainThread(
           (downloadUrlTask) => {
@@ -826,6 +818,7 @@ namespace Firebase.Sample.Storage {
           }
         );
       }).Unwrap();
+      });
     }
 
     // Get download URL from non-existant file.
@@ -843,26 +836,28 @@ namespace Firebase.Sample.Storage {
 
     // Upload small file and retrieve metadata.
     Task TestUploadSmallFileGetMetadata() {
+      return RetryTest(() => { 
       return TestUploadBytesSmallFile().ContinueWithOnMainThread((task) => {
-        return Task.Delay(1000).ContinueWithOnMainThread(t => {
-          return ToTask(GetMetadata()).ContinueWithOnMainThread((metadataTask) => {
-            if (metadataTask.IsCanceled || metadataTask.IsFaulted)
-              return metadataTask;
-            ValidateMetadata(((Task<StorageMetadata>)previousTask).Result, false, null);
-            return CompletedTask();
-          });
-        }).Unwrap();
+        return ToTask(GetMetadata()).ContinueWithOnMainThread((metadataTask) => {
+          if (metadataTask.IsCanceled || metadataTask.IsFaulted)
+            return metadataTask;
+          ValidateMetadata(((Task<StorageMetadata>)previousTask).Result, false, null);
+          return CompletedTask();
+        });
       }).Unwrap();
+      });
     }
 
     // Get metadata from a known missing file.
     Task GetMetadataNonExistantFile(string path) {
+      return RetryTest(() => { 
       return FirebaseStorage.DefaultInstance.GetReference(
                 path).GetMetadataAsync().ContinueWithOnMainThread((task) => {
                   TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
                   tcs.SetResult(task.IsFaulted);
                   return tcs.Task;
                 }).Unwrap();
+      });
     }
 
     // Get metadata from a non-existant file.
@@ -963,14 +958,7 @@ namespace Firebase.Sample.Storage {
                                            if (task.IsFaulted || task.IsCanceled)
                                              return task;
                                            expectedStorageReference = GetStorageReference();
-                                           if (oldImplementationCompatibility) {
-                                           // To avoid a metadata fetch, the old implementation
-                                           // does not report the file size until the download is
-                                           // complete.
-                                           expectedFileSize = 0;
-                                           } else {
-                                             expectedFileSize = contents.Length;
-                                           }
+                                           expectedFileSize = contents.Length;
                                            progressUpdateCount = 0;
                                            if (predownloadOperation != null)
                                              predownloadOperation();
@@ -985,13 +973,16 @@ namespace Firebase.Sample.Storage {
 
     // Upload a small file and download.
     Task TestUploadSmallFileAndDownload() {
+      return RetryTest(() => { 
       return UploadAndDownloadAsByteArray(
           SMALL_FILE_PATH, SMALL_FILE_CONTENTS,
           (task) => { return ValidateDownloadedBytes(task, SMALL_FILE_CONTENTS); });
+      });
     }
 
     // Upload a small file and download while throwing exceptions in the progress callbacks.
     Task TestUploadSmallFileAndDownloadWithProgressExceptions() {
+      return RetryTest(() => { 
       throwExceptionsInProgressCallbacks = true;
       return UploadAndDownloadAsByteArray(
           SMALL_FILE_PATH, SMALL_FILE_CONTENTS,
@@ -999,20 +990,25 @@ namespace Firebase.Sample.Storage {
             throwExceptionsInProgressCallbacks = false;
             return ValidateDownloadedBytes(task, SMALL_FILE_CONTENTS);
           });
+      });
     }
 
     // Upload a large file and download.
     Task TestUploadLargeFileAndDownload() {
+      return RetryTest(() => { 
       return UploadAndDownloadAsByteArray(
           LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
           (task) => { return ValidateDownloadedBytes(task, LARGE_FILE_CONTENTS); });
+      });
     }
 
     // Upload a large file, start downloading then cancel.
     Task TestUploadLargeFileAndDownloadWithCancelation() {
+      return RetryTest(() => { 
       return UploadAndDownloadAsByteArray(
           LARGE_FILE_PATH, LARGE_FILE_CONTENTS, ValidateTaskCanceled,
           predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); });
+      });
     }
 
     // Validate the result of a stream download operation.
@@ -1035,14 +1031,7 @@ namespace Firebase.Sample.Storage {
                                            if (task.IsFaulted || task.IsCanceled)
                                              return task;
                                            expectedStorageReference = GetStorageReference();
-                                           if (oldImplementationCompatibility) {
-                                           // To avoid a metadata fetch, the old implementation
-                                           // does not report the file size until the download
-                                           // is complete.
-                                           expectedFileSize = 0;
-                                           } else {
-                                             expectedFileSize = contents.Length;
-                                           }
+                                           expectedFileSize = contents.Length;
                                            progressUpdateCount = 0;
                                            if (predownloadOperation != null)
                                              predownloadOperation();
@@ -1058,23 +1047,29 @@ namespace Firebase.Sample.Storage {
 
     // Upload a small file and download using a stream callback.
     Task TestUploadSmallFileAndDownloadUsingStreamCallback() {
+      return RetryTest(() => { 
       return UploadAndDownloadUsingStreamCallback(
           SMALL_FILE_PATH, SMALL_FILE_CONTENTS,
           (task) => { return ValidateDownloadedStream(task, SMALL_FILE_CONTENTS); });
+      });
     }
 
     // Upload a large file and download using a stream callback.
     Task TestUploadLargeFileAndDownloadUsingStreamCallback() {
+      return RetryTest(() => { 
       return UploadAndDownloadUsingStreamCallback(
           LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
           (task) => { return ValidateDownloadedStream(task, LARGE_FILE_CONTENTS); });
+      });
     }
 
     // Upload a large file, start downloading using a stream callback then cancel.
     Task TestUploadLargeFileAndDownloadUsingStreamCallbackWithCancelation() {
+      return RetryTest(() => { 
       return UploadAndDownloadUsingStreamCallback(
           LARGE_FILE_PATH, LARGE_FILE_CONTENTS, ValidateTaskCanceled,
           predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); });
+      });
     }
 
     // Validate the result of a file download operation.
@@ -1108,14 +1103,7 @@ namespace Firebase.Sample.Storage {
                                            if (task.IsFaulted || task.IsCanceled)
                                              return task;
                                            expectedStorageReference = GetStorageReference();
-                                           if (oldImplementationCompatibility) {
-                                           // To avoid a metadata fetch, the old implementation
-                                           // does not report the file size until the download is
-                                           // complete.
-                                           expectedFileSize = 0;
-                                           } else {
-                                             expectedFileSize = contents.Length;
-                                           }
+                                           expectedFileSize = contents.Length;
                                            progressUpdateCount = 0;
                                            localFilename = Path.GetFileName(path);
                                            if (predownloadOperation != null)
@@ -1132,23 +1120,29 @@ namespace Firebase.Sample.Storage {
 
     // Upload a small file and download to a file.
     Task TestUploadSmallFileAndDownloadToFile() {
+      return RetryTest(() => { 
       return UploadAndDownloadToFile(
           SMALL_FILE_PATH, SMALL_FILE_CONTENTS,
           (task) => { return ValidateDownloadedFile(task, SMALL_FILE_CONTENTS); });
+      });
     }
 
     // Upload a large file and download to a file.
     Task TestUploadLargeFileAndDownloadToFile() {
+      return RetryTest(() => { 
       return UploadAndDownloadToFile(
           LARGE_FILE_PATH, LARGE_FILE_CONTENTS,
           (task) => { return ValidateDownloadedFile(task, LARGE_FILE_CONTENTS); });
+      });
     }
 
     // Upload a large file, start to download to a file then cancel.
     Task TestUploadLargeFileAndDownloadToFileWithCancelation() {
+      return RetryTest(() => { 
       return UploadAndDownloadToFile(
           LARGE_FILE_PATH, LARGE_FILE_CONTENTS, ValidateTaskCanceled,
           predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); });
+      });
     }
 
     // TODO(smiles): Upload and attempt to partially download a file.
