@@ -68,7 +68,7 @@ python scripts/build_scripts/build_zips.py –platform=<target platform, pick on
 ```
 
 Expected output artifact is
-[Repo Root]/<platform_unity, eg macos_unity>/firebase_unity-<version>-<platform>.zip
+[Repo Root]/<*platform_unity, eg macos_unity*>/firebase_unity-< *version* >-< *platform* >.zip
 
 > **Note:**
 >
@@ -82,7 +82,7 @@ Expected output artifact is
 python scripts/build_scripts/build_zips.py —-platform=<target platform> --targets=<lib1> -–targets=<lib2>
 ```
 
-> **Note:** library name: analytics, auth, crashlytics, database, dynamic_links, firestore, functions, installations, messaging, remote_config, storage
+> **Note:** Supported library names: analytics, auth, crashlytics, database, dynamic_links, firestore, functions, installations, messaging, remote_config, storage
 
 ## Packaging
 
@@ -92,11 +92,11 @@ We can package the built artifacts to better imported by Unity Editor.
 
 Copy the zip file for each platforms to one folder, referred to as assets_zip_dir below, for example usually looks like this
 
-- firebase_unity-9.2.0-Android.zip
-- firebase_unity-9.2.0-Darwin.zip
-- firebase_unity-9.2.0-Linux.zip
-- firebase_unity-9.2.0-iOS.zip
-- firebase_unity-9.2.0-win64.zip
+- firebase_unity-< *version* >-Android.zip
+- firebase_unity-< *version* >-Darwin.zip
+- firebase_unity-< *version* >-Linux.zip
+- firebase_unity-< *version* >-iOS.zip
+- firebase_unity-< *version* >-win64.zip
   
 And then run:
 
