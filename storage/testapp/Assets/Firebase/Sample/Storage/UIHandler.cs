@@ -231,17 +231,22 @@ namespace Firebase.Sample.Storage {
       }
     }
 
-    // Upload file text to Cloud Storage using a byte array.
-    protected IEnumerator UploadBytes() {
+    protected Task<StorageMetadata> UploadBytesAsync() {
       var storageReference = GetStorageReference();
       DebugLog(String.Format("Uploading to {0} ...", storageReference.Path));
-      var task = storageReference.PutBytesAsync(
+      return storageReference.PutBytesAsync(
         Encoding.UTF8.GetBytes(fileContents), StringToMetadataChange(fileMetadataChangeString),
         new StorageProgress<UploadState>(DisplayUploadState),
         cancellationTokenSource.Token, null);
+    }
+
+    // Upload file text to Cloud Storage using a byte array.
+    protected IEnumerator UploadBytes() {
+      var task = UploadBytesAsync();
       yield return new WaitForTaskCompletion(this, task);
       DisplayUploadComplete(task);
     }
+
 
     // Upload file to Cloud Storage using a stream.
     protected IEnumerator UploadStream() {

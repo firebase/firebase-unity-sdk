@@ -520,6 +520,30 @@ namespace Firebase.Sample.Storage {
       return ValidateUploadSuccessful(task, true, ContentTypePlainText);
     }
 
+    // Validate an upload completed with a report of the expected metadata.
+    Task BetterValidateUploadSuccessful(Task storageTask, bool uploadFromFile, string contentType) {
+      Task<StorageMetadata> task = storageTask as Task<StorageMetadata>;
+      Assert("storageMetadataTask != null", task != null);
+      if (!(task.IsFaulted || task.IsCanceled)) {
+        ValidateMetadata(task.Result, uploadFromFile, contentType);
+        // Make sure progress was reported.
+        Assert("progressCount > 0", progressUpdateCount > 0);
+      }
+      return task;
+    }
+
+    // Validate an upload completed with a report of the expected metadata when uploading from a
+    // byte array or stream.
+    Task BetterValidateUploadSuccessfulNotFile(Task task) {
+      return BetterValidateUploadSuccessful(task, false, null);
+    }
+
+    // Validate an upload completed with a report of the expected metadata when uploading from a
+    // local file.
+    Task BetterValidateUploadSuccessfulFile(Task task) {
+      return BetterValidateUploadSuccessful(task, true, ContentTypePlainText);
+    }
+
     // Set the metadata when uploading a file and the expected values for validation later.
     void SetMetadataForTest(MetadataTestMode mode, String contentType) {
       switch (mode) {
@@ -576,10 +600,24 @@ namespace Firebase.Sample.Storage {
       }).Unwrap();
     }
 
+    Task UploadToPathUsingFunc(string path, string contents, MetadataTestMode metadata_mode,
+                               Func<Task<StorageMetadata>> uploadFunc,
+                               TaskValidationDelegate taskValidationDelegate) {
+      progressUpdateCount = 0;
+      storageLocation = path;
+      fileContents = contents;
+      SetMetadataForTest(metadata_mode, null);
+      expectedFileSize = contents.Length;
+      expectedStorageReference = GetStorageReference();
+      return uploadFunc().ContinueWithOnMainThread(task => {
+        return taskValidationDelegate(task);
+      });
+    }
+
     // Upload large file and ensure returned metadata is valid after upload.
     Task TestUploadBytesLargeFile() {
-      return RetryTest(() => { return UploadToPathUsingDelegate(LARGE_FILE_PATH, LARGE_FILE_CONTENTS, MetadataTestMode.Both,
-                                       UploadBytes, ValidateUploadSuccessfulNotFile); });
+      return RetryTest(() => { return UploadToPathUsingFunc(LARGE_FILE_PATH, LARGE_FILE_CONTENTS, MetadataTestMode.Both,
+                                       UploadBytesAsync, BetterValidateUploadSuccessfulNotFile); });
     }
 
     // Upload small file and ensure returned metadata is valid after upload.
