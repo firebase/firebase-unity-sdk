@@ -102,11 +102,11 @@ namespace Firebase.Sample.Storage {
 
     async Task RetryTest(Func<Task> test) {
       int failed = 0;
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < 10; i++) {
         try {
           await test();
         } catch (Exception e) {
-          DebugLog("Failed? " + e);
+          DebugLog("Failed? " + test + " : " + e);
           failed++;
         }
       }
@@ -119,15 +119,15 @@ namespace Firebase.Sample.Storage {
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       Func<Task>[] tests = {
-        TestCreateDestroy,
+        /*TestCreateDestroy,
         TestCreateDestroyRace,
         TestStorageReferenceNavigation,
         TestUrl,
         TestGetReference,
         TestGetStorageInvalidUris,
-        TestGetStorageWrongBucket,
+        TestGetStorageWrongBucket,*/
         TestUploadBytesLargeFile,
-        TestUploadBytesSmallFile,
+        /*TestUploadBytesSmallFile,
         TestUploadBytesSmallFileWithNoMetadata,
         TestUploadBytesSmallFileWithNonCustomOnlyMetadata,
         TestUploadBytesSmallFileWithCustomOnlyMetadata,
@@ -166,7 +166,7 @@ namespace Firebase.Sample.Storage {
         TestUploadLargeFileAndDownloadUsingStreamCallbackWithCancelation,
         TestUploadSmallFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFile,
-        TestUploadLargeFileAndDownloadToFileWithCancelation,
+        TestUploadLargeFileAndDownloadToFileWithCancelation,*/
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
