@@ -102,6 +102,7 @@ flags.DEFINE_bool("use_boringssl", False, "Build with BoringSSL instead of openS
 flags.DEFINE_bool("verbose", False, "If verbose, cmake build with DCMAKE_VERBOSE_MAKEFILE=1")
 flags.DEFINE_string("swig_dir", None, "If pass in swig dir directly rather than find swig by cmake")
 flags.DEFINE_bool("gen_documentation_zip", False, "Also generate a zip file containing files to document")
+flags.DEFINE_bool("gha", False, "True if the build is triggered by Github Action.")
 
 def get_build_path(platform, clean_build=False):
   """Get the folder that cmake configure and build in.
@@ -573,6 +574,9 @@ def main(argv):
     "-DFIREBASE_UNITY_BUILD_TESTS=ON",
     "-DFIREBASE_CPP_BUILD_STUB_TESTS=ON",
   ])
+
+  if FLAGS.gha:
+    cmake_setup_args.append("-DFIREBASE_GITHUB_ACTION_BUILD=ON")
 
   unity_root_args = get_unity_engine_folder_args(FLAGS.unity_root)
   if unity_root_args:
