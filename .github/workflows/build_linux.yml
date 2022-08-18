@@ -120,7 +120,7 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }} --gen_documentation_zip
+          python scripts/build_scripts/build_zips.py --gha --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }} --gen_documentation_zip
       
       - name: Check zip files
         shell: bash

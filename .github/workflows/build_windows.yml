@@ -126,7 +126,7 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --platform=windows --unity_root="$UNITY_ROOT_DIR" --swig_dir="$SWIG_DIR" --apis=${{ inputs.apis }}
+          python scripts/build_scripts/build_zips.py --gha --platform=windows --unity_root="$UNITY_ROOT_DIR" --swig_dir="$SWIG_DIR" --apis=${{ inputs.apis }}
 
       - name: Check zip file
         shell: bash
