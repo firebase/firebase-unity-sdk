@@ -623,21 +623,20 @@ jobs:
         with:
           path: testapps
           name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}
-      - name: Install Cloud SDK
+      - id: ftl_test
         if: steps.device-info.outputs.device_type == 'real'
-        uses: google-github-actions/setup-gcloud@v0
-      - name: Run Mobile integration tests on Real Device via FTL
+        uses: FirebaseExtended/github-actions/firebase-test-lab@test/firebase-test-lab-gameloop
+        env:
+          FIREBASE_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
+        with:
+          testapp_dir: testapps
+          test_type: "game-loop"
+      - name: Read FTL Test Result
         if: steps.device-info.outputs.device_type == 'real'
         timeout-minutes: 60
         shell: bash
         run: |
-          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
-          python scripts/gha/test_lab.py --testapp_dir testapps \
-            --ios_device "${{ matrix.mobile_device }}" \
-            --android_device "${{ matrix.mobile_device }}" \
-            --logfile_name "${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile" \
-            --code_platform unity \
-            --key_file scripts/gha-encrypted/gcs_key_file.json
+          echo "${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile"
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 60
         if: steps.device-info.outputs.device_type == 'virtual'
