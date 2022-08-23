@@ -618,6 +618,7 @@ jobs:
         run: |
           echo "::set-output name=device_type::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_type)"
           echo "::set-output name=device_platform::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_platform)"
+          echo "::set-output name=device::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_ftl_device)"
       - name: Download Desktop integration tests artifact
         uses: actions/download-artifact@v3
         with:
@@ -631,6 +632,7 @@ jobs:
         with:
           testapp_dir: testapps
           test_type: "game-loop"
+          test_devices: ${{ steps.device-info.outputs.device }}
       - name: Read FTL Test Result
         if: steps.device-info.outputs.device_type == 'real'
         timeout-minutes: 60
