@@ -619,7 +619,7 @@ jobs:
           echo "::set-output name=device_type::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_type)"
           echo "::set-output name=device_platform::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_platform)"
           echo "::set-output name=device::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_ftl_device)"
-      - name: Download Desktop integration tests artifact
+      - name: Download Mobile integration tests artifact
         uses: actions/download-artifact@v3
         with:
           path: testapps
@@ -639,8 +639,7 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
-            --output_dir testapps \
-            --logfile_name ${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile
+            --output_path testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 60
         if: steps.device-info.outputs.device_type == 'virtual'

@@ -1,11 +1,19 @@
+import os
 import attr
-import argparse
 import subprocess
 import json
+
+from absl import app
+from absl import flags
 from absl import logging
 
 from integration_testing import test_validation
 from integration_testing import gcs
+
+FLAGS = flags.FLAGS
+
+flags.DEFINE_string("test_result", None, "FTL test result in JSON format.")
+flags.DEFINE_enum("output_path", None, "Log will be write into this path.")
 
 
 @attr.s(frozen=False, eq=False)
@@ -15,13 +23,11 @@ class Test(object):
   logs = attr.ib()
 
 
-def main():
-  parser = argparse.ArgumentParser(description='Build for iOS and tvOS.')
-  parser.add_argument('-r', '--test_result', default=None)
-  parser.add_argument('-d', '--output_dir', default=None)
-  parser.add_argument('-n', '--logfile_name', default=None)
-  args = parser.parse_args()
-  test_result = json.loads(args.test_result)
+def main(argv):
+  if len(argv) > 1:
+    raise app.UsageError("Too many command-line arguments.")
+
+  test_result = json.loads(FLAGS.test_result)
   tests = []
   for app in test_result.get("apps"):
     app_path = app.get("testapp_path")
@@ -34,11 +40,13 @@ def main():
       logging.info("Test result: %s", logs)
       tests.append(Test(testapp_path=app_path, logs=logs))
 
+  (output_dir, file_name) = os.path.split(os.path.abspath(FLAGS.output_path))
+  FLAGS.output_path
   return test_validation.summarize_test_results(
     tests, 
     "unity", 
-    args.output_dir, 
-    file_name="test-results-" + args.logfile_name + ".log")
+    output_dir, 
+    file_name=file_name)
 
 
 def _get_testapp_log_text_from_gcs(gcs_path):
@@ -92,4 +100,6 @@ def _gcs_read_file(gcs_path):
 
 
 if __name__ == '__main__':
-  main()
+  flags.mark_flag_as_required("test_result")
+  flags.mark_flag_as_required("output_path")
+  app.run(main)
