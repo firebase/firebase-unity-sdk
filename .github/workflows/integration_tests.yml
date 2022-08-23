@@ -639,7 +639,7 @@ jobs:
         shell: bash
         run: |
           echo "${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile"
-          python scripts/gha/read_test_result.py -r '${{ steps.ftl_test.outputs.test_summary }}'
+          python scripts/gha/read_ftl_test_result.py -r '${{ steps.ftl_test.outputs.test_summary }}'
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 60
         if: steps.device-info.outputs.device_type == 'virtual'
