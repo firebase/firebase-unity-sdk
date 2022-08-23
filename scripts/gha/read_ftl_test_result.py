@@ -13,7 +13,7 @@ from integration_testing import gcs
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string("test_result", None, "FTL test result in JSON format.")
-flags.DEFINE_enum("output_path", None, "Log will be write into this path.")
+flags.DEFINE_string("output_path", None, "Log will be write into this path.")
 
 
 @attr.s(frozen=False, eq=False)
