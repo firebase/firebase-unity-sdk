@@ -1,22 +1,44 @@
+import attr
 import argparse
 import subprocess
 import json
 from absl import logging
 
+from integration_testing import test_validation
 from integration_testing import gcs
+
+
+@attr.s(frozen=False, eq=False)
+class Test(object):
+  """Holds data related to the testing of one testapp."""
+  testapp_path = attr.ib()
+  logs = attr.ib()
+
 
 def main():
   parser = argparse.ArgumentParser(description='Build for iOS and tvOS.')
   parser.add_argument('-r', '--test_result', default=None)
+  parser.add_argument('-d', '--output_dir', default=None)
+  parser.add_argument('-n', '--logfile_name', default=None)
   args = parser.parse_args()
   test_result = json.loads(args.test_result)
-  logging.info("project_id: %s" % test_result.get("project_id"))
+  tests = []
   for app in test_result.get("apps"):
-    if app.get("return_code") == 0:
-      gcs_dir = app.get("raw_result_link").replace("https://console.developers.google.com/storage/browser", "gs://")
+    app_path = app.get("testapp_path")
+    return_code = app.get("return_code")
+    logging.info("testapp: %s\nreturn code: %s" % (app_path, return_code))
+    if return_code == 0:
+      gcs_dir = app.get("raw_result_link").replace("https://console.developers.google.com/storage/browser/", "gs://")
       logging.info("gcs_dir: %s" % gcs_dir)
       logs = _get_testapp_log_text_from_gcs(gcs_dir)
       logging.info("Test result: %s", logs)
+      tests.append(Test(testapp_path=app_path, logs=logs))
+
+  return test_validation.summarize_test_results(
+    tests, 
+    "unity", 
+    args.output_dir, 
+    file_name="test-results-" + args.logfile_name + ".log")
 
 
 def _get_testapp_log_text_from_gcs(gcs_path):
@@ -67,6 +89,7 @@ def _gcs_read_file(gcs_path):
   logging.info("Reading GCS file: %s", " ".join(args))
   result = subprocess.run(args=args, capture_output=True, text=True, check=True)
   return result.stdout
+
 
 if __name__ == '__main__':
   main()

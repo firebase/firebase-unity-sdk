@@ -638,8 +638,9 @@ jobs:
         timeout-minutes: 60
         shell: bash
         run: |
-          echo "${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile"
-          python scripts/gha/read_ftl_test_result.py -r '${{ steps.ftl_test.outputs.test_summary }}'
+          python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
+            --output_dir testapps \
+            --logfile_name ${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 60
         if: steps.device-info.outputs.device_type == 'virtual'
