@@ -62,7 +62,7 @@ PARAMETERS = {
 
       EXPANDED_KEY: {
         "build_os": ["macos-latest","windows-latest"],
-        "unity_version": ["2020", "2019", "2018", "2017"],
+        "unity_version": ["2020", "2019", "2018"],
         "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
       }
     },
