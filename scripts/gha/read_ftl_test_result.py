@@ -46,11 +46,15 @@ def main(argv):
     app_path = app.get("testapp_path")
     return_code = app.get("return_code")
     logging.info("testapp: %s\nreturn code: %s" % (app_path, return_code))
-    gcs_dir = app.get("raw_result_link").replace("https://console.developers.google.com/storage/browser/", "gs://")
-    logging.info("gcs_dir: %s" % gcs_dir)
-    logs = _get_testapp_log_text_from_gcs(gcs_dir)
-    logging.info("Test result: %s", logs)
-    tests.append(Test(testapp_path=app_path, logs=logs))
+    if return_code == 0:
+      gcs_dir = app.get("raw_result_link").replace("https://console.developers.google.com/storage/browser/", "gs://")
+      logging.info("gcs_dir: %s" % gcs_dir)
+      logs = _get_testapp_log_text_from_gcs(gcs_dir)
+      logging.info("Test result: %s", logs)
+      tests.append(Test(testapp_path=app_path, logs=logs))
+    else:
+      logging.error("Test failed: %s", app)
+      tests.append(Test(testapp_path=app_path, logs=None))
 
   (output_dir, file_name) = os.path.split(os.path.abspath(FLAGS.output_path))
   return test_validation.summarize_test_results(
