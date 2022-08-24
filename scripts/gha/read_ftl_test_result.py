@@ -10,6 +10,20 @@ from absl import logging
 from integration_testing import test_validation
 from integration_testing import gcs
 
+r"""Tool for reading & validating game-loop test log from Firebase Test Lab 
+GitHub Action (FTL GHA).
+  https://github.com/FirebaseExtended/github-actions
+
+This tool will read files from GCS storage bucket. Requires Cloud SDK installed 
+with gsutil. (Should be installed by FTL GHA already.)
+
+Usage:
+
+  python read_ftl_test_result.py --test_result ${JSON_format_output_from_FTL_GHA} \
+    --output_path ${log_path}
+
+"""
+
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string("test_result", None, "FTL test result in JSON format.")
@@ -32,12 +46,11 @@ def main(argv):
     app_path = app.get("testapp_path")
     return_code = app.get("return_code")
     logging.info("testapp: %s\nreturn code: %s" % (app_path, return_code))
-    if return_code == 0:
-      gcs_dir = app.get("raw_result_link").replace("https://console.developers.google.com/storage/browser/", "gs://")
-      logging.info("gcs_dir: %s" % gcs_dir)
-      logs = _get_testapp_log_text_from_gcs(gcs_dir)
-      logging.info("Test result: %s", logs)
-      tests.append(Test(testapp_path=app_path, logs=logs))
+    gcs_dir = app.get("raw_result_link").replace("https://console.developers.google.com/storage/browser/", "gs://")
+    logging.info("gcs_dir: %s" % gcs_dir)
+    logs = _get_testapp_log_text_from_gcs(gcs_dir)
+    logging.info("Test result: %s", logs)
+    tests.append(Test(testapp_path=app_path, logs=logs))
 
   (output_dir, file_name) = os.path.split(os.path.abspath(FLAGS.output_path))
   return test_validation.summarize_test_results(
