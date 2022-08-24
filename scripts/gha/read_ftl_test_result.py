@@ -15,7 +15,6 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("test_result", None, "FTL test result in JSON format.")
 flags.DEFINE_string("output_path", None, "Log will be write into this path.")
 
-
 @attr.s(frozen=False, eq=False)
 class Test(object):
   """Holds data related to the testing of one testapp."""
@@ -41,7 +40,6 @@ def main(argv):
       tests.append(Test(testapp_path=app_path, logs=logs))
 
   (output_dir, file_name) = os.path.split(os.path.abspath(FLAGS.output_path))
-  FLAGS.output_path
   return test_validation.summarize_test_results(
     tests, 
     "unity", 
