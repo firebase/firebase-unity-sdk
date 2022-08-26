@@ -120,6 +120,12 @@ jobs:
           echo "$(swig -swiglib)" >> $GITHUB_PATH
           swig -swiglib
           echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
+
+      # mingw has zlib installed, which causes problems for the build, so we remove it
+      - name: Remove zlib
+        shell: bash
+        run: |
+          rm C:/msys64/mingw64/lib/libz*
       
       - name: Build SDK (Windows)
         timeout-minutes: 90
