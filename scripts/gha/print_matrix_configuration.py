@@ -62,7 +62,7 @@ PARAMETERS = {
 
       EXPANDED_KEY: {
         "build_os": ["macos-latest","windows-latest"],
-        "unity_version": ["2020", "2019", "2018", "2017"],
+        "unity_version": ["2020", "2019", "2018"],
         "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
       }
     },
@@ -132,16 +132,16 @@ UNITY_SETTINGS = {
 BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(s)"]
 
 TEST_DEVICES = {
-  "android_min": {"platform": "Android", "type": "real", "model": "Nexus10", "version": "19"},
-  "android_target": {"platform": "Android", "type": "real", "model": "blueline", "version": "28"},
-  "android_latest": {"platform": "Android", "type": "real", "model": "flame", "version": "29"},
+  "android_min": {"platform": "Android", "type": "real", "device": "model=Nexus10,version=19"},
+  "android_target": {"platform": "Android", "type": "real", "device": "model=blueline,version=28"},
+  "android_latest": {"platform": "Android", "type": "real", "device": "model=oriole,version=33"},
   "emulator_min": {"platform": "Android", "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
   "emulator_target": {"platform": "Android", "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
   "emulator_latest": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
   "emulator_32bit": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
-  "ios_min": {"platform": "iOS", "type": "real", "model": "iphone8", "version": "11.4"},
-  "ios_target": {"platform": "iOS", "type": "real", "model": "iphone8", "version": "14.7"},
-  "ios_latest": {"platform": "iOS", "type": "real", "model": "iphone11", "version": "13.6"},
+  "ios_min": {"platform": "iOS", "type": "real", "device": "model=iphone8,version=11.4"},
+  "ios_target": {"platform": "iOS", "type": "real", "device": "model=iphone11,version=13.6"},
+  "ios_latest": {"platform": "iOS", "type": "real", "device": "model=iphone8,version=14.7"},
   "simulator_min": {"platform": "iOS", "type": "virtual", "name": "iPhone 6", "version": "11.4"},
   "simulator_target": {"platform": "iOS", "type": "virtual", "name": "iPhone 8", "version": "14.5"},
   "simulator_latest": {"platform": "iOS", "type": "virtual", "name": "iPhone 11", "version": "14.4"},
@@ -276,6 +276,9 @@ def main():
   if args.get_device_platform:
     print(TEST_DEVICES.get(args.parm_key).get("platform"))
     return 
+  if args.get_ftl_device:
+    print(TEST_DEVICES.get(args.parm_key).get("device"))
+    return 
   if args.desktop_os:
     print(filterdesktop_os(platform=args.parm_key))
     return 
@@ -322,6 +325,7 @@ def parse_cmdline_args():
   parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version. Used with "-k $unity_setting -u $unity_major_version"')
   parser.add_argument('-get_device_type', action='store_true', help='Get the device type, used with -k $device')
   parser.add_argument('-get_device_platform', action='store_true', help='Get the device platform, used with -k $device')
+  parser.add_argument('-get_ftl_device', action='store_true', help='Get the ftl test device, used with -k $device')
   parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
   parser.add_argument('-mobile_platform', type=bool, default=False, help='Get mobile test platform. Use with "-k $build_platform -mobile_platform=1"')
   parser.add_argument('-build_platform', type=bool, default=False, help='Get build platform. Use with "-k $build_platform -build_platform=1"')

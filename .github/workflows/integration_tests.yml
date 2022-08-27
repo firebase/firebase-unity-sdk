@@ -618,26 +618,27 @@ jobs:
         run: |
           echo "::set-output name=device_type::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_type)"
           echo "::set-output name=device_platform::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_platform)"
-      - name: Download Desktop integration tests artifact
+          echo "::set-output name=device::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_ftl_device)"
+      - name: Download Mobile integration tests artifact
         uses: actions/download-artifact@v3
         with:
           path: testapps
           name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}
-      - name: Install Cloud SDK
+      - id: ftl_test
         if: steps.device-info.outputs.device_type == 'real'
-        uses: google-github-actions/setup-gcloud@v0
-      - name: Run Mobile integration tests on Real Device via FTL
+        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.0
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
+          testapp_dir: testapps
+          test_type: "game-loop"
+          test_devices: ${{ steps.device-info.outputs.device }}
+      - name: Read FTL Test Result
         if: steps.device-info.outputs.device_type == 'real'
         timeout-minutes: 60
         shell: bash
         run: |
-          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
-          python scripts/gha/test_lab.py --testapp_dir testapps \
-            --ios_device "${{ matrix.mobile_device }}" \
-            --android_device "${{ matrix.mobile_device }}" \
-            --logfile_name "${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile" \
-            --code_platform unity \
-            --key_file scripts/gha-encrypted/gcs_key_file.json
+          python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
+            --output_path testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 60
         if: steps.device-info.outputs.device_type == 'virtual'
