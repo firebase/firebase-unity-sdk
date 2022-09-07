@@ -211,7 +211,7 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-      - name: Install Unity
+      - name: Setup Unity
         uses: nick-invision/retry@v2
         with:
           timeout_minutes: 30
@@ -219,18 +219,12 @@ jobs:
           shell: bash
           command: |
             python scripts/gha/unity_installer.py --install \
-              --platforms ${{ matrix.platform }} \
-              --version ${{ matrix.unity_version }}
-      - name: Activate Unity license
-        timeout-minutes: 10
-        shell: bash
-        run: |
-          python scripts/gha/unity_installer.py --activate_license \
-            --version ${{ matrix.unity_version }}  \
-            --username "${{ secrets.UNITY_USERNAME }}" \
-            --password "${{ secrets.UNITY_PASSWORD }}" \
-            --serial_ids "${{ secrets.SERIAL_ID }}" \
-            --logfile "testapps/activate_license.log"
+              --activate_license \
+              --version ${{ matrix.unity_version }}  \
+              --username "${{ secrets.UNITY_USERNAME }}" \
+              --password "${{ secrets.UNITY_PASSWORD }}" \
+              --serial_ids "${{ secrets.SERIAL_ID }}" \
+              --logfile "testapps/activate_license.log"
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash

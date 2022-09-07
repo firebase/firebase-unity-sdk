@@ -153,7 +153,6 @@ def main(argv):
       username = FLAGS.username
       password = FLAGS.password
       serial_ids = FLAGS.serial_ids
-    release_license(FLAGS.logfile, FLAGS.version)
     return activate_license(username, password, serial_ids, FLAGS.logfile, FLAGS.version)
 
   if FLAGS.release_license:
