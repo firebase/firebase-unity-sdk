@@ -221,6 +221,7 @@ jobs:
             python scripts/gha/unity_installer.py --install \
               --activate_license \
               --version ${{ matrix.unity_version }}  \
+              --platforms ${{ matrix.platform }} \
               --username "${{ secrets.UNITY_USERNAME }}" \
               --password "${{ secrets.UNITY_PASSWORD }}" \
               --serial_ids "${{ secrets.SERIAL_ID }}" \
