@@ -17,7 +17,6 @@ inputs:
   version:
     required: true
   platforms:
-    default: ''
     required: false
   username:
     required: false
@@ -60,9 +59,12 @@ runs:
         max_attempts: 3
         shell: bash
         command: |
+          if [[ -n "${{ inputs.platforms }}" ]]; then
+            additional_flags+=(--platforms ${{ inputs.platforms }})
+          fi
           python $GITHUB_ACTION_PATH/unity_installer.py --install \
               --version ${{ inputs.version }}  \
-              --platforms ${{ inputs.platforms }}
+              ${additional_flags[*]}
     - name: Activate Unity license
       if: ${{ !inputs.release_license }} && inputs.username && inputs.password && && inputs.serial_ids
       shell: bash
