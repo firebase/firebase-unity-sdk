@@ -25,9 +25,7 @@ inputs:
   serial_ids:
     required: false
   release_license:
-    default: false
     required: false
-    type: boolean
 
 runs:
   using: 'composite'
