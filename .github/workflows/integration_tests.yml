@@ -207,11 +207,11 @@ jobs:
       - id: unity_setup
         uses: firebase/firebase-unity-sdk/unity@unity-gha
         with:
-          version: matrix.unity_version
-          platforms: matrix.platform
-          username: ecrets.UNITY_USERNAME
-          password: secrets.UNITY_PASSWORD
-          serial_ids: secrets.SERIAL_ID
+          version: ${{ matrix.unity_version }}
+          platforms: ${{ matrix.platform }}
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          serial_ids: ${{ secrets.SERIAL_ID }}
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
@@ -387,10 +387,10 @@ jobs:
       - id: unity_setup
         uses: firebase/firebase-unity-sdk/unity@unity-gha
         with:
-          version: matrix.unity_version
-          username: ecrets.UNITY_USERNAME
-          password: secrets.UNITY_PASSWORD
-          serial_ids: secrets.SERIAL_ID
+          version: ${{ matrix.unity_version }}
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          serial_ids: ${{ secrets.SERIAL_ID }}
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
