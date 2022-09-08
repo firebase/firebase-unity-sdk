@@ -87,7 +87,8 @@ public sealed class XcodeCapabilities
     File.WriteAllText(projectPath, tempProject.WriteToString());
   }
 
-  static void AddEntitlements(PBXProject project, string path, string targetId){
+  static void AddEntitlements(object projectObj, string path, string targetId){
+    var project = (PBXProject)projectObj;
     string[] entitlements = AssetDatabase.FindAssets("dev")
       .Select(AssetDatabase.GUIDToAssetPath)
       .Where(p => p.Contains("dev.entitlements"))
@@ -112,20 +113,23 @@ public sealed class XcodeCapabilities
     Debug.Log("Added entitlement to xcode project.");
   }
 
-  static void MakeChangesForMessaging(PBXProject project, string path, string targetId) {
+  static void MakeChangesForMessaging(object projectObj, string path, string targetId) {
+    var project = (PBXProject)projectObj;
     Debug.Log("Messaging testapp detected.");
     AddFramework(project, targetId, "UserNotifications.framework");
     EnableRemoteNotification(project, path, targetId);
     Debug.Log("Finished making messaging-specific changes.");
   }
 
-  static void MakeChangesForAuth(PBXProject project, string path, string targetId) {
+  static void MakeChangesForAuth(object projectObj, string path, string targetId) {
+    var project = (PBXProject)projectObj;
     Debug.Log("Auth testapp detected.");
     AddFramework(project, targetId, "UserNotifications.framework");
     Debug.Log("Finished making auth-specific changes.");
   }
 
-  static void EnableRemoteNotification(PBXProject project, string path, string targetId) {
+  static void EnableRemoteNotification(object projectObj, string path, string targetId) {
+    var project = (PBXProject)projectObj;
     Debug.Log("Adding remote-notification to UIBackgroundModes");
     var plist = new PlistDocument();
     string plistPath = path + "/Info.plist";
@@ -137,13 +141,15 @@ public sealed class XcodeCapabilities
     Debug.Log("Finished adding remote-notification.");
   }
 
-  static void AddFramework(PBXProject project, string targetId, string framework) {
+  static void AddFramework(object projectObj, string targetId, string framework) {
+    var project = (PBXProject)projectObj;
     Debug.LogFormat("Adding framework to xcode project: {0}.", framework);
     project.AddFrameworkToProject(targetId, framework, false);
     Debug.Log("Finished adding framework.");
   }
 
-  static string GetMainTargetGUID(PBXProject pbxProject) {
+  static string GetMainTargetGUID(object pbxProjectObj) {
+    var pbxProject = (PBXProject)pbxProjectObj;
     // In 2019.3 Unity changed this API without an automated update path via the api-updater.
     // There doesn't seem to be a clean version-independent way to handle this logic.
     #if UNITY_2019_3_OR_NEWER

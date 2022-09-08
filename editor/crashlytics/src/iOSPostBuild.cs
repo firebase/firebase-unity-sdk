@@ -109,8 +109,9 @@ namespace Firebase.Crashlytics.Editor {
       pbxProject.WriteToFile(projectPath);
     }
 
-    private static void SetupGUIDForSymbolUploads(UnityEditor.iOS.Xcode.PBXProject pbxProject,
+    private static void SetupGUIDForSymbolUploads(object pbxProjectObj,
                                                   string completeRunScriptBody, string targetGuid) {
+      var pbxProject = (UnityEditor.iOS.Xcode.PBXProject) pbxProjectObj;
       try {
         // Use reflection to append a Crashlytics Run Script
         BindingFlags bindingFlags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
@@ -152,8 +153,9 @@ namespace Firebase.Crashlytics.Editor {
       }
     }
 
-    private static string GetUnityFrameworkTargetGuid(UnityEditor.iOS.Xcode.PBXProject project) {
-      // var project = (UnityEditor.iOS.Xcode.PBXProject)projectObj;
+    private static string GetUnityFrameworkTargetGuid(object projectObj) {
+      var project = (UnityEditor.iOS.Xcode.PBXProject)projectObj;
+
       MethodInfo getUnityFrameworkTargetGuid =
           project.GetType().GetMethod("GetUnityFrameworkTargetGuid");
 
