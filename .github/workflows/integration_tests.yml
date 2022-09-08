@@ -205,7 +205,7 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - id: unity_setup
-        uses: ./unity@unity-gha
+        uses: firebase/firebase-unity-sdk/unity@unity-gha
         with:
           version: matrix.unity_version
           packages: matrix.platform
@@ -385,7 +385,7 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - id: unity_setup
-        uses: ./unity@unity-gha
+        uses: firebase/firebase-unity-sdk/unity@unity-gha
         with:
           version: matrix.unity_version
           username: ecrets.UNITY_USERNAME

@@ -16,7 +16,7 @@ name: 'Unity Setup'
 inputs:
   version:
     required: true
-  packages:
+  platforms:
     required: false
   username:
     required: false
@@ -63,7 +63,7 @@ runs:
         command: |
           python $GITHUB_ACTION_PATH/unity_installer.py --install \
               --version ${{ inputs.unity_version }}  \
-              --platforms ${{ inputs.platform }}
+              --platforms ${{ inputs.platforms }}
     - name: Activate Unity license
       if: ${{ !inputs.release_license }} && inputs.username && inputs.password && && inputs.serial_ids
       timeout-minutes: 10
