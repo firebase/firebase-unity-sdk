@@ -17,6 +17,7 @@ inputs:
   version:
     required: true
   platforms:
+    default: ''
     required: false
   username:
     required: false
