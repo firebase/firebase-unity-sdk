@@ -40,7 +40,7 @@ runs:
         shell: bash
         command: |
           python $GITHUB_ACTION_PATH/unity_installer.py --release_license \
-            --version ${{ inputs.unity_version }} \
+            --version ${{ inputs.version }} \
             --logfile "testapps/release_license.log"
           cat testapps/release_license.log
     - name: Install Unity installer (U3D)
@@ -60,14 +60,14 @@ runs:
         shell: bash
         command: |
           python $GITHUB_ACTION_PATH/unity_installer.py --install \
-              --version ${{ inputs.unity_version }}  \
+              --version ${{ inputs.version }}  \
               --platforms ${{ inputs.platforms }}
     - name: Activate Unity license
       if: ${{ !inputs.release_license }} && inputs.username && inputs.password && && inputs.serial_ids
       shell: bash
       run: |
         python $GITHUB_ACTION_PATH/unity_installer.py --activate_license \
-          --version ${{ inputs.unity_version }}  \
+          --version ${{ inputs.version }}  \
           --username "${{ inputs.username }}" \
           --password "${{ inputs.password }}" \
           --serial_ids "${{ inputs.serial_ids }}" \
