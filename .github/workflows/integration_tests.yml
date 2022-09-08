@@ -195,13 +195,6 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0.2
-      - name: Install Unity installer (U3D)
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: gem install u3d -v 1.2.3
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -211,21 +204,14 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-      - name: Setup Unity
-        uses: nick-invision/retry@v2
+      - id: unity_setup
+        uses: ./unity@unity-gha
         with:
-          timeout_minutes: 30
-          max_attempts: 3
-          shell: bash
-          command: |
-            python scripts/gha/unity_installer.py --install \
-              --activate_license \
-              --version ${{ matrix.unity_version }}  \
-              --platforms ${{ matrix.platform }} \
-              --username "${{ secrets.UNITY_USERNAME }}" \
-              --password "${{ secrets.UNITY_PASSWORD }}" \
-              --serial_ids "${{ secrets.SERIAL_ID }}" \
-              --logfile "testapps/activate_license.log"
+          version: matrix.unity_version
+          packages: matrix.platform
+          username: ecrets.UNITY_USERNAME
+          password: secrets.UNITY_PASSWORD
+          serial_ids: secrets.SERIAL_ID
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
@@ -389,13 +375,6 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0.2
-      - name: Install Unity installer (U3D)
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: gem install u3d -v 1.2.3
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -405,20 +384,13 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-      - name: Setup Unity
-        uses: nick-invision/retry@v2
+      - id: unity_setup
+        uses: ./unity@unity-gha
         with:
-          timeout_minutes: 20
-          max_attempts: 3
-          shell: bash
-          command: |
-            python scripts/gha/unity_installer.py --install \
-              --activate_license \
-              --version ${{ matrix.unity_version }}  \
-              --username "${{ secrets.UNITY_USERNAME }}" \
-              --password "${{ secrets.UNITY_PASSWORD }}" \
-              --serial_ids "${{ secrets.SERIAL_ID }}" \
-              --logfile "testapps/activate_license.log"
+          version: matrix.unity_version
+          username: ecrets.UNITY_USERNAME
+          password: secrets.UNITY_PASSWORD
+          serial_ids: secrets.SERIAL_ID
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
