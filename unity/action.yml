@@ -66,7 +66,6 @@ runs:
               --platforms ${{ inputs.platforms }}
     - name: Activate Unity license
       if: ${{ !inputs.release_license }} && inputs.username && inputs.password && && inputs.serial_ids
-      timeout-minutes: 10
       shell: bash
       run: |
         python $GITHUB_ACTION_PATH/unity_installer.py --activate_license \
