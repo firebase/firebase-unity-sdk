@@ -155,6 +155,10 @@ Support
 
 Release Notes
 -------------
+### 9.5.0
+- Changes
+    - General: Updated Firebase C++ SDK dependencies to v9.5.0.
+
 ### 9.4.0
 - Changes
     - General: Updated Firebase C++ SDK dependencies to v9.4.0.
