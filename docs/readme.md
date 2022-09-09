@@ -157,6 +157,7 @@ Release Notes
 -------------
 ### 9.5.0
 - Changes
+    - General: Updated Firebase C++ SDK dependencies to v9.5.0.
     - Crashlytics: Fix #218 that Firebase editor tool not loading when iOS
       build support is not installed.
 
