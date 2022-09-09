@@ -247,17 +247,10 @@ jobs:
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
-        # Retry at most 3 times when Return Unity license fails.
-        uses: nick-invision/retry@v2
+        uses: firebase/firebase-unity-sdk/unity@unity-gha
         with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: |
-            python scripts/gha/unity_installer.py --release_license \
-              --version ${{ matrix.unity_version }} \
-              --logfile "testapps/release_license.log"
-            cat testapps/release_license.log
+          version: ${{ matrix.unity_version }}
+          release_license: "true"
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
@@ -425,17 +418,10 @@ jobs:
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
-        # Retry at most 3 times when Return Unity license fails.
-        uses: nick-invision/retry@v2
+        uses: firebase/firebase-unity-sdk/unity@unity-gha
         with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: |
-            python scripts/gha/unity_installer.py --release_license \
-              --version ${{ matrix.unity_version }} \
-              --logfile "testapps/release_license.log"
-            cat testapps/release_license.log
+          version: ${{ matrix.unity_version }}
+          release_license: "true"
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
