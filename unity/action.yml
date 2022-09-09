@@ -32,7 +32,7 @@ runs:
   steps:
     # Setup GCould Env if account infomation was provided
     - name: Return Unity license
-      if: ${{ inputs.release_license != '' }}
+      if: inputs.release_license
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 10
@@ -44,7 +44,7 @@ runs:
             --logfile "testapps/release_license.log"
           cat testapps/release_license.log
     - name: Install Unity installer (U3D)
-      if: ${{ inputs.release_license == '' }}
+      if: inputs.release_license == ''
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 10
@@ -52,7 +52,7 @@ runs:
         shell: bash
         command: gem install u3d -v 1.2.3
     - name: Install Unity
-      if: ${{ inputs.release_license == '' }}
+      if: inputs.release_license == ''
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 10
@@ -66,7 +66,7 @@ runs:
               --version ${{ inputs.version }}  \
               ${additional_flags[*]}
     - name: Activate Unity license
-      if: ${{ inputs.release_license == '' }} && ${{ inputs.username != '' }} && ${{ inputs.password != '' }} && ${{ inputs.serial_ids != '' }}
+      if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
       shell: bash
       run: |
         python $GITHUB_ACTION_PATH/unity_installer.py --activate_license \
