@@ -190,10 +190,6 @@ def get_targets_args(targets):
   support_targets = SUPPORT_TARGETS
   if is_tvos_build():
     support_targets = TVOS_SUPPORT_TARGETS
-    # Explicitly disable Dynamic Links on tvOS. This is required because we're
-    # truncating support_targets to a subset, and the "target in support_targets"
-    # loop below won't append this property definition for us.
-    result_args.append("-DFIREBASE_INCLUDE_DYNAMIC_LINKS=OFF")
     if not targets:
       targets = TVOS_SUPPORT_TARGETS
 
@@ -204,7 +200,7 @@ def get_targets_args(targets):
         raise app.UsageError(
             'Wrong target "{}", please pick from {}'.format(
                 target, ",".join(support_targets)))
-    for target in support_targets:
+    for target in SUPPORT_TARGETS:
       if target in targets:
         result_args.append("-DFIREBASE_INCLUDE_" + target.upper() +
                            "=ON")
@@ -579,7 +575,6 @@ def make_tvos_multi_arch_build(cmake_args):
     Args:
       cmake_args: cmake arguments used to build each architecture.
   """
-  logging.error("DEDB cmake_args: %s", cmake_args)
   global g_target_devices
   current_folder = os.getcwd()
   target_architectures = []

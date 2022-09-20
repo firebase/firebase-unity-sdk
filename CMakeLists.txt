@@ -244,6 +244,11 @@ if (DESKTOP AND APPLE AND FIREBASE_INCLUDE_EDITOR_TOOL)
   add_subdirectory(editor)
 endif()
 
+if (PLATFORM STREQUAL TVOS OR PLATFORM STREQUAL SIMULATOR_TVOS)
+  # Dynamic Links is not supported on tvOS.
+  set(FIREBASE_INCLUDE_DYNAMIC_LINKS OFF)
+endif()
+
 if (FIREBASE_INCLUDE_ANALYTICS)
   add_subdirectory(analytics)
   list(APPEND TARGET_LINK_LIB_NAMES "firebase_analytics" "firebase_analytics_swig")
