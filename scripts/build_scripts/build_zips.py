@@ -186,11 +186,13 @@ def get_targets_args(targets):
       camke args included targets.
   """
   result_args = []
-  support_targets = SUPPORT_TARGETS
+  
   if is_tvos_build():
     supported_targets = TVOS_SUPPORT_TARGETS
     if not targets:
       targets = supported_targets
+  else
+    support_targets = SUPPORT_TARGETS
 
   if targets:
     # check if all the entries are valid
@@ -206,12 +208,12 @@ def get_targets_args(targets):
       else:
         result_args.append("-DFIREBASE_INCLUDE_" + target.upper() +
                            "=OFF")
-  logging.error("get target args are:" + ",".join(result_args))
+  logging.debug("get target args are:" + ",".join(result_args))
   return result_args
 
 
 def get_tvos_args(source_path):
-  """Get the cmake args for tvOS platform specific.
+  """Get the cmake args for tvOS platforms.
 
     Args:
       source_path: root source folder to find toolchain file.
@@ -220,8 +222,6 @@ def get_tvos_args(source_path):
   """
   result_args = []
   toolchain_path = os.path.join(source_path, "cmake", "unity_tvos.cmake")
-  # toolchain_path = os.path.join(source_path, "cmake", "apple.toolchain.cmake")
-  # toolchain args is required
   result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_path)
   # check device input
   global g_target_devices
@@ -518,7 +518,6 @@ def make_macos_multi_arch_build(cmake_args):
 
       for bundle_file in bundle_list:
         bundle_name = os.path.basename(bundle_file)
-        logging.debug("")
         matching_files = glob.glob(os.path.join(
             temporary_dir, "**", "*"+bundle_name), recursive=True)
         if matching_files:

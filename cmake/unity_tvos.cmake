@@ -18,11 +18,6 @@ message(STATUS "Using iOS SDK: ${CMAKE_OSX_SYSROOT}")
 
 set(CMAKE_SYSTEM_NAME "tvOS")
 
-# In order to build for both device and simulator, this needs to be empty,
-# or the CMAKE_OSX_DEPLOYMENT_TARGET setting below is not handled correctly.
-# Note, this seems to cause an issue with repeating builds on some cmake versions,
-# the long term fix will likely be to not handle both device and simulator with
-# the same toolchain, and instead merge the libraries after the fact.
 set(CMAKE_OSX_SYSROOT "")
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
 set(CMAKE_XCODE_EFFECTIVE_PLATFORMS "-appletvos;-tvsimulator")
@@ -40,18 +35,15 @@ elseif(PLATFORM_INT STREQUAL "SIMULATOR_TVOS")
   set(ARCHS x86_64)
   set(APPLE_TARGET_TRIPLE_INT x86_64-apple-tvos)
   set(CMAKE_XCODE_ATTRIBUTE_ARCHS[sdk=appletvsimulator*] "x86_64")
-  set(APPLE_TARGET_TRIPLE_INT )
 endif()
 
-# drsanta@ (we might not need this)
 if(NOT DEFINED ENABLE_ARC)
-  message(STATUS "ARC note defined, enabling by default")
+  message(STATUS "ARC not defined, enabling by default")
   set(ENABLE_ARC TRUE)  
 endif()
-set(ENABLE_ARC_INT ${ENABLE_ARC} CACHE BOOL "Whether or not to enable ARC" FORCE)
 
-# drsanta@ (we might need this)
-# set (XCODE_IOS_PLATFORM tvos)
+set(ENABLE_ARC_INT ${ENABLE_ARC} CACHE BOOL "Whether or not to enable ARC" FORCE)
+set(XCODE_IOS_PLATFORM tvos)
 
 set(CMAKE_IOS_INSTALL_UNIVERSAL_LIBS "YES")
 set(CMAKE_XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO")
