@@ -106,7 +106,8 @@ else()
   set(FIREBASE_SYSTEM_DEPS)
 endif()
 
-if(NOT FIREBASE_IOS_BUILD) # besides iOS build, don't need lib prefix
+# besides iOS/tvOS builds don't need lib prefix.
+if(NOT FIREBASE_IOS_BUILD)
   set(CMAKE_SHARED_LIBRARY_PREFIX "")
   set(CMAKE_STATIC_LIBRARY_PREFIX "")
 endif()

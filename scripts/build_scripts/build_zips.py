@@ -17,7 +17,7 @@
 
 
 Example usage:
-  python build_zips.py --platform=macos --targets=auth --targets=firestore
+  python build_zips.py --platform=macos --apis=auth --targets=firestore
 """
 import glob
 import os
@@ -30,11 +30,15 @@ import sys
 
 from absl import app, flags, logging
 
-SUPPORT_PLATFORMS = ("linux", "macos", "windows", "ios", "android")
+SUPPORT_PLATFORMS = ("linux", "macos", "windows", "ios", "tvos", "android")
 SUPPORT_TARGETS = [
     "analytics", "auth", "crashlytics", "database", "dynamic_links",
     "firestore", "functions", "installations", "messaging", "remote_config",
     "storage"
+]
+TVOS_SUPPORT_TARGETS = [
+    "analytics", "auth", "crashlytics", "database", "firestore", "functions",
+    "installations", "messaging", "remote_config", "storage"
 ]
 SUPPORT_DEVICE = ["device", "simulator"]
 
@@ -52,6 +56,21 @@ IOS_CONFIG_DICT = {
         "architecture": ["arm64", "x86_64", "i386"],
         "ios_platform_location": "iPhoneSimulator.platform",
         "osx_sysroot": "iphonesimulator",
+    }
+}
+
+TVOS_CONFIG_DICT = {
+    "device": {
+        "architecture": ["arm64"],
+        "ios_platform_location": "AppleTvOS.platform",
+        "osx_sysroot": "appletvos",
+        "toolchain_platform": "TVOS",
+    },
+    "simulator": {
+        "architecture": ["x86_64"],
+        "ios_platform_location": "AppleTvSimulator.platform",
+        "osx_sysroot": "appletvsimulator",
+        "toolchain_platform": "SIMULATOR_TVOS",
     }
 }
 
@@ -86,7 +105,7 @@ flags.DEFINE_multi_string(
     "To build on device or simulator. If not set, built on both. Only take affect for ios and android build"
 )
 flags.DEFINE_multi_string(
-    "architecture", None, "Which architectures in build on.\n"
+    "architecture", None, "Which architectures in build on. Ignored on tvOS.\n"
     "For iOS device ({}).\n"
     "For iOS simulator ({}).\n"
     "For android ({}).\n"
@@ -167,23 +186,56 @@ def get_targets_args(targets):
       camke args included targets.
   """
   result_args = []
+  support_targets = SUPPORT_TARGETS
+  if is_tvos_build():
+    supported_targets = TVOS_SUPPORT_TARGETS
+    if not targets:
+      targets = supported_targets
+
   if targets:
     # check if all the entries are valid
     for target in targets:
-      if target not in SUPPORT_TARGETS:
+      if target not in support_targets:
         raise app.UsageError(
             'Wrong target "{}", please pick from {}'.format(
-                target, ",".join(SUPPORT_TARGETS)))
-    for target in SUPPORT_TARGETS:
+                target, ",".join(support_targets)))
+    for target in support_targets:
       if target in targets:
         result_args.append("-DFIREBASE_INCLUDE_" + target.upper() +
                            "=ON")
       else:
         result_args.append("-DFIREBASE_INCLUDE_" + target.upper() +
                            "=OFF")
-  logging.debug("get target args are:" + ",".join(result_args))
+  logging.error("get target args are:" + ",".join(result_args))
   return result_args
 
+
+def get_tvos_args(source_path):
+  """Get the cmake args for tvOS platform specific.
+
+    Args:
+      source_path: root source folder to find toolchain file.
+    Returns:
+      camke args for iOS platform.
+  """
+  result_args = []
+  toolchain_path = os.path.join(source_path, "cmake", "unity_tvos.cmake")
+  # toolchain_path = os.path.join(source_path, "cmake", "apple.toolchain.cmake")
+  # toolchain args is required
+  result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_path)
+  # check device input
+  global g_target_devices
+  if FLAGS.device:
+    for device in FLAGS.device:
+      if device not in SUPPORT_DEVICE:
+        raise app.UsageError(
+            'Wrong device type {}, please pick from {}'.format(
+                device, ",".join(SUPPORT_DEVICE)))
+    g_target_devices = FLAGS.device
+  else:
+    g_target_devices = SUPPORT_DEVICE
+
+  return result_args
 
 def get_ios_args(source_path):
   """Get the cmake args for iOS platform specific.
@@ -466,6 +518,7 @@ def make_macos_multi_arch_build(cmake_args):
 
       for bundle_file in bundle_list:
         bundle_name = os.path.basename(bundle_file)
+        logging.debug("")
         matching_files = glob.glob(os.path.join(
             temporary_dir, "**", "*"+bundle_name), recursive=True)
         if matching_files:
@@ -490,6 +543,108 @@ def make_macos_multi_arch_build(cmake_args):
   logging.info("Generated Darwin (MacOS) multi-arch (%s) zip %s",
                ",".join(g_target_architectures), final_zip_path)
 
+
+def make_tvos_target(device, arch, cmake_args):
+  """Make the tvos build for the given architecture.
+     Assumed to be called from the build directory.
+
+    Args:
+      arch: The architecture to build for.
+      cmake_args: Additional cmake arguments to use.
+  """
+  build_args = cmake_args.copy()
+  build_args.append("-DCMAKE_OSX_ARCHITECTURES=" + arch)
+  build_args.append("-DCMAKE_OSX_SYSROOT=" +
+                      TVOS_CONFIG_DICT[device]["osx_sysroot"])
+  build_args.append("-DCMAKE_XCODE_EFFECTIVE_PLATFORMS=" +
+                       "-"+TVOS_CONFIG_DICT[device]["osx_sysroot"])
+  build_args.append("-DIOS_PLATFORM_LOCATION=" +
+                       TVOS_CONFIG_DICT[device]["ios_platform_location"])
+  build_args.append("-DPLATFORM=" +
+                       TVOS_CONFIG_DICT[device]["toolchain_platform"])
+
+  if not os.path.exists(arch):
+    os.makedirs(arch)
+  build_dir = os.path.join(os.getcwd(), arch)
+  subprocess.call(build_args, cwd=build_dir)
+  subprocess.call('make', cwd=build_dir)
+  subprocess.call(['cpack', '.'], cwd=build_dir)
+
+def make_tvos_multi_arch_build(cmake_args):
+  """Make tvos build for different architectures, and then combine them together
+
+    Args:
+      cmake_args: cmake arguments used to build each architecture.
+  """
+  global g_target_devices
+  current_folder = os.getcwd()
+  target_architectures = []
+
+  # build multiple architectures
+  current_folder = os.getcwd()
+  threads = []
+  for device in g_target_devices:
+    for arch in TVOS_CONFIG_DICT[device]["architecture"]:
+      target_architectures.append(arch)
+      t = threading.Thread(target=make_tvos_target, args=(device, arch, cmake_args))
+      t.start()
+      threads.append(t)
+
+  for t in threads:
+    t.join()
+
+  # Merge the different zip files together, using lipo on the library files
+  zip_base_name = ""
+  library_list = []
+  base_temp_dir = tempfile.mkdtemp()
+  for arch in target_architectures:
+    # find *.zip in subfolder architecture
+    arch_zip_path = glob.glob(os.path.join(arch, "*-tvOS.zip"))
+    if not arch_zip_path:
+      logging.error("No *-tvOS.zip generated for architecture %s", arch)
+      return
+    if not zip_base_name:
+      # first architecture, so extract to the final temp folder. The following
+      # library files will merge to the ones in this folder.
+      zip_base_name = arch_zip_path[0]
+      with zipfile.ZipFile(zip_base_name) as zip_file:
+        zip_file.extractall(base_temp_dir)
+      library_list.extend(glob.glob(os.path.join(
+          base_temp_dir, "**", "*.a"), recursive=True))
+    else:
+      temporary_dir = tempfile.mkdtemp()
+      # from the second *-tvOS.zip, we only need to extract *.a files to operate the merge.
+      with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
+        for file in zip_file.namelist():
+          if file.endswith('.a'):
+            zip_file.extract(file, temporary_dir)
+
+      for library_file in library_list:
+        library_name = os.path.basename(library_file)
+        matching_files = glob.glob(os.path.join(
+            temporary_dir, "Plugins", "tvOS", "Firebase", library_name))
+        if matching_files:
+          merge_args = [
+              "lipo",
+              library_file,
+              matching_files[0],
+              "-create",
+              "-output",
+              library_file,
+          ]
+          subprocess.call(merge_args)
+          logging.info("merging %s to %s", matching_files[0], library_name)
+
+  # archive the temp folder to the final firebase_unity-<version>-tvOS.zip
+  final_zip_path = os.path.join(current_folder, os.path.basename(zip_base_name))
+  with zipfile.ZipFile(final_zip_path, "w", allowZip64=True) as zip_file:
+    for current_root, _, filenames in os.walk(base_temp_dir):
+      for filename in filenames:
+        fullpath = os.path.join(current_root, filename)
+        zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
+  logging.info("Generated Darwin (tvOS) multi-arch (%s) zip %s",
+               ",".join(g_target_architectures), final_zip_path)
+
 def gen_documentation_zip():
   """If the flag was enabled, builds the zip file containing source files to document.
   """
@@ -510,13 +665,19 @@ def is_android_build():
   """
   return FLAGS.platform == "android"
 
-
 def is_ios_build():
   """
     Returns:
       If the build platform is ios
   """
   return FLAGS.platform == "ios"
+
+def is_tvos_build():
+  """
+    Returns:
+      If the build platform is tvos
+  """
+  return FLAGS.platform == "tvos"
 
 def is_windows_build():
   """
@@ -608,6 +769,8 @@ def main(argv):
 
   if is_ios_build():
     cmake_setup_args.extend(get_ios_args(source_path))
+  elif is_tvos_build():
+    cmake_setup_args.extend(get_tvos_args(source_path))
   elif is_android_build():
     cmake_setup_args.extend(get_android_args())
   elif is_macos_build():
@@ -625,6 +788,8 @@ def main(argv):
     logging.info("Build macos with multiple architectures %s",
                  ",".join(g_target_architectures))
     make_macos_multi_arch_build(cmake_setup_args)
+  elif is_tvos_build:
+    make_tvos_multi_arch_build(cmake_setup_args)
   else:
     subprocess.call(cmake_setup_args)
     if is_windows_build():
