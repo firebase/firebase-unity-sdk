@@ -36,7 +36,7 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
   set(shared_target "firebase_${LIBRARY_NAME}_shared")
   
   if(FIREBASE_IOS_BUILD OR NOT FIREBASE_UNI_LIBRARY)
-    # On iOS, we want to include all the symbols in the library
+    # On iOS and tvOS, we want to include all the symbols in the library
     add_library(${shared_target} SHARED
       ${FIREBASE_SOURCE_DIR}/empty.cc
       $<TARGET_OBJECTS:firebase_${LIBRARY_NAME}>

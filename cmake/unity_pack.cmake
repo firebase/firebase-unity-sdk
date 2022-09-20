@@ -24,7 +24,11 @@ include(unity_mono)
 
 # iOS will get the platform name of Darwin if we dont change it here
 if(FIREBASE_IOS_BUILD)
-  set(CPACK_SYSTEM_NAME "iOS")
+  if(FIREBASE_TVOS_VARIANT)
+    set(CPACK_SYSTEM_NAME "tvOS")
+  else()
+    set(CPACK_SYSTEM_NAME "iOS")
+  endif()
 endif()
 
 set(CPACK_GENERATOR "ZIP")
@@ -35,7 +39,11 @@ set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 include(CPack)
 
 if(FIREBASE_IOS_BUILD)
-  set(UNITY_PACK_NATIVE_DIR "Plugins/iOS/Firebase")
+  if(FIREBASE_TVOS_VARIANT)
+    set(UNITY_PACK_NATIVE_DIR "Plugins/tvOS/Firebase")
+  else()
+    set(UNITY_PACK_NATIVE_DIR "Plugins/iOS/Firebase")
+  endif()
 elseif("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64" OR
        "${CMAKE_GENERATOR_PLATFORM}" STREQUAL "")
   set(UNITY_PACK_NATIVE_DIR "Firebase/Plugins/x86_64")
