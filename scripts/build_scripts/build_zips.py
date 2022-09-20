@@ -187,12 +187,9 @@ def get_targets_args(targets):
   """
   result_args = []
   
-  if is_tvos_build():
-    supported_targets = TVOS_SUPPORT_TARGETS
-    if not targets:
-      targets = supported_targets
-  else
-    support_targets = SUPPORT_TARGETS
+  support_targets = SUPPORT_TARGETS
+  if is_tvos_build() and not targets:
+    targets = TVOS_SUPPORT_TARGETS
 
   if targets:
     # check if all the entries are valid
@@ -544,7 +541,7 @@ def make_macos_multi_arch_build(cmake_args):
 
 
 def make_tvos_target(device, arch, cmake_args):
-  """Make the tvos build for the given architecture.
+  """Make the tvos build for the given device and architecture.
      Assumed to be called from the build directory.
 
     Args:
@@ -570,7 +567,8 @@ def make_tvos_target(device, arch, cmake_args):
   subprocess.call(['cpack', '.'], cwd=build_dir)
 
 def make_tvos_multi_arch_build(cmake_args):
-  """Make tvos build for different architectures, and then combine them together
+  """Make tvos build for different architectures, and then combine
+    them together into a fat libraries and a single zip file.
 
     Args:
       cmake_args: cmake arguments used to build each architecture.
