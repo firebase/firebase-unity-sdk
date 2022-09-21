@@ -90,6 +90,16 @@
         },
         {
           "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppApp.a",
+            "Firebase/Plugins/iOS/Firebase.App.dll",
+            "Firebase/Plugins/iOS/Firebase.App.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
           "platforms": [],
           "labels": ["gvh_targets-editor"],
           "paths": [
@@ -232,6 +242,16 @@
           ]
         },
         {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppAnalytics.a",
+            "Firebase/Plugins/iOS/Firebase.Analytics.dll",
+            "Firebase/Plugins/iOS/Firebase.Analytics.pdb"
+          ]
+        },
+        {
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Editor/AnalyticsDependencies.xml",
@@ -323,6 +343,16 @@
           ]
         },
         {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppAuth.a",
+            "Firebase/Plugins/iOS/Firebase.Auth.dll",
+            "Firebase/Plugins/iOS/Firebase.Auth.pdb"
+          ]
+        },
+        {
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Editor/AuthDependencies.xml",
@@ -406,8 +436,17 @@
           "platforms": ["iOS"],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libCrashlyticsiOSWrapper.a",
             "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.a",
+            "Firebase/Plugins/iOS/Firebase.Crashlytics.dll",
+            "Firebase/Plugins/iOS/Firebase.Crashlytics.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppCrashlytics.a",
             "Firebase/Plugins/iOS/Firebase.Crashlytics.dll",
             "Firebase/Plugins/iOS/Firebase.Crashlytics.pdb"
           ]
@@ -597,6 +636,16 @@
           ]
         },
         {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppRemoteConfig.a",
+            "Firebase/Plugins/iOS/Firebase.RemoteConfig.dll",
+            "Firebase/Plugins/iOS/Firebase.RemoteConfig.pdb"
+          ]
+        },
+        {
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Editor/RemoteConfigDependencies.xml",
@@ -680,6 +729,16 @@
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppMessaging.a",
+            "Firebase/Plugins/iOS/Firebase.Messaging.dll",
+            "Firebase/Plugins/iOS/Firebase.Messaging.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppMessaging.a",
             "Firebase/Plugins/iOS/Firebase.Messaging.dll",
             "Firebase/Plugins/iOS/Firebase.Messaging.pdb"
           ]
@@ -793,6 +852,16 @@
           ]
         },
         {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppDatabase.a",
+            "Firebase/Plugins/iOS/Firebase.Database.dll",
+            "Firebase/Plugins/iOS/Firebase.Database.pdb"
+          ]
+        },
+        {
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Editor/DatabaseDependencies.xml",
@@ -892,6 +961,16 @@
           ]
         },
         {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppFunctions.a",
+            "Firebase/Plugins/iOS/Firebase.Functions.dll",
+            "Firebase/Plugins/iOS/Firebase.Functions.pdb"
+          ]
+        },
+        {
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Editor/FunctionsDependencies.xml",
@@ -973,6 +1052,16 @@
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppStorage.a",
+            "Firebase/Plugins/iOS/Firebase.Storage.dll",
+            "Firebase/Plugins/iOS/Firebase.Storage.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppStorage.a",
             "Firebase/Plugins/iOS/Firebase.Storage.dll",
             "Firebase/Plugins/iOS/Firebase.Storage.pdb"
           ]
@@ -1077,6 +1166,16 @@
           ]
         },
         {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppInstallations.a",
+            "Firebase/Plugins/iOS/Firebase.Installations.dll",
+            "Firebase/Plugins/iOS/Firebase.Installations.pdb"
+          ]
+        },
+        {
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Editor/InstallationsDependencies.xml",
@@ -1160,6 +1259,16 @@
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppPerformance.a",
+            "Firebase/Plugins/iOS/Firebase.Performance.dll",
+            "Firebase/Plugins/iOS/Firebase.Performance.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppPerformance.a",
             "Firebase/Plugins/iOS/Firebase.Performance.dll",
             "Firebase/Plugins/iOS/Firebase.Performance.pdb"
           ]
@@ -1252,6 +1361,16 @@
           ]
         },
         {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppFirestore.a",
+            "Firebase/Plugins/iOS/Firebase.Firestore.dll",
+            "Firebase/Plugins/iOS/Firebase.Firestore.pdb"
+          ]
+        },
+        {
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Editor/FirestoreDependencies.xml",
@@ -1335,6 +1454,16 @@
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppTestlab.a",
+            "Firebase/Plugins/iOS/Firebase.TestLab.dll",
+            "Firebase/Plugins/iOS/Firebase.TestLab.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": ["tvOS"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppTestlab.a",
             "Firebase/Plugins/iOS/Firebase.TestLab.dll",
             "Firebase/Plugins/iOS/Firebase.TestLab.pdb"
           ]
