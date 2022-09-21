@@ -155,6 +155,11 @@ Support
 
 Release Notes
 -------------
+### Unreleased
+- Changes
+    - Remote Config: Improve performance when setting default parameters
+      with long strings.
+
 ### 9.5.0
 - Changes
     - General: Updated Firebase C++ SDK dependencies to v9.5.0.
