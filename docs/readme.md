@@ -155,6 +155,12 @@ Support
 
 Release Notes
 -------------
+### 9.6.0
+- Changes
+    - General: Updated Firebase C++ SDK dependencies to v9.6.0.
+    - General (Android): Update Firebase Android BoM dependencies to v30.5.0.
+    - General (iOS): Update Firebase Cocoapods dependencies to v9.6.0.
+
 ### 9.5.0
 - Changes
     - General: Updated Firebase C++ SDK dependencies to v9.5.0.
