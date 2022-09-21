@@ -210,7 +210,7 @@ struct ConfigValueInternal {
       } else if (pair.Value is System.Collections.IEnumerable) {
         // For other collections, just try to convert the inner values.
         var list = pair.Value as System.Collections.IEnumerable;
-        var stringBuilder = new StringBuilder();
+        var stringBuilder = new System.Text.StringBuilder();
         foreach (object obj in list) {
           stringBuilder.Append(obj);
         }
@@ -219,7 +219,6 @@ struct ConfigValueInternal {
         // For everything else, go straight to a string.
         newMap[pair.Key] = pair.Value.ToString();
       }
-      newMap[pair.Key] = toStore;
     }
 
     return newMap;
