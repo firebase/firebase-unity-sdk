@@ -824,20 +824,6 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
     FirebaseApp newProxy;
     lock (nameToProxy) {
       InitializeAppUtilCallbacks();
-      // If this is the first App, register library information.
-      if (cPtrToProxy.Count == 0) {
-        // fire-(unity|mono)/<sdk_version>
-        var libraryPrefix = "fire-" +
-            Firebase.Platform.PlatformInformation.RuntimeName;
-        RegisterLibraryInternal(libraryPrefix, Firebase.VersionInfo.SdkVersion);
-        // fire-(unity|mono)-ver/<unity|mono_version>
-        RegisterLibraryInternal(
-            libraryPrefix + "-ver",
-            Firebase.Platform.PlatformInformation.RuntimeVersion);
-        // fire-(unity|mono)/<github-action-built|custom_built>
-        RegisterLibraryInternal(
-            libraryPrefix + "-buildsrc", Firebase.VersionInfo.BuildSource);
-      }
       var cPtrHandleRef = new System.Runtime.InteropServices.HandleRef(
           null, System.IntPtr.Zero);
       try {
@@ -906,6 +892,25 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
           }
           return existingProxyForNewApp;
         }
+      }
+      // If this is the first App, register library information.
+      if (cPtrToProxy.Count == 0) {
+        // fire-(unity|mono)/<sdk_version>
+        var libraryPrefix = "fire-" +
+            Firebase.Platform.PlatformInformation.RuntimeName;
+        RegisterLibraryInternal(libraryPrefix, Firebase.VersionInfo.SdkVersion);
+        // fire-(unity|mono)-ver/<unity|mono_version>
+        RegisterLibraryInternal(
+            libraryPrefix + "-ver",
+            Firebase.Platform.PlatformInformation.RuntimeVersion);
+        // fire-(unity|mono)/<github-action-built|custom_built>
+        RegisterLibraryInternal(
+            libraryPrefix + "-buildsrc", Firebase.VersionInfo.BuildSource);
+#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+        // On desktop, log a heartbeat after all Unity user agents have been
+        // registered.
+        LogHeartbeatInternal(newProxy);
+#endif  // !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
       }
       // Cache the name so that it can be accessed after the app is disposed.
       newProxy.name = newProxy.NameInternal;
@@ -1311,6 +1316,15 @@ namespace callback {
   %csmethodmodifiers RegisterLibraryInternal() "internal";
   static void RegisterLibraryInternal(const char* library, const char* version) {
     firebase::App::RegisterLibrary(library, version);
+  }
+
+  %csmethodmodifiers LogHeartbeatInternal(App* app) "internal";
+  static void LogHeartbeatInternal(App* app) {
+    SharedPtr<heartbeat::HeartbeatController> heartbeat_controller =
+        app->GetHeartbeatController();
+    if (heartbeat_controller) {
+      heartbeat_controller->LogHeartbeat();
+    }
   }
 
   %csmethodmodifiers AppSetDefaultConfigPath(const char* path) "internal";
