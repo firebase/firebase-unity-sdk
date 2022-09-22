@@ -5,7 +5,7 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS"],
+          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
           "cpu": "AnyCPU",
           "sections": ["dotnet3"],
           "paths": [
@@ -17,7 +17,7 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS"],
+          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
           "cpu": "AnyCPU",
           "sections": ["dotnet4"],
           "override_metadata": {
@@ -39,7 +39,7 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS"],
+          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
           "cpu": "AnyCPU",
           "sections": ["dotnet4"],
           "override_metadata": {
@@ -61,7 +61,7 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS"],
+          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Platform.dll",
@@ -118,7 +118,7 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS"],
+          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.TaskExtension.dll",
@@ -471,7 +471,7 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS"],
+          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Crashlytics/link.xml"
@@ -1068,7 +1068,7 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS"],
+          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Google.Sharpen.dll",
