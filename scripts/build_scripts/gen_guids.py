@@ -201,11 +201,14 @@ def generate_guids_for_asset_paths(guid_data, version, asset_paths,
                                                               version)
   for asset_path in set(asset_paths):
     new_guid = uuid.uuid4().hex
+    logging.error("DEDB asset: %s new guid: %s", asset_path, new_guid)
     if generate_new_guids:
       guids_by_asset_paths[asset_path] = new_guid
     elif asset_path not in all_guids_by_asset_paths:
       guids_by_asset_paths[asset_path] = (
           guids_by_asset_paths.get(asset_path, new_guid))
+
+  logging.error("DEDB")
 
 
 def write_guid_data(filename, guid_data):
@@ -237,6 +240,7 @@ def main(argv_paths):
   Returns:
     The exit code status; 1 for error, 0 for success.
   """
+  logging.error("DEDB gen_guids.py begin")
   # if it's not a cwd relative path, check if it's a google3 relative path.
   guids_file_path = FLAGS.guids_file
   if not os.path.exists(guids_file_path):
@@ -244,11 +248,14 @@ def main(argv_paths):
                   "to start a new guids file at this path, please create the "
                   "empty file first.", FLAGS.guids_file)
     return 1
-
+  logging.error("DEDB reading guid data")
   guid_data = read_guid_data(guids_file_path)
+  logging.error("DEDB removing duplicate guids")
   remove_duplicate_guids(guid_data)
+  logging.error("DEDB generating guids for asset paths: %s", set(argv_paths[1:]))
   generate_guids_for_asset_paths(guid_data, FLAGS.version, set(argv_paths[1:]),
                                  FLAGS.generate_new_guids)
+  logging.error("DEDB writing guid data")
   write_guid_data(guids_file_path, guid_data)
   return 0
 
