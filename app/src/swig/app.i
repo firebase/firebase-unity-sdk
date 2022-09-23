@@ -906,11 +906,12 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
         // fire-(unity|mono)/<github-action-built|custom_built>
         RegisterLibraryInternal(
             libraryPrefix + "-buildsrc", Firebase.VersionInfo.BuildSource);
-#if !(UNITY_IOS || UNITY_ANDROID)
         // On desktop, log a heartbeat after all Unity user agents have been
         // registered.
-        LogHeartbeatInternal(newProxy);
-#endif  // !(UNITY_IOS || UNITY_ANDROID)
+        if (!Firebase.Platform.PlatformInformation.IsAndroid
+            && !Firebase.Platform.PlatformInformation.IsIOS) {
+          LogHeartbeatInternal(newProxy);
+        }
       }
       // Cache the name so that it can be accessed after the app is disposed.
       newProxy.name = newProxy.NameInternal;
@@ -1318,12 +1319,12 @@ namespace callback {
     firebase::App::RegisterLibrary(library, version);
   }
 
-#if !(UNITY_IOS || UNITY_ANDROID)
  %csmethodmodifiers LogHeartbeatInternal(App* app) "internal";
   static void LogHeartbeatInternal(App* app) {
+#if FIREBASE_PLATFORM_DESKTOP
     app->LogHeartbeat();
+#endif  // FIREBASE_PLATFORM_DESKTOP
   }
-#endif  // !(UNITY_IOS || UNITY_ANDROID)
 
   %csmethodmodifiers AppSetDefaultConfigPath(const char* path) "internal";
   static void AppSetDefaultConfigPath(const char* path) {
