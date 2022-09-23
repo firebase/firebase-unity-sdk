@@ -95,6 +95,7 @@ jobs:
             echo "::set-output name=unity_version::${{ github.event.inputs.unity_version }}"
             echo "::set-output name=should_trigger_package::${{ github.event.inputs.should_trigger_package }}"
             echo "::set-output name=runIntegrationTests::${{ github.event.inputs.runIntegrationTests }}"
+            echo "::set-output name=firebase_cpp_sdk_version::${{ github.event.inputs.firebase_cpp_sdk_version }}"
             echo "::set-output name=unity_branch::${{ github.event.inputs.unity_branch }}"
             echo "::set-output name=additional_cmake_flags::${{ github.event.inputs.unity_branch }}"
           else
@@ -104,7 +105,7 @@ jobs:
             echo "::set-output name=apis::'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'"
             echo "::set-output name=unity_version::2019"
             echo "::set-output name=should_trigger_package::true"
-            echo "::set-output name=firebase_cpp_sdk_version::${{ github.event.inputs.firebase_cpp_sdk_version }}"
+            echo "::set-output name=firebase_cpp_sdk_version::"
             echo "::set-output name=unity_branch::"
             echo "::set-output name=additional_cmake_flags::"
             if [[ "${{ github.event_name }}" == "schedule" ]]; then
