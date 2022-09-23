@@ -906,6 +906,11 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
         // fire-(unity|mono)/<github-action-built|custom_built>
         RegisterLibraryInternal(
             libraryPrefix + "-buildsrc", Firebase.VersionInfo.BuildSource);
+#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+        // On desktop, log a heartbeat after all Unity user agents have been
+        // registered.
+        LogHeartbeatInternal(newProxy);
+#endif  // !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
       }
       // Cache the name so that it can be accessed after the app is disposed.
       newProxy.name = newProxy.NameInternal;
