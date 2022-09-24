@@ -171,7 +171,7 @@ unity_pack_cs(firebase_firestore_cs)
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Firestore
     IOS_DEPS
-      "FirebaseFirestore,9.4.0"
+      "Firebase/Firestore"
     ANDROID_DEPS
       ${FIREBASE_FIRESTORE_ANDROID_DEPS}
     ANDROID_SPEC
