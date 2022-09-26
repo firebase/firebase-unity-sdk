@@ -80,7 +80,7 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS, tvOS"],
+          "platforms": ["iOS", "tvOS"],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.App.dll",
@@ -1419,7 +1419,7 @@
           "platforms": ["iOS"],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppPerformance.a"
+            "Plugins/iOS/Firebase/libFirebaseCppFirestore.a"
           ]
         },
         {
