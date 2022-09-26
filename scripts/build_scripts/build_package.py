@@ -121,23 +121,16 @@ def find_pack_script():
       break
 
   
-  # if built_folder != None:
-  #  resolver_root_folder = os.path.join(built_folder, built_folder_postion)
-  #  logging.error("DEDB built_folder already exists. resolver_root_folder: %s", resolver_root_folder)
-  if False:
-    logging.error("DEDB never should get here")
+  if built_folder != None:
+    resolver_root_folder = os.path.join(built_folder, built_folder_postion)
   elif not os.path.exists(resolver_root_folder):
-    logging.error("DEDB built_folder doesn exist. cloning.")
     git_clone_script = ["git", "clone",
-                        # "--depth", "1",
+                        "--depth", "1",
                         "https://github.com/googlesamples/unity-jar-resolver.git"]
-    logging.error("DEDB git_clone_script: %s", git_clone_script)
     subprocess.call(git_clone_script)
     git_fetch_script = ["git", "fetch"]
-    logging.error("DEDB git_fetch_script: %s", git_fetch_script)
     subprocess.call(git_fetch_script)
     git_checkout_script = ["git", "checkout", "feature/tag_tvos_libs"]
-    logging.error("DEDB git_checkout_script: %s", git_checkout_script)
     subprocess.call(git_checkout_script)
 
   if resolver_root_folder != None:
@@ -246,12 +239,9 @@ def main(argv):
         "--version=" + last_version,
         "--generate_new_guids=True",
     ]
-    logging.error("DEDB gen_cmd_args: %s", gen_cmd_args)
-    logging.error("DEDB listing files")
     for file in split_string:
       file = file.strip("\"")
-      logging.error("DEDB file: %s", file)
-      # print(file)
+      print(file)
       gen_cmd_args.append(file)
     subprocess.call(gen_cmd_args)
 
