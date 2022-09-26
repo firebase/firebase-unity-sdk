@@ -120,7 +120,6 @@ def find_pack_script():
       built_folder = folder
       break
 
-  
   if built_folder != None:
     resolver_root_folder = os.path.join(built_folder, built_folder_postion)
   elif not os.path.exists(resolver_root_folder):
@@ -128,10 +127,6 @@ def find_pack_script():
                         "--depth", "1",
                         "https://github.com/googlesamples/unity-jar-resolver.git"]
     subprocess.call(git_clone_script)
-    git_fetch_script = ["git", "fetch"]
-    subprocess.call(git_fetch_script)
-    git_checkout_script = ["git", "checkout", "feature/tag_tvos_libs"]
-    subprocess.call(git_checkout_script)
 
   if resolver_root_folder != None:
     script_path = os.path.join(
@@ -231,7 +226,6 @@ def main(argv):
     split_string = split_string[3:]  # exclude first 3 lines
     gen_guids_script_path = os.path.join(
         os.getcwd(), "scripts", "build_scripts", "gen_guids.py")
-    logging.info("Executing script path: %s", gen_guids_script_path)
     gen_cmd_args = [
         sys.executable,
         gen_guids_script_path,

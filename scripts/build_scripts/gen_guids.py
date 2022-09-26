@@ -207,6 +207,7 @@ def generate_guids_for_asset_paths(guid_data, version, asset_paths,
       guids_by_asset_paths[asset_path] = (
           guids_by_asset_paths.get(asset_path, new_guid))
 
+
 def write_guid_data(filename, guid_data):
   """Write a GUIDs JSON file.
 
@@ -243,6 +244,7 @@ def main(argv_paths):
                   "to start a new guids file at this path, please create the "
                   "empty file first.", FLAGS.guids_file)
     return 1
+
   guid_data = read_guid_data(guids_file_path)
   remove_duplicate_guids(guid_data)
   generate_guids_for_asset_paths(guid_data, FLAGS.version, set(argv_paths[1:]),
