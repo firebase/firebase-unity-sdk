@@ -157,8 +157,8 @@ Release Notes
 -------------
 ### Upcoming
 - Breaking Changes
-    - Auth (Android/iOS): Remove `PhoneAuthProvider.MaxTimeoutMs`. The actual
-      range will be governed by the underlying SDK, ex. [Android](https://firebase.google.com/docs/reference/android/com/google/firebase/auth/PhoneAuthOptions.Builder#public-phoneauthoptions.builder-settimeout-long-timeout,-timeunit-unit).
+    - Auth (Android/iOS): Deprecate `PhoneAuthProvider.MaxTimeoutMs`. The actual
+      range is determined by the underlying SDK, ex. [PhoneAuthOptions.Builder in Android SDK](https://firebase.google.com/docs/reference/android/com/google/firebase/auth/PhoneAuthOptions.Builder).
 
 ### 9.5.0
 - Changes
