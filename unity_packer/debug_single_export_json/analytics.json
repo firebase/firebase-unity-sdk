@@ -9,7 +9,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "sections": [
@@ -28,7 +29,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "sections": [
@@ -57,7 +59,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "sections": [
@@ -86,7 +89,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "paths": [
@@ -111,7 +115,8 @@
         {
           "importer": "PluginImporter",
           "platforms": [
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "paths": [
@@ -146,7 +151,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "paths": [
@@ -284,13 +290,33 @@
         {
           "importer": "PluginImporter",
           "platforms": [
+            "iOS",
+            "tvOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/iOS/Firebase.Analytics.dll",
+            "Firebase/Plugins/iOS/Firebase.Analytics.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
             "iOS"
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAnalytics.a",
-            "Firebase/Plugins/iOS/Firebase.Analytics.dll",
-            "Firebase/Plugins/iOS/Firebase.Analytics.pdb"
+            "Plugins/iOS/Firebase/libFirebaseCppAnalytics.a"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "tvOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppAnalytics.a"
           ]
         },
         {
