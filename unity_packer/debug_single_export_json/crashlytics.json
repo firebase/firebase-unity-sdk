@@ -9,7 +9,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "sections": [
@@ -28,7 +29,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "sections": [
@@ -57,7 +59,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "sections": [
@@ -86,7 +89,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "paths": [
@@ -111,13 +115,33 @@
         {
           "importer": "PluginImporter",
           "platforms": [
+            "iOS",
+            "tvOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/iOS/Firebase.App.dll",
+            "Firebase/Plugins/iOS/Firebase.App.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
             "iOS"
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppApp.a",
-            "Firebase/Plugins/iOS/Firebase.App.dll",
-            "Firebase/Plugins/iOS/Firebase.App.pdb"
+            "Plugins/iOS/Firebase/libFirebaseCppApp.a"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "tvOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppApp.a"
           ]
         },
         {
@@ -146,7 +170,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "paths": [
@@ -284,14 +309,33 @@
         {
           "importer": "PluginImporter",
           "platforms": [
+            "iOS",
+            "tvOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/iOS/Firebase.Crashlytics.dll",
+            "Firebase/Plugins/iOS/Firebase.Crashlytics.pdb"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
             "iOS"
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libCrashlyticsiOSWrapper.a",
-            "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.a",
-            "Firebase/Plugins/iOS/Firebase.Crashlytics.dll",
-            "Firebase/Plugins/iOS/Firebase.Crashlytics.pdb"
+            "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.a"
+          ]
+        },
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "tvOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Plugins/tvOS/Firebase/libFirebaseCppCrashlytics.a",
           ]
         },
         {
@@ -320,7 +364,8 @@
             "Editor",
             "Standalone",
             "Android",
-            "iOS"
+            "iOS",
+            "tvOS"
           ],
           "cpu": "AnyCPU",
           "paths": [
