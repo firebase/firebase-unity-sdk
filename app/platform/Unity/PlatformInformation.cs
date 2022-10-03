@@ -31,7 +31,8 @@ internal static class PlatformInformation {
   // Is the current platform iOS?
   internal static bool IsIOS {
     get {
-      return UnityEngine.Application.platform == UnityEngine.RuntimePlatform.IPhonePlayer;
+      return UnityEngine.Application.platform == UnityEngine.RuntimePlatform.IPhonePlayer ||
+         UnityEngine.Application.platform == UnityEngine.RuntimePlatform.tvOS;
     }
   }
 
