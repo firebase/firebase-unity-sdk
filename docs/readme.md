@@ -155,8 +155,10 @@ Support
 
 Release Notes
 -------------
-### Unreleased
+### Upcoming
 - Changes
+    - Auth (Android/iOS): Deprecate `PhoneAuthProvider.MaxTimeoutMs`. The actual
+      range is determined by the underlying SDK, ex. [PhoneAuthOptions.Builder in Android SDK](https://firebase.google.com/docs/reference/android/com/google/firebase/auth/PhoneAuthOptions.Builder).
     - Remote Config: Improve performance when setting default parameters
       with long strings.
 
