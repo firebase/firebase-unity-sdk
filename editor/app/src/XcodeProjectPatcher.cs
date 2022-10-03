@@ -227,27 +227,8 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
                     "Cancel",
                     selectedBundleId => {
                         if (!String.IsNullOrEmpty(selectedBundleId)) {
-                            // If we have a valid value, the user hit apply.
-                            const BuildTarget activeBuildTarget =
-                                EditorUserBuildSettings.activeBuildTarget;
-                            if (activeBuildTarget == BuildTarget.iOS) {
-                                UnityCompat.SetApplicationId(BuildTarget.iOS,
-                                    selectedBundleId);
-                            } else if (activeBuildTarget == BuildTarget.tvOS) {
-                                UnityCompat.SetApplicationId(BuildTarget.tvOS,
-                                    selectedBundleId);
-                            } else {
-                                // If the user hits cancel, we disable the dialog to
-                                // avoid spamming the user.
-                                spamguard = true;
-                                string unsupportedTargetErrorMessage = String.format(
-                                    "Internal error setting bundleId for unsupported " +
-                                    "target." );
-                                Debug.LogError(unsupportedTargetErrorMessage);
-                            }
-
-                            Measurement.ReportWithBuildTarget("bundleidmismatch/apply", null,
-                                                              "Mismatched Bundle ID: Apply");
+                            UnityCompat.SetApplicationId(
+                                EditorUserBuildSettings.activeBuildTarget, selectedBundleId);
                         } else {
                             Measurement.ReportWithBuildTarget("bundleidmismatch/cancel", null,
                                                               "Mismatched Bundle ID: Cancel");
