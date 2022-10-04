@@ -175,7 +175,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
         // If iOS+ is the selected build target but we're not on a OSX
         // machine report an error as pod installation will fail among other
         // things.
-        const BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+        BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
         if ((buildTarget == BuildTarget.iOS || buildTarget == BuildTarget.tvOS) &&
             Application.platform == RuntimePlatform.WindowsEditor) {
             Debug.LogError(DocRef.IOSNotSupportedOnWindows);
@@ -229,10 +229,10 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
                         if (!String.IsNullOrEmpty(selectedBundleId)) {
                             switch(EditorUserBuildSettings.activeBuildTarget) {
                                 case BuildTarget.iOS:
-                                    UnityCompat.SetApplicationId(BuildTarget.iOS, selectedBundleId)
+                                    UnityCompat.SetApplicationId(BuildTarget.iOS, selectedBundleId);
                                     break;
                                 case BuildTarget.tvOS:
-                                    UnityCompat.SetApplicationId(BuildTarget.tvOS, selectedBundleId)
+                                    UnityCompat.SetApplicationId(BuildTarget.tvOS, selectedBundleId);
                                     break;
                                 default:
                                     throw new Exception("unsupported iOS+ version");
@@ -334,7 +334,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
     internal static void OnPostProcessAddGoogleServicePlist(
             BuildTarget buildTarget, string pathToBuiltProject) {
         if (!Enabled) return;
-        string platform = (buildTarget == BuildTarget.iOS) ? "iOS" : "tvOS"
+        string platform = (buildTarget == BuildTarget.iOS) ? "iOS" : "tvOS";
         Measurement.analytics.Report("ios/xcodepatch",
             platform + " Xcode Project Patcher: Start");
         AddGoogleServicePlist(buildTarget, pathToBuiltProject);

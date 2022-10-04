@@ -81,7 +81,7 @@ namespace Firebase.Crashlytics.Editor {
     }
 
     private static void PrepareProject(string projectPath, IFirebaseConfigurationStorage configurationStorage,
-                                       BuildTarget build_target) {
+                                       BuildTarget buildTarget) {
       // Return if we have already added the script
       var xcodeProjectLines = File.ReadAllLines(projectPath);
       foreach (var line in xcodeProjectLines) {

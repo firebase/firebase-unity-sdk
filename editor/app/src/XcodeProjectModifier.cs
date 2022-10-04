@@ -203,7 +203,7 @@ internal class XcodeProjectModifier {
   // the methods. Once that is complete it saves the modifications back over the original files.
   [PostProcessBuild]
   internal static void PostProcessBuild(BuildTarget buildTarget, string pathToBuiltProject) {
-    if (buildTarget != BuildTarget.iOS && buildTarget != BuildTarget.tvOS)
+    if (buildTarget != BuildTarget.iOS && buildTarget != BuildTarget.tvOS) {
       logger.LogDebug("Skipping PostProcessBuild as target {0} is not for iOS+", buildTarget);
       return;
     }
