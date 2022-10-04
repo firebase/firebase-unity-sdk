@@ -68,7 +68,6 @@ namespace Firebase.Crashlytics.Editor {
     /// </param>
     [PostProcessBuild(100)]
     public static void OnPostprocessBuild(BuildTarget buildTarget, string buildPath) {
-      // BuiltTarget.iOS is not defined in Unity 4, so we just use strings here
       if (buildTarget == BuildTarget.iOS || buildTarget == BuildTarget.tvOS) {
         string projectPath = Path.Combine(buildPath, "Unity-iPhone.xcodeproj/project.pbxproj");
         string plistPath = Path.Combine(buildPath, "Info.plist");

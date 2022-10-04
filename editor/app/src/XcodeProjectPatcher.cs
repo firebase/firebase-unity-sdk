@@ -100,23 +100,18 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
     }
 
     // Get the iOS+ bundle / application ID.
-    private static string GetApplicationId() {
-        switch(EditorUserBuildSettings.activeBuildTarget) {
-            case BuildTarget.iOS:
-                return UnityCompat.GetApplicationId(BuildTarget.iOS);
-                break;
-            case BuildTarget.tvOS:
-                return UnityCompat.GetApplicationId(BuildTarget.tvOS);
-                break;
-            default:
-                throw new Exception("unsupported iOS+ version");
+    private static string GetIosPlusApplicationId() {
+        if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.tvOS) {
+            return UnityCompat.GetApplicationId(BuildTarget.tvOS);
+        } else {
+            return UnityCompat.GetApplicationId(BuildTarget.iOS);
         }
     }
 
     // Check the editor environment on the first update after loading this
     // module.
     private static void CheckConfiguration() {
-        CheckBundleId(GetApplicationId());
+        CheckBundleId(GetIosPlusApplicationId());
         CheckBuildEnvironment();
     }
 
@@ -187,7 +182,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
             object sender,
             PlayServicesResolver.BundleIdChangedEventArgs args) {
         ReadConfig(errorOnNoConfig: false);
-        CheckBundleId(GetApplicationId());
+        CheckBundleId(GetIosPlusApplicationId());
     }
 
     // Check the bundle ID
@@ -271,7 +266,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
         if (configFilePresent) {
             spamguard = false; // Reset our spamguard to show a dialog.
             ReadConfig(errorOnNoConfig: false);
-            CheckBundleId(GetApplicationId());
+            CheckBundleId(GetIosPlusApplicationId());
         }
     }
 
@@ -303,7 +298,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
                         GOOGLE_SERVICES_INFO_PLIST_FILE, Link.IOSAddApp));
             }
         } else if (files.Length > 1) {
-            var bundleId = GetApplicationId();
+            var bundleId = GetIosPlusApplicationId();
             string selectedBundleId = null;
             // Search files for the first file matching the project's bundle identifier.
             foreach (var filename in files) {
@@ -353,7 +348,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
             return;
         }
 
-        CheckBundleId(GetApplicationId(), promptUpdate: false);
+        CheckBundleId(GetIosPlusApplicationId(), promptUpdate: false);
 
         // Copy the config file to the Xcode project folder.
         string configFileBasename = Path.GetFileName(configFile);
