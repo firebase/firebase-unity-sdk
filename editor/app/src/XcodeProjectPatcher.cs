@@ -227,8 +227,16 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
                     "Cancel",
                     selectedBundleId => {
                         if (!String.IsNullOrEmpty(selectedBundleId)) {
-                            UnityCompat.SetApplicationId(
-                                EditorUserBuildSettings.activeBuildTarget, selectedBundleId);
+                            switch(EditorUserBuildSettings.activeBuildTarget) {
+                                case BuildTarget.iOS:
+                                    UnityCompat.SetApplicationId(BuildTarget.iOS, selectedBundleId)
+                                    break;
+                                case BuildTarget.tvOS:
+                                    UnityCompat.SetApplicationId(BuildTarget.tvOS, selectedBundleId)
+                                    break;
+                                default:
+                                    throw new Exception("unsupported iOS+ version");
+                            }
                         } else {
                             Measurement.ReportWithBuildTarget("bundleidmismatch/cancel", null,
                                                               "Mismatched Bundle ID: Cancel");
