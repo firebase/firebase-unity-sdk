@@ -43,7 +43,7 @@ internal class ErrorMessages {
       "* Rebuild your APK and deploy.\n";
 
   private static string DEPENDENCY_NOT_FOUND_ERROR_IOS =
-      "On iOS, Firebase requires native (C/C++) and Cocoapod components\n" +
+      "On iOS+ Firebase requires native (C/C++) and Cocoapod components\n" +
       "that are distributed with the Firebase SDK and via Cocoapods.\n" +
       "\n" +
       "It's likely that you did not include the require Cocoapod\n" +

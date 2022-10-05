@@ -64,20 +64,23 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
     private static bool Enabled {
         get {
             return (EditorUserBuildSettings.activeBuildTarget ==
-                    BuildTarget.iOS) && Google.IOSResolver.Enabled;
+                    BuildTarget.iOS ||
+                    EditorUserBuildSettings.activeBuildTarget ==
+                    BuildTarget.tvOS) && Google.IOSResolver.Enabled;
         }
     }
 
     static XcodeProjectPatcher() {
-        // Delay initialization until the build target is iOS and the editor is not in play
-        // mode.
+        // Delay initialization until the build target is iOS+ and the
+        // editor is not in play mode.
         EditorInitializer.InitializeOnMainThread(
             condition: () => {
-                return EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS &&
+                return (EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS ||
+                        EditorUserBuildSettings.activeBuildTarget == BuildTarget.tvOS) &&
                         !EditorApplication.isPlayingOrWillChangePlaymode;
             }, initializer: () => {
                 // We attempt to read the config even when the target platform isn't
-                // iOS as the project settings are surfaced in the settings window.
+                // iOS+ as the project settings are surfaced in the settings window.
                 Google.IOSResolver.RemapXcodeExtension();
                 ReadConfigOnUpdate();
                 PlayServicesResolver.BundleIdChanged -= OnBundleIdChanged;
@@ -96,15 +99,19 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
         ReadConfig(errorOnNoConfig: false);
     }
 
-    // Get the iOS bundle / application ID.
-    private static string GetIOSApplicationId() {
-      return UnityCompat.GetApplicationId(BuildTarget.iOS);
+    // Get the iOS+ bundle / application ID.
+    private static string GetIosPlusApplicationId() {
+        if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.tvOS) {
+            return UnityCompat.GetApplicationId(BuildTarget.tvOS);
+        } else {
+            return UnityCompat.GetApplicationId(BuildTarget.iOS);
+        }
     }
 
     // Check the editor environment on the first update after loading this
     // module.
     private static void CheckConfiguration() {
-        CheckBundleId(GetIOSApplicationId());
+        CheckBundleId(GetIosPlusApplicationId());
         CheckBuildEnvironment();
     }
 
@@ -115,9 +122,9 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
             ReadConfigInternal(errorOnNoConfig, filename: filename);
         } catch (Exception exception) {
             // FileNotFoundException and TypeInitializationException can be
-            // thrown *before* ReadConfigInternal is entered if the iOS Xcode
+            // thrown *before* ReadConfigInternal is entered if the iOS+ Xcode
             // assembly can't be loaded so we catch them here and only report
-            // a warning if this module is enabled and iOS is the selected
+            // a warning if this module is enabled and iOS+ is the selected
             // platform.
             if (exception is FileNotFoundException ||
                 exception is TypeInitializationException) {
@@ -158,11 +165,13 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
         return configValues;
     }
 
-    // Verify that the build environment *really* supports iOS.
+    // Verify that the build environment *really* supports iOS+.
     private static void CheckBuildEnvironment() {
-        // If iOS is the selected build target but we're not on a OSX machine
-        // report an error as pod installation will fail among other things.
-        if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS &&
+        // If iOS+ is the selected build target but we're not on a OSX
+        // machine report an error as pod installation will fail among other
+        // things.
+        BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+        if ((buildTarget == BuildTarget.iOS || buildTarget == BuildTarget.tvOS) &&
             Application.platform == RuntimePlatform.WindowsEditor) {
             Debug.LogError(DocRef.IOSNotSupportedOnWindows);
         }
@@ -173,7 +182,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
             object sender,
             PlayServicesResolver.BundleIdChangedEventArgs args) {
         ReadConfig(errorOnNoConfig: false);
-        CheckBundleId(GetIOSApplicationId());
+        CheckBundleId(GetIosPlusApplicationId());
     }
 
     // Check the bundle ID
@@ -213,10 +222,16 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
                     "Cancel",
                     selectedBundleId => {
                         if (!String.IsNullOrEmpty(selectedBundleId)) {
-                            // If we have a valid value, the user hit apply.
-                            UnityCompat.SetApplicationId(BuildTarget.iOS, selectedBundleId);
-                            Measurement.ReportWithBuildTarget("bundleidmismatch/apply", null,
-                                                              "Mismatched Bundle ID: Apply");
+                            switch(EditorUserBuildSettings.activeBuildTarget) {
+                                case BuildTarget.iOS:
+                                    UnityCompat.SetApplicationId(BuildTarget.iOS, selectedBundleId);
+                                    break;
+                                case BuildTarget.tvOS:
+                                    UnityCompat.SetApplicationId(BuildTarget.tvOS, selectedBundleId);
+                                    break;
+                                default:
+                                    throw new Exception("unsupported iOS+ version");
+                            }
                         } else {
                             Measurement.ReportWithBuildTarget("bundleidmismatch/cancel", null,
                                                               "Mismatched Bundle ID: Cancel");
@@ -238,7 +253,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
     private static void OnPostprocessAllAssets(
             string[] importedAssets, string[] deletedAssets,
             string[] movedAssets, string[] movedFromPath) {
-        // We track the config file state even when the target isn't iOS
+        // We track the config file state even when the target isn't iOS+
         // as the project settings are surfaced in the settings window.
         if (!Enabled) return;
         bool configFilePresent = false;
@@ -251,7 +266,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
         if (configFilePresent) {
             spamguard = false; // Reset our spamguard to show a dialog.
             ReadConfig(errorOnNoConfig: false);
-            CheckBundleId(GetIOSApplicationId());
+            CheckBundleId(GetIosPlusApplicationId());
         }
     }
 
@@ -283,7 +298,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
                         GOOGLE_SERVICES_INFO_PLIST_FILE, Link.IOSAddApp));
             }
         } else if (files.Length > 1) {
-            var bundleId = GetIOSApplicationId();
+            var bundleId = GetIosPlusApplicationId();
             string selectedBundleId = null;
             // Search files for the first file matching the project's bundle identifier.
             foreach (var filename in files) {
@@ -314,7 +329,9 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
     internal static void OnPostProcessAddGoogleServicePlist(
             BuildTarget buildTarget, string pathToBuiltProject) {
         if (!Enabled) return;
-        Measurement.analytics.Report("ios/xcodepatch", "iOS Xcode Project Patcher: Start");
+        string platform = (buildTarget == BuildTarget.iOS) ? "iOS" : "tvOS";
+        Measurement.analytics.Report("ios/xcodepatch",
+            platform + " Xcode Project Patcher: Start");
         AddGoogleServicePlist(buildTarget, pathToBuiltProject);
     }
 
@@ -331,7 +348,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
             return;
         }
 
-        CheckBundleId(GetIOSApplicationId(), promptUpdate: false);
+        CheckBundleId(GetIosPlusApplicationId(), promptUpdate: false);
 
         // Copy the config file to the Xcode project folder.
         string configFileBasename = Path.GetFileName(configFile);
