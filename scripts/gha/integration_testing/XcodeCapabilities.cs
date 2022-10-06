@@ -63,7 +63,7 @@ public sealed class XcodeCapabilities
   [PostProcessBuild]
   public static void OnPostprocessBuild (BuildTarget buildTarget, string path)
   {
-    if (buildTarget != BuildTarget.iOS) {
+    if (buildTarget != BuildTarget.iOS && buildTarget != BuildTarget.tvOS) {
       return;
     }
 

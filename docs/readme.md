@@ -155,6 +155,19 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Auth (Android/iOS): Deprecate `PhoneAuthProvider.MaxTimeoutMs`. The actual
+      range is determined by the underlying SDK, ex. [PhoneAuthOptions.Builder in Android SDK](https://firebase.google.com/docs/reference/android/com/google/firebase/auth/PhoneAuthOptions.Builder).
+    - Remote Config: Improve performance when setting default parameters
+      with long strings.
+
+### 9.6.0
+- Changes
+    - General: Updated Firebase C++ SDK dependencies to v9.6.0.
+    - General (Android): Update Firebase Android BoM dependencies to v30.5.0.
+    - General (iOS): Update Firebase Cocoapods dependencies to v9.6.0.
+
 ### 9.5.0
 - Changes
     - General: Updated Firebase C++ SDK dependencies to v9.5.0.

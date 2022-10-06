@@ -46,7 +46,7 @@ set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:24.3.0"
+    "com.google.firebase:firebase-firestore:24.3.1"
     "com.google.firebase:firebase-analytics:21.1.1"
 )
 
@@ -56,7 +56,7 @@ set(FIREBASE_FUNCTIONS_ANDROID_DEPS
 )
 
 set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-installations:17.0.2"
+    "com.google.firebase:firebase-installations:17.0.3"
     "com.google.firebase:firebase-analytics:21.1.1"
 )
 

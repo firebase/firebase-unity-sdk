@@ -514,7 +514,7 @@ namespace Firebase.Editor {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Ready to use Firebase on iOS..
+        ///   Looks up a localized string similar to Ready to use Firebase on iOS.
         /// </summary>
         internal static string IOSConnected {
             get {
