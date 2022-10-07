@@ -140,7 +140,7 @@ jobs:
       - name: Check zip file
         shell: bash
         run: |
-          if [ -f ios_unity/*.zip ]; then
+          if [ -f tvos_unity/*.zip ]; then
             echo "tvos_unity zip created."
           else
             echo "Fail to create tvos_unity zip."
