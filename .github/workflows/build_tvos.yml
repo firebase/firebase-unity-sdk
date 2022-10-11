@@ -130,6 +130,10 @@ jobs:
         run: |
           echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{ inputs.unity_version }} -k unity_path )" >> $GITHUB_ENV
 
+      - name: Install prerequisites
+        shell: bash
+        run: pod repo update
+
       - name: Build SDK (tvOS)
         timeout-minutes: 90
         shell: bash
