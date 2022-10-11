@@ -3,7 +3,7 @@ name: Build tvOS (SubWorkflow)
 
 on:
   workflow_dispatch:
-  inputs:
+    inputs:
       unity_version:
         description: 'Unity version'
         default: '2019'
