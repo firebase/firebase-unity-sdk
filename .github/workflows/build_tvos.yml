@@ -25,7 +25,7 @@ on:
         type: string
       unity_platform_name:
         description: 'The platform name Unity should install with'
-        default: 'tvOS'
+        default: 'tvOS,iOS'
         required: true
         type: string
 
@@ -116,6 +116,11 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
 
+      - name: Pod repo add
+        shell: bash
+        # run: pod repo add cocoapods https://github.com/CocoaPods/Specs.git
+        run: pod setup
+
       - name: Install Unity
         uses: nick-invision/retry@v2
         with:
@@ -129,26 +134,6 @@ jobs:
         shell: bash
         run: |
           echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{ inputs.unity_version }} -k unity_path )" >> $GITHUB_ENV
-
-      - name: Pod repo list (pre)
-        shell: bash
-        run: pod repo list
-
-      - name: Pod repo add
-        shell: bash
-        run: pod repo add cocoapods https://github.com/CocoaPods/Specs.git
-
-      - name: Pod repo update
-        shell: bash
-        run: pod repo update
-
-      - name: List cocoapod repo
-        shell: bash
-        run: ls -l ~/.cocoapods/repos
-
-      - name: Pod repo list (post)
-        shell: bash
-        run: pod repo list
 
       - name: Build SDK (tvOS)
         timeout-minutes: 90
