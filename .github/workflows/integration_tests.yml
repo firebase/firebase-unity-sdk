@@ -179,8 +179,8 @@ jobs:
       matrix:
         unity_version: ["2020"]
         os: [windows-latest]
-        platform: ["Windows,macOS,Linux", "Android", "Playmode"]
-        ios_sdk: [${{ needs.check_and_prepare.outputs.mobile_test_on }}]
+        platform: ["Windows,macOS,Linux","Android","Playmode"]
+        ios_sdk: ["none"]
         include:
           - unity_version: "2020"
             os: macos-latest
