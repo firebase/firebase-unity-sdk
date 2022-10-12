@@ -191,6 +191,8 @@ jobs:
       # Disable checking for U3D updates, since it is buggy
       U3D_SKIP_UPDATE_CHECK: 1
     steps:
+      - shell: bash
+        run: echo ${{ matrix }}
       - uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
         with:
