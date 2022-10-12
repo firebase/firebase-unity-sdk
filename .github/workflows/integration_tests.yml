@@ -8,11 +8,10 @@ on:
         description: 'run # of "Firebase Unity SDK build" workflow. (If Leave it empty, the latest released Unity SDK will be used.)'
       unity_versions:
         description: 'Unity version (value: 2018, 2019, 2020. separated by commas)'
-        default: '2019'
+        default: '2020'
         required: true
       build_os:
         description: 'Build OS (value: windows-latest, macos-latest. Left empty will use macos-latest for iOS platform, windows-latest for the rest)'
-        required: true
       platforms:
         description: 'CSV of Android,iOS,Windows,macOS,Linux,Playmode'
         default: 'Android,iOS,Windows,macOS,Linux,Playmode'
