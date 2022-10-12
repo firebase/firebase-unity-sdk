@@ -187,6 +187,9 @@ jobs:
       # Disable checking for U3D updates, since it is buggy
       U3D_SKIP_UPDATE_CHECK: 1
     steps:
+      - id: matrix_info
+        run: |
+          echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}"
       - uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
         with:
@@ -277,72 +280,72 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          if [ ! -f build-results-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}.log.json ]; then
+          if [ ! -f build-results-${{steps.matrix_info.outputs.info}}.log.json ]; then
             # No summary was created, make a placeholder one.
-            echo "__SUMMARY_MISSING__" > build-results-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}.log.json
+            echo "__SUMMARY_MISSING__" > build-results-${{steps.matrix_info.outputs.info}}.log.json
           fi
       - name: Upload build results artifact
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
         with:
           name: log-artifact
-          path: build-results-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}*
+          path: build-results-${{steps.matrix_info.outputs.info}}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Android integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Android') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}-Android
-          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Android
+          name: testapps-${{steps.matrix_info.outputs.info}}-Android
+          path: testapps-${{steps.matrix_info.outputs.info}}/Android
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Android integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'Android') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Android || true
+        run: rm -rf testapps-${{steps.matrix_info.outputs.info}}/Android || true
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'iOS') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}-iOS
-          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/iOS
+          name: testapps-${{steps.matrix_info.outputs.info}}-iOS
+          path: testapps-${{steps.matrix_info.outputs.info}}/iOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete iOS integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/iOS || true
+        run: rm -rf testapps-${{steps.matrix_info.outputs.info}}/iOS || true
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Linux') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}-ubuntu-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Linux
+          name: testapps-${{steps.matrix_info.outputs.info}}-ubuntu-latest
+          path: testapps-${{steps.matrix_info.outputs.info}}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Linux integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'Linux') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Linux || true
+        run: rm -rf testapps-${{steps.matrix_info.outputs.info}}/Linux || true
       - name: Upload macOS integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'macOS') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}-macos-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/macOS
+          name: testapps-${{steps.matrix_info.outputs.info}}-macos-latest
+          path: testapps-${{steps.matrix_info.outputs.info}}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete macOS integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'macOS') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/macOS || true
+        run: rm -rf testapps-${{steps.matrix_info.outputs.info}}/macOS || true
       - name: Upload Windows integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Windows') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
-          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Windows
+          name: testapps-${{steps.matrix_info.outputs.info}}
+          path: testapps-${{steps.matrix_info.outputs.info}}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Windows integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'Windows') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Windows || true
+        run: rm -rf testapps-${{steps.matrix_info.outputs.info}}/Windows || true
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
         uses: actions/download-artifact@v3
@@ -363,7 +366,7 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat build-results-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}.log
+          cat build-results-${{steps.matrix_info.outputs.info}}.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
