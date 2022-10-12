@@ -172,8 +172,8 @@ jobs:
           --run_id ${{github.run_id}}
 
   build:
-    name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}
-    runs-on: ${{matrix.os}}
+    name: build-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
+    runs-on: ${{matrix.build_os}}
     if: ${{ needs.check_and_prepare.outputs.matrix_build_platform != '[]' }}
     needs: check_and_prepare
     strategy:
@@ -256,7 +256,7 @@ jobs:
             --ios_sdk ${{ matrix.ios_sdk }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
-            --artifact_name "${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}" \
+            --artifact_name "${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}" \
             --force_latest_runtime \
             --ci
       - name: Return Unity license
@@ -277,72 +277,72 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          if [ ! -f build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}.log.json ]; then
+          if [ ! -f build-results-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}.log.json ]; then
             # No summary was created, make a placeholder one.
-            echo "__SUMMARY_MISSING__" > build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}.log.json
+            echo "__SUMMARY_MISSING__" > build-results-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}.log.json
           fi
       - name: Upload build results artifact
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
         with:
           name: log-artifact
-          path: build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}*
+          path: build-results-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Android integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Android') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-Android
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}/Android
+          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}-Android
+          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Android
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Android integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'Android') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Android || true
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Android || true
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'iOS') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-iOS
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}/iOS
+          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}-iOS
+          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/iOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete iOS integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/iOS || true
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/iOS || true
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Linux') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-ubuntu-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}/Linux
+          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}-ubuntu-latest
+          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Linux integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'Linux') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Linux || true
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Linux || true
       - name: Upload macOS integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'macOS') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-macos-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}/macOS
+          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}-macos-latest
+          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete macOS integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'macOS') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/macOS || true
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/macOS || true
       - name: Upload Windows integration tests artifact
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Windows') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ matrix.unity_version }}-${{matrix.os}}-windows-latest
-          path: testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform}}/Windows
+          name: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
+          path: testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Windows integration tests artifact
         if: contains(needs.check_and_prepare.outputs.platform, 'Windows') && ${{ !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.os}}-${{ needs.check_and_prepare.outputs.platform }}/Windows || true
+        run: rm -rf testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}/Windows || true
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
         uses: actions/download-artifact@v3
@@ -363,7 +363,7 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat build-results-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}.log
+          cat build-results-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
