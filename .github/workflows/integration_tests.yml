@@ -152,7 +152,7 @@ jobs:
         echo "::set-output name=platform::${platform}"
         echo "::set-output name=matrix_desktop_os::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k "${platform}" -desktop_os=1)"
         echo "::set-output name=matrix_mobile_platform::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k "${platform}" -mobile_platform=1)"
-        echo "::set-output name=matrix_build_platform::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k "${platform}" -build_platform=1)"
+        echo "::set-output name=matrix_build_platform::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k "${platform}")"
         echo "::set-output name=matrix_build_os::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k build_os -o "${{github.event.inputs.build_os}}")"
         echo "::set-output name=matrix_unity_versions::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k unity_version -o "${{github.event.inputs.unity_versions}}")"
         mobile_test_on=$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k mobile_test_on -o "${{github.event.inputs.mobile_test_on}}")
@@ -179,7 +179,7 @@ jobs:
       matrix:
         unity_version: ["2020"]
         os: [windows-latest]
-        platform: ["Windows,macOS,Linux","Android","Playmode"]
+        platform: ["Windows,macOS,Linux", "Android", "Playmode"]
         ios_sdk: [${{ needs.check_and_prepare.outputs.mobile_test_on }}]
         include:
           - unity_version: "2020"
