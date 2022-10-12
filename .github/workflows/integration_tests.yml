@@ -164,7 +164,7 @@ jobs:
         #     {"unity_version": "2020", "os": "macos-latest", "platform": "iOS",  "ios_sdk": "virtual"},
         # '
         echo "::set-output name=build_matrix::$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -build_os "${{github.event.inputs.build_os}}" -ios_sdk "${{github.event.inputs.mobile_test_on}}")"
-        echo build_matrix
+        echo ${build_matrix}
     - name: Update PR label and comment
       if: steps.set_outputs.outputs.pr_number
       run: |
