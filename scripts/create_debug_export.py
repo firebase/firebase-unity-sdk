@@ -64,12 +64,6 @@ def main(argv):
   with open(prod_export_json_path, "r") as fin:
     export_json = json.load(fin)
 
-    # making sure only dotnet4 exists
-    builds = export_json["builds"]
-    for idx, dict in enumerate(builds):
-      if dict["name"] == "dotnet3":
-        builds.pop(idx)
-
     packages = export_json["packages"]
 
     for api_name, package_name in API_PACKAGE_MAP.items():

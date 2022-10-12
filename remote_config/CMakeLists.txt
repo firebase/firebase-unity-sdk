@@ -46,8 +46,6 @@ mono_add_library(firebase_remote_config_cs
     ${firebase_remote_config_src}
     ${firebase_remote_config_swig_gen_src}
   REFERENCES
-    unity_compat_cs
-    unity_tasks_cs
     ${FIREBASE_PLATFORM_REF}
   DEPENDS
     firebase_remote_config_swig

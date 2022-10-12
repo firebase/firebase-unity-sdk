@@ -74,16 +74,6 @@ e.g. FirebaseAnalytics.unitypackage.
 Alternatively, you can use the new style of packages with Unity's package
 manager, by supplying the direction containing them to --use_local_packages.
 
-For .unitypackages, the plugins should not be in the directory itself, but
-a dotnet3 or dotnet4 subdirectory based on whether they are to be used in
-projects configured for .NET 3.5 (legacy runtime) or .NET 4.6 (latest runtime).
-For example:
-~/Downloads/client_unity_plugins/dotnet3/FirebaseAuth.unitypackage
-~/Downloads/client_unity_plugins/dotnet4/FirebaseAuth.unitypackage
-
-If the same plugin is intended for both runtimes, then they can be
-copied or symlinked.
-
 (4) Install the Python dependencies in requirements.txt, which should be in
 in the same directory as this script.
 
@@ -844,12 +834,9 @@ def _replace_in_file(path, substring, replacement):
 
 def _resolve_plugins(plugins_dir, api_config, runtime):
   """Finds paths to .unitypackages based on .NET runtime."""
-  # Unity SDK contains subdirectories 'dotnet3' and 'dotnet4'
-  # for Unity projects targeting .NET 3.5 or 4.6
   plugin_paths = []
   for plugin in api_config.plugins:
-    runtime_subdir = "dotnet4" if runtime == _NET46 else "dotnet3"
-    plugin_paths.append(os.path.join(plugins_dir, runtime_subdir, plugin))
+    plugin_paths.append(os.path.join(plugins_dir, plugin))
   return plugin_paths
 
 
