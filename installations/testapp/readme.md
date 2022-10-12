@@ -47,13 +47,7 @@ deleting Installations using the Firebase Installations API of the
   - Import the `Firebase Installations` plugin.
     - Select the **Assets > Import Package > Custom Package** menu item.
     - From the [Firebase Unity SDK](https://firebase.google.com/download/unity)
-      downloaded previously, import `FirebaseInstallations.unitypackage` from the
-      directory that matches the version of Unity you use:
-       - Unity 5.x and earlier use the .NET 3.x framework, so you need to
-         import the `dotnet3/FirebaseInstallations.unitypackage` package .
-       - Unity 2017.x and newer allow the use of the .NET 4.x framework.  If
-         your project is configured to use .NET 4.x, import the
-         `dotnet4/FirebaseInstallations.unitypackage` package.
+      downloaded previously, import `FirebaseInstallations.unitypackage`.
     - When the **Import Unity Package** window appears, click the **Import**
       button.
   - Add the `GoogleService-Info.plist` file to the project.
@@ -126,13 +120,7 @@ deleting Installations using the Firebase Installations API of the
   - Import the `Firebase Installations` plugin.
     - Select the **Assets > Import Package > Custom Package** menu item.
     - From the [Firebase Unity SDK](https://firebase.google.com/download/unity)
-      downloaded previously, import `FirebaseInstallations.unitypackage` from the
-      directory that matches the version of Unity you use:
-       - Unity 5.x and earlier use the .NET 3.x framework, so you need to
-         import the `dotnet3/FirebaseInstallations.unitypackage` package .
-       - Unity 2017.x and newer allow the use of the .NET 4.x framework.  If
-         your project is configured to use .NET 4.x, import the
-         `dotnet4/FirebaseInstallations.unitypackage` package.
+      downloaded previously, import `FirebaseInstallations.unitypackage`.
   - Add the `google-services.json` file to the project.
     - Navigate to the `Assets/Firebase/Sample/Installations` folder in the
       `Project` window.
