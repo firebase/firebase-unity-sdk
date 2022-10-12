@@ -39,6 +39,7 @@ import argparse
 import json
 import logging
 import platform
+import itertools
 
 
 DEFAULT_WORKFLOW = "desktop"
@@ -52,24 +53,25 @@ _LINUX = "Linux"
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "build_os": ["macos-latest"],
-      "unity_version": ["2019"],
-      "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
+      "build_os": [],
+      "unity_versions": ["2020"],
+      "mobile_devices": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
+      "mobile_test_on": ["real"],
 
       MINIMAL_KEY: {
-        "platform": ["Linux"],
+        "platforms": ["Playmode"],
       },
 
       EXPANDED_KEY: {
         "build_os": ["macos-latest","windows-latest"],
-        "unity_version": ["2020", "2019", "2018"],
-        "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
+        "unity_versions": ["2020", "2019", "2018"],
+        "mobile_test_on": ["real", "virtual"],
+        "mobile_devices": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
       }
     },
     "config": {
-      "platform": "Windows,macOS,Linux,Android,iOS,tvOS,Playmode",
+      "platforms": "Windows,macOS,Linux,Android,iOS,tvOS,Playmode",
       "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
-      "mobile_test_on": "real"
     }
   },
 }
@@ -196,7 +198,6 @@ def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
     if test_matrix and test_matrix in workflow_block["matrix"]:
       if parm_key in workflow_block["matrix"][test_matrix]:
         return workflow_block["matrix"][test_matrix][parm_key]
-    
     return workflow_block[parm_type_key][parm_key]
 
   else:
@@ -234,15 +235,15 @@ def filter_mobile_platform(platform):
   return list(filtered_value)  
 
 
-def filter_build_platform(platform):
-  platform = platform.split(",")
-  build_platform = []
-  build_platform.extend(filter_mobile_platform(platform))
+def filter_build_platforms(platforms):
+  platforms = platforms.split(",")
+  build_platforms = []
+  build_platforms.extend(filter_mobile_platform(platforms))
   # testapps from different desktop platforms are built in one job.
-  desktop_platform = ','.join(list(filter(lambda p: p in platform, ["Windows", "macOS", "Linux"])))
-  if desktop_platform:
-    build_platform.append(desktop_platform)
-  return build_platform
+  desktop_platforms = ','.join(list(filter(lambda p: p in platforms, ["Windows", "macOS", "Linux"])))
+  if desktop_platforms:
+    build_platforms.append(desktop_platforms)
+  return build_platforms
 
 
 def print_value(value, config_parms_only=False):
@@ -262,6 +263,32 @@ def print_value(value, config_parms_only=False):
     print(json.dumps(value))
 
 
+def get_testapp_build_matrix(test_matrix, unity_versions, platforms, build_os, ios_sdk):
+  if test_matrix: unity_versions = get_value("integration_tests", test_matrix, "unity_versions")
+  if test_matrix: platforms = filter_build_platforms(get_value("integration_tests", test_matrix, "platforms", True))
+  else: platforms = filter_build_platforms(platforms)
+  if test_matrix: build_os = get_value("integration_tests", test_matrix, "build_os")
+  if test_matrix: ios_sdk = get_value("integration_tests", test_matrix, "mobile_test_on")
+  matrix = {"include": []}
+  if build_os and build_os[0]:
+    li = list(itertools.product(unity_versions, platforms, build_os))
+    for l in li:
+      if l[1]=="iOS" or l[1]=="tvOS":
+        for s in ios_sdk:
+          matrix["include"].append({"unity_version": l[0], "platform": l[1], "build_os": l[2], "ios_sdk": s})
+      else:
+        matrix["include"].append({"unity_version": l[0], "platform": l[1], "build_os": l[2], "ios_sdk": "NA"})
+  else: 
+    li = list(itertools.product(unity_versions, platforms))
+    for l in li:
+      if l[1]=="iOS" or l[1]=="tvOS":
+        for s in ios_sdk:
+          matrix["include"].append({"unity_version": l[0], "platform": l[1], "build_os": "macos-latest", "ios_sdk": s})
+      else:
+        matrix["include"].append({"unity_version": l[0], "platform": l[1], "build_os": "windows-latest", "ios_sdk": "NA"})
+  return matrix
+
+
 def main():
   args = parse_cmdline_args()
   if args.unity_version:
@@ -269,25 +296,6 @@ def main():
       print(get_unity_path(args.unity_version))
     else:
       print(UNITY_SETTINGS[args.unity_version][get_os()].get(args.parm_key))
-    return 
-
-  if args.get_device_type:
-    print(TEST_DEVICES.get(args.parm_key).get("type"))
-    return 
-  if args.get_device_platform:
-    print(TEST_DEVICES.get(args.parm_key).get("platform"))
-    return 
-  if args.get_ftl_device:
-    print(TEST_DEVICES.get(args.parm_key).get("device"))
-    return 
-  if args.desktop_os:
-    print(filterdesktop_os(platform=args.parm_key))
-    return 
-  if args.mobile_platform:
-    print(filter_mobile_platform(platform=args.parm_key))
-    return 
-  if args.build_platform:
-    print(filter_build_platform(platform=args.parm_key))
     return 
 
   if args.override:
@@ -298,13 +306,11 @@ def main():
     print_value(args.override, args.config)
     return
 
-  if args.expanded:
-    test_matrix = EXPANDED_KEY
-  elif args.minimal:
-    test_matrix = MINIMAL_KEY
-  else:
-    test_matrix = ""
-  value = get_value(args.workflow, test_matrix, args.parm_key, args.config)
+  if args.build_matrix:
+    print(get_testapp_build_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.build_os.split(','), args.ios_sdk.split(',')))
+    return
+
+  value = get_value(args.workflow, args.test_matrix, args.parm_key, args.config)
   if args.workflow == "integration_tests" and args.parm_key == "mobile_device":
     value = filter_devices(devices=value, device_type=args.device_type, device_platform=args.device_platform)
   if args.auto_diff:
@@ -316,20 +322,22 @@ def parse_cmdline_args():
   parser = argparse.ArgumentParser(description='Query matrix and config parameters used in Github workflows.')
   parser.add_argument('-c', '--config', action='store_true', help='Query parameter used for Github workflow/dispatch configurations.')
   parser.add_argument('-w', '--workflow', default=DEFAULT_WORKFLOW, help='Config key for Github workflow.')
-  parser.add_argument('-m', '--minimal', type=bool, default=False, help='Use minimal matrix')
-  parser.add_argument('-e', '--expanded', type=bool, default=False, help='Use expanded matrix')
-  parser.add_argument('-k', '--parm_key', required=True, help='Print the value of specified key from matrix or config maps.')
+  parser.add_argument('-m', '--test_matrix', default="", help='Use minimal/expanded/default matrix')
+  parser.add_argument('-k', '--parm_key', help='Print the value of specified key from matrix or config maps.')
   parser.add_argument('-a', '--auto_diff', metavar='BRANCH', help='Compare with specified base branch to automatically set matrix options')
   parser.add_argument('-o', '--override', help='Override existing value with provided value')
   parser.add_argument('-t', '--device_type', default=['real', 'virtual'], help='Test on which type of mobile devices. Used with "-k $device_type -t $mobile_test_on"')
   parser.add_argument('-p', '--device_platform', default=['Android', 'iOS'], help='Test on which type of mobile devices. Used with "-k $device_type -p $platform"')
   parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version. Used with "-k $unity_setting -u $unity_major_version"')
-  parser.add_argument('-get_device_type', action='store_true', help='Get the device type, used with -k $device')
-  parser.add_argument('-get_device_platform', action='store_true', help='Get the device platform, used with -k $device')
-  parser.add_argument('-get_ftl_device', action='store_true', help='Get the ftl test device, used with -k $device')
-  parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
-  parser.add_argument('-mobile_platform', type=bool, default=False, help='Get mobile test platform. Use with "-k $build_platform -mobile_platform=1"')
-  parser.add_argument('-build_platform', type=bool, default=False, help='Get build platform. Use with "-k $build_platform -build_platform=1"')
+  parser.add_argument('-build_matrix', action='store_true', help='Get the build matrix')
+  parser.add_argument('-unity_versions')
+  parser.add_argument('-platforms')
+  parser.add_argument('-build_os')
+  parser.add_argument('-ios_sdk')
+  # parser.add_argument('-get_device_platform', action='store_true', help='Get the device platform, used with -k $device')
+  # parser.add_argument('-get_ftl_device', action='store_true', help='Get the ftl test device, used with -k $device')
+  # parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
+  # parser.add_argument('-mobile_platform', type=bool, default=False, help='Get mobile test platform. Use with "-k $build_platform -mobile_platform=1"')
   args = parser.parse_args()
   return args
 
