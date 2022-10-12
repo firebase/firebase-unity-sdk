@@ -140,6 +140,7 @@ jobs:
         timeout-minutes: 90
         shell: bash
         run: |
+          # TODO add handling cmake_extras
           python scripts/build_scripts/build_zips.py --gha --platform=tvos --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
 
       - name: Check zip file
