@@ -177,12 +177,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
-        os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
-        platform: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_platform) }}
-        exclude:
-          - os: windows-latest
+        unity_version: 2020
+        os: windows-latest
+        platform: ["Windows,macOS,Linux","Android","Playmode"]
+        ios_sdk: ${{ needs.check_and_prepare.outputs.mobile_test_on }}
+        include:
+          - unity_version: 2020
+            os: macos-latest
             platform: "iOS"
+            ios_sdk: "real"
+          - unity_version: 2020
+            os: macos-latest
+            platform: "iOS"
+            ios_sdk: "virtual"
     env:
       # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
       LC_ALL: en_US.UTF-8
@@ -259,7 +266,7 @@ jobs:
             --t ${{ needs.check_and_prepare.outputs.apis }} \
             --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
             --p ${{ matrix.platform }} \
-            --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
+            --ios_sdk ${{ matrix.ios_sdk }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}" \
