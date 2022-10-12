@@ -119,7 +119,8 @@ jobs:
       - name: Pod repo add
         shell: bash
         # The pod install fails during the cmake build, so preinstall it.
-        run: pod repo add cocoapods https://github.com/CocoaPods/Specs.git
+        run: |
+          pod repo add cocoapods https://github.com/CocoaPods/Specs.git
 
       - name: Install Unity
         uses: nick-invision/retry@v2
@@ -139,7 +140,6 @@ jobs:
         timeout-minutes: 90
         shell: bash
         run: |
-          # TODO add handling cmake_extras
           python scripts/build_scripts/build_zips.py --gha --platform=tvos --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
 
       - name: Check zip file
