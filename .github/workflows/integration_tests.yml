@@ -157,14 +157,9 @@ jobs:
         # mobile_test_on=$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k mobile_test_on -o "${{github.event.inputs.mobile_test_on}}")
         # echo "::set-output name=mobile_test_on::${mobile_test_on}"
         # echo "::set-output name=mobile_device::$( python scripts/gha/print_matrix_configuration.py -w integration_tests ${TEST_MATRIX_PARAM} -k mobile_device -t ${mobile_test_on} -p ${platform})"
-        # MATRIX_PARAMS_COMBINATIONS='
-        #     {"unity_version": "2020", "os": "windows-latest", "platform": "Windows,macOS,Linux",  "ios_sdk": "none"}, 
-        #     {"unity_version": "2020", "os": "windows-latest", "platform": "Android",  "ios_sdk": "none"}, 
-        #     {"unity_version": "2020", "os": "macos-latest", "platform": "iOS",  "ios_sdk": "real"}, 
-        #     {"unity_version": "2020", "os": "macos-latest", "platform": "iOS",  "ios_sdk": "virtual"},
-        # '
-        echo "::set-output name=build_matrix::$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -build_os "${{github.event.inputs.build_os}}" -ios_sdk "${{github.event.inputs.mobile_test_on}}")"
+        build_matrix=$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -build_os "${{github.event.inputs.build_os}}" -ios_sdk "${{github.event.inputs.mobile_test_on}}")
         echo ${build_matrix}
+        echo "::set-output name=build_matrix::${build_matrix}"
     - name: Update PR label and comment
       if: steps.set_outputs.outputs.pr_number
       run: |
