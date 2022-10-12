@@ -192,7 +192,7 @@ jobs:
       U3D_SKIP_UPDATE_CHECK: 1
     steps:
       - shell: bash
-        run: echo ${{ matrix }}
+        run: echo ${{ toJSON(matrix) }}
       - uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
         with:
