@@ -118,8 +118,8 @@ jobs:
 
       - name: Pod repo add
         shell: bash
-        # run: pod repo add cocoapods https://github.com/CocoaPods/Specs.git
-        run: pod setup
+        # The pod install fails during the cmake build, so preinstall it.
+        run: pod repo add cocoapods https://github.com/CocoaPods/Specs.git
 
       - name: Install Unity
         uses: nick-invision/retry@v2
