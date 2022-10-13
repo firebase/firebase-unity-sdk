@@ -270,23 +270,16 @@ def get_testapp_build_matrix(test_matrix, unity_versions, platforms, build_os, i
   if test_matrix: build_os = get_value("integration_tests", test_matrix, "build_os")
   if test_matrix: ios_sdk = get_value("integration_tests", test_matrix, "mobile_test_on")
   matrix = {"include": []}
-  if build_os and build_os[0]:
-    li = list(itertools.product(unity_versions, platforms, build_os))
-    for l in li:
-      if (l[1]=="iOS" or l[1]=="tvOS"):
-        if l[2]=="macos-latest":
-          for s in ios_sdk:
-            matrix["include"].append({"unity_version": l[0], "platform": l[1], "os": l[2], "ios_sdk": s})
-      else:
-        matrix["include"].append({"unity_version": l[0], "platform": l[1], "os": l[2], "ios_sdk": "NA"})
-  else: 
-    li = list(itertools.product(unity_versions, platforms))
-    for l in li:
-      if l[1]=="iOS" or l[1]=="tvOS":
+  li = list(itertools.product(unity_versions, platforms, build_os))
+  for l in li:
+    if not l[2]: 
+      l[2] = "macos-latest" if (l[1]=="iOS" or l[1]=="tvOS") else "windows-latest"
+    if (l[1]=="iOS" or l[1]=="tvOS"):
+      if l[2]=="macos-latest":
         for s in ios_sdk:
-          matrix["include"].append({"unity_version": l[0], "platform": l[1], "os": "macos-latest", "ios_sdk": s})
-      else:
-        matrix["include"].append({"unity_version": l[0], "platform": l[1], "os": "windows-latest", "ios_sdk": "NA"})
+          matrix["include"].append({"unity_version": l[0], "platform": l[1], "os": l[2], "ios_sdk": s})
+    else:
+      matrix["include"].append({"unity_version": l[0], "platform": l[1], "os": l[2], "ios_sdk": "NA"})
   return matrix
 
 
