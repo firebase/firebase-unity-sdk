@@ -503,7 +503,7 @@ jobs:
   integration_test:
     name: test-{{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.device_type }}-${{ matrix.test_os }}
     runs-on: ${{ matrix.test_os }}
-    if: !cancelled()
+    if: ${{ !cancelled() }}
     needs: [check_and_prepare, build_testapp]
     strategy:
       fail-fast: false
