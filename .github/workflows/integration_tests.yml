@@ -479,7 +479,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: log-artifact
-          path: test-results-${{ steps.matrix_info.outputs.info }}-Playmode*
+          path: test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Update PR label and comment
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
