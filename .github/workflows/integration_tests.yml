@@ -446,7 +446,6 @@ jobs:
             --t ${{ needs.check_and_prepare.outputs.apis }} \
             --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
             --p Playmode \
-            --ios_sdk ${{ needs.check_and_prepare.outputs.mobile_test_on }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
