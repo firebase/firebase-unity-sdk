@@ -182,7 +182,7 @@ jobs:
       - id: matrix_info
         run: |
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}"
-          echo "::set-output name=artifact_prefix::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}"
+          echo "::set-output name=artifact_suffix::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}"
       - uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
         with:
@@ -288,7 +288,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Android') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-Android
+          name: testapps-Android-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/Android
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Android integration tests artifact
@@ -299,7 +299,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'iOS') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-iOS
+          name: testapps-iOS-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/iOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete iOS integration tests artifact
@@ -310,7 +310,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Linux') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-Linux
+          name: testapps-Linux-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Linux integration tests artifact
@@ -321,7 +321,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'macOS') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-macOS
+          name: testapps-macOS-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete macOS integration tests artifact
@@ -332,7 +332,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Windows') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-Windows
+          name: testapps-Windows-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Windows integration tests artifact
@@ -512,7 +512,7 @@ jobs:
       - id: matrix_info
         run: |
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}"
-          echo "::set-output name=artifact_path::testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.ios_sdk }}-${{ matrix.platform }}"
+          echo "::set-output name=artifact_path::testapps-${{ matrix.platform }}-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.ios_sdk }}"
       - uses: actions/checkout@v2
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
@@ -530,7 +530,7 @@ jobs:
           path: testapps
           name: ${{ steps.matrix_info.outputs.artifact_path }}
       - name: Run Desktop integration tests
-        if: ${{ matrix.test_device == 'NA'  }}
+        if: ${{ matrix.test_device == 'github_runner'  }}
         timeout-minutes: 30
         shell: bash
         run: |
@@ -544,7 +544,7 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
           testapp_dir: testapps
           test_type: "game-loop"
-          test_devices: ${{ matrix.test_device }}
+          test_devices: ${{ matrix.device_detail }}
       - name: Read FTL Test Result
         if: ${{ matrix.device_type == 'real' }}
         timeout-minutes: 60

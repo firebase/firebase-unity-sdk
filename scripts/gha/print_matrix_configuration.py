@@ -313,8 +313,9 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
   #   "build_os":"build_os",
   #   "test_os":"test_os",
   #   "test_device":"test_device",
-  #   "device_type":"test_device",
-  #   "ios_sdk": "ios_sdk"
+  #   "device_detail":"test_device", # secondary info
+  #   "device_type":"test_device",   # secondary info
+  #   "ios_sdk": "ios_sdk"          
   # }
 
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
@@ -332,17 +333,17 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
     if platform in ["Windows", "macOS", "Linux"]:
       test_os = _get_test_os(platform)
-      # The test_device is the test_os itself (duplicated), thus set the value "NA" for test_device, device_type settings.
-      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "NA", "device_type": "NA", "ios_sdk": "NA"})
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "ios_sdk": "NA"})
     else:
       mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
+        device_detail = TEST_DEVICES.get(mobile_device).get("device")
         device_type = TEST_DEVICES.get(mobile_device).get("type")
         device_platform = TEST_DEVICES.get(mobile_device).get("platform")
         if device_platform == platform and device_type in mobile_device_types:
           test_os = _get_test_os(platform, device_type)
           ios_sdk = device_type if device_platform == "iOS" else "NA"
-          matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_type": device_type, "ios_sdk": ios_sdk})
+          matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_detail": device_detail, "device_type": device_type, "ios_sdk": ios_sdk})
 
   return matrix
 
