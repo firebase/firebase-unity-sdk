@@ -52,13 +52,13 @@ jobs:
   
     steps:
       - name: Checkout Unity Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
           ref: ${{ inputs.unity_branch }}
           
       - name: Checkout CPP Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
@@ -70,7 +70,7 @@ jobs:
           ruby-version: 2.6
 
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7'
 

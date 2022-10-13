@@ -115,13 +115,13 @@ jobs:
             echo "::set-output name=pr_number::${{ github.event.inputs.test_pull_request }}"
           fi
         fi
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: ${{steps.set_outputs.outputs.github_ref}}
         fetch-depth: 0
         submodules: false
     - name: Setup python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ env.pythonVersion }}
     - name: Install python deps
@@ -191,7 +191,7 @@ jobs:
       # Disable checking for U3D updates, since it is buggy
       U3D_SKIP_UPDATE_CHECK: 1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0.2
@@ -203,7 +203,7 @@ jobs:
           shell: bash
           command: gem install u3d -v 1.2.3
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7'
       - name: Install python deps
@@ -390,7 +390,7 @@ jobs:
       # Disable checking for U3D updates, since it is buggy
       U3D_SKIP_UPDATE_CHECK: 1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0.2
@@ -402,7 +402,7 @@ jobs:
           shell: bash
           command: gem install u3d -v 1.2.3
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7'
       - name: Install python deps
@@ -520,7 +520,7 @@ jobs:
         build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
         os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_desktop_os) }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Download Desktop integration tests artifact
@@ -529,7 +529,7 @@ jobs:
           path: testapps
           name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7'
       - name: Install python deps
@@ -602,11 +602,11 @@ jobs:
           - build_os: windows-latest
             mobile_device: "simulator_target"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7'
       - name: Install python deps
@@ -693,11 +693,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.pythonVersion }}
       - name: Install python deps
