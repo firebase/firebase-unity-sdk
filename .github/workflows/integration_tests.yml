@@ -538,7 +538,7 @@ jobs:
             --logfile_name "${{ steps.matrix_info.outputs.info }}"
       - name: Run Mobile integration tests on real device via FTL
         id: ftl_test
-        if: ${{ matrix.test_device == 'real' }}
+        if: ${{ matrix.device_type == 'real' }}
         uses: FirebaseExtended/github-actions/firebase-test-lab@v1.1
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
@@ -546,7 +546,7 @@ jobs:
           test_type: "game-loop"
           test_devices: ${{ matrix.test_device }}
       - name: Read FTL Test Result
-        if: ${{ matrix.test_device == 'real' }}
+        if: ${{ matrix.device_type == 'real' }}
         timeout-minutes: 60
         shell: bash
         run: |
@@ -554,7 +554,7 @@ jobs:
             --output_path testapps/test-results-"${{ steps.matrix_info.outputs.info }}".log
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 60
-        if: ${{ matrix.test_device == 'virtual' }}
+        if: ${{ matrix.device_type == 'virtual' }}
         run: |
           python scripts/gha/test_simulator.py --testapp_dir testapps \
             --ios_device "${{ matrix.test_device }}" \
