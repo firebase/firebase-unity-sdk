@@ -222,12 +222,6 @@ def filter_values_on_diff(parm_key, value, auto_diff):
   return value
 
 
-def filterdesktop_os(platform):
-  os_platform_dict = {"windows-latest":"Windows", "macos-latest":"macOS", "ubuntu-latest":"Linux"}
-  filtered_value = filter(lambda os: os_platform_dict.get(os) in platform, os_platform_dict.keys())
-  return list(filtered_value)  
-
-
 def filter_mobile_platform(platform):
   # tvOS isn't mobile, but it behaves like iOS.
   mobile_platform = ["Android", "iOS", "tvOS"]
@@ -392,8 +386,6 @@ def main():
     return
 
   value = get_value(args.workflow, args.matrix_type, args.parm_key, args.config)
-  if args.workflow == "integration_tests" and args.parm_key == "mobile_device":
-    value = filter_devices(devices=value, device_type=args.device_type, device_platform=args.device_platform)
   if args.auto_diff:
     value = filter_values_on_diff(args.parm_key, value, args.auto_diff)
   print_value(value, args.config)
@@ -407,20 +399,14 @@ def parse_cmdline_args():
   parser.add_argument('-k', '--parm_key', help='Print the value of specified key from matrix or config maps.')
   parser.add_argument('-a', '--auto_diff', metavar='BRANCH', help='Compare with specified base branch to automatically set matrix options')
   parser.add_argument('-o', '--override', help='Override existing value with provided value')
-  parser.add_argument('-t', '--device_type', default=['real', 'virtual'], help='Test on which type of mobile devices. Used with "-k $device_type -t $mobile_test_on"')
-  parser.add_argument('-p', '--device_platform', default=['Android', 'iOS'], help='Test on which type of mobile devices. Used with "-k $device_type -p $platform"')
   parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version. Used with "-k $unity_setting -u $unity_major_version"')
-  parser.add_argument('-build_matrix', action='store_true', help='Get the build matrix')
-  parser.add_argument('-playmode_matrix', action='store_true', help='Get the playmode matrix')
-  parser.add_argument('-test_matrix', action='store_true', help='Get the test matrix')
-  parser.add_argument('-unity_versions')
-  parser.add_argument('-platforms')
-  parser.add_argument('-os')
-  parser.add_argument('-mobile_test_on')
-  # parser.add_argument('-get_device_platform', action='store_true', help='Get the device platform, used with -k $device')
-  # parser.add_argument('-get_ftl_device', action='store_true', help='Get the ftl test device, used with -k $device')
-  # parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
-  # parser.add_argument('-mobile_platform', type=bool, default=False, help='Get mobile test platform. Use with "-k $build_platform -mobile_platform=1"')
+  parser.add_argument('-playmode_matrix', action='store_true', help='Generate the playmode matrix for integration_test workflow')
+  parser.add_argument('-build_matrix', action='store_true', help='Generate the build matrix for integration_test workflow')
+  parser.add_argument('-test_matrix', action='store_true', help='Generate the test matrix for integration_test workflow')
+  parser.add_argument('-unity_versions', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
+  parser.add_argument('-platforms', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
+  parser.add_argument('-os', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
+  parser.add_argument('-mobile_test_on', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
   args = parser.parse_args()
   return args
 
