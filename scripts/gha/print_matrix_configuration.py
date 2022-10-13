@@ -264,12 +264,21 @@ def print_value(value, config_parms_only=False):
 
 
 def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, ios_sdk):
+  # matrix structure:
+  # {
+  #   "unity_version":"unity_version",
+  #   "platform":"platform",
+  #   "os":"os",
+  #   "ios_sdk":"ios_sdk"
+  # }
+
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: platforms = filter_build_platforms(get_value("integration_tests", matrix_type, "platforms", True))
   else: platforms = filter_build_platforms(platforms)
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
   if matrix_type: ios_sdk = get_value("integration_tests", matrix_type, "mobile_test_on")
 
+  # generate base matrix: combinations of (unity_versions, platforms, build_os)
   li = list(itertools.product(unity_versions, platforms, build_os))
   matrix = {"include": []}
   for l in li:
@@ -278,10 +287,12 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
     os = l[2] if l[2] else ("macos-latest" if (platform=="iOS" or platform=="tvOS") else "windows-latest")
     
     if (platform=="iOS" or platform=="tvOS"):
+      # for iOS, tvOS platforms, exclude non macOS build_os 
       if os=="macos-latest":
         for s in ios_sdk:
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": s})
     else:
+      # for Desktop, Android platforms, set value "NA" for ios_sdk setting
       matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": "NA"})
   return matrix
 
@@ -301,11 +312,23 @@ def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os
 
 
 def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mobile_device_types):
+  # matrix structure:
+  # {
+  #   "unity_version":"unity_version",
+  #   "platform":"platform",
+  #   "build_os":"build_os",
+  #   "test_os":"test_os",
+  #   "test_device":"test_device",
+  #   "device_type":"test_device",
+  #   "ios_sdk": "ios_sdk"
+  # }
+
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: platforms = get_value("integration_tests", matrix_type, "platforms")
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
   if matrix_type: mobile_device_types = get_value("integration_tests", matrix_type, "mobile_test_on")
 
+  # generate base matrix: combinations of (unity_versions, platforms, build_os)
   li = list(itertools.product(unity_versions, platforms, build_os))
   matrix = {"include": []}
   for l in li:
@@ -315,20 +338,24 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
     if platform in ["Windows", "macOS", "Linux"]:
       test_os = _get_test_os(platform)
-      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "NA", "device_type": "NA"})
+      # The test_device is the test_os itself (duplicated), thus set the value "NA" for test_device, device_type settings.
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "NA", "device_type": "NA", "ios_sdk": "NA"})
     else:
       mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
         device_type = TEST_DEVICES.get(mobile_device).get("type")
-        if device_type in mobile_device_types:
+        device_platform = TEST_DEVICES.get(mobile_device).get("platform")
+        if device_platform == platform and device_type in mobile_device_types:
           test_os = _get_test_os(platform, device_type)
-          matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_type": device_type})
+          ios_sdk = device_type if device_platform == "iOS" else "NA"
+          matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_type": device_type, "ios_sdk": ios_sdk})
 
   return matrix
 
 
 def _get_test_os(platform, mobile_device_type=""):
-  """Current Operation System"""
+  # Desktop platform test on their OS respectivly. 
+  # Mobile platform test on Linux machine if we run tests on FTL, else Mac machine if we run tests on simulators 
   if platform == 'Windows':
     return "windows-latest"
   elif platform == 'Linux' or ((platform=="Android" or platform=="iOS") and mobile_device_type == 'real'):

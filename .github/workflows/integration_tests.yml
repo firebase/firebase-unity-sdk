@@ -501,7 +501,7 @@ jobs:
           fi
 
   integration_test:
-    name: test-{{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.device_type }}-${{ matrix.test_os }}
+    name: test-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}
     runs-on: ${{ matrix.test_os }}
     if: ${{ !cancelled() }}
     needs: [check_and_prepare, build_testapp]
@@ -511,8 +511,8 @@ jobs:
     steps:
       - id: matrix_info
         run: |
-          echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.device_type }}-${{ matrix.test_os }}"
-          echo "::set-output name=artifact_path::testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.device_type }}-${{ matrix.platform }}"
+          echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}"
+          echo "::set-output name=artifact_path::testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.ios_sdk }}-${{ matrix.platform }}"
       - uses: actions/checkout@v2
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
