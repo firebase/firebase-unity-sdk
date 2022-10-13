@@ -22,6 +22,4 @@ mono_add_executable(mono_sample_app_cs
   REFERENCES
     firebase_app_cs
     firebase_storage_cs
-    unity_compat_cs
-    unity_tasks_cs
 )

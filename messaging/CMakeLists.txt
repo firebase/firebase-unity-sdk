@@ -44,8 +44,6 @@ mono_add_library(firebase_messaging_cs
     ${firebase_messaging_src}
     ${firebase_messaging_swig_gen_src}
   REFERENCES
-    unity_compat_cs
-    unity_tasks_cs
     ${FIREBASE_PLATFORM_REF}
   DEPENDS
     firebase_messaging_swig

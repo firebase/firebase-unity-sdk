@@ -32,12 +32,7 @@ inside the Unity Editor.
   - Import the `Firebase Crashlytics` plugin.
     - Select the **Assets > Import Package > Custom Package** menu item.
     - From the [Firebase Unity SDK](https://firebase.google.com/download/unity)
-      downloaded previously, import `FirebaseCrashlytics.unitypackage` from the
-      directory that matches the version of Unity you use:
-       - If your project is configured to use .NET 3.x, import the
-         `dotnet3/FirebaseCrashlytics.unitypackage` package.
-       - If your project is configured to use .NET 4.x, import the
-         `dotnet4/FirebaseCrashlytics.unitypackage` package.
+      downloaded previously, import `FirebaseCrashlytics.unitypackage`.
     - When the **Import Unity Package** window appears, click the **Import**
       button.
 

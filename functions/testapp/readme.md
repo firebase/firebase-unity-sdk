@@ -54,25 +54,13 @@ inside the Unity Editor.
   - Import the `Firebase Auth` plugin.
     - Select the **Assets > Import Package > Custom Package** menu item.
     - From the [Firebase Unity SDK](https://firebase.google.com/download/unity)
-      downloaded previously, import `FirebaseAuth.unitypackage` from the
-      directory that matches the version of Unity you use:
-       - Unity 5.x and earlier use the .NET 3.x framework, so you need to
-         import the `dotnet3/FirebaseAuth.unitypackage` package .
-       - Unity 2017.x and newer allow the use of the .NET 4.x framework.  If
-         your project is configured to use .NET 4.x, import the
-         `dotnet4/FirebaseAuth.unitypackage` package.
+      downloaded previously, import `FirebaseAuth.unitypackage`.
     - When the **Import Unity Package** window appears, click the **Import**
       button.
   - Import the `Firebase Functions` plugin.
     - Select the **Assets > Import Package > Custom Package** menu item.
     - From the [Firebase Unity SDK](https://firebase.google.com/download/unity)
-      downloaded previously, import `FirebaseFunctions.unitypackage` from the
-      directory that matches the version of Unity you use:
-       - Unity 5.x and earlier use the .NET 3.x framework, so you need to
-         import the `dotnet3/FirebaseFunctions.unitypackage` package .
-       - Unity 2017.x and newer allow the use of the .NET 4.x framework.  If
-         your project is configured to use .NET 4.x, import the
-         `dotnet4/FirebaseFunctions.unitypackage` package.
+      downloaded previously, import `FirebaseFunctions.unitypackage`.
     - When the **Import Unity Package** window appears, click the **Import**
       button.
 
