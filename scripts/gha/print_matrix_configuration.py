@@ -282,7 +282,7 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
         for s in ios_sdk:
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": s})
     else:
-      matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": ""})
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": "NA"})
   return matrix
 
 
@@ -301,7 +301,6 @@ def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os
 
 
 def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mobile_device_types):
-  print(matrix_type)
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: platforms = get_value("integration_tests", matrix_type, "platforms")
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
@@ -316,7 +315,7 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
     if platform in ["Windows", "macOS", "Linux"]:
       test_os = _get_test_os(platform)
-      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "", "device_type": ""})
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "NA", "device_type": "NA"})
     else:
       mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
