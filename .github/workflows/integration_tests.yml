@@ -364,7 +364,6 @@ jobs:
   test_playmode:
     name: test-${{ matrix.unity_version }}-${{matrix.os}}-Playmode
     runs-on: ${{matrix.os}}
-    if: contains(needs.check_and_prepare.outputs.platform, 'Playmode') && !cancelled()
     needs: check_and_prepare
     strategy:
       fail-fast: false
