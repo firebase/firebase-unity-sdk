@@ -46,6 +46,7 @@ jobs:
       github_ref: ${{ steps.set_outputs.outputs.github_ref }}
       pr_number: ${{ steps.set_outputs.outputs.pr_number }}
       build_matrix: ${{ steps.matrix_config.outputs.build_matrix }}
+      test_matrix: ${{ steps.matrix_config.outputs.test_matrix }}
       playmode_matrix: ${{ steps.matrix_config.outputs.playmode_matrix }}
       matrix_build_os: ${{ steps.matrix_config.outputs.matrix_build_os }}
       matrix_build_platform: ${{ steps.matrix_config.outputs.matrix_build_platform }}
@@ -148,7 +149,8 @@ jobs:
         # To feed input into the job matrix, we first need to convert to a JSON
         # list. Then we can use fromJson to define the field in the matrix for the tests job.
         echo "::set-output name=apis::$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k apis -o "${{github.event.inputs.apis}}" ${TEST_MATRIX_PARAM} )"
-        echo "::set-output name=build_matrix::$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" -ios_sdk "${{github.event.inputs.mobile_test_on}}" ${TEST_MATRIX_PARAM})"
+        echo "::set-output name=build_matrix::$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" -mobile_test_on "${{github.event.inputs.mobile_test_on}}" ${TEST_MATRIX_PARAM})"
+        echo "::set-output name=test_matrix::$( python scripts/gha/print_matrix_configuration.py -test_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" -mobile_test_on "${{github.event.inputs.mobile_test_on}}" ${TEST_MATRIX_PARAM})"
         echo "::set-output name=playmode_matrix::$( python scripts/gha/print_matrix_configuration.py -playmode_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" ${TEST_MATRIX_PARAM})"
     - name: Update PR label and comment
       if: steps.set_outputs.outputs.pr_number
@@ -161,7 +163,7 @@ jobs:
           --commit ${{steps.set_outputs.outputs.github_ref}} \
           --run_id ${{github.run_id}}
 
-  build:
+  build_testapp:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
     runs-on: ${{matrix.os}}
     if: ${{ needs.check_and_prepare.outputs.matrix_build_platform != '[]' }}
@@ -180,6 +182,7 @@ jobs:
       - id: matrix_info
         run: |
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}"
+          echo "::set-output name=artifact_prefix::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}"
       - uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
         with:
@@ -285,7 +288,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Android') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.info }}-Android
+          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-Android
           path: testapps-${{ steps.matrix_info.outputs.info }}/Android
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Android integration tests artifact
@@ -296,7 +299,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'iOS') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.info }}-iOS
+          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-iOS
           path: testapps-${{ steps.matrix_info.outputs.info }}/iOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete iOS integration tests artifact
@@ -307,7 +310,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Linux') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.info }}-ubuntu-latest
+          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-Linux
           path: testapps-${{ steps.matrix_info.outputs.info }}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Linux integration tests artifact
@@ -318,7 +321,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'macOS') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.info }}-macos-latest
+          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-macOS
           path: testapps-${{ steps.matrix_info.outputs.info }}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete macOS integration tests artifact
@@ -329,7 +332,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: contains(matrix.platform, 'Windows') && ${{ !cancelled() }}
         with:
-          name: testapps-${{ steps.matrix_info.outputs.info }}
+          name: testapps-${{ steps.matrix_info.outputs.artifact_prefix }}-Windows
           path: testapps-${{ steps.matrix_info.outputs.info }}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Windows integration tests artifact
@@ -361,7 +364,7 @@ jobs:
             exit 1
           fi
 
-  test_playmode:
+  playmode_test:
     name: test-${{ matrix.unity_version }}-${{matrix.os}}-Playmode
     runs-on: ${{matrix.os}}
     needs: check_and_prepare
@@ -497,18 +500,19 @@ jobs:
             exit 1
           fi
 
-  test_desktop:
-    name: test-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}-desktop
-    runs-on: ${{ matrix.os }}
-    if: (contains(needs.check_and_prepare.outputs.platform, 'Windows') || contains(needs.check_and_prepare.outputs.platform, 'macOS') || contains(needs.check_and_prepare.outputs.platform, 'Linux')) && !cancelled()
-    needs: [check_and_prepare, build]
+  integration_test:
+    name: test-{{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.device_type }}-${{ matrix.test_os }}
+    runs-on: ${{ matrix.test_os }}
+    if: !cancelled()
+    needs: [check_and_prepare, build_testapp]
     strategy:
       fail-fast: false
-      matrix:
-        unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
-        build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
-        os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_desktop_os) }}
+      matrix: ${{ fromJson(needs.check_and_prepare.outputs.test_matrix) }}
     steps:
+      - id: matrix_info
+        run: |
+          echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.device_type }}-${{ matrix.test_os }}"
+          echo "::set-output name=artifact_path::testapps-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.device_type }}-${{ matrix.platform }}"
       - uses: actions/checkout@v2
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
@@ -516,7 +520,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: testapps
-          name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}
+          name: ${{ steps.matrix_info.outputs.artifact_path }}
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -527,25 +531,26 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - name: Run Desktop integration tests
+        if: ${{ matrix.test_device != ''  }}
         timeout-minutes: 30
         shell: bash
         run: |
           python scripts/gha/desktop_tester.py --testapp_dir testapps \
-            --logfile_name "${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}-desktop"
+            --logfile_name "${{ steps.matrix_info.outputs.info }}"
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
         run: |
           # If testapps do not exist, then it's a build error not test error. 
-          if [ -d "testapps/testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}" &&  ! -f testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}-desktop.log.json ]; then
-            mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}-desktop.log.json
+          if [ -d "testapps/testapps-${{ steps.matrix_info.outputs.info }}" &&  ! -f testapps/test-results-${{ steps.matrix_info.outputs.info }}.log.json ]; then
+            mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${{ steps.matrix_info.outputs.info }}.log.json
           fi
-      - name: Upload Desktop test results artifact
+      - name: Upload test results artifact
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v3
         with:
           name: log-artifact
-          path: testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}-desktop*
+          path: testapps/test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
@@ -567,118 +572,118 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.os }}-desktop.log
+          cat testapps/test-results-${{ steps.matrix_info.outputs.info }}.log
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
 
-  test_mobile:
-    name: test-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile
-    runs-on: macos-11
-    if: (contains(needs.check_and_prepare.outputs.platform, 'Android') || contains(needs.check_and_prepare.outputs.platform, 'iOS')) && !cancelled()
-    needs: [check_and_prepare, build]
-    strategy:
-      fail-fast: false
-      matrix:
-        unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
-        build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
-        mobile_device: ${{ fromJson(needs.check_and_prepare.outputs.mobile_device) }}
-        exclude:
-        # disable tests on android emualtor temporarily
-          - mobile_device: "emulator_latest"
-          - build_os: windows-latest
-            mobile_device: "ios_target"
-          - build_os: windows-latest
-            mobile_device: "simulator_target"
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{needs.check_and_prepare.outputs.github_ref}}
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.7'
-      - name: Install python deps
-        timeout-minutes: 10
-        shell: bash
-        run: |
-          pip install -r scripts/gha/requirements.txt
-      - id: device-info
-        run: |
-          echo "::set-output name=device_type::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_type)"
-          echo "::set-output name=device_platform::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_platform)"
-          echo "::set-output name=device::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_ftl_device)"
-      - name: Download Mobile integration tests artifact
-        uses: actions/download-artifact@v3
-        with:
-          path: testapps
-          name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}
-      - id: ftl_test
-        if: steps.device-info.outputs.device_type == 'real'
-        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.0
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
-          testapp_dir: testapps
-          test_type: "game-loop"
-          test_devices: ${{ steps.device-info.outputs.device }}
-      - name: Read FTL Test Result
-        if: steps.device-info.outputs.device_type == 'real'
-        timeout-minutes: 60
-        shell: bash
-        run: |
-          python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
-            --output_path testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log
-      - name: Run Mobile integration tests on virtual device locally
-        timeout-minutes: 60
-        if: steps.device-info.outputs.device_type == 'virtual'
-        run: |
-          python scripts/gha/test_simulator.py --testapp_dir testapps \
-            --ios_device "${{ matrix.mobile_device }}" \
-            --android_device "${{ matrix.mobile_device }}" \
-            --logfile_name "${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile" \
-            --ci
-      - name: Prepare results summary artifact
-        if: ${{ !cancelled() }}
-        shell: bash
-        run: |
-          # If testapps do not exist, then it's a build error not test error. 
-          if [ -d "testapps/testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}" && ! -f testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log.json ]; then
-            mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log.json
-          fi
-      - name: Upload Mobile test results artifact
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: log-artifact
-          path: testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile*
-          retention-days: ${{ env.artifactRetentionDays }}
-      - name: Download log artifacts
-        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-        uses: actions/download-artifact@v3
-        with:
-          path: test_results
-          name: log-artifact
-      - name: Update PR label and comment
-        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-        run: |
-          python scripts/gha/it_workflow.py --stage progress \
-            --token ${{github.token}} \
-            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
-            --actor ${{github.actor}} \
-            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
-            --run_id ${{github.run_id}}
-      - name: Summarize test results
-        if: ${{ !cancelled() }}
-        shell: bash
-        run: |
-          cat testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log
-          if [[ "${{ job.status }}" != "success" ]]; then
-            exit 1
-          fi
+  # test_mobile:
+  #   name: test-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile
+  #   runs-on: macos-11
+  #   if: (contains(needs.check_and_prepare.outputs.platform, 'Android') || contains(needs.check_and_prepare.outputs.platform, 'iOS')) && !cancelled()
+  #   needs: [check_and_prepare, build]
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
+  #       build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
+  #       mobile_device: ${{ fromJson(needs.check_and_prepare.outputs.mobile_device) }}
+  #       exclude:
+  #       # disable tests on android emualtor temporarily
+  #         - mobile_device: "emulator_latest"
+  #         - build_os: windows-latest
+  #           mobile_device: "ios_target"
+  #         - build_os: windows-latest
+  #           mobile_device: "simulator_target"
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         ref: ${{needs.check_and_prepare.outputs.github_ref}}
+  #     - name: Setup python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: '3.7'
+  #     - name: Install python deps
+  #       timeout-minutes: 10
+  #       shell: bash
+  #       run: |
+  #         pip install -r scripts/gha/requirements.txt
+  #     - id: device-info
+  #       run: |
+  #         echo "::set-output name=device_type::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_type)"
+  #         echo "::set-output name=device_platform::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_platform)"
+  #         echo "::set-output name=device::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_ftl_device)"
+  #     - name: Download Mobile integration tests artifact
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         path: testapps
+  #         name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}
+  #     - id: ftl_test
+  #       if: steps.device-info.outputs.device_type == 'real'
+  #       uses: FirebaseExtended/github-actions/firebase-test-lab@v1.0
+  #       with:
+  #         credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
+  #         testapp_dir: testapps
+  #         test_type: "game-loop"
+  #         test_devices: ${{ steps.device-info.outputs.device }}
+  #     - name: Read FTL Test Result
+  #       if: steps.device-info.outputs.device_type == 'real'
+  #       timeout-minutes: 60
+  #       shell: bash
+  #       run: |
+  #         python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
+  #           --output_path testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log
+  #     - name: Run Mobile integration tests on virtual device locally
+  #       timeout-minutes: 60
+  #       if: steps.device-info.outputs.device_type == 'virtual'
+  #       run: |
+  #         python scripts/gha/test_simulator.py --testapp_dir testapps \
+  #           --ios_device "${{ matrix.mobile_device }}" \
+  #           --android_device "${{ matrix.mobile_device }}" \
+  #           --logfile_name "${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile" \
+  #           --ci
+  #     - name: Prepare results summary artifact
+  #       if: ${{ !cancelled() }}
+  #       shell: bash
+  #       run: |
+  #         # If testapps do not exist, then it's a build error not test error. 
+  #         if [ -d "testapps/testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}" && ! -f testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log.json ]; then
+  #           mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log.json
+  #         fi
+  #     - name: Upload Mobile test results artifact
+  #       if: ${{ !cancelled() }}
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: log-artifact
+  #         path: testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile*
+  #         retention-days: ${{ env.artifactRetentionDays }}
+  #     - name: Download log artifacts
+  #       if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         path: test_results
+  #         name: log-artifact
+  #     - name: Update PR label and comment
+  #       if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+  #       run: |
+  #         python scripts/gha/it_workflow.py --stage progress \
+  #           --token ${{github.token}} \
+  #           --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
+  #           --actor ${{github.actor}} \
+  #           --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+  #           --run_id ${{github.run_id}}
+  #     - name: Summarize test results
+  #       if: ${{ !cancelled() }}
+  #       shell: bash
+  #       run: |
+  #         cat testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log
+  #         if [[ "${{ job.status }}" != "success" ]]; then
+  #           exit 1
+  #         fi
 
   summarize_results:
     name: "summarize-results"
-    needs: [check_and_prepare, build, test_playmode, test_desktop, test_mobile]
+    needs: [check_and_prepare, build_testapp, playmode_test, integration_test]
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     steps:

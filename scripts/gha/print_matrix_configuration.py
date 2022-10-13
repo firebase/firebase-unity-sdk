@@ -269,18 +269,20 @@ def get_testapp_build_matrix(test_matrix, unity_versions, platforms, build_os, i
   else: platforms = filter_build_platforms(platforms)
   if test_matrix: build_os = get_value("integration_tests", test_matrix, "build_os")
   if test_matrix: ios_sdk = get_value("integration_tests", test_matrix, "mobile_test_on")
-  matrix = {"include": []}
+
   li = list(itertools.product(unity_versions, platforms, build_os))
+  matrix = {"include": []}
   for l in li:
     unity_version = l[0]
     platform = l[1]
     os = l[2] if l[2] else ("macos-latest" if (platform=="iOS" or platform=="tvOS") else "windows-latest")
+    
     if (platform=="iOS" or platform=="tvOS"):
       if os=="macos-latest":
         for s in ios_sdk:
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": s})
     else:
-      matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": "NA"})
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": ""})
   return matrix
 
 
@@ -288,13 +290,51 @@ def get_testapp_playmode_matrix(test_matrix, unity_versions, platforms, build_os
   if "Playmode" not in platforms: return ""
   if test_matrix: unity_versions = get_value("integration_tests", test_matrix, "unity_versions")
   if test_matrix: build_os = get_value("integration_tests", test_matrix, "build_os")
-  matrix = {"include": []}
+
   li = list(itertools.product(unity_versions, build_os))
+  matrix = {"include": []}
   for l in li:
     unity_version = l[0]
     os = l[1] if l[1] else "windows-latest"
     matrix["include"].append({"unity_version": unity_version, "os": os})
   return matrix
+
+
+def get_testapp_test_matrix(test_matrix, unity_versions, platforms, build_os, mobile_device_types):
+  if test_matrix: unity_versions = get_value("integration_tests", test_matrix, "unity_versions")
+  if test_matrix: platforms = get_value("integration_tests", platforms, "platforms")
+  if test_matrix: build_os = get_value("integration_tests", test_matrix, "build_os")
+  if test_matrix: mobile_device_types = get_value("integration_tests", test_matrix, "mobile_test_on")
+
+  li = list(itertools.product(unity_versions, platforms, build_os))
+  matrix = {"include": []}
+  for l in li:
+    unity_version = l[0]
+    platform = l[1]
+    build_os = l[2] if l[2] else ("macos-latest" if (platform=="iOS" or platform=="tvOS") else "windows-latest")
+
+    if platform in ["Windows", "macOS", "Linux"]:
+      test_os = _get_test_os[platform]
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "", "device_type": ""})
+    else:
+      mobile_devices = get_value("integration_tests", test_matrix, "mobile_devices")
+      for mobile_device in mobile_devices:
+        device_type = TEST_DEVICES.get(mobile_device).get("type")
+        if device_type in mobile_device_types:
+          test_os = _get_test_os(platform, device_type)
+          matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_type": device_type})
+
+  return matrix
+
+
+def _get_test_os(platform, mobile_device_type):
+  """Current Operation System"""
+  if platform == 'Windows':
+    return "windows-latest"
+  elif platform == 'Linux' or ((platform=="Android" or platform=="iOS") and mobile_device_type == 'real'):
+    return "ubuntu-latest"
+  else: 
+    return "macos-latest"
 
 
 def main():
@@ -315,10 +355,13 @@ def main():
     return
 
   if args.build_matrix:
-    print(get_testapp_build_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.os.split(','), args.ios_sdk.split(',')))
+    print(get_testapp_build_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.os.split(','), args.mobile_test_on.split(',')))
     return
   if args.playmode_matrix:
     print(get_testapp_playmode_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.os.split(',')))
+    return
+  if args.test_matrix:
+    print(get_testapp_test_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms.split(','), args.os.split(','), args.mobile_test_on.split(',')))
     return
 
   value = get_value(args.workflow, args.test_matrix, args.parm_key, args.config)
@@ -342,10 +385,11 @@ def parse_cmdline_args():
   parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version. Used with "-k $unity_setting -u $unity_major_version"')
   parser.add_argument('-build_matrix', action='store_true', help='Get the build matrix')
   parser.add_argument('-playmode_matrix', action='store_true', help='Get the playmode matrix')
+  parser.add_argument('-test_matrix', action='store_true', help='Get the test matrix')
   parser.add_argument('-unity_versions')
   parser.add_argument('-platforms')
   parser.add_argument('-os')
-  parser.add_argument('-ios_sdk')
+  parser.add_argument('-mobile_test_on')
   # parser.add_argument('-get_device_platform', action='store_true', help='Get the device platform, used with -k $device')
   # parser.add_argument('-get_ftl_device', action='store_true', help='Get the ftl test device, used with -k $device')
   # parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
