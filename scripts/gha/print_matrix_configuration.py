@@ -319,10 +319,10 @@ def main():
     return
 
   if args.build_matrix:
-    print(get_testapp_build_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.build_os.split(','), args.ios_sdk.split(',')))
+    print(get_testapp_build_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.os.split(','), args.ios_sdk.split(',')))
     return
   if args.playmode_matrix:
-    print(get_testapp_playmode_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.build_os.split(',')))
+    print(get_testapp_playmode_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.os.split(',')))
     return
 
   value = get_value(args.workflow, args.test_matrix, args.parm_key, args.config)
