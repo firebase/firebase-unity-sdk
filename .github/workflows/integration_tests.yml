@@ -516,11 +516,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
-      - name: Download Desktop integration tests artifact
-        uses: actions/download-artifact@v3
-        with:
-          path: testapps
-          name: ${{ steps.matrix_info.outputs.artifact_path }}
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -528,8 +523,12 @@ jobs:
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
-        run: |
-          pip install -r scripts/gha/requirements.txt
+        run:  pip install -r scripts/gha/requirements.txt
+      - name: Download Testapp artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: testapps
+          name: ${{ steps.matrix_info.outputs.artifact_path }}
       - name: Run Desktop integration tests
         if: ${{ matrix.test_device == 'NA'  }}
         timeout-minutes: 30
@@ -537,6 +536,31 @@ jobs:
         run: |
           python scripts/gha/desktop_tester.py --testapp_dir testapps \
             --logfile_name "${{ steps.matrix_info.outputs.info }}"
+      - name: Run Mobile integration tests on real device via FTL
+        id: ftl_test
+        if: ${{ matrix.test_device == 'real' }}
+        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.1
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
+          testapp_dir: testapps
+          test_type: "game-loop"
+          test_devices: ${{ matrix.test_device }}
+      - name: Read FTL Test Result
+        if: ${{ matrix.test_device == 'real' }}
+        timeout-minutes: 60
+        shell: bash
+        run: |
+          python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
+            --output_path testapps/test-results-"${{ steps.matrix_info.outputs.info }}".log
+      - name: Run Mobile integration tests on virtual device locally
+        timeout-minutes: 60
+        if: ${{ matrix.test_device == 'virtual' }}
+        run: |
+          python scripts/gha/test_simulator.py --testapp_dir testapps \
+            --ios_device "${{ matrix.test_device }}" \
+            --android_device "${{ matrix.test_device }}" \
+            --logfile_name ""${{ steps.matrix_info.outputs.info }}"" \
+            --ci
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
@@ -576,110 +600,6 @@ jobs:
           if [[ "${{ job.status }}" != "success" ]]; then
             exit 1
           fi
-
-  # test_mobile:
-  #   name: test-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile
-  #   runs-on: macos-11
-  #   if: (contains(needs.check_and_prepare.outputs.platform, 'Android') || contains(needs.check_and_prepare.outputs.platform, 'iOS')) && !cancelled()
-  #   needs: [check_and_prepare, build]
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       unity_version: ${{ fromJson(needs.check_and_prepare.outputs.matrix_unity_versions) }}
-  #       build_os: ${{ fromJson(needs.check_and_prepare.outputs.matrix_build_os) }}
-  #       mobile_device: ${{ fromJson(needs.check_and_prepare.outputs.mobile_device) }}
-  #       exclude:
-  #       # disable tests on android emualtor temporarily
-  #         - mobile_device: "emulator_latest"
-  #         - build_os: windows-latest
-  #           mobile_device: "ios_target"
-  #         - build_os: windows-latest
-  #           mobile_device: "simulator_target"
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #       with:
-  #         ref: ${{needs.check_and_prepare.outputs.github_ref}}
-  #     - name: Setup python
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: '3.7'
-  #     - name: Install python deps
-  #       timeout-minutes: 10
-  #       shell: bash
-  #       run: |
-  #         pip install -r scripts/gha/requirements.txt
-  #     - id: device-info
-  #       run: |
-  #         echo "::set-output name=device_type::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_type)"
-  #         echo "::set-output name=device_platform::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_device_platform)"
-  #         echo "::set-output name=device::$( python scripts/gha/print_matrix_configuration.py -k ${{ matrix.mobile_device }} -get_ftl_device)"
-  #     - name: Download Mobile integration tests artifact
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         path: testapps
-  #         name: testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}
-  #     - id: ftl_test
-  #       if: steps.device-info.outputs.device_type == 'real'
-  #       uses: FirebaseExtended/github-actions/firebase-test-lab@v1.0
-  #       with:
-  #         credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
-  #         testapp_dir: testapps
-  #         test_type: "game-loop"
-  #         test_devices: ${{ steps.device-info.outputs.device }}
-  #     - name: Read FTL Test Result
-  #       if: steps.device-info.outputs.device_type == 'real'
-  #       timeout-minutes: 60
-  #       shell: bash
-  #       run: |
-  #         python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
-  #           --output_path testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log
-  #     - name: Run Mobile integration tests on virtual device locally
-  #       timeout-minutes: 60
-  #       if: steps.device-info.outputs.device_type == 'virtual'
-  #       run: |
-  #         python scripts/gha/test_simulator.py --testapp_dir testapps \
-  #           --ios_device "${{ matrix.mobile_device }}" \
-  #           --android_device "${{ matrix.mobile_device }}" \
-  #           --logfile_name "${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile" \
-  #           --ci
-  #     - name: Prepare results summary artifact
-  #       if: ${{ !cancelled() }}
-  #       shell: bash
-  #       run: |
-  #         # If testapps do not exist, then it's a build error not test error. 
-  #         if [ -d "testapps/testapps-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ steps.device-info.outputs.device_platform }}" && ! -f testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log.json ]; then
-  #           mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log.json
-  #         fi
-  #     - name: Upload Mobile test results artifact
-  #       if: ${{ !cancelled() }}
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: log-artifact
-  #         path: testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile*
-  #         retention-days: ${{ env.artifactRetentionDays }}
-  #     - name: Download log artifacts
-  #       if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         path: test_results
-  #         name: log-artifact
-  #     - name: Update PR label and comment
-  #       if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-  #       run: |
-  #         python scripts/gha/it_workflow.py --stage progress \
-  #           --token ${{github.token}} \
-  #           --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
-  #           --actor ${{github.actor}} \
-  #           --commit ${{needs.check_and_prepare.outputs.github_ref}} \
-  #           --run_id ${{github.run_id}}
-  #     - name: Summarize test results
-  #       if: ${{ !cancelled() }}
-  #       shell: bash
-  #       run: |
-  #         cat testapps/test-results-${{ matrix.unity_version }}-${{ matrix.build_os }}-${{ matrix.mobile_device }}-mobile.log
-  #         if [[ "${{ job.status }}" != "success" ]]; then
-  #           exit 1
-  #         fi
 
   summarize_results:
     name: "summarize-results"
