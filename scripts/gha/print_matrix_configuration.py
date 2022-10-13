@@ -273,9 +273,10 @@ def get_testapp_build_matrix(test_matrix, unity_versions, platforms, build_os, i
   if build_os and build_os[0]:
     li = list(itertools.product(unity_versions, platforms, build_os))
     for l in li:
-      if l[1]=="iOS" or l[1]=="tvOS":
-        for s in ios_sdk:
-          matrix["include"].append({"unity_version": l[0], "platform": l[1], "os": l[2], "ios_sdk": s})
+      if (l[1]=="iOS" or l[1]=="tvOS"):
+        if l[2]=="macos-latest":
+          for s in ios_sdk:
+            matrix["include"].append({"unity_version": l[0], "platform": l[1], "os": l[2], "ios_sdk": s})
       else:
         matrix["include"].append({"unity_version": l[0], "platform": l[1], "os": l[2], "ios_sdk": "NA"})
   else: 
