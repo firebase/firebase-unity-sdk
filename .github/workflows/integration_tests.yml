@@ -381,7 +381,7 @@ jobs:
     steps:
       - id: matrix_info
         run: |
-          echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-Playmode"
+          echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-Playmode-github_runner-${{ matrix.os }}"
       - uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
         with:
