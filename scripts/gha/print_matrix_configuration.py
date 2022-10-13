@@ -173,7 +173,7 @@ def get_unity_path(version):
     return "/opt/unity-editor-%s" % unity_full_version
 
 
-def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
+def get_value(workflow, matrix_type, parm_key, config_parms_only=False):
   """ Fetch value from configuration
 
   Args:
@@ -195,9 +195,9 @@ def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
   parm_type_key = "config" if config_parms_only else "matrix"
   workflow_block = PARAMETERS.get(workflow)
   if workflow_block:
-    if test_matrix and test_matrix in workflow_block["matrix"]:
-      if parm_key in workflow_block["matrix"][test_matrix]:
-        return workflow_block["matrix"][test_matrix][parm_key]
+    if matrix_type and matrix_type in workflow_block["matrix"]:
+      if parm_key in workflow_block["matrix"][matrix_type]:
+        return workflow_block["matrix"][matrix_type][parm_key]
     return workflow_block[parm_type_key][parm_key]
 
   else:
@@ -205,7 +205,7 @@ def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
                    "for workflow '{2}' (test_matrix = {3}) .".format(parm_key,
                                                                 parm_type_key,
                                                                 workflow,
-                                                                test_matrix))
+                                                                matrix_type))
 
 
 def filter_devices(devices, device_type, device_platform):
@@ -263,12 +263,12 @@ def print_value(value, config_parms_only=False):
     print(json.dumps(value))
 
 
-def get_testapp_build_matrix(test_matrix, unity_versions, platforms, build_os, ios_sdk):
-  if test_matrix: unity_versions = get_value("integration_tests", test_matrix, "unity_versions")
-  if test_matrix: platforms = filter_build_platforms(get_value("integration_tests", test_matrix, "platforms", True))
+def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, ios_sdk):
+  if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
+  if matrix_type: platforms = filter_build_platforms(get_value("integration_tests", matrix_type, "platforms", True))
   else: platforms = filter_build_platforms(platforms)
-  if test_matrix: build_os = get_value("integration_tests", test_matrix, "build_os")
-  if test_matrix: ios_sdk = get_value("integration_tests", test_matrix, "mobile_test_on")
+  if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
+  if matrix_type: ios_sdk = get_value("integration_tests", matrix_type, "mobile_test_on")
 
   li = list(itertools.product(unity_versions, platforms, build_os))
   matrix = {"include": []}
@@ -286,10 +286,10 @@ def get_testapp_build_matrix(test_matrix, unity_versions, platforms, build_os, i
   return matrix
 
 
-def get_testapp_playmode_matrix(test_matrix, unity_versions, platforms, build_os):
+def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os):
   if "Playmode" not in platforms: return ""
-  if test_matrix: unity_versions = get_value("integration_tests", test_matrix, "unity_versions")
-  if test_matrix: build_os = get_value("integration_tests", test_matrix, "build_os")
+  if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
+  if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
 
   li = list(itertools.product(unity_versions, build_os))
   matrix = {"include": []}
@@ -300,11 +300,12 @@ def get_testapp_playmode_matrix(test_matrix, unity_versions, platforms, build_os
   return matrix
 
 
-def get_testapp_test_matrix(test_matrix, unity_versions, platforms, build_os, mobile_device_types):
-  if test_matrix: unity_versions = get_value("integration_tests", test_matrix, "unity_versions")
-  if test_matrix: platforms = get_value("integration_tests", platforms, "platforms")
-  if test_matrix: build_os = get_value("integration_tests", test_matrix, "build_os")
-  if test_matrix: mobile_device_types = get_value("integration_tests", test_matrix, "mobile_test_on")
+def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mobile_device_types):
+  print(matrix_type)
+  if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
+  if matrix_type: platforms = get_value("integration_tests", matrix_type, "platforms")
+  if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
+  if matrix_type: mobile_device_types = get_value("integration_tests", matrix_type, "mobile_test_on")
 
   li = list(itertools.product(unity_versions, platforms, build_os))
   matrix = {"include": []}
@@ -314,10 +315,10 @@ def get_testapp_test_matrix(test_matrix, unity_versions, platforms, build_os, mo
     build_os = l[2] if l[2] else ("macos-latest" if (platform=="iOS" or platform=="tvOS") else "windows-latest")
 
     if platform in ["Windows", "macOS", "Linux"]:
-      test_os = _get_test_os[platform]
+      test_os = _get_test_os(platform)
       matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "", "device_type": ""})
     else:
-      mobile_devices = get_value("integration_tests", test_matrix, "mobile_devices")
+      mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
         device_type = TEST_DEVICES.get(mobile_device).get("type")
         if device_type in mobile_device_types:
@@ -327,7 +328,7 @@ def get_testapp_test_matrix(test_matrix, unity_versions, platforms, build_os, mo
   return matrix
 
 
-def _get_test_os(platform, mobile_device_type):
+def _get_test_os(platform, mobile_device_type=""):
   """Current Operation System"""
   if platform == 'Windows':
     return "windows-latest"
@@ -355,16 +356,16 @@ def main():
     return
 
   if args.build_matrix:
-    print(get_testapp_build_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.os.split(','), args.mobile_test_on.split(',')))
+    print(get_testapp_build_matrix(args.matrix_type, args.unity_versions.split(','), args.platforms, args.os.split(','), args.mobile_test_on.split(',')))
     return
   if args.playmode_matrix:
-    print(get_testapp_playmode_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms, args.os.split(',')))
+    print(get_testapp_playmode_matrix(args.matrix_type, args.unity_versions.split(','), args.platforms, args.os.split(',')))
     return
   if args.test_matrix:
-    print(get_testapp_test_matrix(args.test_matrix, args.unity_versions.split(','), args.platforms.split(','), args.os.split(','), args.mobile_test_on.split(',')))
+    print(get_testapp_test_matrix(args.matrix_type, args.unity_versions.split(','), args.platforms.split(','), args.os.split(','), args.mobile_test_on.split(',')))
     return
 
-  value = get_value(args.workflow, args.test_matrix, args.parm_key, args.config)
+  value = get_value(args.workflow, args.matrix_type, args.parm_key, args.config)
   if args.workflow == "integration_tests" and args.parm_key == "mobile_device":
     value = filter_devices(devices=value, device_type=args.device_type, device_platform=args.device_platform)
   if args.auto_diff:
@@ -376,7 +377,7 @@ def parse_cmdline_args():
   parser = argparse.ArgumentParser(description='Query matrix and config parameters used in Github workflows.')
   parser.add_argument('-c', '--config', action='store_true', help='Query parameter used for Github workflow/dispatch configurations.')
   parser.add_argument('-w', '--workflow', default=DEFAULT_WORKFLOW, help='Config key for Github workflow.')
-  parser.add_argument('-m', '--test_matrix', default="", help='Use minimal/expanded/default matrix')
+  parser.add_argument('-m', '--matrix_type', default="", help='Use minimal/expanded/default matrix')
   parser.add_argument('-k', '--parm_key', help='Print the value of specified key from matrix or config maps.')
   parser.add_argument('-a', '--auto_diff', metavar='BRANCH', help='Compare with specified base branch to automatically set matrix options')
   parser.add_argument('-o', '--override', help='Override existing value with provided value')
