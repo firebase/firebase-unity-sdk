@@ -46,6 +46,7 @@ jobs:
       github_ref: ${{ steps.set_outputs.outputs.github_ref }}
       pr_number: ${{ steps.set_outputs.outputs.pr_number }}
       build_matrix: ${{ steps.matrix_config.outputs.build_matrix }}
+      playmode_matrix: ${{ steps.matrix_config.outputs.playmode_matrix }}
       matrix_build_os: ${{ steps.matrix_config.outputs.matrix_build_os }}
       matrix_build_platform: ${{ steps.matrix_config.outputs.matrix_build_platform }}
       matrix_unity_versions: ${{ steps.matrix_config.outputs.matrix_unity_versions }}
