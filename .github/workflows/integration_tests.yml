@@ -249,7 +249,7 @@ jobs:
             --ios_sdk ${{ matrix.ios_sdk }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
-            --artifact_name "${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}" \
+            --artifact_name "${{ steps.matrix_info.outputs.info }}" \
             --force_latest_runtime \
             --ci
       - name: Return Unity license
