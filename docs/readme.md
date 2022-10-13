@@ -67,8 +67,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 10.0.0
 - Changes
+    - General: Updated Firebase C++ SDK dependencies to v10.0.0.
+    - General (Android): Update Firebase Android BoM dependencies to v31.0.0.
+    - General (iOS): Update Firebase Cocoapods dependencies to v10.0.0.
     - General: Minimum supported editor version is now Unity 2019.
     - General: Removed dependency on Parse Tasks. 
     - Auth (Android/iOS): Deprecate `PhoneAuthProvider.MaxTimeoutMs`. The actual
