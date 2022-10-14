@@ -281,11 +281,6 @@ def get_configs_from_file_name(file_name, file_name_re):
   configs = re.sub('-', ' ', configs).split()
   # Remove redundant components. e.g. "latest" in "windows-latest"
   if "latest" in configs: configs = [config for config in configs if config != "latest"]
-  if "desktop" in configs: configs.remove("desktop")
-  if "mobile" in configs: 
-    # Add mobile platform based on mobile test device
-    configs.insert(2, TEST_DEVICES.get(configs[2]).get("platform"))
-    configs.remove("mobile")
   return configs
 
 
