@@ -182,7 +182,7 @@ jobs:
         shell: bash
         command: |
           gem install u3d -v 1.2.3
-          u3d available
+          u3d available -u 2020.3.40f1 -p
 
   build_testapp:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
