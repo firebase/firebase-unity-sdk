@@ -233,7 +233,7 @@ def filter_values_on_diff(parm_key, value, auto_diff):
 
 
 def filter_non_desktop_platform(platform):
-  mobile_platform = [ANDROID, IOS, TVOS, PLAYMODE]
+  mobile_platform = [ANDROID, IOS, TVOS]
   filtered_value = filter(lambda p: p in platform, mobile_platform)
   return list(filtered_value)  
 
