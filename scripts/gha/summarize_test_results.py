@@ -311,7 +311,7 @@ def reorganize_log(log_data, all_tested_configs):
     if errors.get("test",{}).get("failures"):
       reorganized_configs = reorganize_configs(errors.get("test",{}).get("failures"))
       combined_configs = combine_configs(reorganized_configs, all_tested_configs["test_configs"])
-      logging.info("combined_configs: %s", combined_configs)
+      # logging.info("combined_configs: %s", combined_configs)
       all_configs = [["TEST"], ["FAILURE"]]
       all_configs.extend(combined_configs)
       log_results.setdefault(testapp, {}).setdefault(flat_config(all_configs), [])
@@ -341,7 +341,7 @@ def reorganize_configs(configs):
     reorganize_configs.append(set())
 
   for i in range(len(configs)):
-    for j in range(len(configs[i])):
+    for j in range(len(BUILD_CONFIGS)):
       reorganize_configs[j].add(configs[i][j])
   
   # remove empty config
@@ -370,8 +370,8 @@ def combine_config(config, config_value, k):
   if len(config_value) > 1 and len(config) == len(config_value):
     config = ["All %d %s" % (len(config_value), config_name)]
   elif config_name == "Test Device(s)":
-    ftl_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "real", config_value))
-    virtual_devices = set(filter(lambda device: TEST_DEVICES.get(device).get("type") in "virtual", config_value))
+    ftl_devices = set(filter(lambda device: TEST_DEVICES.get(device) and TEST_DEVICES.get(device).get("type") in "real", config_value))
+    virtual_devices = set(filter(lambda device: TEST_DEVICES.get(device) and TEST_DEVICES.get(device).get("type") in "virtual", config_value))
     if len(ftl_devices) > 1 and ftl_devices.issubset(set(config)):
       config.add("All %d FTL Devices" % len(ftl_devices))
       config = [x for x in config if (x not in ftl_devices)]
