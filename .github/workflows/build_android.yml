@@ -153,7 +153,7 @@ jobs:
           fi
 
       - name: Upload Build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: android_unity
           path: android_unity/*.zip

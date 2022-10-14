@@ -127,7 +127,7 @@ jobs:
           fi
 
       - name: Upload Build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ios_unity
           path: ios_unity/*.zip

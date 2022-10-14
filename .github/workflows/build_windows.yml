@@ -145,7 +145,7 @@ jobs:
           fi
 
       - name: Upload Build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: windows_unity
           path: windows_unity/*.zip
