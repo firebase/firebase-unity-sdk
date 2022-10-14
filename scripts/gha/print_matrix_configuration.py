@@ -46,31 +46,41 @@ DEFAULT_WORKFLOW = "desktop"
 EXPANDED_KEY = "expanded"
 MINIMAL_KEY = "minimal"
 
-_WINDOWS = "Windows"
-_MACOS = "macOS"
-_LINUX = "Linux"
+# platform
+WINDOWS = "Windows"
+MACOS = "macOS"
+LINUX = "Linux"
+ANDROID = "Android"
+IOS = "iOS"
+TVOS = "tvOS"
+PLAYMODE = "Playmode"
+
+# GitHub Runner
+WINDOWS_RUNNER = "windows-latest"
+MACOS_RUNNER = "macos-latest"
+LINUX_RUNNER = "ubuntu-latest"
 
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "build_os": [""],
       "unity_versions": ["2020"],
-      "mobile_devices": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
+      "build_os": [""],
+      "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, PLAYMODE],
+      "mobile_devices": ["android_target", "ios_target"],
       "mobile_test_on": ["real"],
 
       MINIMAL_KEY: {
-        "platforms": ["Playmode"],
+        "platforms": [PLAYMODE],
       },
 
       EXPANDED_KEY: {
-        "build_os": ["macos-latest","windows-latest"],
-        "unity_versions": ["2020", "2019", "2018"],
+        "build_os": [MACOS_RUNNER,WINDOWS_RUNNER],
+        "unity_versions": ["2020"],
         "mobile_test_on": ["real", "virtual"],
-        "mobile_devices": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
+        "mobile_devices": ["android_target", "ios_target", "simulator_target"],
       }
     },
     "config": {
-      "platforms": "Windows,macOS,Linux,Android,iOS,tvOS,Playmode",
       "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
     }
   },
@@ -82,51 +92,51 @@ PARAMETERS = {
 # TODO(@sunmou): Add Android Setting. e.g. NDK_VERSION
 UNITY_SETTINGS = {
   "2020": {
-    _WINDOWS: {
+    WINDOWS: {
       "version": "2020.3.34f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: None, MACOS: ["Mac-mono"], LINUX: ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
-    _MACOS: {
+    MACOS: {
       "version": "2020.3.34f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: None, LINUX: ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
-    _LINUX: {
+    LINUX: {
       "version": "2020.3.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": None, "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: None, WINDOWS: ["Windows-mono"], MACOS: ["Mac-mono"], LINUX: None}
     }
   },
   "2019": {
-    _WINDOWS: {
+    WINDOWS: {
       "version": "2019.4.39f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: None, MACOS: ["Mac-mono"], LINUX: ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
-    _MACOS: {
+    MACOS: {
       "version": "2019.4.39f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: None, LINUX: ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
-    _LINUX: {
+    LINUX: {
       "version": "2019.4.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: ["Mac-mono"], LINUX: None}
     }
   },
   "2018": {
-    _WINDOWS: {
+    WINDOWS: {
       "version": "2018.4.36f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-il2cpp"], MACOS: ["Mac-mono"], LINUX: ["Linux"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-windows-x86_64.zip"
     },
-    _MACOS: {
+    MACOS: {
       "version": "2018.4.36f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: ["Mac-il2cpp"], LINUX: ["Linux"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-darwin-x86_64.zip"
     },
-    _LINUX: {
+    LINUX: {
       "version": "2018.3.0f2",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: ["Mac-mono"], LINUX: None}
     }
   },
 }
@@ -134,30 +144,30 @@ UNITY_SETTINGS = {
 BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(s)"]
 
 TEST_DEVICES = {
-  "android_min": {"platform": "Android", "type": "real", "device": "model=Nexus10,version=19"},
-  "android_target": {"platform": "Android", "type": "real", "device": "model=blueline,version=28"},
-  "android_latest": {"platform": "Android", "type": "real", "device": "model=oriole,version=33"},
-  "emulator_min": {"platform": "Android", "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
-  "emulator_target": {"platform": "Android", "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
-  "emulator_latest": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
-  "emulator_32bit": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
-  "ios_min": {"platform": "iOS", "type": "real", "device": "model=iphonexr,version=13.2"},
-  "ios_target": {"platform": "iOS", "type": "real", "device": "model=iphone8,version=13.6"},
-  "ios_latest": {"platform": "iOS", "type": "real", "device": "model=iphone11pro,version=14.7"},
-  "simulator_min": {"platform": "iOS", "type": "virtual", "name": "iPhone 6", "version": "11.4"},
-  "simulator_target": {"platform": "iOS", "type": "virtual", "name": "iPhone 8", "version": "14.5"},
-  "simulator_latest": {"platform": "iOS", "type": "virtual", "name": "iPhone 11", "version": "14.4"},
+  "android_min": {"platform": ANDROID, "type": "real", "device": "model=Nexus10,version=19"},
+  "android_target": {"platform": ANDROID, "type": "real", "device": "model=blueline,version=28"},
+  "android_latest": {"platform": ANDROID, "type": "real", "device": "model=oriole,version=33"},
+  "emulator_min": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
+  "emulator_target": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
+  "emulator_latest": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
+  "emulator_32bit": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
+  "ios_min": {"platform": IOS, "type": "real", "device": "model=iphonexr,version=13.2"},
+  "ios_target": {"platform": IOS, "type": "real", "device": "model=iphone8,version=13.6"},
+  "ios_latest": {"platform": IOS, "type": "real", "device": "model=iphone11pro,version=14.7"},
+  "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 6", "version": "11.4"},
+  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 8", "version": "14.5"},
+  "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 11", "version": "14.4"},
 }
 
 
 def get_os():
   """Current Operation System"""
   if platform.system() == 'Windows':
-    return _WINDOWS
+    return WINDOWS
   elif platform.system() == 'Darwin':
-    return _MACOS
+    return MACOS
   elif platform.system() == 'Linux':
-    return _LINUX
+    return LINUX
 
 
 def get_unity_path(version):
@@ -222,19 +232,17 @@ def filter_values_on_diff(parm_key, value, auto_diff):
   return value
 
 
-def filter_mobile_platform(platform):
-  # tvOS isn't mobile, but it behaves like iOS.
-  mobile_platform = ["Android", "iOS", "tvOS"]
+def filter_non_desktop_platform(platform):
+  mobile_platform = [ANDROID, IOS, TVOS, PLAYMODE]
   filtered_value = filter(lambda p: p in platform, mobile_platform)
   return list(filtered_value)  
 
 
 def filter_build_platforms(platforms):
-  platforms = platforms.split(",")
   build_platforms = []
-  build_platforms.extend(filter_mobile_platform(platforms))
+  build_platforms.extend(filter_non_desktop_platform(platforms))
   # testapps from different desktop platforms are built in one job.
-  desktop_platforms = ','.join(list(filter(lambda p: p in platforms, ["Windows", "macOS", "Linux"])))
+  desktop_platforms = ','.join(list(filter(lambda p: p in platforms, [WINDOWS, MACOS, LINUX])))
   if desktop_platforms:
     build_platforms.append(desktop_platforms)
   return build_platforms
@@ -267,7 +275,7 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
   # }
 
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
-  if matrix_type: platforms = filter_build_platforms(get_value("integration_tests", matrix_type, "platforms", True))
+  if matrix_type: platforms = filter_build_platforms(get_value("integration_tests", matrix_type, "platforms"))
   else: platforms = filter_build_platforms(platforms)
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
   if matrix_type: ios_sdk = get_value("integration_tests", matrix_type, "mobile_test_on")
@@ -278,11 +286,11 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
   for l in li:
     unity_version = l[0]
     platform = l[1]
-    os = l[2] if l[2] else ("macos-latest" if (platform=="iOS" or platform=="tvOS") else "windows-latest")
+    os = l[2] if l[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
     
-    if (platform=="iOS" or platform=="tvOS"):
+    if platform in [IOS, TVOS]:
       # for iOS, tvOS platforms, exclude non macOS build_os 
-      if os=="macos-latest":
+      if os==MACOS_RUNNER:
         for s in ios_sdk:
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": s})
     else:
@@ -292,7 +300,13 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
 
 
 def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os):
-  if "Playmode" not in platforms: return ""
+  # matrix structure:
+  # {
+  #   "unity_version":"unity_version",
+  #   "os":"os",
+  # }
+
+  if PLAYMODE not in platforms: return ""
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
 
@@ -300,7 +314,7 @@ def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os
   matrix = {"include": []}
   for l in li:
     unity_version = l[0]
-    os = l[1] if l[1] else "windows-latest"
+    os = l[1] if l[1] else WINDOWS_RUNNER
     matrix["include"].append({"unity_version": unity_version, "os": os})
   return matrix
 
@@ -329,9 +343,9 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
   for l in li:
     unity_version = l[0]
     platform = l[1]
-    build_os = l[2] if l[2] else ("macos-latest" if (platform=="iOS" or platform=="tvOS") else "windows-latest")
+    build_os = l[2] if l[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
 
-    if platform in ["Windows", "macOS", "Linux"]:
+    if platform in [WINDOWS, MACOS, LINUX]:
       test_os = _get_test_os(platform)
       matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "ios_sdk": "NA"})
     else:
@@ -342,7 +356,7 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
         device_platform = TEST_DEVICES.get(mobile_device).get("platform")
         if device_platform == platform and device_type in mobile_device_types:
           test_os = _get_test_os(platform, device_type)
-          ios_sdk = device_type if device_platform == "iOS" else "NA"
+          ios_sdk = device_type if device_platform == IOS else "NA"
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_detail": device_detail, "device_type": device_type, "ios_sdk": ios_sdk})
 
   return matrix
@@ -352,11 +366,11 @@ def _get_test_os(platform, mobile_device_type=""):
   # Desktop platform test on their OS respectivly. 
   # Mobile platform test on Linux machine if we run tests on FTL, else Mac machine if we run tests on simulators 
   if platform == 'Windows':
-    return "windows-latest"
-  elif platform == 'Linux' or ((platform=="Android" or platform=="iOS") and mobile_device_type == 'real'):
-    return "ubuntu-latest"
+    return WINDOWS_RUNNER
+  elif platform == 'Linux' or (platform in [IOS, ANDROID] and mobile_device_type == 'real'):
+    return LINUX_RUNNER
   else: 
-    return "macos-latest"
+    return MACOS_RUNNER
 
 
 def main():
