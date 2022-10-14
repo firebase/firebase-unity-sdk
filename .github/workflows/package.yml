@@ -85,13 +85,13 @@ jobs:
           echo package_apis: ${{ steps.check-input.outputs.package_apis }}
 
       - name: Check out base branch
-        uses: actions/checkout@v2.3.1
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: ${{ inputs.working_branch }}
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.7
 
@@ -224,7 +224,7 @@ jobs:
           echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
 
       - name: Upload Build unitypackage
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: firebase_unity_sdk.zip
           path: firebase_unity_sdk.zip
@@ -253,13 +253,13 @@ jobs:
 
       - name: Upload Build tgz
         if: ${{ steps.check-input.outputs.package_for_checks }} == '1'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: firebase_unity_sdk_tgz
           path: output_tgz
 
       - name: upload hash
-        uses: actions/upload-artifact@v2.2.2
+        uses: actions/upload-artifact@v3
         with:
           name: firebase_unity_sdk_hash.txt
           path: firebase_unity_sdk_hash.txt
@@ -271,10 +271,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v2.3.1
+      uses: actions/checkout@v3
 
     - name: Setup python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.7
     - name: Generate token for GitHub API
