@@ -57,6 +57,13 @@ jobs:
       apis: ${{ steps.matrix_config.outputs.apis }}
       mobile_test_on: ${{ steps.matrix_config.outputs.mobile_test_on }}
       mobile_device: ${{ steps.matrix_config.outputs.mobile_device }}
+    env:
+        # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
+        LC_ALL: en_US.UTF-8
+        LANG: en_US.UTF-8
+        U3D_PASSWORD: ""
+        # Disable checking for U3D updates, since it is buggy
+        U3D_SKIP_UPDATE_CHECK: 1
     steps:
     ### Fail the workflow if the user does not have admin access to run the tests.
     - name: Check if user has permission to trigger tests
@@ -162,6 +169,11 @@ jobs:
           --actor ${{github.actor}} \
           --commit ${{steps.set_outputs.outputs.github_ref}} \
           --run_id ${{github.run_id}}
+    # Set up the requirements, and install Unity
+    # Ruby setup has to happen before python install and setup, to keep the absl config.
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.0.2
     - name: Install Unity installer (U3D)
       uses: nick-invision/retry@v2
       with:
