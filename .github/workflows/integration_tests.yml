@@ -244,14 +244,6 @@ jobs:
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.packaged_sdk_run_id }}
 
-      - name: Pod repo add
-        if: contains(matrix.platform, 'iOS') && ${{ !cancelled() }}
-        shell: bash
-        # The pod install fails during the cmake build, so preinstall it.
-        run: |
-          pod repo add cocoapods https://github.com/CocoaPods/Specs.git
-          pod repo update
-
       - name: Build integration tests
         timeout-minutes: 240
         shell: bash
