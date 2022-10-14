@@ -162,6 +162,15 @@ jobs:
           --actor ${{github.actor}} \
           --commit ${{steps.set_outputs.outputs.github_ref}} \
           --run_id ${{github.run_id}}
+    - name: Install Unity installer (U3D)
+      uses: nick-invision/retry@v2
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        shell: bash
+        command: |
+          gem install u3d -v 1.2.3
+          u3d available
 
   build_testapp:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
