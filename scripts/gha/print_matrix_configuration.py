@@ -53,7 +53,7 @@ _LINUX = "Linux"
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "build_os": [],
+      "build_os": [""],
       "unity_versions": ["2020"],
       "mobile_devices": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
       "mobile_test_on": ["real"],
