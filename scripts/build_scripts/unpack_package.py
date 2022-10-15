@@ -35,9 +35,6 @@ flags.DEFINE_string('folder', None,
                     'Directory of unziped SDK')
 flags.DEFINE_string("output", "output_unpack",
                     "Output folder for unpacked SDK.")
-flags.DEFINE_spaceseplist(
-    "dotnet_paths", "dotnet3 dotnet4",
-    ("List of subfolders of dotnet selection inside the SDK folder"))
 
 def find_unpack_script():
   """Get the unpack script either from folder passed from arg or download from unity-jar-resolver.
@@ -112,15 +109,10 @@ def main(argv):
 
   clean_create_folder(FLAGS.output)
 
-  for dotnet_path in FLAGS.dotnet_paths:
-    unpack_path = os.path.join(FLAGS.folder, dotnet_path)
-    if not os.path.exists(unpack_path):
-      logging.error("(%s) not exists", unpack_path)
-    else:
-      for f in os.listdir(unpack_path):
-        product_path = os.path.join(unpack_path, f)
-        if os.path.isfile(product_path):
-          unpack_one_package(unpack_script_path, product_path)
+  for f in os.listdir(FLAGS.folder):
+    product_path = os.path.join(FLAGS.folder, f)
+    if os.path.isfile(product_path):
+      unpack_one_package(unpack_script_path, product_path)
   logging.info("Unpack is done, please find result in %s", os.path.join(os.getcwd(), FLAGS.output))
 
 if __name__ == '__main__':

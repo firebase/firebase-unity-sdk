@@ -61,8 +61,6 @@ mono_add_library(firebase_database_cs
     ${firebase_database_swig_gen_src}
   REFERENCES
     google_minijson_cs
-    unity_compat_cs
-    unity_tasks_cs
     ${FIREBASE_PLATFORM_REF}
   DEPENDS
     firebase_database_swig

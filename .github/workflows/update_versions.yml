@@ -88,13 +88,13 @@ jobs:
           echo cpp_release_version: ${{ steps.decide_input.outputs.cpp_release_version }}
 
       - name: Check out base branch
-        uses: actions/checkout@v2.3.1
+        uses: actions/checkout@v3
         with:
           path: firebase-unity-sdk
           fetch-depth: 0
       
       - name: Checkout CPP Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
@@ -108,7 +108,7 @@ jobs:
           private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.7
 

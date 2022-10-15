@@ -43,8 +43,6 @@ mono_add_library(firebase_analytics_cs
     ${firebase_analytics_src}
     ${firebase_analytics_swig_gen_src}
   REFERENCES
-    unity_compat_cs
-    unity_tasks_cs
     ${FIREBASE_PLATFORM_REF}
   DEPENDS
     firebase_analytics_swig

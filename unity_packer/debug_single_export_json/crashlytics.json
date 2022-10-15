@@ -13,86 +13,6 @@
             "tvOS"
           ],
           "cpu": "AnyCPU",
-          "sections": [
-            "dotnet3"
-          ],
-          "paths": [
-            "Parse/Plugins/Unity.Compat.dll",
-            "Parse/Plugins/Unity.Tasks.dll",
-            "Parse/Plugins/dotNet45/Unity.Compat.dll",
-            "Parse/Plugins/dotNet45/Unity.Tasks.dll"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android",
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "sections": [
-            "dotnet4"
-          ],
-          "override_metadata": {
-            "PluginImporter": {
-              "platformData": {
-                "Any": {
-                  "enabled": 0
-                },
-                "Editor": {
-                  "enabled": 0
-                }
-              }
-            }
-          },
-          "paths": [
-            "Parse/Plugins/Unity.Compat.dll",
-            "Parse/Plugins/Unity.Tasks.dll"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android",
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "sections": [
-            "dotnet4"
-          ],
-          "override_metadata": {
-            "PluginImporter": {
-              "platformData": {
-                "Any": {
-                  "enabled": 1
-                },
-                "Editor": {
-                  "enabled": 1
-                }
-              }
-            }
-          },
-          "paths": [
-            "Parse/Plugins/dotNet45/Unity.Compat.dll",
-            "Parse/Plugins/dotNet45/Unity.Tasks.dll"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android",
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Platform.dll",
             "Firebase/Plugins/Firebase.Platform.pdb",
@@ -430,23 +350,6 @@
           "unity": "2018.1"
         }
       }
-    }
-  ],
-  "builds": [
-    {
-      "name": "dotnet4",
-      "sections": [
-        "build_dotnet4"
-      ],
-      "enabled_sections": [
-        "dotnet4"
-      ],
-      "package_name_replacements": [
-        {
-          "match": "^(Firebase.*unitypackage)$",
-          "replacement": "dotnet4/\\1"
-        }
-      ]
     }
   ]
 }

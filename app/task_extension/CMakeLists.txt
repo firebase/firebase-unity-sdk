@@ -24,8 +24,6 @@ mono_add_library(firebase_taskextension_cs
   SOURCES
     ${firebase_taskextension_src}
   REFERENCES
-    unity_compat_cs
-    unity_tasks_cs
     ${firebase_platform_task_lib}
     firebase_platform_cs
   XBUILD_EXE

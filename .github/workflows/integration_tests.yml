@@ -116,13 +116,13 @@ jobs:
             echo "::set-output name=pr_number::${{ github.event.inputs.test_pull_request }}"
           fi
         fi
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: ${{steps.set_outputs.outputs.github_ref}}
         fetch-depth: 0
         submodules: false
     - name: Setup python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ env.pythonVersion }}
     - name: Install python deps
@@ -183,7 +183,7 @@ jobs:
         run: |
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}"
           echo "::set-output name=artifact_suffix::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}"
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0.2
@@ -195,7 +195,7 @@ jobs:
           shell: bash
           command: gem install u3d -v 1.2.3
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7'
       - name: Install python deps
@@ -235,6 +235,7 @@ jobs:
           name: 'firebase_unity_sdk.zip'
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.packaged_sdk_run_id }}
+
       - name: Build integration tests
         timeout-minutes: 240
         shell: bash
@@ -382,7 +383,7 @@ jobs:
       - id: matrix_info
         run: |
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-Playmode-github_runner-${{ matrix.os }}"
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0.2
@@ -394,7 +395,7 @@ jobs:
           shell: bash
           command: gem install u3d -v 1.2.3
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7'
       - name: Install python deps
@@ -512,11 +513,11 @@ jobs:
         run: |
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}"
           echo "::set-output name=artifact_path::testapps-${{ matrix.platform }}-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.ios_sdk }}"
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7'
       - name: Install python deps
@@ -606,11 +607,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.pythonVersion }}
       - name: Install python deps

@@ -199,7 +199,7 @@ endmacro()
 #  sys_references: System CSharp libraries this depends on
 #  dep_targets: Targets this target depends on and need to be linked/built first
 #  guid: MSBuild project guid (for use with solution files)
-#  framework_version: .net framework version, defaults to 3.5
+#  framework_version: .net framework version, defaults to 4.5
 #  defines: Extra defines to add to the project file
 #  assembly_name: Name of the output assembly. Defaults to module
 #  xbuild: Path to xbuild executable. Defaults to XBUILD_EXE global var
@@ -250,7 +250,7 @@ macro(mono_add_internal name output_type)
   endif()
 
   if ("${UNITY_MONO_FRAMEWORK_VERSION}" STREQUAL "")
-    set(UNITY_MONO_FRAMEWORK_VERSION "3.5")
+    set(UNITY_MONO_FRAMEWORK_VERSION "4.5")
   endif()
 
   if ("${UNITY_MONO_ASSEMBLY_NAME}" STREQUAL "")

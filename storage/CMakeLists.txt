@@ -60,8 +60,6 @@ mono_add_library(firebase_storage_cs
     ${firebase_storage_src}
     ${firebase_storage_swig_gen_src}
   REFERENCES
-    unity_compat_cs
-    unity_tasks_cs
     ${FIREBASE_PLATFORM_REF}
   DEPENDS
     firebase_storage_swig

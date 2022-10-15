@@ -50,12 +50,12 @@ jobs:
         # Disable checking for U3D updates, since it is buggy
         U3D_SKIP_UPDATE_CHECK: 1
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
           ref: ${{ inputs.unity_branch }}
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
@@ -77,7 +77,7 @@ jobs:
           command: gem install u3d -v 1.2.3
 
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7'
 
@@ -139,7 +139,7 @@ jobs:
           fi
 
       - name: Upload Build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: macos_unity
           path: macos_unity/*.zip

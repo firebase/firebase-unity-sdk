@@ -73,13 +73,13 @@ jobs:
       unity_branch: ${{ steps.set_outputs.outputs.unity_branch }}
       additional_cmake_flags: ${{ steps.set_outputs.outputs.additional_cmake_flags }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.inputs.unity_branch }}
           fetch-depth: 0
           submodules: false
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.pythonVersion }}
       - name: Install python deps
