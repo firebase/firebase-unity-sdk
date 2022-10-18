@@ -45,18 +45,10 @@ jobs:
       trigger: ${{ steps.set_outputs.outputs.trigger }}
       github_ref: ${{ steps.set_outputs.outputs.github_ref }}
       pr_number: ${{ steps.set_outputs.outputs.pr_number }}
+      apis: ${{ steps.matrix_config.outputs.apis }}
       build_matrix: ${{ steps.matrix_config.outputs.build_matrix }}
       test_matrix: ${{ steps.matrix_config.outputs.test_matrix }}
       playmode_matrix: ${{ steps.matrix_config.outputs.playmode_matrix }}
-      matrix_build_os: ${{ steps.matrix_config.outputs.matrix_build_os }}
-      matrix_build_platform: ${{ steps.matrix_config.outputs.matrix_build_platform }}
-      matrix_unity_versions: ${{ steps.matrix_config.outputs.matrix_unity_versions }}
-      matrix_desktop_os: ${{ steps.matrix_config.outputs.matrix_desktop_os }}
-      matrix_mobile_platform: ${{ steps.matrix_config.outputs.matrix_mobile_platform }}
-      platform: ${{ steps.matrix_config.outputs.platform }}
-      apis: ${{ steps.matrix_config.outputs.apis }}
-      mobile_test_on: ${{ steps.matrix_config.outputs.mobile_test_on }}
-      mobile_device: ${{ steps.matrix_config.outputs.mobile_device }}
     steps:
     ### Fail the workflow if the user does not have admin access to run the tests.
     - name: Check if user has permission to trigger tests
@@ -166,7 +158,6 @@ jobs:
   build_testapp:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
     runs-on: ${{matrix.os}}
-    if: ${{ needs.check_and_prepare.outputs.matrix_build_platform != '[]' }}
     needs: check_and_prepare
     strategy:
       fail-fast: false
@@ -293,7 +284,7 @@ jobs:
           path: testapps-${{ steps.matrix_info.outputs.info }}/Android
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Android integration tests artifact
-        if: contains(needs.check_and_prepare.outputs.platform, 'Android') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'Android') && ${{ !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Android || true
       - name: Upload iOS integration tests artifact
@@ -304,7 +295,7 @@ jobs:
           path: testapps-${{ steps.matrix_info.outputs.info }}/iOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete iOS integration tests artifact
-        if: contains(needs.check_and_prepare.outputs.platform, 'iOS') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'iOS') && ${{ !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/iOS || true
       - name: Upload Linux integration tests artifact
@@ -315,7 +306,7 @@ jobs:
           path: testapps-${{ steps.matrix_info.outputs.info }}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Linux integration tests artifact
-        if: contains(needs.check_and_prepare.outputs.platform, 'Linux') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'Linux') && ${{ !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Linux || true
       - name: Upload macOS integration tests artifact
@@ -326,7 +317,7 @@ jobs:
           path: testapps-${{ steps.matrix_info.outputs.info }}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete macOS integration tests artifact
-        if: contains(needs.check_and_prepare.outputs.platform, 'macOS') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'macOS') && ${{ !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/macOS || true
       - name: Upload Windows integration tests artifact
@@ -337,7 +328,7 @@ jobs:
           path: testapps-${{ steps.matrix_info.outputs.info }}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Windows integration tests artifact
-        if: contains(needs.check_and_prepare.outputs.platform, 'Windows') && ${{ !cancelled() }}
+        if: contains(matrix.platform, 'Windows') && ${{ !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Windows || true
       - name: Download log artifacts
