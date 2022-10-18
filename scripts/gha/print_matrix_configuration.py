@@ -123,22 +123,6 @@ UNITY_SETTINGS = {
       "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: ["Mac-mono"], LINUX: None}
     }
   },
-  "2018": {
-    WINDOWS: {
-      "version": "2018.4.36f1",
-      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-il2cpp"], MACOS: ["Mac-mono"], LINUX: ["Linux"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-windows-x86_64.zip"
-    },
-    MACOS: {
-      "version": "2018.4.36f1",
-      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: ["Mac-il2cpp"], LINUX: ["Linux"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-darwin-x86_64.zip"
-    },
-    LINUX: {
-      "version": "2018.3.0f2",
-      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: ["Mac-mono"], LINUX: None}
-    }
-  },
 }
 
 BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(s)"]
