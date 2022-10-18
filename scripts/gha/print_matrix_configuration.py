@@ -252,10 +252,10 @@ def print_value(value, config_parms_only=False):
 def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, ios_sdk):
   # matrix structure:
   # {
-  #   "unity_version":"unity_version",
-  #   "platform":"platform",
-  #   "os":"os",
-  #   "ios_sdk":"ios_sdk"
+  #   "unity_version":"2020",
+  #   "platform":"iOS",
+  #   "os":"macos-latest",
+  #   "ios_sdk":"real"
   # }
 
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
@@ -265,12 +265,12 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
   if matrix_type: ios_sdk = get_value("integration_tests", matrix_type, "mobile_test_on")
 
   # generate base matrix: combinations of (unity_versions, platforms, build_os)
-  li = list(itertools.product(unity_versions, platforms, build_os))
+  l = list(itertools.product(unity_versions, platforms, build_os))
   matrix = {"include": []}
-  for l in li:
-    unity_version = l[0]
-    platform = l[1]
-    os = l[2] if l[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
+  for li in l:
+    unity_version = li[0]
+    platform = li[1]
+    os = li[2] if li[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
     
     if platform in [IOS, TVOS]:
       # for iOS, tvOS platforms, exclude non macOS build_os 
@@ -286,19 +286,19 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
 def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os):
   # matrix structure:
   # {
-  #   "unity_version":"unity_version",
-  #   "os":"os",
+  #   "unity_version":"2020",
+  #   "os":"windows-latest",
   # }
 
   if PLAYMODE not in platforms: return ""
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
 
-  li = list(itertools.product(unity_versions, build_os))
+  l = list(itertools.product(unity_versions, build_os))
   matrix = {"include": []}
-  for l in li:
-    unity_version = l[0]
-    os = l[1] if l[1] else WINDOWS_RUNNER
+  for li in l:
+    unity_version = li[0]
+    os = li[1] if li[1] else WINDOWS_RUNNER
     matrix["include"].append({"unity_version": unity_version, "os": os})
   return matrix
 
@@ -306,14 +306,14 @@ def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os
 def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mobile_device_types):
   # matrix structure:
   # {
-  #   "unity_version":"unity_version",
-  #   "platform":"platform",
-  #   "build_os":"build_os",
-  #   "test_os":"test_os",
-  #   "test_device":"test_device",
-  #   "device_detail":"test_device", # secondary info
-  #   "device_type":"test_device",   # secondary info
-  #   "ios_sdk": "ios_sdk"          
+  #   "unity_version":"2020",
+  #   "platform":"Android",
+  #   "build_os":"windows-latest",
+  #   "test_os":"ubuntu-latest",
+  #   "test_device":"android_target",
+  #   "device_detail":"model=blueline,version=28", # secondary info
+  #   "device_type":"real",   # secondary info
+  #   "ios_sdk": "NA"          
   # }
 
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
@@ -322,12 +322,12 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
   if matrix_type: mobile_device_types = get_value("integration_tests", matrix_type, "mobile_test_on")
 
   # generate base matrix: combinations of (unity_versions, platforms, build_os)
-  li = list(itertools.product(unity_versions, platforms, build_os))
+  l = list(itertools.product(unity_versions, platforms, build_os))
   matrix = {"include": []}
-  for l in li:
-    unity_version = l[0]
-    platform = l[1]
-    build_os = l[2] if l[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
+  for li in l:
+    unity_version = li[0]
+    platform = li[1]
+    build_os = li[2] if li[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
 
     if platform in [WINDOWS, MACOS, LINUX]:
       test_os = _get_test_os(platform)
