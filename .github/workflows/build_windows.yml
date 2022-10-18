@@ -85,7 +85,7 @@ jobs:
           python-version: '3.7'
 
       - name: Add msbuild to PATH (windows)
-        uses: microsoft/setup-msbuild@v1.0.2
+        uses: microsoft/setup-msbuild@v1.1
 
       - name: Install prerequisites
         shell: bash
