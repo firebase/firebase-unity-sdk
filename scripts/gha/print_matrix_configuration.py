@@ -65,8 +65,8 @@ PARAMETERS = {
     "matrix": {
       "unity_versions": ["2020"],
       "build_os": [""],
-      "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, PLAYMODE],
-      "mobile_devices": ["android_target", "ios_target"],
+      "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, TVOS, PLAYMODE],
+      "mobile_devices": ["android_target", "ios_target", "tvos_target"],
       "mobile_test_on": ["real"],
 
       MINIMAL_KEY: {
@@ -77,7 +77,7 @@ PARAMETERS = {
         "build_os": [MACOS_RUNNER,WINDOWS_RUNNER],
         "unity_versions": ["2020"],
         "mobile_test_on": ["real", "virtual"],
-        "mobile_devices": ["android_target", "ios_target", "simulator_target"],
+        "mobile_devices": ["android_target", "ios_target", "tvos_target", "simulator_target"],
       }
     },
     "config": {
@@ -141,6 +141,7 @@ TEST_DEVICES = {
   "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 6", "version": "11.4"},
   "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 8", "version": "14.5"},
   "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 11", "version": "14.4"},
+  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "14.3"},
 }
 
 
