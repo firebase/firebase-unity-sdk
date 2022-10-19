@@ -278,57 +278,57 @@ jobs:
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Android integration tests artifact
         uses: actions/upload-artifact@v3
-        if: contains(matrix.platform, 'Android') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'Android') && !cancelled() }}
         with:
           name: testapps-Android-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/Android
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Android integration tests artifact
-        if: contains(matrix.platform, 'Android') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'Android') && !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Android || true
       - name: Upload iOS integration tests artifact
         uses: actions/upload-artifact@v3
-        if: contains(matrix.platform, 'iOS') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'iOS') && !cancelled() }}
         with:
           name: testapps-iOS-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/iOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete iOS integration tests artifact
-        if: contains(matrix.platform, 'iOS') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'iOS') && !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/iOS || true
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v3
-        if: contains(matrix.platform, 'Linux') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'Linux') && !cancelled() }}
         with:
           name: testapps-Linux-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Linux integration tests artifact
-        if: contains(matrix.platform, 'Linux') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'Linux') && !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Linux || true
       - name: Upload macOS integration tests artifact
         uses: actions/upload-artifact@v3
-        if: contains(matrix.platform, 'macOS') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'macOS') && !cancelled() }}
         with:
           name: testapps-macOS-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete macOS integration tests artifact
-        if: contains(matrix.platform, 'macOS') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'macOS') && !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/macOS || true
       - name: Upload Windows integration tests artifact
         uses: actions/upload-artifact@v3
-        if: contains(matrix.platform, 'Windows') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'Windows') && !cancelled() }}
         with:
           name: testapps-Windows-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Windows integration tests artifact
-        if: contains(matrix.platform, 'Windows') && ${{ !cancelled() }}
+        if: ${{ contains(matrix.platform, 'Windows') && !cancelled() }}
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Windows || true
       - name: Download log artifacts
@@ -530,7 +530,7 @@ jobs:
       - name: Run Mobile integration tests on real device via FTL
         id: ftl_test
         if: ${{ matrix.device_type == 'real' }}
-        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.1
+        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
           testapp_dir: testapps
