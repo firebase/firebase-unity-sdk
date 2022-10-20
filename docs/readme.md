@@ -67,6 +67,11 @@ Support
 
 Release Notes
 -------------
+### 10.0.1
+- Changes
+    - Crashlytics (Android): Fixed a critical [issue](https://github.com/firebase/firebase-android-sdk/issues/4223) 
+      that was causing background crashes in specific cases.
+
 ### 10.0.0
 - Changes
     - General: Updated Firebase C++ SDK dependencies to v10.0.0.
