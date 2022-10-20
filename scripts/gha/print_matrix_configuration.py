@@ -39,37 +39,49 @@ import argparse
 import json
 import logging
 import platform
+import itertools
 
 
 DEFAULT_WORKFLOW = "desktop"
 EXPANDED_KEY = "expanded"
 MINIMAL_KEY = "minimal"
 
-_WINDOWS = "Windows"
-_MACOS = "macOS"
-_LINUX = "Linux"
+# platform
+WINDOWS = "Windows"
+MACOS = "macOS"
+LINUX = "Linux"
+ANDROID = "Android"
+IOS = "iOS"
+TVOS = "tvOS"
+PLAYMODE = "Playmode"
+
+# GitHub Runner
+WINDOWS_RUNNER = "windows-latest"
+MACOS_RUNNER = "macos-latest"
+LINUX_RUNNER = "ubuntu-latest"
 
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "build_os": ["macos-latest"],
-      "unity_version": ["2019"],
-      "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
+      "unity_versions": ["2020"],
+      "build_os": [""],
+      "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, PLAYMODE],
+      "mobile_devices": ["android_target", "ios_target"],
+      "mobile_test_on": ["real"],
 
       MINIMAL_KEY: {
-        "platform": ["Linux"],
+        "platforms": [PLAYMODE],
       },
 
       EXPANDED_KEY: {
-        "build_os": ["macos-latest","windows-latest"],
-        "unity_version": ["2020", "2019", "2018"],
-        "mobile_device": ["android_target", "emulator_latest", "ios_target", "simulator_target"],
+        "build_os": [MACOS_RUNNER,WINDOWS_RUNNER],
+        "unity_versions": ["2020"],
+        "mobile_test_on": ["real", "virtual"],
+        "mobile_devices": ["android_target", "ios_target", "simulator_target"],
       }
     },
     "config": {
-      "platform": "Windows,macOS,Linux,Android,iOS,tvOS,Playmode",
       "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
-      "mobile_test_on": "real"
     }
   },
 }
@@ -80,51 +92,35 @@ PARAMETERS = {
 # TODO(@sunmou): Add Android Setting. e.g. NDK_VERSION
 UNITY_SETTINGS = {
   "2020": {
-    _WINDOWS: {
+    WINDOWS: {
       "version": "2020.3.34f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: None, MACOS: ["Mac-mono"], LINUX: ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
-    _MACOS: {
+    MACOS: {
       "version": "2020.3.34f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: None, LINUX: ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
-    _LINUX: {
-      "version": "2020.3.29f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+    LINUX: {
+      "version": "2020.3.40f1",
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: None, WINDOWS: ["Windows-mono"], MACOS: ["Mac-mono"], LINUX: None}
     }
   },
   "2019": {
-    _WINDOWS: {
+    WINDOWS: {
       "version": "2019.4.39f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: None, MACOS: ["Mac-mono"], LINUX: ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
-    _MACOS: {
+    MACOS: {
       "version": "2019.4.39f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: None, LINUX: ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
-    _LINUX: {
+    LINUX: {
       "version": "2019.4.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
-    }
-  },
-  "2018": {
-    _WINDOWS: {
-      "version": "2018.4.36f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-il2cpp"], "macOS": ["Mac-mono"], "Linux": ["Linux"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-windows-x86_64.zip"
-    },
-    _MACOS: {
-      "version": "2018.4.36f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": ["Mac-il2cpp"], "Linux": ["Linux"]},
-      "ndk": "https://dl.google.com/android/repository/android-ndk-r16b-darwin-x86_64.zip"
-    },
-    _LINUX: {
-      "version": "2018.3.0f2",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+      "packages": {"Default": ["Unity"], ANDROID: ["Android"], IOS: ["Ios"], TVOS: ["appletv"], WINDOWS: ["Windows-mono"], MACOS: ["Mac-mono"], LINUX: None}
     }
   },
 }
@@ -132,30 +128,30 @@ UNITY_SETTINGS = {
 BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(s)"]
 
 TEST_DEVICES = {
-  "android_min": {"platform": "Android", "type": "real", "device": "model=Nexus10,version=19"},
-  "android_target": {"platform": "Android", "type": "real", "device": "model=blueline,version=28"},
-  "android_latest": {"platform": "Android", "type": "real", "device": "model=oriole,version=33"},
-  "emulator_min": {"platform": "Android", "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
-  "emulator_target": {"platform": "Android", "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
-  "emulator_latest": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
-  "emulator_32bit": {"platform": "Android", "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
-  "ios_min": {"platform": "iOS", "type": "real", "device": "model=iphone8,version=11.4"},
-  "ios_target": {"platform": "iOS", "type": "real", "device": "model=iphone11,version=13.6"},
-  "ios_latest": {"platform": "iOS", "type": "real", "device": "model=iphone8,version=14.7"},
-  "simulator_min": {"platform": "iOS", "type": "virtual", "name": "iPhone 6", "version": "11.4"},
-  "simulator_target": {"platform": "iOS", "type": "virtual", "name": "iPhone 8", "version": "14.5"},
-  "simulator_latest": {"platform": "iOS", "type": "virtual", "name": "iPhone 11", "version": "14.4"},
+  "android_min": {"platform": ANDROID, "type": "real", "device": "model=Nexus10,version=19"},
+  "android_target": {"platform": ANDROID, "type": "real", "device": "model=blueline,version=28"},
+  "android_latest": {"platform": ANDROID, "type": "real", "device": "model=oriole,version=33"},
+  "emulator_min": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
+  "emulator_target": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
+  "emulator_latest": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
+  "emulator_32bit": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
+  "ios_min": {"platform": IOS, "type": "real", "device": "model=iphonexr,version=13.2"},
+  "ios_target": {"platform": IOS, "type": "real", "device": "model=iphone8,version=13.6"},
+  "ios_latest": {"platform": IOS, "type": "real", "device": "model=iphone11pro,version=14.7"},
+  "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 6", "version": "11.4"},
+  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 8", "version": "14.5"},
+  "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 11", "version": "14.4"},
 }
 
 
 def get_os():
   """Current Operation System"""
   if platform.system() == 'Windows':
-    return _WINDOWS
+    return WINDOWS
   elif platform.system() == 'Darwin':
-    return _MACOS
+    return MACOS
   elif platform.system() == 'Linux':
-    return _LINUX
+    return LINUX
 
 
 def get_unity_path(version):
@@ -171,7 +167,7 @@ def get_unity_path(version):
     return "/opt/unity-editor-%s" % unity_full_version
 
 
-def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
+def get_value(workflow, matrix_type, parm_key, config_parms_only=False):
   """ Fetch value from configuration
 
   Args:
@@ -193,10 +189,9 @@ def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
   parm_type_key = "config" if config_parms_only else "matrix"
   workflow_block = PARAMETERS.get(workflow)
   if workflow_block:
-    if test_matrix and test_matrix in workflow_block["matrix"]:
-      if parm_key in workflow_block["matrix"][test_matrix]:
-        return workflow_block["matrix"][test_matrix][parm_key]
-    
+    if matrix_type and matrix_type in workflow_block["matrix"]:
+      if parm_key in workflow_block["matrix"][matrix_type]:
+        return workflow_block["matrix"][matrix_type][parm_key]
     return workflow_block[parm_type_key][parm_key]
 
   else:
@@ -204,7 +199,7 @@ def get_value(workflow, test_matrix, parm_key, config_parms_only=False):
                    "for workflow '{2}' (test_matrix = {3}) .".format(parm_key,
                                                                 parm_type_key,
                                                                 workflow,
-                                                                test_matrix))
+                                                                matrix_type))
 
 
 def filter_devices(devices, device_type, device_platform):
@@ -221,28 +216,20 @@ def filter_values_on_diff(parm_key, value, auto_diff):
   return value
 
 
-def filterdesktop_os(platform):
-  os_platform_dict = {"windows-latest":"Windows", "macos-latest":"macOS", "ubuntu-latest":"Linux"}
-  filtered_value = filter(lambda os: os_platform_dict.get(os) in platform, os_platform_dict.keys())
-  return list(filtered_value)  
-
-
-def filter_mobile_platform(platform):
-  # tvOS isn't mobile, but it behaves like iOS.
-  mobile_platform = ["Android", "iOS", "tvOS"]
+def filter_non_desktop_platform(platform):
+  mobile_platform = [ANDROID, IOS, TVOS]
   filtered_value = filter(lambda p: p in platform, mobile_platform)
   return list(filtered_value)  
 
 
-def filter_build_platform(platform):
-  platform = platform.split(",")
-  build_platform = []
-  build_platform.extend(filter_mobile_platform(platform))
+def filter_build_platforms(platforms):
+  build_platforms = []
+  build_platforms.extend(filter_non_desktop_platform(platforms))
   # testapps from different desktop platforms are built in one job.
-  desktop_platform = ','.join(list(filter(lambda p: p in platform, ["Windows", "macOS", "Linux"])))
-  if desktop_platform:
-    build_platform.append(desktop_platform)
-  return build_platform
+  desktop_platforms = ','.join(list(filter(lambda p: p in platforms, [WINDOWS, MACOS, LINUX])))
+  if desktop_platforms:
+    build_platforms.append(desktop_platforms)
+  return build_platforms
 
 
 def print_value(value, config_parms_only=False):
@@ -262,6 +249,114 @@ def print_value(value, config_parms_only=False):
     print(json.dumps(value))
 
 
+def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, ios_sdk):
+  # matrix structure:
+  # {
+  #   "unity_version":"2020",
+  #   "platform":"iOS",
+  #   "os":"macos-latest",
+  #   "ios_sdk":"real"
+  # }
+
+  if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
+  if matrix_type: platforms = filter_build_platforms(get_value("integration_tests", matrix_type, "platforms"))
+  else: platforms = filter_build_platforms(platforms)
+  if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
+  if matrix_type: ios_sdk = get_value("integration_tests", matrix_type, "mobile_test_on")
+
+  # generate base matrix: combinations of (unity_versions, platforms, build_os)
+  l = list(itertools.product(unity_versions, platforms, build_os))
+  matrix = {"include": []}
+  for li in l:
+    unity_version = li[0]
+    platform = li[1]
+    os = li[2] if li[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
+    
+    if platform in [IOS, TVOS]:
+      # for iOS, tvOS platforms, exclude non macOS build_os 
+      if os==MACOS_RUNNER:
+        for s in ios_sdk:
+          matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": s})
+    else:
+      # for Desktop, Android platforms, set value "NA" for ios_sdk setting
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": "NA"})
+  return matrix
+
+
+def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os):
+  # matrix structure:
+  # {
+  #   "unity_version":"2020",
+  #   "os":"windows-latest",
+  # }
+
+  if PLAYMODE not in platforms: return ""
+  if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
+  if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
+
+  l = list(itertools.product(unity_versions, build_os))
+  matrix = {"include": []}
+  for li in l:
+    unity_version = li[0]
+    os = li[1] if li[1] else WINDOWS_RUNNER
+    matrix["include"].append({"unity_version": unity_version, "os": os})
+  return matrix
+
+
+def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mobile_device_types):
+  # matrix structure:
+  # {
+  #   "unity_version":"2020",
+  #   "platform":"Android",
+  #   "build_os":"windows-latest",
+  #   "test_os":"ubuntu-latest",
+  #   "test_device":"android_target",
+  #   "device_detail":"model=blueline,version=28", # secondary info
+  #   "device_type":"real",   # secondary info
+  #   "ios_sdk": "NA"          
+  # }
+
+  if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
+  if matrix_type: platforms = get_value("integration_tests", matrix_type, "platforms")
+  if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
+  if matrix_type: mobile_device_types = get_value("integration_tests", matrix_type, "mobile_test_on")
+
+  # generate base matrix: combinations of (unity_versions, platforms, build_os)
+  l = list(itertools.product(unity_versions, platforms, build_os))
+  matrix = {"include": []}
+  for li in l:
+    unity_version = li[0]
+    platform = li[1]
+    build_os = li[2] if li[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
+
+    if platform in [WINDOWS, MACOS, LINUX]:
+      test_os = _get_test_os(platform)
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "ios_sdk": "NA"})
+    else:
+      mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
+      for mobile_device in mobile_devices:
+        device_detail = TEST_DEVICES.get(mobile_device).get("device")
+        device_type = TEST_DEVICES.get(mobile_device).get("type")
+        device_platform = TEST_DEVICES.get(mobile_device).get("platform")
+        if device_platform == platform and device_type in mobile_device_types:
+          test_os = _get_test_os(platform, device_type)
+          ios_sdk = device_type if device_platform == IOS else "NA"
+          matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_detail": device_detail, "device_type": device_type, "ios_sdk": ios_sdk})
+
+  return matrix
+
+
+def _get_test_os(platform, mobile_device_type=""):
+  # Desktop platform test on their OS respectivly. 
+  # Mobile platform test on Linux machine if we run tests on FTL, else Mac machine if we run tests on simulators 
+  if platform == 'Windows':
+    return WINDOWS_RUNNER
+  elif platform == 'Linux' or (platform in [IOS, ANDROID] and mobile_device_type == 'real'):
+    return LINUX_RUNNER
+  else: 
+    return MACOS_RUNNER
+
+
 def main():
   args = parse_cmdline_args()
   if args.unity_version:
@@ -269,25 +364,6 @@ def main():
       print(get_unity_path(args.unity_version))
     else:
       print(UNITY_SETTINGS[args.unity_version][get_os()].get(args.parm_key))
-    return 
-
-  if args.get_device_type:
-    print(TEST_DEVICES.get(args.parm_key).get("type"))
-    return 
-  if args.get_device_platform:
-    print(TEST_DEVICES.get(args.parm_key).get("platform"))
-    return 
-  if args.get_ftl_device:
-    print(TEST_DEVICES.get(args.parm_key).get("device"))
-    return 
-  if args.desktop_os:
-    print(filterdesktop_os(platform=args.parm_key))
-    return 
-  if args.mobile_platform:
-    print(filter_mobile_platform(platform=args.parm_key))
-    return 
-  if args.build_platform:
-    print(filter_build_platform(platform=args.parm_key))
     return 
 
   if args.override:
@@ -298,15 +374,17 @@ def main():
     print_value(args.override, args.config)
     return
 
-  if args.expanded:
-    test_matrix = EXPANDED_KEY
-  elif args.minimal:
-    test_matrix = MINIMAL_KEY
-  else:
-    test_matrix = ""
-  value = get_value(args.workflow, test_matrix, args.parm_key, args.config)
-  if args.workflow == "integration_tests" and args.parm_key == "mobile_device":
-    value = filter_devices(devices=value, device_type=args.device_type, device_platform=args.device_platform)
+  if args.build_matrix:
+    print(get_testapp_build_matrix(args.matrix_type, args.unity_versions.split(','), args.platforms, args.os.split(','), args.mobile_test_on.split(',')))
+    return
+  if args.playmode_matrix:
+    print(get_testapp_playmode_matrix(args.matrix_type, args.unity_versions.split(','), args.platforms, args.os.split(',')))
+    return
+  if args.test_matrix:
+    print(get_testapp_test_matrix(args.matrix_type, args.unity_versions.split(','), args.platforms.split(','), args.os.split(','), args.mobile_test_on.split(',')))
+    return
+
+  value = get_value(args.workflow, args.matrix_type, args.parm_key, args.config)
   if args.auto_diff:
     value = filter_values_on_diff(args.parm_key, value, args.auto_diff)
   print_value(value, args.config)
@@ -316,20 +394,18 @@ def parse_cmdline_args():
   parser = argparse.ArgumentParser(description='Query matrix and config parameters used in Github workflows.')
   parser.add_argument('-c', '--config', action='store_true', help='Query parameter used for Github workflow/dispatch configurations.')
   parser.add_argument('-w', '--workflow', default=DEFAULT_WORKFLOW, help='Config key for Github workflow.')
-  parser.add_argument('-m', '--minimal', type=bool, default=False, help='Use minimal matrix')
-  parser.add_argument('-e', '--expanded', type=bool, default=False, help='Use expanded matrix')
-  parser.add_argument('-k', '--parm_key', required=True, help='Print the value of specified key from matrix or config maps.')
+  parser.add_argument('-m', '--matrix_type', default="", help='Use minimal/expanded/default matrix')
+  parser.add_argument('-k', '--parm_key', help='Print the value of specified key from matrix or config maps.')
   parser.add_argument('-a', '--auto_diff', metavar='BRANCH', help='Compare with specified base branch to automatically set matrix options')
   parser.add_argument('-o', '--override', help='Override existing value with provided value')
-  parser.add_argument('-t', '--device_type', default=['real', 'virtual'], help='Test on which type of mobile devices. Used with "-k $device_type -t $mobile_test_on"')
-  parser.add_argument('-p', '--device_platform', default=['Android', 'iOS'], help='Test on which type of mobile devices. Used with "-k $device_type -p $platform"')
   parser.add_argument('-u', '--unity_version', help='Get unity setting based on unity major version. Used with "-k $unity_setting -u $unity_major_version"')
-  parser.add_argument('-get_device_type', action='store_true', help='Get the device type, used with -k $device')
-  parser.add_argument('-get_device_platform', action='store_true', help='Get the device platform, used with -k $device')
-  parser.add_argument('-get_ftl_device', action='store_true', help='Get the ftl test device, used with -k $device')
-  parser.add_argument('-desktop_os', type=bool, default=False, help='Get desktop test OS. Use with "-k $build_platform -desktop_os=1"')
-  parser.add_argument('-mobile_platform', type=bool, default=False, help='Get mobile test platform. Use with "-k $build_platform -mobile_platform=1"')
-  parser.add_argument('-build_platform', type=bool, default=False, help='Get build platform. Use with "-k $build_platform -build_platform=1"')
+  parser.add_argument('-playmode_matrix', action='store_true', help='Generate the playmode matrix for integration_test workflow')
+  parser.add_argument('-build_matrix', action='store_true', help='Generate the build matrix for integration_test workflow')
+  parser.add_argument('-test_matrix', action='store_true', help='Generate the test matrix for integration_test workflow')
+  parser.add_argument('-unity_versions', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
+  parser.add_argument('-platforms', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
+  parser.add_argument('-os', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
+  parser.add_argument('-mobile_test_on', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
   args = parser.parse_args()
   return args
 
