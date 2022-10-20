@@ -67,6 +67,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Crashlytics (Android): Fixed an [issue](https://github.com/firebase/quickstart-unity/issues/1116)
+      with symbols being stripped when using the tgz package.
+
 ### 10.0.1
 - Changes
     - Crashlytics (Android): Fixed a critical [issue](https://github.com/firebase/firebase-android-sdk/issues/4223) 

@@ -16,7 +16,6 @@
 
 namespace Firebase.Crashlytics {
   using System;
-  using System;
   using UnityEngine;
 
   /// <summary>
