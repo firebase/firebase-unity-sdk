@@ -30,7 +30,7 @@ set(FIREBASE_AUTH_ANDROID_DEPS
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:18.3.0"
+    "com.google.firebase:firebase-crashlytics-ndk:18.3.1"
     "com.google.firebase:firebase-analytics:21.2.0"
 )
 
