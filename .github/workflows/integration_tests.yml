@@ -183,6 +183,7 @@ jobs:
         run: |
           echo $ANDROID_HOME
           ls C:/Android/android-sdk/cmdline-tools/latest/bin/
+          C:/Android/android-sdk/cmdline-tools/latest/bin/sdkmanager.bat --version
           C:/Android/android-sdk/cmdline-tools/latest/bin/sdkmanager --version
       - name: Install Unity installer (U3D)
         uses: nick-invision/retry@v2
