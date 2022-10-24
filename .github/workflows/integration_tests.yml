@@ -182,7 +182,8 @@ jobs:
         shell: bash
         run: |
           echo $ANDROID_HOME
-          ls -R C:/Android/android-sdk
+          ls C:/Android/android-sdk/cmdline-tools/latest/bin/
+          C:/Android/android-sdk/cmdline-tools/latest/bin/sdkmanager --version
       - name: Install Unity installer (U3D)
         uses: nick-invision/retry@v2
         with:
