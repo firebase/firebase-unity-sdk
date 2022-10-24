@@ -196,6 +196,9 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
+      - name: setup Xcode version
+        if: runner.os == 'macOS'
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
       - name: Install Unity
         uses: nick-invision/retry@v2
         with:
@@ -228,9 +231,6 @@ jobs:
           name: 'firebase_unity_sdk.zip'
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.packaged_sdk_run_id }}
-      - name: setup Xcode version
-        if: runner.os == 'macOS'
-        run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
 
       - name: Build integration tests
         timeout-minutes: 240
