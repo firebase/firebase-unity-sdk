@@ -181,7 +181,8 @@ jobs:
       - name: Print Android info
         shell: bash
         run: |
-          ls -R C:\Android\android-sdk
+          echo $ANDROID_HOME
+          ls -R C:/Android/android-sdk
       - name: Install Unity installer (U3D)
         uses: nick-invision/retry@v2
         with:
