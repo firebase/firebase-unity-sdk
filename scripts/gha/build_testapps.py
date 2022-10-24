@@ -527,9 +527,10 @@ def patch_android_env(unity_version):
     _run([os.environ["ANDROID_HOME"]+"/tools/bin/sdkmanager", "--uninstall", "platforms;android-33"], check=False)
   except Exception as e:
     logging.exception("Failed to uninstall Android platform android-33")
-    folders = [f for f in glob.glob(os.environ["ANDROID_HOME"] + "**/", recursive=True)]
-    for f in folders:
-      print(f)
+  
+  folders = [f for f in glob.glob(os.environ["ANDROID_HOME"] + "**/", recursive=True)]
+  for f in folders:
+    print(f)
     
   os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
   os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
