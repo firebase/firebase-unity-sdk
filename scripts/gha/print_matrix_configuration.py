@@ -292,7 +292,7 @@ def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os
   #   "os":"windows-latest",
   # }
 
-  if PLAYMODE not in platforms: ""
+  if PLAYMODE not in platforms: return ""
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
 
