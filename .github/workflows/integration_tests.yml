@@ -161,6 +161,7 @@ jobs:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
     runs-on: ${{matrix.os}}
     needs: check_and_prepare
+    if: ${{ needs.check_and_prepare.outputs.build_matrix != '' && !cancelled() }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.build_matrix) }}
@@ -362,6 +363,7 @@ jobs:
     name: test-${{ matrix.unity_version }}-${{matrix.os}}-Playmode
     runs-on: ${{matrix.os}}
     needs: check_and_prepare
+    if: ${{ needs.check_and_prepare.outputs.playmode_matrix != '' && !cancelled() }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.playmode_matrix) }}
@@ -496,7 +498,7 @@ jobs:
   integration_test:
     name: test-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}
     runs-on: ${{ matrix.test_os }}
-    if: ${{ !cancelled() }}
+    if: ${{ needs.check_and_prepare.outputs.test_matrix != '' && !cancelled() }}
     needs: [check_and_prepare, build_testapp]
     strategy:
       fail-fast: false

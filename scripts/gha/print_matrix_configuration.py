@@ -266,6 +266,8 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
 
   # generate base matrix: combinations of (unity_versions, platforms, build_os)
   l = list(itertools.product(unity_versions, platforms, build_os))
+  if not l: return ""
+
   matrix = {"include": []}
   for li in l:
     unity_version = li[0]
@@ -290,7 +292,7 @@ def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os
   #   "os":"windows-latest",
   # }
 
-  if PLAYMODE not in platforms: return {"include": []}
+  if PLAYMODE not in platforms: ""
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
 
@@ -323,6 +325,8 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
   # generate base matrix: combinations of (unity_versions, platforms, build_os)
   l = list(itertools.product(unity_versions, platforms, build_os))
+  if not l: return ""
+
   matrix = {"include": []}
   for li in l:
     unity_version = li[0]
