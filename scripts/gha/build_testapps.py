@@ -127,7 +127,7 @@ _NET46 = "4.6"
 _ANDROID = "Android"
 _PLAYMODE = "Playmode"
 _IOS = "iOS"
-_TVPS = "tvOS"
+_TVOS = "tvOS"
 _WINDOWS = "Windows"
 _MACOS = "macOS"
 _LINUX = "Linux"
@@ -136,7 +136,7 @@ _DESKTOP = "Desktop"
 _BUILD_TARGET = {
   _ANDROID: "Android",
   _IOS: "iOS",
-  _TVOS: "appletv",
+  _TVOS: "tvOS",
   _WINDOWS: "Win64",
   _MACOS: "OSXUniversal",
   _LINUX: "Linux64",
@@ -144,7 +144,7 @@ _BUILD_TARGET = {
 }
 
 _SUPPORTED_PLATFORMS = (
-    _ANDROID, _IOS, , _TVOS, _PLAYMODE, _DESKTOP,
+    _ANDROID, _IOS, _TVOS, _PLAYMODE, _DESKTOP,
     _WINDOWS, _LINUX, _MACOS)
 
 _SUPPORTED_XCODE_CONFIGURATIONS = (
@@ -898,10 +898,10 @@ def validate_testapps(apis, api_configs):
 
 def validate_platforms(platforms):
   """Ensures platforms are valid."""
-  if (_IOS in platforms and platform.system() != "Darwin":
+  if (_IOS in platforms and platform.system() != "Darwin"):
     logging.warning("iOS requested on non-Mac OS, which is not yet supported.")
     platforms.remove(_IOS)
-  if (_TVOS in platforms and platform.system() != "Darwin":
+  if (_TVOS in platforms and platform.system() != "Darwin"):
     logging.warning("tvOS requested on non-Mac OS, which is not yet supported.")
     platforms.remove(_TVOS)
   return platforms
