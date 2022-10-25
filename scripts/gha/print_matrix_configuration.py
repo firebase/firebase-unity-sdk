@@ -320,6 +320,7 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: platforms = get_value("integration_tests", matrix_type, "platforms")
+  if PLAYMODE in platforms: platforms.remove(PLAYMODE)
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
   if matrix_type: mobile_device_types = get_value("integration_tests", matrix_type, "mobile_test_on")
 

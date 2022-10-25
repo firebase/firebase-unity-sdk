@@ -498,7 +498,7 @@ jobs:
   integration_test:
     name: test-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}
     runs-on: ${{ matrix.test_os }}
-    if: ${{ needs.check_and_prepare.outputs.build_matrix != '' && needs.check_and_prepare.outputs.test_matrix != '' && !cancelled() }}
+    if: ${{ needs.check_and_prepare.outputs.test_matrix != '' && !cancelled() }}
     needs: [check_and_prepare, build_testapp]
     strategy:
       fail-fast: false
