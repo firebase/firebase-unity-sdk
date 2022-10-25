@@ -60,13 +60,14 @@ WINDOWS_RUNNER = "windows-latest"
 MACOS_RUNNER = "macos-latest"
 LINUX_RUNNER = "ubuntu-latest"
 
+# TODO @drsanta add TVOS to the platforms once the integration tests can be run on tvOS.
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
       "unity_versions": ["2020"],
       "build_os": [""],
       "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, PLAYMODE],
-      "mobile_devices": ["android_target", "ios_target"],
+      "mobile_devices": ["android_target", "ios_target", "tvos_simulator"],
       "mobile_test_on": ["real"],
 
       MINIMAL_KEY: {
@@ -77,7 +78,7 @@ PARAMETERS = {
         "build_os": [MACOS_RUNNER,WINDOWS_RUNNER],
         "unity_versions": ["2020"],
         "mobile_test_on": ["real", "virtual"],
-        "mobile_devices": ["android_target", "ios_target", "simulator_target"],
+        "mobile_devices": ["android_target", "ios_target", "simulator_target", "tvos_simulator"],
       }
     },
     "config": {
@@ -141,6 +142,7 @@ TEST_DEVICES = {
   "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 6", "version": "11.4"},
   "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 8", "version": "14.5"},
   "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 11", "version": "14.4"},
+  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "14.3"},
 }
 
 
@@ -340,7 +342,7 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
         device_platform = TEST_DEVICES.get(mobile_device).get("platform")
         if device_platform == platform and device_type in mobile_device_types:
           test_os = _get_test_os(platform, device_type)
-          ios_sdk = device_type if device_platform == IOS else "NA"
+          ios_sdk = device_type if device_platform == IOS or device_platform == TVOS else "NA"
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_detail": device_detail, "device_type": device_type, "ios_sdk": ios_sdk})
 
   return matrix
