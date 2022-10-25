@@ -513,9 +513,9 @@ def patch_android_env(unity_version):
   # Figure out path to sdk manager
   sdkmanager_path = os.environ["ANDROID_HOME"]+"/tools/bin/sdkmanager"
   if (not os.path.exists(sdkmanager_path)):
-    sdkmanager_path = os.environ["ANDROID_HOME"]+"cmdline-tools/latest/bin/sdkmanager"
+    sdkmanager_path = os.environ["ANDROID_HOME"]+"/cmdline-tools/latest/bin/sdkmanager"
   if (not os.path.exists(sdkmanager_path)):
-    sdkmanager_path = os.environ["ANDROID_HOME"]+"cmdline-tools/latest/bin/sdkmanager.bat"
+    sdkmanager_path = os.environ["ANDROID_HOME"]+"/cmdline-tools/latest/bin/sdkmanager.bat"
   if (not os.path.exists(sdkmanager_path)):
     raise RuntimeError("Unable to locate Android SDK manager, which will likely cause problems")
 
