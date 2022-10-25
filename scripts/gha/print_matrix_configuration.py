@@ -331,7 +331,7 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
     if platform in [WINDOWS, MACOS, LINUX]:
       test_os = _get_test_os(platform)
-      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "ios_sdk": "NA"})
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "device_detail": "NA", "device_type": "NA", "ios_sdk": "NA"})
     else:
       mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
