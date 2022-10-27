@@ -341,6 +341,7 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
       mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
         device_detail = TEST_DEVICES.get(mobile_device).get("device")
+        if not device_detail: device_detail = "NA"
         device_type = TEST_DEVICES.get(mobile_device).get("type")
         device_platform = TEST_DEVICES.get(mobile_device).get("platform")
         if device_platform == platform and device_type in mobile_device_types:
