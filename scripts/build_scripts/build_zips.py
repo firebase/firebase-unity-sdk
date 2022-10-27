@@ -466,7 +466,7 @@ def make_macos_arch(arch, cmake_args):
   build_dir = os.path.join(os.getcwd(), arch)
   cmake_args.append('-DCMAKE_OSX_ARCHITECTURES='+arch)
   subprocess.call(cmake_args, cwd=build_dir)
-  subprocess.call('make', cwd=build_dir)
+  subprocess.call(['make', '-j'], cwd=build_dir)
   subprocess.call(['cpack', '.'], cwd=build_dir)
 
 def make_macos_multi_arch_build(cmake_args):
@@ -565,7 +565,7 @@ def make_tvos_target(device, arch, cmake_args):
     os.makedirs(arch)
   build_dir = os.path.join(os.getcwd(), arch)
   subprocess.call(build_args, cwd=build_dir)
-  subprocess.call('make', cwd=build_dir)
+  subprocess.call(['make', '-j'], cwd=build_dir)
   subprocess.call(['cpack', '.'], cwd=build_dir)
 
 def make_tvos_multi_arch_build(cmake_args):
@@ -795,7 +795,7 @@ def main(argv):
       # no make command in windows. TODO make config passable
       subprocess.call("cmake --build .  --config Release")
     else:
-      subprocess.call("make")
+      subprocess.call(["make", "-j"])
 
     cmake_pack_args = [
         "cpack",

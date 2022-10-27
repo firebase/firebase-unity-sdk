@@ -30,3 +30,49 @@ vcpkg
 
 # Visual Studio Code
 .vscode/
+
+# Firestore testapp
+firestore/testapp/**/*.dll
+firestore/testapp/**/*.pdb
+firestore/testapp/**/*.bundle
+firestore/testapp/**/*.meta
+
+firestore/testapp/Assets/Plugins
+firestore/testapp/Assets/StreamingAssets
+firestore/testapp/Assets/Editor Default Resources
+firestore/testapp/Assets/ExternalDependencyManager
+firestore/testapp/Assets/Firebase/Editor/*.xml
+firestore/testapp/Assets/Firebase/Editor/*.txt
+firestore/testapp/Assets/Firebase/Editor/*.exe
+firestore/testapp/Assets/Firebase/Editor/*.py
+firestore/testapp/Assets/Firebase/Sample/AutomatedTestRunner.cs
+firestore/testapp/Assets/Firebase/Sample/ftl_testapp_files
+firestore/testapp/Assets/Firebase/m2repository
+
+firestore/testapp/Library
+firestore/testapp/Logs
+firestore/testapp/Packages
+firestore/testapp/Temp
+firestore/testapp/UserSettings
+firestore/testapp/android_BackUpThisFolder_ButDontShipItWithYourGame
+firestore/testapp/ios
+firestore/testapp/macos.app/Contents
+firestore/testapp/obj/Debug
+firestore/testapp/Assembly-CSharp-Editor.csproj
+firestore/testapp/Assembly-CSharp-firstpass.csproj
+firestore/testapp/Assembly-CSharp.csproj
+firestore/testapp/Tests.csproj
+firestore/testapp/android.apk
+firestore/testapp/android_mapping.txt
+firestore/testapp/testapp.sln
+
+firestore/testapp/ProjectSettings/AndroidResolverDependencies.xml
+firestore/testapp/ProjectSettings/GvhProjectSettings.xml
+firestore/testapp/ProjectSettings/MemorySettings.asset
+firestore/testapp/ProjectSettings/PackageManagerSettings.asset
+firestore/testapp/ProjectSettings/PresetManager.asset
+firestore/testapp/ProjectSettings/TimelineSettings.asset
+firestore/testapp/ProjectSettings/VFXManager.asset
+firestore/testapp/ProjectSettings/VersionControlSettings.asset
+firestore/testapp/ProjectSettings/XRSettings.asset
+firestore/testapp/ProjectSettings/boot.config
