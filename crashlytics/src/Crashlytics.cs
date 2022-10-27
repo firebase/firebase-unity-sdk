@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+// Always link the Crashlytics assembly, since it tends to be stripped,
+// and a valid use case doesn't require the user to use the class directly.
+[assembly: UnityEngine.Scripting.AlwaysLinkAssembly]
+
 namespace Firebase.Crashlytics {
   using System;
   using System.Diagnostics;

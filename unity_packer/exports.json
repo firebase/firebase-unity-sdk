@@ -434,14 +434,6 @@
           }
         },
         {
-          "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Crashlytics/link.xml"
-          ]
-        },
-        {
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Editor/CrashlyticsDependencies.xml",
