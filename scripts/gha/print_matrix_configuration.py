@@ -268,6 +268,8 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
 
   # generate base matrix: combinations of (unity_versions, platforms, build_os)
   l = list(itertools.product(unity_versions, platforms, build_os))
+  if not l: return ""
+
   matrix = {"include": []}
   for li in l:
     unity_version = li[0]
@@ -320,11 +322,14 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: platforms = get_value("integration_tests", matrix_type, "platforms")
+  if PLAYMODE in platforms: platforms.remove(PLAYMODE)
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
   if matrix_type: mobile_device_types = get_value("integration_tests", matrix_type, "mobile_test_on")
 
   # generate base matrix: combinations of (unity_versions, platforms, build_os)
   l = list(itertools.product(unity_versions, platforms, build_os))
+  if not l: return ""
+
   matrix = {"include": []}
   for li in l:
     unity_version = li[0]
@@ -333,11 +338,12 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
     if platform in [WINDOWS, MACOS, LINUX]:
       test_os = _get_test_os(platform)
-      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "ios_sdk": "NA"})
+      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "device_detail": "NA", "device_type": "NA", "ios_sdk": "NA"})
     else:
       mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
         device_detail = TEST_DEVICES.get(mobile_device).get("device")
+        if not device_detail: device_detail = "NA"
         device_type = TEST_DEVICES.get(mobile_device).get("type")
         device_platform = TEST_DEVICES.get(mobile_device).get("platform")
         if device_platform == platform and device_type in mobile_device_types:
