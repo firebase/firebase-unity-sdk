@@ -6,11 +6,12 @@ the SDK, targeting desktop/Android/iOS.
 # Prerequisites
 
 Building the Unity SDK requires building the underlying C++ SDK. Refer to
-[][this doc] for what the prerequisites are.
+[https://github.com/firebase/firebase-cpp-sdk#prerequisites][this doc] for 
+what the prerequisites are.
 
 On top of above, you also need Unity installed (obviously). If you use an
-apple silicon machine as host, be sure to install the right version of
-Unity!
+apple silicon machine as host, be sure to install Unity for Apple Silicon,
+otherwise Unity will report missing binaries when you try to run the Testapp.
 
 # Building Firestore Unity SDK
 
@@ -32,6 +33,11 @@ python scripts/build_scripts/build_zips.py -platform=android -targets=auth -targ
 
 # Building for iOS. Incremental build for iOS is broken, so we use clean_build here.
 python scripts/build_scripts/build_zips.py -platform=android -targets=auth -targets=firestore -use_boringssl -clean_build
+
+# Build with OPENSSL: above use boringssl by default, which could add to build time, you can
+# use a binary OPENSSL if you want to, by specifying the location with a ENV Variable.
+OPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl@1.1 python scripts/build_scripts/build_zips.py -platform=macos -targets=auth -targets=firestore
+
 
 # Other supported platforms are tvos,linux,windows
 ```
@@ -63,11 +69,12 @@ able to run this scene which in turn runs all integration tests for Firestore.
 
 # Running Firestore Android TestApp
 
-You *probably* need to use `IL2CPP` as scripting backend instead of `Mono` for Android. To do this,
-you can go to `Edit->Project Setting->Player->Android->Scripting Backend` and select `IL2CPP`.
+*Apple Silicon Unity user*: you need to use `IL2CPP` as scripting backend instead of `Mono` for Android, otherwise you
+cannot target for `ARM64`. To do this, you can go to 
+`Edit->Project Setting->Player->Android->Scripting Backend` and select `IL2CPP`, and also select `Arm64` as target.
 
 You also need to turn on `minification` under on the same setting page, by turning on `R8` under `publish
-settings`.
+settings`. Otherwise you could see build error from task `minifyDebugWithProguard`.
 
 To run the Android testapp, go to `File->Build Settings`, select `Android` then click `Switch Platform`. After
 assets are loaded, click `Build and Run`.
