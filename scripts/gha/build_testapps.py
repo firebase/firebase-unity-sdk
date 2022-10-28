@@ -511,11 +511,21 @@ def patch_android_env(unity_version):
       logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
     else:
       logging.warning("No valid android folder unzipped from url %s, ANDROID_NDK_HOME not overwritten", url) 
+
+  # Figure out path to sdk manager
+  sdkmanager_path = os.environ["ANDROID_HOME"]+"/tools/bin/sdkmanager"
+  if (not os.path.exists(sdkmanager_path)):
+    sdkmanager_path = os.environ["ANDROID_HOME"]+"/cmdline-tools/latest/bin/sdkmanager"
+  if (not os.path.exists(sdkmanager_path)):
+    sdkmanager_path = os.environ["ANDROID_HOME"]+"/cmdline-tools/latest/bin/sdkmanager.bat"
+  if (not os.path.exists(sdkmanager_path)):
+    raise RuntimeError("Unable to locate Android SDK manager, which will likely cause problems")
+
   if major_version >= 2020:
     try:
       # This is a bug from Unity: 
       # https://issuetracker.unity3d.com/issues/android-android-build-fails-when-targeting-sdk-31-and-using-build-tools-31-dot-0-0
-      _run([os.environ["ANDROID_HOME"]+"/tools/bin/sdkmanager", "--uninstall", "build-tools;31.0.0"], check=False)
+      _run([sdkmanager_path, "--uninstall", "build-tools;31.0.0"], check=False)
       logging.info("Uninstall Android build tool 31.0.0")
     except Exception as e:
       logging.info(str(e))
@@ -526,7 +536,7 @@ def patch_android_env(unity_version):
     # If this continues to be a problem, this logic might need to be smarter, to remove all versions newer than 32,
     # but currently the GitHub runners have 33 as their max.
     logging.info("Uninstall Android platform android-33")
-    _run([os.environ["ANDROID_HOME"]+"/tools/bin/sdkmanager", "--uninstall", "platforms;android-33"], check=False)
+    _run([sdkmanager_path, "--uninstall", "platforms;android-33"], check=False)
   except Exception as e:
     logging.exception("Failed to uninstall Android platform android-33")
     
