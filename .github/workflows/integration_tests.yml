@@ -52,7 +52,7 @@ jobs:
     steps:
     ### Fail the workflow if the user does not have admin access to run the tests.
     - name: Check if user has permission to trigger tests
-      uses: lannonbr/repo-permission-check-action@2.0.2
+      uses: lannonbr/repo-permission-check-action@2.0.0
       with:
         permission: "admin"
       env:
