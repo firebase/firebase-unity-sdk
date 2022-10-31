@@ -32,13 +32,7 @@ inside the Unity Editor.
   - Import the `Firebase Storage` plugin.
     - Select the **Assets > Import Package > Custom Package** menu item.
     - From the [Firebase Unity SDK](https://firebase.google.com/download/unity)
-      downloaded previously, import `FirebaseStorage.unitypackage` from the
-      directory that matches the version of Unity you use:
-       - Unity 5.x and earlier use the .NET 3.x framework, so you need to
-         import the `dotnet3/FirebaseStorage.unitypackage` package .
-       - Unity 2017.x and newer allow the use of the .NET 4.x framework.  If
-         your project is configured to use .NET 4.x, import the
-         `dotnet4/FirebaseStorage.unitypackage` package.
+      downloaded previously, import `FirebaseStorage.unitypackage`.
     - When the **Import Unity Package** window appears, click the **Import**
       button.
   - Turn off secure access using [Public Rules](https://firebase.google.com/docs/storage/security/start)

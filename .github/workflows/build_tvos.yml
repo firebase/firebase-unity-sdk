@@ -1,7 +1,34 @@
-# Workflow to handle building the Unity SDK on iOS
-name: Build iOS (SubWorkflow)
+# Workflow to handle building the Unity SDK on tvOS
+name: Build tvOS (SubWorkflow)
 
 on:
+  workflow_dispatch:
+    inputs:
+      unity_version:
+        description: 'Unity version'
+        default: '2019'
+        required: true
+        type: string
+      firebase_cpp_sdk_version:
+        description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
+        default: 'v9.6.0'
+        required: false
+        type: string
+      unity_branch:
+        description: 'Unity branch to build against, empty means current branch'
+        default: ''
+        type: string
+      apis:
+        description: 'CSV of apis to build and test'
+        default: 'analytics,auth,crashlytics,database,firestore,functions,installations,messaging,remote_config,storage'
+        required: true
+        type: string
+      unity_platform_name:
+        description: 'The platform name Unity should install with'
+        default: 'tvOS,iOS'
+        required: true
+        type: string
+
   workflow_call:
     inputs:
       unity_version:
@@ -20,7 +47,7 @@ on:
         type: string
       apis:
         description: 'CSV of apis to build and test'
-        default: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
+        default: 'analytics,auth,crashlytics,database,firestore,functions,installations,messaging,remote_config,storage'
         required: true
         type: string
       unity_platform_name:
@@ -28,16 +55,10 @@ on:
         default: ''
         required: true
         type: string
-      # Additional CMake flags to use
-      additional_cmake_flags:
-        description: 'Additional flags to pass into CMake'
-        default: ''
-        required: false
-        type: string
 
 jobs:
-  build_ios:
-    name: build-ios-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
+  build_tvos:
+    name: build-tvos-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
     runs-on: macos-12
     strategy:
       fail-fast: false
@@ -50,14 +71,14 @@ jobs:
       # Disable checking for U3D updates, since it is buggy
       U3D_SKIP_UPDATE_CHECK: 1
       xcodeVersion: "13.3.1"
-  
+
     steps:
       - name: Checkout Unity Repo
         uses: actions/checkout@v3
         with:
           submodules: true
           ref: ${{ inputs.unity_branch }}
-          
+
       - name: Checkout CPP Repo
         uses: actions/checkout@v3
         with:
@@ -94,7 +115,13 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-      
+
+      - name: Pod repo add
+        shell: bash
+        # The pod install fails during the cmake build, so preinstall it.
+        run: |
+          pod repo add cocoapods https://github.com/CocoaPods/Specs.git
+
       - name: Install Unity
         uses: nick-invision/retry@v2
         with:
@@ -103,31 +130,31 @@ jobs:
           shell: bash
           command:  |
             python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
-      
+
       - name: Setup Unity path
         shell: bash
         run: |
           echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{ inputs.unity_version }} -k unity_path )" >> $GITHUB_ENV
 
-      - name: Build SDK (iOS)
+      - name: Build SDK (tvOS)
         timeout-minutes: 90
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --gha --platform=ios --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
+          python scripts/build_scripts/build_zips.py --gha --platform=tvos --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
 
       - name: Check zip file
         shell: bash
         run: |
-          if [ -f ios_unity/*.zip ]; then
-            echo "ios_unity zip created."
+          if [ -f tvos_unity/*.zip ]; then
+            echo "tvos_unity zip created."
           else
-            echo "Fail to create ios_unity zip."
+            echo "Fail to create tvos_unity zip."
             exit 1
           fi
 
       - name: Upload Build
         uses: actions/upload-artifact@v3
         with:
-          name: ios_unity
-          path: ios_unity/*.zip
+          name: tvos_unity
+          path: tvos_unity/*.zip

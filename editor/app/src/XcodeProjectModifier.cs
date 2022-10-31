@@ -203,9 +203,8 @@ internal class XcodeProjectModifier {
   // the methods. Once that is complete it saves the modifications back over the original files.
   [PostProcessBuild]
   internal static void PostProcessBuild(BuildTarget buildTarget, string pathToBuiltProject) {
-    // BuiltTarget.iOS is not defined in Unity 4, so we just use strings here
-    if (buildTarget.ToString() != "iOS" && buildTarget.ToString() != "iPhone") {
-      logger.LogDebug("Skipping PostProcessBuild as target {0} is not for iOS", buildTarget);
+    if (buildTarget != BuildTarget.iOS && buildTarget != BuildTarget.tvOS) {
+      logger.LogDebug("Skipping PostProcessBuild as target {0} is not for iOS+", buildTarget);
       return;
     }
 

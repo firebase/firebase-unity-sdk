@@ -198,26 +198,27 @@ struct ConfigValueInternal {
 
     foreach (System.Collections.Generic.KeyValuePair<string, object>
              pair in oldMap) {
-      string toStore;
-      if (pair.Value is System.Collections.Generic.IEnumerable<byte>) {
+      if (pair.Value is string) {
+        newMap[pair.Key] = pair.Value as string;
+      } else if (pair.Value is System.Collections.Generic.IEnumerable<byte>) {
         // For lists of bytes, match the UTF8 conversion used by the base
         // implementation.
         var list =
             new System.Collections.Generic.List<byte>(
                 pair.Value as System.Collections.Generic.IEnumerable<byte>);
-        toStore = System.Text.Encoding.UTF8.GetString(list.ToArray());
+        newMap[pair.Key] = System.Text.Encoding.UTF8.GetString(list.ToArray());
       } else if (pair.Value is System.Collections.IEnumerable) {
         // For other collections, just try to convert the inner values.
         var list = pair.Value as System.Collections.IEnumerable;
-        toStore = "";
+        var stringBuilder = new System.Text.StringBuilder();
         foreach (object obj in list) {
-          toStore += obj.ToString();
+          stringBuilder.Append(obj);
         }
+        newMap[pair.Key] = stringBuilder.ToString();
       } else {
         // For everything else, go straight to a string.
-        toStore = pair.Value.ToString();
+        newMap[pair.Key] = pair.Value.ToString();
       }
-      newMap[pair.Key] = toStore;
     }
 
     return newMap;

@@ -87,8 +87,6 @@ mono_add_library(firebase_crashlytics_cs
     ${firebase_crashlytics_src}
     ${firebase_crashlytics_swig_gen_src}
   REFERENCES
-    unity_compat_cs
-    unity_tasks_cs
     ${FIREBASE_PLATFORM_REF}
   DEPENDS
     firebase_crashlytics_swig
@@ -107,12 +105,6 @@ else()
 endif()
 
 unity_pack_cs(firebase_crashlytics_cs)
-
-# Crashlytics has a special file to prevent il2cpp from stripping symbols.
-unity_pack_file(
-  "link.xml"
-  PACK_PATH "Firebase/Plugins/Crashlytics"
-)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Crashlytics

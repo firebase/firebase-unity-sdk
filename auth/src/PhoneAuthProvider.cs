@@ -59,6 +59,11 @@ namespace Firebase.Auth {
 public sealed class PhoneAuthProvider : global::System.IDisposable {
   /// Maximum value of `autoVerifyTimeOutMs` in @ref VerifyPhoneNumber.
   /// @ref VerifyPhoneNumber will automatically clamp values to this amount.
+  ///
+  /// @deprecated This value is no longer used to clamp
+  /// `autoVerifyTimeOutMs` in @ref VerifyPhoneNumber. The range is
+  /// determined by the underlying SDK, ex. <a href="/docs/reference/android/com/google/firebase/auth/PhoneAuthOptions.Builder"><code>PhoneAuthOptions.Build</code> in Android SDK</a>
+  [System.Obsolete("PhoneAuthProvider.MaxTimeoutMs is deprecated. This value no longer affects PhoneAuthProvider.VerifyPhoneNumber()")]
   public static uint MaxTimeoutMs {
     get {
       return PhoneAuthProviderInternal.kMaxTimeoutMs;
@@ -212,7 +217,6 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   ///    miliseconds. Currently SMS auto retrieval is only supported on Android.
   ///    If 0, do not do SMS auto retrieval.
   ///    If positive, try to auto-retrieve the SMS verification code.
-  ///    If larger than MaxTimeoutMs, clamped to MaxTimeoutMs.
   ///    When the time out is exceeded, `codeAutoRetrievalTimeOut`
   ///    is called.
   /// @param[in] forceResendingToken If NULL, assume this is a new phone
@@ -247,7 +251,6 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   ///    miliseconds. Currently SMS auto retrieval is only supported on Android.
   ///    If 0, do not do SMS auto retrieval.
   ///    If positive, try to auto-retrieve the SMS verification code.
-  ///    If larger than MaxTimeoutMs, clamped to MaxTimeoutMs.
   ///    When the time out is exceeded, `codeAutoRetrievalTimeOut`
   ///    is called.
   /// @param[in] forceResendingToken If NULL, assume this is a new phone
@@ -287,7 +290,6 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   ///    miliseconds. Currently SMS auto retrieval is only supported on Android.
   ///    If 0, do not do SMS auto retrieval.
   ///    If positive, try to auto-retrieve the SMS verification code.
-  ///    If larger than MaxTimeoutMs, clamped to MaxTimeoutMs.
   ///    When the time out is exceeded, `codeAutoRetrievalTimeOut`
   ///    is called.
   /// @param[in] forceResendingToken If NULL, assume this is a new phone
@@ -324,7 +326,6 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   ///    miliseconds. Currently SMS auto retrieval is only supported on Android.
   ///    If 0, do not do SMS auto retrieval.
   ///    If positive, try to auto-retrieve the SMS verification code.
-  ///    If larger than MaxTimeoutMs, clamped to MaxTimeoutMs.
   ///    When the time out is exceeded, `codeAutoRetrievalTimeOut`
   ///    is called.
   /// @param[in] forceResendingToken If NULL, assume this is a new phone

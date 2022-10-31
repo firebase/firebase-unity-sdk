@@ -95,8 +95,6 @@ mono_add_library(firebase_app_cs
     ${firebase_app_swig_gen_src}
     ${version_info_file}
   REFERENCES
-    unity_compat_cs
-    unity_tasks_cs
     ${firebase_platform_task_lib}
     firebase_platform_cs
     firebase_taskextension_cs

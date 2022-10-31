@@ -54,8 +54,6 @@ mono_add_library(firebase_installations_cs
     ${firebase_installations_src}
     ${firebase_installations_swig_gen_src}
   REFERENCES
-    unity_compat_cs
-    unity_tasks_cs
     ${FIREBASE_PLATFORM_REF}
   DEPENDS
     firebase_installations_swig

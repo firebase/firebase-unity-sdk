@@ -20,7 +20,7 @@
 //
 // It also creates the google-services-desktop.json file, (used when building on
 // desktop or running in the editor) based on either the google-services.json or
-// GoogleService-Info.plist file, depending on your current build target.  (iOS
+// GoogleService-Info.plist file, depending on your current build target.  (iOS+
 // targets will prefer the GoogleService-Info.plist file, while Android build
 // targets will prefer google-services.json.)
 //
@@ -172,7 +172,7 @@ namespace Firebase.Editor {
       // file.
 
       // If the project is set to build for Android, the google-services.json file
-      // is preferred.  If it is set to build for iOS, the GoogleServices-Info.plist
+      // is preferred.  If it is set to build for iOS+, the GoogleServices-Info.plist
       // file is preferred.  When set to standalone desktop, it tries to match the
       // current bundleid, and if it can't, it takes any plist/json file it can find.
 
@@ -201,7 +201,8 @@ namespace Firebase.Editor {
         // Regenerate google-services-desktop file.
         switch (EditorUserBuildSettings.selectedBuildTargetGroup) {
           case BuildTargetGroup.iOS:
-            // If we're on iOS, generate the desktop file from the plist, if possible.
+          case BuildTargetGroup.tvOS:
+            // If we're on iOS+, generate the desktop file from the plist, if possible.
             if (googleServiceInfoFile != null) {
               CreateDesktopJsonFromPlist(googleServiceInfoFile);
             } else if (googleServicesFile != null) {
@@ -229,7 +230,8 @@ namespace Firebase.Editor {
         logMessageForNoConfigFiles(
             String.Format(DocRef.GoogleServicesFileBundleIdMissing,
                 GetAndroidApplicationId(),
-                EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.iOS ?
+                (EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.iOS ||
+                 EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.tvOS) ?
                     "GoogleService-Info.plist" : "google-services.json",
                 String.Join("\n", BundleIdsFromBundleIdsByConfigFile(
                     ConfigFileDirectory).ToArray()),
@@ -465,10 +467,11 @@ namespace Firebase.Editor {
       ConfigFileType fileType;
       if (EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.Android) {
         fileType = ConfigFileType.Json;
-      } else if (EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.iOS) {
+      } else if (EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.iOS ||
+                 EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.tvOS) {
         fileType = ConfigFileType.Plist;
       } else {
-        // Don't need to be here, if we're not on iOS or Android.
+        // Don't need to be here, if we're not on iOS+ or Android.
         return;
       }
       var configFile = FindGoogleServicesFile(fileType, bundleId,

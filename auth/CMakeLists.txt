@@ -57,8 +57,6 @@ mono_add_library(firebase_auth_cs
     ${firebase_auth_src}
     ${firebase_auth_swig_gen_src}
   REFERENCES
-    unity_compat_cs
-    unity_tasks_cs
     ${FIREBASE_PLATFORM_REF}
   DEPENDS
     firebase_auth_swig

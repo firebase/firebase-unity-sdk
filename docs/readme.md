@@ -18,14 +18,7 @@ features on *iOS* and *Android*:
 | Firebase Remote Config             | FirebaseRemoteConfig.unitypackage |
 | Firebase Storage                   | FirebaseStorage.unitypackage      |
 
-The SDK provides .NET 3.x and .NET 4.x compatible packages in the `dotnet3` and
-`dotnet4` directories of the SDK:
-
-* Unity 5.x and earlier use the .NET 3.x framework, so you need to import
-  packages from the `dotnet3` directory.
-* Unity 2017.x and newer allow the use of the .NET 4.x framework.  If your
-  project is configured to use .NET 4.x, import packages from the
-  `dotnet4` directory.
+The SDK provides .NET 4.x compatible packages
 
 ## Desktop Workflow Implementations
 
@@ -58,87 +51,6 @@ need to conditionally compile code when also targeting the desktop.
 The AdMob Unity plugin is distributed separately and is available from the
 [AdMob Get Started](https://firebase.google.com/docs/admob/unity/start) guide.
 
-## Known Issues
-
-### .NET 4.x compatibility when using Unity 2017.x and newer.
-
-.NET 4.x support is available as a build option in Unity 2017 and newer.
-Firebase plugins use components of the
-[Parse SDK](https://github.com/parse-community/Parse-SDK-dotNET) to provide some
-.NET 4.x classes in earlier versions of .NET. Therefore, versions `5.4.0` and
-newer of the {{unity_sdk}} provide plugins that are compatible with either
-.NET 3.x or .NET 4.x in `dotnet3` and `dotnet4` directories of the
-{{unity_sdk_link}}.
-
-If you import a Firebase plugin that is incompatible with the .NET version
-enabled in your project, you'll see compile errors from some types in the
-.NET framework that are implemented by the Parse SDK.
-
-To resolve the compilation error, if you're using .NET 3.x:
-
-1. Remove or disable the following DLLs for all platforms:
-    - `Parse/Plugins/dotNet45/Unity.Compat.dll`
-    - `Parse/Plugins/dotNet45/Unity.Tasks.dll`
-1. Enable the following DLLs for all platforms:
-    - `Parse/Plugins/Unity.Compat.dll`
-    - `Parse/Plugins/Unity.Tasks.dll`
-
-To resolve the compilation error, if you're using .NET 4.x:
-
-1. Remove or disable the following DLLs for all platforms:
-    - `Parse/Plugins/Unity.Compat.dll`
-    - `Parse/Plugins/Unity.Tasks.dll`
-1. Enable the following DLLs for all platforms:
-    - `Parse/Plugins/dotNet45/Unity.Compat.dll`
-    - `Parse/Plugins/dotNet45/Unity.Tasks.dll`
-
-If you import another Firebase plugin:
-
-- Select the menu item
-  `Assets > Play Services Resolver > Version Handler > Update`
-  to enable the correct DLLs for your project.
-
-
-### Unity 4 workarounds
-
-Firebase plugins are not officially supported in Unity 4.  However, we do
-make an effort to ensure the plugins can work with some manual setup.
-
-A couple of components do not work in Unity 4:
-
-  - [Version Handler](https://github.com/googlesamples/unity-jar-resolver#unity-plugin-version-management)
-    does not work due to no PluginImporter and no clean way to prevent managed
-    DLLs from being loaded by Unity 4.
-    - This means it's not possible for plugins to automatically enable the most
-      recent version of shared components (e.g Firebase, AdMob, Facebook etc.
-      may share a common component).
-    - DLLs that target a specific .NET version (e.g .NET 4.x) are not disabled.
-  - Managed (C#) DLLs cannot be targeted to a specific platform which breaks
-    our plugin where we have platform specific C# DLLs for some components.
-
-To use in Unity 4 you will need to:
-
-  - Resolve any dependencies that are shared between multiple plugins.
-    For example, Firebase and AdMob use the
-    [Play Services Resolver](https://github.com/googlesamples/unity-jar-resolver)
-    which contains DLLs that encode the version in their filename under the
-    folder `PlayServicesResolver/Editor`.  For each versioned DLL under the
-    folder `PlayServicesResolver/Editor` delete the oldest version of each DLL.
-  - Remove .NET 4.x DLLs from `Parse/Plugins/dotNet45`.
-  - Remove / rename platform specific DLLs.
-    Firebase plugins contain iOS specific DLLs under the folder
-    `Firebase/Plugins/iOS`.
-    - When *not* building for iOS:
-      - Change the extension of files under the `Firebase/Plugins/iOS` folder
-        from `.dll` to `.dlldisabled`
-    - When building for iOS:
-      - Change the extension of files under the `Firebase/Plugins/iOS` folder
-        from `.dlldisabled` to `.dll`
-      - For each file in `Firebase/Plugins/iOS` change the file extension of
-        the same name under `Firebase/Plugins` from `.dll` to `.dlldisabled`.
-        For example, `Firebase/Plugins/iOS/Firebase.App.dll` and
-        `Firebase/Plugins/Firebase.App.dlldisabled`.
-
 Setup
 -----
 
@@ -155,6 +67,40 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Crashlytics (Android): Fixed an [issue](https://github.com/firebase/quickstart-unity/issues/1116)
+      with symbols being stripped when using the tgz package.
+
+### 10.0.1
+- Changes
+    - Crashlytics (Android): Fixed a critical [issue](https://github.com/firebase/firebase-android-sdk/issues/4223) 
+      that was causing background crashes in specific cases.
+
+### 10.0.0
+- Changes
+    - General: Updated Firebase C++ SDK dependencies to v10.0.0.
+    - General (Android): Update Firebase Android BoM dependencies to v31.0.0.
+    - General (iOS): Update Firebase Cocoapods dependencies to v10.0.0.
+    - General: Minimum supported editor version is now Unity 2019.
+    - General: Removed dependency on Parse Tasks. 
+    - Auth (Android/iOS): Deprecate `PhoneAuthProvider.MaxTimeoutMs`. The actual
+      range is determined by the underlying SDK, ex. [PhoneAuthOptions.Builder in Android SDK](https://firebase.google.com/docs/reference/android/com/google/firebase/auth/PhoneAuthOptions.Builder).
+    - Remote Config: Improve performance when setting default parameters
+      with long strings.
+
+### 9.6.0
+- Changes
+    - General: Updated Firebase C++ SDK dependencies to v9.6.0.
+    - General (Android): Update Firebase Android BoM dependencies to v30.5.0.
+    - General (iOS): Update Firebase Cocoapods dependencies to v9.6.0.
+
+### 9.5.0
+- Changes
+    - General: Updated Firebase C++ SDK dependencies to v9.5.0.
+    - Crashlytics: Fix #218 that Firebase editor tool not loading when iOS
+      build support is not installed.
+
 ### 9.4.0
 - Changes
     - General: Updated Firebase C++ SDK dependencies to v9.4.0.

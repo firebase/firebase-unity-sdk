@@ -20,9 +20,10 @@
  * -AppBuilderHelper.outputDir
  * The directory for build artifacts to be placed.
  *
- * -AppBuilderHelper.targetIosSdk (iOS only)
- * Determines whether the iOS app will run on simulator or device. Must be either
- * "simulator" or "device", accordingly. Anything else will cause the build to fail.
+ * -AppBuilderHelper.targetIosSdk (iOS and tvOS only)
+ * Determines whether the iOS or tvOS app will run on simulator or device. Must be
+ * either "simulator" or "device", accordingly. Anything else will cause the build
+ * to fail.
  *
  * -AppBuilderHelper.noSymlinkLibraries (optional, iOS only)
  * Disable symlinking of iOS libraries into the generated xcode project.
@@ -168,6 +169,9 @@ public sealed class AppBuilderHelper {
     else if (buildTarget == "iOS") {
       build = BuildiOS;
     }
+    else if (buildTarget == "tvOS") {
+      build = BuildtvOS;
+    }
     else if (buildTarget == "Win64") {
       // Windows won't recognize the file as an application unless it has the "exe" extension.
       build = () => StandaloneBuild(BuildTarget.StandaloneWindows64, WINDOWS_SUBDIR, APP_NAME + ".exe");
@@ -263,6 +267,23 @@ public sealed class AppBuilderHelper {
   }
 
   /// <summary>
+  /// Performs a build for tvOS. Will generate an xcode project (folder) at
+  /// the directory given by outputDir. The flag targetIosSdk should
+  /// be specified when building for iOS.
+  /// </summary>
+  private static void BuildtvOS() {
+#if EDM4U_IS_ENABLED
+    if (forceXcodeProject) {
+      Google.IOSResolver.CocoapodsIntegrationMethodPref = Google.IOSResolver.CocoapodsIntegrationMethod.Project;
+    } else {
+      Google.IOSResolver.CocoapodsIntegrationMethodPref = Google.IOSResolver.CocoapodsIntegrationMethod.Workspace;
+    }
+#endif
+    int returnCode = BuildForTVOS();
+    EditorApplication.Exit(returnCode);
+  }
+
+  /// <summary>
   /// Helper method for the standalone builds. Exits
   /// application after performing a standalone build for the given target.
   /// </summary>
@@ -316,6 +337,24 @@ public sealed class AppBuilderHelper {
       PlayerSettings.iOS.sdkVersion = iOSSdkVersion.SimulatorSDK;
     } else {
       Debug.LogError("Unrecognized iOS target: " + targetIosSdk);
+      return -1;
+    }
+    return BuildPlayer(playerOptions);
+  }
+
+  /// <summary>
+  /// Performs a tvOS build. Assumes all dependencies are present.
+  /// </summary>
+  /// <returns>Returns 0 if and only if build succeeded.</returns>
+  private static int BuildForTVOS() {
+    string path = Path.Combine(outputDir, APP_NAME + "_xcode");
+    BuildPlayerOptions playerOptions = GetBuildOptions(BuildTarget.tvOS, path);
+    if (targetIosSdk == "device") {
+      PlayerSettings.tvOS.sdkVersion = tvOSSdkVersion.Device;
+    } else if (targetIosSdk == "simulator") {
+      PlayerSettings.tvOS.sdkVersion = tvOSSdkVersion.Simulator;
+    } else {
+      Debug.LogError("Unrecognized tvOS target: " + targetIosSdk);
       return -1;
     }
     return BuildPlayer(playerOptions);

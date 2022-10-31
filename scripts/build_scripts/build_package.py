@@ -149,7 +149,7 @@ def _debug_create_target_package(target, packer_script_path, guids_file_path, ou
   ]
   debug_cmd_args.extend(
       ["--assets_zip=" + zip_file for zip_file in zip_file_list])
-  debug_cmd_args.append("--enabled_sections=build_dotnet4 asset_package_only")
+  debug_cmd_args.append("--enabled_sections=asset_package_only")
   debug_cmd_args.append("--plugins_version=" + last_version)
   subprocess.call(debug_cmd_args)
   logging.info("Debug Packaging done for target %s", target)
@@ -208,11 +208,10 @@ def main(argv):
     cmd_args.append("--plugins_version=" + last_version)
 
   if FLAGS.output_upm:
-    cmd_args.append("--enabled_sections=build_dotnet4")
     cmd_args.append("--output_unitypackage=False")
   else:
     cmd_args.append(
-        "--enabled_sections=build_dotnet3 build_dotnet4 asset_package_only")
+        "--enabled_sections=asset_package_only")
 
   # Check if need to gen new guids
   p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

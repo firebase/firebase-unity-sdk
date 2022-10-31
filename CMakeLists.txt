@@ -106,7 +106,8 @@ else()
   set(FIREBASE_SYSTEM_DEPS)
 endif()
 
-if(NOT FIREBASE_IOS_BUILD) # besides iOS build, don't need lib prefix
+# besides iOS/tvOS builds don't need lib prefix.
+if(NOT FIREBASE_IOS_BUILD)
   set(CMAKE_SHARED_LIBRARY_PREFIX "")
   set(CMAKE_STATIC_LIBRARY_PREFIX "")
 endif()
@@ -241,6 +242,11 @@ list(APPEND PROJECT_LIST_HEADER "  X(App)")
 # Include Firebase editor tools.
 if (DESKTOP AND APPLE AND FIREBASE_INCLUDE_EDITOR_TOOL)
   add_subdirectory(editor)
+endif()
+
+if (PLATFORM STREQUAL TVOS OR PLATFORM STREQUAL SIMULATOR_TVOS)
+  # Dynamic Links is not supported on tvOS.
+  set(FIREBASE_INCLUDE_DYNAMIC_LINKS OFF)
 endif()
 
 if (FIREBASE_INCLUDE_ANALYTICS)

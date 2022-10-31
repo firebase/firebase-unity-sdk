@@ -12,7 +12,7 @@ on:
     inputs:
       unity_version:
         description: 'Unity version'
-        default: '2019'
+        default: '2020'
         required: true
       firebase_cpp_sdk_version:
         description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout). Required if for release'
@@ -73,13 +73,13 @@ jobs:
       unity_branch: ${{ steps.set_outputs.outputs.unity_branch }}
       additional_cmake_flags: ${{ steps.set_outputs.outputs.additional_cmake_flags }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.inputs.unity_branch }}
           fetch-depth: 0
           submodules: false
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.pythonVersion }}
       - name: Install python deps
@@ -95,6 +95,7 @@ jobs:
             echo "::set-output name=unity_version::${{ github.event.inputs.unity_version }}"
             echo "::set-output name=should_trigger_package::${{ github.event.inputs.should_trigger_package }}"
             echo "::set-output name=runIntegrationTests::${{ github.event.inputs.runIntegrationTests }}"
+            echo "::set-output name=firebase_cpp_sdk_version::${{ github.event.inputs.firebase_cpp_sdk_version }}"
             echo "::set-output name=unity_branch::${{ github.event.inputs.unity_branch }}"
             echo "::set-output name=additional_cmake_flags::${{ github.event.inputs.unity_branch }}"
           else
@@ -102,7 +103,7 @@ jobs:
             echo "::set-output name=release_label::nightly-$(date "+%Y%m%d-%H%M%S")"
             echo "::set-output name=release_version::NoVersion"
             echo "::set-output name=apis::'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'"
-            echo "::set-output name=unity_version::2019"
+            echo "::set-output name=unity_version::2020"
             echo "::set-output name=should_trigger_package::true"
             echo "::set-output name=firebase_cpp_sdk_version::"
             echo "::set-output name=unity_branch::"

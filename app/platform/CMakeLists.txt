@@ -64,8 +64,6 @@ mono_add_library(firebase_platform_cs
     ${firebase_platform_src}
   REFERENCES
     google_minijson_cs
-    unity_compat_cs
-    unity_tasks_cs
     ${firebase_platform_task_lib}
 )
 

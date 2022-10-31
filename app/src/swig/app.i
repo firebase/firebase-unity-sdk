@@ -42,6 +42,7 @@
 #include "app/src/include/firebase/app.h"
 #include "app/src/callback.h"
 #include "app/src/include/firebase/internal/mutex.h"
+#include "app/src/include/firebase/internal/platform.h"
 #include "app/src/app_common.h"
 #include "app/src/log.h"
 #include "app/src/util.h"
@@ -906,6 +907,8 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
         // fire-(unity|mono)/<github-action-built|custom_built>
         RegisterLibraryInternal(
             libraryPrefix + "-buildsrc", Firebase.VersionInfo.BuildSource);
+        // Log a heartbeat after all Unity user agents have been registered.
+        LogHeartbeatInternal(newProxy);
       }
       // Cache the name so that it can be accessed after the app is disposed.
       newProxy.name = newProxy.NameInternal;
@@ -1311,6 +1314,15 @@ namespace callback {
   %csmethodmodifiers RegisterLibraryInternal() "internal";
   static void RegisterLibraryInternal(const char* library, const char* version) {
     firebase::App::RegisterLibrary(library, version);
+  }
+
+ %csmethodmodifiers LogHeartbeatInternal(App* app) "internal";
+  static void LogHeartbeatInternal(App* app) {
+#if FIREBASE_PLATFORM_DESKTOP
+    // Only need to call LogHeartbeat on desktop, since native mobile SDKs
+    // Will handle heartbeat logging internally.
+    app->LogHeartbeat();
+#endif  // FIREBASE_PLATFORM_DESKTOP
   }
 
   %csmethodmodifiers AppSetDefaultConfigPath(const char* path) "internal";

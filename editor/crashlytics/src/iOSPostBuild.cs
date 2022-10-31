@@ -68,19 +68,19 @@ namespace Firebase.Crashlytics.Editor {
     /// </param>
     [PostProcessBuild(100)]
     public static void OnPostprocessBuild(BuildTarget buildTarget, string buildPath) {
-      // BuiltTarget.iOS is not defined in Unity 4, so we just use strings here
-      if (buildTarget.ToString() == "iOS" || buildTarget.ToString() == "iPhone") {
+      if (buildTarget == BuildTarget.iOS || buildTarget == BuildTarget.tvOS) {
         string projectPath = Path.Combine(buildPath, "Unity-iPhone.xcodeproj/project.pbxproj");
         string plistPath = Path.Combine(buildPath, "Info.plist");
 
         IFirebaseConfigurationStorage configurationStorage = StorageProvider.ConfigurationStorage;
 
-        PrepareProject(projectPath, configurationStorage);
+        PrepareProject(projectPath, configurationStorage, buildTarget);
         AddCrashlyticsDevelopmentPlatformToPlist(plistPath);
       }
     }
 
-    private static void PrepareProject(string projectPath, IFirebaseConfigurationStorage configurationStorage) {
+    private static void PrepareProject(string projectPath, IFirebaseConfigurationStorage configurationStorage,
+                                       BuildTarget buildTarget) {
       // Return if we have already added the script
       var xcodeProjectLines = File.ReadAllLines(projectPath);
       foreach (var line in xcodeProjectLines) {
@@ -96,7 +96,7 @@ namespace Firebase.Crashlytics.Editor {
 
       string completeRunScriptBody = GetRunScriptBody(configurationStorage);
 
-      string appGUID = iOSPostBuild.GetMainUnityProjectTargetGuid(pbxProject);
+      string appGUID = iOSPostBuild.GetMainUnityProjectTargetGuid(pbxProject, buildTarget);
       SetupGUIDForSymbolUploads(pbxProject, completeRunScriptBody, appGUID);
 
       // In older versions of Unity there is no separate framework GUID, so this can
@@ -109,8 +109,9 @@ namespace Firebase.Crashlytics.Editor {
       pbxProject.WriteToFile(projectPath);
     }
 
-    private static void SetupGUIDForSymbolUploads(UnityEditor.iOS.Xcode.PBXProject pbxProject,
+    private static void SetupGUIDForSymbolUploads(object pbxProjectObj,
                                                   string completeRunScriptBody, string targetGuid) {
+      var pbxProject = (UnityEditor.iOS.Xcode.PBXProject) pbxProjectObj;
       try {
         // Use reflection to append a Crashlytics Run Script
         BindingFlags bindingFlags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
@@ -152,8 +153,9 @@ namespace Firebase.Crashlytics.Editor {
       }
     }
 
-    private static string GetUnityFrameworkTargetGuid(UnityEditor.iOS.Xcode.PBXProject project) {
-      // var project = (UnityEditor.iOS.Xcode.PBXProject)projectObj;
+    private static string GetUnityFrameworkTargetGuid(object projectObj) {
+      var project = (UnityEditor.iOS.Xcode.PBXProject)projectObj;
+
       MethodInfo getUnityFrameworkTargetGuid =
           project.GetType().GetMethod("GetUnityFrameworkTargetGuid");
 
@@ -181,7 +183,7 @@ namespace Firebase.Crashlytics.Editor {
     /// </summary>
     /// <param name="projectObj">The project where the main target GUID will be read from</param>
     /// <returns>The main target GUID</returns>
-    private static string GetMainUnityProjectTargetGuid(object projectObj) {
+    private static string GetMainUnityProjectTargetGuid(object projectObj, BuildTarget buildTarget) {
       var project = (UnityEditor.iOS.Xcode.PBXProject)projectObj;
       MethodInfo getUnityMainTargetGuid =  project.GetType().GetMethod("GetUnityMainTargetGuid");
 
@@ -192,7 +194,7 @@ namespace Firebase.Crashlytics.Editor {
       } else {
         // Hardcode the main target name "Unity-iPhone" by default, just in case
         // GetUnityTargetName() is not available.
-        string targetName = "Unity-iPhone";
+        string targetName = (buildTarget == BuildTarget.tvOS) ? "Unity-tvOS" : "Unity-iPhone";
         MethodInfo getUnityTargetName =  project.GetType().GetMethod("GetUnityTargetName");
         if (getUnityTargetName != null) {
           targetName = (string) getUnityTargetName.Invoke(null, new object[] {});

@@ -52,13 +52,7 @@ using the
   - Import the `Firebase Dynamic Links` plugin.
     - Select the **Assets > Import Package > Custom Package** menu item.
     - From the [Firebase Unity SDK](https://firebase.google.com/download/unity)
-      downloaded previously, import `FirebaseDynamicLinks.unitypackage` from the
-      directory that matches the version of Unity you use:
-       - Unity 5.x and earlier use the .NET 3.x framework, so you need to
-         import the `dotnet3/FirebaseDynamicLinks.unitypackage` package .
-       - Unity 2017.x and newer allow the use of the .NET 4.x framework.  If
-         your project is configured to use .NET 4.x, import the
-         `dotnet4/FirebaseDynamicLinks.unitypackage` package.
+      downloaded previously, import `FirebaseDynamicLinks.unitypackage`.
     - When the **Import Unity Package** window appears, click the **Import**
       button.
   - Add the `GoogleService-Info.plist` file to the project.
@@ -162,13 +156,7 @@ using the
   - Import the `Firebase Dynamic Links` plugin.
     - Select the **Assets > Import Package > Custom Package** menu item.
     - From the [Firebase Unity SDK](https://firebase.google.com/download/unity)
-      downloaded previously, import `FirebaseDynamicLinks.unitypackage` from the
-      directory that matches the version of Unity you use:
-       - Unity 5.x and earlier use the .NET 3.x framework, so you need to
-         import the `dotnet3/FirebaseDynamicLinks.unitypackage` package .
-       - Unity 2017.x and newer allow the use of the .NET 4.x framework.  If
-         your project is configured to use .NET 4.x, import the
-         `dotnet4/FirebaseDynamicLinks.unitypackage` package.
+      downloaded previously, import `FirebaseDynamicLinks.unitypackage`.
     - When the **Import Unity Package** window appears, click the **Import**
       button.
   - Add the `google-services.json` file to the project.
