@@ -29,7 +29,6 @@ inputs:
 
 runs:
   using: 'composite'
-  env:
   steps:
     - name: Set the Env
       run: |
