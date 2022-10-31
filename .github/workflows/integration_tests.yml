@@ -164,13 +164,13 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.build_matrix) }}
     env:
-      # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
-      LC_ALL: en_US.UTF-8
-      LANG: en_US.UTF-8
-      U3D_PASSWORD: ""
-      # Disable checking for U3D updates, since it is buggy
-      U3D_SKIP_UPDATE_CHECK: 1
-      # Which xcode version to use
+      # # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
+      # LC_ALL: en_US.UTF-8
+      # LANG: en_US.UTF-8
+      # U3D_PASSWORD: ""
+      # # Disable checking for U3D updates, since it is buggy
+      # U3D_SKIP_UPDATE_CHECK: 1
+      # # Which xcode version to use
       xcodeVersion: "13.3.1"
     steps:
       - id: matrix_info
@@ -178,9 +178,6 @@ jobs:
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}"
           echo "::set-output name=artifact_suffix::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}"
       - uses: actions/checkout@v3
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.0.2
       - name: Setup python
         uses: actions/setup-python@v4
         with:
@@ -344,21 +341,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.playmode_matrix) }}
-    env:
-      # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
-      LC_ALL: en_US.UTF-8
-      LANG: en_US.UTF-8
-      U3D_PASSWORD: ""
-      # Disable checking for U3D updates, since it is buggy
-      U3D_SKIP_UPDATE_CHECK: 1
+    # env:
+    #   # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
+    #   LC_ALL: en_US.UTF-8
+    #   LANG: en_US.UTF-8
+    #   U3D_PASSWORD: ""
+    #   # Disable checking for U3D updates, since it is buggy
+    #   U3D_SKIP_UPDATE_CHECK: 1
     steps:
       - id: matrix_info
         run: |
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-Playmode-github_runner-${{ matrix.os }}"
       - uses: actions/checkout@v3
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.0.2
       - name: Setup python
         uses: actions/setup-python@v4
         with:
