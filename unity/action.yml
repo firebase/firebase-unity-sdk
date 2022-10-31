@@ -31,6 +31,7 @@ runs:
   using: 'composite'
   steps:
     - name: Set the Env
+      shell: bash
       run: |
         echo "LC_ALL=en_US.UTF-8" >> $GITHUB_ENV
         echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
