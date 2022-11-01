@@ -67,70 +67,45 @@ jobs:
           echo "requested_tests=auto" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
           echo "pr_number=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)" >> $GITHUB_OUTPUT
-          # echo "::set-output name=trigger::label_trigger"
-          # echo "::set-output name=requested_tests::auto"
-          # echo "::set-output name=github_ref::${{github.sha}}"
-          # echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == *"label-full-packaging" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=label_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=expanded" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
           echo "pr_number=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)" >> $GITHUB_OUTPUT
-          # echo "::set-output name=trigger::label_trigger"
-          # echo "::set-output name=requested_tests::expanded"
-          # echo "::set-output name=github_ref::${{github.sha}}"
-          # echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == *"pr-close-packaging" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=postsubmit_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=auto" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
           echo "pr_number=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)" >> $GITHUB_OUTPUT
-          # echo "::set-output name=trigger::postsubmit_trigger"
-          # echo "::set-output name=requested_tests::auto"
-          # echo "::set-output name=github_ref::${{github.sha}}"
-          # echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == "nightly-packaging" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=scheduled_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=expanded" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
-          # echo "::set-output name=trigger::scheduled_trigger"
-          # echo "::set-output name=requested_tests::expanded"
-          # echo "::set-output name=github_ref::${{github.sha}}"
         elif [[ "${{ github.event.inputs.test_pull_request }}" == "1" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=manual_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=auto" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
-          # echo "::set-output name=trigger::manual_trigger"
-          # echo "::set-output name=requested_tests::auto"
-          # echo "::set-output name=github_ref::${{github.sha}}"
         else
           # Triggered manually
           echo "trigger=manual_trigger" >> $GITHUB_OUTPUT
-          # echo "::set-output name=trigger::manual_trigger"
           if [[ "${{ github.event.inputs.use_expanded_matrix }}" == "1" ]]; then
             echo "requested_tests=expanded" >> $GITHUB_OUTPUT
-            # echo "::set-output name=requested_tests::expanded"
           fi
           if [[ -z "${{github.event.inputs.test_pull_request}}" ]]; then
             # test_pull_request not specified
             echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
-            # echo "::set-output name=github_ref::${{github.sha}}"
           elif [[ "${{github.event.inputs.test_pull_request}}" == *:* ]]; then
             # If specified as pr:commit_hash, split them.
             echo "github_ref=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f2)" >> $GITHUB_OUTPUT
             echo "pr_number=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)" >> $GITHUB_OUTPUT
-            # echo "::set-output name=github_ref::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f2)"
-            # echo "::set-output name=pr_number::$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)"
           else
             # Just the PR specified, use refs/pull/<number>/merge as the ref.
             echo "github_ref=refs/pull/${{github.event.inputs.test_pull_request}}/merge" >> $GITHUB_OUTPUT
             echo "pr_number=${{ github.event.inputs.test_pull_request }}" >> $GITHUB_OUTPUT
-            # echo "::set-output name=github_ref::refs/pull/${{github.event.inputs.test_pull_request}}/merge"
-            # echo "::set-output name=pr_number::${{ github.event.inputs.test_pull_request }}"
           fi
         fi
     - uses: actions/checkout@v3
@@ -169,10 +144,6 @@ jobs:
         echo "build_matrix=$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" -mobile_test_on "${{github.event.inputs.mobile_test_on}}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
         echo "test_matrix=$( python scripts/gha/print_matrix_configuration.py -test_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" -mobile_test_on "${{github.event.inputs.mobile_test_on}}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
         echo "playmode_matrix=$( python scripts/gha/print_matrix_configuration.py -playmode_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
-        # echo "::set-output name=apis::$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k apis -o "${{github.event.inputs.apis}}" ${TEST_MATRIX_PARAM} )"
-        # echo "::set-output name=build_matrix::$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" -mobile_test_on "${{github.event.inputs.mobile_test_on}}" ${TEST_MATRIX_PARAM})"
-        # echo "::set-output name=test_matrix::$( python scripts/gha/print_matrix_configuration.py -test_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" -mobile_test_on "${{github.event.inputs.mobile_test_on}}" ${TEST_MATRIX_PARAM})"
-        # echo "::set-output name=playmode_matrix::$( python scripts/gha/print_matrix_configuration.py -playmode_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" ${TEST_MATRIX_PARAM})"
     - name: Update PR label and comment
       if: steps.set_outputs.outputs.pr_number
       run: |
@@ -206,8 +177,6 @@ jobs:
         run: |
           echo "info=${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}" >> $GITHUB_OUTPUT
           echo "artifact_suffix=${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}" >> $GITHUB_OUTPUT
-          # echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}"
-          # echo "::set-output name=artifact_suffix::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}"
       - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
@@ -412,7 +381,6 @@ jobs:
       - id: matrix_info
         run: |
           echo "info=${{ matrix.unity_version }}-${{matrix.os}}-Playmode-github_runner-${{ matrix.os }}" >> $GITHUB_OUTPUT
-          # echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-Playmode-github_runner-${{ matrix.os }}"
       - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
@@ -543,8 +511,6 @@ jobs:
         run: |
           echo "info=${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}" >> $GITHUB_OUTPUT
           echo "artifact_path=testapps-${{ matrix.platform }}-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.ios_sdk }}" >> $GITHUB_OUTPUT
-          # echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}"
-          # echo "::set-output name=artifact_path::testapps-${{ matrix.platform }}-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.ios_sdk }}"
       - uses: actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}

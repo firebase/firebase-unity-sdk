@@ -98,18 +98,6 @@ jobs:
             echo "firebase_cpp_sdk_version=${{ github.event.inputs.firebase_cpp_sdk_version }}" >> $GITHUB_OUTPUT
             echo "unity_branch=${{ github.event.inputs.unity_branch }}" >> $GITHUB_OUTPUT
             echo "additional_cmake_flags=${{ github.event.inputs.unity_branch }}" >> $GITHUB_OUTPUT
-            
-
-            # echo "::set-output name=platform::${platform}"
-            # echo "::set-output name=release_label::${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}"
-            # echo "::set-output name=release_version::${{ github.event.inputs.release_version }}"
-            # echo "::set-output name=apis::${{ github.event.inputs.apis }}"
-            # echo "::set-output name=unity_version::${{ github.event.inputs.unity_version }}"
-            # echo "::set-output name=should_trigger_package::${{ github.event.inputs.should_trigger_package }}"
-            # echo "::set-output name=runIntegrationTests::${{ github.event.inputs.runIntegrationTests }}"
-            # echo "::set-output name=firebase_cpp_sdk_version::${{ github.event.inputs.firebase_cpp_sdk_version }}"
-            # echo "::set-output name=unity_branch::${{ github.event.inputs.unity_branch }}"
-            # echo "::set-output name=additional_cmake_flags::${{ github.event.inputs.unity_branch }}"
           else
             echo "platform='Android,iOS,Windows,macOS,Linux,Playmode'" >> $GITHUB_OUTPUT
             echo "release_label=nightly-$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_OUTPUT
@@ -121,37 +109,20 @@ jobs:
             echo "unity_branch=" >> $GITHUB_OUTPUT
             echo "additional_cmake_flags=" >> $GITHUB_OUTPUT
 
-
-            # echo "::set-output name=platform::'Android,iOS,Windows,macOS,Linux,Playmode'"
-            # echo "::set-output name=release_label::nightly-$(date "+%Y%m%d-%H%M%S")"
-            # echo "::set-output name=release_version::NoVersion"
-            # echo "::set-output name=apis::'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'"
-            # echo "::set-output name=unity_version::2020"
-            # echo "::set-output name=should_trigger_package::true"
-            # echo "::set-output name=firebase_cpp_sdk_version::"
-            # echo "::set-output name=unity_branch::"
-            # echo "::set-output name=additional_cmake_flags::"
-
             if [[ "${{ github.event_name }}" == "schedule" ]]; then
               echo "runIntegrationTests=nightly-packaging" >> $GITHUB_OUTPUT
-              # echo "::set-output name=runIntegrationTests::nightly-packaging"
             elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
               if [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == "tests-requested: quick" ]]; then
                 echo "runIntegrationTests=${{ github.event.pull_request.number }}:label-quick-packaging" >> $GITHUB_OUTPUT
-                # echo "::set-output name=runIntegrationTests::${{ github.event.pull_request.number }}:label-quick-packaging"
               elif [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == "tests-requested: full" ]]; then
                 echo "runIntegrationTests=${{ github.event.pull_request.number }}:label-full-packaging" >> $GITHUB_OUTPUT
-                # echo "::set-output name=runIntegrationTests::${{ github.event.pull_request.number }}:label-full-packaging"
               elif [[ "${{ github.event.action }}" == "closed" && "${{ github.event.pull_request.merged == true}}" == "true"  ]]; then
                 echo "runIntegrationTests=${{ github.event.pull_request.number }}:pr-close-packaging" >> $GITHUB_OUTPUT
-                # echo "::set-output name=runIntegrationTests::${{ github.event.pull_request.number }}:pr-close-packaging"
               else
                 echo "invalid_trigger=1" >> $GITHUB_OUTPUT
-                # echo "::set-output name=invalid_trigger::1"
               fi
             else
               echo "invalid_trigger=1" >> $GITHUB_OUTPUT
-              # echo "::set-output name=invalid_trigger::1"
             fi
           fi
       - name: Cancel workflow
@@ -199,10 +170,8 @@ jobs:
           if [[ "${{ needs.check_and_prepare.outputs.release_version }}" == "'NoVersion'" ]]; then
             # Triggered by callable
             echo "branch=${{ needs.check_and_prepare.outputs.unity_branch }}" >> $GITHUB_OUTPUT
-            # echo "::set-output name=branch::${{ needs.check_and_prepare.outputs.unity_branch }}"
           else
             echo "branch=${{ needs.update_versions.outputs.new_branch }}" >> $GITHUB_OUTPUT
-            # echo "::set-output name=branch::${{ needs.update_versions.outputs.new_branch }}"
           fi
 
   build_android:
