@@ -10,7 +10,7 @@ jobs:
     steps:
       # ...
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/unity@unity-gha
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
           version: ${{ matrix.unity_version }}
           platforms: ${{ matrix.platform }}
