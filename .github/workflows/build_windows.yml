@@ -65,20 +65,6 @@ jobs:
       - name: Support longpaths
         run: git config --system core.longpaths true
 
-      # Set up the requirements, and install Unity
-      # Ruby setup has to happen before python install and setup, to keep the absl config.
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.0.2
-
-      - name: Install Unity installer (U3D)
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: gem install u3d -v 1.2.3
-
       - name: Setup python
         uses: actions/setup-python@v4
         with:
@@ -104,14 +90,11 @@ jobs:
         run: |
           choco install openssl -r
 
-      - name: Install Unity
-        uses: nick-invision/retry@v2
+      - id: unity_setup
+        uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
         with:
-          timeout_minutes: 15
-          max_attempts: 3
-          shell: bash
-          command: |
-            python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
+          version: ${{ inputs.unity_version }}
+          platforms: ${{ inputs.unity_platform_name }}
 
       - name: Setup Unity path
         shell: bash
