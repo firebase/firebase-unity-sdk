@@ -26,6 +26,9 @@ inputs:
     required: false
   release_license:
     required: false
+outputs:
+  unity_path:
+    value: ${{ steps.unity_installation.outputs.unity_path }}
 
 runs:
   using: 'composite'
@@ -60,7 +63,8 @@ runs:
         echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
         echo "U3D_PASSWORD=" >> $GITHUB_ENV
         echo "U3D_SKIP_UPDATE_CHECK=1" >> $GITHUB_ENV
-    - name: Install Unity
+    - id: unity_installation
+      name: Install Unity
       if: inputs.release_license == ''
       uses: nick-invision/retry@v2
       with:
@@ -71,9 +75,8 @@ runs:
           if [[ -n "${{ inputs.platforms }}" ]]; then
             additional_flags+=(--platforms ${{ inputs.platforms }})
           fi
-          python $GITHUB_ACTION_PATH/unity_installer.py --install \
-            --version ${{ inputs.version }}  \
-            ${additional_flags[*]}
+          unity_path=$(python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]})
+          echo "unity_path=${unity_path}" >> $GITHUB_OUTPUT
     - name: Activate Unity license
       if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
       shell: bash

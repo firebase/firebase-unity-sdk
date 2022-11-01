@@ -223,7 +223,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
+            --u ${{ steps.unity_setup.outputs.unity_path }} \
             --p ${{ matrix.platform }} \
             --ios_sdk ${{ matrix.ios_sdk }} \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
@@ -366,9 +366,6 @@ jobs:
         uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
         with:
           version: ${{ matrix.unity_version }}
-          # username: ${{ secrets.UNITY_USERNAME }}
-          # password: ${{ secrets.UNITY_PASSWORD }}
-          # serial_ids: ${{ secrets.SERIAL_ID }}
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
@@ -392,20 +389,13 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
+            --u ${{ steps.unity_setup.outputs.unity_path }} \
             --p Playmode \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
             --force_latest_runtime \
             --ci
-      - name: Return Unity license
-        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
-        if: always()
-        uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
-        with:
-          version: ${{ matrix.unity_version }}
-          release_license: "true"
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
