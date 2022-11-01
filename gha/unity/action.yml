@@ -52,7 +52,7 @@ runs:
         timeout_minutes: 10
         max_attempts: 2
         shell: bash
-        command: gem install u3d -v 1.3.2
+        command: gem install u3d -v 1.2.3
     - name: Set the Unity Env
       shell: bash
       run: |
