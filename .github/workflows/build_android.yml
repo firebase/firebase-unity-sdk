@@ -42,12 +42,6 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
-      LC_ALL: en_US.UTF-8
-      LANG: en_US.UTF-8
-      U3D_PASSWORD: ""
-      # Disable checking for U3D updates, since it is buggy
-      U3D_SKIP_UPDATE_CHECK: 1
       CCACHE_DIR: ${{ github.workspace }}/ccache_dir
   
     steps:
@@ -64,10 +58,6 @@ jobs:
           path: firebase-cpp-sdk
           ref: ${{ inputs.firebase_cpp_sdk_version }}
           submodules: true
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6
 
       - name: Setup python
         uses: actions/setup-python@v4
@@ -103,27 +93,16 @@ jobs:
           echo "NDK_ROOT=/tmp/android-ndk-r21e" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=/tmp/android-ndk-r21e" >> $GITHUB_ENV
 
-      - name: Install Unity installer (U3D)
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: gem install u3d -v 1.2.3
-
       - name: Install python deps
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
       
-      - name: Install Unity
-        uses: nick-invision/retry@v2
+      - id: unity_setup
+        uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
         with:
-          timeout_minutes: 15
-          max_attempts: 3
-          shell: bash
-          command:  |
-            python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
+          version: ${{ inputs.unity_version }}
+          platforms: ${{ inputs.unity_platform_name }}
       
       - name: Setup Unity path
         shell: bash
