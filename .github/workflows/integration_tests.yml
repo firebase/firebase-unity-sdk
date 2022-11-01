@@ -366,9 +366,9 @@ jobs:
         uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
         with:
           version: ${{ matrix.unity_version }}
-          username: ${{ secrets.UNITY_USERNAME }}
-          password: ${{ secrets.UNITY_PASSWORD }}
-          serial_ids: ${{ secrets.SERIAL_ID }}
+          # username: ${{ secrets.UNITY_USERNAME }}
+          # password: ${{ secrets.UNITY_PASSWORD }}
+          # serial_ids: ${{ secrets.SERIAL_ID }}
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
