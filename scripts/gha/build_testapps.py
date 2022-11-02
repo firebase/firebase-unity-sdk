@@ -105,7 +105,6 @@ from integration_testing import unity_commands
 from integration_testing import unity_finder
 from integration_testing import unity_version
 from integration_testing import xcodebuild
-from print_matrix_configuration import UNITY_SETTINGS
 
 # Used in specifying whether xcodebuild should build for device or simulator
 _DEVICE_REAL = "real"
@@ -488,8 +487,18 @@ def build_testapp(dir_helper, api_config, ios_config, target):
 def patch_android_env(unity_version):
   major_version = int(unity_version.split(".")[0])
   # Set ndk env
-  if UNITY_SETTINGS[str(major_version)][get_desktop_platform()]["ndk"]:
-    url = UNITY_SETTINGS[str(major_version)][get_desktop_platform()]["ndk"]
+  UNITY_SETTINGS = {
+    "2020": {
+      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip",
+      _MACOS: "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip",
+    },
+    "2019": {
+      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip",
+      _MACOS: "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip",
+    },
+  }
+  url = UNITY_SETTINGS[str(major_version)][get_desktop_platform()]
+  if url:
     logging.info("install ndk: %s", url)
     ndk_zip_path = "ndk_zip"
     ndk_path = "ndk"
