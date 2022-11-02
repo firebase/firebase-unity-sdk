@@ -216,7 +216,7 @@ def install_unity(unity_version, platforms):
   logging.info("Finished installing Unity.")
 
   unity_path = get_unity_path(unity_version)
-  logging.info(unity_path)
+  logging.info("unity_path: %s", unity_path)
   print(unity_path)
 
 
@@ -311,7 +311,9 @@ def get_unity_path(version):
 def run(args, check=True, timeout=_CMD_TIMEOUT):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
   logging.info("run cmd: %s", " ".join(args))
-  subprocess.run(args=args, check=check, timeout=timeout)
+  result = subprocess.run(args=args, check=check, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+  logging.info(result.stdout)
+  logging.info(result.stderr)
 
 
 if __name__ == "__main__":
