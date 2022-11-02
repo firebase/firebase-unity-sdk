@@ -41,14 +41,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       fail-fast: false
-      
-    env:
-        # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
-        LC_ALL: en_US.UTF-8
-        LANG: en_US.UTF-8
-        U3D_PASSWORD: ""
-        # Disable checking for U3D updates, since it is buggy
-        U3D_SKIP_UPDATE_CHECK: 1
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -67,14 +60,6 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.0.2
-
-      - name: Install Unity installer (U3D)
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: gem install u3d -v 1.2.3
 
       - name: Setup python
         uses: actions/setup-python@v4
@@ -104,19 +89,15 @@ jobs:
           # brew won't overwrite MacOS system default OpenSSL, so force it here.
           echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
 
-      - name: Install Unity
-        uses: nick-invision/retry@v2
+      - id: unity_setup
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
-          timeout_minutes: 15
-          max_attempts: 3
-          shell: bash
-          command:  |
-            python scripts/gha/unity_installer.py --install --platforms ${{ inputs.unity_platform_name }} --version ${{ inputs.unity_version }}
+          version: ${{ inputs.unity_version }}
+          platforms: ${{ inputs.unity_platform_name }}
 
-      - name: Setup Unity path
+      - name: Setup Swig Env
         shell: bash
         run: |
-          echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{ inputs.unity_version }} -k unity_path )" >> $GITHUB_ENV
           echo "$(swig -swiglib)" >> $GITHUB_PATH
           swig -swiglib
           echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
