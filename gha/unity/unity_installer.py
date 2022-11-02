@@ -92,6 +92,9 @@ _MACOS = "macOS"
 _LINUX = "Linux"
 _SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _TVOS, _WINDOWS, _MACOS, _LINUX)
 
+# Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
+# To list avaliable packages, install u3d, and use cmd "u3d available -u $unity_version -p"
+# The packages below is valid only if Unity Hub is not installed.
 UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {

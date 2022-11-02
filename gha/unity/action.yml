@@ -26,6 +26,7 @@ inputs:
     required: false
   release_license:
     required: false
+
 outputs:
   unity_version:
     value: ${{ steps.unity_installation.outputs.unity_version }}
@@ -37,8 +38,8 @@ runs:
       if: inputs.release_license
       uses: nick-invision/retry@v2
       with:
-        timeout_minutes: 10
-        max_attempts: 3
+        timeout_minutes: 5
+        max_attempts: 2
         shell: bash
         command: |
           python $GITHUB_ACTION_PATH/unity_installer.py --release_license \
@@ -54,6 +55,7 @@ runs:
         shell: bash
         command: gem install u3d -v 1.2.3
     - name: Set the Unity Env
+      if: inputs.release_license == ''
       shell: bash
       run: |
         echo "LC_ALL=en_US.UTF-8" >> $GITHUB_ENV
