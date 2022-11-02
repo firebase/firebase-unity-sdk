@@ -67,8 +67,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 10.1.0
 - Changes
+    - General: Update to Firebase C++ SDK version 10.1.0.
+    - General (Android): Update to Firebase Android BoM version 31.0.2.
+    - General (iOS): Update to Firebase Cocoapods version 10.1.0.
     - Crashlytics (Android): Fixed an [issue](https://github.com/firebase/quickstart-unity/issues/1116)
       with symbols being stripped when using the tgz package.
 
