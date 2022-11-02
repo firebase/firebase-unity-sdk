@@ -86,42 +86,43 @@ _CMD_TIMEOUT = 900
 _DEFALUT = "Default"
 _ANDROID = "Android"
 _IOS = "iOS"
+_TVOS = "tvOS"
 _WINDOWS = "Windows"
 _MACOS = "macOS"
 _LINUX = "Linux"
-_SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _WINDOWS, _MACOS, _LINUX)
+_SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _TVOS, _WINDOWS, _MACOS, _LINUX)
 
 UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {
       "version": "2020.3.34f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
     _MACOS: {
       "version": "2020.3.34f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
     _LINUX: {
       "version": "2020.3.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": None, "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
     }
   },
   "2019": {
     _WINDOWS: {
       "version": "2019.4.39f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip"
     },
     _MACOS: {
       "version": "2019.4.39f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
       "ndk": "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip"
     },
     _LINUX: {
       "version": "2019.4.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
     }
   },
 }
