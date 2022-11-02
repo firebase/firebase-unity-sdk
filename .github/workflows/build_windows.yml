@@ -65,6 +65,12 @@ jobs:
       - name: Support longpaths
         run: git config --system core.longpaths true
 
+      # Set up the requirements, and install Unity
+      # Ruby setup has to happen before python install and setup, to keep the absl config.
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0.2
+
       - name: Setup python
         uses: actions/setup-python@v4
         with:
@@ -96,10 +102,9 @@ jobs:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}
 
-      - name: Setup Unity path
+      - name: Setup Env
         shell: bash
         run: |
-          echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{inputs.unity_version}} -k unity_path )" >> $GITHUB_ENV
           echo "$(swig -swiglib)" >> $GITHUB_PATH
           swig -swiglib
           echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV

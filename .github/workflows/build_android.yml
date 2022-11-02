@@ -59,6 +59,10 @@ jobs:
           ref: ${{ inputs.firebase_cpp_sdk_version }}
           submodules: true
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6
+
       - name: Setup python
         uses: actions/setup-python@v4
         with:
@@ -103,11 +107,6 @@ jobs:
         with:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}
-      
-      - name: Setup Unity path
-        shell: bash
-        run: |
-          echo "UNITY_ROOT_DIR=$( python scripts/gha/print_matrix_configuration.py -u ${{ inputs.unity_version }} -k unity_path )" >> $GITHUB_ENV
 
       - name: Display Swig Version
         shell: bash

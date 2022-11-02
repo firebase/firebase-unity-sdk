@@ -33,9 +33,6 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 3.1.2
     - name: Return Unity license
       if: inputs.release_license
       uses: nick-invision/retry@v2
@@ -76,6 +73,7 @@ runs:
             additional_flags+=(--platforms ${{ inputs.platforms }})
           fi
           unity_path=$(python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]})
+          echo "UNITY_ROOT_DIR=${unity_path}" >> $GITHUB_ENV
           echo "unity_path=${unity_path}" >> $GITHUB_OUTPUT
     - name: Activate Unity license
       if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
