@@ -174,7 +174,7 @@ def main(argv):
 
   if FLAGS.install:
     uninstall_unity(FLAGS.version)
-    return install_unity(FLAGS.version, FLAGS.platforms)
+    install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
     if FLAGS.license_file:
@@ -217,7 +217,7 @@ def install_unity(unity_version, platforms):
 
   unity_path = get_unity_path(unity_version)
   logging.info(unity_path)
-  return unity_path
+  print(unity_path)
 
 
 def uninstall_unity(unity_version):

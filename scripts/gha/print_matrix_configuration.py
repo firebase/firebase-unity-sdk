@@ -37,7 +37,6 @@ python scripts/gha/print_matrix_configuration.py -c -w integration_tests
 
 import argparse
 import json
-import logging
 import platform
 import itertools
 
