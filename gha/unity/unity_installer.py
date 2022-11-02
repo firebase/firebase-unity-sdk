@@ -173,7 +173,7 @@ def main(argv):
 
   if FLAGS.install:
     uninstall_unity(FLAGS.version)
-    install_unity(FLAGS.version, FLAGS.platforms)
+    return install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
     if FLAGS.license_file:
@@ -214,7 +214,9 @@ def install_unity(unity_version, platforms):
        "-p", package_csv])
   logging.info("Finished installing Unity.")
 
-  print(get_unity_path(unity_version))
+  unity_path = get_unity_path(unity_version)
+  logging.info(unity_path)
+  return unity_path
 
 
 def uninstall_unity(unity_version):
