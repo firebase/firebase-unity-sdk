@@ -84,12 +84,12 @@ jobs:
           sudo apt install openssl
 
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}
 
-      - name: Setup Env
+      - name: Setup Swig Env
         shell: bash
         run: |
           echo "$(swig -swiglib)" >> $GITHUB_PATH

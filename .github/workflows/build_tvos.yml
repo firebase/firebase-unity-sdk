@@ -109,7 +109,7 @@ jobs:
           pod repo add cocoapods https://github.com/CocoaPods/Specs.git
 
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}

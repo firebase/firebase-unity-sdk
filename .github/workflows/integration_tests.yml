@@ -184,7 +184,7 @@ jobs:
         if: runner.os == 'macOS'
         run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
           version: ${{ matrix.unity_version }}
           platforms: ${{ matrix.platform }}
@@ -227,7 +227,7 @@ jobs:
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
-        uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
           version: ${{ matrix.unity_version }}
           release_license: "true"
@@ -349,7 +349,7 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
           version: ${{ matrix.unity_version }}
           username: ${{ secrets.UNITY_USERNAME }}
@@ -388,7 +388,7 @@ jobs:
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
-        uses: firebase/firebase-unity-sdk/gha/unity@unity-gha
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
           version: ${{ matrix.unity_version }}
           release_license: "true"

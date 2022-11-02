@@ -84,7 +84,7 @@ In this GitHub Action, supported Unity Versions are maintained by `UNITY_SETTING
   -   `Major_version_number`: unity major version number: 2020, 2021, etc.
   -   `Full_version_number`: unity full version number. e.g. 2020.3.34f1 for major version 2020. Run `u3d available` and select [Unity LTS versions](https://unity3d.com/unity/qa/lts-releases).
   -   `Platform`: Values of [Android,iOS,tvOS,Windows,macOS,Linux]
-  -   `Package`: Unity Packages that required for certain platform. e.g. ["Windows-mono"] pakcages for "Windows" platform. To list avaliable packages, run `u3d available -u $unity_version -p`.
+  -   `Package`:[Unity Hub must **not** been installed] Unity Packages that required for certain platform. e.g. ["Windows-mono"] pakcages for "Windows" platform. To list avaliable packages, run `u3d available -u $unity_version -p`.
 
       ```
       UNITY_SETTINGS = {
@@ -100,8 +100,10 @@ In this GitHub Action, supported Unity Versions are maintained by `UNITY_SETTING
 
 **Common failures & solutions**
 
-If you met problem with `u3d` cmd (e.g. `u3d available -u $unity_version -p`), please install older version of `u3d` and disable the `u3d` version check. Then try it again.
-```
-gem install u3d -v 1.2.3
-export U3D_SKIP_UPDATE_CHECK=1
-``` 
+1. If you met problem with `u3d` cmd (e.g. `u3d available -u $unity_version -p`), please install older version of `u3d` and disable the `u3d` version check. Then try it again.
+    ```
+    gem install u3d -v 1.2.3
+    export U3D_SKIP_UPDATE_CHECK=1
+    ``` 
+
+2. If you have problem with Android build. Make sure you are using the right version of NDK and JDK. Testapp building process is using a patch function `patch_android_env` in `build_testapp.py`. (Please refer [Unity Documentation](https://docs.unity3d.com/Manual/android-sdksetup.html) for Android environment setup).
