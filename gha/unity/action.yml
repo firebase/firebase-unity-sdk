@@ -27,8 +27,8 @@ inputs:
   release_license:
     required: false
 outputs:
-  unity_path:
-    value: ${{ steps.unity_installation.outputs.unity_path }}
+  unity_version:
+    value: ${{ steps.unity_installation.outputs.unity_version }}
 
 runs:
   using: 'composite'
@@ -72,9 +72,9 @@ runs:
           if [[ -n "${{ inputs.platforms }}" ]]; then
             additional_flags+=(--platforms ${{ inputs.platforms }})
           fi
-          unity_path=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
-          echo "UNITY_ROOT_DIR=${unity_path}" >> $GITHUB_ENV
-          echo "unity_path=${unity_path}" >> $GITHUB_OUTPUT
+          unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
+          echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
+          echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
     - name: Activate Unity license
       if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
       shell: bash

@@ -216,9 +216,9 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u ${{ steps.unity_setup.outputs.unity_path }} \
-            --p ${{ matrix.platform }} \
-            --ios_sdk ${{ matrix.ios_sdk }} \
+            --u "${{ steps.unity_setup.outputs.unity_version }}" \
+            --p "${{ matrix.platform }}" \
+            --ios_sdk "${{ matrix.ios_sdk }}" \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
@@ -375,7 +375,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u ${{ steps.unity_setup.outputs.unity_path }} \
+            --u ${{ steps.unity_setup.outputs.unity_version }} \
             --p Playmode \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
