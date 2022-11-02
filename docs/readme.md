@@ -74,6 +74,9 @@ Release Notes
     - General (iOS): Update to Firebase Cocoapods version 10.1.0.
     - Crashlytics (Android): Fixed an [issue](https://github.com/firebase/quickstart-unity/issues/1116)
       with symbols being stripped when using the tgz package.
+    - Firestore (Android): Reduce the number of JNI global references consumed
+      when creating or updating documents
+      ([#1111](https://github.com/firebase/firebase-cpp-sdk/pull/1111)).
 
 ### 10.0.1
 - Changes
