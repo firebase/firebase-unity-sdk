@@ -243,8 +243,15 @@ jobs:
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
         with:
-          name: log-artifact
+          name: build_and_test_results
           path: build-results-${{ steps.matrix_info.outputs.info }}*
+          retention-days: ${{ env.artifactRetentionDays }}
+      - name: Upload build logs artifact
+        uses: actions/upload-artifact@v3
+        if: ${{ !cancelled() }}
+        with:
+          name: testapps-build-logs
+          path: build-results-${{ steps.matrix_info.outputs.info }}/build-logs
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Android integration tests artifact
         uses: actions/upload-artifact@v3
@@ -306,7 +313,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: test_results
-          name: log-artifact
+          name: build_and_test_results
       - name: Update PR label and comment
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
         shell: bash
@@ -404,7 +411,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
         with:
-          name: log-artifact
+          name: build_and_test_results
           path: test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Update PR label and comment
@@ -499,7 +506,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v3
         with:
-          name: log-artifact
+          name: build_and_test_results
           path: testapps/test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Download log artifacts
@@ -507,7 +514,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: test_results
-          name: log-artifact
+          name: build_and_test_results
       - name: Update PR label and comment
         shell: bash
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
@@ -546,7 +553,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: test_results
-          name: log-artifact
+          name: build_and_test_results
       # Use a different token to remove the "in-progress" label,
       # to allow the removal to trigger the "Check Labels" workflow.
       - name: Generate token for GitHub API
