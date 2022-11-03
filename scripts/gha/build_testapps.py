@@ -634,7 +634,7 @@ def run_xcodebuild(dir_helper, ios_config, device_type):
 
 
 def _collect_build_logs(root_output_dir, output_dir, artifact_name):
-  log_extension = ".buildlog"
+  log_extension = ".build.log"
   log_paths = []
   for file_dir, _, file_names in os.walk(output_dir):
     for file_name in file_names:
@@ -1211,7 +1211,7 @@ class _DirectoryHelper(object):
       (str) Absolute path.
 
     """
-    return os.path.join(self.output_dir, name + ".buildlog")
+    return os.path.join(self.output_dir, name + ".build.log")
 
 
 if __name__ == "__main__":
