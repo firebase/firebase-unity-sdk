@@ -371,6 +371,7 @@ def main(argv):
     
   if platforms:
     _collect_integration_tests(config, testapps, root_output_dir, output_dir, FLAGS.artifact_name)
+    _collect_build_logs(root_output_dir, output_dir, FLAGS.artifact_name)
     build_passes = _summarize_build_results(
         testapps=testapps,
         platforms=platforms,
@@ -471,14 +472,9 @@ def build_testapp(dir_helper, api_config, ios_config, target):
         shutil.copy(
             os.path.join(dir_helper.root_dir, api_config.entitlements),
             os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
-      try:
-        # This is a patch. Unity 2018 retrun non 0 value, but it build successfully
-        _run(arg_builder.get_args_to_open_project(build_flags))
-        logging.info("Finished building target %s xcode project", target)
-      except(subprocess.SubprocessError, RuntimeError) as e:
-        logging.info(str(e))
-      finally:
-        run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config, device_type = device_type)
+      _run(arg_builder.get_args_to_open_project(build_flags))
+      logging.info("Finished building target %s xcode project", target)
+      run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config, device_type = device_type)
   else:
     if api_config.minify:
       build_flags += ["-AppBuilderHelper.minify", api_config.minify]
@@ -635,6 +631,31 @@ def run_xcodebuild(dir_helper, ios_config, device_type):
     xcodebuild.generate_unsigned_ipa(
         output_dir=build_output_dir,
         configuration=ios_config.configuration)
+
+
+def _collect_build_logs(root_output_dir, output_dir, artifact_name):
+  log_extension = ".buildlog"
+  log_paths = []
+  for file_dir, _, file_names in os.walk(output_dir):
+    for file_name in file_names:
+      if file_name.endswith(log_extension):
+        log_paths.append(os.path.join(file_dir, file_name))
+  logging.info(root_output_dir)
+  logging.info(output_dir)
+  logging.info("Collecting build log artifacts from: %s", log_paths)
+  
+  if not log_paths:
+    return
+
+  artifact_path = os.path.join(root_output_dir, "testapps-" + artifact_name, "build-logs")
+  logging.info("Collecting build log artifacts to: %s", artifact_path)
+  for path in log_paths:
+    file_name = os.path.basename(path)
+    testapp_name = os.path.basename(os.path.dirname(path))
+    log_output_dir = os.path.join(artifact_path, testapp_name)
+    if not os.path.exists(log_output_dir):
+      os.makedirs(log_output_dir)
+    shutil.move(path, os.path.join(log_output_dir, file_name))
 
 
 def _collect_integration_tests(config, testapps, root_output_dir, output_dir, artifact_name):
@@ -1037,7 +1058,7 @@ def _fix_path(path):
   return os.path.abspath(os.path.expanduser(path))
 
 
-def _run(args, timeout=3000, capture_output=False, text=None, check=True):
+def _run(args, timeout=1200, capture_output=False, text=None, check=True):
   """Executes a command in a subprocess."""
   logging.info("Running in subprocess: %s", " ".join(args))
   return subprocess.run(
@@ -1190,7 +1211,7 @@ class _DirectoryHelper(object):
       (str) Absolute path.
 
     """
-    return os.path.join(self.output_dir, name + ".log")
+    return os.path.join(self.output_dir, name + ".buildlog")
 
 
 if __name__ == "__main__":
