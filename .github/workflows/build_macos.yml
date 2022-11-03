@@ -114,6 +114,12 @@ jobs:
         timeout-minutes: 90
         shell: bash
         run: |
+          if [ -f /usr/local/bin/python3.11 ]; then
+            echo "Removing python3.11"
+            sudo rm -f /usr/local/bin/python3.11
+          else
+            echo "Did not find python3.11"
+          fi
           # TODO add handling cmake_extras
           python scripts/build_scripts/build_zips.py --gha --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --apis=${{ inputs.apis }}
 
