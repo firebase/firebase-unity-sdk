@@ -250,7 +250,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
         with:
-          name: testapps-build-logs
+          name: testapps-build-logs-${{ steps.matrix_info.outputs.info }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/build-logs
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Android integration tests artifact
