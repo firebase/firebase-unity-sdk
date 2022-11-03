@@ -78,6 +78,16 @@ jobs:
           python scripts/gha/install_prereqs_desktop.py
           cd ..
 
+      - name: Remove python3.11
+        shell: bash
+        run: |
+          if [ -d /usr/local/bin/python3.11 ]; then
+            echo "Deleting python3.11"
+            rm /usr/local/bin/python3.11
+          else
+            echo "Failed to find python3.11"
+          fi
+
       - name: Install python deps
         shell: bash
         run: |
