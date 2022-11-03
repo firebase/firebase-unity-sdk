@@ -65,9 +65,9 @@ jobs:
       - name: Remove other pythons
         shell: bash
         run: |
-          ls -l /usr/local/bin | grep /Library/Frameworks/Python.framework/Versions/3 | awk '{print "rm \47/usr/local/bin/" $9 "\47"}'
-          ls -d /Library/Frameworks/Python.framework/Versions/3.* 2> /dev/null | awk '{print "rm -rf \47" $0 "\47"}'
-          ls -d /Applications/Python\ 3.* 2> /dev/null | awk '{print "rm -rf \47" $0 "\47"}'
+          ls -l /usr/local/bin | grep /Library/Frameworks/Python.framework/Versions/3 | awk '{print "sudo rm \47/usr/local/bin/" $9 "\47"}'
+          ls -d /Library/Frameworks/Python.framework/Versions/3.* 2> /dev/null | awk '{print "sudo rm -rf \47" $0 "\47"}'
+          ls -d /Applications/Python\ 3.* 2> /dev/null | awk '{print "sudo rm -rf \47" $0 "\47"}'
 
       - name: Setup python
         uses: actions/setup-python@v4
