@@ -36,7 +36,7 @@ import os
 import shutil
 
 
-def get_args_for_build(path, scheme, output_dir, ios_sdk, configuration):
+def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configuration):
   """Constructs subprocess args for an unsigned xcode build.
 
   Args:
@@ -46,6 +46,7 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, configuration):
     output_dir (str): Directory for the resulting build artifacts. Will be
         created if it doesn't already exist.
     ios_sdk (str): Where this build will be run: device or simulator.
+    target_os (str): one of "iOS" or "tvOS".
     configuration (str): Value for the -configuration flag.
 
   Returns:
@@ -54,7 +55,7 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, configuration):
   """
   args = [
       "xcodebuild",
-      "-sdk", _get_ios_env_from_target(ios_sdk),
+      "-sdk", _get_ios_env_from_target(ios_sdk, target_os),
       "-scheme", scheme,
       "-configuration", configuration,
       "-quiet",
@@ -79,14 +80,24 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, configuration):
   return args
 
 
-def _get_ios_env_from_target(ios_sdk):
+def _get_ios_env_from_target(ios_sdk, target_os):
   """Return a value for the -sdk flag based on the target (device/simulator)."""
-  if ios_sdk == "device":
-    return "iphoneos"
-  elif ios_sdk == "simulator":
-    return "iphonesimulator"
+  if target_os == "iOS":
+    if ios_sdk == "device":
+      return "iphoneos"
+    elif ios_sdk == "simulator":
+      return "iphonesimulator"
+    else:
+      raise ValueError("Unrecognized iOS ios_sdk paramter: %s" % ios_sdk)
+  elif target_os == "tvOS":
+    if ios_sdk == "device":
+      return "appletvos"
+    elif ios_sdk == "simulator":
+      return "appletvsimulator"
+    else:
+      raise ValueError("Unrecognized tvOS ios_sdk parameter: %s" % sdk)
   else:
-    raise ValueError("Unrecognized ios_sdk: %s" % ios_sdk)
+    raise ValueError("Unrecognized target_os %s" % target_os)
 
 
 def generate_unsigned_ipa(output_dir, configuration):
