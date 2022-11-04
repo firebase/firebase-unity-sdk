@@ -59,7 +59,7 @@
 %include "firebase/analytics/parameter_names.h"
 %include "firebase/analytics/user_property_names.h"
 
-
+#include <cstdint>
 %include "stdint.i"
 
 namespace firebase {
@@ -280,6 +280,6 @@ class ParameterCopy : private firebase::analytics::Parameter {
 
 // GetSessionId returns Future<int64_t>.
 %include "app/src/swig/future.i"
-%SWIG_FUTURE(Future_Int64, long, internal, long, FirebaseException)
+%SWIG_FUTURE(Future_Int64, long, internal, int64_t, FirebaseException)
 
 %include "analytics/src/include/firebase/analytics.h"
