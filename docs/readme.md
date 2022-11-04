@@ -67,6 +67,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+- Changes
+    - Analytics: Add a new method `GetSessionIdAsync()`.
+
 ### 10.1.0
 - Changes
     - General: Update to Firebase C++ SDK version 10.1.0.
