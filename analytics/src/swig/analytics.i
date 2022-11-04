@@ -59,6 +59,9 @@
 %include "firebase/analytics/parameter_names.h"
 %include "firebase/analytics/user_property_names.h"
 
+// Including cstdint before stdint.i ensures the int64_t typedef is correct,
+// otherwise on some platforms it is defined as "long long int" instead of
+// "long int".
 #include <cstdint>
 %include "stdint.i"
 
