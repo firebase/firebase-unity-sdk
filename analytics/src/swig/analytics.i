@@ -59,6 +59,7 @@
 %include "firebase/analytics/parameter_names.h"
 %include "firebase/analytics/user_property_names.h"
 
+#include <cstdint>
 %include "stdint.i"
 
 namespace firebase {
