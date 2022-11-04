@@ -31,6 +31,7 @@ namespace Firebase.Sample.Analytics {
         TestAnalyticsGroupJoinDoesNotThrow,
         TestAnalyticsLevelUpDoesNotThrow,
         TestInstanceIdChangeAfterReset,
+        TestGetSessionId,
         TestResetAnalyticsData,
         // Temporarily disabled until this test is deflaked. b/143603151
         //TestCheckAndFixDependenciesInvalidOperation,
@@ -185,6 +186,25 @@ namespace Firebase.Sample.Analytics {
           return WaitForAnalyticsInstanceIdToChange(oldIdTcs.Task.Result, tcs);
         }));
       return tcs.Task;
+    }
+
+    Task TestGetSessionId() {
+      // Depending on platform, GetSessionId needs a few seconds for Analytics
+      // to initialize (especially on iOS simulator). Pause for 5 seconds before
+      // running this test.
+      yield return new UnityEngine.WaitForSeconds(5);
+      var tcs = new TaskCompletionSource<bool>();
+      base.DisplaySessionId().ContinueWithOnMainThread(task => {
+          if (task.IsCanceled) {			      	 
+            tcs.TrySetException(new Exception("Unexpectedly canceled"));
+          } else if (task.IsFaulted) {
+            tcs.TrySetException(task.Exception);
+          } else if (task.Result == 0) {
+            tcs.TrySetException(new Exception("Zero ID returned"));
+          } else {
+            tcs.TrySetResult(true);
+          }
+        });
     }
 
     Task TestResetAnalyticsData() {
