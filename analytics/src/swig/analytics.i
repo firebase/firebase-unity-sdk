@@ -280,6 +280,6 @@ class ParameterCopy : private firebase::analytics::Parameter {
 
 // GetSessionId returns Future<int64_t>.
 %include "app/src/swig/future.i"
-%SWIG_FUTURE(Future_Int64, long, internal, long long, FirebaseException)
+%SWIG_FUTURE(Future_Int64, long, internal, long, FirebaseException)
 
 %include "analytics/src/include/firebase/analytics.h"
