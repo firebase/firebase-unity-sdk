@@ -1,0 +1,90 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: 'Unity Setup'
+inputs:
+  version:
+    required: true
+  platforms:
+    required: false
+  username:
+    required: false
+  password:
+    required: false
+  serial_ids:
+    required: false
+  release_license:
+    required: false
+
+outputs:
+  unity_version:
+    value: ${{ steps.unity_installation.outputs.unity_version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Return Unity license
+      if: inputs.release_license
+      uses: nick-invision/retry@v2
+      with:
+        timeout_minutes: 5
+        max_attempts: 2
+        shell: bash
+        command: |
+          python $GITHUB_ACTION_PATH/unity_installer.py --release_license \
+            --version ${{ inputs.version }} \
+            --logfile "testapps/release_license.log"
+          cat testapps/release_license.log
+    - name: Install Unity installer (U3D)
+      if: inputs.release_license == ''
+      uses: nick-invision/retry@v2
+      with:
+        timeout_minutes: 10
+        max_attempts: 2
+        shell: bash
+        command: gem install u3d -v 1.2.3
+    - name: Set the Unity Env
+      if: inputs.release_license == ''
+      shell: bash
+      run: |
+        echo "LC_ALL=en_US.UTF-8" >> $GITHUB_ENV
+        echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
+        echo "U3D_PASSWORD=" >> $GITHUB_ENV
+        echo "U3D_SKIP_UPDATE_CHECK=1" >> $GITHUB_ENV
+    - id: unity_installation
+      name: Install Unity
+      if: inputs.release_license == ''
+      uses: nick-invision/retry@v2
+      with:
+        timeout_minutes: 12
+        max_attempts: 2
+        shell: bash
+        command: |
+          if [[ -n "${{ inputs.platforms }}" ]]; then
+            additional_flags+=(--platforms ${{ inputs.platforms }})
+          fi
+          unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
+          echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
+          echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
+    - name: Activate Unity license
+      if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
+      shell: bash
+      run: |
+        python $GITHUB_ACTION_PATH/unity_installer.py --activate_license \
+          --version ${{ inputs.version }}  \
+          --username "${{ inputs.username }}" \
+          --password "${{ inputs.password }}" \
+          --serial_ids "${{ inputs.serial_ids }}" \
+          --logfile "testapps/activate_license.log"
+        cat testapps/activate_license.log

@@ -164,13 +164,6 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.build_matrix) }}
     env:
-      # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
-      LC_ALL: en_US.UTF-8
-      LANG: en_US.UTF-8
-      U3D_PASSWORD: ""
-      # Disable checking for U3D updates, since it is buggy
-      U3D_SKIP_UPDATE_CHECK: 1
-      # Which xcode version to use
       xcodeVersion: "13.3.1"
     steps:
       - id: matrix_info
@@ -178,16 +171,6 @@ jobs:
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}"
           echo "::set-output name=artifact_suffix::${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}"
       - uses: actions/checkout@v3
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.0.2
-      - name: Install Unity installer (U3D)
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: gem install u3d -v 1.2.3
       - name: Setup python
         uses: actions/setup-python@v4
         with:
@@ -200,26 +183,14 @@ jobs:
       - name: setup Xcode version
         if: runner.os == 'macOS'
         run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
-      - name: Install Unity
-        uses: nick-invision/retry@v2
+      - id: unity_setup
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
-          timeout_minutes: 30
-          max_attempts: 3
-          shell: bash
-          command: |
-            python scripts/gha/unity_installer.py --install \
-              --platforms ${{ matrix.platform }} \
-              --version ${{ matrix.unity_version }}
-      - name: Activate Unity license
-        timeout-minutes: 10
-        shell: bash
-        run: |
-          python scripts/gha/unity_installer.py --activate_license \
-            --version ${{ matrix.unity_version }}  \
-            --username "${{ secrets.UNITY_USERNAME }}" \
-            --password "${{ secrets.UNITY_PASSWORD }}" \
-            --serial_ids "${{ secrets.SERIAL_ID }}" \
-            --logfile "testapps/activate_license.log"
+          version: ${{ matrix.unity_version }}
+          platforms: ${{ matrix.platform }}
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          serial_ids: ${{ secrets.SERIAL_ID }}
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
@@ -245,9 +216,9 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
-            --p ${{ matrix.platform }} \
-            --ios_sdk ${{ matrix.ios_sdk }} \
+            --u "${{ steps.unity_setup.outputs.unity_version }}" \
+            --p "${{ matrix.platform }}" \
+            --ios_sdk "${{ matrix.ios_sdk }}" \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
@@ -256,17 +227,10 @@ jobs:
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
-        # Retry at most 3 times when Return Unity license fails.
-        uses: nick-invision/retry@v2
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: |
-            python scripts/gha/unity_installer.py --release_license \
-              --version ${{ matrix.unity_version }} \
-              --logfile "testapps/release_license.log"
-            cat testapps/release_license.log
+          version: ${{ matrix.unity_version }}
+          release_license: "true"
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
@@ -370,28 +334,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.playmode_matrix) }}
-    env:
-      # LC_ALL, LANG and U3D_PASSWORD are needed for U3D.
-      LC_ALL: en_US.UTF-8
-      LANG: en_US.UTF-8
-      U3D_PASSWORD: ""
-      # Disable checking for U3D updates, since it is buggy
-      U3D_SKIP_UPDATE_CHECK: 1
     steps:
       - id: matrix_info
         run: |
           echo "::set-output name=info::${{ matrix.unity_version }}-${{matrix.os}}-Playmode-github_runner-${{ matrix.os }}"
       - uses: actions/checkout@v3
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.0.2
-      - name: Install Unity installer (U3D)
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: gem install u3d -v 1.2.3
       - name: Setup python
         uses: actions/setup-python@v4
         with:
@@ -401,25 +348,13 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-      - name: Install Unity
-        uses: nick-invision/retry@v2
+      - id: unity_setup
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
-          timeout_minutes: 20
-          max_attempts: 3
-          shell: bash
-          command: |
-            python scripts/gha/unity_installer.py --install \
-              --version ${{ matrix.unity_version }}
-      - name: Activate Unity license
-        timeout-minutes: 10
-        shell: bash
-        run: |
-          python scripts/gha/unity_installer.py --activate_license \
-            --version ${{ matrix.unity_version }}  \
-            --username "${{ secrets.UNITY_USERNAME }}" \
-            --password "${{ secrets.UNITY_PASSWORD }}" \
-            --serial_ids "${{ secrets.SERIAL_ID }}" \
-            --logfile "testapps/activate_license.log"
+          version: ${{ matrix.unity_version }}
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          serial_ids: ${{ secrets.SERIAL_ID }}
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
@@ -443,7 +378,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u $( python scripts/gha/print_matrix_configuration.py -k version -u ${{matrix.unity_version}}) \
+            --u ${{ steps.unity_setup.outputs.unity_version }} \
             --p Playmode \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
@@ -453,17 +388,10 @@ jobs:
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
-        # Retry at most 3 times when Return Unity license fails.
-        uses: nick-invision/retry@v2
+        uses: firebase/firebase-unity-sdk/gha/unity@main
         with:
-          timeout_minutes: 10
-          max_attempts: 3
-          shell: bash
-          command: |
-            python scripts/gha/unity_installer.py --release_license \
-              --version ${{ matrix.unity_version }} \
-              --logfile "testapps/release_license.log"
-            cat testapps/release_license.log
+          version: ${{ matrix.unity_version }}
+          release_license: "true"
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
