@@ -98,7 +98,7 @@ jobs:
           echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
 
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/gha/unity@main
+        uses: firebase/firebase-unity-sdk/gha/unity@feature/retry-unity
         with:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}

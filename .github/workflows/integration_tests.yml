@@ -356,7 +356,7 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/gha/unity@main
+        uses: firebase/firebase-unity-sdk/gha/unity@feature/retry-unity
         with:
           version: ${{ matrix.unity_version }}
           username: ${{ secrets.UNITY_USERNAME }}
@@ -395,7 +395,7 @@ jobs:
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
-        uses: firebase/firebase-unity-sdk/gha/unity@main
+        uses: firebase/firebase-unity-sdk/gha/unity@feature/retry-unity
         with:
           version: ${{ matrix.unity_version }}
           release_license: "true"
