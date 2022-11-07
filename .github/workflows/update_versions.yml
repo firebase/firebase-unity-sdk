@@ -61,22 +61,22 @@ jobs:
           if [[ "${{ inputs.triggered_by_callable }}" == "true" ]]; then
             # Triggered by callable
             if [[ "${{ inputs.base_branch }}" == "" ]]; then
-              echo "::set-output name=base_branch::${{ github.ref }}"
+              echo "base_branch=${{ github.ref }}" >> $GITHUB_OUTPUT
             else
-              echo "::set-output name=base_branch::${{ inputs.base_branch }}"
+              echo "base_branch=${{ inputs.base_branch }}" >> $GITHUB_OUTPUT
             fi
             
-            echo "::set-output name=package_version_number::${{ inputs.package_version_number }}" 
-            echo "::set-output name=cpp_release_version::${{ inputs.cpp_release_version }}" 
+            echo "package_version_number=${{ inputs.package_version_number }}" >> $GITHUB_OUTPUT
+            echo "cpp_release_version=${{ inputs.cpp_release_version }}" >> $GITHUB_OUTPUT
           else
             if [[ "${{ github.event.inputs.base_branch }}" == "" ]]; then
-              echo "::set-output name=base_branch::${{ github.ref }}"
+              echo "base_branch=${{ github.ref }}" >> $GITHUB_OUTPUT
             else
-              echo "::set-output name=base_branch::${{ github.event.inputs.base_branch }}"
+              echo "base_branch=${{ github.event.inputs.base_branch }}" >> $GITHUB_OUTPUT
             fi
-            echo "::set-output name=base_branch::${{ github.event.inputs.base_branch }}"
-            echo "::set-output name=package_version_number::${{ github.event.inputs.package_version_number }}"
-            echo "::set-output name=cpp_release_version::${{ github.event.inputs.cpp_release_version }}" 
+            echo "base_branch=${{ github.event.inputs.base_branch }}" >> $GITHUB_OUTPUT
+            echo "package_version_number=${{ github.event.inputs.package_version_number }}" >> $GITHUB_OUTPUT
+            echo "cpp_release_version=${{ github.event.inputs.cpp_release_version }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Print inputs
@@ -124,7 +124,7 @@ jobs:
           date_str=$(date "+%Y%m%d-%H%M%S")
           new_branch=release-${{ steps.decide_input.outputs.package_version_number }}-${date_str}
           echo "NEW_BRANCH=${new_branch}" >> $GITHUB_ENV
-          echo "::set-output name=new_branch::${new_branch}"
+          echo "new_branch=${new_branch}" >> $GITHUB_OUTPUT
 
       - name: Create new branch
         run: |
@@ -162,17 +162,17 @@ jobs:
             git commit -a -m "${commit_title}
 
           ${commit_body}"
-            echo "::set-output name=branch_pushed::1"
+            echo "branch_pushed=1" >> $GITHUB_OUTPUT
             # Show changes in git log
             git diff
             # Push branch
             git push --set-upstream origin "${NEW_BRANCH}"
             # Create pull request
             pr_number=$(python scripts/gha/create_pull_request.py --token ${{ steps.generate-pr-token.outputs.token }} --head "${NEW_BRANCH}" --base "${{ steps.decide_input.outputs.base_branch }}" --title "${commit_title}" --body "${commit_body}")
-            echo "::set-output name=created_pr_number::${pr_number}"
+            echo "created_pr_number=${pr_number}" >> $GITHUB_OUTPUT
           else
             echo "::warning ::No changes detected, won't create pull request."
-            echo "::set-output name=branch_pushed::0"
+            echo "branch_pushed=0" >> $GITHUB_OUTPUT
           fi
 
       - name: Decide output
@@ -180,7 +180,7 @@ jobs:
         run: |
           if [[ "${{ steps.push-branch.outputs.branch_pushed }}" == "1" ]]; then
             # Triggered by callable
-            echo "::set-output name=new_branch::${{ steps.name-branch.outputs.new_branch }}"
+            echo "new_branch=${{ steps.name-branch.outputs.new_branch }}" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=new_branch::"
+            echo "new_branch=" >> $GITHUB_OUTPUT
           fi
