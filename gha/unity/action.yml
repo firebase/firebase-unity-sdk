@@ -33,7 +33,6 @@ outputs:
 
 runs:
   using: 'composite'
-  timeout-minutes: 30
   steps:
     - name: Return Unity license
       if: inputs.release_license
