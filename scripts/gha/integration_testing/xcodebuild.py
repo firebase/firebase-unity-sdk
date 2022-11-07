@@ -45,7 +45,7 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configurati
     scheme (str): Name of the scheme to build.
     output_dir (str): Directory for the resulting build artifacts. Will be
         created if it doesn't already exist.
-    ios_sdk (str): Where this build will be run: device or simulator.
+    ios_sdk (str): Where this build will be run: "device" or "simulator".
     target_os (str): one of "iOS" or "tvOS".
     configuration (str): Value for the -configuration flag.
 
@@ -97,7 +97,7 @@ def _get_ios_env_from_target(ios_sdk, target_os):
     else:
       raise ValueError("Unrecognized tvOS ios_sdk parameter: %s" % sdk)
   else:
-    raise ValueError("Unrecognized target_os %s" % target_os)
+    raise ValueError("Unrecognized target_os %s for ios_sdk %s" % (target_os, ios_sdk))
 
 
 def generate_unsigned_ipa(output_dir, configuration):
