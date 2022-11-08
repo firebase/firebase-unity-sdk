@@ -173,7 +173,6 @@ def main(argv):
     raise app.UsageError("Too many command-line arguments.")
 
   if FLAGS.install:
-    uninstall_unity(FLAGS.version)
     install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
@@ -210,9 +209,23 @@ def install_unity(unity_version, platforms):
   u3d = find_u3d()
   run([u3d, "available", "-u", unity_version], check=False)
   run([u3d, "available", "-u", unity_full_version, "-p"], check=False)
-  run([u3d, "install", "--trace",
+  attempt_num = 1
+  while attempt_num <= _MAX_ATTEMPTS:
+    uninstall_unity(unity_version)
+    args = [u3d, "install", "--trace",
        "--verbose", unity_full_version,
-       "-p", package_csv])
+       "-p", package_csv]
+    logging.info("run_with_retry: %s (attempt %s of %s)", args, attempt_num, _MAX_ATTEMPTS)
+    try:
+      run(args)
+    except subprocess.SubprocessError:
+      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED", args, attempt_num, _MAX_ATTEMPTS)
+      # If retries have been exhausted, just raise the exception
+      if attempt_num >= _MAX_ATTEMPTS:
+        raise
+    else:
+      break
+    attempt_num += 1
   
   logging.info("Finished installing Unity.")
 
