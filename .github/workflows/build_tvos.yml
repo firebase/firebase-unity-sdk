@@ -109,7 +109,7 @@ jobs:
           pod repo add cocoapods https://github.com/CocoaPods/Specs.git
 
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/gha/unity@feature/retry-unity
+        uses: ./gha/unity
         timeout-minutes: 30
         with:
           version: ${{ inputs.unity_version }}
