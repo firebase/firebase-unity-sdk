@@ -90,7 +90,8 @@ jobs:
           choco install openssl -r
 
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/gha/unity@main
+        uses: ./gha/unity
+        timeout-minutes: 30
         with:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}

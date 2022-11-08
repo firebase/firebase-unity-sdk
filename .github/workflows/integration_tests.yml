@@ -167,6 +167,7 @@ jobs:
       xcodeVersion: "13.3.1"
     steps:
       - id: matrix_info
+        shell: bash
         run: |
           echo "info=${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}" >> $GITHUB_OUTPUT
           echo "artifact_suffix=${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}" >> $GITHUB_OUTPUT
@@ -185,6 +186,7 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
       - id: unity_setup
         uses: ./gha/unity
+        timeout-minutes: 30
         with:
           version: ${{ matrix.unity_version }}
           platforms: ${{ matrix.platform }}
@@ -343,6 +345,7 @@ jobs:
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.playmode_matrix) }}
     steps:
       - id: matrix_info
+        shell: bash
         run: |
           echo "info=${{ matrix.unity_version }}-${{matrix.os}}-Playmode-github_runner-${{ matrix.os }}" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v3
@@ -357,6 +360,7 @@ jobs:
           pip install -r scripts/gha/requirements.txt
       - id: unity_setup
         uses: ./gha/unity
+        timeout-minutes: 30
         with:
           version: ${{ matrix.unity_version }}
           username: ${{ secrets.UNITY_USERNAME }}
@@ -443,6 +447,7 @@ jobs:
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.test_matrix) }}
     steps:
       - id: matrix_info
+        shell: bash
         run: |
           echo "info=${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}" >> $GITHUB_OUTPUT
           echo "artifact_path=testapps-${{ matrix.platform }}-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.ios_sdk }}" >> $GITHUB_OUTPUT
