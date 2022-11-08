@@ -99,7 +99,7 @@ UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {
       "version": "2020.3.34f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "packages": {"Default": ["Unity"], "Android": ["Android", "iOS"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
     },
     _MACOS: {
       "version": "2020.3.34f1",
