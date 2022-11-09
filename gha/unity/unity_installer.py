@@ -84,7 +84,7 @@ from absl import logging
 _CMD_TIMEOUT = 900
 _MAX_ATTEMPTS = 3
 
-_DEFALUT = "Default"
+_DEFAULT = "Default"
 _ANDROID = "Android"
 _IOS = "iOS"
 _TVOS = "tvOS"
@@ -126,6 +126,38 @@ UNITY_SETTINGS = {
     }
   },
 }
+
+# Fallback installers to try to use if u3d fails. Use the same format for the strings as the output of the packages map above.
+FALLBACK_INSTALLERS = {
+  _WINDOWS: {
+    "Version": "2020.3.34f1",
+    "Unity": "https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe",
+    "Android": "https://download.unity3d.com/download_unity/9a4c9c70452b/TargetSupportInstaller/UnitySetup-Android-Support-for-Editor-2020.3.34f1.exe",
+    "Ios": "https://download.unity3d.com/download_unity/9a4c9c70452b/TargetSupportInstaller/UnitySetup-iOS-Support-for-Editor-2020.3.34f1.exe",
+    "Mac-mono": "https://download.unity3d.com/download_unity/9a4c9c70452b/TargetSupportInstaller/UnitySetup-Mac-Mono-Support-for-Editor-2020.3.34f1.exe",
+    "Linux-mono": "https://download.unity3d.com/download_unity/9a4c9c70452b/TargetSupportInstaller/UnitySetup-Linux-Mono-Support-for-Editor-2020.3.34f1.exe",
+  },
+  _MACOS: {
+    "Version": "2020.3.34f1",
+    "Unity": "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorInstaller/Unity.pkg",
+    "Android": "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorTargetInstaller/UnitySetup-Android-Support-for-Editor-2020.3.34f1.pkg",
+    "Ios": "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorTargetInstaller/UnitySetup-iOS-Support-for-Editor-2020.3.34f1.pkg",
+    "appletv": "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorTargetInstaller/UnitySetup-AppleTV-Support-for-Editor-2020.3.34f1.pkg",
+    "Windows-mono": "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorTargetInstaller/UnitySetup-Windows-Mono-Support-for-Editor-2020.3.34f1.pkg",
+    "Linux-mono": "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorTargetInstaller/UnitySetup-Linux-Mono-Support-for-Editor-2020.3.34f1.pkg",
+  },
+  _LINUX: {
+    "Version": "2020.3.40f1",
+    "Unity": "https://download.unity3d.com/download_unity/ba48d4efcef1/LinuxEditorInstaller/Unity.tar.xz",
+  }
+}
+
+FALLBACK_MACOS_VERSION = "2020.3.34f1"
+FALLBACK_MACOS_INSTALLER = "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorInstaller/Unity.pkg"
+FALLBACK_MACOS_ANDROID_INSTALLER = "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorTargetInstaller/UnitySetup-Android-Support-for-Editor-2020.3.34f1.pkg"
+FALLBACK_MACOS_IOS_INSTALLER = "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorTargetInstaller/UnitySetup-iOS-Support-for-Editor-2020.3.34f1.pkg"
+FALLBACK_MACOS_WINDOWS_INSTALLER = "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorTargetInstaller/UnitySetup-Windows-Mono-Support-for-Editor-2020.3.34f1.pkg"
+FALLBACK_MACOS_LINUX_INSTALLER = "https://download.unity3d.com/download_unity/9a4c9c70452b/MacEditorTargetInstaller/UnitySetup-Linux-Mono-Support-for-Editor-2020.3.34f1.pkg"
 
 FLAGS = flags.FLAGS
 
@@ -199,7 +231,7 @@ def install_unity(unity_version, platforms):
   # for platforms other than the running OS, or embedded Android SDK/NDK.
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-  package_list = UNITY_SETTINGS[unity_version][os]["packages"][_DEFALUT]
+  package_list = UNITY_SETTINGS[unity_version][os]["packages"][_DEFAULT]
   if platforms:
     for p in platforms:
       if UNITY_SETTINGS[unity_version][os]["packages"][p]:
@@ -210,6 +242,7 @@ def install_unity(unity_version, platforms):
   run([u3d, "available", "-u", unity_version], check=False)
   run([u3d, "available", "-u", unity_full_version, "-p"], check=False)
   attempt_num = 1
+  try_fallback = False
   while attempt_num <= _MAX_ATTEMPTS:
     uninstall_unity(unity_version)
     args = [u3d, "install", "--trace",
@@ -222,16 +255,48 @@ def install_unity(unity_version, platforms):
       logging.exception("run_with_retry: %s (attempt %s of %s) FAILED", args, attempt_num, _MAX_ATTEMPTS)
       # If retries have been exhausted, just raise the exception
       if attempt_num >= _MAX_ATTEMPTS:
-        raise
+        try_fallback = True
     else:
       break
     attempt_num += 1
   
+  if try_fallback:
+    install_unity_fallback(package_list)
+
   logging.info("Finished installing Unity.")
 
   unity_path = get_unity_path(unity_version)
   logging.info("unity_path: %s", unity_path)
   print("%s,%s" % (unity_full_version, unity_path))
+
+
+def install_unity_fallback(package_list):
+  logging.info("Trying to use the fallback method of installation")
+  os = get_os()
+  unity_version = FALLBACK_INSTALLERS[os]["Version"]
+  # Try to install Unity without using U3D
+  for package in package_list:
+    download_path = FALLBACK_INSTALLERS[os][package]
+    if os == _WINDOWS:
+      install_on_windows(unity_version, download_path)
+    elif os == _MACOS:
+      install_on_macos(unity_version, download_path)
+    else:
+      install_on_linux(unity_version, download_path)
+
+def install_on_windows(unity_version, download_path):
+  logging.info("Will try to install on Windows. Unity version: %s. Download path: %s",
+    unity_version, download_path)
+  # Download the executable
+  run(["curl", "-L", download_path, "-o", "~/Downloads/Installer.exe"], check=False)
+
+def install_on_macos(unity_version, download_path):
+  logging.info("Will try to install on MacOS. Unity version: %s. Download path: %s",
+    unity_version, download_path)
+
+def install_on_linux(unity_version, download_path):
+  logging.info("Will try to install on Linux. Unity version: %s. Download path: %s",
+    unity_version, download_path)
 
 
 def uninstall_unity(unity_version):

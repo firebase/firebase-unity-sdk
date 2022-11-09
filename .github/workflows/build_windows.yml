@@ -109,12 +109,12 @@ jobs:
         run: |
           rm C:/msys64/mingw64/lib/libz*
       
-      - name: Build SDK (Windows)
-        timeout-minutes: 90
-        shell: bash
-        run: |
-          # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --gha --platform=windows --unity_root="$UNITY_ROOT_DIR" --swig_dir="$SWIG_DIR" --apis=${{ inputs.apis }}
+#      - name: Build SDK (Windows)
+#        timeout-minutes: 90
+#        shell: bash
+#        run: |
+#          # TODO add handling cmake_extras
+#          python scripts/build_scripts/build_zips.py --gha --platform=windows --unity_root="$UNITY_ROOT_DIR" --swig_dir="$SWIG_DIR" --apis=${{ inputs.apis }}
 
       - name: Check zip file
         shell: bash
