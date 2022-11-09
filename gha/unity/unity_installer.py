@@ -288,7 +288,7 @@ def install_on_windows(unity_version, download_path):
   logging.info("Will try to install on Windows. Unity version: %s. Download path: %s",
     unity_version, download_path)
   # Download the executable
-  run(["curl", "-L", download_path, "-o", "~/Downloads/Installer.exe"], check=False)
+  run(["curl", "-L", download_path], check=False)
 
 def install_on_macos(unity_version, download_path):
   logging.info("Will try to install on MacOS. Unity version: %s. Download path: %s",
