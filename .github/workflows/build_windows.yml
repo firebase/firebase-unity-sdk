@@ -100,6 +100,7 @@ jobs:
         run: |
           mkdir -p ~/Downloads
           curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/UnityInstaller.exe
+          curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/TargetSupportInstaller/UnitySetup-Android-Support-for-Editor-2020.3.34f1.exe -o ~/Downloads/UnityInstallerAndroid.exe
           ls -l ~/Downloads/
 
       - name: Setup Swig Env
