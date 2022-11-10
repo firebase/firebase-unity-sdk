@@ -62,6 +62,12 @@ runs:
         echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
         echo "U3D_PASSWORD=" >> $GITHUB_ENV
         echo "U3D_SKIP_UPDATE_CHECK=1" >> $GITHUB_ENV
+    - name: Download Unity Fallback
+      if: inputs.release_license == '' && startsWith(matrix.os, 'windows')
+      shell: bash
+      run: |
+        mkdir -p ~/Downloads
+        curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/UnityInstaller.exe
     - id: unity_installation
       name: Install Unity
       if: inputs.release_license == ''
@@ -73,13 +79,6 @@ runs:
         unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
         echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
         echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
-    - name: Install Unity Fallback
-      if: inputs.release_license == ''
-      shell: bash
-      run: |
-        mkdir -p ~/Downloads
-        curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/Installer.exe
-        ls ~/Downloads
     - name: Activate Unity license
       if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
       shell: bash

@@ -131,7 +131,7 @@ UNITY_SETTINGS = {
 FALLBACK_INSTALLERS = {
   _WINDOWS: {
     "Version": "2020.3.34f1",
-    "Unity": "https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe",
+    #"Unity": "https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe",
     "Android": "https://download.unity3d.com/download_unity/9a4c9c70452b/TargetSupportInstaller/UnitySetup-Android-Support-for-Editor-2020.3.34f1.exe",
     "Ios": "https://download.unity3d.com/download_unity/9a4c9c70452b/TargetSupportInstaller/UnitySetup-iOS-Support-for-Editor-2020.3.34f1.exe",
     "Mac-mono": "https://download.unity3d.com/download_unity/9a4c9c70452b/TargetSupportInstaller/UnitySetup-Mac-Mono-Support-for-Editor-2020.3.34f1.exe",
@@ -274,27 +274,32 @@ def install_unity_fallback(package_list):
   logging.info("Trying to use the fallback method of installation")
   os = get_os()
   unity_version = FALLBACK_INSTALLERS[os]["Version"]
+  # First, check if the installer was downloaded ahead of time
+  if os.path.exists("~/Downloads/UnityInstaller.exe"):
+    # Found the Windows installer
+    logging.info("Found the Windows installer!")
   # Try to install Unity without using U3D
   for package in package_list:
     download_path = FALLBACK_INSTALLERS[os][package]
-    if os == _WINDOWS:
-      install_on_windows(unity_version, download_path)
-    elif os == _MACOS:
-      install_on_macos(unity_version, download_path)
-    else:
-      install_on_linux(unity_version, download_path)
+    if download_path:
+      if os == _WINDOWS:
+        download_and_install_on_windows(unity_version, download_path)
+      elif os == _MACOS:
+        download_and_install_on_macos(unity_version, download_path)
+      else:
+        download_and_install_on_linux(unity_version, download_path)
 
-def install_on_windows(unity_version, download_path):
+def download_and_install_on_windows(unity_version, download_path):
   logging.info("Will try to install on Windows. Unity version: %s. Download path: %s",
     unity_version, download_path)
   # Download the executable
   #run(["curl", "-L", download_path], check=False)
 
-def install_on_macos(unity_version, download_path):
+def download_and_install_on_macos(unity_version, download_path):
   logging.info("Will try to install on MacOS. Unity version: %s. Download path: %s",
     unity_version, download_path)
 
-def install_on_linux(unity_version, download_path):
+def download_and_install_on_linux(unity_version, download_path):
   logging.info("Will try to install on Linux. Unity version: %s. Download path: %s",
     unity_version, download_path)
 
