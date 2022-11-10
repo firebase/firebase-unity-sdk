@@ -77,7 +77,9 @@ runs:
       if: inputs.release_license == ''
       shell: bash
       run: |
-        curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe
+        mkdir -p ~/Downloads
+        curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/Installer.exe
+        ls ~/Downloads
     - name: Activate Unity license
       if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
       shell: bash
