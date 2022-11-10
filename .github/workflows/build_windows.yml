@@ -99,9 +99,13 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/Downloads
+          echo "=== Starting the Download ==="
           curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/UnityInstaller.exe
-          curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/TargetSupportInstaller/UnitySetup-Android-Support-for-Editor-2020.3.34f1.exe -o ~/Downloads/UnityInstallerAndroid.exe
+          echo "===  Finished Downloading ==="
           ls -l ~/Downloads/
+          echo "=== Installing Unity ==="
+          ~/Downloads/UnityInstaller.exe /S /D=C:\Program Files\Unity_2020.3.34f1
+
 
       - name: Setup Swig Env
         shell: bash
@@ -116,12 +120,12 @@ jobs:
         run: |
           rm C:/msys64/mingw64/lib/libz*
       
-#      - name: Build SDK (Windows)
-#        timeout-minutes: 90
-#        shell: bash
-#        run: |
-#          # TODO add handling cmake_extras
-#          python scripts/build_scripts/build_zips.py --gha --platform=windows --unity_root="$UNITY_ROOT_DIR" --swig_dir="$SWIG_DIR" --apis=${{ inputs.apis }}
+      - name: Build SDK (Windows)
+        timeout-minutes: 90
+        shell: bash
+        run: |
+          # TODO add handling cmake_extras
+          python scripts/build_scripts/build_zips.py --gha --platform=windows --unity_root="$UNITY_ROOT_DIR" --swig_dir="$SWIG_DIR" --apis=${{ inputs.apis }}
 
       - name: Check zip file
         shell: bash
