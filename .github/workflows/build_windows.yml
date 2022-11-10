@@ -89,12 +89,18 @@ jobs:
         run: |
           choco install openssl -r
 
-      - id: unity_setup
-        uses: ./gha/unity
-        timeout-minutes: 30
-        with:
-          version: ${{ inputs.unity_version }}
-          platforms: ${{ inputs.unity_platform_name }}
+      #- id: unity_setup
+      #  uses: ./gha/unity
+      #  timeout-minutes: 30
+      #  with:
+      #    version: ${{ inputs.unity_version }}
+      #    platforms: ${{ inputs.unity_platform_name }}
+      - name: Download Unity Installer
+        shell: bash
+        run: |
+          mkdir -p ~/Downloads
+          curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/UnityInstaller.exe
+          ls -l ~/Downloads/
 
       - name: Setup Swig Env
         shell: bash
