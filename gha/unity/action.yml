@@ -68,6 +68,7 @@ runs:
       run: |
         mkdir -p ~/Downloads
         curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/UnityInstaller.exe
+        ls -l ~/Downloads/
     - id: unity_installation
       name: Install Unity
       if: inputs.release_license == ''

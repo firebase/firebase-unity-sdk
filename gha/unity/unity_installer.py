@@ -72,6 +72,7 @@ X4-XXXX-XXXX-XXXX-XXXX
 
 """
 
+import os
 import platform
 import shutil
 import subprocess
