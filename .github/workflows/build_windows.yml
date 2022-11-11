@@ -104,7 +104,8 @@ jobs:
           echo "===  Finished Downloading ==="
           ls -l ~/Downloads/
           echo "=== Installing Unity ==="
-          ~/Downloads/UnityInstaller.exe /S /D=C:\Program Files\Unity_2020.3.34f1
+          ~/Downloads/UnityInstaller.exe -UI=reduced /S /D="C:\Program Files\Unity_2020.3.34f1"
+          ls -l "C:\Program Files\Unity_2020.3.34f1"
 
 
       - name: Setup Swig Env
