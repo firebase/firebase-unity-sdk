@@ -95,26 +95,34 @@ jobs:
       #  with:
       #    version: ${{ inputs.unity_version }}
       #    platforms: ${{ inputs.unity_platform_name }}
-      - name: Download Unity Installer
+      #- name: Download Unity Installer
+      #  shell: bash
+      #  timeout-minutes: 10
+      #  run: |
+      #    mkdir -p Downloads
+      #    echo "=== Starting the Download ==="
+      #    curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o Downloads/UnitySetup64.exe
+      #    echo "===  Finished Downloading ==="
+      #    ls -l Downloads/
+      #    pwd Downloads/UnitySetup64.exe
+
+      #- name: Install Unity
+      #  timeout-minutes: 20
+      #  run: |
+      #    echo "=== Installing Unity ==="
+      #    ls -l "C:\\Program Files"
+      #    echo "Running: Downloads/UnitySetup64.exe /UI=reduced /S /D=\"C:\\Program Files\\Unity_2020.3.34f1\""
+      #    Downloads/UnitySetup64.exe /UI=reduced /S
+      #    ls -l "C:\\Program Files\\Unity_2020.3.34f1"
+      - name: Setup Unity
+        uses: kuler90/setup-unity@v1
+        with:
+          unity-version: 2020.3.34f1
+
+      - name: Print info
         shell: bash
-        timeout-minutes: 10
         run: |
-          mkdir -p Downloads
-          echo "=== Starting the Download ==="
-          curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o Downloads/UnitySetup64.exe
-          echo "===  Finished Downloading ==="
-          ls -l Downloads/
-          pwd Downloads/UnitySetup64.exe
-
-      - name: Install Unity
-        timeout-minutes: 20
-        run: |
-          echo "=== Installing Unity ==="
           ls -l "C:\\Program Files"
-          echo "Running: Downloads/UnitySetup64.exe /UI=reduced /S /D=\"C:\\Program Files\\Unity_2020.3.34f1\""
-          Downloads/UnitySetup64.exe /UI=reduced /S /D=C:\Program Files\Unity_2020.3.34f1
-          ls -l "C:\\Program Files\\Unity_2020.3.34f1"
-
 
       - name: Setup Swig Env
         shell: bash
