@@ -112,7 +112,7 @@ jobs:
           echo "=== Installing Unity ==="
           ls -l "C:\\Program Files"
           echo "Running: Downloads/UnitySetup64.exe /UI=reduced /S /D=\"C:\\Program Files\\Unity_2020.3.34f1\""
-          Downloads/UnitySetup64.exe /UI=reduced /S /D="C:\\Program Files\\Unity_2020.3.34f1"
+          Downloads/UnitySetup64.exe /UI=reduced /S /D="C:\\Program\ Files\\Unity_2020.3.34f1"
           ls -l "C:\\Program Files\\Unity_2020.3.34f1"
 
 
