@@ -100,14 +100,14 @@ jobs:
         timeout-minutes: 30
         run: |
           mkdir -p ~/Downloads
-          reg query HKU\\S-1-5-19
           echo "=== Starting the Download ==="
-          curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/UnityInstaller.exe
+          curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/UnitySetup64.exe
           echo "===  Finished Downloading ==="
           ls -l ~/Downloads/
+          pwd ~/Downloads/UnitySetup64.exe
           echo "=== Installing Unity ==="
-          echo "Running: ~/Downloads/UnityInstaller.exe /UI=reduced /S /D=\"C:\\Program Files\\Unity_2020.3.34f1\""
-          ~/Downloads/UnityInstaller.exe /UI=reduced /S /D="C:\\Program Files\\Unity_2020.3.34f1"
+          echo "Running: ~/Downloads/UnitySetup64.exe /UI=reduced /S /D=\"C:\\Program Files\\Unity_2020.3.34f1\""
+          ~/Downloads/UnitySetup64.exe /UI=reduced /S /D="C:\\Program Files\\Unity_2020.3.34f1"
           ls -l "C:\Program Files\Unity_2020.3.34f1"
 
 
