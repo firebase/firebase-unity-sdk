@@ -97,7 +97,7 @@ jobs:
       #    platforms: ${{ inputs.unity_platform_name }}
       - name: Download Unity Installer
         shell: bash
-        timeout-minutes: 30
+        timeout-minutes: 10
         run: |
           mkdir -p Downloads
           echo "=== Starting the Download ==="
@@ -107,7 +107,7 @@ jobs:
           pwd Downloads/UnitySetup64.exe
 
       - name: Install Unity
-        timeout-minutes: 30
+        timeout-minutes: 20
         run: |
           echo "=== Installing Unity ==="
           ls -l "C:\\Program Files"
