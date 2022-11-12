@@ -97,12 +97,10 @@ jobs:
           # brew won't overwrite MacOS system default OpenSSL, so force it here.
           echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
 
-      - id: unity_setup
-        uses: ./gha/unity
-        timeout-minutes: 30
+      - name: Setup Unity
+        uses: kuler90/setup-unity@v1
         with:
-          version: ${{ inputs.unity_version }}
-          platforms: ${{ inputs.unity_platform_name }}
+          unity-version: 2020.3.34f1
 
       - name: Setup Swig Env
         shell: bash
