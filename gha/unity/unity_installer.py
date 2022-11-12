@@ -384,9 +384,17 @@ def get_unity_executable(version):
   # https://github.com/DragonBox/u3d
   full_version = UNITY_SETTINGS[version][get_os()]["version"]
   if platform.system() == "Windows":
-    return "C:/Program Files/Unity_%s/editor/unity.exe" % full_version
+    unity_path = "C:/Program Files/Unity_%s/editor/unity.exe" % full_version
+    if os.path.exists(unity_path):
+      return unity_path
+    else:
+      return "C:/Program Files/Unity/Hub/Editor/2020.3.34f1/Editor/Unity.exe"
   elif platform.system() == "Darwin":
-    return "/Applications/Unity_%s/Unity.app/Contents/MacOS/Unity" % full_version
+    unity_path = "/Applications/Unity_%s/Unity.app/Contents/MacOS/Unity" % full_version
+    if os.path.exists(unity_path):
+      return unity_path
+    else:
+      return "/Applications/Unity/Hub/Editor/2020.3.34f1/Unity.app/Contents/MacOS/Unity"
   else:
     # /opt/unity-editor-%s/Editor/Unity is the path for Linux expected by U3D,
     # but Linux is not yet supported.
