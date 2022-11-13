@@ -190,10 +190,14 @@ jobs:
         uses: kuler90/setup-unity@v1
         with:
           unity-version: 2020.3.34f1
-          # Because of a bug, include iOS for the editor tools
-          unity-modules:
-            - android
-            - ios
+          unity-modules: android
+      # Because of a bug, include iOS for the editor tools
+      - name: Setup Unity (Android, Part 2)
+        if: ${{ contains(matrix.platform, 'Android') }}
+        uses: kuler90/setup-unity@v1
+        with:
+          unity-version: 2020.3.34f1
+          unity-modules: ios
 
       - name: Setup Unity (iOS)
         if: ${{ contains(matrix.platform, 'iOS') }}
@@ -208,18 +212,26 @@ jobs:
         uses: kuler90/setup-unity@v1
         with:
           unity-version: 2020.3.34f1
-          unity-modules:
-            - mac-mono
-            - linux-mono
+          unity-modules: mac-mono
+      - name: Setup Unity (Desktop Windows Part 2)
+        if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os != 'macOS' }}
+        uses: kuler90/setup-unity@v1
+        with:
+          unity-version: 2020.3.34f1
+          unity-modules: linux-mono
 
       - name: Setup Unity (Desktop macOS)
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os == 'macOS' }}
         uses: kuler90/setup-unity@v1
         with:
           unity-version: 2020.3.34f1
-          unity-modules:
-            - windows-mono
-            - linux-mono
+          unity-modules: windows-mono
+      - name: Setup Unity (Desktop macOS Part 2)
+        if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os == 'macOS' }}
+        uses: kuler90/setup-unity@v1
+        with:
+          unity-version: 2020.3.34f1
+          unity-modules: linux-mono
 
       - name: Activate Unity license
         shell: bash
