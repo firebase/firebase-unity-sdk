@@ -235,7 +235,7 @@ jobs:
       - name: Activate Unity license
         shell: bash
         run: |
-          python $GITHUB_ACTION_PATH/unity_installer.py --activate_license \
+          python gha/unity/unity_installer.py --activate_license \
             --version 2020  \
             --username "${{ secrets.UNITY_USERNAME }}" \
             --password "${{ secrets.UNITY_PASSWORD }}" \
@@ -285,7 +285,7 @@ jobs:
           max_attempts: 2
           shell: bash
           command: |
-            python $GITHUB_ACTION_PATH/unity_installer.py --release_license \
+            python gha/unity/unity_installer.py --release_license \
               --version 2020 \
               --logfile "testapps/release_license.log"
             cat testapps/release_license.log
@@ -422,7 +422,7 @@ jobs:
       - name: Activate Unity license
         shell: bash
         run: |
-          python $GITHUB_ACTION_PATH/unity_installer.py --activate_license \
+          python gha/unity/unity_installer.py --activate_license \
             --version 2020  \
             --username "${{ secrets.UNITY_USERNAME }}" \
             --password "${{ secrets.UNITY_PASSWORD }}" \
@@ -467,7 +467,7 @@ jobs:
           max_attempts: 2
           shell: bash
           command: |
-            python $GITHUB_ACTION_PATH/unity_installer.py --release_license \
+            python gha/unity/unity_installer.py --release_license \
               --version 2020 \
               --logfile "testapps/release_license.log"
             cat testapps/release_license.log
