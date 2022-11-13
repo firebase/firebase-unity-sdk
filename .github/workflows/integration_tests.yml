@@ -204,8 +204,7 @@ jobs:
         uses: kuler90/setup-unity@v1
         with:
           unity-version: 2020.3.34f1
-          unity-modules:
-            - ios
+          unity-modules: ios
 
       - name: Setup Unity (Desktop Windows)
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os != 'macOS' }}
