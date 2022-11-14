@@ -73,16 +73,17 @@ runs:
     #     unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
     #     echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
     #     echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
-    # - name: unity_setting
-    #   if: inputs.release_license == ''
-    #   shell: bash
-    #   run: |
-    #     if [[ -n "${{ inputs.platforms }}" ]]; then
-    #       additional_flags+=(--platforms ${{ inputs.platforms }})
-    #     fi
-    #     unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
-    #     echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
-    #     echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
+    - name: unity_setting
+      if: inputs.release_license == ''
+      shell: bash
+      run: |
+        if [[ -n "${{ inputs.platforms }}" ]]; then
+          additional_flags+=(--platforms ${{ inputs.platforms }})
+        fi
+        unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
+        echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
+        echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
+        echo "module_flag=$(cut -d',' -f3 <<< ${unity_info})" >> $GITHUB_OUTPUT
     - name: Setup Unity
       uses: kuler90/setup-unity@v1
       with:

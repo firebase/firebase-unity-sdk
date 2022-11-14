@@ -198,8 +198,18 @@ def main(argv):
     release_license(FLAGS.logfile, FLAGS.version)
 
 
-def install_unity(print_setting, platforms):
-
+def print_setting(unity_version, platforms):
+  os = get_os()
+  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+  module_flag = ""
+  if platforms:
+    for p in platforms:
+      if UNITY_SETTINGS[unity_version][os]["packages"][p]:
+        module = UNITY_SETTINGS[unity_version][os]["packages"][p]
+        module_flag += "-m %s" % module
+  unity_path = get_unity_path(unity_version)
+  logging.info("unity_path: %s", unity_path)
+  print("%s,%s,%s" % (unity_full_version, unity_path, module_flag))
 
 
 def install_unity(unity_version, platforms):
