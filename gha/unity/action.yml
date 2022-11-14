@@ -59,6 +59,11 @@ runs:
         echo "UNITY_ROOT_DIR=$(cut -d',' -f3 <<< ${unity_info})" >> $GITHUB_ENV
         echo "UNITY_HUB_DIR=$(cut -d',' -f4 <<< ${unity_info})" >> $GITHUB_ENV
         echo ${unity_info}
+        echo ${unity_version}
+    - name: Test
+      shell: bash
+      run: |
+        echo ${{ steps.unity_setting.outputs.unity_version }}
     - name: Install Unity
       if: inputs.release_license == ''
       uses: kuler90/setup-unity@v1
