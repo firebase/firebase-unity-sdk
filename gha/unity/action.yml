@@ -65,10 +65,10 @@ runs:
       with:
         unity-version: ${{ env.UNITY_VERSION }}
     - name: Install Unity Modules
-      if: inputs.release_license == ''
+      if: inputs.release_license == '' && ${{ env.MODULE_FLAG }}
       shell: bash
       run: |
-        ${{ env.UNITY_HUB_DIR }} -- --headless install-modules --version ${{ env.UNITY_VERSION }} ${{ env.MODULE_FLAG }}
+        "${{ env.UNITY_HUB_DIR }}" -- --headless install-modules --version ${{ env.UNITY_VERSION }} ${{ env.MODULE_FLAG }}
     - name: Activate Unity license
       if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
       shell: bash
