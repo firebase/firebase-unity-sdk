@@ -178,8 +178,8 @@ def main(argv):
   if FLAGS.setting:
     print_setting(FLAGS.version, FLAGS.platforms)
 
-  # if FLAGS.install:
-  #   install_unity(FLAGS.version, FLAGS.platforms)
+  if FLAGS.install:
+    print_setting(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
     if FLAGS.license_file:
@@ -204,8 +204,7 @@ def print_setting(unity_version, platforms):
   module_flag = ""
   if platforms:
     for p in platforms:
-      if UNITY_SETTINGS[unity_version][os]["packages"][p]:
-        module = UNITY_SETTINGS[unity_version][os]["packages"][p]
+      for module in UNITY_SETTINGS[unity_version][os]["packages"][p]:
         module_flag += "-m %s" % module
   unity_path = get_unity_path(unity_version)
   logging.info("unity_path: %s", unity_path)
