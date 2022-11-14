@@ -218,7 +218,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u "${{ steps.unity_setup.outputs.unity_version }}" \
+            --u ${{ env.UNITY_VERSION }} \
             --p "${{ matrix.platform }}" \
             --ios_sdk "${{ matrix.ios_sdk }}" \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
@@ -389,7 +389,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u ${{ steps.unity_setup.outputs.unity_version }} \
+            --u ${{ env.UNITY_VERSION }} \
             --p Playmode \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \

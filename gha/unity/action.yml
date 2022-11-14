@@ -27,10 +27,6 @@ inputs:
   release_license:
     required: false
 
-outputs:
-  unity_version:
-    value: ${{ steps.unity_setting.outputs.unity_version }}
-
 runs:
   using: 'composite'
   steps:
@@ -51,7 +47,6 @@ runs:
       shell: bash
       run: |
         unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --setting --version ${{ inputs.version }})
-        echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
         echo "UNITY_VERSION=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_ENV
         echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
     - name: Install Unity
