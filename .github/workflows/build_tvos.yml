@@ -108,12 +108,12 @@ jobs:
         run: |
           pod repo add cocoapods https://github.com/CocoaPods/Specs.git
 
-      - name: Setup Unity
-        uses: kuler90/setup-unity@v1
+      - id: unity_setup
+        uses: ./gha/unity
         timeout-minutes: 30
         with:
-          unity-version: 2020.3.34f1
-          unity-modules: appletv
+          version: ${{ inputs.unity_version }}
+          platforms: ${{ inputs.unity_platform_name }}
 
       - name: Build SDK (tvOS)
         timeout-minutes: 90

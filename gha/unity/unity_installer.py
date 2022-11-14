@@ -73,7 +73,7 @@ from absl import logging
 _CMD_TIMEOUT = 900
 _MAX_ATTEMPTS = 3
 
-_DEFAULT = "Default"
+_DEFALUT = "Default"
 _ANDROID = "Android"
 _IOS = "iOS"
 _TVOS = "tvOS"

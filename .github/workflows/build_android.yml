@@ -101,13 +101,13 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-
-      - name: Setup Unity
-        uses: kuler90/setup-unity@v1
+      
+      - id: unity_setup
+        uses: ./gha/unity
         timeout-minutes: 30
         with:
-          unity-version: 2020.3.34f1
-          unity-modules: android
+          version: ${{ inputs.unity_version }}
+          platforms: ${{ inputs.unity_platform_name }}
 
       - name: Display Swig Version
         shell: bash
