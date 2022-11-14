@@ -425,7 +425,10 @@ jobs:
       - name: Setup Unity
         uses: kuler90/setup-unity@v1
         with:
+          timeout-minutes: 30
           unity-version: 2020.3.34f1
+          # Install ios for the editor tools
+          unity-modules: ios
       - name: Activate Unity license
         shell: bash
         run: |
