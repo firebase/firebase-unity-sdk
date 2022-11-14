@@ -189,6 +189,7 @@ jobs:
         if: ${{ contains(matrix.platform, 'Android') }}
         uses: kuler90/setup-unity@v1
         with:
+          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: android
       # Because of a bug, include iOS for the editor tools
@@ -196,6 +197,7 @@ jobs:
         if: ${{ contains(matrix.platform, 'Android') }}
         uses: kuler90/setup-unity@v1
         with:
+          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: ios
 
@@ -203,6 +205,7 @@ jobs:
         if: ${{ contains(matrix.platform, 'iOS') }}
         uses: kuler90/setup-unity@v1
         with:
+          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: ios
 
@@ -210,12 +213,14 @@ jobs:
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os != 'macOS' }}
         uses: kuler90/setup-unity@v1
         with:
+          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: mac-mono
       - name: Setup Unity (Desktop Windows Part 2)
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os != 'macOS' }}
         uses: kuler90/setup-unity@v1
         with:
+          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: linux-mono
 
@@ -223,12 +228,14 @@ jobs:
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os == 'macOS' }}
         uses: kuler90/setup-unity@v1
         with:
+          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: windows-mono
       - name: Setup Unity (Desktop macOS Part 2)
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os == 'macOS' }}
         uses: kuler90/setup-unity@v1
         with:
+          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: linux-mono
 
@@ -268,7 +275,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u "${{ steps.unity_setup.outputs.unity_version }}" \
+            --u 2020.3.34f1 \
             --p "${{ matrix.platform }}" \
             --ios_sdk "${{ matrix.ios_sdk }}" \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
