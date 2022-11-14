@@ -82,6 +82,7 @@ from absl import logging
 
 
 _CMD_TIMEOUT = 900
+_MAX_ATTEMPTS = 3
 
 _DEFALUT = "Default"
 _ANDROID = "Android"
@@ -172,7 +173,6 @@ def main(argv):
     raise app.UsageError("Too many command-line arguments.")
 
   if FLAGS.install:
-    uninstall_unity(FLAGS.version)
     install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
@@ -209,9 +209,24 @@ def install_unity(unity_version, platforms):
   u3d = find_u3d()
   run([u3d, "available", "-u", unity_version], check=False)
   run([u3d, "available", "-u", unity_full_version, "-p"], check=False)
-  run([u3d, "install", "--trace",
+  attempt_num = 1
+  while attempt_num <= _MAX_ATTEMPTS:
+    uninstall_unity(unity_version)
+    args = [u3d, "install", "--trace",
        "--verbose", unity_full_version,
-       "-p", package_csv])
+       "-p", package_csv]
+    logging.info("run_with_retry: %s (attempt %s of %s)", args, attempt_num, _MAX_ATTEMPTS)
+    try:
+      run(args)
+    except subprocess.SubprocessError:
+      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED", args, attempt_num, _MAX_ATTEMPTS)
+      # If retries have been exhausted, just raise the exception
+      if attempt_num >= _MAX_ATTEMPTS:
+        raise
+    else:
+      break
+    attempt_num += 1
+  
   logging.info("Finished installing Unity.")
 
   unity_path = get_unity_path(unity_version)
@@ -324,8 +339,8 @@ def run(args, check=True, timeout=_CMD_TIMEOUT):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
   logging.info("run cmd: %s", " ".join(args))
   result = subprocess.run(args=args, check=check, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-  logging.info(result.stdout)
-  logging.info(result.stderr)
+  logging.info("cmd result.stdout: %s", result.stdout)
+  logging.info("cmd result.stderr: %s", result.stderr)
 
 
 if __name__ == "__main__":

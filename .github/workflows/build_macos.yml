@@ -61,6 +61,14 @@ jobs:
         with:
           ruby-version: 3.0.2
 
+      # Remove other python installs before installing the version we want
+      - name: Remove other pythons
+        shell: bash
+        run: |
+          ls -l /usr/local/bin | grep /Library/Frameworks/Python.framework/Versions/3 | awk '{print "sudo rm \47/usr/local/bin/" $9 "\47"}'
+          ls -d /Library/Frameworks/Python.framework/Versions/3.* 2> /dev/null | awk '{print "sudo rm -rf \47" $0 "\47"}'
+          ls -d /Applications/Python\ 3.* 2> /dev/null | awk '{print "sudo rm -rf \47" $0 "\47"}'
+
       - name: Setup python
         uses: actions/setup-python@v4
         with:
@@ -90,7 +98,8 @@ jobs:
           echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
 
       - id: unity_setup
-        uses: firebase/firebase-unity-sdk/gha/unity@main
+        uses: ./gha/unity
+        timeout-minutes: 30
         with:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}
@@ -106,6 +115,12 @@ jobs:
         timeout-minutes: 90
         shell: bash
         run: |
+          if [ -f /usr/local/bin/python3.11 ]; then
+            echo "Removing python3.11"
+            sudo rm -f /usr/local/bin/python3.11
+          else
+            echo "Did not find python3.11"
+          fi
           # TODO add handling cmake_extras
           python scripts/build_scripts/build_zips.py --gha --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --apis=${{ inputs.apis }}
 

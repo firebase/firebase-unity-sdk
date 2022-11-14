@@ -65,18 +65,14 @@ runs:
     - id: unity_installation
       name: Install Unity
       if: inputs.release_license == ''
-      uses: nick-invision/retry@v2
-      with:
-        timeout_minutes: 12
-        max_attempts: 2
-        shell: bash
-        command: |
-          if [[ -n "${{ inputs.platforms }}" ]]; then
-            additional_flags+=(--platforms ${{ inputs.platforms }})
-          fi
-          unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
-          echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
-          echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
+      shell: bash
+      run: |
+        if [[ -n "${{ inputs.platforms }}" ]]; then
+          additional_flags+=(--platforms ${{ inputs.platforms }})
+        fi
+        unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
+        echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
+        echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
     - name: Activate Unity license
       if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
       shell: bash
