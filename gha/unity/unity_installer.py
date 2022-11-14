@@ -268,7 +268,7 @@ def get_unity_executable(version):
   # https://github.com/DragonBox/u3d
   full_version = UNITY_SETTINGS[version][get_os()]["version"]
   if platform.system() == "Windows":
-    return "/c/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe" % full_version
+    return "C:/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe" % full_version
   elif platform.system() == "Darwin":
     return "/Applications/Unity/Hub/Editor/%s/Unity.app/Contents/MacOS/Unity" % full_version
   else:
@@ -282,7 +282,7 @@ def get_unity_hub_path():
   # These are the path formats assumed by U3D, as documented here:
   # https://github.com/DragonBox/u3d
   if platform.system() == "Windows":
-    return "/c/Program Files/Unity Hub/Unity Hub.exe"
+    return "C:/Program Files/Unity Hub/Unity Hub.exe"
   elif platform.system() == "Darwin":
     return "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub"
   elif platform.system() == 'Linux':
@@ -295,7 +295,7 @@ def get_unity_path(version):
   # https://github.com/DragonBox/u3d
   full_version = UNITY_SETTINGS[version][get_os()]["version"]
   if platform.system() == "Windows":
-    return "/c/Program Files/Unity/Hub/Editor/%s" % full_version
+    return "C:/Program Files/Unity/Hub/Editor/%s" % full_version
   elif platform.system() == "Darwin":
     return "/Applications/Unity/Hub/Editor/%s" % full_version
   elif platform.system() == 'Linux':
