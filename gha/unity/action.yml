@@ -65,7 +65,8 @@ runs:
     - name: Setup Unity
       uses: kuler90/setup-unity@v1
       with:
-        unity-modules: android,ios,appletv
+        unity-version: 2020.3.34f1
+        unity-modules: [android,ios,appletv]
     # - id: unity_installation
     #   name: Install Unity
     #   if: inputs.release_license == ''
