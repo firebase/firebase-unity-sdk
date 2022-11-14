@@ -204,8 +204,9 @@ def print_setting(unity_version, platforms):
   module_flag = ""
   if platforms:
     for p in platforms:
-      for module in UNITY_SETTINGS[unity_version][os]["packages"][p]:
-        module_flag += "-m %s" % module
+      if UNITY_SETTINGS[unity_version][os]["packages"][p]:
+        for module in UNITY_SETTINGS[unity_version][os]["packages"][p]:
+          module_flag += "-m %s" % module
   unity_path = get_unity_path(unity_version)
   logging.info("unity_path: %s", unity_path)
   print("%s,%s,%s" % (unity_full_version, unity_path, module_flag))
