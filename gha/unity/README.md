@@ -69,7 +69,7 @@ This GitHub Action will provide `unity_version` (full unity version) output and 
               release_license: "true"
     ```
 
-## How to upgrade supported unity versions
+## [Deprecated] How to upgrade supported unity versions
 **Background**
 
 This GitHub Action leverages [U3D](github.com/DragonBox/u3d), which is a command line tool for working with Unity from the command line on all three operating systems. 
