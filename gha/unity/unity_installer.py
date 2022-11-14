@@ -203,7 +203,7 @@ def print_setting(unity_version, platforms):
     for p in platforms:
       if UNITY_SETTINGS[unity_version][os]["packages"][p]:
         for module in UNITY_SETTINGS[unity_version][os]["packages"][p]:
-          module_flag += "-m %s " % module
+          module_flag += "--module %s " % module
   unity_path = get_unity_path(unity_version)
   unity_hub_path = get_unity_hub_path()
   logging.info("unity_path: %s", unity_path)
