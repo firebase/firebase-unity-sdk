@@ -62,6 +62,13 @@ runs:
         echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
         echo "U3D_PASSWORD=" >> $GITHUB_ENV
         echo "U3D_SKIP_UPDATE_CHECK=1" >> $GITHUB_ENV
+    - name: Download Unity Fallback
+      if: inputs.release_license == '' && startsWith(matrix.os, 'windows')
+      shell: bash
+      run: |
+        mkdir -p ~/Downloads
+        curl -L https://download.unity3d.com/download_unity/9a4c9c70452b/Windows64EditorInstaller/UnitySetup64.exe -o ~/Downloads/UnityInstaller.exe
+        ls -l ~/Downloads/
     - id: unity_installation
       name: Install Unity
       if: inputs.release_license == ''

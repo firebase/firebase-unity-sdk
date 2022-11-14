@@ -81,12 +81,12 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
       
-      - id: unity_setup
-        uses: ./gha/unity
+      - name: Setup Unity
+        uses: kuler90/setup-unity@v1
         timeout-minutes: 30
         with:
-          version: ${{ inputs.unity_version }}
-          platforms: ${{ inputs.unity_platform_name }}
+          unity-version: 2020.3.34f1
+          unity-modules: ios
 
       - name: Build SDK (iOS)
         timeout-minutes: 90
