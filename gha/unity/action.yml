@@ -53,7 +53,7 @@ runs:
         if [[ -n "${{ inputs.platforms }}" ]]; then
           additional_flags+=(--platforms ${{ inputs.platforms }})
         fi
-        unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
+        unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --setting --version ${{ inputs.version }} ${additional_flags[*]} )
         echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
         echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
         echo "module_flag=$(cut -d',' -f3 <<< ${unity_info})" >> $GITHUB_OUTPUT

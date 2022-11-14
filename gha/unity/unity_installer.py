@@ -178,9 +178,6 @@ def main(argv):
   if FLAGS.setting:
     print_setting(FLAGS.version, FLAGS.platforms)
 
-  if FLAGS.install:
-    print_setting(FLAGS.version, FLAGS.platforms)
-
   if FLAGS.activate_license:
     if FLAGS.license_file:
       with open(FLAGS.license_file, "r") as f:
