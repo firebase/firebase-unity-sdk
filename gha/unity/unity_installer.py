@@ -84,7 +84,7 @@ from absl import logging
 _CMD_TIMEOUT = 900
 _MAX_ATTEMPTS = 3
 
-_DEFALUT = "Default"
+_DEFAULT = "Default"
 _ANDROID = "Android"
 _IOS = "iOS"
 _TVOS = "tvOS"
@@ -131,6 +131,9 @@ FLAGS = flags.FLAGS
 
 # These are the three actions supported by the tool.
 flags.DEFINE_bool(
+    "setting", False,
+    "Print out detailed Unity Setting. Supply --version and --platforms.")
+flags.DEFINE_bool(
     "install", False,
     "Install Unity and build supports. Supply --version and --platforms.")
 
@@ -143,7 +146,7 @@ flags.DEFINE_bool(
     "release_license", False,
     "Release an activated Unity license. Supply --version and --logfile.")
 
-flags.DEFINE_string("version", None, "Major version string, e.g. 2018")
+flags.DEFINE_string("version", None, "Major version string, e.g. 2020")
 flags.DEFINE_string("license_file", None, "Path to the license file.")
 flags.DEFINE_string("username", None, "username for a Unity account.")
 flags.DEFINE_string("password", None, "password for that Unity account.")
@@ -172,6 +175,9 @@ def main(argv):
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
 
+  if FLAGS.setting:
+    print_setting(FLAGS.version, FLAGS.platforms)
+
   if FLAGS.install:
     install_unity(FLAGS.version, FLAGS.platforms)
 
@@ -192,6 +198,10 @@ def main(argv):
     release_license(FLAGS.logfile, FLAGS.version)
 
 
+def install_unity(print_setting, platforms):
+
+
+
 def install_unity(unity_version, platforms):
   """Installs Unity and build supports (packages)."""
   # This always installs Unity, and installs build supports for Android
@@ -199,7 +209,7 @@ def install_unity(unity_version, platforms):
   # for platforms other than the running OS, or embedded Android SDK/NDK.
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-  package_list = UNITY_SETTINGS[unity_version][os]["packages"][_DEFALUT]
+  package_list = UNITY_SETTINGS[unity_version][os]["packages"][_DEFAULT]
   if platforms:
     for p in platforms:
       if UNITY_SETTINGS[unity_version][os]["packages"][p]:
