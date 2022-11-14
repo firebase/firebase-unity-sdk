@@ -202,7 +202,7 @@ def print_setting(unity_version):
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
   unity_path = get_unity_path(unity_version)
-  print("%s,%s,%s" % (unity_full_version, unity_path))
+  print("%s,%s" % (unity_full_version, unity_path))
 
 
 def install_modules(unity_version, platforms):
