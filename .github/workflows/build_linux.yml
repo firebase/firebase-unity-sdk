@@ -83,12 +83,11 @@ jobs:
         run: |
           sudo apt install openssl
 
-      - id: unity_setup
-        uses: ./gha/unity
+      - name: Setup Unity
+        uses: kuler90/setup-unity@v1
         timeout-minutes: 30
         with:
-          version: ${{ inputs.unity_version }}
-          platforms: ${{ inputs.unity_platform_name }}
+          unity-version: 2020.3.40f1
 
       - name: Setup Swig Env
         shell: bash
