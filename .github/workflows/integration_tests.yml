@@ -188,54 +188,54 @@ jobs:
       - name: Setup Unity (Android)
         if: ${{ contains(matrix.platform, 'Android') }}
         uses: kuler90/setup-unity@v1
+        timeout-minutes: 30
         with:
-          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: android
       # Because of a bug, include iOS for the editor tools
       - name: Setup Unity (Android, Part 2)
         if: ${{ contains(matrix.platform, 'Android') }}
         uses: kuler90/setup-unity@v1
+        timeout-minutes: 30
         with:
-          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: ios
 
       - name: Setup Unity (iOS)
         if: ${{ contains(matrix.platform, 'iOS') }}
         uses: kuler90/setup-unity@v1
+        timeout-minutes: 30
         with:
-          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: ios
 
       - name: Setup Unity (Desktop Windows)
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os != 'macOS' }}
         uses: kuler90/setup-unity@v1
+        timeout-minutes: 30
         with:
-          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: mac-mono
       - name: Setup Unity (Desktop Windows Part 2)
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os != 'macOS' }}
         uses: kuler90/setup-unity@v1
+        timeout-minutes: 30
         with:
-          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: linux-mono
 
       - name: Setup Unity (Desktop macOS)
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os == 'macOS' }}
         uses: kuler90/setup-unity@v1
+        timeout-minutes: 30
         with:
-          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: windows-mono
       - name: Setup Unity (Desktop macOS Part 2)
         if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os == 'macOS' }}
         uses: kuler90/setup-unity@v1
+        timeout-minutes: 30
         with:
-          timeout-minutes: 30
           unity-version: 2020.3.34f1
           unity-modules: linux-mono
 
@@ -424,8 +424,8 @@ jobs:
           pip install -r scripts/gha/requirements.txt
       - name: Setup Unity
         uses: kuler90/setup-unity@v1
+        timeout-minutes: 30
         with:
-          timeout-minutes: 30
           unity-version: 2020.3.34f1
           # Install ios for the editor tools
           unity-modules: ios
