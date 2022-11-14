@@ -137,7 +137,7 @@ namespace Firebase.Sample.Analytics {
     }
 
     // Get the current app session ID
-    public Task<string> DisplaySessionId() {
+    public Task<long> DisplaySessionId() {
       return FirebaseAnalytics.GetSessionIdAsync().ContinueWithOnMainThread(task => {
         if (task.IsCanceled) {
           DebugLog("Session ID fetch was canceled.");
