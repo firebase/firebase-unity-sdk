@@ -132,10 +132,10 @@ FLAGS = flags.FLAGS
 # These are the three actions supported by the tool.
 flags.DEFINE_bool(
     "setting", False,
-    "Print out detailed Unity Setting. Supply --version and --platforms.")
+    "Print out detailed Unity Setting. Supply --version.")
 flags.DEFINE_bool(
-    "install", False,
-    "Install Unity and build supports. Supply --version and --platforms.")
+    "install_modules", False,
+    "Install Unity Modules and build supports. Supply --version and --platforms.")
 
 flags.DEFINE_bool(
     "activate_license", False,
@@ -176,7 +176,10 @@ def main(argv):
     raise app.UsageError("Too many command-line arguments.")
 
   if FLAGS.setting:
-    print_setting(FLAGS.version, FLAGS.platforms)
+    print_setting(FLAGS.version)
+
+  if FLAGS.install_modules:
+    install_modules(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
     if FLAGS.license_file:
@@ -195,19 +198,27 @@ def main(argv):
     release_license(FLAGS.logfile, FLAGS.version)
 
 
-def print_setting(unity_version, platforms):
+def print_setting(unity_version):
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-  module_flag = ""
+  unity_path = get_unity_path(unity_version)
+  print("%s,%s,%s" % (unity_full_version, unity_path))
+
+
+def install_modules(unity_version, platforms):
+  os = get_os()
+  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+  unity_hub_path = get_unity_hub_path()
   if platforms:
     for p in platforms:
       if UNITY_SETTINGS[unity_version][os]["packages"][p]:
         for module in UNITY_SETTINGS[unity_version][os]["packages"][p]:
-          module_flag += "--module %s " % module
-  unity_path = get_unity_path(unity_version)
-  unity_hub_path = get_unity_hub_path()
-  logging.info("unity_path: %s", unity_path)
-  print("%s,%s,%s,%s" % (unity_full_version, module_flag, unity_path, unity_hub_path))
+          run([unity_hub_path, "--", "--headless", 
+                "install-modules", 
+                "--version", unity_full_version, 
+                "--module", module, 
+                "--childModules"], 
+              check=False)
 
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
