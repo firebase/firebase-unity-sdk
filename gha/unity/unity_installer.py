@@ -178,8 +178,8 @@ def main(argv):
   if FLAGS.setting:
     print_setting(FLAGS.version, FLAGS.platforms)
 
-  if FLAGS.install:
-    install_unity(FLAGS.version, FLAGS.platforms)
+  # if FLAGS.install:
+  #   install_unity(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
     if FLAGS.license_file:
@@ -212,57 +212,57 @@ def print_setting(unity_version, platforms):
   print("%s,%s,%s" % (unity_full_version, unity_path, module_flag))
 
 
-def install_unity(unity_version, platforms):
-  """Installs Unity and build supports (packages)."""
-  # This always installs Unity, and installs build supports for Android
-  # and iOS. Other supports can be added here, e.g. desktop platforms
-  # for platforms other than the running OS, or embedded Android SDK/NDK.
-  os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-  package_list = UNITY_SETTINGS[unity_version][os]["packages"][_DEFAULT]
-  if platforms:
-    for p in platforms:
-      if UNITY_SETTINGS[unity_version][os]["packages"][p]:
-        package_list.extend(UNITY_SETTINGS[unity_version][os]["packages"][p])
-  package_csv = ",".join(filter(None.__ne__, package_list))
+# def install_unity(unity_version, platforms):
+#   """Installs Unity and build supports (packages)."""
+#   # This always installs Unity, and installs build supports for Android
+#   # and iOS. Other supports can be added here, e.g. desktop platforms
+#   # for platforms other than the running OS, or embedded Android SDK/NDK.
+#   os = get_os()
+#   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+#   package_list = UNITY_SETTINGS[unity_version][os]["packages"][_DEFAULT]
+#   if platforms:
+#     for p in platforms:
+#       if UNITY_SETTINGS[unity_version][os]["packages"][p]:
+#         package_list.extend(UNITY_SETTINGS[unity_version][os]["packages"][p])
+#   package_csv = ",".join(filter(None.__ne__, package_list))
 
-  u3d = find_u3d()
-  run([u3d, "available", "-u", unity_version], check=False)
-  run([u3d, "available", "-u", unity_full_version, "-p"], check=False)
-  attempt_num = 1
-  while attempt_num <= _MAX_ATTEMPTS:
-    uninstall_unity(unity_version)
-    args = [u3d, "install", "--trace",
-       "--verbose", unity_full_version,
-       "-p", package_csv]
-    logging.info("run_with_retry: %s (attempt %s of %s)", args, attempt_num, _MAX_ATTEMPTS)
-    try:
-      run(args)
-    except subprocess.SubprocessError:
-      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED", args, attempt_num, _MAX_ATTEMPTS)
-      # If retries have been exhausted, just raise the exception
-      if attempt_num >= _MAX_ATTEMPTS:
-        raise
-    else:
-      break
-    attempt_num += 1
+#   u3d = find_u3d()
+#   run([u3d, "available", "-u", unity_version], check=False)
+#   run([u3d, "available", "-u", unity_full_version, "-p"], check=False)
+#   attempt_num = 1
+#   while attempt_num <= _MAX_ATTEMPTS:
+#     uninstall_unity(unity_version)
+#     args = [u3d, "install", "--trace",
+#        "--verbose", unity_full_version,
+#        "-p", package_csv]
+#     logging.info("run_with_retry: %s (attempt %s of %s)", args, attempt_num, _MAX_ATTEMPTS)
+#     try:
+#       run(args)
+#     except subprocess.SubprocessError:
+#       logging.exception("run_with_retry: %s (attempt %s of %s) FAILED", args, attempt_num, _MAX_ATTEMPTS)
+#       # If retries have been exhausted, just raise the exception
+#       if attempt_num >= _MAX_ATTEMPTS:
+#         raise
+#     else:
+#       break
+#     attempt_num += 1
   
-  logging.info("Finished installing Unity.")
+#   logging.info("Finished installing Unity.")
 
-  unity_path = get_unity_path(unity_version)
-  logging.info("unity_path: %s", unity_path)
-  print("%s,%s" % (unity_full_version, unity_path))
+#   unity_path = get_unity_path(unity_version)
+#   logging.info("unity_path: %s", unity_path)
+#   print("%s,%s" % (unity_full_version, unity_path))
 
 
-def uninstall_unity(unity_version):
-  """Uninstalls Unity and build supports (packages)."""
-  # Cleaning up installed Unity.
-  os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+# def uninstall_unity(unity_version):
+#   """Uninstalls Unity and build supports (packages)."""
+#   # Cleaning up installed Unity.
+#   os = get_os()
+#   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
 
-  u3d = find_u3d()
-  run([u3d, "uninstall", "--trace", unity_full_version], check=False)
-  logging.info("Finished uninstalling Unity.")
+#   u3d = find_u3d()
+#   run([u3d, "uninstall", "--trace", unity_full_version], check=False)
+#   logging.info("Finished uninstalling Unity.")
 
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
@@ -307,14 +307,14 @@ def release_license(logfile, unity_version):
   logging.info("Unity license released.")
 
 
-def find_u3d():
-  """Returns the full path to the u3d tool."""
-  # On Windows, running in a subprocess will not search the system path,
-  # so calling "u3d" won't work. Find full path instead.
-  u3d = shutil.which("u3d")
-  if not u3d:
-    raise RuntimeError("Could not find u3d. Ensure it's installed and on path.")
-  return u3d
+# def find_u3d():
+#   """Returns the full path to the u3d tool."""
+#   # On Windows, running in a subprocess will not search the system path,
+#   # so calling "u3d" won't work. Find full path instead.
+#   u3d = shutil.which("u3d")
+#   if not u3d:
+#     raise RuntimeError("Could not find u3d. Ensure it's installed and on path.")
+#   return u3d
 
 
 def get_os():
