@@ -484,7 +484,7 @@ jobs:
           test_type: "game-loop"
           test_devices: ${{ matrix.device_detail }}
       - name: Read FTL Test Result
-        if: ${{ matrix.device_type == 'real' }}
+        if: ${{ matrix.device_type == 'real' && !cancelled() }}
         timeout-minutes: 60
         shell: bash
         run: |
