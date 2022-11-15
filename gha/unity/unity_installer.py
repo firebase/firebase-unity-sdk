@@ -211,7 +211,7 @@ def install_unity_hub():
     else:
       logging.info("path.exists false")
     run(["sudo", "hdiutil", "attach", unity_hub_path])
-    mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.pkg")
+    mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     logging.info("mounted_to")
     logging.info(mounted_to)
     logging.info(mounted_to[0])
