@@ -184,72 +184,15 @@ jobs:
       - name: setup Xcode version
         if: runner.os == 'macOS'
         run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
-
-      - name: Setup Unity (Android)
-        if: ${{ contains(matrix.platform, 'Android') }}
-        uses: kuler90/setup-unity@v1
+      - id: unity_setup
+        uses: ./gha/unity
         timeout-minutes: 30
         with:
-          unity-version: 2020.3.34f1
-          unity-modules: android
-      # Because of a bug, include iOS for the editor tools
-      - name: Setup Unity (Android, Part 2)
-        if: ${{ contains(matrix.platform, 'Android') }}
-        uses: kuler90/setup-unity@v1
-        timeout-minutes: 30
-        with:
-          unity-version: 2020.3.34f1
-          unity-modules: ios
-
-      - name: Setup Unity (iOS)
-        if: ${{ contains(matrix.platform, 'iOS') }}
-        uses: kuler90/setup-unity@v1
-        timeout-minutes: 30
-        with:
-          unity-version: 2020.3.34f1
-          unity-modules: ios
-
-      - name: Setup Unity (Desktop Windows)
-        if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os != 'macOS' }}
-        uses: kuler90/setup-unity@v1
-        timeout-minutes: 30
-        with:
-          unity-version: 2020.3.34f1
-          unity-modules: mac-mono
-      - name: Setup Unity (Desktop Windows Part 2)
-        if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os != 'macOS' }}
-        uses: kuler90/setup-unity@v1
-        timeout-minutes: 30
-        with:
-          unity-version: 2020.3.34f1
-          unity-modules: linux-mono
-
-      - name: Setup Unity (Desktop macOS)
-        if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os == 'macOS' }}
-        uses: kuler90/setup-unity@v1
-        timeout-minutes: 30
-        with:
-          unity-version: 2020.3.34f1
-          unity-modules: windows-mono
-      - name: Setup Unity (Desktop macOS Part 2)
-        if: ${{ !contains(matrix.platform, 'Android') && !contains(matrix.platform, 'iOS') && runner.os == 'macOS' }}
-        uses: kuler90/setup-unity@v1
-        timeout-minutes: 30
-        with:
-          unity-version: 2020.3.34f1
-          unity-modules: linux-mono
-
-      - name: Activate Unity license
-        shell: bash
-        run: |
-          python gha/unity/unity_installer.py --activate_license \
-            --version 2020  \
-            --username "${{ secrets.UNITY_USERNAME }}" \
-            --password "${{ secrets.UNITY_PASSWORD }}" \
-            --serial_ids "${{ secrets.SERIAL_ID }}" \
-            --logfile "testapps/activate_license.log"
-          cat testapps/activate_license.log
-
+          version: ${{ matrix.unity_version }}
+          platforms: ${{ matrix.platform }}
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          serial_ids: ${{ secrets.SERIAL_ID }}
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
@@ -275,7 +218,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u 2020.3.34f1 \
+            --u ${{ env.UNITY_VERSION }} \
             --p "${{ matrix.platform }}" \
             --ios_sdk "${{ matrix.ios_sdk }}" \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
@@ -283,20 +226,13 @@ jobs:
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
             --force_latest_runtime \
             --ci
-
       - name: Return Unity license
+        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
-        uses: nick-invision/retry@v2
+        uses: ./gha/unity
         with:
-          timeout_minutes: 5
-          max_attempts: 2
-          shell: bash
-          command: |
-            python gha/unity/unity_installer.py --release_license \
-              --version 2020 \
-              --logfile "testapps/release_license.log"
-            cat testapps/release_license.log
-
+          version: ${{ matrix.unity_version }}
+          release_license: "true"
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
@@ -422,23 +358,15 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-      - name: Setup Unity
-        uses: kuler90/setup-unity@v1
+      - id: unity_setup
+        uses: ./gha/unity
         timeout-minutes: 30
         with:
-          unity-version: 2020.3.34f1
-          # Install ios for the editor tools
-          unity-modules: ios
-      - name: Activate Unity license
-        shell: bash
-        run: |
-          python gha/unity/unity_installer.py --activate_license \
-            --version 2020  \
-            --username "${{ secrets.UNITY_USERNAME }}" \
-            --password "${{ secrets.UNITY_PASSWORD }}" \
-            --serial_ids "${{ secrets.SERIAL_ID }}" \
-            --logfile "testapps/activate_license.log"
-          cat testapps/activate_license.log
+          version: ${{ matrix.unity_version }}
+          platforms: Playmode
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          serial_ids: ${{ secrets.SERIAL_ID }}
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
@@ -462,7 +390,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u 2020.3.34f1 \
+            --u ${{ env.UNITY_VERSION }} \
             --p Playmode \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
@@ -470,17 +398,12 @@ jobs:
             --force_latest_runtime \
             --ci
       - name: Return Unity license
+        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
-        uses: nick-invision/retry@v2
+        uses: ./gha/unity
         with:
-          timeout_minutes: 5
-          max_attempts: 2
-          shell: bash
-          command: |
-            python gha/unity/unity_installer.py --release_license \
-              --version 2020 \
-              --logfile "testapps/release_license.log"
-            cat testapps/release_license.log
+          version: ${{ matrix.unity_version }}
+          release_license: "true"
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
@@ -562,7 +485,7 @@ jobs:
           test_type: "game-loop"
           test_devices: ${{ matrix.device_detail }}
       - name: Read FTL Test Result
-        if: ${{ matrix.device_type == 'real' }}
+        if: ${{ matrix.device_type == 'real' && !cancelled() }}
         timeout-minutes: 60
         shell: bash
         run: |
