@@ -70,6 +70,7 @@ import re
 from absl import app
 from absl import flags
 from absl import logging
+from os import path
 
 
 _CMD_TIMEOUT = 900
@@ -201,15 +202,16 @@ def install_unity_hub():
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg'
     response = requests.get(URL)
     open("UnityHubSetup.dmg", "wb").write(response.content)
-    if os.path.exists("UnityHubSetup.dmg"):
-      unity_hub_path = os.path.abspath(os.path.realpath("UnityHubSetup.dmg"))
+    if path.exists("UnityHubSetup.dmg"):
+      unity_hub_path = path.abspath(path.realpath("UnityHubSetup.dmg"))
       logging.info("unity_hub_path")
-      logging.info(os.path.realpath("UnityHubSetup.dmg"))
+      logging.info(path.realpath("UnityHubSetup.dmg"))
+      logging.info(path.abspath("UnityHubSetup.dmg"))
       logging.info(unity_hub_path)
     else:
-      logging.info("os.path.exists false")
+      logging.info("path.exists false")
     run(["sudo", "hdiutil", "attach", unity_hub_path])
-    mounted_to = glob.glob(os.path.join(dir, "/Volumes/Unity Hub*/Unity Hub.pkg"))
+    mounted_to = glob.glob(path.join(dir, "/Volumes/Unity Hub*/Unity Hub.pkg"))
     logging.info("mounted_to")
     logging.info(mounted_to)
     logging.info(mounted_to[0])
@@ -219,13 +221,14 @@ def install_unity_hub():
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
-    if os.path.exists("UnityHubSetup.exe"):
-      unity_hub_path = os.path.abspath(os.path.realpath("UnityHubSetup.exe"))
+    if path.exists("UnityHubSetup.exe"):
+      unity_hub_path = path.abspath(path.realpath("UnityHubSetup.exe"))
       logging.info("unity_hub_path")
-      logging.info(os.path.realpath("UnityHubSetup.exe"))
+      logging.info(path.realpath("UnityHubSetup.exe"))
+      logging.info(path.abspath("UnityHubSetup.exe"))
       logging.info(unity_hub_path)
     else:
-      logging.info("os.path.exists false")
+      logging.info("path.exists false")
     run(['"%s"' % unity_hub_path, "/s"])
   elif os == _LINUX:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
