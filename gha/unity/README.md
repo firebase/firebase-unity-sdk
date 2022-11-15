@@ -15,7 +15,7 @@
 
 ## Output
 
-This GitHub Action will provide `unity_version` (full unity version) output and `UNITY_ROOT_DIR` (Unity project directory) environment variable 
+This GitHub Action will provide `UNITY_VERSION` (full unity version) and `UNITY_ROOT_DIR` (Unity project directory) environment variable 
 
 -   Output usage:
     ```yml
@@ -25,8 +25,8 @@ This GitHub Action will provide `unity_version` (full unity version) output and 
         version: ${{ unity_version }}
         platforms: ${{ platforms }}
     - run: |
-        echo '${{ steps.unity_setup.outputs.unity_version }}'
-        echo '$UNITY_ROOT_DIR'
+        echo '${{ env.UNITY_VERSION }}'
+        echo '${{ env.UNITY_ROOT_DIR }}'
     ```
 
 ## Usage
