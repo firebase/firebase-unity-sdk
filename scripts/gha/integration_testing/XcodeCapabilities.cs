@@ -84,7 +84,7 @@ public sealed class XcodeCapabilities
     }
     // Bitcode is being deprecated by xcode, but Unity defaults to it on, so turn it off.
     tempProject.SetBuildProperty(targetId, "ENABLE_BITCODE", "NO");
-    string unityFrameworkTargetId = GetUnityFrameworkTargetGuid();
+    string unityFrameworkTargetId = GetUnityFrameworkTargetGuid(tempProject);
     tempProject.SetBuildProperty(unityFrameworkTargetId, "ENABLE_BITCODE", "NO");
     File.WriteAllText(projectPath, tempProject.WriteToString());
   }
