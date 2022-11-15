@@ -202,13 +202,7 @@ def install_unity_hub():
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg'
     response = requests.get(URL)
     open("UnityHubSetup.dmg", "wb").write(response.content)
-    if path.exists("UnityHubSetup.dmg"):
-      unity_hub_path = path.path("UnityHubSetup.dmg")
-      logging.info("unity_hub_path")
-      logging.info(unity_hub_path)
-    else:
-      logging.info("path.exists false")
-    run(["sudo", "hdiutil", "attach", unity_hub_path])
+    run(["sudo", "hdiutil", "attach", "UnityHubSetup.dmg"])
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     logging.info("mounted_to")
     logging.info(mounted_to)
@@ -220,8 +214,10 @@ def install_unity_hub():
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
     if path.exists("UnityHubSetup.exe"):
-      unity_hub_path = path.path("UnityHubSetup.exe")
+      unity_hub_path = path("UnityHubSetup.exe")
       logging.info("unity_hub_path")
+      logging.info(unity_hub_path)
+      unity_hub_path = unity_hub_path.replace('\\', '/')
       logging.info(unity_hub_path)
     else:
       logging.info("path.exists false")
