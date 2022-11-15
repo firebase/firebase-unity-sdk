@@ -64,6 +64,8 @@ X4-XXXX-XXXX-XXXX-XXXX
 import requests
 import platform
 import subprocess
+import glob
+import re
 
 from absl import app
 from absl import flags
@@ -199,14 +201,28 @@ def install_unity_hub():
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg'
     response = requests.get(URL)
     open("UnityHubSetup.dmg", "wb").write(response.content)
-    run(["sudo", "hdiutil", "attach", "UnityHubSetup.dmg"])
-    run(["sudo", "installer", "-package", "/Volumes/UnityHubSetup/UnityHubSetup.pkg", "-target", "/Applications/Unity Hub.app"])
-    run(["sudo", "hdiutil", "detach", "/Volumes/UnityHubSetup"])
+    unity_hub_path = os.path.abspath("UnityHubSetup.dmg")
+    logging.info("unity_hub_path")
+    logging.info(unity_hub_path)
+    run(["sudo", "hdiutil", "attach", unity_hub_path])
+    mounted_to = glob.glob(os.path.join(dir, "/Volumes/Unity Hub*/Unity Hub.pkg"))
+    logging.info("mounted_to")
+    logging.info(mounted_to)
+    logging.info(mounted_to[0])
+    if mounted_to:
+      run(["sudo", "installer", "-package", mounted_to[0], "-target", "/Applications/Unity Hub.app"])
   elif os == _WINDOWS:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
-    run(["UnityHubSetup.exe", "/s"])
+    unity_hub_path = os.path.abspath("UnityHubSetup.exe")
+    logging.info("unity_hub_path")
+    logging.info(unity_hub_path)
+    run(['"%s"' % unity_hub_path, "/s"])
+  elif os == _LINUX:
+    URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
+    response = requests.get(URL)
+    open("UnityHub.AppImage", "wb").write(response.content)
 
 
 def install_unity(unity_version):
