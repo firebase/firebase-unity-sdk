@@ -208,7 +208,7 @@ def install_unity_hub():
     logging.info(mounted_to)
     logging.info(mounted_to[0])
     if mounted_to:
-      run(["sudo", "installer", "-package", mounted_to[0], "-target", "/"])
+      run(["sudo", "cp", "-R", mounted_to[0], "/Applications"])
   elif os == _WINDOWS:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
