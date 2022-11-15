@@ -88,29 +88,29 @@ UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {
       "version": "2020.3.34f1",
-      "modules": {"Default": ["Unity"], "Android": ["android", "ios"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"]},
+      "modules": {"Default": ["Unity"], "Android": ["android", "ios"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
     },
     _MACOS: {
       "version": "2020.3.34f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"]},
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
     },
     _LINUX: {
       "version": "2020.3.40f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": None, "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None}
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": None, "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
     }
   },
   "2019": {
     _WINDOWS: {
       "version": "2019.4.39f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"]},
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
     },
     _MACOS: {
       "version": "2019.4.39f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"]},
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
     },
     _LINUX: {
       "version": "2019.4.40f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None}
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
     }
   },
 }

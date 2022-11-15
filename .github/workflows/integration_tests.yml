@@ -363,6 +363,7 @@ jobs:
         timeout-minutes: 30
         with:
           version: ${{ matrix.unity_version }}
+          platforms: Playmode
           username: ${{ secrets.UNITY_USERNAME }}
           password: ${{ secrets.UNITY_PASSWORD }}
           serial_ids: ${{ secrets.SERIAL_ID }}
