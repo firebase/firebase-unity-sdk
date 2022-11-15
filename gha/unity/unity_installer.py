@@ -61,19 +61,17 @@ X4-XXXX-XXXX-XXXX-XXXX
 
 """
 
+import requests
 import platform
-import shutil
 import subprocess
 
 from absl import app
 from absl import flags
-from absl import logging
 
 
 _CMD_TIMEOUT = 900
 _MAX_ATTEMPTS = 3
 
-_DEFALUT = "Default"
 _ANDROID = "Android"
 _IOS = "iOS"
 _TVOS = "tvOS"
@@ -83,7 +81,7 @@ _LINUX = "Linux"
 _SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _TVOS, _WINDOWS, _MACOS, _LINUX)
 
 # Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
-# The modules below is valid only if Unity Hub is not installed.
+# The modules below is valid only if Unity Hub & Unity are installed.
 UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {
@@ -115,20 +113,16 @@ UNITY_SETTINGS = {
   },
 }
 
+
 FLAGS = flags.FLAGS
 
 flags.DEFINE_bool(
     "setting", False,
     "Print out detailed Unity Setting. Supply --version.")
 
-# TODO: @sunmou
-# flags.DEFINE_bool(
-#     "install", False,
-#     "Install Unity and build supports. Supply --version and --platforms.")
-
 flags.DEFINE_bool(
-    "install_modules", False,
-    "Install Unity Modules and build supports. Supply --version and --platforms.")
+    "install", False,
+    "Install Unity and build supports. Supply --version and --platforms.")
 
 flags.DEFINE_bool(
     "activate_license", False,
@@ -165,8 +159,8 @@ def main(argv):
   if FLAGS.setting:
     print_setting(FLAGS.version)
 
-  if FLAGS.install_modules:
-    install_modules(FLAGS.version, FLAGS.platforms)
+  if FLAGS.install:
+    install(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
     if FLAGS.license_file:
@@ -192,10 +186,40 @@ def print_setting(unity_version):
   print("%s,%s" % (unity_full_version, unity_path))
 
 
+def install(unity_version, platforms):
+  install_unity_hub()
+  install_unity(unity_version)
+  install_modules(unity_version, platforms)
+
+
+def install_unity_hub():
+  os = get_os()
+  if os == _MACOS:
+    URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg'
+    response = requests.get(URL)
+    open("UnityHubSetup.dmg", "wb").write(response.content)
+    run(["sudo", "hdiutil", "attach", "UnityHubSetup.dmg"])
+    run(["sudo", "installer", "-package", "/Volumes/UnityHubSetup/UnityHubSetup.pkg", "-target", "/Applications/Unity Hub.app"])
+    run(["sudo", "hdiutil", "detach", "/Volumes/UnityHubSetup"])
+  elif os == _WINDOWS:
+    URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
+    response = requests.get(URL)
+    open("UnityHubSetup.exe", "wb").write(response.content)
+    run(["UnityHubSetup.exe", "/s"])
+
+
+def install_unity(unity_version):
+  os = get_os()
+  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+  unity_hub_path = get_unity_hub_executable()
+  run([unity_hub_path, "--", "--headless", 
+        "install", "--version", unity_full_version])
+
+
 def install_modules(unity_version, platforms):
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-  unity_hub_path = get_unity_hub_path()
+  unity_hub_path = get_unity_hub_executable()
   if platforms:
     for p in platforms:
       if UNITY_SETTINGS[unity_version][os]["modules"][p]:
@@ -260,19 +284,7 @@ def get_os():
     return _LINUX
 
 
-def get_unity_executable(version):
-  """Returns the path to this version of Unity."""
-  full_version = UNITY_SETTINGS[version][get_os()]["version"]
-  if platform.system() == "Windows":
-    return "C:/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe" % full_version
-  elif platform.system() == "Darwin":
-    return "/Applications/Unity/Hub/Editor/%s/Unity.app/Contents/MacOS/Unity" % full_version
-  else:
-    # Linux is not yet supported.
-    raise RuntimeError("Only Windows and MacOS are supported.")
-
-
-def get_unity_hub_path():
+def get_unity_hub_executable():
   """Returns the path to Unity Hub."""
   if platform.system() == "Windows":
     return "C:/Program Files/Unity Hub/Unity Hub.exe"
@@ -291,6 +303,18 @@ def get_unity_path(version):
     return "/Applications/Unity/Hub/Editor/%s" % full_version
   elif platform.system() == 'Linux':
     return "/home/runner/Unity/Hub/Editor/%s" % full_version
+
+
+def get_unity_executable(version):
+  """Returns the path to this version of Unity."""
+  full_version = UNITY_SETTINGS[version][get_os()]["version"]
+  if platform.system() == "Windows":
+    return "C:/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe" % full_version
+  elif platform.system() == "Darwin":
+    return "/Applications/Unity/Hub/Editor/%s/Unity.app/Contents/MacOS/Unity" % full_version
+  else:
+    # Linux is not yet supported.
+    raise RuntimeError("Only Windows and MacOS are supported.")
 
 
 def run(args, check=True, timeout=_CMD_TIMEOUT):
