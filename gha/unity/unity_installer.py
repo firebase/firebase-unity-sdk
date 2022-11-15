@@ -203,10 +203,8 @@ def install_unity_hub():
     response = requests.get(URL)
     open("UnityHubSetup.dmg", "wb").write(response.content)
     if path.exists("UnityHubSetup.dmg"):
-      unity_hub_path = path.abspath(path.realpath("UnityHubSetup.dmg"))
+      unity_hub_path = path.path("UnityHubSetup.dmg")
       logging.info("unity_hub_path")
-      logging.info(path.realpath("UnityHubSetup.dmg"))
-      logging.info(path.abspath("UnityHubSetup.dmg"))
       logging.info(unity_hub_path)
     else:
       logging.info("path.exists false")
@@ -216,16 +214,14 @@ def install_unity_hub():
     logging.info(mounted_to)
     logging.info(mounted_to[0])
     if mounted_to:
-      run(["sudo", "installer", "-package", mounted_to[0], "-target", "/Applications/Unity Hub.app"])
+      run(["sudo", "installer", "-package", mounted_to[0], "-target", "/"])
   elif os == _WINDOWS:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
     if path.exists("UnityHubSetup.exe"):
-      unity_hub_path = path.abspath(path.realpath("UnityHubSetup.exe"))
+      unity_hub_path = path.path("UnityHubSetup.exe")
       logging.info("unity_hub_path")
-      logging.info(path.realpath("UnityHubSetup.exe"))
-      logging.info(path.abspath("UnityHubSetup.exe"))
       logging.info(unity_hub_path)
     else:
       logging.info("path.exists false")
