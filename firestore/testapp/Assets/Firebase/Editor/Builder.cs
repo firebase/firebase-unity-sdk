@@ -51,7 +51,7 @@ public class Builder {
     options.locationPathName = "tvos-build";
     options.target = BuildTarget.tvOS;
     // Firebase Unity plugins don't seem to work on a simulator.
-    PlayerSettings.tvOS.sdkVersion = tvOSSdkVersion.DeviceSDK;
+    PlayerSettings.tvOS.sdkVersion = tvOSSdkVersion.Device;
 
     // AcceptExternalModificationsToPlayer corresponds to "Append" in the Unity
     // UI -- it allows doing incremental builds.
