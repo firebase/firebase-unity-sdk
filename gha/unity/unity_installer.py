@@ -201,7 +201,7 @@ def install_unity_hub():
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg'
     response = requests.get(URL)
     open("UnityHubSetup.dmg", "wb").write(response.content)
-    unity_hub_path = os.path.abspath("UnityHubSetup.dmg")
+    unity_hub_path = os.path.abspath(os.path.path("UnityHubSetup.dmg"))
     logging.info("unity_hub_path")
     logging.info(unity_hub_path)
     run(["sudo", "hdiutil", "attach", unity_hub_path])
@@ -215,7 +215,7 @@ def install_unity_hub():
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
-    unity_hub_path = os.path.abspath("UnityHubSetup.exe")
+    unity_hub_path = os.path.abspath(os.path.path("UnityHubSetup.exe"))
     logging.info("unity_hub_path")
     logging.info(unity_hub_path)
     run(['"%s"' % unity_hub_path, "/s"])
