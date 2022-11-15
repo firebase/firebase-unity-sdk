@@ -211,7 +211,7 @@ def install_unity_hub():
     else:
       logging.info("path.exists false")
     run(["sudo", "hdiutil", "attach", unity_hub_path])
-    mounted_to = glob.glob(path.join(dir, "/Volumes/Unity Hub*/Unity Hub.pkg"))
+    mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.pkg")
     logging.info("mounted_to")
     logging.info(mounted_to)
     logging.info(mounted_to[0])
@@ -229,7 +229,7 @@ def install_unity_hub():
       logging.info(unity_hub_path)
     else:
       logging.info("path.exists false")
-    run(['"%s"' % unity_hub_path, "/s"])
+    run([unity_hub_path, "/s"])
   elif os == _LINUX:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
     response = requests.get(URL)
