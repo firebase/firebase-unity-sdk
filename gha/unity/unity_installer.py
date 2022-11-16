@@ -206,24 +206,14 @@ def install_unity_hub():
     open("UnityHubSetup.dmg", "wb").write(response.content)
     run(["sudo", "hdiutil", "attach", "UnityHubSetup.dmg"])
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
-    logging.info("mounted_to")
-    logging.info(mounted_to)
-    logging.info(mounted_to[0])
     if mounted_to:
       run(["sudo", "cp", "-R", mounted_to[0], "/Applications"])
   elif os == _WINDOWS:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
-    if path.exists("UnityHubSetup.exe"):
-      unity_hub_path = path.abspath("UnityHubSetup.exe")
-      logging.info("unity_hub_path")
-      logging.info(unity_hub_path)
-      unity_hub_path = unity_hub_path.replace('\\', '/')
-      logging.info(unity_hub_path)
-    else:
-      logging.info("path.exists false")
-    run(["UnityHubSetup.exe", "/S"])
+    run(["UnityHubSetup.exe", "/S", "/D=C:/Program Files/Unity Hub"])
+
   elif os == _LINUX:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
     response = requests.get(URL)
