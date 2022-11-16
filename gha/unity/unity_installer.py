@@ -204,16 +204,16 @@ def install_unity_hub():
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg'
     response = requests.get(URL)
     open("UnityHubSetup.dmg", "wb").write(response.content)
-    run(["sudo", "hdiutil", "attach", "UnityHubSetup.dmg"])
+    run("sudo hdiutil attach UnityHubSetup.dmg", max_attemps=3)
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     if mounted_to:
-      run(["sudo", "cp", "-R", mounted_to[0], "/Applications"])
+      run("sudo cp -R %s /Applications" % mounted_to[0], max_attemps=3)
   elif os == _WINDOWS:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
-    run(["UnityHubSetup.exe", "/S", "/D=C:/Program Files/Unity Hub"])
-    run(["ls", "C:/Program Files/Unity Hub"])
+    run('"UnityHubSetup.exe" /S', max_attemps=3)
+    run('ls "C:/Program Files/Unity Hub')
   elif os == _LINUX:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
     response = requests.get(URL)
@@ -225,17 +225,12 @@ def install_unity(unity_version):
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
   changeset = UNITY_SETTINGS[unity_version][os]["changeset"]
   unity_hub_path = get_unity_hub_executable()
-  run([unity_hub_path, "--", "--headless", 
-        "editors", "--installed"], check=False)
-  run([unity_hub_path, "--", "--headless", 
-        "install", 
-        "--version", unity_full_version,
-        "--changeset", changeset], max_attemps=3)
-  run([unity_hub_path, "--", "--headless", 
-        "editors", "--installed"], check=False)
+  run('%s -- --headless editors --installed' % unity_hub_path)
+  run('%s -- --headless install --version %s --changeset %s' % (unity_hub_path,unity_full_version,changeset), max_attemps=3)
+  run('%s -- --headless editors --installed' % unity_hub_path)
   if os == _MACOS:
-    run(["sudo", "mkdir", "-p", "/Library/Application Support/Unity"])
-    run(["sudo", "chown", "-R", "runner", "/Library/Application Support/Unity"])
+    run("sudo mkdir -p /Library/Application Support/Unity")
+    run("sudo chown -R runner /Library/Application Support/Unity")
 
 
 def install_modules(unity_version, platforms):
@@ -308,7 +303,7 @@ def get_os():
 def get_unity_hub_executable():
   """Returns the path to Unity Hub."""
   if platform.system() == "Windows":
-    return "C:/Program Files/Unity Hub/Unity Hub.exe"
+    return '"C:/Program Files/Unity Hub/Unity Hub.exe"'
   elif platform.system() == "Darwin":
     return "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub"
   elif platform.system() == 'Linux':
@@ -319,7 +314,7 @@ def get_unity_path(version):
   """Returns the path to this version of Unity."""
   full_version = UNITY_SETTINGS[version][get_os()]["version"]
   if platform.system() == "Windows":
-    return "C:/Program Files/Unity/Hub/Editor/%s" % full_version
+    return '"C:/Program Files/Unity/Hub/Editor/%s"' % full_version
   elif platform.system() == "Darwin":
     return "/Applications/Unity/Hub/Editor/%s" % full_version
   elif platform.system() == 'Linux':
@@ -330,7 +325,7 @@ def get_unity_executable(version):
   """Returns the path to this version of Unity."""
   full_version = UNITY_SETTINGS[version][get_os()]["version"]
   if platform.system() == "Windows":
-    return "C:/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe" % full_version
+    return '"C:/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe"' % full_version
   elif platform.system() == "Darwin":
     return "/Applications/Unity/Hub/Editor/%s/Unity.app/Contents/MacOS/Unity" % full_version
   else:
@@ -338,19 +333,19 @@ def get_unity_executable(version):
     raise RuntimeError("Only Windows and MacOS are supported.")
 
 
-def run(args, check=True, timeout=_CMD_TIMEOUT, max_attemps=1):
+def run(command, check=True, timeout=_CMD_TIMEOUT, max_attemps=1):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
   attempt_num = 1
   while attempt_num <= max_attemps:
     try:
-      logging.info("run_with_retry: %s (attempt %s of %s)", " ".join(args), attempt_num, max_attemps)
-      result = subprocess.run(args=args, check=check, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
+      logging.info("run_with_retry: %s (attempt %s of %s)", command, attempt_num, max_attemps)
+      result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
       if result.stdout:
-        logging.info("cmd stdout: %s", result.stdout)
+        logging.info("cmd stdout: %s", result.stdout.read().strip())
       if result.stderr:
-        logging.info("cmd stderr: %s", result.stderr)
+        logging.info("cmd stderr: %s", result.stderr.read().strip())
     except subprocess.SubprocessError as e:
-      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", " ".join(args), attempt_num, max_attemps, e)
+      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", command, attempt_num, max_attemps, e)
       if attempt_num >= max_attemps:
         raise
     else:
