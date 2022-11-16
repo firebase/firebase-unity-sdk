@@ -192,19 +192,21 @@ namespace Firebase.Sample.Analytics {
       // Depending on platform, GetSessionId needs a few seconds for Analytics
       // to initialize (especially on iOS simulator). Pause for 5 seconds before
       // running this test.
-      yield return new UnityEngine.WaitForSeconds(5);
       var tcs = new TaskCompletionSource<bool>();
-      base.DisplaySessionId().ContinueWithOnMainThread(task => {
-          if (task.IsCanceled) {			      	 
-            tcs.TrySetException(new Exception("Unexpectedly canceled"));
-          } else if (task.IsFaulted) {
-            tcs.TrySetException(task.Exception);
-          } else if (task.Result == 0) {
-            tcs.TrySetException(new Exception("Zero ID returned"));
-          } else {
-            tcs.TrySetResult(true);
-          }
-        });
+      Task.Delay(TimeSpan.FromSeconds(5)).ContinueWithOnMainThread(task_ => {
+	  base.DisplaySessionId().ContinueWithOnMainThread(task => {
+	      if (task.IsCanceled) {			      	 
+		tcs.TrySetException(new Exception("Unexpectedly canceled"));
+	      } else if (task.IsFaulted) {
+		tcs.TrySetException(task.Exception);
+	      } else if (task.Result == 0) {
+		tcs.TrySetException(new Exception("Zero ID returned"));
+	      } else {
+		tcs.TrySetResult(true);
+	      }
+	    });
+	});
+      return tcs.Task;
     }
 
     Task TestResetAnalyticsData() {
