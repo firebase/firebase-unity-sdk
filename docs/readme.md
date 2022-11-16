@@ -69,6 +69,7 @@ Release Notes
 -------------
 ### 10.1.1
 - Changes
+    - General (Android): Update to Firebase Android BoM version 31.0.3.
     - Crashlytics (Android): Fixed an [issue](https://github.com/firebase/firebase-android-sdk/issues/4313)
       preventing native crashes from being reported for Android API 29+.
 
