@@ -65,7 +65,7 @@ import requests
 import platform
 import subprocess
 import glob
-import re
+import os
 
 from absl import app
 from absl import flags
@@ -186,8 +186,8 @@ def main(argv):
 
 
 def print_setting(unity_version):
-  os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+  runner_os = get_os()
+  unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
   unity_path = get_unity_path(unity_version)
   print("%s,%s" % (unity_full_version, unity_path))
 
@@ -199,8 +199,8 @@ def install(unity_version, platforms):
 
 
 def install_unity_hub():
-  os = get_os()
-  if os == _MACOS:
+  runner_os = get_os()
+  if runner_os == _MACOS:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg'
     response = requests.get(URL)
     open("UnityHubSetup.dmg", "wb").write(response.content)
@@ -208,37 +208,43 @@ def install_unity_hub():
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     if mounted_to:
       run('sudo cp -R "%s" /Applications' % mounted_to[0], max_attemps=3)
-  elif os == _WINDOWS:
+  elif runner_os == _WINDOWS:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
     run('"UnityHubSetup.exe" /S', max_attemps=3)
-  elif os == _LINUX:
+  elif runner_os == _LINUX:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
     response = requests.get(URL)
     open("UnityHub.AppImage", "wb").write(response.content)
+    home_dir = os.environ["HOME"]
+    unity_hub_path = get_unity_hub_executable()
+    run('mkdir -p "%s/Unity Hub" "%s/.config/Unity Hub"' % (home_dir,home_dir))
+    run('mv UnityHub.AppImage %s' % unity_hub_path)
+    run('chmod +x %s' % unity_hub_path)
+    run('touch "%s/.config/Unity Hub/eulaAccepted"' % home_dir)
 
 
 def install_unity(unity_version):
-  os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-  changeset = UNITY_SETTINGS[unity_version][os]["changeset"]
+  runner_os = get_os()
+  unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
+  changeset = UNITY_SETTINGS[unity_version][runner_os]["changeset"]
   unity_hub_path = get_unity_hub_executable()
   run('%s -- --headless install --version %s --changeset %s' % (unity_hub_path,unity_full_version,changeset), max_attemps=3)
   run('%s -- --headless editors --installed' % unity_hub_path)
-  if os == _MACOS:
+  if runner_os == _MACOS:
     run('sudo mkdir -p "/Library/Application Support/Unity"')
-    run('sudo chown -R runner "/Library/Application Support/Unity"')
+    run('sudo chown -R %s "/Library/Application Support/Unity"' % os.environ["USER"])
 
 
 def install_modules(unity_version, platforms):
-  os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+  runner_os = get_os()
+  unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
   unity_hub_path = get_unity_hub_executable()
   if platforms:
     for p in platforms:
-      if UNITY_SETTINGS[unity_version][os]["modules"][p]:
-        for module in UNITY_SETTINGS[unity_version][os]["modules"][p]:
+      if UNITY_SETTINGS[unity_version][runner_os]["modules"][p]:
+        for module in UNITY_SETTINGS[unity_version][runner_os]["modules"][p]:
           run('%s -- --headless install-modules --version %s --module %s --childModules' % (unity_hub_path,unity_full_version,module), max_attemps=3)
 
 
