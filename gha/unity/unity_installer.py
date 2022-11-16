@@ -213,9 +213,7 @@ def install_unity_hub():
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
     run(["UnityHubSetup.exe", "/S", "/D=C:/Program Files/Unity Hub"])
-    run(["ls", "C:/Program Files/"])
-    run(["ls", "-R", "C:/Program Files/Unity Hub"])
-
+    run(["ls", "C:/Program Files/Unity Hub"])
   elif os == _LINUX:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
     response = requests.get(URL)
@@ -228,9 +226,11 @@ def install_unity(unity_version):
   changeset = UNITY_SETTINGS[unity_version][os]["changeset"]
   unity_hub_path = get_unity_hub_executable()
   run([unity_hub_path, "--", "--headless", 
+        "editors", "--installed"])
+  run([unity_hub_path, "--", "--headless", 
         "install", 
         "--version", unity_full_version,
-        "--changeset", changeset])
+        "--changeset", changeset], max_attemps=3)
   run([unity_hub_path, "--", "--headless", 
         "editors", "--installed"])
   if os == _MACOS:
@@ -250,7 +250,7 @@ def install_modules(unity_version, platforms):
                 "install-modules", 
                 "--version", unity_full_version, 
                 "--module", module, 
-                "--childModules"])
+                "--childModules"], max_attemps=3)
 
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
@@ -338,14 +338,19 @@ def get_unity_executable(version):
     raise RuntimeError("Only Windows and MacOS are supported.")
 
 
-def run(args, check=True, timeout=_CMD_TIMEOUT):
+def run(args, check=True, timeout=_CMD_TIMEOUT, max_attemps=1):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
-  logging.info("run cmd: %s", " ".join(args))
-  result = subprocess.run(args=args, check=check, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-  if result.stdout:
-    logging.info("cmd stdout: %s", result.stdout)
-  if result.stderr:
-    logging.info("cmd stderr: %s", result.stderr)
+  attempt_num = 1
+  while attempt_num <= max_attemps:
+    try:
+      logging.info("run_with_retry: %s (attempt %s of %s)", " ".join(args), attempt_num, max_attemps)
+      result = subprocess.run(args=args, check=check, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+      if result.stdout:
+        logging.info("cmd stdout: %s", result.stdout)
+      if result.stderr:
+        logging.info("cmd stderr: %s", result.stderr)
+    except subprocess.SubprocessError as e:
+      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", " ".join(args), attempt_num, max_attemps, e)
 
 
 if __name__ == "__main__":
