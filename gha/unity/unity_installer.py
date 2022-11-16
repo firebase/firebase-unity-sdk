@@ -91,30 +91,30 @@ UNITY_SETTINGS = {
     _WINDOWS: {
       "version": "2020.3.34f1",
       "changeset": "9a4c9c70452b",
-      "modules": {"Default": ["Unity"], "Android": ["android", "ios"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
+      "modules": {"Android": ["android", "ios"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
     },
     _MACOS: {
       "version": "2020.3.34f1",
       "changeset": "9a4c9c70452b",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
+      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
     },
     _LINUX: {
       "version": "2020.3.40f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": None, "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
+      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": None, "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
     }
   },
   "2019": {
     _WINDOWS: {
       "version": "2019.4.39f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
+      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
     },
     _MACOS: {
       "version": "2019.4.39f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
+      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
     },
     _LINUX: {
       "version": "2019.4.40f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
+      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
     }
   },
 }
@@ -223,7 +223,7 @@ def install_unity_hub():
       logging.info(unity_hub_path)
     else:
       logging.info("path.exists false")
-    run([unity_hub_path, "/s"])
+    run(["UnityHubSetup.exe", "/S"])
   elif os == _LINUX:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
     response = requests.get(URL)
@@ -236,8 +236,13 @@ def install_unity(unity_version):
   changeset = UNITY_SETTINGS[unity_version][os]["changeset"]
   unity_hub_path = get_unity_hub_executable()
   run([unity_hub_path, "--", "--headless", 
-        "install", "--version", unity_full_version,
+        "install", 
+        "--version", unity_full_version,
         "--changeset", changeset])
+  run([unity_hub_path, "--", "--headless", 
+        "editors", "--installed"])
+  if os == _MACOS:
+    run(["sudo", "mkdir", "-p", "/Library/Application Support/Unity"])
 
 
 def install_modules(unity_version, platforms):
@@ -252,8 +257,7 @@ def install_modules(unity_version, platforms):
                 "install-modules", 
                 "--version", unity_full_version, 
                 "--module", module, 
-                "--childModules"], 
-              check=False)
+                "--childModules"])
 
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
@@ -345,8 +349,10 @@ def run(args, check=True, timeout=_CMD_TIMEOUT):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
   logging.info("run cmd: %s", " ".join(args))
   result = subprocess.run(args=args, check=check, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-  logging.info("cmd result.stdout: %s", result.stdout)
-  logging.info("cmd result.stderr: %s", result.stderr)
+  if result.stdout:
+    logging.info("cmd stdout: %s", result.stdout)
+  if result.stderr:
+    logging.info("cmd stderr: %s", result.stderr)
 
 
 if __name__ == "__main__":
