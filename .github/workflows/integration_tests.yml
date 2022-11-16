@@ -218,7 +218,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u "${{ steps.unity_setup.outputs.unity_version }}" \
+            --u ${{ env.UNITY_VERSION }} \
             --p "${{ matrix.platform }}" \
             --ios_sdk "${{ matrix.ios_sdk }}" \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
@@ -363,6 +363,7 @@ jobs:
         timeout-minutes: 30
         with:
           version: ${{ matrix.unity_version }}
+          platforms: Playmode
           username: ${{ secrets.UNITY_USERNAME }}
           password: ${{ secrets.UNITY_PASSWORD }}
           serial_ids: ${{ secrets.SERIAL_ID }}
@@ -389,7 +390,7 @@ jobs:
           fi
           python scripts/gha/build_testapps.py \
             --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u ${{ steps.unity_setup.outputs.unity_version }} \
+            --u ${{ env.UNITY_VERSION }} \
             --p Playmode \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
@@ -484,7 +485,7 @@ jobs:
           test_type: "game-loop"
           test_devices: ${{ matrix.device_detail }}
       - name: Read FTL Test Result
-        if: ${{ matrix.device_type == 'real' }}
+        if: ${{ matrix.device_type == 'real' && !cancelled() }}
         timeout-minutes: 60
         shell: bash
         run: |

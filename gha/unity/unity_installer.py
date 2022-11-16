@@ -14,16 +14,11 @@
 
 r"""Utility for downloading, installing and licensing Unity in CI.
 
-Uses u3d for downloading and installing Unity, which must first be installed.
-Can be installed as a gem:
-
-gem install u3d
-
-See https://github.com/DragonBox/u3d for details on u3d.
+Downloading and installing Unity, which must first be installed.
 
 USAGE
 Using Unity on CI requires the following flow:
-(1) Install Unity
+(1) Install Unity & Modules
 (2) Activate Unity License
 (*) Use Unity
 (3) Release Unity License
@@ -31,17 +26,11 @@ Using Unity on CI requires the following flow:
 This tool supports (1), (2) and (3).
 
 
-(1) Installation:
+TODO: (1) Installation:
   unity_installer.py --install --version 2017.3.1f1 --platforms Android,iOS
 
 'platforms' specifies additional build supports to install. Always installs
 Unity itself.
-
-u3d will install Unity to the following path. The full path to the binary is
-listed, as that's needed to use Unity in batchmode.
-
-Windows: C:/Program Files/Unity_{version}/editor/unity.exe
-MacOS: /Applications/Unity_{version}/Unity.app/Contents/MacOS/Unity
 
 
 (2) License activation:
@@ -94,45 +83,52 @@ _LINUX = "Linux"
 _SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _TVOS, _WINDOWS, _MACOS, _LINUX)
 
 # Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
-# To list avaliable packages, install u3d, and use cmd "u3d available -u $unity_version -p"
-# The packages below is valid only if Unity Hub is not installed.
+# The modules below is valid only if Unity Hub is not installed.
 UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {
       "version": "2020.3.34f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "modules": {"Default": ["Unity"], "Android": ["android", "ios"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
     },
     _MACOS: {
       "version": "2020.3.34f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
     },
     _LINUX: {
       "version": "2020.3.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": None, "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": None, "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
     }
   },
   "2019": {
     _WINDOWS: {
       "version": "2019.4.39f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["Mac-mono"], "Linux": ["Linux-mono"]},
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
     },
     _MACOS: {
       "version": "2019.4.39f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": None, "Linux": ["Linux-mono"]},
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
     },
     _LINUX: {
       "version": "2019.4.40f1",
-      "packages": {"Default": ["Unity"], "Android": ["Android"], "iOS": ["Ios"], "tvOS": ["appletv"], "Windows": ["Windows-mono"], "macOS": ["Mac-mono"], "Linux": None}
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
     }
   },
 }
 
 FLAGS = flags.FLAGS
 
-# These are the three actions supported by the tool.
 flags.DEFINE_bool(
-    "install", False,
-    "Install Unity and build supports. Supply --version and --platforms.")
+    "setting", False,
+    "Print out detailed Unity Setting. Supply --version.")
+
+# TODO: @sunmou
+# flags.DEFINE_bool(
+#     "install", False,
+#     "Install Unity and build supports. Supply --version and --platforms.")
+
+flags.DEFINE_bool(
+    "install_modules", False,
+    "Install Unity Modules and build supports. Supply --version and --platforms.")
 
 flags.DEFINE_bool(
     "activate_license", False,
@@ -143,28 +139,22 @@ flags.DEFINE_bool(
     "release_license", False,
     "Release an activated Unity license. Supply --version and --logfile.")
 
-flags.DEFINE_string("version", None, "Major version string, e.g. 2018")
+flags.DEFINE_string("version", None, "Major version string, e.g. 2020")
 flags.DEFINE_string("license_file", None, "Path to the license file.")
 flags.DEFINE_string("username", None, "username for a Unity account.")
 flags.DEFINE_string("password", None, "password for that Unity account.")
 flags.DEFINE_list("serial_ids", [], "Unity serial ID.")
 flags.DEFINE_string("logfile", None, "Where to store Unity logs.")
 
-# Implementation note: it would have been simpler to pass a
-# string directly to u3d. The issue is that there's a relationship between
-# the value of this flag, and the --platforms flag in build_testapps.py.
-# e.g. if we want to pass "Android,Desktop,iOS" to build_testapps.py, then we
-# need to pass "Unity,Android,Ios" to U3D.
 # In a CI context, where platforms may be parameterized, some logic would be
 # needed to pass the appropriately formatted values to both tools.
 # Instead, this tool is written to expect the same format as build_testapps.py.
-# This keeps the CI workflow logic simple, but requires some parsing of the
-# platforms here, before passing them to U3D.
+# This keeps the CI workflow logic simple.
 flags.DEFINE_list(
     "platforms", None,
-    "(Optional) Additional platforms to install. Should be in the format of"
-    " Unity build targets, i.e. the same format as taken by build_testapps.py."
-    " Invalid values will be ignored."
+    "(Optional) Additional modules to install based on platforms. Should be"
+    " in the format of Unity build targets, i.e. the same format as taken by"
+    " build_testapps.py. Invalid values will be ignored."
     " Valid values: " + ",".join(_SUPPORTED_PLATFORMS))
 
 
@@ -172,8 +162,11 @@ def main(argv):
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
 
-  if FLAGS.install:
-    install_unity(FLAGS.version, FLAGS.platforms)
+  if FLAGS.setting:
+    print_setting(FLAGS.version)
+
+  if FLAGS.install_modules:
+    install_modules(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
     if FLAGS.license_file:
@@ -192,57 +185,27 @@ def main(argv):
     release_license(FLAGS.logfile, FLAGS.version)
 
 
-def install_unity(unity_version, platforms):
-  """Installs Unity and build supports (packages)."""
-  # This always installs Unity, and installs build supports for Android
-  # and iOS. Other supports can be added here, e.g. desktop platforms
-  # for platforms other than the running OS, or embedded Android SDK/NDK.
+def print_setting(unity_version):
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-  package_list = UNITY_SETTINGS[unity_version][os]["packages"][_DEFALUT]
-  if platforms:
-    for p in platforms:
-      if UNITY_SETTINGS[unity_version][os]["packages"][p]:
-        package_list.extend(UNITY_SETTINGS[unity_version][os]["packages"][p])
-  package_csv = ",".join(filter(None.__ne__, package_list))
-
-  u3d = find_u3d()
-  run([u3d, "available", "-u", unity_version], check=False)
-  run([u3d, "available", "-u", unity_full_version, "-p"], check=False)
-  attempt_num = 1
-  while attempt_num <= _MAX_ATTEMPTS:
-    uninstall_unity(unity_version)
-    args = [u3d, "install", "--trace",
-       "--verbose", unity_full_version,
-       "-p", package_csv]
-    logging.info("run_with_retry: %s (attempt %s of %s)", args, attempt_num, _MAX_ATTEMPTS)
-    try:
-      run(args)
-    except subprocess.SubprocessError:
-      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED", args, attempt_num, _MAX_ATTEMPTS)
-      # If retries have been exhausted, just raise the exception
-      if attempt_num >= _MAX_ATTEMPTS:
-        raise
-    else:
-      break
-    attempt_num += 1
-  
-  logging.info("Finished installing Unity.")
-
   unity_path = get_unity_path(unity_version)
-  logging.info("unity_path: %s", unity_path)
   print("%s,%s" % (unity_full_version, unity_path))
 
 
-def uninstall_unity(unity_version):
-  """Uninstalls Unity and build supports (packages)."""
-  # Cleaning up installed Unity.
+def install_modules(unity_version, platforms):
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-
-  u3d = find_u3d()
-  run([u3d, "uninstall", "--trace", unity_full_version], check=False)
-  logging.info("Finished uninstalling Unity.")
+  unity_hub_path = get_unity_hub_path()
+  if platforms:
+    for p in platforms:
+      if UNITY_SETTINGS[unity_version][os]["modules"][p]:
+        for module in UNITY_SETTINGS[unity_version][os]["modules"][p]:
+          run([unity_hub_path, "--", "--headless", 
+                "install-modules", 
+                "--version", unity_full_version, 
+                "--module", module, 
+                "--childModules"], 
+              check=False)
 
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
@@ -287,16 +250,6 @@ def release_license(logfile, unity_version):
   logging.info("Unity license released.")
 
 
-def find_u3d():
-  """Returns the full path to the u3d tool."""
-  # On Windows, running in a subprocess will not search the system path,
-  # so calling "u3d" won't work. Find full path instead.
-  u3d = shutil.which("u3d")
-  if not u3d:
-    raise RuntimeError("Could not find u3d. Ensure it's installed and on path.")
-  return u3d
-
-
 def get_os():
   """Current Operation System"""
   if platform.system() == 'Windows':
@@ -308,31 +261,36 @@ def get_os():
 
 
 def get_unity_executable(version):
-  """Returns the path to this version of Unity, as generated by U3D."""
-  # These are the path formats assumed by U3D, as documented here:
-  # https://github.com/DragonBox/u3d
+  """Returns the path to this version of Unity."""
   full_version = UNITY_SETTINGS[version][get_os()]["version"]
   if platform.system() == "Windows":
-    return "C:/Program Files/Unity_%s/editor/unity.exe" % full_version
+    return "C:/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe" % full_version
   elif platform.system() == "Darwin":
-    return "/Applications/Unity_%s/Unity.app/Contents/MacOS/Unity" % full_version
+    return "/Applications/Unity/Hub/Editor/%s/Unity.app/Contents/MacOS/Unity" % full_version
   else:
-    # /opt/unity-editor-%s/Editor/Unity is the path for Linux expected by U3D,
-    # but Linux is not yet supported.
+    # Linux is not yet supported.
     raise RuntimeError("Only Windows and MacOS are supported.")
 
 
+def get_unity_hub_path():
+  """Returns the path to Unity Hub."""
+  if platform.system() == "Windows":
+    return "C:/Program Files/Unity Hub/Unity Hub.exe"
+  elif platform.system() == "Darwin":
+    return "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub"
+  elif platform.system() == 'Linux':
+    return "/home/runner/Unity Hub/UnityHub.AppImage"
+ 
+
 def get_unity_path(version):
-  """Returns the path to this version of Unity, as generated by U3D."""
-  # These are the path formats assumed by U3D, as documented here:
-  # https://github.com/DragonBox/u3d
+  """Returns the path to this version of Unity."""
   full_version = UNITY_SETTINGS[version][get_os()]["version"]
   if platform.system() == "Windows":
-    return "/c/Program Files/Unity_%s" % full_version
+    return "C:/Program Files/Unity/Hub/Editor/%s" % full_version
   elif platform.system() == "Darwin":
-    return "/Applications/Unity_%s" % full_version
+    return "/Applications/Unity/Hub/Editor/%s" % full_version
   elif platform.system() == 'Linux':
-    return "/opt/unity-editor-%s" % full_version
+    return "/home/runner/Unity/Hub/Editor/%s" % full_version
 
 
 def run(args, check=True, timeout=_CMD_TIMEOUT):

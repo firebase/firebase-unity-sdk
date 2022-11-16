@@ -27,10 +27,6 @@ inputs:
   release_license:
     required: false
 
-outputs:
-  unity_version:
-    value: ${{ steps.unity_installation.outputs.unity_version }}
-
 runs:
   using: 'composite'
   steps:
@@ -46,33 +42,26 @@ runs:
             --version ${{ inputs.version }} \
             --logfile "testapps/release_license.log"
           cat testapps/release_license.log
-    - name: Install Unity installer (U3D)
-      if: inputs.release_license == ''
-      uses: nick-invision/retry@v2
-      with:
-        timeout_minutes: 10
-        max_attempts: 2
-        shell: bash
-        command: gem install u3d -v 1.2.3
-    - name: Set the Unity Env
+    - name: unity_setting
       if: inputs.release_license == ''
       shell: bash
       run: |
-        echo "LC_ALL=en_US.UTF-8" >> $GITHUB_ENV
-        echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
-        echo "U3D_PASSWORD=" >> $GITHUB_ENV
-        echo "U3D_SKIP_UPDATE_CHECK=1" >> $GITHUB_ENV
-    - id: unity_installation
-      name: Install Unity
+        unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --setting --version ${{ inputs.version }})
+        echo "UNITY_VERSION=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_ENV
+        echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
+    - name: Install Unity
+      if: inputs.release_license == ''
+      uses: kuler90/setup-unity@v1
+      with:
+        unity-version: ${{ env.UNITY_VERSION }}
+    - name: Install Unity Modules
       if: inputs.release_license == ''
       shell: bash
       run: |
         if [[ -n "${{ inputs.platforms }}" ]]; then
           additional_flags+=(--platforms ${{ inputs.platforms }})
         fi
-        unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} )
-        echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
-        echo "unity_version=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_OUTPUT
+        python $GITHUB_ACTION_PATH/unity_installer.py --install_modules --version ${{ inputs.version }} ${additional_flags[*]} 
     - name: Activate Unity license
       if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
       shell: bash

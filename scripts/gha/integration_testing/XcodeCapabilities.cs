@@ -82,8 +82,10 @@ public sealed class XcodeCapabilities
     if (path.Contains("FirebaseAuth")) {
       MakeChangesForAuth(tempProject, path, targetId);
     }
-    // Bitcode is unnecessary, as we are not submitting these to the Apple store.
+    // Bitcode is being deprecated by xcode, but Unity defaults to it on, so turn it off.
     tempProject.SetBuildProperty(targetId, "ENABLE_BITCODE", "NO");
+    string unityFrameworkTargetId = GetUnityFrameworkTargetGuid(tempProject);
+    tempProject.SetBuildProperty(unityFrameworkTargetId, "ENABLE_BITCODE", "NO");
     File.WriteAllText(projectPath, tempProject.WriteToString());
   }
 
@@ -156,6 +158,17 @@ public sealed class XcodeCapabilities
       return pbxProject.GetUnityMainTargetGuid();
     #else
       return pbxProject.TargetGuidByName(PBXProject.GetUnityTargetName());
+    #endif
+  }
+
+  static string GetUnityFrameworkTargetGuid(object pbxProjectObj) {
+    var pbxProject = (PBXProject)pbxProjectObj;
+    // In 2019.3 Unity changed this API without an automated update path via the api-updater.
+    // There doesn't seem to be a clean version-independent way to handle this logic.
+    #if UNITY_2019_3_OR_NEWER
+      return pbxProject.GetUnityFrameworkTargetGuid();
+    #else
+      return pbxProject.TargetGuidByName("UnityFramework");
     #endif
   }
 }
