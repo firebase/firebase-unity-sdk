@@ -100,6 +100,7 @@ UNITY_SETTINGS = {
     },
     _LINUX: {
       "version": "2020.3.40f1",
+      "changeset": "ba48d4efcef1",
       "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": None, "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
     }
   },
@@ -329,7 +330,7 @@ def get_unity_executable(version):
     raise RuntimeError("Only Windows and MacOS are supported.")
 
 
-def run(command, check=True, timeout=_CMD_TIMEOUT, max_attemps=1):
+def run(command, check=True, max_attemps=1):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
   attempt_num = 1
   while attempt_num <= max_attemps:
@@ -342,7 +343,7 @@ def run(command, check=True, timeout=_CMD_TIMEOUT, max_attemps=1):
         logging.info("cmd stderr: %s", result.stderr.read().strip())
     except subprocess.SubprocessError as e:
       logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", command, attempt_num, max_attemps, e)
-      if attempt_num >= max_attemps:
+      if check and (attempt_num >= max_attemps):
         raise
     else:
       break
