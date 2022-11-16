@@ -205,7 +205,7 @@ def install_unity_hub():
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg'
     response = requests.get(URL)
     open("UnityHubSetup.dmg", "wb").write(response.content)
-    run("sudo hdiutil attach UnityHubSetup.dmg", max_attemps=3)
+    run('sudo hdiutil attach UnityHubSetup.dmg', max_attemps=3)
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     if mounted_to:
       run('sudo cp -R "%s" /Applications' % mounted_to[0], max_attemps=3)
@@ -260,7 +260,7 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
   for i, serial_id in enumerate(serial_ids):
     logging.info("Attempting license %d", i)
     try:
-      run("%s -quit -batchmode -username %s -password %s -serial %s -logfile %s" % (unity,username,password,serial_id,logfile))
+      run('%s -quit -batchmode -username %s -password %s -serial %s -logfile %s' % (unity,username,password,serial_id,logfile))
       logging.info("Activated Unity license.")
       return
     except subprocess.CalledProcessError as e:
@@ -283,7 +283,7 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
 def release_license(logfile, unity_version):
   """Releases the Unity license. Requires finding an installation of Unity."""
   unity = get_unity_executable(unity_version)
-  run("%s -quit -batchmode -returnlicense -logfile %s" % (unity,logfile))
+  run('%s -quit -batchmode -returnlicense -logfile %s' % (unity,logfile))
   logging.info("Unity license released.")
 
 
@@ -313,9 +313,9 @@ def get_unity_path(version):
   if platform.system() == "Windows":
     return '"C:/Program Files/Unity/Hub/Editor/%s"' % full_version
   elif platform.system() == "Darwin":
-    return "/Applications/Unity/Hub/Editor/%s" % full_version
+    return '"/Applications/Unity/Hub/Editor/%s"' % full_version
   elif platform.system() == 'Linux':
-    return "/home/runner/Unity/Hub/Editor/%s" % full_version
+    return '"/home/runner/Unity/Hub/Editor/%s"' % full_version
 
 
 def get_unity_executable(version):
@@ -324,7 +324,7 @@ def get_unity_executable(version):
   if platform.system() == "Windows":
     return '"C:/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe"' % full_version
   elif platform.system() == "Darwin":
-    return "/Applications/Unity/Hub/Editor/%s/Unity.app/Contents/MacOS/Unity" % full_version
+    return '"/Applications/Unity/Hub/Editor/%s/Unity.app/Contents/MacOS/Unity"' % full_version
   else:
     # Linux is not yet supported.
     raise RuntimeError("Only Windows and MacOS are supported.")
