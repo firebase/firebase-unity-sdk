@@ -214,7 +214,7 @@ def install_unity_hub():
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
     if path.exists("UnityHubSetup.exe"):
-      unity_hub_path = path("UnityHubSetup.exe")
+      unity_hub_path = path.abspath("UnityHubSetup.exe")
       logging.info("unity_hub_path")
       logging.info(unity_hub_path)
       unity_hub_path = unity_hub_path.replace('\\', '/')
