@@ -226,13 +226,13 @@ def install_unity(unity_version):
   changeset = UNITY_SETTINGS[unity_version][os]["changeset"]
   unity_hub_path = get_unity_hub_executable()
   run([unity_hub_path, "--", "--headless", 
-        "editors", "--installed"])
+        "editors", "--installed"], check=False)
   run([unity_hub_path, "--", "--headless", 
         "install", 
         "--version", unity_full_version,
         "--changeset", changeset], max_attemps=3)
   run([unity_hub_path, "--", "--headless", 
-        "editors", "--installed"])
+        "editors", "--installed"], check=False)
   if os == _MACOS:
     run(["sudo", "mkdir", "-p", "/Library/Application Support/Unity"])
     run(["sudo", "chown", "-R", "runner", "/Library/Application Support/Unity"])
@@ -344,7 +344,7 @@ def run(args, check=True, timeout=_CMD_TIMEOUT, max_attemps=1):
   while attempt_num <= max_attemps:
     try:
       logging.info("run_with_retry: %s (attempt %s of %s)", " ".join(args), attempt_num, max_attemps)
-      result = subprocess.run(args=args, check=check, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+      result = subprocess.run(args=args, check=check, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
       if result.stdout:
         logging.info("cmd stdout: %s", result.stdout)
       if result.stderr:
