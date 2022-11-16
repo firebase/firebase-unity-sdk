@@ -213,6 +213,8 @@ def install_unity_hub():
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
     run(["UnityHubSetup.exe", "/S", "/D=C:/Program Files/Unity Hub"])
+    run(["ls", "C:/Program Files/"])
+    run(["ls", "-R", "C:/Program Files/Unity Hub"])
 
   elif os == _LINUX:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
@@ -233,6 +235,7 @@ def install_unity(unity_version):
         "editors", "--installed"])
   if os == _MACOS:
     run(["sudo", "mkdir", "-p", "/Library/Application Support/Unity"])
+    run(["sudo", "chown", "-R", "runner", "/Library/Application Support/Unity"])
 
 
 def install_modules(unity_version, platforms):
