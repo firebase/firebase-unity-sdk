@@ -224,12 +224,11 @@ def install_unity(unity_version):
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
   changeset = UNITY_SETTINGS[unity_version][os]["changeset"]
   unity_hub_path = get_unity_hub_executable()
-  run('%s -- --headless editors --installed' % unity_hub_path)
   run('%s -- --headless install --version %s --changeset %s' % (unity_hub_path,unity_full_version,changeset), max_attemps=3)
   run('%s -- --headless editors --installed' % unity_hub_path)
   if os == _MACOS:
-    run("sudo mkdir -p /Library/Application Support/Unity")
-    run("sudo chown -R runner /Library/Application Support/Unity")
+    run('sudo mkdir -p "/Library/Application Support/Unity"')
+    run('sudo chown -R runner "/Library/Application Support/Unity"')
 
 
 def install_modules(unity_version, platforms):
