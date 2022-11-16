@@ -241,11 +241,7 @@ def install_modules(unity_version, platforms):
     for p in platforms:
       if UNITY_SETTINGS[unity_version][os]["modules"][p]:
         for module in UNITY_SETTINGS[unity_version][os]["modules"][p]:
-          run([unity_hub_path, "--", "--headless", 
-                "install-modules", 
-                "--version", unity_full_version, 
-                "--module", module, 
-                "--childModules"], max_attemps=3)
+          run('%s -- --headless install-modules --version %s --module %s --childModules' % (unity_hub_path,unity_full_version,module), max_attemps=3)
 
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
@@ -259,11 +255,7 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
   for i, serial_id in enumerate(serial_ids):
     logging.info("Attempting license %d", i)
     try:
-      run([unity, "-quit", "-batchmode",
-           "-username", username,
-           "-password", password,
-           "-serial", serial_id,
-           "-logfile", logfile])
+      run("%s -quit -batchmode -username %s -password %s -serial %s -logfile %s" % (unity,username,password,serial_id,logfile))
       logging.info("Activated Unity license.")
       return
     except subprocess.CalledProcessError as e:
@@ -286,7 +278,7 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
 def release_license(logfile, unity_version):
   """Releases the Unity license. Requires finding an installation of Unity."""
   unity = get_unity_executable(unity_version)
-  run([unity, "-quit", "-batchmode", "-returnlicense", "-logfile", logfile])
+  run("%s -quit -batchmode -returnlicense -logfile %s" % (unity,logfile))
   logging.info("Unity license released.")
 
 
@@ -305,9 +297,9 @@ def get_unity_hub_executable():
   if platform.system() == "Windows":
     return '"C:/Program Files/Unity Hub/Unity Hub.exe"'
   elif platform.system() == "Darwin":
-    return "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub"
+    return '"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub"'
   elif platform.system() == 'Linux':
-    return "/home/runner/Unity Hub/UnityHub.AppImage"
+    return '"/home/runner/Unity Hub/UnityHub.AppImage"'
  
 
 def get_unity_path(version):
