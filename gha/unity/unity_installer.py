@@ -351,6 +351,11 @@ def run(args, check=True, timeout=_CMD_TIMEOUT, max_attemps=1):
         logging.info("cmd stderr: %s", result.stderr)
     except subprocess.SubprocessError as e:
       logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", " ".join(args), attempt_num, max_attemps, e)
+      if attempt_num >= max_attemps:
+        raise
+    else:
+      break
+    attempt_num += 1
 
 
 if __name__ == "__main__":
