@@ -233,8 +233,12 @@ def install_unity(unity_version):
   unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
   changeset = UNITY_SETTINGS[unity_version][runner_os]["changeset"]
   unity_hub_path = get_unity_hub_executable()
-  run('%s -- --headless install --version %s --changeset %s' % (unity_hub_path,unity_full_version,changeset), max_attemps=3)
-  run('%s -- --headless editors --installed' % unity_hub_path)
+  if runner_os == _LINUX:
+    run('xvfb-run --auto-servernum %s --headless install --version %s --changeset %s' % (unity_hub_path,unity_full_version,changeset), max_attemps=3)
+    run('xvfb-run --auto-servernum %s --headless editors --installed' % unity_hub_path)
+  else:
+    run('%s -- --headless install --version %s --changeset %s' % (unity_hub_path,unity_full_version,changeset), max_attemps=3)
+    run('%s -- --headless editors --installed' % unity_hub_path)
   if runner_os == _MACOS:
     run('sudo mkdir -p "/Library/Application Support/Unity"')
     run('sudo chown -R %s "/Library/Application Support/Unity"' % os.environ["USER"])
