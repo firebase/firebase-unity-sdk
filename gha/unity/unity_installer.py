@@ -207,13 +207,12 @@ def install_unity_hub():
     run("sudo hdiutil attach UnityHubSetup.dmg", max_attemps=3)
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     if mounted_to:
-      run("sudo cp -R %s /Applications" % mounted_to[0], max_attemps=3)
+      run('sudo cp -R "%s" /Applications' % mounted_to[0], max_attemps=3)
   elif os == _WINDOWS:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
     open("UnityHubSetup.exe", "wb").write(response.content)
     run('"UnityHubSetup.exe" /S', max_attemps=3)
-    run('ls "C:/Program Files/Unity Hub')
   elif os == _LINUX:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
     response = requests.get(URL)
