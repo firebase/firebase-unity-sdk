@@ -90,10 +90,12 @@ UNITY_SETTINGS = {
   "2020": {
     _WINDOWS: {
       "version": "2020.3.34f1",
+      "changeset": "9a4c9c70452b",
       "modules": {"Default": ["Unity"], "Android": ["android", "ios"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
     },
     _MACOS: {
       "version": "2020.3.34f1",
+      "changeset": "9a4c9c70452b",
       "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
     },
     _LINUX: {
@@ -231,9 +233,11 @@ def install_unity_hub():
 def install_unity(unity_version):
   os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
+  changeset = UNITY_SETTINGS[unity_version][os]["changeset"]
   unity_hub_path = get_unity_hub_executable()
   run([unity_hub_path, "--", "--headless", 
-        "install", "--version", unity_full_version])
+        "install", "--version", unity_full_version,
+        "--changeset", changeset])
 
 
 def install_modules(unity_version, platforms):
