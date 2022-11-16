@@ -224,6 +224,8 @@ def install_unity_hub():
     run('mv UnityHub.AppImage %s' % unity_hub_path)
     run('chmod +x %s' % unity_hub_path)
     run('touch "%s/.config/Unity Hub/eulaAccepted"' % home_dir)
+    run('sudo apt-get update')
+    run('sudo apt-get install -y libgconf-2-4 libglu1 libasound2 libgtk2.0-0 libgtk-3-0 libnss3 zenity xvfb')
 
 
 def install_unity(unity_version):
