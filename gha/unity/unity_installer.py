@@ -218,10 +218,10 @@ def print_setting(unity_version):
 
 def install(unity_version, platforms):
   install_unity_hub()
+  runner_os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
   changeset = UNITY_SETTINGS[unity_version][runner_os]["changeset"]
   install_unity(unity_full_version, changeset)
-  runner_os = get_os()
   for p in platforms:
     for module in UNITY_SETTINGS[unity_version][runner_os]["modules"][p]:
       install_module(unity_full_version, module)
@@ -231,8 +231,7 @@ def install_unity_hub():
   runner_os = get_os()
   unity_hub_url = UNITY_SETTINGS["unity_hub_url"][runner_os]
   unity_hub_installer = path.basename(unity_hub_url)
-  response = requests.get(unity_hub_url)
-  open(unity_hub_installer, "wb").write(response.content)
+  download_unity_hub(unity_hub_url, unity_hub_installer, max_attemps=3)
   if runner_os == MACOS:
     run(f'sudo hdiutil attach {unity_hub_installer}', max_attemps=3)
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
@@ -249,6 +248,21 @@ def install_unity_hub():
     run(f'mv {unity_hub_installer} {unity_hub_path}')
     run(f'chmod +x {unity_hub_path}')
     run(f'touch "{home_dir}/.config/Unity Hub/eulaAccepted"', max_attemps=3)
+
+
+def download_unity_hub(unity_hub_url, unity_hub_installer, max_attemps=1):
+  attempt_num = 1
+  while attempt_num <= max_attemps:
+    try:
+      response = requests.get(unity_hub_url)
+      open(unity_hub_installer, "wb").write(response.content)
+    except Exception as e:
+      logging.info("download unity hub failed. URL: %s (attempt %s of %s). Exception: %s", Exception, e)
+      if attempt_num >= max_attemps:
+        raise
+    else:
+      break
+    attempt_num += 1
 
 
 def install_unity(unity_full_version, changeset):
