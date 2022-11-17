@@ -115,11 +115,13 @@ SETTINGS = {
     MACOS: f'"/Applications/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}/Unity.app/Contents/MacOS/Unity"',
     LINUX: None # Linux is not yet supported.
   },
-  # Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
-  # Changeset is required. 
-  # Find the changeset it at https://unity3d.com/unity/whats-new/{unity_version}. 
+  # Please use Unity Hub supported versions.
+  # Please also use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
+  # Changeset is required for each version. 
+  # Please find out the changeset it at page https://unity3d.com/unity/whats-new/{unity_version}. 
   # e.g. https://unity3d.com/unity/whats-new/2020.3.34
-  # The modules below is valid only if Unity Hub & Unity are installed.
+  # Some modules are required to build sepecific platforms.
+  # The modules are valid only if Unity Hub & Unity are installed.
   "2020": {
     WINDOWS: {
       "version": "2020.3.34f1",
@@ -230,7 +232,7 @@ def install(unity_version, platforms):
   unity_full_version = SETTINGS[unity_version][runner_os]["version"]
   changeset = SETTINGS[unity_version][runner_os]["changeset"]
   install_unity(unity_full_version, changeset)
-  
+
   for p in platforms:
     for module in SETTINGS[unity_version][runner_os]["modules"][p]:
       install_module(unity_full_version, module)
