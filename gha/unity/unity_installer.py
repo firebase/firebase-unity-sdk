@@ -73,8 +73,8 @@ from absl import logging
 from os import path
 
 
-_CMD_TIMEOUT = 900
-_MAX_ATTEMPTS = 3
+CMD_TIMEOUT = 900
+MAX_ATTEMPTS = 3
 
 ANDROID = "Android"
 IOS = "iOS"
@@ -231,34 +231,34 @@ def install_unity_hub():
   runner_os = get_os()
   unity_hub_url = UNITY_SETTINGS["unity_hub_url"][runner_os]
   unity_hub_installer = path.basename(unity_hub_url)
-  download_unity_hub(unity_hub_url, unity_hub_installer, max_attemps=3)
+  download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=MAX_ATTEMPTS)
   if runner_os == MACOS:
-    run(f'sudo hdiutil attach {unity_hub_installer}', max_attemps=3)
+    run(f'sudo hdiutil attach {unity_hub_installer}', max_attempts=MAX_ATTEMPTS)
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     if mounted_to:
-      run(f'sudo cp -R "{mounted_to[0]}" "/Applications"', max_attemps=3)
+      run(f'sudo cp -R "{mounted_to[0]}" "/Applications"', max_attempts=MAX_ATTEMPTS)
     run('sudo mkdir -p "/Library/Application Support/Unity"')
     run(f'sudo chown -R {os.environ["USER"]} "/Library/Application Support/Unity"')
   elif runner_os == WINDOWS:
-    run(f'{unity_hub_installer} /S', max_attemps=3)
+    run(f'{unity_hub_installer} /S', max_attempts=MAX_ATTEMPTS)
   elif runner_os == LINUX:
     home_dir = os.environ["HOME"]
     unity_hub_path = UNITY_SETTINGS["unity_hub_path"][runner_os]
     run(f'mkdir -p "{home_dir}/Unity Hub" "{home_dir}/.config/Unity Hub"')
     run(f'mv {unity_hub_installer} {unity_hub_path}')
     run(f'chmod +x {unity_hub_path}')
-    run(f'touch "{home_dir}/.config/Unity Hub/eulaAccepted"', max_attemps=3)
+    run(f'touch "{home_dir}/.config/Unity Hub/eulaAccepted"', max_attempts=MAX_ATTEMPTS)
 
 
-def download_unity_hub(unity_hub_url, unity_hub_installer, max_attemps=1):
+def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
   attempt_num = 1
-  while attempt_num <= max_attemps:
+  while attempt_num <= max_attempts:
     try:
       response = requests.get(unity_hub_url)
       open(unity_hub_installer, "wb").write(response.content)
     except Exception as e:
       logging.info("download unity hub failed. URL: %s (attempt %s of %s). Exception: %s", Exception, e)
-      if attempt_num >= max_attemps:
+      if attempt_num >= max_attempts:
         raise
     else:
       break
@@ -267,13 +267,13 @@ def download_unity_hub(unity_hub_url, unity_hub_installer, max_attemps=1):
 
 def install_unity(unity_full_version, changeset):
   unity_hub_executable = UNITY_SETTINGS["unity_hub_executable"][get_os()]
-  run(f'{unity_hub_executable} -- --headless install --version {unity_full_version} --changeset {changeset}', max_attemps=3)
+  run(f'{unity_hub_executable} -- --headless install --version {unity_full_version} --changeset {changeset}', max_attempts=MAX_ATTEMPTS)
   run(f'{unity_hub_executable} -- --headless editors --installed')
 
 
 def install_module(unity_full_version, module):
   unity_hub_executable = UNITY_SETTINGS["unity_hub_executable"][get_os()]
-  run(f'{unity_hub_executable} -- --headless install-modules --version {unity_full_version} --module {module} --childModules', max_attemps=3)
+  run(f'{unity_hub_executable} -- --headless install-modules --version {unity_full_version} --module {module} --childModules', max_attempts=MAX_ATTEMPTS)
           
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
@@ -326,20 +326,20 @@ def get_os():
     return LINUX
 
 
-def run(command, check=True, max_attemps=1):
+def run(command, check=True, max_attempts=1):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
   attempt_num = 1
-  while attempt_num <= max_attemps:
+  while attempt_num <= max_attempts:
     try:
-      logging.info("run_with_retry: %s (attempt %s of %s)", command, attempt_num, max_attemps)
+      logging.info("run_with_retry: %s (attempt %s of %s)", command, attempt_num, max_attempts)
       result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
       if result.stdout:
         logging.info("cmd stdout: %s", result.stdout.read().strip())
       if result.stderr:
         logging.info("cmd stderr: %s", result.stderr.read().strip())
     except subprocess.SubprocessError as e:
-      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", command, attempt_num, max_attemps, e)
-      if check and (attempt_num >= max_attemps):
+      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", command, attempt_num, max_attempts, e)
+      if check and (attempt_num >= max_attempts):
         raise
     else:
       break
