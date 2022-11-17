@@ -76,46 +76,74 @@ from os import path
 _CMD_TIMEOUT = 900
 _MAX_ATTEMPTS = 3
 
-_ANDROID = "Android"
-_IOS = "iOS"
-_TVOS = "tvOS"
-_WINDOWS = "Windows"
-_MACOS = "macOS"
-_LINUX = "Linux"
-_SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _TVOS, _WINDOWS, _MACOS, _LINUX)
+ANDROID = "Android"
+IOS = "iOS"
+TVOS = "tvOS"
+WINDOWS = "Windows"
+MACOS = "macOS"
+LINUX = "Linux"
+PLAYMODE = "Playmode"
+BUILD_OS = (WINDOWS, MACOS, LINUX)
+SUPPORTED_PLATFORMS = (ANDROID, IOS, TVOS, WINDOWS, MACOS, LINUX, PLAYMODE)
+UNITY_VERSION_PLACEHOLDER = "unity_version_placeholder"
 
 # Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
 # The modules below is valid only if Unity Hub & Unity are installed.
 UNITY_SETTINGS = {
+  "unity_hub_url": {
+    WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe",
+    MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg",
+    LINUX: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage",
+  },
+  "unity_hub_path": {
+    WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe"',
+    MACOS: '"/Applications/Unity Hub.app"',
+    LINUX: '"/home/runner/Unity Hub/UnityHub.AppImage"',
+  },
+  "unity_hub_executable": {
+    WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe"',
+    MACOS: '"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub"',
+    LINUX: 'xvfb-run --auto-servernum "/home/runner/Unity Hub/UnityHub.AppImage"',
+  },
+  "unity_path": {
+    WINDOWS: f'"C:/Program Files/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}"',
+    MACOS: f'"/Applications/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}"',
+    LINUX: f'"/home/runner/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}"',
+  },
+  "unity_executable": {
+    WINDOWS: f'"C:/Program Files/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}/Editor/Unity.exe"',
+    MACOS: f'"/Applications/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}/Unity.app/Contents/MacOS/Unity"',
+    LINUX: None # Linux is not yet supported.
+  },
   "2020": {
-    _WINDOWS: {
+    WINDOWS: {
       "version": "2020.3.34f1",
       "changeset": "9a4c9c70452b",
-      "modules": {"Android": ["android", "ios"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
+      "modules": {ANDROID: ["android", "ios"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
     },
-    _MACOS: {
+    MACOS: {
       "version": "2020.3.34f1",
       "changeset": "9a4c9c70452b",
-      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
-    _LINUX: {
+    LINUX: {
       "version": "2020.3.40f1",
       "changeset": "ba48d4efcef1",
-      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": None, "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: [], WINDOWS: ["windows-mono"], MACOS: ["mac-mono"], LINUX: [], PLAYMODE: []}
     }
   },
   "2019": {
-    _WINDOWS: {
+    WINDOWS: {
       "version": "2019.4.39f1",
-      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
     },
-    _MACOS: {
+    MACOS: {
       "version": "2019.4.39f1",
-      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
-    _LINUX: {
+    LINUX: {
       "version": "2019.4.40f1",
-      "modules": {"Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["mac-mono"], LINUX: [], PLAYMODE: []}
     }
   },
 }
@@ -123,9 +151,6 @@ UNITY_SETTINGS = {
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_bool(
-    "setting", False,
-    "Print out detailed Unity Setting. Supply --version.")
 
 flags.DEFINE_bool(
     "install", False,
@@ -152,22 +177,20 @@ flags.DEFINE_string("logfile", None, "Where to store Unity logs.")
 # Instead, this tool is written to expect the same format as build_testapps.py.
 # This keeps the CI workflow logic simple.
 flags.DEFINE_list(
-    "platforms", None,
+    "platforms", [],
     "(Optional) Additional modules to install based on platforms. Should be"
     " in the format of Unity build targets, i.e. the same format as taken by"
     " build_testapps.py. Invalid values will be ignored."
-    " Valid values: " + ",".join(_SUPPORTED_PLATFORMS))
+    " Valid values: " + ",".join(SUPPORTED_PLATFORMS))
 
 
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
 
-  if FLAGS.setting:
-    print_setting(FLAGS.version)
-
   if FLAGS.install:
     install(FLAGS.version, FLAGS.platforms)
+    print_setting(FLAGS.version)
 
   if FLAGS.activate_license:
     if FLAGS.license_file:
@@ -189,70 +212,55 @@ def main(argv):
 def print_setting(unity_version):
   runner_os = get_os()
   unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
-  unity_path = get_unity_path(unity_version)
+  unity_path = UNITY_SETTINGS["unity_path"][runner_os].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
   print("%s,%s" % (unity_full_version, unity_path))
 
 
 def install(unity_version, platforms):
   install_unity_hub()
-  install_unity(unity_version)
-  install_modules(unity_version, platforms)
+  unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
+  changeset = UNITY_SETTINGS[unity_version][runner_os]["changeset"]
+  install_unity(unity_full_version, changeset)
+  runner_os = get_os()
+  for p in platforms:
+    for module in UNITY_SETTINGS[unity_version][runner_os]["modules"][p]:
+      install_module(unity_full_version, module)
 
 
 def install_unity_hub():
   runner_os = get_os()
-  if runner_os == _MACOS:
-    URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg'
-    response = requests.get(URL)
-    open("UnityHubSetup.dmg", "wb").write(response.content)
-    run('sudo hdiutil attach UnityHubSetup.dmg', max_attemps=3)
+  unity_hub_url = UNITY_SETTINGS["unity_hub_url"][runner_os]
+  unity_hub_installer = path.basename(unity_hub_url)
+  response = requests.get(unity_hub_url)
+  open(unity_hub_installer, "wb").write(response.content)
+  if runner_os == MACOS:
+    run(f'sudo hdiutil attach {unity_hub_installer}', max_attemps=3)
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     if mounted_to:
-      run('sudo cp -R "%s" /Applications' % mounted_to[0], max_attemps=3)
+      run(f'sudo cp -R {mounted_to[0]} /Applications', max_attemps=3)
     run('sudo mkdir -p "/Library/Application Support/Unity"')
-    run('sudo chown -R %s "/Library/Application Support/Unity"' % os.environ["USER"])
-  elif runner_os == _WINDOWS:
-    URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
-    response = requests.get(URL)
-    open("UnityHubSetup.exe", "wb").write(response.content)
-    run('"UnityHubSetup.exe" /S', max_attemps=3)
-  elif runner_os == _LINUX:
-    URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage'
-    response = requests.get(URL)
-    open("UnityHub.AppImage", "wb").write(response.content)
+    run(f'sudo chown -R {os.environ["USER"]} "/Library/Application Support/Unity"')
+  elif runner_os == WINDOWS:
+    run(f'{unity_hub_installer} /S', max_attemps=3)
+  elif runner_os == LINUX:
     home_dir = os.environ["HOME"]
-    unity_hub_path = get_unity_hub_executable()
-    run('mkdir -p "%s/Unity Hub" "%s/.config/Unity Hub"' % (home_dir,home_dir))
-    run('mv UnityHub.AppImage %s' % unity_hub_path)
-    run('chmod +x %s' % unity_hub_path)
-    run('touch "%s/.config/Unity Hub/eulaAccepted"' % home_dir)
-    # run('sudo apt-get update')
-    # run('sudo apt-get install -y libgconf-2-4 libglu1 libasound2 libgtk2.0-0 libgtk-3-0 libnss3 zenity xvfb')
+    unity_hub_path = UNITY_SETTINGS["unity_hub_path"][runner_os]
+    run(f'mkdir -p "{home_dir}/Unity Hub" "{home_dir}/.config/Unity Hub"')
+    run(f'mv {unity_hub_installer} {unity_hub_path}')
+    run(f'chmod +x {unity_hub_path}')
+    run(f'touch "{home_dir}/.config/Unity Hub/eulaAccepted"', max_attemps=3)
 
 
-def install_unity(unity_version):
-  runner_os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
-  changeset = UNITY_SETTINGS[unity_version][runner_os]["changeset"]
-  unity_hub_path = get_unity_hub_executable()
-  if runner_os == _LINUX:
-    run('xvfb-run --auto-servernum %s --headless install --version %s --changeset %s' % (unity_hub_path,unity_full_version,changeset), max_attemps=3)
-    run('xvfb-run --auto-servernum %s --headless editors --installed' % unity_hub_path)
-  else:
-    run('%s -- --headless install --version %s --changeset %s' % (unity_hub_path,unity_full_version,changeset), max_attemps=3)
-    run('%s -- --headless editors --installed' % unity_hub_path)
+def install_unity(unity_full_version, changeset):
+  unity_hub_executable = UNITY_SETTINGS["unity_hub_executable"][get_os()]
+  run(f'{unity_hub_executable} -- --headless install --version {unity_full_version} --changeset {changeset}', max_attemps=3)
+  run(f'{unity_hub_executable} -- --headless editors --installed')
 
 
-def install_modules(unity_version, platforms):
-  runner_os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
-  unity_hub_path = get_unity_hub_executable()
-  if platforms:
-    for p in platforms:
-      if UNITY_SETTINGS[unity_version][runner_os]["modules"][p]:
-        for module in UNITY_SETTINGS[unity_version][runner_os]["modules"][p]:
-          run('%s -- --headless install-modules --version %s --module %s --childModules' % (unity_hub_path,unity_full_version,module), max_attemps=3)
-
+def install_module(unity_full_version, module):
+  unity_hub_executable = UNITY_SETTINGS["unity_hub_executable"][get_os()]
+  run(f'{unity_hub_executable} -- --headless install-modules --version {unity_full_version} --module {module} --childModules', max_attemps=3)
+          
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
   """Activates an installation of Unity with a license."""
@@ -260,12 +268,13 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
   # succeeds. This has occurred e.g. in Unity 2019.3.15 on Mac.
   # To handle this case, we check the Unity logs for the message indicating
   # successful activation and ignore the error in that case.
-  unity = get_unity_executable(unity_version)
+  unity_full_version = UNITY_SETTINGS[unity_version][get_os()]["version"]
+  unity_executable = UNITY_SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
   logging.info("Found %d licenses. Attempting each.", len(serial_ids))
   for i, serial_id in enumerate(serial_ids):
     logging.info("Attempting license %d", i)
     try:
-      run('%s -quit -batchmode -username %s -password %s -serial %s -logfile %s' % (unity,username,password,serial_id,logfile))
+      run(f'{unity_executable} -quit -batchmode -username {username} -password {password} -serial {serial_id} -logfile {logfile}')
       logging.info("Activated Unity license.")
       return
     except subprocess.CalledProcessError as e:
@@ -287,52 +296,20 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
 
 def release_license(logfile, unity_version):
   """Releases the Unity license. Requires finding an installation of Unity."""
-  unity = get_unity_executable(unity_version)
-  run('%s -quit -batchmode -returnlicense -logfile %s' % (unity,logfile))
+  unity_full_version = UNITY_SETTINGS[unity_version][get_os()]["version"]
+  unity_executable = UNITY_SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
+  run(f'{unity_executable} -quit -batchmode -returnlicense -logfile {logfile}')
   logging.info("Unity license released.")
 
 
 def get_os():
   """Current Operation System"""
   if platform.system() == 'Windows':
-    return _WINDOWS
+    return WINDOWS
   elif platform.system() == 'Darwin':
-    return _MACOS
+    return MACOS
   elif platform.system() == 'Linux':
-    return _LINUX
-
-
-def get_unity_hub_executable():
-  """Returns the path to Unity Hub."""
-  if platform.system() == "Windows":
-    return '"C:/Program Files/Unity Hub/Unity Hub.exe"'
-  elif platform.system() == "Darwin":
-    return '"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub"'
-  elif platform.system() == 'Linux':
-    return '"/home/runner/Unity Hub/UnityHub.AppImage"'
- 
-
-def get_unity_path(version):
-  """Returns the path to this version of Unity."""
-  full_version = UNITY_SETTINGS[version][get_os()]["version"]
-  if platform.system() == "Windows":
-    return '"C:/Program Files/Unity/Hub/Editor/%s"' % full_version
-  elif platform.system() == "Darwin":
-    return '"/Applications/Unity/Hub/Editor/%s"' % full_version
-  elif platform.system() == 'Linux':
-    return '"/home/runner/Unity/Hub/Editor/%s"' % full_version
-
-
-def get_unity_executable(version):
-  """Returns the path to this version of Unity."""
-  full_version = UNITY_SETTINGS[version][get_os()]["version"]
-  if platform.system() == "Windows":
-    return '"C:/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe"' % full_version
-  elif platform.system() == "Darwin":
-    return '"/Applications/Unity/Hub/Editor/%s/Unity.app/Contents/MacOS/Unity"' % full_version
-  else:
-    # Linux is not yet supported.
-    raise RuntimeError("Only Windows and MacOS are supported.")
+    return LINUX
 
 
 def run(command, check=True, max_attemps=1):

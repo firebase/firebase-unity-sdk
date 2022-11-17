@@ -53,13 +53,6 @@ runs:
             --version ${{ inputs.version }} \
             --logfile "testapps/release_license.log"
           cat testapps/release_license.log
-    - name: unity_setting
-      if: steps.configs.outputs.install_unity
-      shell: bash
-      run: |
-        unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --setting --version ${{ inputs.version }})
-        echo "UNITY_VERSION=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_ENV
-        echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
     - name: Install Unity
       if: steps.configs.outputs.install_unity
       shell: bash
@@ -67,7 +60,9 @@ runs:
         if [[ -n "${{ inputs.platforms }}" ]]; then
           additional_flags+=(--platforms ${{ inputs.platforms }})
         fi
-        python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} 
+        unity_info=$(python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]})
+        echo "UNITY_VERSION=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_ENV
+        echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
     - name: Activate Unity license
       if: steps.configs.outputs.activate_license
       shell: bash
