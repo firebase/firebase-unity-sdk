@@ -209,6 +209,8 @@ def install_unity_hub():
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     if mounted_to:
       run('sudo cp -R "%s" /Applications' % mounted_to[0], max_attemps=3)
+    run('sudo mkdir -p "/Library/Application Support/Unity"')
+    run('sudo chown -R %s "/Library/Application Support/Unity"' % os.environ["USER"])
   elif runner_os == _WINDOWS:
     URL = 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe'
     response = requests.get(URL)
@@ -239,9 +241,6 @@ def install_unity(unity_version):
   else:
     run('%s -- --headless install --version %s --changeset %s' % (unity_hub_path,unity_full_version,changeset), max_attemps=3)
     run('%s -- --headless editors --installed' % unity_hub_path)
-  if runner_os == _MACOS:
-    run('sudo mkdir -p "/Library/Application Support/Unity"')
-    run('sudo chown -R %s "/Library/Application Support/Unity"' % os.environ["USER"])
 
 
 def install_modules(unity_version, platforms):
