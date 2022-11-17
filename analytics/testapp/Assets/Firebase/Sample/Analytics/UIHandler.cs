@@ -145,7 +145,7 @@ namespace Firebase.Sample.Analytics {
           DebugLog(String.Format("Encounted an error fetching session ID {0}",
                                   task.Exception.ToString()));
           if (task.Exception.InnerException != null) {
-	    DebugLog(String.Format("--> Inner exception: {0}, task.InnerException.ToString()));
+	    DebugLog(String.Format("--> Inner exception: {0}", task.InnerException.ToString()));
           }
         } else if (task.IsCompleted) {
           DebugLog(String.Format("Session ID: {0}", task.Result));
