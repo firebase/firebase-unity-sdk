@@ -236,7 +236,7 @@ def install_unity_hub():
     run(f'sudo hdiutil attach {unity_hub_installer}', max_attemps=3)
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
     if mounted_to:
-      run(f'sudo cp -R {mounted_to[0]} /Applications', max_attemps=3)
+      run(f'sudo cp -R "{mounted_to[0]}" "/Applications"', max_attemps=3)
     run('sudo mkdir -p "/Library/Application Support/Unity"')
     run(f'sudo chown -R {os.environ["USER"]} "/Library/Application Support/Unity"')
   elif runner_os == WINDOWS:
