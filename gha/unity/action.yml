@@ -30,8 +30,19 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - id: configs
+      shell: bash
+      run: |
+        if [[ "${{ inputs.release_license }}" != "" ]]; then 
+          echo "release_license=True" >> $GITHUB_OUTPUT
+        else
+          echo "install_unity=True" >> $GITHUB_OUTPUT
+          if [[ "${{ inputs.username }}" != "" && "${{ inputs.password }}" != "" && "${{ inputs.serial_ids }}" != "" ]]; then 
+            echo "activate_license=True" >> $GITHUB_OUTPUT
+          fi
+        fi
     - name: Return Unity license
-      if: inputs.release_license
+      if: steps.configs.outputs.release_license
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 5
@@ -43,14 +54,14 @@ runs:
             --logfile "testapps/release_license.log"
           cat testapps/release_license.log
     - name: unity_setting
-      if: inputs.release_license == ''
+      if: steps.configs.outputs.install_unity
       shell: bash
       run: |
         unity_info=$( python $GITHUB_ACTION_PATH/unity_installer.py --setting --version ${{ inputs.version }})
         echo "UNITY_VERSION=$(cut -d',' -f1 <<< ${unity_info})" >> $GITHUB_ENV
         echo "UNITY_ROOT_DIR=$(cut -d',' -f2 <<< ${unity_info})" >> $GITHUB_ENV
     - name: Install Unity
-      if: inputs.release_license == ''
+      if: steps.configs.outputs.install_unity
       shell: bash
       run: |
         if [[ -n "${{ inputs.platforms }}" ]]; then
@@ -58,7 +69,7 @@ runs:
         fi
         python $GITHUB_ACTION_PATH/unity_installer.py --install --version ${{ inputs.version }} ${additional_flags[*]} 
     - name: Activate Unity license
-      if: inputs.release_license == '' && inputs.username != '' && inputs.password != '' && inputs.serial_ids != ''
+      if: steps.configs.outputs.activate_license
       shell: bash
       run: |
         python $GITHUB_ACTION_PATH/unity_installer.py --activate_license \
