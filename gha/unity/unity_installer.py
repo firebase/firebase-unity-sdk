@@ -27,15 +27,14 @@ This tool supports (1), (2) and (3).
 
 
 TODO: (1) Installation:
-  unity_installer.py --install --version 2017.3.1f1 --platforms Android,iOS
+  unity_installer.py --install --version 2020 --platforms Android,iOS
 
-'platforms' specifies additional build supports to install. Always installs
-Unity itself.
+'platforms' specifies additional build modules to install. 
 
 
 (2) License activation:
 
-  unity_installer.py --activate_license --version 2017.3.1f1 \
+  unity_installer.py --activate_license --version 2020 \
     --license_file ~/license.txt --logfile activate.log
 
   or:
@@ -57,7 +56,7 @@ X4-XXXX-XXXX-XXXX-XXXX
 
 
 (3) License release:
-  unity_installer.py --release_license --version 2019 --logfile return.log
+  unity_installer.py --release_license --version 2020 --logfile return.log
 
 """
 
@@ -87,24 +86,25 @@ BUILD_OS = (WINDOWS, MACOS, LINUX)
 SUPPORTED_PLATFORMS = (ANDROID, IOS, TVOS, WINDOWS, MACOS, LINUX, PLAYMODE)
 UNITY_VERSION_PLACEHOLDER = "unity_version_placeholder"
 
-# Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
-# The modules below is valid only if Unity Hub & Unity are installed.
-UNITY_SETTINGS = {
+SETTINGS = {
+  # Used for downloading Unity Hub
   "unity_hub_url": {
     WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe",
     MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg",
     LINUX: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage",
   },
+  # Unity Hub will be installed at this location
   "unity_hub_path": {
     WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe"',
     MACOS: '"/Applications/Unity Hub.app"',
     LINUX: '"/home/runner/Unity Hub/UnityHub.AppImage"',
   },
   "unity_hub_executable": {
-    WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe"',
-    MACOS: '"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub"',
-    LINUX: 'xvfb-run --auto-servernum "/home/runner/Unity Hub/UnityHub.AppImage"',
+    WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe" -- --headless',
+    MACOS: '"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless',
+    LINUX: 'xvfb-run --auto-servernum "/home/runner/Unity Hub/UnityHub.AppImage" --headless',
   },
+  # Unity will be installed at this location
   "unity_path": {
     WINDOWS: f'"C:/Program Files/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}"',
     MACOS: f'"/Applications/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}"',
@@ -115,6 +115,11 @@ UNITY_SETTINGS = {
     MACOS: f'"/Applications/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}/Unity.app/Contents/MacOS/Unity"',
     LINUX: None # Linux is not yet supported.
   },
+  # Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
+  # Changeset is required. 
+  # Find the changeset it at https://unity3d.com/unity/whats-new/{unity_version}. 
+  # e.g. https://unity3d.com/unity/whats-new/2020.3.34
+  # The modules below is valid only if Unity Hub & Unity are installed.
   "2020": {
     WINDOWS: {
       "version": "2020.3.34f1",
@@ -135,14 +140,17 @@ UNITY_SETTINGS = {
   "2019": {
     WINDOWS: {
       "version": "2019.4.39f1",
+      "changeset": "78d14dfa024b",
       "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
     },
     MACOS: {
       "version": "2019.4.39f1",
+      "changeset": "78d14dfa024b",
       "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     LINUX: {
       "version": "2019.4.40f1",
+      "changeset": "ffc62b691db5",
       "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["mac-mono"], LINUX: [], PLAYMODE: []}
     }
   },
@@ -150,7 +158,6 @@ UNITY_SETTINGS = {
 
 
 FLAGS = flags.FLAGS
-
 
 flags.DEFINE_bool(
     "install", False,
@@ -211,25 +218,27 @@ def main(argv):
 
 def print_setting(unity_version):
   runner_os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
-  unity_path = UNITY_SETTINGS["unity_path"][runner_os].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
+  unity_full_version = SETTINGS[unity_version][runner_os]["version"]
+  unity_path = SETTINGS["unity_path"][runner_os].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
   print("%s,%s" % (unity_full_version, unity_path))
 
 
 def install(unity_version, platforms):
   install_unity_hub()
+
   runner_os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][runner_os]["version"]
-  changeset = UNITY_SETTINGS[unity_version][runner_os]["changeset"]
+  unity_full_version = SETTINGS[unity_version][runner_os]["version"]
+  changeset = SETTINGS[unity_version][runner_os]["changeset"]
   install_unity(unity_full_version, changeset)
+  
   for p in platforms:
-    for module in UNITY_SETTINGS[unity_version][runner_os]["modules"][p]:
+    for module in SETTINGS[unity_version][runner_os]["modules"][p]:
       install_module(unity_full_version, module)
 
 
 def install_unity_hub():
   runner_os = get_os()
-  unity_hub_url = UNITY_SETTINGS["unity_hub_url"][runner_os]
+  unity_hub_url = SETTINGS["unity_hub_url"][runner_os]
   unity_hub_installer = path.basename(unity_hub_url)
   download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=MAX_ATTEMPTS)
   if runner_os == MACOS:
@@ -243,7 +252,7 @@ def install_unity_hub():
     run(f'{unity_hub_installer} /S', max_attempts=MAX_ATTEMPTS)
   elif runner_os == LINUX:
     home_dir = os.environ["HOME"]
-    unity_hub_path = UNITY_SETTINGS["unity_hub_path"][runner_os]
+    unity_hub_path = SETTINGS["unity_hub_path"][runner_os]
     run(f'mkdir -p "{home_dir}/Unity Hub" "{home_dir}/.config/Unity Hub"')
     run(f'mv {unity_hub_installer} {unity_hub_path}')
     run(f'chmod +x {unity_hub_path}')
@@ -266,14 +275,14 @@ def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
 
 
 def install_unity(unity_full_version, changeset):
-  unity_hub_executable = UNITY_SETTINGS["unity_hub_executable"][get_os()]
-  run(f'{unity_hub_executable} -- --headless install --version {unity_full_version} --changeset {changeset}', max_attempts=MAX_ATTEMPTS)
-  run(f'{unity_hub_executable} -- --headless editors --installed')
+  unity_hub_executable = SETTINGS["unity_hub_executable"][get_os()]
+  run(f'{unity_hub_executable} install --version {unity_full_version} --changeset {changeset}', max_attempts=MAX_ATTEMPTS)
+  run(f'{unity_hub_executable} editors --installed')
 
 
 def install_module(unity_full_version, module):
-  unity_hub_executable = UNITY_SETTINGS["unity_hub_executable"][get_os()]
-  run(f'{unity_hub_executable} -- --headless install-modules --version {unity_full_version} --module {module} --childModules', max_attempts=MAX_ATTEMPTS)
+  unity_hub_executable = SETTINGS["unity_hub_executable"][get_os()]
+  run(f'{unity_hub_executable} install-modules --version {unity_full_version} --module {module} --childModules', max_attempts=MAX_ATTEMPTS)
           
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
@@ -282,8 +291,8 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
   # succeeds. This has occurred e.g. in Unity 2019.3.15 on Mac.
   # To handle this case, we check the Unity logs for the message indicating
   # successful activation and ignore the error in that case.
-  unity_full_version = UNITY_SETTINGS[unity_version][get_os()]["version"]
-  unity_executable = UNITY_SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
+  unity_full_version = SETTINGS[unity_version][get_os()]["version"]
+  unity_executable = SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
   logging.info("Found %d licenses. Attempting each.", len(serial_ids))
   for i, serial_id in enumerate(serial_ids):
     logging.info("Attempting license %d", i)
@@ -310,8 +319,8 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
 
 def release_license(logfile, unity_version):
   """Releases the Unity license. Requires finding an installation of Unity."""
-  unity_full_version = UNITY_SETTINGS[unity_version][get_os()]["version"]
-  unity_executable = UNITY_SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
+  unity_full_version = SETTINGS[unity_version][get_os()]["version"]
+  unity_executable = SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
   run(f'{unity_executable} -quit -batchmode -returnlicense -logfile {logfile}')
   logging.info("Unity license released.")
 
