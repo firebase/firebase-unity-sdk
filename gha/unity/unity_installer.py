@@ -92,7 +92,7 @@ UNITY_SETTINGS = {
     },
     _MACOS: {
       "version": "2020.3.34f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
+      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios", "appletv"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
     },
     _LINUX: {
       "version": "2020.3.40f1",
