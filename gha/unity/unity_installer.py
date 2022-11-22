@@ -131,7 +131,7 @@ SETTINGS = {
     MACOS: {
       "version": "2020.3.34f1",
       "changeset": "9a4c9c70452b",
-      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
+      "modules": {ANDROID: ["android"], IOS: ["ios", "appletv"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     LINUX: {
       "version": "2020.3.40f1",
