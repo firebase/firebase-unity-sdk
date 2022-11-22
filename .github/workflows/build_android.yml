@@ -59,10 +59,6 @@ jobs:
           ref: ${{ inputs.firebase_cpp_sdk_version }}
           submodules: true
 
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6
-
       - name: Setup python
         uses: actions/setup-python@v4
         with:
