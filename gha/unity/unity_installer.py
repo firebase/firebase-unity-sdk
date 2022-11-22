@@ -118,9 +118,9 @@ SETTINGS = {
   # Please use Unity Hub supported versions.
   # Please also use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
   # Changeset is required for each version. 
-  # Please find out the changeset it at page https://unity3d.com/unity/whats-new/{unity_version}. 
+  # Please find out the changeset at this page https://unity3d.com/unity/whats-new/{unity_version}. 
   # e.g. https://unity3d.com/unity/whats-new/2020.3.34
-  # Some modules are required to build sepecific platforms.
+  # The modules are required to build sepecific platforms.
   # The modules are valid only if Unity Hub & Unity are installed.
   "2020": {
     WINDOWS: {
