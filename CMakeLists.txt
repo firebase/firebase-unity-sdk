@@ -146,6 +146,12 @@ else()
   set(DESKTOP OFF)
 endif()
 
+# Define the Python executable before including the subprojects
+find_program(FIREBASE_PYTHON_EXECUTABLE
+  NAMES python3 python
+  REQUIRED
+)
+
 include(FindPkgConfig)
 include(android_dependencies)
 include(build_universal)

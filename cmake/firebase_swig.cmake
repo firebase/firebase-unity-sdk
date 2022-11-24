@@ -202,13 +202,13 @@ macro(firebase_swig_add_library name)
     OUTPUT ${UNITY_SWIG_CS_FIX_FILE}
     DEPENDS ${UNITY_SWIG_CS_GEN_FILE}
     COMMAND
-      python
+      ${FIREBASE_PYTHON_EXECUTABLE}
         ${CMAKE_CURRENT_LIST_DIR}/../swig_commenter.py
         --input=\"${all_cpp_header_files}\"
         --output=\"${UNITY_SWIG_CS_GEN_FILE}\"
         --namespace_prefix=\"Firebase\"
     COMMAND
-      python
+      ${FIREBASE_PYTHON_EXECUTABLE}
         ${FIREBASE_SWIG_FIX_PY}
         --language=csharp
         --in_file=\"${UNITY_SWIG_CS_GEN_FILE}\"
@@ -233,7 +233,7 @@ macro(firebase_swig_add_library name)
     OUTPUT ${UNITY_SWIG_CPP_FIX_FILE}
     DEPENDS ${UNITY_SWIG_CPP_GEN_FILE}
     COMMAND
-      python
+      ${FIREBASE_PYTHON_EXECUTABLE}
         ${FIREBASE_SWIG_FIX_PY}
         --language=cpp
         --in_file=\"${UNITY_SWIG_CPP_GEN_FILE}\"
