@@ -695,7 +695,7 @@ def _collect_integration_tests(config, testapps, root_output_dir, output_dir, ar
         linux_testapp_paths.append(os.path.join(file_dir, directory))
       elif ios_simualtor_testapp_dir in file_dir and directory.endswith(ios_simualtor_testapp_extension):
         ios_testapp_paths.append(os.path.join(file_dir, directory))
-      elif tvos_simualtor_testapp_dir in file_dir and directory.endswith(ios_simualtor_testapp_extension):
+      elif tvos_simulator_testapp_dir in file_dir and directory.endswith(ios_simualtor_testapp_extension):
         tvos_testapp_paths.append(os.path.join(file_dir, directory))
     for file_name in file_names:
       if file_name.endswith(android_testapp_extension):
