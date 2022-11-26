@@ -725,13 +725,19 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
   if not testapp_paths:
     return
 
+  logging.info("platform - start  " + platform)
+  if platform == _TVOS or platform == _IOS:
+    platform = os.path.join("apple", platform)
+  logging.info("platform end: " + platform)
+
   for testapp in testapps:
-    os.makedirs(os.path.join(artifact_path, platform ,testapp))
+    os.makedirs(os.path.join(artifact_path, platform, testapp))
+
   for path in testapp_paths:
     for testapp in testapps:
       if config.get_api(testapp).full_name in path:
         if os.path.isfile(path):
-          shutil.move(path, os.path.join(artifact_path, platform ,testapp))
+          shutil.move(path, os.path.join(artifact_path, platform, testapp))
         else:
           shutil.move(path, os.path.join(artifact_path, platform ,testapp, os.path.basename(path)), copy_function = shutil.copytree)
         break

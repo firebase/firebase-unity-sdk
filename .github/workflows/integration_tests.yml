@@ -271,23 +271,23 @@ jobs:
         if: ${{ contains(matrix.platform, 'iOS') && !cancelled() }}
         with:
           name: testapps-iOS-${{ steps.matrix_info.outputs.artifact_suffix }}
-          path: testapps-${{ steps.matrix_info.outputs.info }}/iOS
+          path: testapps-${{ steps.matrix_info.outputs.info }}/apple
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete iOS integration tests artifact
         if: ${{ contains(matrix.platform, 'iOS') && !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/iOS || true
+        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/apple || true
       - name: Upload tvOS integration tests artifact
         uses: actions/upload-artifact@v3
         if: ${{ contains(matrix.platform, 'tvOS') && !cancelled() }}
         with:
           name: testapps-tvOS-${{ steps.matrix_info.outputs.artifact_suffix }}
-          path: testapps-${{ steps.matrix_info.outputs.info }}/tvOS
+          path: testapps-${{ steps.matrix_info.outputs.info }}/apple
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete tvOS integration tests artifact
         if: ${{ contains(matrix.platform, 'tvOS') && !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/tvOS || true
+        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/apple || true
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v3
         if: ${{ contains(matrix.platform, 'Linux') && !cancelled() }}
