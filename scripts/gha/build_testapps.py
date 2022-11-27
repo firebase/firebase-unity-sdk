@@ -726,8 +726,8 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
     return
 
   logging.info("platform - start  " + platform)
-  if platform == _TVOS or platform == _IOS:
-    platform = os.path.join("apple", platform)
+  #if platform == _TVOS or platform == _IOS:
+  #  platform = os.path.join("apple", platform)
   logging.info("platform end: " + platform)
 
   for testapp in testapps:
