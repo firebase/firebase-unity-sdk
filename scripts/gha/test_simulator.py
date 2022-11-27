@@ -126,7 +126,7 @@ flags.DEFINE_string(
     "tvos_name", "Apple TV",
     "See module docstring for details on how to set and get this name.")
 flags.DEFINE_string(
-    "tvos_version", "14.0",
+    "tvos_version", "16.1",
     "See module docstring for details on how to set and get this version.")
 flags.DEFINE_string(
     "android_device", None,
