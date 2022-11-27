@@ -511,6 +511,13 @@ jobs:
             --android_device "${{ matrix.test_device }}" \
             --logfile_name ""${{ steps.matrix_info.outputs.info }}"" \
             --ci
+      - name: Upload tvOS xctestrun tests artifact
+        uses: actions/upload-artifact@v3
+        if: ${{ contains(matrix.platform, 'tvOS') }}
+        with:
+          name: testapps-tvOS-xctestrun
+          path: scripts/gha/integration_testing/gameloop_apple/Build/gameloop_tvos_appletvsimulator16.0-x86_64.xctestrun
+          retention-days: ${{ env.artifactRetentionDays }}
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
