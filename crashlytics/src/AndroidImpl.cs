@@ -141,6 +141,24 @@ namespace Firebase.Crashlytics
         }, "LogException");
     }
 
+    public override void LogExceptionAsFatal(Exception exception) {
+      var loggedException = LoggedException.FromException(exception);
+      StackFrames frames = new StackFrames();
+      foreach (Dictionary<string, string> frame in loggedException.ParsedStackTrace) {
+        frames.Add(new FirebaseCrashlyticsFrame {
+          library = frame["class"],
+          symbol = frame["method"],
+          fileName = frame["file"],
+          lineNumber = frame["line"],
+        });
+      }
+      // TODO(mrober): Do something for empty stacktrace. Get current stacktrace?
+      CallInternalMethod(() => {
+          crashlyticsInternal.LogExceptionAsFatal(loggedException.Name,
+              loggedException.Message, frames);
+        }, "LogExceptionAsFatal");
+    }
+
     public override bool IsCrashlyticsCollectionEnabled() {
       return CallInternalMethod(() => {
           return crashlyticsInternal.IsCrashlyticsCollectionEnabled();

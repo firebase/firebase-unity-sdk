@@ -29,6 +29,14 @@ namespace Firebase.Crashlytics {
   public static class Crashlytics {
 
     /// <summary>
+    /// Whether Crashlytics is set to report uncaught exceptions as fatal.
+    /// <returns>
+    /// true if Crashlytics is set to report uncaught exceptions as fatal, false otherwise
+    /// </returns>
+    /// </summary>
+    public static bool ReportUncaughtExceptionsAsFatal = false;
+
+    /// <summary>
     /// Checks whether the Crashlytics specific data collection flag has been enabled.
     /// <returns>
     /// true if the platform level data collection flag is enabled or unset, false otherwise
@@ -104,6 +112,16 @@ namespace Firebase.Crashlytics {
     /// </param>
     public static void LogException(Exception exception) {
       PlatformAccessor.Impl.LogException(exception);
+    }
+
+    /// <summary>
+    /// Record a fatal exception.
+    /// </summary>
+    /// <param name="exception">
+    /// The exception to log as fatal.
+    /// </param>
+    public static void LogExceptionAsFatal(Exception exception) {
+      PlatformAccessor.Impl.LogExceptionAsFatal(exception);
     }
 
     /// <summary>

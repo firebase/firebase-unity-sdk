@@ -69,6 +69,8 @@ class Crashlytics {
   void SetUserId(const char* id);
   void LogException(const char* name, const char* reason,
                     std::vector<Frame> frames);
+  void LogExceptionAsFatal(const char* name, const char* reason,
+                           std::vector<Frame> frames);
   bool IsCrashlyticsCollectionEnabled();
   void SetCrashlyticsCollectionEnabled(bool enabled);
 
