@@ -254,6 +254,7 @@ def install_unity_hub():
   elif runner_os == WINDOWS:
     run(f'{unity_hub_installer} /S', max_attempts=MAX_ATTEMPTS)
   elif runner_os == LINUX:
+    # https://docs.unity3d.com/hub/manual/InstallHub.html#install-hub-linux
     run('sudo sh -c \'echo "deb https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list\'')
     run('wget -qO - https://hub.unity3d.com/linux/keys/public | sudo apt-key add -', max_attempts=MAX_ATTEMPTS)
     run('sudo apt update')
