@@ -259,6 +259,8 @@ def install_unity_hub():
     run(f'mv {unity_hub_installer} {unity_hub_path}')
     run(f'chmod +x {unity_hub_path}')
     run(f'touch "{home_dir}/.config/Unity Hub/eulaAccepted"', max_attempts=MAX_ATTEMPTS)
+    run('sudo apt-get update -y')
+    run('sudo apt-get install -y libfuse2')
 
 
 def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
