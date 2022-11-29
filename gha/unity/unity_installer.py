@@ -27,15 +27,14 @@ This tool supports (1), (2) and (3).
 
 
 TODO: (1) Installation:
-  unity_installer.py --install --version 2017.3.1f1 --platforms Android,iOS
+  unity_installer.py --install --version 2020 --platforms Android,iOS
 
-'platforms' specifies additional build supports to install. Always installs
-Unity itself.
+'platforms' specifies additional build modules to install. 
 
 
 (2) License activation:
 
-  unity_installer.py --activate_license --version 2017.3.1f1 \
+  unity_installer.py --activate_license --version 2020 \
     --license_file ~/license.txt --logfile activate.log
 
   or:
@@ -57,78 +56,114 @@ X4-XXXX-XXXX-XXXX-XXXX
 
 
 (3) License release:
-  unity_installer.py --release_license --version 2019 --logfile return.log
+  unity_installer.py --release_license --version 2020 --logfile return.log
 
 """
 
+import requests
 import platform
-import shutil
 import subprocess
+import glob
+import os
 
 from absl import app
 from absl import flags
 from absl import logging
+from os import path
 
 
-_CMD_TIMEOUT = 900
-_MAX_ATTEMPTS = 3
+CMD_TIMEOUT = 900
+MAX_ATTEMPTS = 3
 
-_DEFALUT = "Default"
-_ANDROID = "Android"
-_IOS = "iOS"
-_TVOS = "tvOS"
-_WINDOWS = "Windows"
-_MACOS = "macOS"
-_LINUX = "Linux"
-_SUPPORTED_PLATFORMS = (_ANDROID, _IOS, _TVOS, _WINDOWS, _MACOS, _LINUX)
+ANDROID = "Android"
+IOS = "iOS"
+TVOS = "tvOS"
+WINDOWS = "Windows"
+MACOS = "macOS"
+LINUX = "Linux"
+PLAYMODE = "Playmode"
+BUILD_OS = (WINDOWS, MACOS, LINUX)
+SUPPORTED_PLATFORMS = (ANDROID, IOS, TVOS, WINDOWS, MACOS, LINUX, PLAYMODE)
+UNITY_VERSION_PLACEHOLDER = "unity_version_placeholder"
 
-# Plese use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
-# The modules below is valid only if Unity Hub is not installed.
-UNITY_SETTINGS = {
+SETTINGS = {
+  # Used for downloading Unity Hub
+  "unity_hub_url": {
+    WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe",
+    MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg",
+    LINUX: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage",
+  },
+  # Unity Hub will be installed at this location
+  "unity_hub_path": {
+    WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe"',
+    MACOS: '"/Applications/Unity Hub.app"',
+    LINUX: '"/home/runner/Unity Hub/UnityHub.AppImage"',
+  },
+  "unity_hub_executable": {
+    WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe" -- --headless',
+    MACOS: '"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless',
+    LINUX: 'xvfb-run --auto-servernum "/home/runner/Unity Hub/UnityHub.AppImage" --headless',
+  },
+  # Unity will be installed at this location
+  "unity_path": {
+    WINDOWS: f'"C:/Program Files/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}"',
+    MACOS: f'"/Applications/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}"',
+    LINUX: f'"/home/runner/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}"',
+  },
+  "unity_executable": {
+    WINDOWS: f'"C:/Program Files/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}/Editor/Unity.exe"',
+    MACOS: f'"/Applications/Unity/Hub/Editor/{UNITY_VERSION_PLACEHOLDER}/Unity.app/Contents/MacOS/Unity"',
+    LINUX: None # Linux is not yet supported.
+  },
+  # Please use Unity Hub supported versions.
+  # Please also use Unity LTS versions: https://unity3d.com/unity/qa/lts-releases
+  # Changeset is required for each version. 
+  # Please find out the changeset at this page https://unity3d.com/unity/whats-new/{unity_version}. 
+  # e.g. https://unity3d.com/unity/whats-new/2020.3.34
+  # The modules are required to build sepecific platforms.
+  # The modules are valid only if Unity Hub & Unity are installed.
   "2020": {
-    _WINDOWS: {
+    WINDOWS: {
       "version": "2020.3.34f1",
-      "modules": {"Default": ["Unity"], "Android": ["android", "ios"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
+      "changeset": "9a4c9c70452b",
+      "modules": {ANDROID: ["android", "ios"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
     },
-    _MACOS: {
+    MACOS: {
       "version": "2020.3.34f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios", "appletv"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
+      "changeset": "9a4c9c70452b",
+      "modules": {ANDROID: ["android"], IOS: ["ios", "appletv"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
-    _LINUX: {
+    LINUX: {
       "version": "2020.3.40f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": None, "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
+      "changeset": "ba48d4efcef1",
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: [], WINDOWS: ["windows-mono"], MACOS: ["mac-mono"], LINUX: [], PLAYMODE: []}
     }
   },
   "2019": {
-    _WINDOWS: {
+    WINDOWS: {
       "version": "2019.4.39f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": None, "macOS": ["mac-mono"], "Linux": ["linux-mono"], "Playmode": ["ios"]},
+      "changeset": "78d14dfa024b",
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
     },
-    _MACOS: {
+    MACOS: {
       "version": "2019.4.39f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["ios"], "Linux": ["linux-mono"], "Playmode": None},
+      "changeset": "78d14dfa024b",
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
-    _LINUX: {
+    LINUX: {
       "version": "2019.4.40f1",
-      "modules": {"Default": ["Unity"], "Android": ["android"], "iOS": ["ios"], "tvOS": ["appletv"], "Windows": ["windows-mono"], "macOS": ["mac-mono"], "Linux": None, "Playmode": None}
+      "changeset": "ffc62b691db5",
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["mac-mono"], LINUX: [], PLAYMODE: []}
     }
   },
 }
 
+
 FLAGS = flags.FLAGS
 
 flags.DEFINE_bool(
-    "setting", False,
-    "Print out detailed Unity Setting. Supply --version.")
-
-# TODO: @sunmou
-# flags.DEFINE_bool(
-#     "install", False,
-#     "Install Unity and build supports. Supply --version and --platforms.")
-
-flags.DEFINE_bool(
-    "install_modules", False,
-    "Install Unity Modules and build supports. Supply --version and --platforms.")
+    "install", False,
+    "Install Unity and build supports. Supply --version and --platforms.")
 
 flags.DEFINE_bool(
     "activate_license", False,
@@ -151,22 +186,20 @@ flags.DEFINE_string("logfile", None, "Where to store Unity logs.")
 # Instead, this tool is written to expect the same format as build_testapps.py.
 # This keeps the CI workflow logic simple.
 flags.DEFINE_list(
-    "platforms", None,
+    "platforms", [],
     "(Optional) Additional modules to install based on platforms. Should be"
     " in the format of Unity build targets, i.e. the same format as taken by"
     " build_testapps.py. Invalid values will be ignored."
-    " Valid values: " + ",".join(_SUPPORTED_PLATFORMS))
+    " Valid values: " + ",".join(SUPPORTED_PLATFORMS))
 
 
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
 
-  if FLAGS.setting:
+  if FLAGS.install:
+    install(FLAGS.version, FLAGS.platforms)
     print_setting(FLAGS.version)
-
-  if FLAGS.install_modules:
-    install_modules(FLAGS.version, FLAGS.platforms)
 
   if FLAGS.activate_license:
     if FLAGS.license_file:
@@ -186,27 +219,73 @@ def main(argv):
 
 
 def print_setting(unity_version):
-  os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-  unity_path = get_unity_path(unity_version)
+  runner_os = get_os()
+  unity_full_version = SETTINGS[unity_version][runner_os]["version"]
+  unity_path = SETTINGS["unity_path"][runner_os].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
   print("%s,%s" % (unity_full_version, unity_path))
 
 
-def install_modules(unity_version, platforms):
-  os = get_os()
-  unity_full_version = UNITY_SETTINGS[unity_version][os]["version"]
-  unity_hub_path = get_unity_hub_path()
-  if platforms:
-    for p in platforms:
-      if UNITY_SETTINGS[unity_version][os]["modules"][p]:
-        for module in UNITY_SETTINGS[unity_version][os]["modules"][p]:
-          run([unity_hub_path, "--", "--headless", 
-                "install-modules", 
-                "--version", unity_full_version, 
-                "--module", module, 
-                "--childModules"], 
-              check=False)
+def install(unity_version, platforms):
+  install_unity_hub()
 
+  runner_os = get_os()
+  unity_full_version = SETTINGS[unity_version][runner_os]["version"]
+  changeset = SETTINGS[unity_version][runner_os]["changeset"]
+  install_unity(unity_full_version, changeset)
+
+  for p in platforms:
+    for module in SETTINGS[unity_version][runner_os]["modules"][p]:
+      install_module(unity_full_version, module)
+
+
+def install_unity_hub():
+  runner_os = get_os()
+  unity_hub_url = SETTINGS["unity_hub_url"][runner_os]
+  unity_hub_installer = path.basename(unity_hub_url)
+  download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=MAX_ATTEMPTS)
+  if runner_os == MACOS:
+    run(f'sudo hdiutil attach {unity_hub_installer}', max_attempts=MAX_ATTEMPTS)
+    mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
+    if mounted_to:
+      run(f'sudo cp -R "{mounted_to[0]}" "/Applications"', max_attempts=MAX_ATTEMPTS)
+    run('sudo mkdir -p "/Library/Application Support/Unity"')
+    run(f'sudo chown -R {os.environ["USER"]} "/Library/Application Support/Unity"')
+  elif runner_os == WINDOWS:
+    run(f'{unity_hub_installer} /S', max_attempts=MAX_ATTEMPTS)
+  elif runner_os == LINUX:
+    home_dir = os.environ["HOME"]
+    unity_hub_path = SETTINGS["unity_hub_path"][runner_os]
+    run(f'mkdir -p "{home_dir}/Unity Hub" "{home_dir}/.config/Unity Hub"')
+    run(f'mv {unity_hub_installer} {unity_hub_path}')
+    run(f'chmod +x {unity_hub_path}')
+    run(f'touch "{home_dir}/.config/Unity Hub/eulaAccepted"', max_attempts=MAX_ATTEMPTS)
+
+
+def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
+  attempt_num = 1
+  while attempt_num <= max_attempts:
+    try:
+      response = requests.get(unity_hub_url)
+      open(unity_hub_installer, "wb").write(response.content)
+    except Exception as e:
+      logging.info("download unity hub failed. URL: %s (attempt %s of %s). Exception: %s", Exception, e)
+      if attempt_num >= max_attempts:
+        raise
+    else:
+      break
+    attempt_num += 1
+
+
+def install_unity(unity_full_version, changeset):
+  unity_hub_executable = SETTINGS["unity_hub_executable"][get_os()]
+  run(f'{unity_hub_executable} install --version {unity_full_version} --changeset {changeset}', max_attempts=MAX_ATTEMPTS)
+  run(f'{unity_hub_executable} editors --installed')
+
+
+def install_module(unity_full_version, module):
+  unity_hub_executable = SETTINGS["unity_hub_executable"][get_os()]
+  run(f'{unity_hub_executable} install-modules --version {unity_full_version} --module {module} --childModules', max_attempts=MAX_ATTEMPTS)
+          
 
 def activate_license(username, password, serial_ids, logfile, unity_version):
   """Activates an installation of Unity with a license."""
@@ -214,16 +293,13 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
   # succeeds. This has occurred e.g. in Unity 2019.3.15 on Mac.
   # To handle this case, we check the Unity logs for the message indicating
   # successful activation and ignore the error in that case.
-  unity = get_unity_executable(unity_version)
+  unity_full_version = SETTINGS[unity_version][get_os()]["version"]
+  unity_executable = SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
   logging.info("Found %d licenses. Attempting each.", len(serial_ids))
   for i, serial_id in enumerate(serial_ids):
     logging.info("Attempting license %d", i)
     try:
-      run([unity, "-quit", "-batchmode",
-           "-username", username,
-           "-password", password,
-           "-serial", serial_id,
-           "-logfile", logfile])
+      run(f'{unity_executable} -quit -batchmode -username {username} -password {password} -serial {serial_id} -logfile {logfile}')
       logging.info("Activated Unity license.")
       return
     except subprocess.CalledProcessError as e:
@@ -245,60 +321,40 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
 
 def release_license(logfile, unity_version):
   """Releases the Unity license. Requires finding an installation of Unity."""
-  unity = get_unity_executable(unity_version)
-  run([unity, "-quit", "-batchmode", "-returnlicense", "-logfile", logfile])
+  unity_full_version = SETTINGS[unity_version][get_os()]["version"]
+  unity_executable = SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
+  run(f'{unity_executable} -quit -batchmode -returnlicense -logfile {logfile}')
   logging.info("Unity license released.")
 
 
 def get_os():
   """Current Operation System"""
   if platform.system() == 'Windows':
-    return _WINDOWS
+    return WINDOWS
   elif platform.system() == 'Darwin':
-    return _MACOS
+    return MACOS
   elif platform.system() == 'Linux':
-    return _LINUX
+    return LINUX
 
 
-def get_unity_executable(version):
-  """Returns the path to this version of Unity."""
-  full_version = UNITY_SETTINGS[version][get_os()]["version"]
-  if platform.system() == "Windows":
-    return "C:/Program Files/Unity/Hub/Editor/%s/Editor/Unity.exe" % full_version
-  elif platform.system() == "Darwin":
-    return "/Applications/Unity/Hub/Editor/%s/Unity.app/Contents/MacOS/Unity" % full_version
-  else:
-    # Linux is not yet supported.
-    raise RuntimeError("Only Windows and MacOS are supported.")
-
-
-def get_unity_hub_path():
-  """Returns the path to Unity Hub."""
-  if platform.system() == "Windows":
-    return "C:/Program Files/Unity Hub/Unity Hub.exe"
-  elif platform.system() == "Darwin":
-    return "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub"
-  elif platform.system() == 'Linux':
-    return "/home/runner/Unity Hub/UnityHub.AppImage"
- 
-
-def get_unity_path(version):
-  """Returns the path to this version of Unity."""
-  full_version = UNITY_SETTINGS[version][get_os()]["version"]
-  if platform.system() == "Windows":
-    return "C:/Program Files/Unity/Hub/Editor/%s" % full_version
-  elif platform.system() == "Darwin":
-    return "/Applications/Unity/Hub/Editor/%s" % full_version
-  elif platform.system() == 'Linux':
-    return "/home/runner/Unity/Hub/Editor/%s" % full_version
-
-
-def run(args, check=True, timeout=_CMD_TIMEOUT):
+def run(command, check=True, max_attempts=1):
   """Runs args in a subprocess, throwing an error on non-zero return code."""
-  logging.info("run cmd: %s", " ".join(args))
-  result = subprocess.run(args=args, check=check, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-  logging.info("cmd result.stdout: %s", result.stdout)
-  logging.info("cmd result.stderr: %s", result.stderr)
+  attempt_num = 1
+  while attempt_num <= max_attempts:
+    try:
+      logging.info("run_with_retry: %s (attempt %s of %s)", command, attempt_num, max_attempts)
+      result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+      if result.stdout:
+        logging.info("cmd stdout: %s", result.stdout.read().strip())
+      if result.stderr:
+        logging.info("cmd stderr: %s", result.stderr.read().strip())
+    except subprocess.SubprocessError as e:
+      logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", command, attempt_num, max_attempts, e)
+      if check and (attempt_num >= max_attempts):
+        raise
+    else:
+      break
+    attempt_num += 1
 
 
 if __name__ == "__main__":
