@@ -3,24 +3,23 @@
 ## Inputs
 -  `version`: **[Required]** Unity Major Version Number. Currently supported values: [2019, 2020].
 
--  `platforms`: Platforms that you'd like to support, if not provided, some platforms may encounter errors. Values: [Android,iOS,tvOS,Windows,macOS,Linux].
+-  `platforms`: Platforms that you'd like to support, if not provided, build apps on certain platforms may encounter errors. Values: [Android,iOS,tvOS,Windows,macOS,Linux].
 
--  `username`: Required when Activate Unity license. Refer to the Usage section below.
+-  `username`: Required when Activate Unity license. See the [Usage](https://github.com/firebase/firebase-unity-sdk/tree/main/gha/unity#usage) section below.
 
--  `password`: Required when Activate Unity license. Refer to the Usage section below.
+-  `password`: Required when Activate Unity license. See the Usage section below.
 
--  `serial_ids`: Required when Activate Unity license. Refer to the Usage section below.
+-  `serial_ids`: Required when Activate Unity license. See the Usage section below.
 
--  `release_license`: If a license has been activated in the pervious step, then **must** add anothe step and set **"ture"** to `release_license` input.
+-  `release_license`: If a license has been activated in the pervious step, then **must** add another step to release the license. Set **"ture"** to `release_license` input.
 
 ## Output
 
-This GitHub Action will provide `UNITY_VERSION` (full unity version) and `UNITY_ROOT_DIR` (Unity project directory) environment variable 
+This GitHub Action will provide `UNITY_VERSION` (full unity version, e.g. `2020.3.34f1`) and `UNITY_ROOT_DIR` (Unity project directory, e.g. `/Applications/Unity/Hub/Editor/2020.3.34f1`) environment variables as outputs.
 
 -   Output usage:
     ```yml
-    - id: unity_setup
-      uses: firebase/firebase-unity-sdk/gha/unity@main
+    - uses: firebase/firebase-unity-sdk/gha/unity@main
       with:
         version: ${{ unity_version }}
         platforms: ${{ platforms }}
@@ -38,8 +37,7 @@ This GitHub Action will provide `UNITY_VERSION` (full unity version) and `UNITY_
 
         steps:
           # ...
-          - id: unity_setup
-            uses: firebase/firebase-unity-sdk/gha/unity@main
+          - uses: firebase/firebase-unity-sdk/gha/unity@main
             with:
               version: ${{ unity_version }}
               platforms: ${{ platforms }}
@@ -53,7 +51,7 @@ This GitHub Action will provide `UNITY_VERSION` (full unity version) and `UNITY_
 
         steps:
           # ...
-          - id: unity_setup
+          - id: unity_setup_and_activate
             uses: firebase/firebase-unity-sdk/gha/unity@main
             with:
               version: ${{ unity_version }}
@@ -69,29 +67,45 @@ This GitHub Action will provide `UNITY_VERSION` (full unity version) and `UNITY_
               release_license: "true"
     ```
 
-## [Deprecated] How to upgrade supported unity versions
+## How to upgrade supported unity versions
 **Background**
 
-This GitHub Action leverages [U3D](github.com/DragonBox/u3d), which is a command line tool for working with Unity from the command line on all three operating systems. 
+This GitHub Action leverages [Unity Hub](https://unity3d.com/get-unity/download), which is a standalone application that streamlines the way you navigate, download, and manage your Unity projects and installations. Unity Hub is with beta version CLI support, and we are using it for Unity versions management.
 
-In this GitHub Action, supported Unity Versions are maintained by `UNITY_SETTINGS` in `gha/unity/unity_installer.py`. 
+In this GitHub Action, supported Unity Versions are maintained by `SETTINGS` in `gha/unity/unity_installer.py`. 
 
 **Add a new Unity version support**
 
-1. Install [U3D](github.com/DragonBox/u3d).
+1. Select your version from [Unity LTS versions list](https://unity3d.com/unity/qa/lts-releases) and make sure this version can be installed with Unity Hub.
 
 2. Generate new JSON string and added it to `UNITY_SETTINGS`:
-  -   `Major_version_number`: unity major version number: 2020, 2021, etc.
-  -   `Full_version_number`: unity full version number. e.g. 2020.3.34f1 for major version 2020. Run `u3d available` and select [Unity LTS versions](https://unity3d.com/unity/qa/lts-releases).
-  -   `Platform`: Values of [Android,iOS,tvOS,Windows,macOS,Linux]
-  -   `Package`:[Unity Hub must **not** been installed] Unity Packages that required for certain platform. e.g. ["Windows-mono"] pakcages for "Windows" platform. To list avaliable packages, run `u3d available -u $unity_version -p`.
+  -   `Major_version_number`: unity major version number: `2020`, `2021`, etc.
+  -   `Full_version_number`: unity full version number. e.g. `2020.3.34f1` for major version `2020`.
+  -   `Changeset`: changeset locates at the bottom of this page https://unity3d.com/unity/whats-new/{unity_version}. Note: the version is neither `Major_version_number` nor `Full_version_number`. e.g. https://unity3d.com/unity/whats-new/2020.3.34
+  -   `Platform`: Firebase Unity SDK supported platforms. Values of [Android,iOS,tvOS,Windows,macOS,Linux]
+  -   `Modules`:[Unity Hub must been installed] Unity modules that required for certain platform. e.g. ["windows-mono"] module for "Windows" platform. To list avaliable modules, run `"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless help` on your mac machine.
 
+      Template:
       ```
       UNITY_SETTINGS = {
         Major_version_number: {
           OS: {
             "version": Full_version_number,
-            "packages": {Platform: [Package], ...},
+            "changeset": Changeset,
+            "modules": {Platform: [Moudles], ...},
+          },
+          ...
+        },
+      }
+      ```
+      e.g.
+      ```
+      UNITY_SETTINGS = {
+        "2020": {
+          WINDOWS: {
+            "version": "2020.3.34f1",
+            "changeset": "9a4c9c70452b",
+            "modules": {ANDROID: ["android", "ios"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
           },
           ...
         },
@@ -100,10 +114,4 @@ In this GitHub Action, supported Unity Versions are maintained by `UNITY_SETTING
 
 **Common failures & solutions**
 
-1. If you met problem with `u3d` cmd (e.g. `u3d available -u $unity_version -p`), please install older version of `u3d` and disable the `u3d` version check. Then try it again.
-    ```
-    gem install u3d -v 1.2.3
-    export U3D_SKIP_UPDATE_CHECK=1
-    ``` 
-
-2. If you have problem with Android build. Make sure you are using the right version of NDK and JDK. Testapp building process is using a patch function `patch_android_env` in `build_testapp.py`. (Please refer [Unity Documentation](https://docs.unity3d.com/Manual/android-sdksetup.html) for Android environment setup).
+1. If you have problem with Android build. Make sure you are using the right version of NDK and JDK. Testapp building process is using a patch function `patch_android_env` in `build_testapp.py`. (Please refer [Unity Documentation](https://docs.unity3d.com/Manual/android-sdksetup.html) for Android environment setup).
