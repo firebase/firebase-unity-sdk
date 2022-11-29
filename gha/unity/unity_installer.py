@@ -91,7 +91,7 @@ SETTINGS = {
   "unity_hub_url": {
     WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe",
     MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg",
-    LINUX: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage",
+    LINUX: "",
   },
   # Unity Hub will be installed at this location
   "unity_hub_path": {
@@ -241,8 +241,9 @@ def install(unity_version, platforms):
 def install_unity_hub():
   runner_os = get_os()
   unity_hub_url = SETTINGS["unity_hub_url"][runner_os]
-  unity_hub_installer = path.basename(unity_hub_url)
-  download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=MAX_ATTEMPTS)
+  if unity_hub_url:
+    unity_hub_installer = path.basename(unity_hub_url)
+    download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=MAX_ATTEMPTS)
   if runner_os == MACOS:
     run(f'sudo hdiutil attach {unity_hub_installer}', max_attempts=MAX_ATTEMPTS)
     mounted_to = glob.glob("/Volumes/Unity Hub*/Unity Hub.app")
@@ -253,15 +254,11 @@ def install_unity_hub():
   elif runner_os == WINDOWS:
     run(f'{unity_hub_installer} /S', max_attempts=MAX_ATTEMPTS)
   elif runner_os == LINUX:
-    home_dir = os.environ["HOME"]
-    unity_hub_path = SETTINGS["unity_hub_path"][runner_os]
-    run(f'mkdir -p "{home_dir}/Unity Hub" "{home_dir}/.config/Unity Hub"')
-    run(f'mv {unity_hub_installer} {unity_hub_path}')
-    run(f'chmod +x {unity_hub_path}')
-    run(f'touch "{home_dir}/.config/Unity Hub/eulaAccepted"', max_attempts=MAX_ATTEMPTS)
-    run('sudo apt-get update -y')
-    run('sudo apt-get install -y libfuse2')
-
+    run('sudo sh -c \'echo "deb https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list\'')
+    run('wget -qO - https://hub.unity3d.com/linux/keys/public | sudo apt-key add -', max_attempts=MAX_ATTEMPTS)
+    run('sudo apt update')
+    run('sudo apt-get install unityhub', max_attempts=MAX_ATTEMPTS)
+    run('whereis unityhub')
 
 def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
   attempt_num = 1
