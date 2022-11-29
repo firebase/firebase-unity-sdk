@@ -102,7 +102,7 @@ SETTINGS = {
   "unity_hub_executable": {
     WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe" -- --headless',
     MACOS: '"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless',
-    LINUX: 'xvfb-run --auto-servernum "/usr/bin/unityhub" --headless',
+    LINUX: 'xvfb-run unityhub --headless',
   },
   # Unity will be installed at this location
   "unity_path": {
@@ -258,7 +258,6 @@ def install_unity_hub():
     run('wget -qO - https://hub.unity3d.com/linux/keys/public | sudo apt-key add -', max_attempts=MAX_ATTEMPTS)
     run('sudo apt update')
     run('sudo apt-get install unityhub', max_attempts=MAX_ATTEMPTS)
-    run('whereis unityhub')
 
 def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
   attempt_num = 1
