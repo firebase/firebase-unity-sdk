@@ -69,8 +69,8 @@ Release Notes
 -------------
 ### 10.2.0
 - Changes
-    - General (Android) (Android) Update to Firebase Android BoM version 31.1.0.
-    - General (iOS) Update to Firebase Cocoapods version 10.2.0.
+    - General (Android): Update to Firebase Android BoM version 31.1.0.
+    - General (iOS): Update to Firebase Cocoapods version 10.2.0.
 
 ### 10.1.1
 - Changes
