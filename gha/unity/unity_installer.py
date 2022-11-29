@@ -102,7 +102,7 @@ SETTINGS = {
   "unity_hub_executable": {
     WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe" -- --headless',
     MACOS: '"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless',
-    LINUX: '"/usr/bin/unityhub" -- --headless',
+    LINUX: 'xvfb-run --auto-servernum "/usr/bin/unityhub" --headless',
   },
   # Unity will be installed at this location
   "unity_path": {
