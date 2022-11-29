@@ -97,12 +97,12 @@ SETTINGS = {
   "unity_hub_path": {
     WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe"',
     MACOS: '"/Applications/Unity Hub.app"',
-    LINUX: '"/home/runner/Unity Hub/UnityHub.AppImage"',
+    LINUX: '/usr/bin/unityhub',
   },
   "unity_hub_executable": {
     WINDOWS: '"C:/Program Files/Unity Hub/Unity Hub.exe" -- --headless',
     MACOS: '"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless',
-    LINUX: 'xvfb-run --auto-servernum "/home/runner/Unity Hub/UnityHub.AppImage" --headless',
+    LINUX: '"/usr/bin/unityhub" -- --headless',
   },
   # Unity will be installed at this location
   "unity_path": {
