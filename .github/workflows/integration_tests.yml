@@ -502,13 +502,6 @@ jobs:
         run: |
           python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
             --output_path testapps/test-results-"${{ steps.matrix_info.outputs.info }}".log
-      - name: Upload tvOS repo
-        uses: actions/upload-artifact@v3
-        if: ${{ contains(matrix.platform, 'tvOS') && !cancelled() }}
-        with:
-          name: repo-tvOS-${{ steps.matrix_info.outputs.artifact_suffix }}
-          path: .
-          retention-days: ${{ env.artifactRetentionDays }}
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 60
         if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
@@ -518,6 +511,13 @@ jobs:
             --android_device "${{ matrix.test_device }}" \
             --logfile_name ""${{ steps.matrix_info.outputs.info }}"" \
             --ci
+      - name: Upload tvOS xctestrun tests artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: testapps-tvOS-xctestrun
+          path: scripts/gha/integration_testing/gameloop_apple
+          retention-days: ${{ env.artifactRetentionDays }}
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash
