@@ -64,7 +64,7 @@ While installing through UnityHub, when you decide which version to install, it 
 Under the repo root folder, call
 
 ``` bash
-python scripts/build_scripts/build_zips.py –platform=<target platform>
+python scripts/build_scripts/build_zips.py --platform=<target platform>
 ```
 
 > **Note:** Supported target platform names: linux,macos,windows,ios,android
