@@ -169,7 +169,6 @@ def main(argv):
     for directory in directories:
       full_path = os.path.join(file_dir, directory)
       if directory.endswith(".app"):
-        logging.info("apple .app found in directory: " + file_dir)
         if "tvOS" in file_dir:
           tvos_testapps.append(full_path)
         else:

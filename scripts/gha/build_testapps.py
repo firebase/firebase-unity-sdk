@@ -725,11 +725,6 @@ def _collect_integration_tests_platform(config, testapps, artifact_path, testapp
   if not testapp_paths:
     return
 
-  logging.info("platform - start  " + platform)
-  #if platform == _TVOS or platform == _IOS:
-  #  platform = os.path.join("apple", platform)
-  logging.info("platform end: " + platform)
-
   for testapp in testapps:
     os.makedirs(os.path.join(artifact_path, platform, testapp))
 
