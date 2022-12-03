@@ -121,6 +121,18 @@ namespace Firebase.Sample.Analytics {
       FirebaseAnalytics.ResetAnalyticsData();
     }
 
+    public void AnalyticsSetConsent() {
+      FirebaseAnalytics.SetConsent(new {
+         { ConsentType.AnalyticsStorage, ConsentStatus.Denied },
+         { ConsentType.AdStorage, ConsentStatus.Denied }
+      });
+      FirebaseAnalytics.SetConsent(new {});
+      FirebaseAnalytics.SetConsent(new {
+         { ConsentType.AnalyticsStorage, ConsentStatus.Granted },
+         { ConsentType.AdStorage, ConsentStatus.Granted }
+      });
+    }
+
     // Get the current app instance ID.
     public Task<string> DisplayAnalyticsInstanceId() {
       return FirebaseAnalytics.GetAnalyticsInstanceIdAsync().ContinueWithOnMainThread(task => {
@@ -191,6 +203,9 @@ namespace Firebase.Sample.Analytics {
         }
         if (GUILayout.Button("Show Analytics Instance ID")) {
           DisplayAnalyticsInstanceId();
+        }
+        if (GUILayout.Button("Test SetConsent")) {
+          AnalyticsSetConsent();
         }
         GUILayout.EndVertical();
         GUILayout.EndScrollView();
