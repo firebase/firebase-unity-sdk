@@ -21,8 +21,6 @@
 %{#include "app/src/export_fix.h"%}
 #endif
 
-%include "std_map.i"
-
 %pragma(csharp) moduleclassmodifiers="public sealed class"
 %pragma(csharp) modulecode=%{
   // Hold a reference to the default app when methods from this module are
@@ -277,6 +275,22 @@ class ParameterCopy : private firebase::analytics::Parameter {
   /// session.
   public static void SetSessionTimeoutDuration(System.TimeSpan timeSpan) {
     SetSessionTimeoutDurationInternal((long)timeSpan.TotalMilliseconds);
+  }
+%}
+
+%template(ConsentMap) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus>;
+%rename(SetConsentInternal) SetConsent;
+%csmethodmodifiers firebase::analytics::SetConsent(const std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> &) "internal";
+
+%pragma(csharp) modulecode=%{
+  /// @brief Sets the applicable end user consent state (e.g., for device                                                                           /// identifiers) for this app on this device.                                                                                                     ///                                                                                                                                               /// Use the consent map to specify individual consent type values. Settings are                                                                   /// persisted across app sessions. By default consent types are set to
+  /// "granted".
+public static void SetConsent(System.Collections.Generic.IDictionary<ConsentType, ConsentStatus> consentSettings) {
+    ConsentMap consentSettingsMap = new ConsentMap();
+    foreach(var kv in consentSettings.toArray()) {
+      consentSettingsMap[kv.Key] = kv.Value;
+    }
+    SetConsentInternal(consentSettingsMap);
   }
 %}
 
