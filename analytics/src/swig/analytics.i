@@ -233,6 +233,7 @@ class ParameterCopy : private firebase::analytics::Parameter {
 // Initialize / Terminate implicitly called when App is created / destroyed.
 %ignore Initialize;
 %ignore Terminate;
+
 } // namespace analytics
 } // namespace firebase
 
@@ -284,6 +285,7 @@ class ParameterCopy : private firebase::analytics::Parameter {
 %template(ConsentMap) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus>;
 %rename(SetConsentInternal) SetConsent;
 %csmethodmodifiers firebase::analytics::SetConsent(const std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> &) "internal";
+%csmethodmodifiers firebase::analytics::SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *) "internal";
 
 %pragma(csharp) modulecode=%{
 /// @brief Sets the applicable end user consent state (e.g., for device
@@ -297,9 +299,20 @@ public static void SetConsent(System.Collections.Generic.IDictionary<ConsentType
     foreach(var kv in consentSettings.toArray()) {
       consentSettingsMap[kv.Key] = kv.Value;
     }
-    SetConsentInternal(consentSettingsMap);
+    SetConsentByPtr(consentSettingsMap);
   }
 %}
 
 
 %include "analytics/src/include/firebase/analytics.h"
+namespace firebase {
+namespace analytics {
+
+%{
+  void SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr)
+      SetConsentInternal(*ptr);
+  }
+%}
+
+} // namespace analytics
+} // namespace firebase
