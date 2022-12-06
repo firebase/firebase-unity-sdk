@@ -287,7 +287,7 @@ class ParameterCopy : private firebase::analytics::Parameter {
 %pragma(csharp) modulecode=%{
   /// @brief Sets the applicable end user consent state (e.g., for device                                                                           /// identifiers) for this app on this device.                                                                                                     ///                                                                                                                                               /// Use the consent map to specify individual consent type values. Settings are                                                                   /// persisted across app sessions. By default consent types are set to
   /// "granted".
-public static void SetConsent(System.Collections.Dictionary<ConsentType, ConsentStatus> consentSettings) {
+public static void SetConsent(System.Collections.IDictionary<ConsentType, ConsentStatus> consentSettings) {
     ConsentMap consentSettingsMap = new ConsentMap();
     foreach(var kv in consentSettings.toArray()) {
       consentSettingsMap[kv.Key] = kv.Value;

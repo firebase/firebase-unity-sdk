@@ -120,6 +120,13 @@ jobs:
           name: linux_unity
           path: linux_unity/*Linux.zip
 
+      - name: Upload Source
+        uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: linux_source
+          path: linux_unity
+
       - name: Upload Documentation Sources
         uses: actions/upload-artifact@v3
         with:
