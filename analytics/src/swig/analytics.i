@@ -21,6 +21,8 @@
 %{#include "app/src/export_fix.h"%}
 #endif
 
+%include "std_map.i"
+
 %pragma(csharp) moduleclassmodifiers="public sealed class"
 %pragma(csharp) modulecode=%{
   // Hold a reference to the default app when methods from this module are
