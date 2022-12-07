@@ -507,6 +507,7 @@ jobs:
         if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
         run: |
           python scripts/gha/test_simulator.py --testapp_dir testapps \
+            --tvos_device "${{ matrix.test_device }}" \
             --ios_device "${{ matrix.test_device }}" \
             --android_device "${{ matrix.test_device }}" \
             --logfile_name ""${{ steps.matrix_info.outputs.info }}"" \
