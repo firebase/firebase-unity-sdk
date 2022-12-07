@@ -22,7 +22,7 @@ namespace Firebase.TestLab {
   /// <summary>
   /// Provides access to the native iOS plugin for Game Loops.
   /// </summary>
-  internal sealed class IOSPluginWrapper {
+  internal sealed class ApplePluginWrapper {
     public static int GetScenario() {
       // Not yet hooked up to a native plugin. Return 1 for now, so that we treat the testapps
       // as always running on Game Loops. This is 'harmless', since this assumption currently
