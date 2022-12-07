@@ -233,6 +233,8 @@ class ParameterCopy : private firebase::analytics::Parameter {
 // Initialize / Terminate implicitly called when App is created / destroyed.
 %ignore Initialize;
 %ignore Terminate;
+// SetConsent handled via SetConsentByPtr below.
+%ignore SetConsent;
 
 } // namespace analytics
 } // namespace firebase
@@ -283,7 +285,6 @@ class ParameterCopy : private firebase::analytics::Parameter {
 
 %typemap(csclassmodifiers) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> "internal class"
 %template(ConsentMap) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus>;
-%ignore SetConsent;
 %csmethodmodifiers firebase::analytics::SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *) "internal";
 
 %pragma(csharp) modulecode=%{
