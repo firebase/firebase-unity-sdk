@@ -309,8 +309,8 @@ namespace firebase {
 namespace analytics {
 
 %{
-  void SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr)
-      SetConsent(*ptr);
+  void SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr) {
+      SetConsentInternal(*ptr);
   }
 %}
 
