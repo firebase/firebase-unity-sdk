@@ -31,7 +31,7 @@ namespace Firebase.TestLab {
 
     protected override void OnFinishTest() {
       logWriter.Close();
-      Application.OpenURL("firebase-game-loop-complete://");
+      // Application.OpenURL("firebase-game-loop-complete://");
     }
 
     public override void LogToResults(string s) {
