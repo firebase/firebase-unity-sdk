@@ -66,7 +66,7 @@ PARAMETERS = {
       "unity_versions": ["2020"],
       "build_os": [""],
       "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, TVOS, PLAYMODE],
-      "mobile_devices": ["android_target", "emulator_ftl_target", "emulator_target", "ios_target", "simulator_target", "tvos_simulator"],
+      "mobile_devices": ["android_target", "ios_target", "simulator_target", "tvos_simulator"],
       "mobile_test_on": ["real"],
 
       MINIMAL_KEY: {
