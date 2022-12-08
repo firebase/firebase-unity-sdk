@@ -2,7 +2,7 @@
 name: Generate SWIG files
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       unity_version:
         description: 'Unity version'
