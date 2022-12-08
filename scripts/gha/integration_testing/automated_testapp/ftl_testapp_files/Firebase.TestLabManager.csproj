@@ -38,8 +38,8 @@
     <Compile Include="AndroidTestLabManager.cs" />
     <Compile Include="DesktopTestLabManager.cs" />
     <Compile Include="DummyTestLabManager.cs" />
-    <Compile Include="ApplePluginWrapper.cs" />
-    <Compile Include="AppleTestLabManager.cs" />
+    <Compile Include="IOSPluginWrapper.cs" />
+    <Compile Include="IOSTestLabManager.cs" />
     <Compile Include="LibcWrapper.cs" />
     <Compile Include="TestLabManager.cs" />
   </ItemGroup>
