@@ -49,7 +49,7 @@ namespace Firebase.TestLab {
       if (scenario == -1) {  // Not using Game Loops: return dummy.
         return new DummyTestLabManager();
       }
-      string logDir = Application.persistentDataPath + "/GameLoopResults";
+      string logDir = Application.temporaryCachePath + "/GameLoopResults";
       string logPath = string.Format("{0}/Results{1}.json", logDir, scenario);
       Directory.CreateDirectory(logDir);
       // Logs will be appended, so we need to clear the file first.
