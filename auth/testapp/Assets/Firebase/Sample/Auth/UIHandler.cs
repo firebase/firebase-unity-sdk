@@ -78,13 +78,13 @@ namespace Firebase.Sample.Auth {
     // add them if possible.
     public virtual void Start() {
       Firebase.FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task => {
-        // dependencyStatus = task.Result;
-        // if (dependencyStatus == Firebase.DependencyStatus.Available) {
-        InitializeFirebase();
-        // } else {
-        //   Debug.LogError(
-        //     "Could not resolve all Firebase dependencies: " + dependencyStatus);
-        // }
+        dependencyStatus = task.Result;
+        if (dependencyStatus == Firebase.DependencyStatus.Available) {
+          InitializeFirebase();
+        } else {
+          Debug.LogError(
+            "Could not resolve all Firebase dependencies: " + dependencyStatus);
+        }
       });
     }
 
@@ -914,11 +914,11 @@ namespace Firebase.Sample.Auth {
     // Render the GUI:
     void OnGUI() {
       GUI.skin = fb_GUISkin;
-      // if (dependencyStatus != Firebase.DependencyStatus.Available) {
-      //   GUILayout.Label("One or more Firebase dependencies are not present.");
-      //   GUILayout.Label("Current dependency status: " + dependencyStatus.ToString());
-      //   return;
-      // }
+      if (dependencyStatus != Firebase.DependencyStatus.Available) {
+        GUILayout.Label("One or more Firebase dependencies are not present.");
+        GUILayout.Label("Current dependency status: " + dependencyStatus.ToString());
+        return;
+      }
       Rect logArea, controlArea;
 
       if (Screen.width < Screen.height) {
