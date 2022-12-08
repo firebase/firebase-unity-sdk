@@ -289,15 +289,19 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
       test_os = _get_test_os(platform)
       matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "device_detail": "NA", "device_type": "NA", "ios_sdk": "NA"})
     else:
+      # for iOS, tvOS platforms, exclude non macOS build_os
+      if platform in [IOS, TVOS] and build_os!=MACOS_RUNNER:
+        continue
       mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
         device_detail = TEST_DEVICES.get(mobile_device).get("device")
         if not device_detail: device_detail = "NA"
         device_type = TEST_DEVICES.get(mobile_device).get("type")
         device_platform = TEST_DEVICES.get(mobile_device).get("platform")
+        # testapp & test device must match. e.g. iOS app only runs on iOS device, and cannot run on Android or tvOS devices
         if device_platform == platform and device_type in mobile_device_types:
           test_os = _get_test_os(platform, device_type)
-          ios_sdk = device_type if device_platform == IOS or device_platform == TVOS else "NA"
+          ios_sdk = device_type if device_platform in [IOS, TVOS] else "NA"
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_detail": device_detail, "device_type": device_type, "ios_sdk": ios_sdk})
 
   return matrix
