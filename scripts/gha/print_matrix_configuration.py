@@ -66,7 +66,7 @@ PARAMETERS = {
       "unity_versions": ["2020"],
       "build_os": [""],
       "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, TVOS, PLAYMODE],
-      "mobile_devices": ["android_target", "emulator_target", "ios_target", "simulator_target", "tvos_simulator"],
+      "mobile_devices": ["android_target", "emulator_ftl_target", "emulator_target", "ios_target", "simulator_target", "tvos_simulator"],
       "mobile_test_on": ["real"],
 
       MINIMAL_KEY: {
@@ -91,7 +91,7 @@ TEST_DEVICES = {
   "android_min": {"platform": ANDROID, "type": "real", "device": "model=Nexus10,version=19"},
   "android_target": {"platform": ANDROID, "type": "real", "device": "model=blueline,version=28"},
   "android_latest": {"platform": ANDROID, "type": "real", "device": "model=oriole,version=33"},
-  "emulator_min": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
+  "emulator_ftl_target": {"platform": ANDROID, "type": "real", "device": "model=Pixel2,version=28"},
   "emulator_target": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
   "emulator_latest": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
   "emulator_32bit": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
@@ -101,7 +101,7 @@ TEST_DEVICES = {
   "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 6", "version": "11.4"},
   "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "14.5"},
   "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "16.0"},
-  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "14.5"},
+  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "16.1"},
 }
 
 
