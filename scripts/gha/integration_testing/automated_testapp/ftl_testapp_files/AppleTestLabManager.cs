@@ -31,7 +31,10 @@ namespace Firebase.TestLab {
 
     protected override void OnFinishTest() {
       logWriter.Close();
-      // Application.OpenURL("firebase-game-loop-complete://");
+      if (Application.platform == RuntimePlatform.IPhonePlayer){
+        // OpenURL function doesn't exist on tvOS
+        Application.OpenURL("firebase-game-loop-complete://");
+      } 
     }
 
     public override void LogToResults(string s) {
@@ -53,6 +56,8 @@ namespace Firebase.TestLab {
       if (Application.platform == RuntimePlatform.IPhonePlayer){
         logDir = Application.persistentDataPath + "/GameLoopResults";
       } else if (Application.platform == RuntimePlatform.tvOS) {
+        // persistentDataPath doesn't exist on tvOS
+        // files under temporaryCachePath may be cleared at anytime
         logDir = Application.temporaryCachePath + "/GameLoopResults";
       }
       string logPath = string.Format("{0}/Results{1}.json", logDir, scenario);
