@@ -226,6 +226,9 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
       # for iOS, tvOS platforms, exclude non macOS build_os 
       if os==MACOS_RUNNER:
         for s in ios_sdk:
+          # skip tvOS build for real devices
+          if platform==TVOS and s=="real": 
+            continue
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": s})
     else:
       # for Desktop, Android platforms, set value "NA" for ios_sdk setting
