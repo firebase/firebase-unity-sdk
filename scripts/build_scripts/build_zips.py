@@ -122,6 +122,7 @@ flags.DEFINE_bool("verbose", False, "If verbose, cmake build with DCMAKE_VERBOSE
 flags.DEFINE_string("swig_dir", None, "If pass in swig dir directly rather than find swig by cmake")
 flags.DEFINE_bool("gen_documentation_zip", False, "Also generate a zip file containing files to document")
 flags.DEFINE_bool("gha", False, "True if the build is triggered by Github Action.")
+flags.DEFINE_bool("gen_swig_only", False, "Should it only generate swig, skipping building libraries")
 
 def get_build_path(platform, clean_build=False):
   """Get the folder that cmake configure and build in.
@@ -647,7 +648,7 @@ def make_tvos_multi_arch_build(cmake_args):
 def gen_documentation_zip():
   """If the flag was enabled, builds the zip file containing source files to document.
   """
-  if not FLAGS.gen_documentation_zip:
+  if not FLAGS.gen_documentation_zip and not FLAGS.gen_swig_only:
     return
   cpack_args = [
     'cpack',
@@ -797,11 +798,13 @@ def main(argv):
     else:
       subprocess.call("make")
 
-    cmake_pack_args = [
+    if (not FLAGS.gen_swig_only):
+      cmake_pack_args = [
         "cpack",
         ".",
-    ]
-    subprocess.call(cmake_pack_args)
+      ]
+      subprocess.call(cmake_pack_args)
+
     gen_documentation_zip()
 
   os.chdir(source_path)
