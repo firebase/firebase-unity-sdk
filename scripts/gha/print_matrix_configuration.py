@@ -99,8 +99,8 @@ TEST_DEVICES = {
   "ios_target": {"platform": IOS, "type": "real", "device": "model=iphone8,version=13.6"},
   "ios_latest": {"platform": IOS, "type": "real", "device": "model=iphone11pro,version=14.7"},
   "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 6", "version": "11.4"},
-  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 8", "version": "14.5"},
-  "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 11", "version": "14.4"},
+  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "14.5"},
+  "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "16.0"},
   "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "14.5"},
 }
 
