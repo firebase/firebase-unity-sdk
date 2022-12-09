@@ -173,7 +173,7 @@ def main(argv):
       if directory.endswith(".app"):
         if "tvOS" in file_dir:
           tvos_testapps.append(full_path)
-        else:
+        elif "iOS" in file_dir:
           ios_testapps.append(full_path)
 
     for file_name in file_names:

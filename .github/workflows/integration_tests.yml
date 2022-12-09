@@ -248,46 +248,24 @@ jobs:
           name: build_and_test_results
           path: build-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
-      - name: Upload build logs artifact
+      - name: Upload Mobile integration tests artifact
         uses: actions/upload-artifact@v3
-        if: ${{ !cancelled() }}
+        if: ${{ contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
+        with:
+          name: testapps-${{ matrix.platform }}-${{ steps.matrix_info.outputs.artifact_suffix }}
+          path: testapps-${{ steps.matrix_info.outputs.info }}
+          retention-days: ${{ env.artifactRetentionDays }}
+      - name: Delete Mobile integration tests artifact
+        if: ${{ contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
+        shell: bash
+        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }} || true
+      - name: Upload Desktop build logs artifact  # Mobile build logs are uploaded with integration tests artifact
+        uses: actions/upload-artifact@v3
+        if: ${{ !contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
         with:
           name: testapps-build-logs-${{ steps.matrix_info.outputs.info }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/build-logs
           retention-days: ${{ env.artifactRetentionDays }}
-      - name: Upload Android integration tests artifact
-        uses: actions/upload-artifact@v3
-        if: ${{ contains(matrix.platform, 'Android') && !cancelled() }}
-        with:
-          name: testapps-Android-${{ steps.matrix_info.outputs.artifact_suffix }}
-          path: testapps-${{ steps.matrix_info.outputs.info }}/Android
-          retention-days: ${{ env.artifactRetentionDays }}
-      - name: Delete Android integration tests artifact
-        if: ${{ contains(matrix.platform, 'Android') && !cancelled() }}
-        shell: bash
-        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Android || true
-      - name: Upload iOS integration tests artifact
-        uses: actions/upload-artifact@v3
-        if: ${{ contains(matrix.platform, 'iOS') && !cancelled() }}
-        with:
-          name: testapps-iOS-${{ steps.matrix_info.outputs.artifact_suffix }}
-          path: testapps-${{ steps.matrix_info.outputs.info }}/iOS
-          retention-days: ${{ env.artifactRetentionDays }}
-      - name: Delete iOS integration tests artifact
-        if: ${{ contains(matrix.platform, 'iOS') && !cancelled() }}
-        shell: bash
-        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/iOS || true
-      - name: Upload tvOS integration tests artifact
-        uses: actions/upload-artifact@v3
-        if: ${{ contains(matrix.platform, 'tvOS') && !cancelled() }}
-        with:
-          name: testapps-tvOS-${{ steps.matrix_info.outputs.artifact_suffix }}
-          path: testapps-${{ steps.matrix_info.outputs.info }}/tvOS
-          retention-days: ${{ env.artifactRetentionDays }}
-      - name: Delete tvOS integration tests artifact
-        if: ${{ contains(matrix.platform, 'tvOS') && !cancelled() }}
-        shell: bash
-        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/tvOS || true
       - name: Upload Linux integration tests artifact
         uses: actions/upload-artifact@v3
         if: ${{ contains(matrix.platform, 'Linux') && !cancelled() }}
