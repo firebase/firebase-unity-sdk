@@ -64,8 +64,12 @@
 
 %include "stdint.i"
 
-%typemap(csclassmodifiers) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> "internal class"
-%template(ConsentMap) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus>;
+%{
+  using firebase::analytics::ConsentType;
+  using firebase::analytics::ConsentStatus;
+%}
+%typemap(csclassmodifiers) std::map<ConsentType, ConsentStatus> "internal class"
+%template(ConsentMap) std::map<ConsentType, ConsentStatus>;
 
 namespace firebase {
 namespace analytics {
