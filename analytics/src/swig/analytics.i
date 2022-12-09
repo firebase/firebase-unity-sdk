@@ -320,7 +320,13 @@ using firebase::analytics::ConsentStatus;
 %typemap(csclassmodifiers) std::map<ConsentType, ConsentStatus> "internal class"
 %template(ConsentMap) std::map<ConsentType, ConsentStatus>;
 
+namespace firebase {
+namespace analytics {
+    
 %pragma(csharp) modulecode=%{
+  //using Firebase.Analytics.ConsentType;
+  //using Firebase.Analytics.ConsentStatus;
+  //using Firebase.Analytics.SetConsentByPtr;
   /// @brief Sets the applicable end user consent state (e.g., for device
   /// identifiers) for this app on this device.
   ///
@@ -335,3 +341,6 @@ using firebase::analytics::ConsentStatus;
     SetConsentByPtr(consentSettingsMap);
   }
 %}
+
+}  // namespace analytics
+}  // namespace firebase
