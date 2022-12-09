@@ -86,7 +86,7 @@ if(FIREBASE_INCLUDE_UNITY)
     NO_CMAKE_FIND_ROOT_PATH
   )
 
-  if(NOT EXISTS ${UNITY_ENGINE_DLL} OR NOT EXISTS ${UNITY_EDITOR_DLL})
+  if ((NOT EXISTS ${UNITY_ENGINE_DLL} OR NOT EXISTS ${UNITY_EDITOR_DLL}) AND NOT FIREBASE_GENERATE_DOCUMENTATION_ONLY)
     message(FATAL_ERROR "Fail to find UnityEngine.dll or UnityEditor.dll. \
       Please set valid path with -DUNITY_ROOT_DIR or check that Unity \
       is installed in system default place ${UNITY_PATH_HUB_HINT}. \

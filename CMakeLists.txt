@@ -75,6 +75,9 @@ option(FIREBASE_UNITY_BUILD_TESTS
 option(FIREBASE_GITHUB_ACTION_BUILD
        "Indicates that this build was created from a GitHub Action" OFF)
 
+option(FIREBASE_GENERATE_SWIG_ONLY
+       "Indicates that this build is only intending to generate the swig files" OFF)
+
 # These options allow selecting what built outputs go into the CPack zip file
 # as we merge the different platform zip's together for unity package
 # For example: only packing dotnet libraries on linux builds

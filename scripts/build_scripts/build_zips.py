@@ -776,6 +776,9 @@ def main(argv):
   elif is_macos_build():
     cmake_setup_args.extend(get_macos_args())
 
+  if FLAGS.gen_swig_only:
+    cmake_setup_args.append("-DFIREBASE_GENERATE_SWIG_ONLY=ON")
+
   global g_target_architectures
   logging.info("cmake_setup_args is: " + " ".join(cmake_setup_args))
   if is_android_build() and len(g_target_architectures) > 1:
