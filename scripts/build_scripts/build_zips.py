@@ -792,13 +792,15 @@ def main(argv):
     make_tvos_multi_arch_build(cmake_setup_args)
   else:
     subprocess.call(cmake_setup_args)
-    if is_windows_build():
-      # no make command in windows. TODO make config passable
-      subprocess.call("cmake --build .  --config Release")
+    if (FLAGS.gen_swig_only):
+      subprocess.call("cmake --build . --target firebase_swig_targets")
     else:
-      subprocess.call("make")
+      if is_windows_build():
+        # no make command in windows. TODO make config passable
+        subprocess.call("cmake --build .  --config Release")
+      else:
+        subprocess.call("make")
 
-    if (not FLAGS.gen_swig_only):
       cmake_pack_args = [
         "cpack",
         ".",

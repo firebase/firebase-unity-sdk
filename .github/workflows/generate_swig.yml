@@ -14,18 +14,9 @@ on:
         default: ''
         required: false
         type: string
-      unity_branch:
-        description: 'Unity branch to build against, empty means current branch'
-        default: ''
-        type: string
       apis:
         description: 'CSV of apis to build and test'
         default: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
-        required: true
-        type: string
-      unity_platform_name:
-        description: 'The platform name Unity should install with'
-        default: ''
         required: true
         type: string
       # Additional CMake flags to use
@@ -46,7 +37,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: true
-          ref: ${{ inputs.unity_branch }}
 
       - uses: actions/checkout@v3
         with:
@@ -82,7 +72,6 @@ jobs:
         timeout-minutes: 30
         with:
           version: ${{ inputs.unity_version }}
-          platforms: ${{ inputs.unity_platform_name }}
 
       - name: Setup Swig Env
         shell: bash
