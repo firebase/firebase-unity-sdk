@@ -215,22 +215,22 @@ endmacro()
 #  * If no guid is provided a new guid will be generated each time
 #
 macro(mono_add_library name)
-  mono_add_internal(${name} "Library" ${ARGN})
-  set_target_properties(${name} PROPERTIES FOLDER "Mono Dll")
+  if (NOT FIREBASE_GENERATE_SWIG_ONLY)
+    mono_add_internal(${name} "Library" ${ARGN})
+    set_target_properties(${name} PROPERTIES FOLDER "Mono Dll")
+  endif()
 endmacro()
 
 # Creates and executable library. See mono_add_library for args
 macro(mono_add_executable name)
-  mono_add_internal(${name} "Exe" ${ARGN})
-  set_target_properties(${name} PROPERTIES FOLDER "Mono Bin")
+  if (NOT FIREBASE_GENERATE_SWIG_ONLY)
+    mono_add_internal(${name} "Exe" ${ARGN})
+    set_target_properties(${name} PROPERTIES FOLDER "Mono Bin")
+  endif()
 endmacro()
 
 # Internal helper function for mono_add_library and mono_add_executable
 macro(mono_add_internal name output_type)
-
-  if (FIREBASE_GENERATE_SWIG_ONLY)
-    return()
-  endif()
 
   set(multi
     MODULE

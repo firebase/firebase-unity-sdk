@@ -795,9 +795,7 @@ def main(argv):
     make_tvos_multi_arch_build(cmake_setup_args)
   else:
     subprocess.call(cmake_setup_args)
-    if (FLAGS.gen_swig_only):
-      subprocess.call(["cmake", "--build", ".", "--target", "firebase_swig_targets"])
-    else:
+    if (not FLAGS.gen_swig_only):
       if is_windows_build():
         # no make command in windows. TODO make config passable
         subprocess.call("cmake --build .  --config Release")
@@ -809,6 +807,8 @@ def main(argv):
         ".",
       ]
       subprocess.call(cmake_pack_args)
+    else:
+      subprocess.call(["cmake", "--build", ".", "--target", "firebase_swig_targets"])
 
     gen_documentation_zip()
 
