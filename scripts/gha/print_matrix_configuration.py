@@ -66,7 +66,7 @@ PARAMETERS = {
       "unity_versions": ["2020"],
       "build_os": [""],
       "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, TVOS, PLAYMODE],
-      "mobile_devices": ["android_target", "ios_target", "tvos_simulator"],
+      "mobile_devices": ["android_target", "ios_target", "simulator_target", "tvos_simulator"],
       "mobile_test_on": ["real"],
 
       MINIMAL_KEY: {
@@ -77,7 +77,6 @@ PARAMETERS = {
         "build_os": [MACOS_RUNNER,WINDOWS_RUNNER],
         "unity_versions": ["2020"],
         "mobile_test_on": ["real", "virtual"],
-        "mobile_devices": ["android_target", "ios_target", "simulator_target", "tvos_simulator"],
       }
     },
     "config": {
@@ -92,7 +91,7 @@ TEST_DEVICES = {
   "android_min": {"platform": ANDROID, "type": "real", "device": "model=Nexus10,version=19"},
   "android_target": {"platform": ANDROID, "type": "real", "device": "model=blueline,version=28"},
   "android_latest": {"platform": ANDROID, "type": "real", "device": "model=oriole,version=33"},
-  "emulator_min": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-18;google_apis;x86"},
+  "emulator_ftl_target": {"platform": ANDROID, "type": "real", "device": "model=Pixel2,version=28"},
   "emulator_target": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
   "emulator_latest": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
   "emulator_32bit": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
@@ -100,9 +99,9 @@ TEST_DEVICES = {
   "ios_target": {"platform": IOS, "type": "real", "device": "model=iphone8,version=13.6"},
   "ios_latest": {"platform": IOS, "type": "real", "device": "model=iphone11pro,version=14.7"},
   "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 6", "version": "11.4"},
-  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 8", "version": "14.5"},
-  "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 11", "version": "14.4"},
-  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "14.3"},
+  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "14.5"},
+  "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "16.0"},
+  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "14.5"},
 }
 
 
@@ -227,6 +226,9 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
       # for iOS, tvOS platforms, exclude non macOS build_os 
       if os==MACOS_RUNNER:
         for s in ios_sdk:
+          # skip tvOS build for real devices
+          if platform==TVOS and s=="real": 
+            continue
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": s})
     else:
       # for Desktop, Android platforms, set value "NA" for ios_sdk setting
@@ -287,15 +289,19 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
       test_os = _get_test_os(platform)
       matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "device_detail": "NA", "device_type": "NA", "ios_sdk": "NA"})
     else:
+      # for iOS, tvOS platforms, exclude non macOS build_os
+      if platform in [IOS, TVOS] and build_os!=MACOS_RUNNER:
+        continue
       mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
         device_detail = TEST_DEVICES.get(mobile_device).get("device")
         if not device_detail: device_detail = "NA"
         device_type = TEST_DEVICES.get(mobile_device).get("type")
         device_platform = TEST_DEVICES.get(mobile_device).get("platform")
+        # testapp & test device must match. e.g. iOS app only runs on iOS device, and cannot run on Android or tvOS devices
         if device_platform == platform and device_type in mobile_device_types:
           test_os = _get_test_os(platform, device_type)
-          ios_sdk = device_type if device_platform == IOS or device_platform == TVOS else "NA"
+          ios_sdk = device_type if device_platform in [IOS, TVOS] else "NA"
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_detail": device_detail, "device_type": device_type, "ios_sdk": ios_sdk})
 
   return matrix
