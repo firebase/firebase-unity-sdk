@@ -90,6 +90,10 @@ unity_pack_documentation_sources(app
     task_extension/TaskExtension.cs
 )
 if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(app
+    DOCUMENTATION_SOURCES
+      ${firebase_app_swig_gen_cpp_src}
+  )
   return()
 endif()
 

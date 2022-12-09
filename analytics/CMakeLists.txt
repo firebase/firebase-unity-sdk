@@ -42,6 +42,10 @@ unity_pack_documentation_sources(analytics
     ${firebase_analytics_swig_gen_src}
 )
 if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(analytics
+    DOCUMENTATION_SOURCES
+      ${firebase_analytics_swig_gen_cpp_src}
+  )
   return()
 endif()
 

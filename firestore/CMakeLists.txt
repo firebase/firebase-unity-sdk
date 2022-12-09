@@ -133,6 +133,19 @@ else()
   )
 endif()
 
+unity_pack_documentation_sources(firestore
+  DOCUMENTATION_SOURCES
+    ${firebase_firestore_src_documented}
+)
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(firestore
+    DOCUMENTATION_SOURCES
+      ${firebase_firestore_swig_gen_src}
+      ${firebase_firestore_swig_gen_cpp_src}
+  )
+  return()
+endif()
+
 mono_add_library(firebase_firestore_cs
   MODULE
     Firebase.Firestore
@@ -176,11 +189,6 @@ if (FIREBASE_INCLUDE_UNITY)
       "firestore"
   )
 endif()
-
-unity_pack_documentation_sources(firestore
-  DOCUMENTATION_SOURCES
-    ${firebase_firestore_src_documented}
-)
 
 set_property(TARGET firebase_firestore_cs
   PROPERTY FOLDER
