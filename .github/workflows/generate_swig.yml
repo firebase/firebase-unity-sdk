@@ -90,24 +90,12 @@ jobs:
       - name: Check zip files
         shell: bash
         run: |
-          if [ -f linux_unity/*Linux.zip ]; then
-            echo "linux_unity zip created."
-          else
-            echo "Fail to create linux_unity zip."
-            exit 1
-          fi
           if [ -f linux_unity/documentation_sources.zip ]; then
             echo "documentation_sources zip created."
           else
             echo "Fail to create documentation_sources zip."
             exit 1
           fi
-
-      - name: Upload Build
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux_unity
-          path: linux_unity/*Linux.zip
 
       - name: Upload Documentation Sources
         uses: actions/upload-artifact@v3
