@@ -16,6 +16,10 @@
 
 find_package(Mono REQUIRED)
 
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  return()
+endif()
+
 if (NOT EXISTS "${UNITY_ROOT_DIR}")
   # Make our best attempt to find the latest unity installed on the system.
   # Note that Unity <=2018 include mono 2.x which causes compilation errors.

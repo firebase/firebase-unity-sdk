@@ -23,8 +23,10 @@ else()
   set(firebase_platform_task_lib "")
 endif()
 
-add_subdirectory(platform)
-add_subdirectory(task_extension)
+if (NOT FIREBASE_GENERATE_SWIG_ONLY)
+  add_subdirectory(platform)
+  add_subdirectory(task_extension)
+endif()
 
 set(FIREBASE_PLATFORM_REF
   "firebase_app_cs"
@@ -81,6 +83,20 @@ firebase_swig_add_library(firebase_app_swig
     firebase_app
 )
 
+unity_pack_documentation_sources(app
+  DOCUMENTATION_SOURCES
+    ${firebase_app_src_documented}
+    ${firebase_app_swig_gen_src}
+    task_extension/TaskExtension.cs
+)
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(app
+    DOCUMENTATION_SOURCES
+      ${firebase_app_swig_gen_cpp_src}
+  )
+  return()
+endif()
+
 if(FIREBASE_UNI_LIBRARY AND NOT FIREBASE_IOS_BUILD)
   set(firebase_native_library firebase_app_uni)
 else()
@@ -114,13 +130,6 @@ if (FIREBASE_INCLUDE_UNITY)
       "app"
   )
 endif()
-
-unity_pack_documentation_sources(app
-  DOCUMENTATION_SOURCES
-    ${firebase_app_src_documented}
-    ${firebase_app_swig_gen_src}
-    task_extension/TaskExtension.cs
-)
 
 set_property(TARGET firebase_app_cs
   PROPERTY FOLDER
