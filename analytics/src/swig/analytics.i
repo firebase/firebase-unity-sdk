@@ -241,7 +241,8 @@ class ParameterCopy : private firebase::analytics::Parameter {
 %ignore Initialize;
 %ignore Terminate;
 // SetConsent handled via SetConsentByPtr below.
-%rename(SetConsentInternal) SetConsent;
+// %rename(SetConsentInternal) SetConsent;
+%ignore SetConsent;
 %csmethodmodifiers firebase::analytics::SetConsentByPtr(std::map<::firebase::analytics::ConsentType, ::firebase::analytics::ConsentStatus> *) "internal";
 
 } // namespace analytics
@@ -300,7 +301,7 @@ class ParameterCopy : private firebase::analytics::Parameter {
   /// "granted".
   public static void SetConsent(System.Collections.Generic.IDictionary<ConsentType, ConsentStatus> consentSettings) {
     ConsentMap consentSettingsMap = new ConsentMap();
-    foreach(var kv in consentSettings.toArray()) {
+    foreach(var kv in consentSettings) {
       consentSettingsMap[kv.Key] = kv.Value;
     }
     SetConsentByPtr(consentSettingsMap);
