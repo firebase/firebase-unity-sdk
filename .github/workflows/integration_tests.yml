@@ -481,7 +481,7 @@ jobs:
           python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
             --output_path testapps/test-results-"${{ steps.matrix_info.outputs.info }}".log
       - name: Run Mobile integration tests on virtual device locally
-        timeout-minutes: 60
+        timeout-minutes: 120
         if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
         run: |
           python scripts/gha/test_simulator.py --testapp_dir testapps \

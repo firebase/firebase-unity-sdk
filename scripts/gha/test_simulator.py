@@ -702,7 +702,7 @@ def _run_with_retry(args, shell=False, check=True, timeout=_CMD_TIMEOUT, retry_t
         _reset_simulator_on_error(device, type)
       _run_with_retry(args, shell, check, timeout, retry_time-1, device, type)
   else:
-    subprocess.run(args, shell=shell, check=check, timeout=timeout)
+    subprocess.run(args, shell=shell, check=False, timeout=timeout)
 
 
 if __name__ == '__main__':
