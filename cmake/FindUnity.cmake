@@ -14,8 +14,10 @@
 
 # Handles locating required files and executables for unity builds
 
-if (NOT FIREBASE_GENERATE_SWIG_ONLY)
-  find_package(Mono REQUIRED)
+find_package(Mono REQUIRED)
+
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  return()
 endif()
 
 if (NOT EXISTS "${UNITY_ROOT_DIR}")
@@ -88,7 +90,7 @@ if(FIREBASE_INCLUDE_UNITY)
     NO_CMAKE_FIND_ROOT_PATH
   )
 
-  if ((NOT EXISTS ${UNITY_ENGINE_DLL} OR NOT EXISTS ${UNITY_EDITOR_DLL}) AND NOT FIREBASE_GENERATE_SWIG_ONLY)
+  if(NOT EXISTS ${UNITY_ENGINE_DLL} OR NOT EXISTS ${UNITY_EDITOR_DLL})
     message(FATAL_ERROR "Fail to find UnityEngine.dll or UnityEditor.dll. \
       Please set valid path with -DUNITY_ROOT_DIR or check that Unity \
       is installed in system default place ${UNITY_PATH_HUB_HINT}. \
@@ -206,8 +208,8 @@ if(FIREBASE_INCLUDE_UNITY)
   endif()
 
   # If Mono tools still aren't found report an error.
-  if ((NOT EXISTS "${UNITY_MONO_EXE}" OR
-    NOT EXISTS "${UNITY_CSHARP_BUILD_EXE}") AND NOT FIREBASE_GENERATE_SWIG_ONLY)
+  if(NOT EXISTS "${UNITY_MONO_EXE}" OR
+    NOT EXISTS "${UNITY_CSHARP_BUILD_EXE}")
     message(FATAL_ERROR "Mono tools not found.")
   endif()
 

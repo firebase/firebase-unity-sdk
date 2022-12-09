@@ -146,6 +146,11 @@ endmacro()
 #
 macro(mono_add_external_dll name dllpath)
 
+  if(FIREBASE_GENERATE_SWIG_ONLY)
+    add_custom_target(${name})
+    return()
+  endif()
+
   if(NOT EXISTS ${dllpath})
     message(FATAL_ERROR "Expected ${name} file to already exist for mono_add_external_dll(${dllpath})")
   endif()
@@ -222,6 +227,10 @@ endmacro()
 
 # Internal helper function for mono_add_library and mono_add_executable
 macro(mono_add_internal name output_type)
+
+  if (FIREBASE_GENERATE_SWIG_ONLY)
+    return()
+  endif()
 
   set(multi
     MODULE
