@@ -793,7 +793,7 @@ def main(argv):
   else:
     subprocess.call(cmake_setup_args)
     if (FLAGS.gen_swig_only):
-      subprocess.call("cmake --build . --target firebase_swig_targets")
+      subprocess.call(["cmake", "--build", ".", "--target", "firebase_swig_targets"])
     else:
       if is_windows_build():
         # no make command in windows. TODO make config passable
