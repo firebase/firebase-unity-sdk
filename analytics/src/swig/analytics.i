@@ -297,8 +297,8 @@ namespace firebase {
 namespace analytics {
 
 %{
-  void SetConsentByPtr(std::map<ConsentType, ConsentStatus> *ptr) {
-      SetConsent(*ptr);
+  void SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr) {
+    firebase::analytics::SetConsent(*ptr);
   }
 %}
 
@@ -309,6 +309,7 @@ namespace analytics {
   using firebase::analytics::ConsentType;
   using firebase::analytics::ConsentStatus;
 %}
+
 %typemap(csclassmodifiers) std::map<ConsentType, ConsentStatus> "internal class"
 %template(ConsentMap) std::map<ConsentType, ConsentStatus>;
 
