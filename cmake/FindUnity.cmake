@@ -14,7 +14,9 @@
 
 # Handles locating required files and executables for unity builds
 
-find_package(Mono REQUIRED)
+if (NOT FIREBASE_GENERATE_SWIG_ONLY)
+  find_package(Mono REQUIRED)
+endif()
 
 if (NOT EXISTS "${UNITY_ROOT_DIR}")
   # Make our best attempt to find the latest unity installed on the system.
@@ -204,8 +206,8 @@ if(FIREBASE_INCLUDE_UNITY)
   endif()
 
   # If Mono tools still aren't found report an error.
-  if(NOT EXISTS "${UNITY_MONO_EXE}" OR
-    NOT EXISTS "${UNITY_CSHARP_BUILD_EXE}")
+  if ((NOT EXISTS "${UNITY_MONO_EXE}" OR
+    NOT EXISTS "${UNITY_CSHARP_BUILD_EXE}") AND NOT FIREBASE_GENERATE_SWIG_ONLY)
     message(FATAL_ERROR "Mono tools not found.")
   endif()
 
