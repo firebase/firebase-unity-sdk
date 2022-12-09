@@ -47,6 +47,11 @@
 #include "analytics/src/include/firebase/analytics/user_property_names.h"
 %}
 
+%rename(kConsentTypeAdStorage) firebase::analytics::kConsentTypeAdStorage;
+%rename(kConsentTypeAnalyticsStorage) firebase::analytics::kConsentTypeAnalyticsStorage;
+%rename(kConsentStatusGranted) firebase::analytics::kConsentStatusGranted;
+%rename(kConsentStatusDenied) firebase::analytics::kConsentStatusDenied;
+
 // Constant renaming must happen before SWIG_CONSTANT_HEADERS is included.
 %rename(kParameterAchievementId) firebase::analytics::kParameterAchievementID;
 %rename(kParameterGroupId) firebase::analytics::kParameterGroupID;
@@ -63,13 +68,6 @@
 
 
 %include "stdint.i"
-
-%{
-  using firebase::analytics::ConsentType;
-  using firebase::analytics::ConsentStatus;
-%}
-%typemap(csclassmodifiers) std::map<ConsentType, ConsentStatus> "internal class"
-%template(ConsentMap) std::map<ConsentType, ConsentStatus>;
 
 namespace firebase {
 namespace analytics {
@@ -243,7 +241,6 @@ class ParameterCopy : private firebase::analytics::Parameter {
 // SetConsent handled via SetConsentByPtr below.
 // %rename(SetConsentInternal) SetConsent;
 %ignore SetConsent;
-%csmethodmodifiers firebase::analytics::SetConsentByPtr(std::map<::firebase::analytics::ConsentType, ::firebase::analytics::ConsentStatus> *) "internal";
 
 } // namespace analytics
 } // namespace firebase
@@ -292,6 +289,28 @@ class ParameterCopy : private firebase::analytics::Parameter {
   }
 %}
 
+%include "analytics/src/include/firebase/analytics.h"
+
+%csmethodmodifiers firebase::analytics::SetConsentByPtr(std::map<::firebase::analytics::ConsentType, ::firebase::analytics::ConsentStatus> *) "intnamespace firebase {
+namespace analytics {
+
+ernal";
+%{
+  void SetConsentByPtr(std::map<ConsentType, ConsentStatus> *ptr) {
+      SetConsent(*ptr);
+  }
+%}
+
+} // namespace analytics
+} // namespace firebase
+
+%{
+  using firebase::analytics::ConsentType;
+  using firebase::analytics::ConsentStatus;
+%}
+%typemap(csclassmodifiers) std::map<ConsentType, ConsentStatus> "internal class"
+%template(ConsentMap) std::map<ConsentType, ConsentStatus>;
+
 %pragma(csharp) modulecode=%{
   /// @brief Sets the applicable end user consent state (e.g., for device
   /// identifiers) for this app on this device.
@@ -307,17 +326,3 @@ class ParameterCopy : private firebase::analytics::Parameter {
     SetConsentByPtr(consentSettingsMap);
   }
 %}
-
-
-%include "analytics/src/include/firebase/analytics.h"
-namespace firebase {
-namespace analytics {
-
-%{
-  void SetConsentByPtr(std::map<::firebase::analytics::ConsentType, ::firebase::analytics::ConsentStatus> *ptr) {
-      SetConsent(*ptr);
-  }
-%}
-
-} // namespace analytics
-} // namespace firebase
