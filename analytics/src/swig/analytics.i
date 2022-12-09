@@ -291,6 +291,8 @@ class ParameterCopy : private firebase::analytics::Parameter {
 
 %include "analytics/src/include/firebase/analytics.h"
 
+%rename(ConsentType) firebase::analytics::ConsentType;
+%rename(ConsentStatus) firebase::analytics::ConsentStatus;
 %{
 namespace firebase {
 namespace analytics {
@@ -312,8 +314,6 @@ using firebase::analytics::ConsentStatus;
 %{
 %}
 
-%rename(ConsentType) firebase::analytics::ConsentType;
-%rename(ConsentStatus) firebase::analytics::ConsentStatus;
 %typemap(csclassmodifiers) firebase::analytics::ConsentType "enum";
 %typemap(csclassmodifiers) firebase::analytics::ConsentStatus "enum";
 
