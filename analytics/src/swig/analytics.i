@@ -291,23 +291,25 @@ class ParameterCopy : private firebase::analytics::Parameter {
 
 %include "analytics/src/include/firebase/analytics.h"
 
+%{
 namespace firebase {
 namespace analytics {
 
-%{
   void SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr) {
     firebase::analytics::SetConsent(*ptr);
   }
-%}
 
 } // namespace analytics
 } // namespace firebase
 
+using firebase::analytics::ConsentType;
+using firebase::analytics::ConsentStatus;
+%}
+
+
 %csmethodmodifiers firebase::analytics::SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *) "internal";
 
 %{
-  using firebase::analytics::ConsentType;
-  using firebase::analytics::ConsentStatus;
 %}
 
 %rename(ConsentType) firebase::analytics::ConsentType;
