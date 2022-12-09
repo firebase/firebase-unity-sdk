@@ -31,7 +31,7 @@ namespace Firebase.TestLab {
 
     protected override void OnFinishTest() {
       logWriter.Close();
-      if (Application.platform == RuntimePlatform.IPhonePlayer){
+      if (Application.platform == RuntimePlatform.IPhonePlayer) {
         // OpenURL function doesn't exist on tvOS
         Application.OpenURL("firebase-game-loop-complete://");
       } 
@@ -52,8 +52,8 @@ namespace Firebase.TestLab {
       if (scenario == -1) {  // Not using Game Loops: return dummy.
         return new DummyTestLabManager();
       }
-      string logDir;
-      if (Application.platform == RuntimePlatform.IPhonePlayer){
+      string logDir = "";
+      if (Application.platform == RuntimePlatform.IPhonePlayer) {
         logDir = Application.persistentDataPath + "/GameLoopResults";
       } else if (Application.platform == RuntimePlatform.tvOS) {
         // persistentDataPath doesn't exist on tvOS
