@@ -39,6 +39,19 @@ firebase_swig_add_library(firebase_remote_config_swig
     firebase_remote_config
 )
 
+unity_pack_documentation_sources(remote_config
+  DOCUMENTATION_SOURCES
+    ${firebase_remote_config_src}
+    ${firebase_remote_config_swig_gen_src}
+)
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(remote_config
+    DOCUMENTATION_SOURCES
+      ${firebase_remote_config_swig_gen_cpp_src}
+  )
+  return()
+endif()
+
 mono_add_library(firebase_remote_config_cs
   MODULE
     Firebase.RemoteConfig
@@ -73,12 +86,6 @@ if (FIREBASE_INCLUDE_UNITY)
       "config"
   )
 endif()
-
-unity_pack_documentation_sources(remote_config
-  DOCUMENTATION_SOURCES
-    ${firebase_remote_config_src}
-    ${firebase_remote_config_swig_gen_src}
-)
 
 set_property(TARGET firebase_remote_config_cs
   PROPERTY FOLDER
