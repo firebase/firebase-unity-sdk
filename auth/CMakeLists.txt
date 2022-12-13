@@ -50,6 +50,19 @@ firebase_swig_add_library(firebase_auth_swig
     ${EXTERNAL_LIB_NAMES}
 )
 
+unity_pack_documentation_sources(auth
+  DOCUMENTATION_SOURCES
+    ${firebase_auth_src}
+    ${firebase_auth_swig_gen_src}
+)
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(auth
+    DOCUMENTATION_SOURCES
+      ${firebase_auth_swig_gen_cpp_src}
+  )
+  return()
+endif()
+
 mono_add_library(firebase_auth_cs
   MODULE
     Firebase.Auth
@@ -84,12 +97,6 @@ if (FIREBASE_INCLUDE_UNITY)
       "auth"
   )
 endif()
-
-unity_pack_documentation_sources(auth
-  DOCUMENTATION_SOURCES
-    ${firebase_auth_src}
-    ${firebase_auth_swig_gen_src}
-)
 
 set_property(TARGET firebase_auth_cs
   PROPERTY FOLDER

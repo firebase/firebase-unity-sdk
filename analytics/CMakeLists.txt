@@ -36,6 +36,19 @@ firebase_swig_add_library(firebase_analytics_swig
     firebase_analytics
 )
 
+unity_pack_documentation_sources(analytics
+  DOCUMENTATION_SOURCES
+    ${firebase_analytics_src}
+    ${firebase_analytics_swig_gen_src}
+)
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(analytics
+    DOCUMENTATION_SOURCES
+      ${firebase_analytics_swig_gen_cpp_src}
+  )
+  return()
+endif()
+
 mono_add_library(firebase_analytics_cs
   MODULE
     Firebase.Analytics
@@ -70,12 +83,6 @@ if (FIREBASE_INCLUDE_UNITY)
       "analytics"
   )
 endif()
-
-unity_pack_documentation_sources(analytics
-  DOCUMENTATION_SOURCES
-    ${firebase_analytics_src}
-    ${firebase_analytics_swig_gen_src}
-)
 
 set_property(TARGET firebase_analytics_cs
   PROPERTY FOLDER

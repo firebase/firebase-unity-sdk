@@ -40,6 +40,19 @@ firebase_swig_add_library(firebase_functions_swig
     firebase_functions
 )
 
+unity_pack_documentation_sources(functions
+  DOCUMENTATION_SOURCES
+    ${firebase_functions_src}
+    ${firebase_functions_swig_gen_src}
+)
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(functions
+    DOCUMENTATION_SOURCES
+      ${firebase_functions_swig_gen_cpp_src}
+  )
+  return()
+endif()
+
 mono_add_library(firebase_functions_cs
   MODULE
     Firebase.Functions
@@ -74,12 +87,6 @@ if (FIREBASE_INCLUDE_UNITY)
       "functions"
   )
 endif()
-
-unity_pack_documentation_sources(functions
-  DOCUMENTATION_SOURCES
-    ${firebase_functions_src}
-    ${firebase_functions_swig_gen_src}
-)
 
 set_property(TARGET firebase_functions_cs
   PROPERTY FOLDER

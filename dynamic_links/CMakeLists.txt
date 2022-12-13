@@ -48,6 +48,19 @@ firebase_swig_add_library(firebase_dynamic_links_swig
     firebase_dynamic_links
 )
 
+unity_pack_documentation_sources(dynamic_links
+  DOCUMENTATION_SOURCES
+    ${firebase_dynamic_links_src}
+    ${firebase_dynamic_links_swig_gen_src}
+)
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(dynamic_links
+    DOCUMENTATION_SOURCES
+      ${firebase_dynamic_links_swig_gen_cpp_src}
+  )
+  return()
+endif()
+
 mono_add_library(firebase_dynamic_links_cs
   MODULE
     Firebase.DynamicLinks
@@ -82,12 +95,6 @@ if (FIREBASE_INCLUDE_UNITY)
       "dynamic-links"
   )
 endif()
-
-unity_pack_documentation_sources(dynamic_links
-  DOCUMENTATION_SOURCES
-    ${firebase_dynamic_links_src}
-    ${firebase_dynamic_links_swig_gen_src}
-)
 
 set_property(TARGET firebase_dynamic_links_cs
   PROPERTY FOLDER

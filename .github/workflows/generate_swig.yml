@@ -1,0 +1,98 @@
+# Workflow to generate the SWIG files on linux
+name: Generate SWIG files
+
+on:
+  workflow_dispatch:
+    inputs:
+      unity_version:
+        description: 'Unity version'
+        default: '2020'
+        required: true
+        type: string
+      firebase_cpp_sdk_version:
+        description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
+        default: ''
+        required: false
+        type: string
+      apis:
+        description: 'CSV of apis to build and test'
+        default: 'analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'
+        required: true
+        type: string
+      # Additional CMake flags to use
+      additional_cmake_flags:
+        description: 'Additional flags to pass into CMake'
+        default: ''
+        required: false
+        type: string
+
+jobs:
+  generate_swig:
+    name: generate-swig-unity${{inputs.unity_version}}-CPP${{ inputs.firebase_cpp_sdk_version }}
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: actions/checkout@v3
+        with:
+          repository: firebase/firebase-cpp-sdk
+          path: firebase-cpp-sdk
+          submodules: true
+          ref: ${{ inputs.firebase_cpp_sdk_version }}
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.7'
+
+      - name: Install prerequisites
+        shell: bash
+        run: |
+          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
+          cd firebase-cpp-sdk
+          python scripts/gha/install_prereqs_desktop.py
+          cd ..
+
+      - name: Install python deps
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+
+      - name: Install OpenSSL (Linux)
+        run: |
+          sudo apt install openssl
+
+      - name: Setup Swig Env
+        shell: bash
+        run: |
+          echo "$(swig -swiglib)" >> $GITHUB_PATH
+          swig -swiglib
+          echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
+
+      - name: Build SDK (Linux)
+        timeout-minutes: 90
+        shell: bash
+        run: |
+          # TODO add handling cmake_extras
+          python scripts/build_scripts/build_zips.py --gha --platform=linux --apis=${{ inputs.apis }} --gen_swig_only
+      
+      - name: Check zip files
+        shell: bash
+        run: |
+          if [ -f linux_unity/documentation_sources.zip ]; then
+            echo "documentation_sources zip created."
+          else
+            echo "Fail to create documentation_sources zip."
+            exit 1
+          fi
+
+      - name: Upload Documentation Sources
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation_sources
+          path: linux_unity/documentation_sources.zip

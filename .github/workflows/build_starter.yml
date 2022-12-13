@@ -200,6 +200,18 @@ jobs:
       unity_platform_name: iOS
       additional_cmake_flags: ${{ needs.check_and_prepare.outputs.additional_cmake_flags }}
 
+  build_tvos:
+    name: build-tvos-unity${{ needs.check_and_prepare.outputs.unity_version }}-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
+    uses: ./.github/workflows/build_tvos.yml
+    needs: [check_and_prepare, decide_build_branch]
+    if: always() && contains(needs.check_and_prepare.outputs.platform, 'tvOS')
+    with:
+      unity_version: ${{needs.check_and_prepare.outputs.unity_version }}
+      firebase_cpp_sdk_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
+      unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
+      apis: ${{ needs.check_and_prepare.outputs.apis }}
+      unity_platform_name: 'tvOS,iOS'
+
   build_linux:
     name: build-linux-unity${{ needs.check_and_prepare.outputs.unity_version }}-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_linux.yml

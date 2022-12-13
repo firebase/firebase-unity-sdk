@@ -58,13 +58,18 @@ namespace Firebase.TestLab {
     public static TestLabManager Instantiate() {
       if (Application.platform == RuntimePlatform.Android) {
         return AndroidTestLabManager.Create();
-      } else if (Application.platform == RuntimePlatform.IPhonePlayer) {
-        return IOSTestLabManager.Create();
+      } else if (IsApplePlatform(Application.platform)) {
+        return AppleTestLabManager.Create();
       } else if (IsDesktopPlatform(Application.platform)) {
         return DesktopTestLabManager.Create();
       } else {
         return new DummyTestLabManager();
       }
+    }
+
+    static bool IsApplePlatform(RuntimePlatform platform) {
+      return platform == RuntimePlatform.IPhonePlayer
+        || platform == RuntimePlatform.tvOS;
     }
 
     static bool IsDesktopPlatform(RuntimePlatform platform) {

@@ -80,6 +80,19 @@ firebase_swig_add_library(firebase_crashlytics_swig
     ${EXTERNAL_LIB_NAMES}
 )
 
+unity_pack_documentation_sources(crashlytics
+  DOCUMENTATION_SOURCES
+    ${firebase_crashlytics_src_documented}
+)
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(crashlytics
+    DOCUMENTATION_SOURCES
+      ${firebase_crashlytics_swig_gen_src}
+      ${firebase_crashlytics_swig_gen_cpp_src}
+  )
+  return()
+endif()
+
 mono_add_library(firebase_crashlytics_cs
   MODULE
     Firebase.Crashlytics
@@ -116,11 +129,6 @@ if (FIREBASE_INCLUDE_UNITY)
       "crashlytics"
   )
 endif()
-
-unity_pack_documentation_sources(crashlytics
-  DOCUMENTATION_SOURCES
-    ${firebase_crashlytics_src_documented}
-)
 
 set_property(TARGET firebase_crashlytics_cs
   PROPERTY FOLDER
