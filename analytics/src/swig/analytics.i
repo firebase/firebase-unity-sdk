@@ -238,8 +238,7 @@ class ParameterCopy : private firebase::analytics::Parameter {
 // Initialize / Terminate implicitly called when App is created / destroyed.
 %ignore Initialize;
 %ignore Terminate;
-// SetConsent handled via SetConsentByPtr below.
-// %rename(SetConsentInternal) SetConsent;
+// SetConsent handled via SetConsentInternal below.
 %ignore SetConsent;
 
 } // namespace analytics
@@ -293,32 +292,26 @@ class ParameterCopy : private firebase::analytics::Parameter {
 
 %rename(ConsentType) firebase::analytics::ConsentType;
 %rename(ConsentStatus) firebase::analytics::ConsentStatus;
+// Add a swig C++ function to call into the Analytics C++ implementation.
 %{
 namespace firebase {
 namespace analytics {
 
-  void SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr) {
+  void SetConsentInternal(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr) {
     firebase::analytics::SetConsent(*ptr);
   }
 
 } // namespace analytics
 } // namespace firebase
-
-using firebase::analytics::ConsentType;
-using firebase::analytics::ConsentStatus;
 %}
-
-
-%csmethodmodifiers firebase::analytics::SetConsentByPtr(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *) "internal";
-
-%{
-%}
+// The definition on the C++ side, so that swig is aware of the function's existence.
+void SetConsentInternal(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr);
 
 %typemap(csclassmodifiers) firebase::analytics::ConsentType "enum";
 %typemap(csclassmodifiers) firebase::analytics::ConsentStatus "enum";
 
-%typemap(csclassmodifiers) std::map<ConsentType, ConsentStatus> "internal class"
-%template(ConsentMap) std::map<ConsentType, ConsentStatus>;
+%typemap(csclassmodifiers) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> "internal class"
+%template(ConsentMap) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus>;
 
 namespace firebase {
 namespace analytics {
@@ -338,7 +331,7 @@ namespace analytics {
     foreach(var kv in consentSettings) {
       consentSettingsMap[kv.Key] = kv.Value;
     }
-    SetConsentByPtr(consentSettingsMap);
+    SetConsentInternal(consentSettingsMap);
   }
 %}
 
