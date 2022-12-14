@@ -30,19 +30,28 @@ namespace Firebase.RemoteConfig {
     /// @note Fetches less than duration seconds after the last fetch from the
     /// Firebase Remote Config server would use values returned during the last
     /// fetch. Default is 12 hours.
-    public ulong MinimumFetchInternalInMilliseconds { get; set; }
+    public ulong MinimumFetchIntervalInMilliseconds { get; set; }
+
+    /// The minimum interval between successive fetch calls.
+    ///
+    /// @deprecated Use MinimumFetchIntervalInMilliseconds instead. This will be
+    /// removed in the next major release.
+    public ulong MinimumFetchInternalInMilliseconds {
+      get { return MinimumFetchIntervalInMilliseconds; }
+      set { MinimumFetchIntervalInMilliseconds = value; }
+    }
 
     internal static ConfigSettings FromInternal(ConfigSettingsInternal csInternal) {
       return new ConfigSettings {
         FetchTimeoutInMilliseconds = csInternal.fetch_timeout_in_milliseconds,
-        MinimumFetchInternalInMilliseconds = csInternal.minimum_fetch_interval_in_milliseconds
+        MinimumFetchIntervalInMilliseconds = csInternal.minimum_fetch_interval_in_milliseconds
       };
     }
 
     internal static ConfigSettingsInternal ToInternal(ConfigSettings cs) {
       ConfigSettingsInternal csInternal = new ConfigSettingsInternal();
       csInternal.fetch_timeout_in_milliseconds = cs.FetchTimeoutInMilliseconds;
-      csInternal.minimum_fetch_interval_in_milliseconds = cs.MinimumFetchInternalInMilliseconds;
+      csInternal.minimum_fetch_interval_in_milliseconds = cs.MinimumFetchIntervalInMilliseconds;
       return csInternal;
     }
   }
