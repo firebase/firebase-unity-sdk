@@ -122,6 +122,7 @@ flags.DEFINE_bool("verbose", False, "If verbose, cmake build with DCMAKE_VERBOSE
 flags.DEFINE_string("swig_dir", None, "If pass in swig dir directly rather than find swig by cmake")
 flags.DEFINE_bool("gen_documentation_zip", False, "Also generate a zip file containing files to document")
 flags.DEFINE_bool("gha", False, "True if the build is triggered by Github Action.")
+flags.DEFINE_bool("gen_swig_only", False, "Should it only generate swig, skipping building libraries")
 
 def get_build_path(platform, clean_build=False):
   """Get the folder that cmake configure and build in.
@@ -192,6 +193,11 @@ def get_targets_args(targets):
     support_targets = TVOS_SUPPORT_TARGETS
     if not targets:
       targets = TVOS_SUPPORT_TARGETS
+    else:
+      if 'dynamic_links' in targets:
+        logging.warning("Dynamic Links is not supported on tvOS. " +
+          "Removing it from the api build list.")
+        targets.remove('dynamic_links')
 
   if targets:
     # check if all the entries are valid
@@ -647,7 +653,7 @@ def make_tvos_multi_arch_build(cmake_args):
 def gen_documentation_zip():
   """If the flag was enabled, builds the zip file containing source files to document.
   """
-  if not FLAGS.gen_documentation_zip:
+  if not FLAGS.gen_documentation_zip and not FLAGS.gen_swig_only:
     return
   cpack_args = [
     'cpack',
@@ -775,6 +781,9 @@ def main(argv):
   elif is_macos_build():
     cmake_setup_args.extend(get_macos_args())
 
+  if FLAGS.gen_swig_only:
+    cmake_setup_args.append("-DFIREBASE_GENERATE_SWIG_ONLY=ON")
+
   global g_target_architectures
   logging.info("cmake_setup_args is: " + " ".join(cmake_setup_args))
   if is_android_build() and len(g_target_architectures) > 1:
@@ -791,17 +800,21 @@ def main(argv):
     make_tvos_multi_arch_build(cmake_setup_args)
   else:
     subprocess.call(cmake_setup_args)
-    if is_windows_build():
-      # no make command in windows. TODO make config passable
-      subprocess.call("cmake --build .  --config Release")
-    else:
-      subprocess.call("make")
+    if (not FLAGS.gen_swig_only):
+      if is_windows_build():
+        # no make command in windows. TODO make config passable
+        subprocess.call("cmake --build .  --config Release")
+      else:
+        subprocess.call("make")
 
-    cmake_pack_args = [
+      cmake_pack_args = [
         "cpack",
         ".",
-    ]
-    subprocess.call(cmake_pack_args)
+      ]
+      subprocess.call(cmake_pack_args)
+    else:
+      subprocess.call(["cmake", "--build", ".", "--target", "firebase_swig_targets"])
+
     gen_documentation_zip()
 
   os.chdir(source_path)

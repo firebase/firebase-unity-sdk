@@ -81,6 +81,8 @@ import os
 import pathlib
 import subprocess
 import time
+import glob
+import re
 
 from absl import app
 from absl import flags
@@ -126,7 +128,7 @@ flags.DEFINE_string(
     "tvos_name", "Apple TV",
     "See module docstring for details on how to set and get this name.")
 flags.DEFINE_string(
-    "tvos_version", "14.0",
+    "tvos_version", "16.1",
     "See module docstring for details on how to set and get this version.")
 flags.DEFINE_string(
     "android_device", None,
@@ -169,7 +171,11 @@ def main(argv):
     for directory in directories:
       full_path = os.path.join(file_dir, directory)
       if directory.endswith(".app"):
-        ios_testapps.append(full_path)
+        if "tvOS" in file_dir:
+          tvos_testapps.append(full_path)
+        elif "iOS" in file_dir:
+          ios_testapps.append(full_path)
+
     for file_name in file_names:
       full_path = os.path.join(file_dir, file_name)
       if file_name.endswith(".apk"):
@@ -349,7 +355,7 @@ def _build_tvos_gameloop(gameloop_project, device_name, device_os):
         return os.path.join(file_dir, file_name)
 
 
-def _run_xctest(gameloop_app, device_id):
+def _run_xctest(gameloop_app, bundle_id, app_path, device_id):
   """Run the gameloop UI Test app.
     This gameloop app can run integration_test app automatically.
   """
@@ -357,16 +363,19 @@ def _run_xctest(gameloop_app, device_id):
     "-xctestrun", gameloop_app, 
     "-destination", "id=%s" % device_id]
   logging.info("Running game-loop test: %s", " ".join(args))
-  result = subprocess.run(args=args, capture_output=True, text=True, check=False)
-
-  if not result.stdout:
-    logging.info("No xctest result")
-    return
-
-  result = result.stdout.splitlines()
-  log_path = next((line for line in result if ".xcresult" in line), None)
-  logging.info("game-loop xctest result: %s", log_path)
-  return log_path
+  open_process = subprocess.Popen(args=args)
+  
+  logging.info("Wait and get test result")
+  test_running = True
+  time_until_timeout = 300  # Timeout of 300 seconds, or 5 minutes.
+  while test_running and time_until_timeout > 0:
+    time.sleep(10)
+    time_until_timeout -= 10
+    log = _get_apple_test_log(bundle_id, app_path, device_id)
+    test_running = "All tests finished" not in log
+  open_process.kill()
+  logging.info("Apple test result: %s", log)
+  return log
 
 
 def _shutdown_simulator():
@@ -441,8 +450,7 @@ def _run_apple_gameloop_test(bundle_id, app_path, gameloop_app, device_id, retry
   """Run gameloop test and collect test result."""
   logging.info("Running apple gameloop test: %s, %s, %s, %s", bundle_id, app_path, gameloop_app, device_id)
   _install_apple_app(app_path, device_id)
-  _run_xctest(gameloop_app, device_id)
-  log = _get_apple_test_log(bundle_id, app_path, device_id)
+  log = _run_xctest(gameloop_app, bundle_id, app_path, device_id)
   _uninstall_apple_app(bundle_id, device_id)
   if retry > 1:
     result = test_validation.validate_results(log, test_validation.UNITY)
@@ -470,19 +478,27 @@ def _uninstall_apple_app(bundle_id, device_id):
 def _get_apple_test_log(bundle_id, app_path, device_id):
   """Read integration_test app testing result."""
   args=["xcrun", "simctl", "get_app_container", device_id, bundle_id, "data"]
-  logging.info("Get test result: %s", " ".join(args))
+  logging.info("Check test result file: %s", " ".join(args))
   result = subprocess.run(
       args=args,
       capture_output=True, text=True, check=False)
   
   if not result.stdout:
-    logging.info("No test Result")
-    return None
+    logging.info("xcrun simctl get_app_container error %s", result.stderr)
+    return ""
 
-  log_path = os.path.join(result.stdout.strip(), "Documents", "GameLoopResults", _RESULT_FILE) 
-  log = _read_file(log_path) 
-  logging.info("Apple test result: %s", log)
-  return log
+  data_dir = result.stdout.strip()
+  # iOS log_path is {data_dir}/Documents/GameLoopResults/Results1.json
+  # tvOS log_path is {data_dir}/Library/Caches/GameLoopResults/Results1.json
+  log_path = glob.glob(os.path.join(data_dir, "**", "GameLoopResults", _RESULT_FILE), recursive=True)
+  for path in log_path:
+    logging.info("Reading file: %s", path)
+    log = _read_file(path) 
+    return log
+  else:
+    logging.info("No test Result")
+    return ""
+  
 
 
 def _read_file(path):
@@ -490,10 +506,9 @@ def _read_file(path):
   if os.path.isfile(path):
     with open(path, "r") as f:
       test_result = f.read()
-
-    logging.info("Reading file: %s", path)
-    logging.info("File content: %s", test_result)
     return test_result
+  else:
+    return ""
 
 
 # -------------------Android Only-------------------
@@ -687,7 +702,7 @@ def _run_with_retry(args, shell=False, check=True, timeout=_CMD_TIMEOUT, retry_t
         _reset_simulator_on_error(device, type)
       _run_with_retry(args, shell, check, timeout, retry_time-1, device, type)
   else:
-    subprocess.run(args, shell=shell, check=check, timeout=timeout)
+    subprocess.run(args, shell=shell, check=False, timeout=timeout)
 
 
 if __name__ == '__main__':

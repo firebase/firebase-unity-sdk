@@ -55,12 +55,6 @@ jobs:
           submodules: true
           ref: ${{ inputs.firebase_cpp_sdk_version }}
 
-      # Set up the requirements, and install Unity
-      # Ruby setup has to happen before python install and setup, to keep the absl config.
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.0.2
-
       # Remove other python installs before installing the version we want
       - name: Remove other pythons
         shell: bash

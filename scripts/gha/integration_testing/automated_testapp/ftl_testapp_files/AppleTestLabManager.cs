@@ -17,21 +17,24 @@ using System.IO;
 using UnityEngine;
 
 namespace Firebase.TestLab {
-  internal sealed class IOSTestLabManager : TestLabManager {
+  internal sealed class AppleTestLabManager : TestLabManager {
 
     public override int ScenarioNumber { get { return scenario; } }
 
     readonly int scenario;
     readonly StreamWriter logWriter;
 
-    private IOSTestLabManager(int scenario, StreamWriter logWriter) {
+    private AppleTestLabManager(int scenario, StreamWriter logWriter) {
       this.scenario = scenario;
       this.logWriter = logWriter;
     }
 
     protected override void OnFinishTest() {
       logWriter.Close();
-      Application.OpenURL("firebase-game-loop-complete://");
+      if (Application.platform == RuntimePlatform.IPhonePlayer) {
+        // OpenURL function doesn't exist on tvOS
+        Application.OpenURL("firebase-game-loop-complete://");
+      } 
     }
 
     public override void LogToResults(string s) {
@@ -40,21 +43,28 @@ namespace Firebase.TestLab {
     }
 
     /// <summary>
-    /// Attempts to create a TestLabManager for an iOS build. If running with Game Loops,
+    /// Attempts to create a TestLabManager for an iOS/tvOS build. If running with Game Loops,
     /// and all necessary information is found in the custom url, this will return a functional
-    /// IOSTestLabManager. If not running with Game Loops, this will return a dummy.
+    /// AppleTestLabManager. If not running with Game Loops, this will return a dummy.
     /// </summary>
     public static TestLabManager Create() {
-      int scenario = IOSPluginWrapper.GetScenario();
+      int scenario = ApplePluginWrapper.GetScenario();
       if (scenario == -1) {  // Not using Game Loops: return dummy.
         return new DummyTestLabManager();
       }
-      string logDir = Application.persistentDataPath + "/GameLoopResults";
+      string logDir = "";
+      if (Application.platform == RuntimePlatform.IPhonePlayer) {
+        logDir = Application.persistentDataPath + "/GameLoopResults";
+      } else if (Application.platform == RuntimePlatform.tvOS) {
+        // persistentDataPath doesn't exist on tvOS
+        // files under temporaryCachePath may be cleared at anytime
+        logDir = Application.temporaryCachePath + "/GameLoopResults";
+      }
       string logPath = string.Format("{0}/Results{1}.json", logDir, scenario);
       Directory.CreateDirectory(logDir);
       // Logs will be appended, so we need to clear the file first.
       File.Delete(logPath);
-      return new IOSTestLabManager(scenario, File.AppendText(logPath));
+      return new AppleTestLabManager(scenario, File.AppendText(logPath));
     }
   }
 }

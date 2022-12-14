@@ -43,23 +43,6 @@ public class Builder {
     Build(options);
   }
 
-  public static void BuildTvos() {
-    var options = new BuildPlayerOptions();
-
-    // For tvOS, this is the name of the folder containing the generated XCode
-    // project.
-    options.locationPathName = "tvos-build";
-    options.target = BuildTarget.tvOS;
-    // Firebase Unity plugins don't seem to work on a simulator.
-    PlayerSettings.tvOS.sdkVersion = tvOSSdkVersion.DeviceSDK;
-
-    // AcceptExternalModificationsToPlayer corresponds to "Append" in the Unity
-    // UI -- it allows doing incremental builds.
-    options.options = BuildOptions.AcceptExternalModificationsToPlayer;
-
-    Build(options);
-  }
-
   public static void BuildAndroid() {
     var options = new BuildPlayerOptions();
 

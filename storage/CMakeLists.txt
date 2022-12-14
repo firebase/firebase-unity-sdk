@@ -53,6 +53,19 @@ firebase_swig_add_library(firebase_storage_swig
     firebase_storage
 )
 
+unity_pack_documentation_sources(storage
+  DOCUMENTATION_SOURCES
+    ${firebase_storage_src}
+)
+if (FIREBASE_GENERATE_SWIG_ONLY)
+  unity_pack_documentation_sources(storage
+    DOCUMENTATION_SOURCES
+      ${firebase_storage_swig_gen_src}
+      ${firebase_storage_swig_gen_cpp_src}
+  )
+  return()
+endif()
+
 mono_add_library(firebase_storage_cs
   MODULE
     Firebase.Storage
@@ -87,11 +100,6 @@ if (FIREBASE_INCLUDE_UNITY)
       "storage"
   )
 endif()
-
-unity_pack_documentation_sources(storage
-  DOCUMENTATION_SOURCES
-    ${firebase_storage_src}
-)
 
 set_property(TARGET firebase_storage_cs
   PROPERTY FOLDER

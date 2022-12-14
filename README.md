@@ -64,7 +64,7 @@ While installing through UnityHub, when you decide which version to install, it 
 Under the repo root folder, call
 
 ``` bash
-python scripts/build_scripts/build_zips.py –platform=<target platform>
+python scripts/build_scripts/build_zips.py --platform=<target platform>
 ```
 
 > **Note:** Supported target platform names: linux,macos,windows,ios,android
@@ -81,7 +81,7 @@ Expected output artifact is
 ### Building for certain library
 
 ``` bash
-python scripts/build_scripts/build_zips.py —-platform=<target platform> --targets=<lib1> -–targets=<lib2>
+python scripts/build_scripts/build_zips.py --platform=<target platform> --targets=<lib1> --targets=<lib2>
 ```
 
 > **Note:** Supported library names: analytics, auth, crashlytics, database, dynamic_links, firestore, functions, installations, messaging, remote_config, storage
@@ -103,7 +103,7 @@ Copy the zip file for each platforms to one folder, referred to as assets_zip_di
 And then run:
 
 ``` bash
-python scripts/build_scripts/build_package.py --zip_dir=<assets_zip_dir> –output=<output dir>
+python scripts/build_scripts/build_package.py --zip_dir=<assets_zip_dir> --output=<output dir>
 ```
 
 ### Packaging tgz
@@ -111,7 +111,7 @@ python scripts/build_scripts/build_package.py --zip_dir=<assets_zip_dir> –outp
 With the same assets_zip_dir, we can run:
 
 ``` bash
-python scripts/build_scripts/build_package.py --zip_dir=<assets_zip_dir> –output=<output dir> --output_upm=True
+python scripts/build_scripts/build_package.py --zip_dir=<assets_zip_dir> --output=<output dir> --output_upm=True
 ```
 
 ### Packing for certain library
@@ -119,7 +119,7 @@ python scripts/build_scripts/build_package.py --zip_dir=<assets_zip_dir> –outp
 If we build only certain subset of the libraries like in [Building for certain library](#building-for-certain-library), we can copy the built artifacts into assets_zip_dir, and then run:
 
 ``` bash
-python scripts/build_scripts/build_package.py --zip_dir=<assets_zip_dir> -–output=<output dir> --apis=<lib1,lib2>
+python scripts/build_scripts/build_package.py --zip_dir=<assets_zip_dir> --output=<output dir> --apis=<lib1,lib2>
 ```
 
 ## Including in Project
