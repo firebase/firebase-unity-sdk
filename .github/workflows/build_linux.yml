@@ -120,18 +120,6 @@ jobs:
           name: linux_unity
           path: linux_unity/*Linux.zip
 
-      - name: Zip source
-        shell: bash
-        if: ${{ always() }}
-        run: tar -cvzf linux_unity.tgz linux_unity
-
-      - name: Upload Source
-        uses: actions/upload-artifact@v3
-        if: ${{ always() }}
-        with:
-          name: linux_unity
-          path: linux_unity.tgz
-
       - name: Upload Documentation Sources
         uses: actions/upload-artifact@v3
         with:
