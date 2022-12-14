@@ -67,6 +67,11 @@ Support
 
 Release Notes
 -------------
+### 10.3.0
+- Changes
+    - General (Android): Update to Firebase Android BoM version 31.1.1.
+    - General (iOS): Update to Firebase Cocoapods version 10.3.0.
+
 ### 10.2.0
 - Changes
     - General (Android): Update to Firebase Android BoM version 31.1.0.
