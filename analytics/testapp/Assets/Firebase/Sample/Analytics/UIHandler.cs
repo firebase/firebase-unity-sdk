@@ -17,6 +17,7 @@ namespace Firebase.Sample.Analytics {
   using Firebase.Analytics;
   using Firebase.Extensions;
   using System;
+  using System.Collections.Generic;
   using System.Threading.Tasks;
   using UnityEngine;
 
