@@ -122,12 +122,14 @@ namespace Firebase.Sample.Analytics {
     }
 
     public void AnalyticsSetConsent() {
-      FirebaseAnalytics.SetConsent(new {
+      FirebaseAnalytics.SetConsent(new Dictionary<ConsentType, ConsentStatus>()
+      {
          { ConsentType.AnalyticsStorage, ConsentStatus.Denied },
          { ConsentType.AdStorage, ConsentStatus.Denied }
       });
-      FirebaseAnalytics.SetConsent(new {});
-      FirebaseAnalytics.SetConsent(new {
+      FirebaseAnalytics.SetConsent(new Dictionary<ConsentType, ConsentStatus>());
+      FirebaseAnalytics.SetConsent(new Dictionary<ConsentType, ConsentStatus>()
+      {
          { ConsentType.AnalyticsStorage, ConsentStatus.Granted },
          { ConsentType.AdStorage, ConsentStatus.Granted }
       });
