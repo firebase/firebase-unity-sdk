@@ -67,6 +67,14 @@ Support
 
 Release Notes
 -------------
+### 10.3.0
+- Changes
+    - General (Android): Update to Firebase Android BoM version 31.1.1.
+    - General (iOS): Update to Firebase Cocoapods version 10.3.0.
+    - Remote Config: Added `ConfigSettings.MinimumFetchIntervalInMilliseconds`,
+      which should be used instead of `MinimumFetchInternalInMilliseconds`. The
+      old one is considered deprecated, and will be removed with the next major release.
+
 ### 10.2.0
 - Changes
     - General (Android): Update to Firebase Android BoM version 31.1.0.
