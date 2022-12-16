@@ -19,7 +19,7 @@ This GitHub Action will provide `UNITY_VERSION` (full unity version, e.g. `2020.
 
 -   Output usage:
     ```yml
-    - uses: firebase/firebase-unity-sdk/gha/unity@main
+    - uses: ./gha/unity
       with:
         version: ${{ unity_version }}
         platforms: ${{ platforms }}
@@ -37,13 +37,13 @@ This GitHub Action will provide `UNITY_VERSION` (full unity version, e.g. `2020.
 
         steps:
           # ...
-          - uses: firebase/firebase-unity-sdk/gha/unity@main
+          - uses: ./gha/unity
             with:
               version: ${{ unity_version }}
               platforms: ${{ platforms }}
     ```
 
--   Install Unity, Activate and Release Unity License
+-   Install Unity, Activate and Release Unity License. Always release the license after usage.
     ```yml
     jobs:
       build_testapp:
@@ -52,7 +52,7 @@ This GitHub Action will provide `UNITY_VERSION` (full unity version, e.g. `2020.
         steps:
           # ...
           - id: unity_setup_and_activate
-            uses: firebase/firebase-unity-sdk/gha/unity@main
+            uses: ./gha/unity
             with:
               version: ${{ unity_version }}
               platforms: ${{ platforms }}
@@ -61,7 +61,7 @@ This GitHub Action will provide `UNITY_VERSION` (full unity version, e.g. `2020.
               serial_ids: ${{ secrets.SERIAL_ID }}
           # ...
           - id: release_license
-            uses: firebase/firebase-unity-sdk/gha/unity@main
+            uses: ./gha/unity
             with:
               version: ${{ unity_version }}
               release_license: "true"
@@ -72,18 +72,21 @@ This GitHub Action will provide `UNITY_VERSION` (full unity version, e.g. `2020.
 
 This GitHub Action leverages [Unity Hub](https://unity3d.com/get-unity/download), which is a standalone application that streamlines the way you navigate, download, and manage your Unity projects and installations. Unity Hub is with beta version CLI support, and we are using it for Unity versions management.
 
-In this GitHub Action, supported Unity Versions are maintained by `SETTINGS` in `gha/unity/unity_installer.py`. 
+In this GitHub Action, supported Unity Versions are maintained by `SETTINGS` in [`gha/unity/unity_installer.py`](https://github.com/firebase/firebase-unity-sdk/blob/unity-readme/gha/unity/unity_installer.py#L89). 
 
 **Add a new Unity version support**
 
-1. Select your version from [Unity LTS versions list](https://unity3d.com/unity/qa/lts-releases) and make sure this version can be installed with Unity Hub.
+1. Select your version from [Unity LTS versions list](https://unity3d.com/unity/qa/lts-releases):
+  -   Make sure this version can be installed with Unity Hub. 
+  -   Make sure this version works on you computer first.
+  -   You may need to select different versions for different OS.
 
-2. Generate new JSON string and added it to `UNITY_SETTINGS`:
+2. Generate a JSON string which contains the following information and added it to `UNITY_SETTINGS`:
   -   `Major_version_number`: unity major version number: `2020`, `2021`, etc.
   -   `Full_version_number`: unity full version number. e.g. `2020.3.34f1` for major version `2020`.
   -   `Changeset`: changeset locates at the bottom of this page https://unity3d.com/unity/whats-new/{unity_version}. Note: the version is neither `Major_version_number` nor `Full_version_number`. e.g. https://unity3d.com/unity/whats-new/2020.3.34
   -   `Platform`: Firebase Unity SDK supported platforms. Values of [Android,iOS,tvOS,Windows,macOS,Linux]
-  -   `Modules`:[Unity Hub must been installed] Unity modules that required for certain platform. e.g. ["windows-mono"] module for "Windows" platform. To list avaliable modules, run `"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless help` on your mac machine.
+  -   `Modules`:[Unity Hub must been installed] Unity modules that required for certain platform. e.g. ["windows-mono"] module for "Windows" platform. To list avaliable modules on mac machines, run `"/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" -- --headless help` .
 
       Template:
       ```
