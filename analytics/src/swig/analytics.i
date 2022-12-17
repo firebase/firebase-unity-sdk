@@ -317,9 +317,6 @@ namespace firebase {
 namespace analytics {
     
 %pragma(csharp) modulecode=%{
-  //using Firebase.Analytics.ConsentType;
-  //using Firebase.Analytics.ConsentStatus;
-  //using Firebase.Analytics.SetConsentByPtr;
   /// @brief Sets the applicable end user consent state (e.g., for device
   /// identifiers) for this app on this device.
   ///
