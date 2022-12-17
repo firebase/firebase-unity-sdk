@@ -62,7 +62,7 @@ set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
 
 # iid is needed by messaging to avoid a conflict with functions
 set(FIREBASE_MESSAGING_ANDROID_DEPS
-    "com.google.firebase:firebase-messaging:23.1.0"
+    "com.google.firebase:firebase-messaging:23.1.1"
     "com.google.firebase:firebase-analytics:21.2.0"
     "com.google.firebase:firebase-iid:21.1.0"
 )
