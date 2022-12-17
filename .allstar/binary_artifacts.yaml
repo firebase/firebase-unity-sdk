@@ -1,0 +1,5 @@
+# Ignore reason: Necessary files for build or onboarding tool
+ignorePaths:
+- aar_builder/classes.jar
+- messaging/activity/classes.jar
+- network_request.exe
