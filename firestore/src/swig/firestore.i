@@ -159,8 +159,8 @@ static void SWIG_CSharpSetPendingExceptionFirestore(const char* msg) {
 // Important: `invalid_argument` is a subclass of `logic_error` -- make sure
 // they are checked in order from most to least derived.
 //
-// The catch-all clause is to work around iOS issues where some exception types
-// aren't getting caught correctly.
+// The catch-all clause is to work around iOS and tvOS issues where some
+// exception types aren't getting caught correctly.
 %exception {
   try {
     $action

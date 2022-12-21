@@ -412,7 +412,7 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
   /// If this setting is enabled, it triggers the token registration refresh
   /// immediately. This setting is persisted across app restarts and overrides
   /// the setting "firebase_messaging_auto_init_enabled" specified in your
-  /// Android manifest (on Android) or Info.plist (on iOS).
+  /// Android manifest (on Android) or Info.plist (on iOS and tvOS).
   ///
   /// <p>By default, token registration during initialization is enabled.
   ///
@@ -431,7 +431,7 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
   /// @endcode
   /// @endif
   ///
-  /// or on iOS to your Info.plist:
+  /// or on iOS or tvOS to your Info.plist:
   ///
   /// @if NOT_DOXYGEN
   ///   <key>FirebaseMessagingAutoInitEnabled</key>
@@ -847,8 +847,8 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
 // The following docs are all here instead of the header due to b/35780150.
 
 %csmethodmodifiers firebase::messaging::Notification::title "
-  /// Indicates notification title. This field is not visible on iOS phones
-  /// and tablets.
+  /// Indicates notification title. This field is not visible on tvOS, iOS
+  /// phones and tablets.
   public"
 
 %csmethodmodifiers firebase::messaging::Notification::body "
@@ -865,13 +865,13 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
   /// Supports default, or the filename of a sound resource bundled in the
   /// app.
   ///
-  /// Android sound files must reside in /res/raw/, while iOS sound files
-  /// can be in the main bundle of the client app or in the Library/Sounds
-  /// folder of the app’s data container.
+  /// Android sound files must reside in /res/raw/, while tvOS and iOS sound
+  /// files can be in the main bundle of the client app or in the
+  /// Library/Sounds folder of the app’s data container.
   public"
 
 %csmethodmodifiers firebase::messaging::Notification::badge "
-  /// Indicates the badge on the client app home icon. iOS only.
+  /// Indicates the badge on the client app home icon. iOS and tvOS only.
   public"
 
 %csmethodmodifiers firebase::messaging::Notification::tag "
@@ -892,13 +892,13 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
   /// On Android, if this is set, an activity with a matching intent filter is
   /// launched when user clicks the notification.
   ///
-  /// If set on iOS, corresponds to category in APNS payload.
+  /// If set on iOS or tvOS, corresponds to category in APNS payload.
   public"
 
 %csmethodmodifiers firebase::messaging::Notification::body_loc_key "
   /// Indicates the key to the body string for localization.
   ///
-  /// On iOS, this corresponds to \"loc-key\" in APNS payload.
+  /// On iOS and tvOS, this corresponds to \"loc-key\" in APNS payload.
   ///
   /// On Android, use the key in the app's string resources when populating this
   /// value.
@@ -908,7 +908,7 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
   /// Indicates the string value to replace format specifiers in body string
   /// for localization.
   ///
-  /// On iOS, this corresponds to \"loc-args\" in APNS payload.
+  /// On iOS and tvOS, this corresponds to \"loc-args\" in APNS payload.
   ///
   /// On Android, these are the format arguments for the string resource. For
   /// more information, see [Formatting strings][1].
@@ -920,7 +920,7 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
 %csmethodmodifiers firebase::messaging::Notification::title_loc_key "
   /// Indicates the key to the title string for localization.
   ///
-  /// On iOS, this corresponds to \"title-loc-key\" in APNS payload.
+  /// On iOS and tvOS, this corresponds to \"title-loc-key\" in APNS payload.
   ///
   /// On Android, use the key in the app's string resources when populating this
   /// value.
@@ -930,7 +930,7 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
   /// Indicates the string value to replace format specifiers in title string
   /// for localization.
   ///
-  /// On iOS, this corresponds to \"title-loc-args\" in APNS payload.
+  /// On iOS and tvOS, this corresponds to \"title-loc-args\" in APNS payload.
   ///
   /// On Android, these are the format arguments for the string resource. For
   /// more information, see [Formatting strings][1].
