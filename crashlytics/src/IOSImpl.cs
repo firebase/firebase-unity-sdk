@@ -33,7 +33,7 @@ namespace Firebase.Crashlytics
   }
   
 
-  // Stub implementation that is not used on iOS.
+  // Stub implementation that is not used on iOS or tvOS.
   internal class AndroidImpl : Impl {}
 
   //TODO(b/112043008): These extern symbols aren't available for Android builds.

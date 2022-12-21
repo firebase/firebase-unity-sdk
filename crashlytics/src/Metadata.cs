@@ -22,7 +22,7 @@ namespace Firebase.Crashlytics {
   /// Represents the Unity-specific metadata object that is transformed into JSON.
   ///
   /// Metadata keys are acronyms to save space as there are limits to the maximum size of Keys in
-  /// the Android and iOS SDK.
+  /// the Android, iOS and tvOS SDKs.
   /// </summary>
   internal class Metadata {
     // unityVersion: Version of Unity Engine
