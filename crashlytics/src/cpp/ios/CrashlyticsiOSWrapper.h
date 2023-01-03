@@ -40,7 +40,7 @@ typedef struct Frame {
 // to used to log NSException objects. All safely-reportable NSExceptions are
 // automatically captured by Crashlytics.
 void CLURecordCustomException(const char *name, const char *reason,
-                              Frame *frames, int frameCount);
+                              Frame *frames, int frameCount, bool isOnDemand);
 
 // Returns true when the Crashlytics SDK is initialized.
 bool CLUIsInitialized();
