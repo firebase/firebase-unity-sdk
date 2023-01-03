@@ -30,11 +30,13 @@ namespace Firebase.Crashlytics {
 
     /// <summary>
     /// Whether Crashlytics is set to report uncaught exceptions as fatal.
+    /// Fatal exceptions count towards Crash Free Users and Velocity Alerts.
+    /// It is recommended to enable this for new apps.
     /// <returns>
-    /// true if Crashlytics is set to report uncaught exceptions as fatal, false otherwise
+    /// true if Crashlytics is set to report uncaught exceptions as fatal, false otherwise.
     /// </returns>
     /// </summary>
-    public static bool ReportUncaughtExceptionsAsFatal = false;
+    public static bool ReportUncaughtExceptionsAsFatal { get; set; } = false;
 
     /// <summary>
     /// Checks whether the Crashlytics specific data collection flag has been enabled.
