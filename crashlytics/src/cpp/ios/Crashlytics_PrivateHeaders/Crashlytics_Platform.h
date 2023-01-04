@@ -25,6 +25,7 @@
 @property(nonatomic, strong, nullable) NSString* developmentPlatformName;
 @property(nonatomic, strong, nullable) NSString* developmentPlatformVersion;
 
+- (void)recordOnDemandExceptionModel:(FIRExceptionModel* _Nonnull)exceptionModel;
 @end
 
 void FIRCLSUserLoggingRecordInternalKeyValue(NSString* key, id value);

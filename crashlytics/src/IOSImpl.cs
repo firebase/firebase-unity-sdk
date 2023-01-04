@@ -60,7 +60,7 @@ namespace Firebase.Crashlytics
 
     [DllImport("__Internal")]
     private static extern void CLURecordCustomException(string name, string reason,
-                                                        Frame[] frames, int frameCount);
+                                                        Frame[] frames, int frameCount, bool isOnDemand);
 
     [DllImport("__Internal")]
     private static extern bool CLUIsCrashlyticsCollectionEnabled();
@@ -96,7 +96,12 @@ namespace Firebase.Crashlytics
     public override void LogException(Exception exception)
     {
       var loggedException = LoggedException.FromException(exception);
-      RecordCustomException(loggedException);
+      RecordCustomException(loggedException, false);
+    }
+
+    public override void LogExceptionAsFatal(Exception exception) {
+      var loggedException = LoggedException.FromException(exception);
+      RecordCustomException(loggedException, true);
     }
 
     public override bool IsCrashlyticsCollectionEnabled() {
@@ -108,7 +113,7 @@ namespace Firebase.Crashlytics
     }
 
     // private void RecordCustomException(string name, string reason, string stackTraceString)
-    private void RecordCustomException(LoggedException loggedException) {
+    private void RecordCustomException(LoggedException loggedException, bool isOnDemand) {
       Dictionary<string, string>[] parsedStackTrace = loggedException.ParsedStackTrace;
 
       List<Frame> frames = new List<Frame>();
@@ -121,7 +126,7 @@ namespace Firebase.Crashlytics
         });
       }
 
-      CLURecordCustomException(loggedException.Name, loggedException.Message, frames.ToArray(), frames.Count);
+      CLURecordCustomException(loggedException.Name, loggedException.Message, frames.ToArray(), frames.Count, isOnDemand);
     }
   }
 }

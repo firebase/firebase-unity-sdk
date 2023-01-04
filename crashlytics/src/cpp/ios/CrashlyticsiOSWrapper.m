@@ -38,7 +38,7 @@ NSString *safeCharToNSString(const char *c) {
 
 #pragma mark Main API
 
-void CLURecordCustomException(const char *name, const char *reason, Frame *frames, int frameCount) {
+void CLURecordCustomException(const char *name, const char *reason, Frame *frames, int frameCount, bool isOnDemand) {
   NSString *nameString = safeCharToNSString(name);
   NSString *reasonString = safeCharToNSString(reason);
   NSMutableArray<FIRStackFrame *> *framesArray = [NSMutableArray arrayWithCapacity:frameCount];
@@ -57,6 +57,10 @@ void CLURecordCustomException(const char *name, const char *reason, Frame *frame
     [FIRExceptionModel exceptionModelWithName:nameString reason:reasonString];
   model.stackTrace = framesArray;
 
+  if (isOnDemand) {
+    [[FIRCrashlytics crashlytics] recordOnDemandExceptionModel:model];
+    return;
+  }
   [[FIRCrashlytics crashlytics] recordExceptionModel:model];
 }
 
