@@ -65,7 +65,7 @@ PARAMETERS = {
     "matrix": {
       "unity_versions": ["2020"],
       "build_os": [""],
-      "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, TVOS, PLAYMODE],
+      "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, PLAYMODE],
       "mobile_devices": ["android_target", "ios_target", "simulator_target", "tvos_simulator"],
       "mobile_test_on": ["real"],
 
