@@ -90,7 +90,7 @@ namespace Firebase.Sample.Crashlytics {
       bool result = (bool)isInitializedMethodInfo.Invoke(impl, new object[] {});
       DebugLog("Crashlytics.impl.isSDKInitialized(): " + result);
 
-#if UNITY_ANDROID || UNITY_IOS
+#if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
       return result;
 #else
       // The desktop stub implementation returns false, so expect that.

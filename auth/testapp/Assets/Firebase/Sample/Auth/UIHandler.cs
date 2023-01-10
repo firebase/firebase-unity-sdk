@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if UNITY_IOS
+#if (UNITY_IOS || UNITY_TVOS)
 using UnityEngine.SocialPlatforms.GameCenter;
 #endif
 
@@ -350,7 +350,7 @@ namespace Firebase.Sample.Auth {
     }
 
     public void AuthenticateToGameCenter() {
-      #if UNITY_IOS
+      #if (UNITY_IOS || UNITY_TVOS)
         Social.localUser.Authenticate(success => {
           Debug.Log("Game Center Initialization Complete - Result: " + success);
         });
