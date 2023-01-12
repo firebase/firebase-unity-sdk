@@ -116,6 +116,13 @@ namespace Firebase.Crashlytics
     private void RecordCustomException(LoggedException loggedException, bool isOnDemand) {
       Dictionary<string, string>[] parsedStackTrace = loggedException.ParsedStackTrace;
 
+      if (isOnDemand && parsedStackTrace.Length == 0) {
+        // if for some reason we don't get stack trace from exception, we add current stack trace in
+        var currentStackTrace = System.Environment.StackTrace;
+        LoggedException loggedExceptionWithCurrentStackTrace = new LoggedException(loggedException.Name, loggedException.Message, currentStackTrace);
+        parsedStackTrace = loggedExceptionWithCurrentStackTrace.ParsedStackTrace;
+      }
+
       List<Frame> frames = new List<Frame>();
       foreach (Dictionary<string, string> frame in parsedStackTrace) {
         frames.Add(new Frame {

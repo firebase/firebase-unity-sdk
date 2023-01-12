@@ -143,6 +143,15 @@ namespace Firebase.Crashlytics
 
     public override void LogExceptionAsFatal(Exception exception) {
       var loggedException = LoggedException.FromException(exception);
+      Dictionary<string, string>[] parsedStackTrace = loggedException.ParsedStackTrace;
+      
+      if (parsedStackTrace.Length == 0) {
+        // if for some reason we don't get stack trace from exception, we add current stack trace in
+        var currentStackTrace = System.Environment.StackTrace;
+        LoggedException loggedExceptionWithCurrentStackTrace = new LoggedException(loggedException.Name, loggedException.Message, currentStackTrace);
+        parsedStackTrace = loggedExceptionWithCurrentStackTrace.ParsedStackTrace;
+      }
+  
       StackFrames frames = new StackFrames();
       foreach (Dictionary<string, string> frame in loggedException.ParsedStackTrace) {
         frames.Add(new FirebaseCrashlyticsFrame {
@@ -152,7 +161,7 @@ namespace Firebase.Crashlytics
           lineNumber = frame["line"],
         });
       }
-      // TODO(mrober): Do something for empty stacktrace. Get current stacktrace?
+
       CallInternalMethod(() => {
           crashlyticsInternal.LogExceptionAsFatal(loggedException.Name,
               loggedException.Message, frames);
