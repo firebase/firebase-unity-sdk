@@ -284,6 +284,7 @@ def main(argv):
   timestamp = get_timestamp() if FLAGS.timestamp else ""
 
   testapps = validate_testapps(FLAGS.testapps, config.apis)
+
   platforms = validate_platforms(FLAGS.platforms)
   output_root = os.path.join(root_output_dir, "testapps")
   playmode_tests = []
@@ -325,8 +326,12 @@ def main(argv):
         failures.append(Failure(testapp=testapp, description=build_desc, error_message=str(e)))
         logging.info(str(e))
         continue  # If setup failed, don't try to build. Move to next testapp.
+
       for p in platforms:
         try:
+          if p == _TVOS and testapp == "dynamic_links":
+            logging.info("Skipping dynamic_links on tvOS...")
+            continue
           if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
             p = get_desktop_platform()
           if p == _PLAYMODE:
@@ -449,6 +454,7 @@ def build_testapp(dir_helper, api_config, ios_config, target):
 
   """
   logging.info("Building target %s...", target)
+
   arg_builder = unity_commands.UnityArgBuilder(
       dir_helper.unity_path, dir_helper.unity_project_dir)
   arg_builder.set_log_file(dir_helper.make_log_path("build_" + target))
