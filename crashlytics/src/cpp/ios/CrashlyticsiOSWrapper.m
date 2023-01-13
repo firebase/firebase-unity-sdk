@@ -21,6 +21,7 @@
 #import "CrashlyticsiOSWrapper.h"
 #import "FirebaseCrashlytics.h"
 #import "./Crashlytics_PrivateHeaders/Crashlytics_Platform.h"
+#import "./Crashlytics_PrivateHeaders/ExceptionModel_Platform.h"
 
 @interface FIRCrashlytics ()
 - (BOOL)isCrashlyticsStarted;
@@ -58,6 +59,9 @@ void CLURecordCustomException(const char *name, const char *reason, Frame *frame
   model.stackTrace = framesArray;
 
   if (isOnDemand) {
+    // For on demand exception, we log them as fatal
+    model.onDemand = YES;
+    model.isFatal = YES;
     [[FIRCrashlytics crashlytics] recordOnDemandExceptionModel:model];
     return;
   }
