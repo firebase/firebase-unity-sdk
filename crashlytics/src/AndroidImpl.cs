@@ -145,22 +145,22 @@ namespace Firebase.Crashlytics
     public override void LogExceptionAsFatal(Exception exception) {
       var loggedException = LoggedException.FromException(exception);
       Dictionary<string, string>[] parsedStackTrace = loggedException.ParsedStackTrace;
-      
+
       if (parsedStackTrace.Length == 0) {
         // if for some reason we don't get stack trace from exception, we add current stack trace in
         var currentStackTrace = System.Environment.StackTrace;
         LoggedException loggedExceptionWithCurrentStackTrace = new LoggedException(loggedException.Name, loggedException.Message, currentStackTrace);
         parsedStackTrace = loggedExceptionWithCurrentStackTrace.ParsedStackTrace;
 
-        if (parsedStackTrace.Length > 2) {
-          // remove RecordCustomException and System.Environment.StackTrace frame for fault blame on crashlytics sdk
-          var slicedParsedStackTrace = parsedStackTrace.Skip(2).Take(parsedStackTrace.Length - 2).ToArray();
+        if (parsedStackTrace.Length > 3) {
+          // remove AndroidImpl frames for fault blame on crashlytics sdk
+          var slicedParsedStackTrace = parsedStackTrace.Skip(3).Take(parsedStackTrace.Length - 3).ToArray();
           parsedStackTrace = slicedParsedStackTrace;
         }
       }
-  
+
       StackFrames frames = new StackFrames();
-      foreach (Dictionary<string, string> frame in loggedException.ParsedStackTrace) {
+      foreach (Dictionary<string, string> frame in parsedStackTrace) {
         frames.Add(new FirebaseCrashlyticsFrame {
           library = frame["class"],
           symbol = frame["method"],
