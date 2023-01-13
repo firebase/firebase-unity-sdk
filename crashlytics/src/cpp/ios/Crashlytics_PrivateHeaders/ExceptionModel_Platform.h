@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 //
-//  Crashlytics_Platform.h
+//  Crashlytics_ExceptionModel.h
 //  Crashlytics
 //
 
 #import <FIRCrashlytics.h>
 
-@interface FIRCrashlytics (Platform)
+@interface FIRExceptionModel (Platform)
 
-@property(nonatomic, strong, nullable) NSString* developmentPlatformName;
-@property(nonatomic, strong, nullable) NSString* developmentPlatformVersion;
+@property(nonatomic) BOOL isFatal;
+@property(nonatomic) BOOL onDemand;
 
-- (void)recordOnDemandExceptionModel:(FIRExceptionModel* _Nonnull)exceptionModel;
 @end
-
-void FIRCLSUserLoggingRecordInternalKeyValue(NSString* key, id value);
