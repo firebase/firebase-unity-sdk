@@ -20,6 +20,7 @@ namespace Firebase.Crashlytics
   using System;
   using System.Diagnostics;
   using System.Collections.Generic;
+  using System.Linq;
 
   using UnityEngine;
 
@@ -150,6 +151,12 @@ namespace Firebase.Crashlytics
         var currentStackTrace = System.Environment.StackTrace;
         LoggedException loggedExceptionWithCurrentStackTrace = new LoggedException(loggedException.Name, loggedException.Message, currentStackTrace);
         parsedStackTrace = loggedExceptionWithCurrentStackTrace.ParsedStackTrace;
+
+        if (parsedStackTrace.Length > 2) {
+          // remove RecordCustomException and System.Environment.StackTrace frame for fault blame on crashlytics sdk
+          var slicedParsedStackTrace = parsedStackTrace.Skip(2).Take(parsedStackTrace.Length - 2).ToArray();
+          parsedStackTrace = slicedParsedStackTrace;
+        }
       }
   
       StackFrames frames = new StackFrames();

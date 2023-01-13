@@ -60,8 +60,8 @@ void CLURecordCustomException(const char *name, const char *reason, Frame *frame
 
   if (isOnDemand) {
     // For on demand exception, we log them as fatal
-    model.onDemand = isOnDemand;
-    model.isFatal = fatal;
+    model.onDemand = YES;
+    model.isFatal = YES;
     [[FIRCrashlytics crashlytics] recordOnDemandExceptionModel:model];
     return;
   }
