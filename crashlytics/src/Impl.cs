@@ -35,6 +35,8 @@ namespace Firebase.Crashlytics {
       "Would set user identifier if running on a physical device: {0}";
     private static readonly string LogExceptionString =
       "Would log exception if running on a physical device: {0}";
+    private static readonly string LogExceptionAsFatalString =
+      "Would log exception as fatal if running on a physical device: {0}";
     private static readonly string IsCrashlyticsCollectionEnabledString =
       "Would get Crashlytics data collection if running on a physical device";
     private static readonly string SetCrashlyticsCollectionEnabledString =
@@ -68,6 +70,10 @@ namespace Firebase.Crashlytics {
 
     public virtual void LogException(Exception exception) {
       LogUtil.LogMessage(LogLevel.Debug, String.Format(LogExceptionString, exception));
+    }
+
+    public virtual void LogExceptionAsFatal(Exception exception) {
+      LogUtil.LogMessage(LogLevel.Debug, String.Format(LogExceptionAsFatalString, exception));
     }
 
     public virtual bool IsCrashlyticsCollectionEnabled() {

@@ -20,6 +20,7 @@ namespace Firebase.Crashlytics
   using System;
   using System.Diagnostics;
   using System.Collections.Generic;
+  using System.Linq;
 
   using UnityEngine;
 
@@ -139,6 +140,39 @@ namespace Firebase.Crashlytics
       CallInternalMethod(() => {
           crashlyticsInternal.LogException(loggedException.Name, loggedException.Message, frames);
         }, "LogException");
+    }
+
+    public override void LogExceptionAsFatal(Exception exception) {
+      var loggedException = LoggedException.FromException(exception);
+      Dictionary<string, string>[] parsedStackTrace = loggedException.ParsedStackTrace;
+
+      if (parsedStackTrace.Length == 0) {
+        // if for some reason we don't get stack trace from exception, we add current stack trace in
+        var currentStackTrace = System.Environment.StackTrace;
+        LoggedException loggedExceptionWithCurrentStackTrace = new LoggedException(loggedException.Name, loggedException.Message, currentStackTrace);
+        parsedStackTrace = loggedExceptionWithCurrentStackTrace.ParsedStackTrace;
+
+        if (parsedStackTrace.Length > 3) {
+          // remove AndroidImpl frames for fault blame on crashlytics sdk
+          var slicedParsedStackTrace = parsedStackTrace.Skip(3).Take(parsedStackTrace.Length - 3).ToArray();
+          parsedStackTrace = slicedParsedStackTrace;
+        }
+      }
+
+      StackFrames frames = new StackFrames();
+      foreach (Dictionary<string, string> frame in parsedStackTrace) {
+        frames.Add(new FirebaseCrashlyticsFrame {
+          library = frame["class"],
+          symbol = frame["method"],
+          fileName = frame["file"],
+          lineNumber = frame["line"],
+        });
+      }
+
+      CallInternalMethod(() => {
+          crashlyticsInternal.LogExceptionAsFatal(loggedException.Name,
+              loggedException.Message, frames);
+        }, "LogExceptionAsFatal");
     }
 
     public override bool IsCrashlyticsCollectionEnabled() {

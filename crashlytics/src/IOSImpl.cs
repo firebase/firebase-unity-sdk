@@ -20,6 +20,7 @@ namespace Firebase.Crashlytics
   using System.Runtime.InteropServices;
   using System.Diagnostics;
   using System.Collections.Generic;
+  using System.Linq;
   using UnityEngine;
 
   
@@ -60,7 +61,7 @@ namespace Firebase.Crashlytics
 
     [DllImport("__Internal")]
     private static extern void CLURecordCustomException(string name, string reason,
-                                                        Frame[] frames, int frameCount);
+                                                        Frame[] frames, int frameCount, bool isOnDemand);
 
     [DllImport("__Internal")]
     private static extern bool CLUIsCrashlyticsCollectionEnabled();
@@ -96,7 +97,12 @@ namespace Firebase.Crashlytics
     public override void LogException(Exception exception)
     {
       var loggedException = LoggedException.FromException(exception);
-      RecordCustomException(loggedException);
+      RecordCustomException(loggedException, false);
+    }
+
+    public override void LogExceptionAsFatal(Exception exception) {
+      var loggedException = LoggedException.FromException(exception);
+      RecordCustomException(loggedException, true);
     }
 
     public override bool IsCrashlyticsCollectionEnabled() {
@@ -108,8 +114,21 @@ namespace Firebase.Crashlytics
     }
 
     // private void RecordCustomException(string name, string reason, string stackTraceString)
-    private void RecordCustomException(LoggedException loggedException) {
+    private void RecordCustomException(LoggedException loggedException, bool isOnDemand) {
       Dictionary<string, string>[] parsedStackTrace = loggedException.ParsedStackTrace;
+
+      if (isOnDemand && parsedStackTrace.Length == 0) {
+        // if for some reason we don't get stack trace from exception, we add current stack trace in
+        var currentStackTrace = System.Environment.StackTrace;
+        LoggedException loggedExceptionWithCurrentStackTrace = new LoggedException(loggedException.Name, loggedException.Message, currentStackTrace);
+        parsedStackTrace = loggedExceptionWithCurrentStackTrace.ParsedStackTrace;
+
+        if (parsedStackTrace.Length > 2) {
+          // remove RecordCustomException and System.Environment.StackTrace frame for fault blame on crashlytics sdk
+          var slicedParsedStackTrace = parsedStackTrace.Skip(2).Take(parsedStackTrace.Length - 2).ToArray();
+          parsedStackTrace = slicedParsedStackTrace;
+        }
+      }
 
       List<Frame> frames = new List<Frame>();
       foreach (Dictionary<string, string> frame in parsedStackTrace) {
@@ -121,7 +140,7 @@ namespace Firebase.Crashlytics
         });
       }
 
-      CLURecordCustomException(loggedException.Name, loggedException.Message, frames.ToArray(), frames.Count);
+      CLURecordCustomException(loggedException.Name, loggedException.Message, frames.ToArray(), frames.Count, isOnDemand);
     }
   }
 }

@@ -43,6 +43,8 @@ class CrashlyticsInternal {
   void SetUserId(const char* id);
   void LogException(const char* name, const char* reason,
                     std::vector<firebase::crashlytics::Frame> frames);
+  void LogExceptionAsFatal(const char* name, const char* reason,
+                           std::vector<firebase::crashlytics::Frame> frames);
   bool IsCrashlyticsCollectionEnabled();
   void SetCrashlyticsCollectionEnabled(bool enabled);
 

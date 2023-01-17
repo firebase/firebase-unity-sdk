@@ -94,7 +94,11 @@ namespace Firebase.Crashlytics {
                                             "Exception stack trace:\n" +
                                             "{1}", e.Message, e.StackTrace)
                              );
-      Crashlytics.LogException(e);
+      if (Crashlytics.ReportUncaughtExceptionsAsFatal) {
+        Crashlytics.LogExceptionAsFatal(e);
+      } else {
+        Crashlytics.LogException(e);
+      }
     }
   }
 }
