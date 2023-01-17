@@ -284,7 +284,6 @@ def main(argv):
   timestamp = get_timestamp() if FLAGS.timestamp else ""
 
   testapps = validate_testapps(FLAGS.testapps, config.apis)
-
   platforms = validate_platforms(FLAGS.platforms)
   output_root = os.path.join(root_output_dir, "testapps")
   playmode_tests = []
@@ -456,7 +455,6 @@ def build_testapp(dir_helper, api_config, ios_config, target):
 
   """
   logging.info("Building target %s...", target)
-
   arg_builder = unity_commands.UnityArgBuilder(
       dir_helper.unity_path, dir_helper.unity_project_dir)
   arg_builder.set_log_file(dir_helper.make_log_path("build_" + target))
