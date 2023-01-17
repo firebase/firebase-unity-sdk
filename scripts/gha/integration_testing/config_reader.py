@@ -100,6 +100,7 @@ def read_config(path=None):
           captial_name=api["captial_name"],
           testapp_path=api["testapp_path"],
           plugins=api["plugins"],
+          platforms=api["platforms"],
           bundle_id=api["bundle_id"],
           upm_packages=api.get("upm_packages", None),
           entitlements=api.get("entitlements", None),
@@ -136,6 +137,7 @@ class APIConfig(object):
   captial_name = attr.ib()
   testapp_path = attr.ib()  # Relative path to this testapp's directory
   plugins = attr.ib()  # .unitypackages
+  platforms = attr.ib() # supported platforms
   bundle_id = attr.ib()
   upm_packages = attr.ib()  # Optional package tars for use_local_packages
   entitlements = attr.ib()  # Optional relative path to an entitlements file

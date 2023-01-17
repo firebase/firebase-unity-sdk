@@ -329,8 +329,10 @@ def main(argv):
 
       for p in platforms:
         try:
-          if p == _TVOS and testapp == "dynamic_links":
-            logging.info("Skipping dynamic_links on tvOS...")
+          if p not in api_config.platforms:
+            logging.warning(
+              "Skipping {0} on {1} as it's not in the platform config.".format(
+              testapp, p))
             continue
           if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
             p = get_desktop_platform()
