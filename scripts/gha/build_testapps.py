@@ -325,7 +325,6 @@ def main(argv):
         failures.append(Failure(testapp=testapp, description=build_desc, error_message=str(e)))
         logging.info(str(e))
         continue  # If setup failed, don't try to build. Move to next testapp.
-
       for p in platforms:
         try:
           if p not in api_config.platforms:
