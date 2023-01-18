@@ -327,6 +327,11 @@ def main(argv):
         continue  # If setup failed, don't try to build. Move to next testapp.
       for p in platforms:
         try:
+          if p not in api_config.platforms:
+            logging.warning(
+              "Skipping {0} on {1} as it's not in the platform config.".format(
+              testapp, p))
+            continue
           if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
             p = get_desktop_platform()
           if p == _PLAYMODE:
