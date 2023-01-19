@@ -536,14 +536,10 @@ def patch_android_env(unity_version):
     try:
       # This is a bug from Unity: 
       # https://issuetracker.unity3d.com/issues/android-android-build-fails-when-targeting-sdk-31-and-using-build-tools-31-dot-0-0
-      _run([sdkmanager_path, "--uninstall", "build-tools;31.0.0"], check=True)
+      _run([sdkmanager_path, "--uninstall", "build-tools;31.0.0"], check=False)
       logging.info("Uninstall Android build tool 31.0.0")
     except Exception as e:
       logging.info(str(e))
-
-  # check if android 33 is intalled
-  logging.info("Checking for platforms;android-33")
-  _run([sdkmanager_path, "--list_installed"], check=True)
 
   try:
     # The platform android-33 includes libraries that were built with Java 11, and require a newer version of gradle
@@ -551,28 +547,17 @@ def patch_android_env(unity_version):
     # If this continues to be a problem, this logic might need to be smarter, to remove all versions newer than 32,
     # but currently the GitHub runners have 33 as their max.
     logging.info("Uninstall Android platform android-33")
-    _run([sdkmanager_path, "--uninstall", "platforms;android-33"], check=True)
+    _run([sdkmanager_path, "--uninstall", "platforms;android-33", "platforms;android-33-ext4"], check=False)
   except Exception as e:
     logging.exception("Failed to uninstall Android platform android-33")
 
-  # after single uninstall, check if android 33 is intalled
-  logging.info("Checking for platforms;android-33")
-  _run([sdkmanager_path, "--list_installed"], check=True)
-
   try:
-    # The platform android-33 includes libraries that were built with Java 11, and require a newer version of gradle
-    # than Unity comes with. Note this only happens when using minification.
-    # If this continues to be a problem, this logic might need to be smarter, to remove all versions newer than 32,
-    # but currently the GitHub runners have 33 as their max.
-    logging.info("Uninstall Android platform android-33-ext4")
-    _run([sdkmanager_path, "--uninstall", "platforms;android-33-ext4"], check=True)
+    # List the installed packages to make it easier to notice if any incompatible packages are present.
+    logging.info("Listing installed sdks")
+    _run([sdkmanager_path, "--list_installed"], check=False)
   except Exception as e:
-    logging.exception("Failed to uninstall Android platform android-33-ext4")
-  
-  # after uninstalls, check if android 33 is intalled
-  logging.info("Checking for platforms;android-33")
-  _run([sdkmanager_path, "--list_installed"], check=True)
-    
+    logging.info(str(e))
+
   os.environ["UNITY_ANDROID_SDK"]=os.environ["ANDROID_HOME"]
   os.environ["UNITY_ANDROID_NDK"]=os.environ["ANDROID_NDK_HOME"]
   os.environ["UNITY_ANDROID_JDK"]=os.environ["JAVA_HOME"]
