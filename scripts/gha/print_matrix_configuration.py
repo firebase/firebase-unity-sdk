@@ -170,10 +170,8 @@ def filter_non_desktop_platform(platform):
 
 
 def filter_build_platforms(platforms):
-  print("FilterBuildPlatforms: " + platforms)
   build_platforms = []
   build_platforms.extend(filter_non_desktop_platform(platforms))
-  print("build_platforms: ", build_platforms)
   # testapps from different desktop platforms are built in one job.
   desktop_platforms = ','.join(list(filter(lambda p: p in platforms, [WINDOWS, MACOS, LINUX])))
   if desktop_platforms:
@@ -206,14 +204,13 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
   #   "os":"macos-latest",
   #   "ios_sdk":"real"
   # }
-  print("Matrix type: " + matrix_type)
+
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
   if matrix_type: platforms = filter_build_platforms(get_value("integration_tests", matrix_type, "platforms"))
   else: platforms = filter_build_platforms(platforms)
   if matrix_type: build_os = get_value("integration_tests", matrix_type, "build_os")
   if matrix_type: ios_sdk = get_value("integration_tests", matrix_type, "mobile_test_on")
 
-  print("Final platforms: ", platforms)
   # generate base matrix: combinations of (unity_versions, platforms, build_os)
   l = list(itertools.product(unity_versions, platforms, build_os))
   if not l: return ""
@@ -235,7 +232,6 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
     else:
       # for Desktop, Android platforms, set value "NA" for ios_sdk setting
       matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": "NA"})
-  print("final matrix: ", matrix)      
   return matrix
 
 
