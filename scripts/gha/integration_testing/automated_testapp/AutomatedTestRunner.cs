@@ -40,6 +40,8 @@ namespace Firebase.Sample {
     private int failedTestsCount = 0;
     // Descriptions of failing tests.
     private List<string> failingTestDescriptions = new List<string>();
+    // Warnings to print.
+    private List<string> warningsToPrint = new List<string>();
 
     // If a test takes longer to run than the timeout, it will be skipped and considered failed.
     // The unit is seconds, used by Unity.
@@ -50,7 +52,8 @@ namespace Firebase.Sample {
     private float endTime;
 
     private AutomatedTestRunner(Func<Task>[] testsToRun, TestLabManager testLabManager,
-                                Action<string> logFunc = null, string[] testNames = null) {
+                                Action<string> logFunc = null, string[] testNames = null,
+                                int maxAttempts = 1) {
       LogFunc = logFunc != null ? logFunc : UnityEngine.Debug.Log;
       Finished = false;
       TestTimeoutSeconds = 60.0f;
@@ -62,7 +65,7 @@ namespace Firebase.Sample {
         if (testNames != null && i < testNames.Length) {
           testName = testNames[i];
         }
-        AddTestCase(testsToRun[i], testName);
+        AddTestCase(testsToRun[i], testName, maxAttempts);
       }
     }
 
@@ -73,9 +76,10 @@ namespace Firebase.Sample {
     // Static factory method for the test runner. Creates an instance and sets up
     // the environment for testing.
     public static AutomatedTestRunner CreateTestRunner(
-      Func<Task>[] testsToRun, Action<string> logFunc = null, string[] testNames = null) {
+      Func<Task>[] testsToRun, Action<string> logFunc = null, string[] testNames = null,
+      int maxAttempts = 1) {
       TestLabManager testLabManager = InitializeTestLabManager();
-      return new AutomatedTestRunner(testsToRun, testLabManager, logFunc, testNames);
+      return new AutomatedTestRunner(testsToRun, testLabManager, logFunc, testNames, maxAttempts);
     }
 
     public void FailTest(string reason) {
@@ -124,7 +128,12 @@ namespace Firebase.Sample {
                                 "{2}{3}", passedTestsCount, failedTestsCount,
                                 failedTestsCount > 0 ? "Failing Tests:\n" : "",
                                 String.Join("\n", failingTestDescriptions.ToArray())));
-          failingTestDescriptions = new List<string>();
+          failingTestDescriptions.Clear();
+          // Print out any warnings
+          if (warningsToPrint.Count > 0) {
+            LogFunc(String.Format("WARNINGS: {0}\n{1}", warningsToPrint.Count,
+                                  String.Join("\n", warningsToPrint.ToArray())));
+          }
           Finished = true;
           endTime = Time.time;
         }
@@ -136,25 +145,20 @@ namespace Firebase.Sample {
         CurrentRunningTest.Update();
 
         // If the test is finished, log the results
-        switch (CurrentRunningTest.Status) {
-          case AutomatedTestStatus.Succeeded:
-            CurrentRunningTest.LogResult();
+        if (CurrentRunningTest.IsFinished) {
+          CurrentRunningTest.LogResult();
+          CurrentRunningTest.CollectWarnings(warningsToPrint);
+          if (CurrentRunningTest.Status == AutomatedTestStatus.Succeeded) {
             ++passedTestsCount;
-            break;
-          case AutomatedTestStatus.Failed:
-          case AutomatedTestStatus.TimedOut:
-            CurrentRunningTest.LogResult();
+          } else {
             ++failedTestsCount;
             failingTestDescriptions.Add(CurrentRunningTest.Description);
-            break;
-          default:
-            // Assume the test is still running
-            return;
+          }
         }
       }
 
       // If the current test is done, start up the next one.
-      if (CurrentRunningTest == null || CurrentRunningTest.Status != AutomatedTestStatus.Running) {
+      if (CurrentRunningTest == null || CurrentRunningTest.IsFinished) {
         StartNextTest();
       }
     }
@@ -212,156 +216,189 @@ namespace Firebase.Sample {
     }
   }
 
-public enum AutomatedTestStatus {
-  NotStarted,
-  Running,
-  Succeeded,
-  Failed,
-  TimedOut,
-}
-
-public class AutomatedTestCase {
-  // The test runner that owns this test case
-  public AutomatedTestRunner Runner { get; private set; }
-  public Action<string> LogFunc { get { return Runner?.LogFunc; } }
-  // The test to be run.
-  Func<Task> testToRun;
-  // List of exceptions thrown in the currently running test.
-  private List<Exception> testExceptions = new List<Exception>();
-  // Whether the currently running test is expected to fail.
-  public bool postTestIgnoredFailureCheckEnabled = true;
-
-  private string customName = null;
-
-  private int maxAttempts = 1;
-  private int currentAttempt = 1;
-
-  // Used to measure the time currently elapsed by the test, to see if the test timed out.
-  private float startTime = 0.0f;
-  // If it timed out, how much time had elapsed.
-  private float timeOutTime;
-
-  // Name and index of the current running test function.
-  public string Description { get; private set; }
-  // The Task that represents the currently running test.
-  public Task Result { get; private set; }
-  public AutomatedTestStatus Status { get; private set; }
-  public bool TookMultipleAttempts { get; private set; }
-
-  public AutomatedTestCase(AutomatedTestRunner runner, Func<Task> test, string customName = null, int maxAttempts = 1) {
-    Runner = runner;
-    testToRun = test;
-    this.customName = customName;
-    this.maxAttempts = maxAttempts;
-    Status = AutomatedTestStatus.NotStarted;
+  public enum AutomatedTestStatus {
+    NotStarted,
+    Running,
+    Succeeded,
+    Failed,
+    TimedOut,
   }
 
-  public void StartTest(int index, int testCount) {
-    // Set the Description, based on the name and parameters
-    string testName = testToRun.Method.Name;
-    if (customName != null) {
-      testName = customName;
-    }
-    Description = String.Format("{0} ({1}/{2})", testName,
-                                index + 1, testCount);
+  public class AutomatedTestCase {
+    // The test runner that owns this test case
+    public AutomatedTestRunner Runner { get; private set; }
+    public Action<string> LogFunc { get { return Runner?.LogFunc; } }
+    // The test to be run.
+    Func<Task> testToRun;
+    // List of exceptions thrown in the currently running test.
+    private List<Exception> testExceptions = new List<Exception>();
+    // Whether the currently running test is expected to fail.
+    public bool postTestIgnoredFailureCheckEnabled = true;
 
-    // Mark that the test is running for outside observers.
-    Status = AutomatedTestStatus.Running;
-    StartTestInternal();
-  }
+    private string customName = null;
 
-  private void StartTestInternal() {
-    // Log that the test is starting (also, which attempt this is, if multiple)
-    string attemptDesc = "";
-    if (currentAttempt > 1) {
-      attemptDesc = " (attempt " + currentAttempt + " of " + maxAttempts + ")";
-    }
-    LogFunc("Test " + Description + " started..." + attemptDesc);
-    startTime = Time.time;
+    private int maxAttempts = 1;
+    private int currentAttempt = 1;
 
-    // Call the function to start the test
-    if (testToRun != null) {
-      try {
-        Result = testToRun();
-      } catch (Exception e) {
-        Result = Task.FromException(e);
+    // Used to measure the time currently elapsed by the test, to see if the test timed out.
+    private float startTime = 0.0f;
+    // If it timed out, how much time had elapsed.
+    private float timeOutTime;
+
+    // Name and index of the current running test function.
+    public string Description { get; private set; }
+    // The Task that represents the currently running test.
+    public Task Result { get; private set; }
+    public AutomatedTestStatus Status { get; private set; }
+    public bool TookMultipleAttempts { get; private set; }
+
+    public bool IsFinished { get {
+        return Status == AutomatedTestStatus.Succeeded ||
+          Status == AutomatedTestStatus.Failed ||
+          Status == AutomatedTestStatus.TimedOut;
       }
     }
-  }
 
-  public void FailTest(string reason) {
-    // Save the reason as an exception
-    var e = new Exception(reason);
-    testExceptions.Add(e);
-    throw e;
-  }
-
-  private bool TryRetryTest() {
-    if (currentAttempt < maxAttempts) {
-      testExceptions.Clear();
-      TookMultipleAttempts = true;
-      currentAttempt++;
-      StartTestInternal();
-      return true;
+    public AutomatedTestCase(AutomatedTestRunner runner, Func<Task> test, string customName = null, int maxAttempts = 1) {
+      Runner = runner;
+      testToRun = test;
+      this.customName = customName;
+      // Use reflection to check for the attempts attribute first
+      System.Reflection.MethodInfo mInfo = test.Method;
+      if (mInfo != null) {
+        AutomatedTestAttemptsAttribute attr =
+          (AutomatedTestAttemptsAttribute)Attribute.GetCustomAttribute(mInfo, typeof(AutomatedTestAttemptsAttribute));
+        if (attr != null) {
+          maxAttempts = attr.attemptAmount;
+        }
+      }
+      this.maxAttempts = maxAttempts;
+      Status = AutomatedTestStatus.NotStarted;
     }
-    return false;
-  }
 
-  public void Update() {
-    // Check the Task to determine if it is finished
-    if (Status == AutomatedTestStatus.Running) {
-      if (Result == null || Result.IsCompleted || Result.IsCanceled || Result.IsFaulted) {
-        // Determine if the test failed
-        bool failed = (Result == null || Result.IsCanceled || Result.IsFaulted);
-        // If it gathered exceptions, and they weren't expected, fail
-        failed |= (postTestIgnoredFailureCheckEnabled && testExceptions.Count > 0);
+    public void StartTest(int index, int testCount) {
+      // Set the Description, based on the name and parameters
+      string testName = testToRun.Method.Name;
+      if (customName != null) {
+        testName = customName;
+      }
+      Description = String.Format("{0} ({1}/{2})", testName,
+                                  index + 1, testCount);
 
-        // If it failed, attempt to retry it
-        if (failed) {
+      // Mark that the test is running for outside observers.
+      Status = AutomatedTestStatus.Running;
+      StartTestInternal();
+    }
+
+    private void StartTestInternal() {
+      // Log that the test is starting (also, which attempt this is, if multiple)
+      string attemptDesc = "";
+      if (currentAttempt > 1) {
+        attemptDesc = " (attempt " + currentAttempt + " of " + maxAttempts + ")";
+      }
+      LogFunc("Test " + Description + " started..." + attemptDesc);
+      startTime = Time.time;
+
+      // Call the function to start the test
+      if (testToRun != null) {
+        try {
+          Result = testToRun();
+        } catch (Exception e) {
+          Result = Task.FromException(e);
+        }
+      }
+    }
+
+    public void FailTest(string reason) {
+      // Save the reason as an exception
+      var e = new Exception(reason);
+      testExceptions.Add(e);
+      throw e;
+    }
+
+    private bool TryRetryTest() {
+      if (currentAttempt < maxAttempts) {
+        testExceptions.Clear();
+        TookMultipleAttempts = true;
+        currentAttempt++;
+        StartTestInternal();
+        return true;
+      }
+      return false;
+    }
+
+    public void Update() {
+      // Check the Task to determine if it is finished
+      if (Status == AutomatedTestStatus.Running) {
+        if (Result == null || Result.IsCompleted || Result.IsCanceled || Result.IsFaulted) {
+          // Determine if the test failed
+          bool failed = (Result == null || Result.IsCanceled || Result.IsFaulted);
+          // If it gathered exceptions, and they weren't expected, fail
+          failed |= (postTestIgnoredFailureCheckEnabled && testExceptions.Count > 0);
+
+          // If it failed, attempt to retry it
+          if (failed) {
+            if (TryRetryTest()) {
+              return;
+            }
+          }
+          // Otherwise, finish the test
+          Status = failed ? AutomatedTestStatus.Failed : AutomatedTestStatus.Succeeded;
+        } else if (Time.time - startTime > Runner.TestTimeoutSeconds) {
+          // The test has timed out
+          // Try to restart it
           if (TryRetryTest()) {
             return;
           }
+          // Otherwise, finish the test
+          timeOutTime = Time.time - startTime;
+          Status = AutomatedTestStatus.TimedOut;
         }
-        // Otherwise, finish the test
-        Status = failed ? AutomatedTestStatus.Failed : AutomatedTestStatus.Succeeded;
-      } else if (Time.time - startTime > Runner.TestTimeoutSeconds) {
-        // The test has timed out
-        // Try to restart it
-        if (TryRetryTest()) {
-          return;
+      }
+    }
+
+    public void LogResult() {
+      if (Status == AutomatedTestStatus.Succeeded) {
+        LogFunc("Test " + Description + " passed.");
+      } else if (Status == AutomatedTestStatus.Failed) {
+        if (Result == null) {
+          LogFunc(String.Format("Test {0} failed.\n\n" +
+                                "No task was returned by the test.",
+                                Description));
+        } else if (Result.IsFaulted) {
+          LogFunc(String.Format("Test {0} failed!\n\n" +
+                                "Exception message: {1}",
+                                Description,
+                                Result.Exception.Flatten().ToString()));
+        } else {
+          // Assume exceptions were thrown, causing the failure
+          LogFunc(String.Format("Test {0} failed with {1} exception(s).\n\n",
+                                Description, testExceptions.Count.ToString()));
+          for (int i = 0; i < testExceptions.Count; ++i) {
+            LogFunc(String.Format("Exception message ({0}): {1}\n\n", (i + 1).ToString(),
+                                  testExceptions[i].ToString()));
+          }
         }
-        // Otherwise, finish the test
-        timeOutTime = Time.time - startTime;
-        Status = AutomatedTestStatus.TimedOut;
+      } else if (Status == AutomatedTestStatus.TimedOut) {
+        LogFunc("Test " + Description + " timed out, elapsed time: " + timeOutTime);
+      }
+    }
+
+    public void CollectWarnings(List<string> warnings) {
+      // If multiple attempts were taked, add a warning
+      if (TookMultipleAttempts) {
+        warnings.Add(String.Format("Test {0} took {1} of {2} attempts to pass.",
+                                   Description, currentAttempt, maxAttempts));
       }
     }
   }
 
-  public void LogResult() {
-    if (Status == AutomatedTestStatus.Succeeded) {
-      LogFunc("Test " + Description + " passed.");
-    } else if (Status == AutomatedTestStatus.Failed) {
-      if (Result == null) {
-        LogFunc(String.Format("Test {0} failed.\n\n" +
-                              "No task was returned by the test.",
-                              Description));
-      } else if (Result.IsFaulted) {
-        LogFunc(String.Format("Test {0} failed!\n\n" +
-                              "Exception message: {1}",
-                              Description,
-                              Result.Exception.Flatten().ToString()));
-      } else {
-        // Assume exceptions were thrown, causing the failure
-        LogFunc(String.Format("Test {0} failed with {1} exception(s).\n\n",
-                              Description, testExceptions.Count.ToString()));
-        for (int i = 0; i < testExceptions.Count; ++i) {
-          LogFunc(String.Format("Exception message ({0}): {1}\n\n", (i + 1).ToString(),
-                                testExceptions[i].ToString()));
-        }
-      }
-    } else if (Status == AutomatedTestStatus.TimedOut) {
-      LogFunc("Test " + Description + " timed out, elapsed time: " + timeOutTime);
+  [AttributeUsage(AttributeTargets.Method)]
+  public class AutomatedTestAttemptsAttribute : Attribute {
+    public int attemptAmount;
+
+    public AutomatedTestAttemptsAttribute(int attempts) {
+      attemptAmount = attempts;
     }
   }
-}
 }
