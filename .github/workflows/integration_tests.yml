@@ -14,7 +14,7 @@ on:
         description: 'Build OS (value: windows-latest, macos-latest. Left empty will use macos-latest for iOS platform, windows-latest for the rest)'
       platforms:
         description: 'CSV of Android,iOS,Windows,macOS,Linux,Playmode'
-        default: 'Android,iOS,Windows,macOS,Linux,Playmode'
+        default: 'Android,iOS,tvOS,Windows,macOS,Linux,Playmode'
         required: true
       apis:
         description: 'CSV of apis to build and test'
