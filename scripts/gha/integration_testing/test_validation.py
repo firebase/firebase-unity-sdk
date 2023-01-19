@@ -230,6 +230,7 @@ def summarize_test_results(tests, platform, summary_dir, file_name="summary.log"
       if hasattr(test, "raw_result_link") and test.raw_result_link:
         summary.append("raw_result_link: %s" % test.raw_result_link)
       summary.append(results.summary)
+  summary.append("\n::warning This is a test warning\n")
   summary.append(
       "%d TESTAPPS TOTAL: %d PASSES, %d FAILURES, %d ERRORS"
       % (len(tests), len(successes), len(failures), len(errors)))
