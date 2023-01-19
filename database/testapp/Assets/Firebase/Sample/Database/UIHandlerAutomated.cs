@@ -31,33 +31,11 @@ namespace Firebase.Sample.Database {
 
     static Thread mainThread = null;
 
-    int fakeTestAttempts = 0;
-    [Firebase.Sample.AutomatedTestAttempts(3)]
-    public Task FakeTest() {
-      ++fakeTestAttempts;
-      if (fakeTestAttempts == 3) {
-        return Task.CompletedTask;
-      }
-      return null;
-    }
-
-    int fakeTestAttempts2 = 0;
-    public Task FakeTest2() {
-      ++fakeTestAttempts2;
-      if (fakeTestAttempts2 == 3) {
-        return Task.CompletedTask;
-      }
-      return null;
-    }
-
     protected override void Start() {
       mainThread = Thread.CurrentThread;
       Func<Task>[] tests = {
-        FakeTest,
-        FakeTest2,
-
         TestDataSnapshot,
-/*
+
         TestDbRefParent,
         TestDbRefRoot,
         TestDbRefChild,
@@ -118,12 +96,11 @@ namespace Firebase.Sample.Database {
         TestLogLevel,
 
         TestSnapshotWithCoroutinesChild,
-        TestSnapshotWithCoroutinesChildren,*/
+        TestSnapshotWithCoroutinesChildren,
       };
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
-        logFunc: DebugLog,
-        maxAttempts: 5
+        logFunc: DebugLog
       );
 
       DebugLog("NOTE: Some API calls report failures using UnityEngine.Debug.LogError which will " +
