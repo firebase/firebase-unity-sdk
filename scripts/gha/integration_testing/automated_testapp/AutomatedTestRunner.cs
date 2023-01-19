@@ -387,7 +387,7 @@ namespace Firebase.Sample {
     public void CollectWarnings(List<string> warnings) {
       // If multiple attempts were taked, add a warning
       if (TookMultipleAttempts) {
-        warnings.Add(String.Format("Test {0} took {1} of {2} attempts to pass.",
+        warnings.Add(String.Format("::warning Test {0} took {1} of {2} attempts to pass.",
                                    Description, currentAttempt, maxAttempts));
       }
     }
