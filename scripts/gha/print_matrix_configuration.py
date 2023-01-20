@@ -59,13 +59,12 @@ WINDOWS_RUNNER = "windows-latest"
 MACOS_RUNNER = "macos-latest"
 LINUX_RUNNER = "ubuntu-latest"
 
-# TODO @drsanta add TVOS to the platforms once the integration tests can be run on tvOS.
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
       "unity_versions": ["2020"],
       "build_os": [""],
-      "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, PLAYMODE],
+      "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, TVOS, PLAYMODE],
       "mobile_devices": ["android_target", "ios_target", "simulator_target", "tvos_simulator"],
       "mobile_test_on": ["real"],
 
