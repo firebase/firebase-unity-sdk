@@ -11,10 +11,10 @@ namespace Firebase.Sample {
     public Action<string> LogFunc { get; set; }
     // The index of the currently running test.
     private int currentTestIndex = -1;
+    // Has the Runner started executing the test cases.
     private bool startedExecution = false;
-
+    // List of test cases to run.
     private List<AutomatedTestCase> tests = null;
-
     // Have all the tests been run and finished.
     public bool Finished { get; private set; }
 
@@ -385,9 +385,9 @@ namespace Firebase.Sample {
     }
 
     public void CollectWarnings(List<string> warnings) {
-      // If multiple attempts were taked, add a warning
+      // Add a warning if multiple attempts were made.
       if (TookMultipleAttempts) {
-        warnings.Add(String.Format("Test {0} took {1} of {2} attempts to pass.",
+        warnings.Add(String.Format("Test {0} took {1} of {2} attempts to pass (Possible Flake).",
                                    Description, currentAttempt, maxAttempts));
       }
     }
