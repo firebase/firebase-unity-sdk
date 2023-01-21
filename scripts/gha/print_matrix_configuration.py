@@ -59,7 +59,6 @@ WINDOWS_RUNNER = "windows-latest"
 MACOS_RUNNER = "macos-latest"
 LINUX_RUNNER = "ubuntu-latest"
 
-# TODO @drsanta add TVOS to the platforms once the integration tests can be run on tvOS.
 PARAMETERS = {
   "integration_tests": {
     "matrix": {

@@ -62,6 +62,11 @@ METHOD_LOOKUP_DEFINITION(firebase_crashlytics,
                          CRASHLYTICS_METHODS, CRASHLYTICS_FIELDS)
 
 // clang-format off
+#define CRASHLYTICS_CORE_METHODS(X)                                          \
+  X(LogFatalException, "logFatalException",                                  \
+    "(Ljava/lang/Throwable;)V",                                              \
+    util::kMethodTypeInstance)
+
 #define CRASHLYTICS_CORE_FIELDS(X)                                           \
   X(DataCollectionArbiter, "dataCollectionArbiter",                          \
   "Lcom/google/firebase/crashlytics/internal/common/DataCollectionArbiter;", \
@@ -69,12 +74,13 @@ METHOD_LOOKUP_DEFINITION(firebase_crashlytics,
 
 // clang-format on
 METHOD_LOOKUP_DECLARATION(crashlytics_core,
-                          METHOD_LOOKUP_NONE, CRASHLYTICS_CORE_FIELDS)
+                          CRASHLYTICS_CORE_METHODS,
+                          CRASHLYTICS_CORE_FIELDS)
 METHOD_LOOKUP_DEFINITION(
     crashlytics_core,
     PROGUARD_KEEP_CLASS
     "com/google/firebase/crashlytics/internal/common/CrashlyticsCore",
-    METHOD_LOOKUP_NONE, CRASHLYTICS_CORE_FIELDS)
+    CRASHLYTICS_CORE_METHODS, CRASHLYTICS_CORE_FIELDS)
 
 // clang-format off
 #define CRASHLYTICS_DATA_COLLECTION_METHODS(X)                         \
@@ -144,6 +150,7 @@ bool cached_data_collection_enabled_ = false;
 
 CrashlyticsInternal::CrashlyticsInternal(App* app) {
   data_collection_obj_ = nullptr;
+  core_ = nullptr;
   obj_ = nullptr;
   java_vm_ = app->java_vm();
 
@@ -188,6 +195,7 @@ CrashlyticsInternal::CrashlyticsInternal(App* app) {
   env->DeleteLocalRef(application_context);
   assert(data_collection_obj != nullptr);
   data_collection_obj_ = env->NewGlobalRef(data_collection_obj);
+  core_ = env->NewGlobalRef(core);
   env->DeleteLocalRef(data_collection_obj);
   env->DeleteLocalRef(core);
 
@@ -212,6 +220,10 @@ CrashlyticsInternal::~CrashlyticsInternal() {
     env->DeleteGlobalRef(data_collection_obj_);
     data_collection_obj_ = nullptr;
   }
+  if (core_) {
+    env->DeleteGlobalRef(core_);
+    core_ = nullptr;
+  }
   Terminate();
   java_vm_ = nullptr;
 
@@ -227,6 +239,7 @@ bool CrashlyticsInternal::Initialize(JNIEnv* env, jobject activity) {
     if (!(firebase_crashlytics::CacheMethodIds(env, activity) &&
           firebase_crashlytics::CacheFieldIds(env, activity) &&
           firebase_crashlytics_ndk::CacheMethodIds(env, activity) &&
+          crashlytics_core::CacheMethodIds(env, activity) &&
           crashlytics_core::CacheFieldIds(env, activity) &&
           crashlytics_data_collection::CacheMethodIds(env, activity) &&
           java_exception::CacheMethodIds(env, activity) &&
@@ -337,6 +350,29 @@ void CrashlyticsInternal::LogException(
       exception_object);
   util::LogException(env, kLogLevelError,
                      "Crashlytics::LogException() failed");
+  env->DeleteLocalRef(exception_object);
+}
+
+void CrashlyticsInternal::LogExceptionAsFatal(
+    const char* name, const char* reason,
+    std::vector<firebase::crashlytics::Frame> frames) {
+  if (!cached_data_collection_enabled_) {
+    return;
+  }
+  JNIEnv* env = util::GetThreadsafeJNIEnv(java_vm_);
+
+  std::string message(name);
+  message += EXCEPTION_MESSAGE_SEPARATOR;
+  message += reason;
+
+  jobject exception_object = BuildJavaException(message, frames);
+
+  env->CallVoidMethod(
+      core_,
+      crashlytics_core::GetMethodId(crashlytics_core::kLogFatalException),
+      exception_object);
+  util::LogException(env, kLogLevelError,
+                     "Crashlytics::LogExceptionAsFatal() failed");
   env->DeleteLocalRef(exception_object);
 }
 

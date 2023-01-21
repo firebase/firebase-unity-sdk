@@ -41,6 +41,10 @@ void CrashlyticsInternal::LogException(
     const char* name, const char* reason,
     std::vector<firebase::crashlytics::Frame> frames) {}
 
+void CrashlyticsInternal::LogExceptionAsFatal(
+    const char* name, const char* reason,
+    std::vector<firebase::crashlytics::Frame> frames) {}
+
 bool CrashlyticsInternal::IsCrashlyticsCollectionEnabled() { return false; }
 
 void CrashlyticsInternal::SetCrashlyticsCollectionEnabled(bool enabled) {}

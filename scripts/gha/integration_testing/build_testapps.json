@@ -6,6 +6,7 @@
       "captial_name": "Analytics",
       "bundle_id": "com.google.firebase.unity.analytics.testapp",
       "testapp_path": "analytics/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseAnalytics.unitypackage"
       ],
@@ -22,6 +23,7 @@
       "captial_name": "Auth",
       "bundle_id": "com.google.FirebaseUnityAuthTestApp.dev",
       "testapp_path": "auth/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseAuth.unitypackage"
       ],
@@ -39,6 +41,7 @@
       "captial_name": "Crashlytics",
       "bundle_id": "com.google.firebase.unity.crashlytics.testapp",
       "testapp_path": "crashlytics/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseCrashlytics.unitypackage"
       ],
@@ -55,6 +58,7 @@
       "captial_name": "Database",
       "bundle_id": "com.google.firebase.unity.database.testapp",
       "testapp_path": "database/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseDatabase.unitypackage"
       ],
@@ -72,6 +76,7 @@
       "captial_name": "DynamicLinks",
       "bundle_id": "com.google.FirebaseUnityDynamicLinksTestApp.dev",
       "testapp_path": "dynamic_links/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseDynamicLinks.unitypackage"
       ],
@@ -89,6 +94,7 @@
       "captial_name": "Firestore",
       "bundle_id": "com.google.firebase.firestore.unity.testapp",
       "testapp_path": "firestore/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseFirestore.unitypackage",
         "FirebaseAuth.unitypackage"
@@ -108,6 +114,7 @@
       "captial_name": "Functions",
       "bundle_id": "com.google.firebase.unity.functions.testapp",
       "testapp_path": "functions/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Desktop"],
       "plugins": [
         "FirebaseFunctions.unitypackage",
         "FirebaseAuth.unitypackage"
@@ -126,6 +133,7 @@
       "captial_name": "Installations",
       "bundle_id": "com.google.firebase.unity.fis.testapp",
       "testapp_path": "installations/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseInstallations.unitypackage"
       ],
@@ -142,6 +150,7 @@
       "captial_name": "Messaging",
       "bundle_id": "com.google.FirebaseUnityMessagingTestApp.dev",
       "testapp_path": "messaging/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseMessaging.unitypackage"
       ],
@@ -159,6 +168,7 @@
       "captial_name": "RemoteConfig",
       "bundle_id": "com.google.firebase.unity.remoteconfig.testapp",
       "testapp_path": "remote_config/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseRemoteConfig.unitypackage"
       ],
@@ -175,6 +185,7 @@
       "captial_name": "Storage",
       "bundle_id": "com.google.firebase.unity.storage.testapp",
       "testapp_path": "storage/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseStorage.unitypackage"
       ],

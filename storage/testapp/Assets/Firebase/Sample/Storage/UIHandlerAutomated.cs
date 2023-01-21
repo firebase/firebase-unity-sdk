@@ -17,12 +17,12 @@ namespace Firebase.Sample.Storage {
 
     private Firebase.Sample.AutomatedTestRunner testRunner;
 
-#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#if !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
     // Storage bucket (without the scheme) extracted from MyStorageBucket.
     private string storageBucket;
     // Manually create the default app on desktop so that it's possible to specify the storage bucket.
     private FirebaseApp defaultApp;
-#endif  // !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
 
     // Metadata to upload to the test file.
     private string METADATA_STRING_NON_CUSTOM_ONLY =
@@ -117,12 +117,18 @@ namespace Firebase.Sample.Storage {
         TestUploadBytesSmallFileThenUpdateMetadata,
         TestUploadStreamLargeFile,
         TestUploadStreamSmallFile,
+#if !(UNITY_TVOS)
+        // Tests which require file access don't work on tvOS.
         TestUploadFromFileLargeFile,
         TestUploadFromFileSmallFile,
+#endif
         TestUploadFromNonExistantFile,
         TestUploadBytesWithCancelation,
         TestUploadStreamWithCancelation,
+#if !(UNITY_TVOS)
+        // Tests which require file access don't work on tvOS.
         TestUploadFromFileWithCancelation,
+#endif
         TestUploadSmallFileGetDownloadUrl,
         TestGetDownloadUrlNonExistantFile,
         TestUploadSmallFileGetMetadata,
@@ -137,9 +143,12 @@ namespace Firebase.Sample.Storage {
         TestUploadSmallFileAndDownloadUsingStreamCallback,
         TestUploadLargeFileAndDownloadUsingStreamCallback,
         TestUploadLargeFileAndDownloadUsingStreamCallbackWithCancelation,
+#if !(UNITY_TVOS)
+        // Tests which require file access don't work on tvOS.
         TestUploadSmallFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFileWithCancelation,
+#endif
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -173,22 +182,22 @@ namespace Firebase.Sample.Storage {
 
     // Create the default FirebaseApp on non-mobile platforms.
     private void CreateDefaultApp() {
-#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#if !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
       defaultApp = FirebaseApp.Create(new AppOptions { StorageBucket = storageBucket });
       Debug.Log(String.Format("Default app created with storage bucket {0}",
                               defaultApp.Options.StorageBucket));
-#endif  // !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
     }
 
     // Remove all reference to the default FirebaseApp.
     private void DestroyDefaultApp() {
-#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#if !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
       defaultApp = null;
-#endif  // !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
     }
 
     protected override void InitializeFirebase() {
-#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#if !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
       storageBucket = (new Uri(MyStorageBucket)).Host;
 #endif
       CreateDefaultApp();

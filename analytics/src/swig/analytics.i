@@ -21,6 +21,8 @@
 %{#include "app/src/export_fix.h"%}
 #endif
 
+%include "std_map.i"
+
 %pragma(csharp) moduleclassmodifiers="public sealed class"
 %pragma(csharp) modulecode=%{
   // Hold a reference to the default app when methods from this module are
@@ -44,6 +46,11 @@
 #include "analytics/src/include/firebase/analytics/parameter_names.h"
 #include "analytics/src/include/firebase/analytics/user_property_names.h"
 %}
+
+%rename(kConsentTypeAdStorage) firebase::analytics::kConsentTypeAdStorage;
+%rename(kConsentTypeAnalyticsStorage) firebase::analytics::kConsentTypeAnalyticsStorage;
+%rename(kConsentStatusGranted) firebase::analytics::kConsentStatusGranted;
+%rename(kConsentStatusDenied) firebase::analytics::kConsentStatusDenied;
 
 // Constant renaming must happen before SWIG_CONSTANT_HEADERS is included.
 %rename(kParameterAchievementId) firebase::analytics::kParameterAchievementID;
@@ -234,6 +241,9 @@ class ParameterCopy : private firebase::analytics::Parameter {
 // Initialize / Terminate implicitly called when App is created / destroyed.
 %ignore Initialize;
 %ignore Terminate;
+// SetConsent handled via SetConsentInternal below.
+%ignore SetConsent;
+
 } // namespace analytics
 } // namespace firebase
 
@@ -286,3 +296,48 @@ class ParameterCopy : private firebase::analytics::Parameter {
 %SWIG_FUTURE(Future_LongLong, long, internal, long long, FirebaseException)
 
 %include "analytics/src/include/firebase/analytics.h"
+
+%rename(ConsentType) firebase::analytics::ConsentType;
+%rename(ConsentStatus) firebase::analytics::ConsentStatus;
+// Add a swig C++ function to call into the Analytics C++ implementation.
+%{
+namespace firebase {
+namespace analytics {
+
+  void SetConsentInternal(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr) {
+    firebase::analytics::SetConsent(*ptr);
+  }
+
+} // namespace analytics
+} // namespace firebase
+%}
+// The definition on the C++ side, so that swig is aware of the function's existence.
+void SetConsentInternal(std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> *ptr);
+
+%typemap(csclassmodifiers) firebase::analytics::ConsentType "enum";
+%typemap(csclassmodifiers) firebase::analytics::ConsentStatus "enum";
+
+%typemap(csclassmodifiers) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus> "internal class"
+%template(ConsentMap) std::map<firebase::analytics::ConsentType, firebase::analytics::ConsentStatus>;
+
+namespace firebase {
+namespace analytics {
+    
+%pragma(csharp) modulecode=%{
+  /// @brief Sets the applicable end user consent state (e.g., for device
+  /// identifiers) for this app on this device.
+  ///
+  /// Use the consent map to specify individual consent type values. Settings are
+  /// persisted across app sessions. By default consent types are set to
+  /// "granted".
+  public static void SetConsent(System.Collections.Generic.IDictionary<ConsentType, ConsentStatus> consentSettings) {
+    ConsentMap consentSettingsMap = new ConsentMap();
+    foreach(var kv in consentSettings) {
+      consentSettingsMap[kv.Key] = kv.Value;
+    }
+    SetConsentInternal(consentSettingsMap);
+  }
+%}
+
+}  // namespace analytics
+}  // namespace firebase

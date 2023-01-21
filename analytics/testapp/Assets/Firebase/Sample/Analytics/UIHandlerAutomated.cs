@@ -30,6 +30,7 @@ namespace Firebase.Sample.Analytics {
         TestAnalyticsScoreDoesNotThrow,
         TestAnalyticsGroupJoinDoesNotThrow,
         TestAnalyticsLevelUpDoesNotThrow,
+	TestAnalyticsSetConsentDoesNotThrow,
         TestInstanceIdChangeAfterReset,
         TestGetSessionId,
         TestResetAnalyticsData,
@@ -88,6 +89,12 @@ namespace Firebase.Sample.Analytics {
       });
     }
 
+    Task TestAnalyticsSetConsentDoesNotThrow() {
+      return WrapWithTask(() => {
+        base.AnalyticsSetConsent();
+        return true;
+      });
+    }
     Task TestCheckAndFixDependenciesInvalidOperation() {
       // Only run the test on Android, as CheckAndFixDependenciesAsync is short
       // lived on other platforms, and thus could finish before the extra call.
