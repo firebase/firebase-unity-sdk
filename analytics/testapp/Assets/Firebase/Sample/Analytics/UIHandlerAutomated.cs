@@ -30,9 +30,9 @@ namespace Firebase.Sample.Analytics {
         TestAnalyticsScoreDoesNotThrow,
         TestAnalyticsGroupJoinDoesNotThrow,
         TestAnalyticsLevelUpDoesNotThrow,
+        TestGetSessionId,
 	TestAnalyticsSetConsentDoesNotThrow,
         TestInstanceIdChangeAfterReset,
-        TestGetSessionId,
         TestResetAnalyticsData,
         // Temporarily disabled until this test is deflaked. b/143603151
         //TestCheckAndFixDependenciesInvalidOperation,
