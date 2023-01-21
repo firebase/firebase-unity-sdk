@@ -224,6 +224,7 @@ namespace Firebase.Sample.Analytics {
         }
         if (GUILayout.Button("Show Session ID")) {
           DisplaySessionId();
+	}
         if (GUILayout.Button("Test SetConsent")) {
           AnalyticsSetConsent();
         }
