@@ -67,6 +67,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+- Changes
+    - Analytics: Added `SetConsent()` and `GetSessionIdAsync()` APIs.
+
 ### 10.3.0
 - Changes
     - General (Android): Update to Firebase Android BoM version 31.1.1.
