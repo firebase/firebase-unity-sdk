@@ -70,6 +70,7 @@ Release Notes
 ### Upcoming Release
 - Changes
     - Analytics: Added `SetConsent()` and `GetSessionIdAsync()` APIs.
+    - Crashlytics: Add `ReportUncaughtExceptionsAsFatal` propertie and `LogExceptionAsFatal` API. Crashlytics now support on-demand fatal reports.
 
 ### 10.3.0
 - Changes
