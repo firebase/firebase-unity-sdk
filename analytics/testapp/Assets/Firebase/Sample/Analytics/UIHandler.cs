@@ -151,6 +151,21 @@ namespace Firebase.Sample.Analytics {
       }).Unwrap();
     }
 
+    // Get the current app session ID
+    public Task<long> DisplaySessionId() {
+      return FirebaseAnalytics.GetSessionIdAsync().ContinueWithOnMainThread(task => {
+        if (task.IsCanceled) {
+          DebugLog("Session ID fetch was canceled.");
+        } else if (task.IsFaulted) {
+          DebugLog(String.Format("Encounted an error fetching session ID {0}",
+                                  task.Exception.ToString()));
+        } else if (task.IsCompleted) {
+          DebugLog(String.Format("Session ID: {0}", task.Result));
+        }
+        return task;
+      }).Unwrap();
+    }
+
     // Output text to the debug log text field, as well as the console.
     public void DebugLog(string s) {
       print(s);
@@ -207,6 +222,9 @@ namespace Firebase.Sample.Analytics {
         if (GUILayout.Button("Show Analytics Instance ID")) {
           DisplayAnalyticsInstanceId();
         }
+        if (GUILayout.Button("Show Session ID")) {
+          DisplaySessionId();
+	}
         if (GUILayout.Button("Test SetConsent")) {
           AnalyticsSetConsent();
         }

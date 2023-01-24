@@ -66,7 +66,10 @@
 %include "firebase/analytics/parameter_names.h"
 %include "firebase/analytics/user_property_names.h"
 
-
+// Including cstdint before stdint.i ensures the int64_t typedef is correct,
+// otherwise on some platforms it is defined as "long long int" instead of
+// "long int".
+#include <cstdint>
 %include "stdint.i"
 
 namespace firebase {
@@ -287,6 +290,10 @@ class ParameterCopy : private firebase::analytics::Parameter {
     SetSessionTimeoutDurationInternal((long)timeSpan.TotalMilliseconds);
   }
 %}
+
+// GetSessionId returns Future<long long> in SWIG.
+%include "app/src/swig/future.i"
+%SWIG_FUTURE(Future_LongLong, long, internal, long long, FirebaseException)
 
 %include "analytics/src/include/firebase/analytics.h"
 
