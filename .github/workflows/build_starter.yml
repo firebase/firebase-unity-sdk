@@ -99,7 +99,7 @@ jobs:
             echo "unity_branch=${{ github.event.inputs.unity_branch }}" >> $GITHUB_OUTPUT
             echo "additional_cmake_flags=${{ github.event.inputs.unity_branch }}" >> $GITHUB_OUTPUT
           else
-            echo "platform='Android,iOS,Windows,macOS,Linux,Playmode'" >> $GITHUB_OUTPUT
+            echo "platform='Android,iOS,tvOS,Windows,macOS,Linux,Playmode'" >> $GITHUB_OUTPUT
             echo "release_label=nightly-$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_OUTPUT
             echo "release_version=NoVersion" >> $GITHUB_OUTPUT
             echo "apis='analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'" >> $GITHUB_OUTPUT

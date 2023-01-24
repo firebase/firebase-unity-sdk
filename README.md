@@ -1,7 +1,8 @@
 # Firebase Unity Open Source Development
 
 The repository contains the Firebase Unity SDK source, with support for Android,
-iOS, and desktop platforms. It includes the following Firebase libraries:
+iOS, and desktop platforms. Note that desktop is ***only supported for development
+purposes***. It includes the following Firebase libraries:
 
 - [Google Analytics for Firebase](https://firebase.google.com/docs/analytics/)
 - [Firebase Authentication](https://firebase.google.com/docs/auth/)

@@ -69,7 +69,7 @@ Release Notes
 -------------
 ### Upcoming Release
 - Changes
-    - Analytics: Add a new method `GetSessionIdAsync()`.
+    - Analytics: Added `SetConsent()` and `GetSessionIdAsync()` APIs.
 
 ### 10.3.0
 - Changes
