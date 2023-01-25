@@ -23,6 +23,8 @@ namespace Firebase.Auth {
 /// Allows developers to use the phone number and SMS verification codes
 /// to authenticate a user.
 ///
+/// This class is not supported on tvOS and Desktop platforms.
+///
 /// The verification flow results in a Credential that can be used to,
 /// * Sign in to an existing phone number account/sign up with a new
 ///   phone number

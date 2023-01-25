@@ -479,7 +479,7 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
   /// @endcode
   /// @endif
   ///
-  /// or on iOS to your Info.plist:
+  /// or on iOS or tvOS to your Info.plist:
   ///
   /// @if NOT_DOXYGEN
   ///   <key>FirebaseDataCollectionDefaultEnabled</key>
