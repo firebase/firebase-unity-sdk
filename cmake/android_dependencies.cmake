@@ -15,7 +15,7 @@
 # This file defines the Android dependencies needed by all the modules.
 
 set(FIREBASE_APP_ANDROID_DEPS
-    "com.google.firebase:firebase-common:20.2.0"
+    "com.google.firebase:firebase-common:20.3.0"
     "com.google.firebase:firebase-analytics:21.2.0"
     "com.google.android.gms:play-services-base:18.1.0"
 )
@@ -30,7 +30,7 @@ set(FIREBASE_AUTH_ANDROID_DEPS
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:18.3.2"
+    "com.google.firebase:firebase-crashlytics-ndk:18.3.3"
     "com.google.firebase:firebase-analytics:21.2.0"
 )
 
@@ -46,12 +46,12 @@ set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:24.4.1"
+    "com.google.firebase:firebase-firestore:24.4.2"
     "com.google.firebase:firebase-analytics:21.2.0"
 )
 
 set(FIREBASE_FUNCTIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-functions:20.2.1"
+    "com.google.firebase:firebase-functions:20.2.2"
     "com.google.firebase:firebase-analytics:21.2.0"
 )
 
@@ -68,7 +68,7 @@ set(FIREBASE_MESSAGING_ANDROID_DEPS
 )
 
 set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
-    "com.google.firebase:firebase-config:21.2.0"
+    "com.google.firebase:firebase-config:21.2.1"
     "com.google.firebase:firebase-analytics:21.2.0"
 )
 
