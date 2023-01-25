@@ -117,18 +117,12 @@ namespace Firebase.Sample.Storage {
         TestUploadBytesSmallFileThenUpdateMetadata,
         TestUploadStreamLargeFile,
         TestUploadStreamSmallFile,
-#if !(UNITY_TVOS)
-        // Tests which require file access don't work on tvOS.
         TestUploadFromFileLargeFile,
         TestUploadFromFileSmallFile,
-#endif
         TestUploadFromNonExistantFile,
         TestUploadBytesWithCancelation,
         TestUploadStreamWithCancelation,
-#if !(UNITY_TVOS)
-        // Tests which require file access don't work on tvOS.
         TestUploadFromFileWithCancelation,
-#endif
         TestUploadSmallFileGetDownloadUrl,
         TestGetDownloadUrlNonExistantFile,
         TestUploadSmallFileGetMetadata,
@@ -143,12 +137,9 @@ namespace Firebase.Sample.Storage {
         TestUploadSmallFileAndDownloadUsingStreamCallback,
         TestUploadLargeFileAndDownloadUsingStreamCallback,
         TestUploadLargeFileAndDownloadUsingStreamCallbackWithCancelation,
-#if !(UNITY_TVOS)
-        // Tests which require file access don't work on tvOS.
         TestUploadSmallFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFileWithCancelation,
-#endif
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(

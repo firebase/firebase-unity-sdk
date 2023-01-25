@@ -70,6 +70,7 @@ Release Notes
 ### 10.4.0
 - Changes
     - Analytics: Added `SetConsent()` and `GetSessionIdAsync()` APIs.
+    - Crashlytics: Added `ReportUncaughtExceptionsAsFatal` property and `LogExceptionAsFatal` API.
 
 ### 10.3.0
 - Changes
