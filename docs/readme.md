@@ -71,6 +71,8 @@ Release Notes
 -------------
 ### 10.4.0
 - Changes
+    - General (Android): Update to Firebase Android BoM version 31.2.0.
+    - General (iOS): Update to Firebase Cocoapods version 10.4.0.
     - Firebase introduces Unity SDK support for tvOS, for Analytics,
       Authentication, Crashlytics, Database, Firestore, Cloud Functions,
       Installations, Messaging, Remote Config and Storage.
