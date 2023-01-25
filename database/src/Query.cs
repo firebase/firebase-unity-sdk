@@ -351,7 +351,7 @@ namespace Firebase.Database {
     ///   Create a query constrained to only return the child node with the given key and value.
     ///   Note that there is at most one such child as names are unique. <br />
     ///   <br />
-    ///   <b>Known issue</b> This currently does not work properly on iOS. Please use
+    ///   <b>Known issue</b> This currently does not work properly on iOS and tvOS. Please use
     ///   EqualTo(string value) instead.
     /// </remarks>
     /// <param name="value">The value to query for</param>
@@ -368,7 +368,7 @@ namespace Firebase.Database {
     ///   Create a query constrained to only return the child node with the given key and value.
     ///   Note that there is at most one such child as keys are unique. <br />
     ///   <br />
-    ///   <b>Known issue</b> This currently does not work properly on iOS. Please use
+    ///   <b>Known issue</b> This currently does not work properly on iOS and tvOS. Please use
     ///   EqualTo(double value) instead.
     /// </remarks>
     /// <param name="value">The value to query for</param>
@@ -385,7 +385,7 @@ namespace Firebase.Database {
     ///   Create a query constrained to only return the child node with the given key and value.
     ///   Note that there is at most one such child as keys are unique. <br />
     ///   <br />
-    ///   <b>Known issue</b> This currently does not work properly on iOS. Please use
+    ///   <b>Known issue</b> This currently does not work properly on iOS and tvOS. Please use
     ///   EqualTo(bool value) instead.
     /// </remarks>
     /// <param name="value">The value to query for</param>

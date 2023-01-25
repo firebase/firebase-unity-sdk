@@ -151,7 +151,7 @@ static CppInstanceManager<Installations> g_installations_instances;
   /// `Installations` if required.
   ///
   /// @param[in] app The `App` to create an `Installations` object from. On
-  /// **iOS** this must be the default Firebase `App`.
+  /// **iOS and tvOS** this must be the default Firebase `App`.
   ///
   /// @returns Installations object if successful, null otherwise.
   public static FirebaseInstallations GetInstance(FirebaseApp app) {

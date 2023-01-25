@@ -43,8 +43,9 @@ internal class ErrorMessages {
       "* Rebuild your APK and deploy.\n";
 
   private static string DEPENDENCY_NOT_FOUND_ERROR_IOS =
-      "On iOS+ Firebase requires native (C/C++) and Cocoapod components\n" +
-      "that are distributed with the Firebase SDK and via Cocoapods.\n" +
+      "On iOS and tvOS Firebase requires native (C/C++) and Cocoapod\n" +
+      "components that are distributed with the Firebase SDK and via\n" +
+      "Cocoapods.\n" +
       "\n" +
       "It's likely that you did not include the require Cocoapod\n" +
       "dependencies for Firebase in your Unity project.\n" +
@@ -56,8 +57,8 @@ internal class ErrorMessages {
       "  iOS Resolver -> Settings'\n" +
       "* In the iOS Resolver settings check 'Podfile Generation' and\n" +
       "  'Add Cocoapods to Generated Xcode Project'.\n" +
-      "* Build your iOS project and check the Unity console for any\n" +
-      "  errors associated with Cocoapod tool execution.\n"  +
+      "* Build your iOS or tvOS project and check the Unity console for\n" +
+      "  any errors associated with Cocoapod tool execution.\n"  +
       "  You will need to correctly install Cocoapods tools to generate\n" +
       "  a working build.\n";
 
@@ -84,7 +85,7 @@ internal class ErrorMessages {
 
   private static string DLL_NOT_FOUND_ERROR_IOS =
       "A Firebase static library (e.g libApp.a) was not linked with your\n" +
-      "iOS application.\n";
+      "iOS or tvOS application.\n";
 
   private static string DLL_NOT_FOUND_ERROR_GENERIC =
       "A Firebase shared library (.dll / .so) could not be loaded.\n";

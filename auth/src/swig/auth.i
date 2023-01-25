@@ -473,9 +473,9 @@ static CppInstanceManager<Auth> g_auth_instances;
 
   /// Sign-in a user authenticated via a federated auth provider.
   ///
-  /// @note: This operation is supported only on iOS and Android platforms. On
-  /// non-mobile platforms this method will return a Future with a preset error
-  /// code: kAuthErrorUnimplemented.
+  /// @note: This operation is supported only on iOS, tvOS and Android
+  /// platforms. On other platforms this method will return a Future with a
+  /// preset error code: kAuthErrorUnimplemented.
   public System.Threading.Tasks.Task<SignInResult> SignInWithProviderAsync(
       FederatedAuthProvider provider) {
     ThrowIfNull();
@@ -1087,9 +1087,9 @@ static CppInstanceManager<Auth> g_auth_instances;
 
   /// Reauthenticate a user via a federated auth provider.
   ///
-  /// @note: This operation is supported only on iOS and Android platforms. On
-  /// non-mobile platforms this method will return a Future with a preset error
-  /// code: kAuthErrorUnimplemented.
+  /// @note: This operation is supported only on iOS, tvOS and Android
+  /// platforms. On other platforms this method will return a Future with a
+  /// preset error code: kAuthErrorUnimplemented.
   public System.Threading.Tasks.Task<SignInResult>
       ReauthenticateWithProviderAsync(FederatedAuthProvider provider) {
     ThrowIfNull();
@@ -1110,9 +1110,9 @@ static CppInstanceManager<Auth> g_auth_instances;
 
   /// Link a user via a federated auth provider.
   ///
-  /// @note: This operation is supported only on iOS and Android platforms. On
-  /// non-mobile platforms this method will return a Future with a preset error
-  /// code: kAuthErrorUnimplemented.
+  /// @note: This operation is supported only on iOS, tvOS and Android
+  /// platforms. On other platforms this method will return a Future with a
+  /// preset error code: kAuthErrorUnimplemented.
   public System.Threading.Tasks.Task<SignInResult> LinkWithProviderAsync(
       FederatedAuthProvider provider) {
     ThrowIfNull();

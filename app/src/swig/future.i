@@ -250,7 +250,7 @@ namespace firebase {
 %define %SWIG_FUTURE_FOOTER(CSNAME, CSTYPE, CTYPE)
   public delegate void Action();
 
-  // On iOS, in order to marshal a delegate from C#, it needs both a
+  // On iOS and tvOS, in order to marshal a delegate from C#, it needs both a
   // MonoPInvokeCallback attribute, and be static.
   // Because of this need to be static, the instanced callbacks need to be
   // saved in a way that can be obtained later, hence the use of a static

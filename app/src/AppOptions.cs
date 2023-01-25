@@ -72,7 +72,7 @@ public sealed class AppOptions : global::System.IDisposable {
   /// file or PROJECT_ID in the GoogleService-Info.plist.
   public string ProjectId { get; set; }
 
-  /// Gets or sets the Android or iOS client project name.
+  /// Gets or sets the Android, iOS or tvOS client project name.
   ///
   /// This is the project_name in the Android google-services.json config
   /// file or BUNDLE_ID in the GoogleService-Info.plist.
