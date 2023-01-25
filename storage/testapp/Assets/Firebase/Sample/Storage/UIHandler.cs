@@ -79,7 +79,11 @@ namespace Firebase.Sample.Storage {
     // the required dependencies to use Firebase, and if not,
     // add them if possible.
     protected virtual void Start() {
-      persistentDataPath = Application.persistentDataPath;
+#if (UNITY_TVOS)
+       persistentDataPath = Application.temporaryCachePath;
+#else
+       persistentDataPath = Application.persistentDataPath;
+#endif
       FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task => {
         dependencyStatus = task.Result;
         if (dependencyStatus == DependencyStatus.Available) {
