@@ -75,6 +75,7 @@ Release Notes
       Authentication, Crashlytics, Database, Firestore, Cloud Functions,
       Installations, Messaging, Remote Config and Storage.
     - Analytics: Added `SetConsent()` and `GetSessionIdAsync()` APIs.
+    - Crashlytics: Added `ReportUncaughtExceptionsAsFatal` property and `LogExceptionAsFatal` API.
 
 ### 10.3.0
 - Changes
