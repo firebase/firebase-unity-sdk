@@ -21,6 +21,7 @@
 #import "CrashlyticsiOSWrapper.h"
 #import "FirebaseCrashlytics.h"
 #import "./Crashlytics_PrivateHeaders/Crashlytics_Platform.h"
+#import "./Crashlytics_PrivateHeaders/ExceptionModel_Platform.h"
 
 @interface FIRCrashlytics ()
 - (BOOL)isCrashlyticsStarted;
@@ -38,7 +39,7 @@ NSString *safeCharToNSString(const char *c) {
 
 #pragma mark Main API
 
-void CLURecordCustomException(const char *name, const char *reason, Frame *frames, int frameCount) {
+void CLURecordCustomException(const char *name, const char *reason, Frame *frames, int frameCount, bool isOnDemand) {
   NSString *nameString = safeCharToNSString(name);
   NSString *reasonString = safeCharToNSString(reason);
   NSMutableArray<FIRStackFrame *> *framesArray = [NSMutableArray arrayWithCapacity:frameCount];
@@ -57,6 +58,13 @@ void CLURecordCustomException(const char *name, const char *reason, Frame *frame
     [FIRExceptionModel exceptionModelWithName:nameString reason:reasonString];
   model.stackTrace = framesArray;
 
+  if (isOnDemand) {
+    // For on demand exception, we log them as fatal
+    model.onDemand = YES;
+    model.isFatal = YES;
+    [[FIRCrashlytics crashlytics] recordOnDemandExceptionModel:model];
+    return;
+  }
   [[FIRCrashlytics crashlytics] recordExceptionModel:model];
 }
 

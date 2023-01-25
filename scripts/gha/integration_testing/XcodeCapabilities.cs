@@ -48,7 +48,7 @@
  * for reference.
  */
 
-#if UNITY_IOS
+#if (UNITY_IOS || UNITY_TVOS)
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;

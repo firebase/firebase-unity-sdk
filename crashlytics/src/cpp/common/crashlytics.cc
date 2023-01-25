@@ -91,6 +91,11 @@ void Crashlytics::LogException(const char* name, const char* reason,
   internal_->LogException(name, reason, frames);
 }
 
+void Crashlytics::LogExceptionAsFatal(const char* name, const char* reason,
+                                      std::vector<Frame> frames) {
+  internal_->LogExceptionAsFatal(name, reason, frames);
+}
+
 bool Crashlytics::IsCrashlyticsCollectionEnabled() {
   return internal_->IsCrashlyticsCollectionEnabled();
 }

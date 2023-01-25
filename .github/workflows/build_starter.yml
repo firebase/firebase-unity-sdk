@@ -24,7 +24,7 @@ on:
         required: false
       platforms:
         description: 'Test Platforms of Android,iOS,Windows,macOS,Linux,Playmode'
-        default: 'Android,iOS,Windows,macOS,Linux,Playmode'
+        default: 'Android,iOS,tvOS,Windows,macOS,Linux,Playmode'
         required: true
       apis:
         description: 'CSV of apis to build and test'
@@ -99,7 +99,7 @@ jobs:
             echo "unity_branch=${{ github.event.inputs.unity_branch }}" >> $GITHUB_OUTPUT
             echo "additional_cmake_flags=${{ github.event.inputs.unity_branch }}" >> $GITHUB_OUTPUT
           else
-            echo "platform='Android,iOS,Windows,macOS,Linux,Playmode'" >> $GITHUB_OUTPUT
+            echo "platform='Android,iOS,tvOS,Windows,macOS,Linux,Playmode'" >> $GITHUB_OUTPUT
             echo "release_label=nightly-$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_OUTPUT
             echo "release_version=NoVersion" >> $GITHUB_OUTPUT
             echo "apis='analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage'" >> $GITHUB_OUTPUT
@@ -253,7 +253,7 @@ jobs:
 
   trigger_reusable_package:
     name: package ${{ needs.check_and_prepare.outputs.release_label }}
-    needs: [check_and_prepare, build_android, build_ios, build_linux, build_macos, build_windows, decide_build_branch]
+    needs: [check_and_prepare, build_android, build_ios, build_tvos, build_linux, build_macos, build_windows, decide_build_branch]
     uses: ./.github/workflows/package.yml
     if: (needs.check_and_prepare.outputs.should_trigger_package == 'true') && !cancelled() && !failure()
     with:

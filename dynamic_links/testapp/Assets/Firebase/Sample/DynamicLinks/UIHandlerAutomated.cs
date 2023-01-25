@@ -32,7 +32,8 @@ namespace Firebase.Sample.DynamicLinks {
     public override void Start() {
       Func<Task>[] tests = {
         TestCreateLongLinkAsync,
-#if (UNITY_ANDROID || UNITY_IOS)
+// TODO(b/264533368) Enable theses tests when the issue has been fixed.
+#if (false)  // (UNITY_ANDROID || UNITY_IOS)
         // Link shortening does not work on desktop builds, so only test that for mobile.
         TestCreateShortLinkAsync,
         TestCreateUnguessableShortLinkAsync,

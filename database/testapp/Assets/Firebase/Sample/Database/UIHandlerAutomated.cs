@@ -24,10 +24,10 @@ namespace Firebase.Sample.Database {
     // Database URL
     private string databaseUrl = "REPLACE_WITH_YOUR_DATABASE_URL";
 
-#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#if !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
     // Manually create the default app on desktop so that it's possible to specify the database URL.
     private FirebaseApp defaultApp;
-#endif  // !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
 
     static Thread mainThread = null;
 
@@ -69,13 +69,13 @@ namespace Firebase.Sample.Database {
         TestQueryEqualToString,
         TestQueryEqualToDouble,
         TestQueryEqualToBool,
-#if !UNITY_IOS
+#if !(UNITY_IOS || UNITY_TVOS)
         // TODO(b/129906113) These tests don't work on iOS, and are removed
         // until they are fixed.
         TestQueryEqualToStringAndKey,
         TestQueryEqualToDoubleAndKey,
         TestQueryEqualToBoolAndKey,
-#endif  // !UNITY_IOS
+#endif  // !(UNITY_IOS || UNITY_TVOS)
         TestQueryLimitToFirst,
         TestQueryLimitToLast,
         TestQueryOrderByChild,
@@ -116,21 +116,21 @@ namespace Firebase.Sample.Database {
 
     // Create the default FirebaseApp on non-mobile platforms.
     private void CreateDefaultApp() {
-#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#if !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
       defaultApp = FirebaseApp.Create(new AppOptions { DatabaseUrl = new Uri(databaseUrl) });
       if (!loggedOnceCreateDefaultApp) {
         DebugLog(String.Format("Default app created with database url {0}",
                                 defaultApp.Options.DatabaseUrl));
         loggedOnceCreateDefaultApp = true;
       }
-#endif  // !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
     }
 
     // Remove all reference to the default FirebaseApp.
     private void DestroyDefaultApp() {
-#if !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#if !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
       defaultApp = null;
-#endif  // !(UNITY_IOS || UNITY_ANDROID) || UNITY_EDITOR
+#endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
     }
 
     protected override void InitializeFirebase() {
@@ -398,13 +398,13 @@ namespace Firebase.Sample.Database {
         reference.ChildChanged += childChangedListener;
         reference.ChildMoved += childMovedListener;
         reference.ChildRemoved += childRemovedListener;
-#if (UNITY_IOS || UNITY_ANDROID)
+#if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
         // The desktop implementation will currently fail if exceptions are thrown in child
         reference.ChildAdded += childAddedListenerThrowException;
         reference.ChildChanged += childChangedListenerThrowException;
         reference.ChildMoved += childMovedListenerThrowException;
         reference.ChildRemoved += childRemovedListenerThrowException;
-#endif  // #if (UNITY_IOS || UNITY_ANDROID)
+#endif  // #if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
       }
 
       public bool AllGood { get; private set; }

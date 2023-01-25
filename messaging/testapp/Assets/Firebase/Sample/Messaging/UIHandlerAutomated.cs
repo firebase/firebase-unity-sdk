@@ -38,18 +38,18 @@ namespace Firebase.Sample.Messaging {
       Func<Task>[] tests = {
         // Disable these tests on desktop, as desktop never receives a token, and so WaitForToken
         // (called by all of these tests) stalls forever.
-#if (UNITY_IOS || UNITY_ANDROID)
+#if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
         MakeTest(TestWaitForToken),
-#if !UNITY_IOS
+#if !(UNITY_IOS || UNITY_TVOS)
         // TODO(b/130674454) This test times out on iOS, disabling until fixed.
         MakeTest(TestSendPlaintextMessageToDevice),
-#endif // !UNITY_IOS
+#endif // !(UNITY_IOS || UNITY_TVOS)
         MakeTest(TestSendJsonMessageToDevice),
         MakeTest(TestSendJsonMessageToSubscribedTopic),
-#else  // (UNITY_IOS || UNITY_ANDROID)
+#else  // (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
         // Run a vacuous test. Should be removed if/when desktop platforms get a real test.
         MakeTest(TestDummy),
-#endif // (UNITY_IOS || UNITY_ANDROID)
+#endif // (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
         // TODO(varconst): a more involved test to check that resubscribing works
         MakeTest(TestGetTokenAsync),
         MakeTest(TestDeleteTokenAsync),
@@ -58,18 +58,18 @@ namespace Firebase.Sample.Messaging {
       string[] customTests = {
         // Disable these tests on desktop, as desktop never receives a token, and so WaitForToken
         // (called by all of these tests) stalls forever.
-#if (UNITY_IOS || UNITY_ANDROID)
+#if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
         "TestWaitForToken",
-#if !UNITY_IOS
+#if !(UNITY_IOS || UNITY_TVOS)
         // TODO(b/130674454) This test times out on iOS, disabling until fixed.
         "TestSendPlaintextMessageToDevice",
-#endif // !UNITY_IOS
+#endif // !(UNITY_IOS || UNITY_TVOS)
         "TestSendJsonMessageToDevice",
         "TestSendJsonMessageToSubscribedTopic",
-#else  // (UNITY_IOS || UNITY_ANDROID)
+#else  // #if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
         // Run a vacuous test. Should be removed if/when desktop platforms get a real test.
         "TestDummy",
-#endif // (UNITY_IOS || UNITY_ANDROID)
+#endif // (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
         // TODO(varconst): a more involved test to check that resubscribing works
         "TestGetTokenAsync",
         "TestDeleteTokenAsync",
