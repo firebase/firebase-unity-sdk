@@ -67,7 +67,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
+### 10.4.0
 - Changes
     - Analytics: Added `SetConsent()` and `GetSessionIdAsync()` APIs.
 
