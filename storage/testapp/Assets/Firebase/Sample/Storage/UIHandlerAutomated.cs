@@ -144,7 +144,8 @@ namespace Firebase.Sample.Storage {
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
-        logFunc: DebugLog
+        logFunc: DebugLog,
+        maxAttempts: 3
       );
 
       mainThreadDispatcher = gameObject.AddComponent<MainThreadDispatcher>();
