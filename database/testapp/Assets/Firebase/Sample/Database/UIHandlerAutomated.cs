@@ -813,9 +813,9 @@ namespace Firebase.Sample.Database {
         // 2. Set the reference's value to something else;
         WaitAndAssertCompleted("Second SetValue without listener", r.SetValueAsync(valueChangedAgain));
         WaitAndAssertCompleted("RemoveValue without listener", r.RemoveValueAsync());
+        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
         checks.WaitForEvents();
         checks.AssertAllEventsDone();
-        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
         Assert("All checks in listeners passed.\n" + checks.FailMessage, checks.AllGood);
       });
     }
@@ -855,9 +855,9 @@ namespace Firebase.Sample.Database {
         // 2. Set the reference's value to something else;
         WaitAndAssertCompleted("Second SetValue without listener", r.SetValueAsync(valueChangedAgain));
         WaitAndAssertCompleted("RemoveValue without listener", r.RemoveValueAsync());
+        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
         checks.WaitForEvents();
         checks.AssertAllEventsDone();
-        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
         Assert("All checks in listeners passed.\n" + checks.FailMessage, checks.AllGood);
       });
     }
