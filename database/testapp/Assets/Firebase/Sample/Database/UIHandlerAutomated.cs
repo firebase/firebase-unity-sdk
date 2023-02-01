@@ -41,6 +41,8 @@ namespace Firebase.Sample.Database {
         TestDbRefChild,
         TestDbRefPush,
         TestDbRefSetValue,
+        TestDbRefSetValueWithUnregisteredListener,
+        TestDbRefSetValueWithUnregisteredListenerAtSamePath,
         TestDbRefSetJson,
         TestDbRefSetInvalid,
         TestDbRefSetWPriority,
@@ -440,6 +442,21 @@ namespace Firebase.Sample.Database {
         allEventsReceived.WaitOne(20 * NumMillisPerSecond);
       }
 
+      public void UnregisterListeners() {
+        UnregisterListeners(this.reference);
+      }
+
+      public void UnregisterListeners(DatabaseReference dbref) {
+        dbref.ChildAdded -= childAddedListener;
+        dbref.ChildAdded -= childAddedListenerThrowException;
+        dbref.ChildChanged -= childChangedListener;
+        dbref.ChildChanged -= childChangedListenerThrowException;
+        dbref.ChildMoved -= childMovedListener;
+        dbref.ChildMoved -= childMovedListenerThrowException;
+        dbref.ChildRemoved -= childRemovedListener;
+        dbref.ChildRemoved -= childRemovedListenerThrowException;
+      }
+
       // Assert that all expected events happened.
       // This MUST be called, as it also cleans up (i.e. unregisters) the listeners.
       public void AssertAllEventsDone() {
@@ -450,14 +467,7 @@ namespace Firebase.Sample.Database {
           }
         }
         // No more events are expected, clean up the listeners.
-        reference.ChildAdded -= childAddedListener;
-        reference.ChildAdded -= childAddedListenerThrowException;
-        reference.ChildChanged -= childChangedListener;
-        reference.ChildChanged -= childChangedListenerThrowException;
-        reference.ChildMoved -= childMovedListener;
-        reference.ChildMoved -= childMovedListenerThrowException;
-        reference.ChildRemoved -= childRemovedListener;
-        reference.ChildRemoved -= childRemovedListenerThrowException;
+        UnregisterListeners();
       }
 
       // Common handler for all child events.
@@ -768,6 +778,86 @@ namespace Firebase.Sample.Database {
         // Wait for the ChildRemoved listener to be called
         checks.WaitForEvents();
         checks.AssertAllEventsDone();
+        Assert("All checks in listeners passed.\n" + checks.FailMessage, checks.AllGood);
+      });
+    }
+
+    Task TestDbRefSetValueWithUnregisteredListener() {
+      return Task.Run(() => {
+        // This test will register a value and use listeners to verify that
+        // the value did indeed get set. Then it will unregister the listeners
+        // and set the value again, ensuring that the listeners aren't called again.
+        string childKey = "ChildKey";
+        object valueAdded = "1st Value";
+        object valueChanged = "2nd Value";
+        object valueAddedAgain = "Another 1st Value";
+        object valueChangedAgain = "Another 2nd Value";
+
+        // We use Push to create a random child to not interfere with someone else running this test.
+        var parent = database.RootReference.Child("TestTree").Push();
+        AsyncChecks checks = new AsyncChecks(parent);
+        // We expect two listener events: two for the two calls to SetValue.
+        checks.ExpectEvent(AsyncChecks.ChildEventType.Added, childKey, valueAdded);
+        checks.ExpectEvent(AsyncChecks.ChildEventType.Changed, childKey, valueChanged);
+
+        var r = parent.Child(childKey);
+        // 1. Set a value in a newly created reference;
+        WaitAndAssertCompleted("First SetValue", r.SetValueAsync(valueAdded));
+        // 2. Set the reference's value to something else;
+        WaitAndAssertCompleted("Second SetValue", r.SetValueAsync(valueChanged));
+
+        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
+        checks.UnregisterListeners();
+        WaitAndAssertCompleted("RemoveValue", r.RemoveValueAsync());
+        WaitAndAssertCompleted("First SetValue without listener", r.SetValueAsync(valueAddedAgain));
+        // 2. Set the reference's value to something else;
+        WaitAndAssertCompleted("Second SetValue without listener", r.SetValueAsync(valueChangedAgain));
+        WaitAndAssertCompleted("RemoveValue without listener", r.RemoveValueAsync());
+        checks.WaitForEvents();
+        checks.AssertAllEventsDone();
+        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
+        Assert("All checks in listeners passed.\n" + checks.FailMessage, checks.AllGood);
+      });
+    }
+
+    Task TestDbRefSetValueWithUnregisteredListenerAtSamePath() {
+      return Task.Run(() => {
+        // This test will register a value and use listeners to verify that
+        // the value did indeed get set. Then it will unregister the listeners
+        // (using the path to get a new DatabaseReference) and set the value again,
+        // ensuring that the listeners aren't called again.
+        string childKey = "ChildKey";
+        object valueAdded = "1st Value";
+        object valueChanged = "2nd Value";
+        object valueAddedAgain = "Another 1st Value";
+        object valueChangedAgain = "Another 2nd Value";
+
+        // We use Push to create a random child to not interfere with someone else running this test.
+        var parent = database.RootReference.Child("TestTree").Push();
+        AsyncChecks checks = new AsyncChecks(parent);
+        // We expect two listener events: two for the two calls to SetValue.
+        checks.ExpectEvent(AsyncChecks.ChildEventType.Added, childKey, valueAdded);
+        checks.ExpectEvent(AsyncChecks.ChildEventType.Changed, childKey, valueChanged);
+
+        var r = parent.Child(childKey);
+        // 1. Set a value in a newly created reference;
+        WaitAndAssertCompleted("First SetValue", r.SetValueAsync(valueAdded));
+        // 2. Set the reference's value to something else;
+        WaitAndAssertCompleted("Second SetValue", r.SetValueAsync(valueChanged));
+
+        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
+
+        // Get a new DatabaseReference pointing to the same path as parent, by doing .Child().Parent.
+        checks.UnregisterListeners(parent.Child("unused_child").Parent);
+
+        WaitAndAssertCompleted("RemoveValue", r.RemoveValueAsync());
+        WaitAndAssertCompleted("First SetValue without listener", r.SetValueAsync(valueAddedAgain));
+        // 2. Set the reference's value to something else;
+        WaitAndAssertCompleted("Second SetValue without listener", r.SetValueAsync(valueChangedAgain));
+        WaitAndAssertCompleted("RemoveValue without listener", r.RemoveValueAsync());
+        checks.WaitForEvents();
+        checks.AssertAllEventsDone();
+        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
         Assert("All checks in listeners passed.\n" + checks.FailMessage, checks.AllGood);
       });
     }
