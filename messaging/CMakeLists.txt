@@ -95,6 +95,11 @@ if (ANDROID)
       "Firebase/Plugins/Android/"
   )
   # Get the Messaging Java AAR file from the C++ SDK.
+  add_custom_target(
+    firebase_messaging_java_aar_unity
+    ALL
+    DEPENDS firebase_messaging_java_aar
+  )
   get_target_property(messaging_aar_file firebase_messaging_java_aar OBJECT_OUTPUTS)
   unity_pack_file(
     ${messaging_aar_file}
