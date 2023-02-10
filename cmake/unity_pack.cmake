@@ -298,6 +298,7 @@ endfunction()
 #
 # unity_pack_file(<file>
 #                 PACK_PATH
+#                 RENAME_TO
 # )
 #
 # Args:
@@ -308,19 +309,26 @@ endfunction()
 #  * Files are put into build arch folder
 #
 function(unity_pack_file file)
-  set(multi PACK_PATH)
+  set(single PACK_PATH RENAME_TO)
   # Parse the arguments into UNITY_MONO_SOURCES and UNITY_MONO_DEPENDS.
-  cmake_parse_arguments(UNITY_PACK "" "" "${multi}" ${ARGN})
+  cmake_parse_arguments(UNITY_PACK "" "${single}" "" ${ARGN})
 
   if("${UNITY_PACK_PACK_PATH}" STREQUAL "")
     set(UNITY_PACK_PACK_PATH ${UNITY_PACK_DEFAULT_CS_PATH})
   endif()
 
-  # meta file
-  install(
-    FILES ${file}
-    DESTINATION ${UNITY_PACK_PACK_PATH}
-  )
+  if ("${UNITY_PACK_RENAME_TO}" STREQUAL "")
+    install(
+      FILES ${file}
+      DESTINATION ${UNITY_PACK_PACK_PATH}
+    )
+  else()
+    install(
+      FILES ${file}
+      DESTINATION ${UNITY_PACK_PACK_PATH}
+      RENAME ${UNITY_PACK_RENAME_TO}
+    )
+  endif()
 endfunction()
 
 # Packs a aar file into the unity zip

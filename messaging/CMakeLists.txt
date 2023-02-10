@@ -71,8 +71,6 @@ build_firebase_shared(
   FirebaseCppMessaging
   ANDROID_MANIFEST
     "${CMAKE_CURRENT_LIST_DIR}/AndroidManifest.xml"
-  CLASSES_JAR
-    "${CMAKE_CURRENT_LIST_DIR}/activity/classes.jar"
 )
 endif()
 
@@ -86,6 +84,24 @@ if (FIREBASE_INCLUDE_UNITY)
       ${FIREBASE_MESSAGING_ANDROID_DEPS}
     ANDROID_SPEC
       "messaging"
+  )
+endif()
+
+if (ANDROID)
+  # Add the additional Messaging files needed for Android
+  unity_pack_file(
+    "activity/com/google/firebase/MessagingUnityPlayerActivity.java"
+    PACK_PATH
+      "Firebase/Plugins/Android/"
+  )
+  # Get the Messaging Java AAR file from the C++ SDK.
+  get_target_property(messaging_aar_file firebase_messaging_java_aar OBJECT_OUTPUTS)
+  unity_pack_file(
+    ${messaging_aar_file}
+    PACK_PATH
+      "Firebase/Plugins/Android/"
+    RENAME_TO
+      "firebase-messaging-cpp.aar"
   )
 endif()
 

@@ -437,6 +437,8 @@
         "Firebase/Editor/FirebaseMessaging_version-10.4.0_manifest.txt": "b3485828d4234137a8280f00a1f7b9ee",
         "Firebase/Editor/FirebaseRemoteConfig_version-10.4.0_manifest.txt": "b2256be1dfd54952908252655336b218",
         "Firebase/Editor/FirebaseStorage_version-10.4.0_manifest.txt": "981f0090257a44369332d6a7437869f3",
+        "Firebase/Plugins/Android/MessagingUnityPlayerActivity.java": "794c5e69320a44ca9d01f87f1019164e",
+        "Firebase/Plugins/Android/firebase-messaging-cpp.aar": "0be2cda49adc4b61a7e9eb9bf669fdab",
         "Firebase/Plugins/x86_64/FirebaseCppApp-10_4_0.bundle": "377df3b93de5491f8ca5dd75a1c63285",
         "Firebase/Plugins/x86_64/FirebaseCppApp-10_4_0.dll": "6008badfe2a9454c897af3b59668d865",
         "Firebase/Plugins/x86_64/FirebaseCppApp-10_4_0.so": "e2c049b2b0a44e3cb32171ad383d7bb1",
