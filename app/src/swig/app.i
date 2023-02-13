@@ -158,6 +158,15 @@ static App *AppGetOrCreateInstance(const AppOptions *options,
   return instance;
 }
 
+// Log a heartbeat only if the current platform is desktop platforms.
+static void LogHeartbeatForDesktop(App* app) {
+#if FIREBASE_PLATFORM_DESKTOP
+    // Only need to call LogHeartbeat on desktop, since native mobile SDKs
+    // Will handle heartbeat logging internally.
+    app->LogHeartbeat();
+#endif  // FIREBASE_PLATFORM_DESKTOP
+}
+
 // Decrease the reference count for the app. When the reference count reaches
 // 0, the App will be deleted.
 static void AppReleaseReference(App* app) {
@@ -862,11 +871,11 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
         }
         // TODO(smiles): Improve error code passing from C++ to C# so that
         // we don't need to parse magic strings from the error message.
-        
+
         if (errorMessage.IndexOf("Please verify the AAR") >= 0) {
           errorMessage += "\n" + Firebase.ErrorMessages.DependencyNotFoundErrorMessage;
         }
-        
+
         //         util_android.cc)
         throw new Firebase.InitializationException(initResult, errorMessage);
       } catch (System.Exception exception) {
@@ -1318,11 +1327,7 @@ namespace callback {
 
  %csmethodmodifiers LogHeartbeatInternal(App* app) "internal";
   static void LogHeartbeatInternal(App* app) {
-#if FIREBASE_PLATFORM_DESKTOP
-    // Only need to call LogHeartbeat on desktop, since native mobile SDKs
-    // Will handle heartbeat logging internally.
-    app->LogHeartbeat();
-#endif  // FIREBASE_PLATFORM_DESKTOP
+    firebase::LogHeartbeatForDesktop(app);
   }
 
   %csmethodmodifiers AppSetDefaultConfigPath(const char* path) "internal";
