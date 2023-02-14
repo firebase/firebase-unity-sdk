@@ -69,6 +69,11 @@ Support
 
 Release Notes
 -------------
+### 10.5.0
+- Changes
+    - General (Android): Update to Firebase Android BoM version 31.2.1.
+    - General (iOS): Update to Firebase Cocoapods version 10.5.0.
+
 ### 10.4.0
 - Changes
     - General (Android): Update to Firebase Android BoM version 31.2.0.
@@ -111,7 +116,7 @@ Release Notes
 
 ### 10.0.1
 - Changes
-    - Crashlytics (Android): Fixed a critical [issue](https://github.com/firebase/firebase-android-sdk/issues/4223) 
+    - Crashlytics (Android): Fixed a critical [issue](https://github.com/firebase/firebase-android-sdk/issues/4223)
       that was causing background crashes in specific cases.
 
 ### 10.0.0
@@ -120,7 +125,7 @@ Release Notes
     - General (Android): Update Firebase Android BoM dependencies to v31.0.0.
     - General (iOS): Update Firebase Cocoapods dependencies to v10.0.0.
     - General: Minimum supported editor version is now Unity 2019.
-    - General: Removed dependency on Parse Tasks. 
+    - General: Removed dependency on Parse Tasks.
     - Auth (Android/iOS): Deprecate `PhoneAuthProvider.MaxTimeoutMs`. The actual
       range is determined by the underlying SDK, ex. [PhoneAuthOptions.Builder in Android SDK](https://firebase.google.com/docs/reference/android/com/google/firebase/auth/PhoneAuthOptions.Builder).
     - Remote Config: Improve performance when setting default parameters
