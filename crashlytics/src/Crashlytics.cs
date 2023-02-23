@@ -122,7 +122,7 @@ namespace Firebase.Crashlytics {
     /// <param name="exception">
     /// The exception to log as fatal.
     /// </param>
-    public static void LogExceptionAsFatal(Exception exception) {
+    internal static void LogExceptionAsFatal(Exception exception) {
       PlatformAccessor.Impl.LogExceptionAsFatal(exception);
     }
 
