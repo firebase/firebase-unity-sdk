@@ -116,7 +116,8 @@ def find_pack_script():
   built_folder = None
   resolver_root_folder = "unity-jar-resolver"
   for folder in os.listdir("."):
-    if folder.endswith(built_folder_ext):
+    if (folder.endswith(built_folder_ext) and
+       os.path.exists(os.path.join(folder, built_folder_postion))):
       built_folder = folder
       break
 
