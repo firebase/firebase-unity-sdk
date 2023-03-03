@@ -865,27 +865,27 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
         Firebase.Platform.FirebaseAppUtils.Instance);
     FirebaseApp newProxy;
 
-    // If this is the first App, register library information.
-    if (!userAgentRegistered) {
+    lock (nameToProxy) {
+      // If this is the first App, register library information.
+      if (!userAgentRegistered) {
         userAgentRegistered = true;
         var userAgentMap = new StringStringMap();
 
         // fire-(unity|mono)/<sdk_version>
         var libraryPrefix = "fire-" +
-                Firebase.Platform.PlatformInformation.RuntimeName;
+            Firebase.Platform.PlatformInformation.RuntimeName;
         userAgentMap[libraryPrefix] =
-                Firebase.VersionInfo.SdkVersion;
+            Firebase.VersionInfo.SdkVersion;
         // fire-(unity|mono)-ver/<unity|mono_version>
         userAgentMap[libraryPrefix + "-ver"] =
-                Firebase.Platform.PlatformInformation.RuntimeVersion;
+            Firebase.Platform.PlatformInformation.RuntimeVersion;
         // fire-(unity|mono)/<github-action-built|custom_built>
         userAgentMap[libraryPrefix + "-buildsrc"] =
-                Firebase.VersionInfo.BuildSource;
+            Firebase.VersionInfo.BuildSource;
 
         RegisterLibrariesInternal(userAgentMap);
-    }
+      }
 
-    lock (nameToProxy) {
       InitializeAppUtilCallbacks();
       var cPtrHandleRef = new System.Runtime.InteropServices.HandleRef(
           null, System.IntPtr.Zero);
