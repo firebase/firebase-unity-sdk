@@ -51,7 +51,7 @@
 
 #if defined(__ANDROID__)
 #include "app/src/google_play_services/availability_android.h"
-#include "app/src/util_android.h"
+#include "app/src/app_android.h"
 #endif // defined(__ANDROID__)
 
 namespace firebase {
@@ -173,7 +173,7 @@ static void RegisterLibrariesHelper(
 #if FIREBASE_PLATFORM_ANDROID
     JNIEnv* jni_env;
     jobject activity_local_ref = UnityGetActivity(&jni_env);
-    firebase::util::CallAfterEnsureMethodsCached(
+    firebase::CallAfterEnsureMethodsCached(
             jni_env, activity_local_ref, [&libraries, &jni_env](){
         for (std::map<std::string, std::string>::const_iterator it =
                 libraries.begin(); it != libraries.end(); ++it) {
