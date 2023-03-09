@@ -198,6 +198,11 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+      - name: Setup Android keystore
+        shell: bash
+        run: |
+          ls -a
+          ls -a .android
       - name: Fetch prebuilt packaged SDK from previous run
         if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
         uses: dawidd6/action-download-artifact@v2
