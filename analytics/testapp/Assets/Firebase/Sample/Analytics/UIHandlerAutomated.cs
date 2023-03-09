@@ -198,6 +198,8 @@ namespace Firebase.Sample.Analytics {
     Task TestGetSessionId() {
       // Session ID has problems when running on the Android test infrastructure,
       // as it depends on play services, which is not guaranteed to be updated.
+      // There is better logic to check this in the C++ tests, which we will just
+      // rely on to test the general logic.
       if (Application.platform == RuntimePlatform.Android) {
         return Task.CompletedTask;
       }
