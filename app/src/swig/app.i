@@ -51,6 +51,7 @@
 
 #if defined(__ANDROID__)
 #include "app/src/google_play_services/availability_android.h"
+#include "app/src/app_android.h"
 #endif // defined(__ANDROID__)
 
 namespace firebase {
@@ -165,6 +166,35 @@ static void LogHeartbeatForDesktop(App* app) {
     // Will handle heartbeat logging internally.
     app->LogHeartbeat();
 #endif  // FIREBASE_PLATFORM_DESKTOP
+}
+
+static void RegisterLibrariesHelper(
+        const std::map<std::string, std::string>& libraries) {
+#if FIREBASE_PLATFORM_ANDROID
+    JNIEnv* jni_env;
+    jobject activity_local_ref = UnityGetActivity(&jni_env);
+    firebase::CallAfterEnsureMethodsCached(
+            jni_env, activity_local_ref, [&libraries, &jni_env](){
+        for (std::map<std::string, std::string>::const_iterator it =
+                libraries.begin(); it != libraries.end(); ++it) {
+            const std::string& library = it->first;
+            const std::string& version = it->second;
+            firebase::App::RegisterLibrary(library.c_str(),
+                                           version.c_str(),
+                                           jni_env);
+        }
+    });
+    jni_env->DeleteLocalRef(activity_local_ref);
+#else
+    for (std::map<std::string, std::string>::const_iterator it =
+            libraries.begin(); it != libraries.end(); ++it) {
+        const std::string& library = it->first;
+        const std::string& version = it->second;
+        firebase::App::RegisterLibrary(library.c_str(),
+                                       version.c_str(),
+                                       nullptr);
+    }
+#endif
 }
 
 // Decrease the reference count for the app. When the reference count reaches
@@ -821,6 +851,8 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
   // Whether Crashlytics initialization has been attempted.
   private static bool crashlyticsInitializationAttempted = false;
 
+  private static bool userAgentRegistered = false;
+
   // Instantiates a C++ App and returns a reference to the C# proxy.
   // existingProxy is required here to prevent the finalizer being executed
   // while we're creating a new FirebaseApp proxy.
@@ -832,7 +864,28 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
     Firebase.Platform.FirebaseHandler.Create(
         Firebase.Platform.FirebaseAppUtils.Instance);
     FirebaseApp newProxy;
+
     lock (nameToProxy) {
+      // If this is the first App, register library information.
+      if (!userAgentRegistered) {
+        userAgentRegistered = true;
+        var userAgentMap = new StringStringMap();
+
+        // fire-(unity|mono)/<sdk_version>
+        var libraryPrefix = "fire-" +
+            Firebase.Platform.PlatformInformation.RuntimeName;
+        userAgentMap[libraryPrefix] =
+            Firebase.VersionInfo.SdkVersion;
+        // fire-(unity|mono)-ver/<unity|mono_version>
+        userAgentMap[libraryPrefix + "-ver"] =
+            Firebase.Platform.PlatformInformation.RuntimeVersion;
+        // fire-(unity|mono)/<github-action-built|custom_built>
+        userAgentMap[libraryPrefix + "-buildsrc"] =
+            Firebase.VersionInfo.BuildSource;
+
+        RegisterLibrariesInternal(userAgentMap);
+      }
+
       InitializeAppUtilCallbacks();
       var cPtrHandleRef = new System.Runtime.InteropServices.HandleRef(
           null, System.IntPtr.Zero);
@@ -903,22 +956,10 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
           return existingProxyForNewApp;
         }
       }
-      // If this is the first App, register library information.
-      if (cPtrToProxy.Count == 0) {
-        // fire-(unity|mono)/<sdk_version>
-        var libraryPrefix = "fire-" +
-            Firebase.Platform.PlatformInformation.RuntimeName;
-        RegisterLibraryInternal(libraryPrefix, Firebase.VersionInfo.SdkVersion);
-        // fire-(unity|mono)-ver/<unity|mono_version>
-        RegisterLibraryInternal(
-            libraryPrefix + "-ver",
-            Firebase.Platform.PlatformInformation.RuntimeVersion);
-        // fire-(unity|mono)/<github-action-built|custom_built>
-        RegisterLibraryInternal(
-            libraryPrefix + "-buildsrc", Firebase.VersionInfo.BuildSource);
-        // Log a heartbeat after all Unity user agents have been registered.
-        LogHeartbeatInternal(newProxy);
-      }
+
+      // Log a heartbeat after all Unity user agents have been registered.
+      LogHeartbeatInternal(newProxy);
+
       // Cache the name so that it can be accessed after the app is disposed.
       newProxy.name = newProxy.NameInternal;
       // By default the newly created proxy doesn't own the C++ app, take
@@ -1320,9 +1361,9 @@ namespace callback {
     return firebase::GetLogLevel();
   }
 
-  %csmethodmodifiers RegisterLibraryInternal() "internal";
-  static void RegisterLibraryInternal(const char* library, const char* version) {
-    firebase::App::RegisterLibrary(library, version);
+  %csmethodmodifiers RegisterLibrariesInternal() "internal";
+  static void RegisterLibrariesInternal(std::map<std::string, std::string> libraries) {
+    firebase::RegisterLibrariesHelper(libraries);
   }
 
  %csmethodmodifiers LogHeartbeatInternal(App* app) "internal";

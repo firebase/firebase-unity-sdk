@@ -15,9 +15,9 @@
 # This file defines the Android dependencies needed by all the modules.
 
 set(FIREBASE_APP_ANDROID_DEPS
-    "com.google.firebase:firebase-common:20.3.0"
+    "com.google.firebase:firebase-common:20.3.1"
     "com.google.firebase:firebase-analytics:21.2.0"
-    "com.google.android.gms:play-services-base:18.1.0"
+    "com.google.android.gms:play-services-base:18.2.0"
 )
 
 set(FIREBASE_ANALYTICS_ANDROID_DEPS
@@ -30,14 +30,14 @@ set(FIREBASE_AUTH_ANDROID_DEPS
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:18.3.4"
+    "com.google.firebase:firebase-crashlytics-ndk:18.3.5"
     "com.google.firebase:firebase-analytics:21.2.0"
 )
 
 set(FIREBASE_DATABASE_ANDROID_DEPS
     "com.google.firebase:firebase-database:20.1.0"
     "com.google.firebase:firebase-analytics:21.2.0"
-    "com.google.android.gms:play-services-base:18.1.0"
+    "com.google.android.gms:play-services-base:18.2.0"
 )
 
 set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
@@ -46,7 +46,7 @@ set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:24.4.3"
+    "com.google.firebase:firebase-firestore:24.4.4"
     "com.google.firebase:firebase-analytics:21.2.0"
 )
 
@@ -56,13 +56,13 @@ set(FIREBASE_FUNCTIONS_ANDROID_DEPS
 )
 
 set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-installations:17.1.1"
+    "com.google.firebase:firebase-installations:17.1.3"
     "com.google.firebase:firebase-analytics:21.2.0"
 )
 
 # iid is needed by messaging to avoid a conflict with functions
 set(FIREBASE_MESSAGING_ANDROID_DEPS
-    "com.google.firebase:firebase-messaging:23.1.1"
+    "com.google.firebase:firebase-messaging:23.1.2"
     "com.google.firebase:firebase-analytics:21.2.0"
     "com.google.firebase:firebase-iid:21.1.0"
     "com.google.flatbuffers:flatbuffers-java:1.12.0"

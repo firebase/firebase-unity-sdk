@@ -75,6 +75,11 @@ Release Notes
       as a Java file instead of precompiling it. This is to better support
       changes with the UnityPlayerActivity in the Unity 2023 editor.
 
+### 10.6.0
+- Changes
+    - General (Android): Update to Firebase Android BoM version 31.2.3.
+    - General (iOS): Update to Firebase Cocoapods version 10.6.0.
+
 ### 10.5.0
 - Changes
     - General (Android): Update to Firebase Android BoM version 31.2.1.

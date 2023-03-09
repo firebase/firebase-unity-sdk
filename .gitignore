@@ -30,3 +30,10 @@ vcpkg
 
 # Visual Studio Code
 .vscode/
+
+# Downloaded NDK
+ndk/
+ndk_zip
+
+# Downloaded EDM4U
+unity_jar_resolver/
