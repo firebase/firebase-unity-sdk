@@ -201,8 +201,8 @@ jobs:
       - name: Setup Android keystore
         shell: bash
         run: |
-          ls -a
-          ls -a .android
+          ls -a ~
+          ls -a ~/.android
       - name: Fetch prebuilt packaged SDK from previous run
         if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
         uses: dawidd6/action-download-artifact@v2
