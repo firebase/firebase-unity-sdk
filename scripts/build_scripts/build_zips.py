@@ -771,6 +771,8 @@ def main(argv):
 
   if FLAGS.use_boringssl:
     cmake_setup_args.append("-DFIREBASE_USE_BORINGSSL=ON")
+  else:
+    cmake_setup_args.append("-DFIREBASE_USE_BORINGSSL=OFF")
 
   if is_ios_build():
     cmake_setup_args.extend(get_ios_args(source_path))
