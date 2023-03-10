@@ -199,6 +199,7 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Setup Android keystore
+        if: ${{ contains('Android', matrix.platform) }}
         shell: bash
         run: |
           # The android directory might not exist, so make it
