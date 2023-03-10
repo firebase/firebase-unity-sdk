@@ -69,6 +69,12 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Messaging (Android): Provide the custom MessagingUnityPlayerActivity
+      as a Java file instead of precompiling it. This is to better support
+      changes with the UnityPlayerActivity in the Unity 2023 editor.
+
 ### 10.6.0
 - Changes
     - General (Android): Update to Firebase Android BoM version 31.2.3.

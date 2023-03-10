@@ -743,6 +743,15 @@
           ]
         },
         {
+          "importer": "PluginImporter",
+          "platforms": ["Android"],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/Android/MessagingUnityPlayerActivity.java",
+            "Firebase/Plugins/Android/firebase-messaging-cpp.aar"
+          ]
+        },
+        {
           "importer": "DefaultImporter",
           "paths": ["Firebase/Editor/FirebaseMessaging*_manifest.txt"]
         },
