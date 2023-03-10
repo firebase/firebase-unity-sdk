@@ -196,14 +196,6 @@ namespace Firebase.Sample.Analytics {
     }
 
     Task TestGetSessionId() {
-      // Session ID has problems when running on the Android test infrastructure,
-      // as it depends on play services, which is not guaranteed to be updated.
-      // There is better logic to check this in the C++ tests, which we will just
-      // rely on to test the general logic.
-      if (Application.platform == RuntimePlatform.Android) {
-        return Task.CompletedTask;
-      }
-
       // Depending on platform, GetSessionId needs a few seconds for Analytics
       // to initialize (especially on iOS simulator). Pause for 5 seconds before
       // running this test.
@@ -211,13 +203,23 @@ namespace Firebase.Sample.Analytics {
       Task.Delay(TimeSpan.FromSeconds(5)).ContinueWithOnMainThread(task_ => {
 	  base.DisplaySessionId().ContinueWithOnMainThread(task => {
 	      if (task.IsCanceled) {			      	 
-		tcs.TrySetException(new Exception("Unexpectedly canceled"));
+		      tcs.TrySetException(new Exception("Unexpectedly canceled"));
 	      } else if (task.IsFaulted) {
-		tcs.TrySetException(task.Exception);
+          // Session ID has problems when running on the Android test infrastructure,
+          // as it depends on play services, which is not guaranteed to be updated.
+          // There is better logic to check this in the C++ tests, which we will just
+          // rely on to test the general logic.
+          if (Application.platform == RuntimePlatform.Android) {
+            DebugLog("GetSessionId got an exception, but that might be expected on Android");
+            DebugLog("Exception: " + task.Exception);
+            tcs.TrySetResult(true);
+            return;
+          }
+          tcs.TrySetException(task.Exception);
 	      } else if (task.Result == 0) {
-		tcs.TrySetException(new Exception("Zero ID returned"));
+		      tcs.TrySetException(new Exception("Zero ID returned"));
 	      } else {
-		tcs.TrySetResult(true);
+		      tcs.TrySetResult(true);
 	      }
 	    });
 	});
