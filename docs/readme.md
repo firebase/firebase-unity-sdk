@@ -71,9 +71,10 @@ Release Notes
 -------------
 ### Upcoming
 - Changes
-    - Messaging (Android): Provide the custom MessagingUnityPlayerActivity
+    - Messaging (Android): Generate the custom MessagingUnityPlayerActivity
       as a Java file instead of precompiling it. This is to better support
-      changes with the UnityPlayerActivity in the Unity 2023 editor.
+      changes with the UnityPlayerActivity, and GameActivity options, in
+      the Unity 2023 editor.
 
 ### 10.6.0
 - Changes

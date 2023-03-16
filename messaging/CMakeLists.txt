@@ -90,9 +90,16 @@ endif()
 if (ANDROID)
   # Add the additional Messaging files needed for Android
   unity_pack_file(
+    "activity/FirebaseMessagingActivityGenerator.cs"
+    PACK_PATH
+      "Firebase/Editor/"
+  )
+  unity_pack_file(
     "activity/com/google/firebase/MessagingUnityPlayerActivity.java"
     PACK_PATH
-      "Firebase/Plugins/Android/"
+      "Firebase/Editor/"
+    RENAME_TO
+      "MessagingUnityPlayerActivityTemplate.txt"
   )
   # Get the Messaging Java AAR file from the C++ SDK.
   add_custom_target(
