@@ -730,7 +730,9 @@
         {
           "importer": "DefaultImporter",
           "paths": [
+            "Firebase/Editor/FirebaseMessagingActivityGenerator.cs",
             "Firebase/Editor/MessagingDependencies.xml",
+            "Firebase/Editor/MessagingUnityPlayerActivityTemplate.txt",
             "Firebase/m2repository/com/google/firebase/firebase-messaging-unity/"
           ]
         },
