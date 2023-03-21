@@ -92,12 +92,17 @@ if (ANDROID)
   unity_pack_file(
     "activity/FirebaseMessagingActivityGenerator.cs"
     PACK_PATH
-      "Firebase/Editor/"
+      "Firebase/Editor/Messaging/"
+  )
+  unity_pack_file(
+    "activity/FirebaseMessagingActivityGenerator.asmdef"
+    PACK_PATH
+      "Firebase/Editor/Messaging/"
   )
   unity_pack_file(
     "activity/com/google/firebase/MessagingUnityPlayerActivity.java"
     PACK_PATH
-      "Firebase/Editor/"
+      "Firebase/Editor/Messaging/"
     RENAME_TO
       "MessagingUnityPlayerActivityTemplate.txt"
   )
