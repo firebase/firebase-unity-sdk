@@ -99,13 +99,6 @@ if (ANDROID)
     PACK_PATH
       "Firebase/Editor/Messaging/"
   )
-  unity_pack_file(
-    "activity/com/google/firebase/MessagingUnityPlayerActivity.java"
-    PACK_PATH
-      "Firebase/Editor/Messaging/"
-    RENAME_TO
-      "MessagingUnityPlayerActivityTemplate.txt"
-  )
   # Get the Messaging Java AAR file from the C++ SDK.
   add_custom_target(
     firebase_messaging_java_aar_unity
