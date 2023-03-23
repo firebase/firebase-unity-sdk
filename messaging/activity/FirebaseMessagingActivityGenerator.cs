@@ -159,10 +159,12 @@ public class FirebaseMessagingActivityGenerator : IPreprocessBuildWithReport {
     }
 #endif
     string fileContents = System.String.Format(System.String.Join("\n", ActivityClassContents), baseClass);
-    string newAssetDirectory = Path.Combine(Application.dataPath, OutputPath);
-    System.IO.Directory.CreateDirectory(newAssetDirectory);
-    System.IO.File.WriteAllText(Path.Combine(newAssetDirectory, OutputFilename), fileContents);
-    Object newAsset = AssetDatabase.LoadMainAssetAtPath(Path.Combine("Asset", OutputPath, OutputFilename));
+    string newAssetFullDirectory = Path.Combine(Application.dataPath, OutputPath);
+    System.IO.Directory.CreateDirectory(newAssetFullDirectory);
+    System.IO.File.WriteAllText(Path.Combine(newAssetFullDirectory, OutputFilename), fileContents);
+    string newAssetLocalPath = Path.Combine("Assets", OutputPath, OutputFilename);
+    AssetDatabase.ImportAsset(newAssetLocalPath);
+    Object newAsset = AssetDatabase.LoadMainAssetAtPath(newAssetLocalPath);
     AssetDatabase.SetLabels(newAsset, new[]{GeneratedFileTag});
   }
 }
