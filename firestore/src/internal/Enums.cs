@@ -19,6 +19,15 @@ namespace Firebase.Firestore.Internal {
   /// documentation purposes -- they are otherwise equivalent to the proxy ones.
   static class Enums {
 
+    public static AggregateSourceProxy Convert(AggregateSource aggregateSource) {
+      switch (aggregateSource) {
+        case AggregateSource.Server:
+          return AggregateSourceProxy.Server;
+        default:
+          throw new System.ArgumentOutOfRangeException("Unexpected enum value: " +
+                                                       aggregateSource.ToString());
+      }
+    }
     public static SourceProxy Convert(Source source) {
           switch (source) {
             case Source.Default:

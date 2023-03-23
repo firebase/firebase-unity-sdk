@@ -142,6 +142,10 @@ namespace Firebase.Sample.Firestore {
         TestInternalExceptions,
         TestListenerRegistrationDispose,
         TestLoadBundles,
+        TestQueryMethodOnAggregateQuery,
+        TestQueryMethodOnAggregateQuerySnapshot,
+        TestAggregateQueryEqualsAndGetHashCode,
+        TestAggregateQuerySnapshotEqualsAndGetHashCode,
         TestQueryEqualsAndGetHashCode,
         TestQuerySnapshotEqualsAndGetHashCode,
         TestDocumentSnapshotEqualsAndGetHashCode,
@@ -3524,6 +3528,25 @@ namespace Firebase.Sample.Firestore {
       }
     }
 
+    Task TestQueryMethodOnAggregateQuery() {
+      return Async(() => {
+        Query query = TestCollection().WhereEqualTo("num", 1);
+
+        AssertEq(query.Count.Query.Equals(query), true);
+      });
+    }
+
+    Task TestQueryMethodOnAggregateQuerySnapshot() {
+      return Async(() => {
+        var collection = TestCollection();
+        AggregateQuery query = collection.WhereEqualTo("num", 1).Count;
+
+        AggregateQuerySnapshot snapshot = AssertTaskSucceeds(query.GetSnapshotAsync(AggregateSource.Server));
+
+        AssertEq(snapshot.Query.Equals(query), true);
+      });
+    }
+
     Task TestQueryEqualsAndGetHashCode() {
       return Async(() => {
         var collection = TestCollection();
@@ -3544,6 +3567,37 @@ namespace Firebase.Sample.Firestore {
         var query5 = collection.OrderBy("num");
         var query6 = collection.Limit(2);
         var query7 = collection.OrderBy("num").Limit(2);
+        AssertEq(query5.Equals(query6), false);
+        AssertEq(query5.Equals(query7), false);
+        AssertEq(query6.Equals(query7), false);
+        AssertEq(query1.Equals(null), false);
+
+        AssertNe(query5.GetHashCode(), query6.GetHashCode());
+        AssertNe(query5.GetHashCode(), query7.GetHashCode());
+        AssertNe(query6.GetHashCode(), query7.GetHashCode());
+      });
+    }
+    
+    Task TestAggregateQueryEqualsAndGetHashCode() {
+      return Async(() => {
+        var collection = TestCollection();
+
+        var query1 = collection.WhereEqualTo("num", 1).Count;
+        var query2 = collection.WhereEqualTo("num", 1).Count;
+        AssertEq(query1.Equals(query2), true);
+        AssertEq(query1.GetHashCode(), query2.GetHashCode());
+
+        var query3 = collection.WhereNotEqualTo("num", 1).Count;
+        AssertEq(query1.Equals(query3), false);
+        AssertNe(query1.GetHashCode(), query3.GetHashCode());
+
+        var query4 = collection.WhereEqualTo("state", "done").Count;
+        AssertEq(query1.Equals(query4), false);
+        AssertNe(query1.GetHashCode(), query4.GetHashCode());
+
+        var query5 = collection.OrderBy("num").Count;
+        var query6 = collection.Limit(2).Count;
+        var query7 = collection.OrderBy("num").Limit(2).Count;
         AssertEq(query5.Equals(query6), false);
         AssertEq(query5.Equals(query7), false);
         AssertEq(query6.Equals(query7), false);
@@ -3579,6 +3633,28 @@ namespace Firebase.Sample.Firestore {
         AssertEq(snapshot1.GetHashCode(), snapshot1.GetHashCode());
         AssertEq(snapshot2.GetHashCode(), snapshot3.GetHashCode());
         AssertNe(snapshot3.GetHashCode(), snapshot4.GetHashCode());
+      });
+    }
+
+    Task TestAggregateQuerySnapshotEqualsAndGetHashCode() {
+      return Async(() => {
+        var collection = TestCollection();
+
+        AssertTaskSucceeds(collection.Document("a").SetAsync(TestData(1)));
+        AggregateQuerySnapshot snapshot1 = AssertTaskSucceeds(collection.Count.GetSnapshotAsync(AggregateSource.Server));
+        AggregateQuerySnapshot snapshot2 = AssertTaskSucceeds(collection.Count.GetSnapshotAsync(AggregateSource.Server));
+
+        AssertTaskSucceeds(collection.Document("b").SetAsync(TestData(2)));
+        AggregateQuerySnapshot snapshot3 = AssertTaskSucceeds(collection.Count.GetSnapshotAsync(AggregateSource.Server));
+
+        AssertEq(snapshot1.Equals(snapshot1), true);
+        AssertEq(snapshot1.Equals(snapshot2), true);
+        AssertEq(snapshot1.Equals(snapshot3), false);
+        AssertEq(snapshot1.Equals(null), false);
+
+        AssertEq(snapshot1.GetHashCode(), snapshot1.GetHashCode());
+        AssertEq(snapshot1.GetHashCode(), snapshot2.GetHashCode());
+        AssertNe(snapshot1.GetHashCode(), snapshot3.GetHashCode());
       });
     }
 
@@ -3949,12 +4025,19 @@ namespace Firebase.Sample.Firestore {
     }
 
     private void AssertQueryResults(string desc, Query query, List<string> docIds) {
+      AssertQueryResults(desc, query, docIds, docIds.Count);
+    }
+
+    private void AssertQueryResults(string desc, Query query, List<string> docIds, long count) {
       var snapshot = Await(query.GetSnapshotAsync());
 
       AssertEq(desc + ": Query result count", snapshot.Count, docIds.Count);
       for (int i = 0; i < snapshot.Count; i++) {
         AssertEq(desc + ": Document ID " + i, docIds[i], snapshot[i].Id);
       }
+      
+      var aggregateSnapshot = Await(query.Count.GetSnapshotAsync(AggregateSource.Server));
+      AssertEq(desc + ": Aggregate query count", aggregateSnapshot.Count, docIds.Count);
     }
 
     private FirebaseFirestore NonDefaultFirestore(string appName) {

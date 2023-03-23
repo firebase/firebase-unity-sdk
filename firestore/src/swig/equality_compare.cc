@@ -13,6 +13,14 @@ namespace firebase {
 namespace firestore {
 namespace csharp {
 
+bool AggregateQueryEquals(const AggregateQuery* lhs, const AggregateQuery* rhs) {
+  return EqualityCompareHelper(lhs, rhs);
+}
+
+bool AggregateQuerySnapshotEquals(const AggregateQuerySnapshot* lhs, const AggregateQuerySnapshot* rhs) {
+  return EqualityCompareHelper(lhs, rhs);
+}
+
 bool QueryEquals(const Query* lhs, const Query* rhs) {
   return EqualityCompareHelper(lhs, rhs);
 }

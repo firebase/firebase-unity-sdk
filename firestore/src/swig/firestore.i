@@ -201,6 +201,8 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(::firebase::firestore::csharp::LoadBundleTaskProgre
 
 // Generate Future instantiations, must be before other wrappers.
 %include "app/src/swig/future.i"
+%SWIG_FUTURE(Future_AggregateQuerySnapshot, AggregateQuerySnapshotProxy, internal,
+             firebase::firestore::AggregateQuerySnapshot, FirestoreException)
 %SWIG_FUTURE(Future_QuerySnapshot, QuerySnapshotProxy, internal,
              firebase::firestore::QuerySnapshot, FirestoreException)
 %SWIG_FUTURE(Future_DocumentSnapshot, DocumentSnapshotProxy, internal,
@@ -249,6 +251,10 @@ SWIG_CREATE_PROXY(firebase::firestore::ListenerRegistration)
 // Generate a C# wrapper for Source. Must be before DocumentReference and Query.
 SWIG_CREATE_PROXY(firebase::firestore::Source)
 %include "firestore/src/include/firebase/firestore/source.h"
+
+// Generate a C# wrapper for Source. Must be before AggregateQuery.
+SWIG_CREATE_PROXY(firebase::firestore::AggregateSource)
+%include "firestore/src/include/firebase/firestore/aggregate_source.h"
 
 // Generate a C# wrapper for FieldPath. Must be above DocumentSnapshot and SetOptions.
 SWIG_CREATE_PROXY(firebase::firestore::FieldPath)
@@ -369,6 +375,7 @@ SWIG_CREATE_PROXY(firebase::firestore::Query);
 %rename("%s") firebase::firestore::Query::EndBefore(const DocumentSnapshot&) const;
 %rename("%s") firebase::firestore::Query::EndAt(const DocumentSnapshot&) const;
 %rename("%s") firebase::firestore::Query::Get;
+%rename("%s") firebase::firestore::Query::Count;
 %rename("%s") firebase::firestore::Query::Direction;
 %include "firestore/src/include/firebase/firestore/query.h"
 
@@ -386,6 +393,18 @@ SWIG_CREATE_PROXY(firebase::firestore::QuerySnapshot);
 %rename("%s") firebase::firestore::QuerySnapshot::metadata;
 %rename("%s") firebase::firestore::QuerySnapshot::size;
 %include "firestore/src/include/firebase/firestore/query_snapshot.h"
+
+// Generate a C# wrapper for AggregateQuery. Must be after Query.
+SWIG_CREATE_PROXY(firebase::firestore::AggregateQuery);
+%rename("%s") firebase::firestore::AggregateQuery::query;
+%rename("%s") firebase::firestore::AggregateQuery::Get;
+%include "firestore/src/include/firebase/firestore/aggregate_query.h"
+
+// Generate a C# wrapper for AggregateQuerySnapshot. Must be after AggregateQuery.
+SWIG_CREATE_PROXY(firebase::firestore::AggregateQuerySnapshot);
+%rename("%s") firebase::firestore::AggregateQuerySnapshot::query;
+%rename("%s") firebase::firestore::AggregateQuerySnapshot::count;
+%include "firestore/src/include/firebase/firestore/aggregate_query_snapshot.h"
 
 // Generate a C# wrapper for Settings.
 SWIG_CREATE_PROXY(firebase::firestore::Settings);

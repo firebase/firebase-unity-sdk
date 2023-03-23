@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "firestore/src/include/firebase/firestore/aggregate_query.h"
+#include "firestore/src/include/firebase/firestore/aggregate_query_snapshot.h"
 #include "firestore/src/include/firebase/firestore/document_change.h"
 #include "firestore/src/include/firebase/firestore/document_snapshot.h"
 #include "firestore/src/include/firebase/firestore/query.h"
@@ -11,6 +13,12 @@
 namespace firebase {
 namespace firestore {
 namespace csharp {
+
+// Returns the hash code for the given query.
+int32_t AggregateQueryHashCode(const AggregateQuery* query);
+
+// Returns the hash code for the given query snapshot.
+int32_t AggregateQuerySnapshotHashCode(const AggregateQuerySnapshot* snapshot);
 
 // Returns the hash code for the given query.
 int32_t QueryHashCode(const Query* query);
