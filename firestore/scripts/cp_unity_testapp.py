@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 """
+Syntax: %s [options] <dest_dir>
+
 Copies the Unity Firestore testapp from the Firebase Unity SDK GitHub repository
 into another directory and tweaks its structure and configuration to suit local
 development. For example, it copies the "framework" files into their correct
@@ -9,7 +11,6 @@ repository.
 """
 
 from collections.abc import Sequence
-import dataclasses
 import json
 import pathlib
 import shutil
@@ -23,17 +24,7 @@ from absl import flags
 from absl import logging
 
 
-DEFAULTS_FILE = pathlib.Path.home() / ".cp_unity_testapp.flags.txt"
 DEFAULT_GIT_REPO_DIR = pathlib.Path(__file__).parent.parent.parent
-
-FLAG_DEFAULTS_FILE = flags.DEFINE_string(
-  name="defaults_file",
-  default=None,
-  help="The file from which to load the default values for flags that are "
-    "not explicitly specified. This is a text file where each line is stripped "
-    "of leading and trailing whitespace and each line is then treated as a "
-    f"single command-line flag. (default: {DEFAULTS_FILE})",
-)
 
 FLAG_GIT_REPO_DIR = flags.DEFINE_string(
   name="git_repo_dir",
@@ -43,28 +34,14 @@ FLAG_GIT_REPO_DIR = flags.DEFINE_string(
     f"of this file, which, in this case, is {DEFAULT_GIT_REPO_DIR}",
 )
 
-FLAG_DEST_DIR_2017 = flags.DEFINE_string(
-  name="dest_dir_2017",
-  default=None,
-  help="The directory to which to assemble the Unity application, modified for "
-    "support in Unity 2017. This directory will be deleted if it exists.",
-)
-
-FLAG_DEST_DIR_2020 = flags.DEFINE_string(
-  name="dest_dir_2020",
-  default=None,
-  help="The directory to which to assemble the Unity application, modified for "
-    "support in Unity 2020. This directory will be deleted if it exists.",
-)
-
 FLAG_GOOGLE_SERVICES_JSON_FILE = flags.DEFINE_string(
   name="google_services_json",
   default=None,
   help="The google-services.json file to use in the Unity application. "
     "This file will be copied into the destination directory and the Android "
     "package name will be read from it. The Unity project will then be edited "
-    "to use the parsed Android package name. If this flag is not specified "
-    "then these steps will need to be performed manually.",
+    "to use the parsed Android package name. If this flag is not specified, "
+    "or is empty, then these steps will need to be performed manually.",
 )
 
 FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE = flags.DEFINE_string(
@@ -73,16 +50,17 @@ FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE = flags.DEFINE_string(
   help="The GoogleService-Info.plist file to use in the Unity application. "
     "This file will be copied into the destination directory and the Bundle ID "
     "will be read from it. The Unity project will then be edited to use the "
-    "parsed Bundle ID. If this flag is not specified then these steps will "
-    "need to be performed manually if targeting iOS.",
+    "parsed Bundle ID. If this flag is not specified, or is empty, then these "
+    "steps will need to be performed manually if targeting iOS.",
 )
 
 FLAG_ANDROID_PACKAGE_NAME = flags.DEFINE_string(
   name="android_package_name",
   default=None,
   help="The Android package name to use; must be one of the package names "
-    "listed in google-services.json. If this flag is not specified then the "
-    "first Android package name found in the google-services.json will be used.",
+    "listed in google-services.json. If this flag is not specified, or is "
+    "empty then the first Android package name found in the "
+    "google-services.json will be used.",
 )
 
 FLAG_APPLE_DEVELOPER_TEAM_ID = flags.DEFINE_string(
@@ -90,8 +68,8 @@ FLAG_APPLE_DEVELOPER_TEAM_ID = flags.DEFINE_string(
   default=None,
   help="The Apple developer team ID to use. The Unity project in the "
     "destination directory will be edited to use this value in the generated "
-    "Xcode project. If this flag is not specified then the Developer Team ID "
-    "will need to be manually set in Xcode.",
+    "Xcode project. If this flag is not specified, or is empty, then the "
+    "Developer Team ID will need to be manually set in Xcode.",
 )
 
 FLAG_HARDLINK_CS_FILES = flags.DEFINE_boolean(
@@ -100,34 +78,42 @@ FLAG_HARDLINK_CS_FILES = flags.DEFINE_boolean(
   help="Instead of copying the .cs source files, hardlink them. This can be "
     "useful when developing the C# code for the testapp itself, as changes "
     "to those files will be instantly reflected both in the destination "
-    "Unity project and the GitHub repository."
+    "Unity project and the GitHub repository. (default: %(default)s)"
 )
 
 
 def main(argv: Sequence[str]) -> None:
-  if len(argv) > 1:
-    raise app.UsageError(f"unexpected argument: {argv[1]}")
+  if len(argv) < 2:
+    raise app.UsageError(f"<dest_dir> must be specified")
+  if len(argv) > 2:
+    raise app.UsageError(f"unexpected argument: {argv[2]}")
 
-  flags_parser = FlagsParser()
-  try:
-    flags = flags_parser.parse()
-  except flags_parser.DefaultsFileParseError as e:
-    print("ERROR: loading flag default values from "
-      f"{flags_parser.defaults_file} failed: {e}", file=sys.stderr)
-    sys.exit(1)
-  except flags_parser.Error as e:
-    print(f"ERROR: {e}", file=sys.stderr)
-    sys.exit(2)
+  dest_dir = pathlib.Path(argv[1])
+
+  git_repo_dir = \
+    pathlib.Path(FLAG_GIT_REPO_DIR.value) \
+    if FLAG_GIT_REPO_DIR.value else DEFAULT_GIT_REPO_DIR
+  google_services_json_file = \
+    pathlib.Path(FLAG_GOOGLE_SERVICES_JSON_FILE.value) \
+    if FLAG_GOOGLE_SERVICES_JSON_FILE.value else None
+  google_service_info_plist_file = \
+    pathlib.Path(FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE.value) \
+    if FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE.value else None
+  android_package_name = \
+    FLAG_ANDROID_PACKAGE_NAME.value \
+    if FLAG_ANDROID_PACKAGE_NAME.value else None
+  apple_developer_team_id = \
+    FLAG_APPLE_DEVELOPER_TEAM_ID.value \
+    if FLAG_APPLE_DEVELOPER_TEAM_ID.value else None
 
   copier = UnityTestappCopier(
-    git_repo_dir=flags.git_repo_dir,
-    dest_dir_2017=flags.dest_dir_2017,
-    dest_dir_2020=flags.dest_dir_2020,
-    google_services_json_file=flags.google_services_json_file,
-    google_service_info_plist_file=flags.google_service_info_plist_file,
-    android_package_name=flags.android_package_name,
-    apple_developer_team_id=flags.apple_developer_team_id,
-    hardlink_cs_files=flags.hardlink_cs_files,
+    git_repo_dir=git_repo_dir,
+    dest_dir=dest_dir,
+    google_services_json_file=google_services_json_file,
+    google_service_info_plist_file=google_service_info_plist_file,
+    android_package_name=android_package_name,
+    apple_developer_team_id=apple_developer_team_id,
+    hardlink_cs_files=FLAG_HARDLINK_CS_FILES.value,
   )
 
   try:
@@ -137,157 +123,13 @@ def main(argv: Sequence[str]) -> None:
     sys.exit(1)
 
 
-class FlagsParser:
-
-  def __init__(self) -> None:
-    if FLAG_DEFAULTS_FILE.value is not None:
-      self.defaults_file = pathlib.Path(FLAG_DEFAULTS_FILE.value)
-    else:
-      self.defaults_file = DEFAULTS_FILE
-
-    self.git_repo_dir = DEFAULT_GIT_REPO_DIR
-    self.dest_dir_2017: Optional[pathlib.Path] = None
-    self.dest_dir_2020: Optional[pathlib.Path] = None
-    self.google_services_json_file: Optional[pathlib.Path] = None
-    self.google_service_info_plist_file: Optional[pathlib.Path] = None
-    self.android_package_name: Optional[str] = None
-    self.apple_developer_team_id: Optional[str] = None
-
-  @dataclasses.dataclass(frozen=True)
-  class ParsedFlags:
-    git_repo_dir: pathlib.Path
-    dest_dir_2017: Optional[pathlib.Path]
-    dest_dir_2020: Optional[pathlib.Path]
-    google_services_json_file: Optional[pathlib.Path]
-    google_service_info_plist_file: Optional[pathlib.Path]
-    android_package_name: Optional[str]
-    apple_developer_team_id: Optional[str]
-    hardlink_cs_files: bool
-
-  def parse(self) -> ParsedFlags:
-    self._load_defaults_file()
-    self._load_flag_values()
-    return self._to_parsed_flags()
-
-  def _to_parsed_flags(self) -> ParsedFlags:
-    return self.ParsedFlags(
-      git_repo_dir = self.git_repo_dir,
-      dest_dir_2017 = self.dest_dir_2017,
-      dest_dir_2020 = self.dest_dir_2020,
-      google_services_json_file = self.google_services_json_file,
-      google_service_info_plist_file = self.google_service_info_plist_file,
-      android_package_name = self.android_package_name,
-      apple_developer_team_id = self.apple_developer_team_id,
-      hardlink_cs_files = FLAG_HARDLINK_CS_FILES.value,
-    )
-
-  def _load_defaults_file(self) -> None:
-    if not self.defaults_file.is_file():
-      return
-
-    logging.info("Loading flag default values from file: %s", self.defaults_file)
-    with self.defaults_file.open("rt", encoding="utf8") as f:
-      current_flag = None
-      for line_number, line in enumerate(f, start=1):
-        line = line.strip()
-        if current_flag is None:
-          if not line.startswith("--"):
-            raise self.DefaultsFileParseError(
-              f"line {line_number}: should start with --: {line}")
-          flag_name = line[2:]
-          current_flag = self._flag_from_flag_name(flag_name)
-          if current_flag is None:
-            raise self.DefaultsFileParseError(
-              f"line {line_number}: unknown flag: {line}")
-        else:
-          self._set_flag_value(current_flag, line)
-          current_flag = None
-
-    if current_flag is not None:
-      raise self.DefaultsFileParseError(
-        f"line {line_number}: expected line after this line: {line}")
-
-  def _load_flag_values(self) -> None:
-    if FLAG_GIT_REPO_DIR.value:
-      self._log_using_flag_from_command_line(FLAG_GIT_REPO_DIR)
-      self.git_repo_dir = pathlib.Path(FLAG_GIT_REPO_DIR.value)
-    if FLAG_DEST_DIR_2017.value:
-      self._log_using_flag_from_command_line(FLAG_DEST_DIR_2017)
-      self.dest_dir_2017 = pathlib.Path(FLAG_DEST_DIR_2017.value)
-    if FLAG_DEST_DIR_2020.value:
-      self._log_using_flag_from_command_line(FLAG_DEST_DIR_2020)
-      self.dest_dir_2020 = pathlib.Path(FLAG_DEST_DIR_2020.value)
-    if FLAG_GOOGLE_SERVICES_JSON_FILE.value:
-      self._log_using_flag_from_command_line(FLAG_GOOGLE_SERVICES_JSON_FILE)
-      self.google_services_json_file = pathlib.Path(FLAG_GOOGLE_SERVICES_JSON_FILE.value)
-    if FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE.value:
-      self._log_using_flag_from_command_line(FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE)
-      self.google_service_info_plist_file = pathlib.Path(FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE.value)
-    if FLAG_ANDROID_PACKAGE_NAME.value:
-      self._log_using_flag_from_command_line(FLAG_ANDROID_PACKAGE_NAME)
-      self.android_package_name = FLAG_ANDROID_PACKAGE_NAME.value
-    if FLAG_APPLE_DEVELOPER_TEAM_ID.value:
-      self._log_using_flag_from_command_line(FLAG_APPLE_DEVELOPER_TEAM_ID)
-      self.apple_developer_team_id = FLAG_APPLE_DEVELOPER_TEAM_ID.value
-
-    self._log_using_flag_from_command_line(FLAG_HARDLINK_CS_FILES)
-
-  @classmethod
-  def _log_using_flag_from_command_line(cls, flag: flags.Flag) -> None:
-    logging.info("Using flag from command line: --%s=%s", flag.name, flag.value)
-
-  @classmethod
-  def _flag_from_flag_name(cls, flag_name: str) -> Optional[flags.Flag]:
-    known_flags = (
-      FLAG_GIT_REPO_DIR,
-      FLAG_DEST_DIR_2017,
-      FLAG_DEST_DIR_2020,
-      FLAG_GOOGLE_SERVICES_JSON_FILE,
-      FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE,
-      FLAG_ANDROID_PACKAGE_NAME,
-      FLAG_APPLE_DEVELOPER_TEAM_ID,
-    )
-    for known_flag in known_flags:
-      if known_flag.name == flag_name:
-        return known_flag
-    else:
-      return None
-
-  def _set_flag_value(self, flag: flags.Flag, value: str) -> None:
-    if flag is FLAG_GIT_REPO_DIR:
-      self.git_repo_dir = pathlib.Path(value)
-    elif flag is FLAG_DEST_DIR_2017:
-      self.dest_dir_2017 = pathlib.Path(value)
-    elif flag is FLAG_DEST_DIR_2020:
-      self.dest_dir_2020 = pathlib.Path(value)
-    elif flag is FLAG_GOOGLE_SERVICES_JSON_FILE:
-      self.google_services_json_file = pathlib.Path(value)
-    elif flag is FLAG_GOOGLE_SERVICE_INFO_PLIST_FILE:
-      self.google_service_info_plist_file = pathlib.Path(value)
-    elif flag is FLAG_ANDROID_PACKAGE_NAME:
-      self.android_package_name = value
-    elif flag is FLAG_APPLE_DEVELOPER_TEAM_ID:
-      self.apple_developer_team_id = value
-    else:
-      raise RuntimeError(f"unknown flag: {flag.value}")
-
-    logging.info("Loaded flag from %s: --%s=%s", self.defaults_file, flag.name, value)
-
-  class Error(Exception):
-    pass
-
-  class DefaultsFileParseError(Error):
-    pass
-
-
 class UnityTestappCopier:
 
   def __init__(
     self,
     *,
     git_repo_dir: pathlib.Path,
-    dest_dir_2017: Optional[pathlib.Path],
-    dest_dir_2020: Optional[pathlib.Path],
+    dest_dir: pathlib.Path,
     google_services_json_file: Optional[pathlib.Path],
     google_service_info_plist_file: Optional[pathlib.Path],
     android_package_name: Optional[str],
@@ -295,8 +137,7 @@ class UnityTestappCopier:
     hardlink_cs_files: bool,
   ) -> None:
     self.git_repo_dir = git_repo_dir
-    self.dest_dir_2017 = dest_dir_2017
-    self.dest_dir_2020 = dest_dir_2020
+    self.dest_dir = dest_dir
     self.google_services_json_file = google_services_json_file
     self.google_service_info_plist_file = google_service_info_plist_file
     self.android_package_name = android_package_name
@@ -304,51 +145,33 @@ class UnityTestappCopier:
     self.hardlink_cs_files = hardlink_cs_files
 
   def run(self) -> None:
-    something_done = False
-
-    if self.dest_dir_2017 is not None:
-      self._run(self.dest_dir_2017, 2017)
-      something_done = True
-    if self.dest_dir_2020 is not None:
-      self._run(self.dest_dir_2020, 2020)
-      something_done = True
-
-    if not something_done:
-      raise self.Error("Nothing to do; no destination directories specified")
-
-  def _run(self, dest_dir: pathlib.Path, unity_version: int) -> None:
-    if dest_dir.exists():
-      self._rmtree(dest_dir)
+    if self.dest_dir.exists():
+      self._rmtree(self.dest_dir)
 
     testapp_dir = self.git_repo_dir / "firestore" / "testapp"
-    self._copy_tree(testapp_dir, dest_dir)
+    self._copy_tree(testapp_dir, self.dest_dir)
 
     # Delete the nunit tests, since they are not maintained.
-    self._rmtree(dest_dir / "Assets" / "Tests")
+    self._rmtree(self.dest_dir / "Assets" / "Tests")
 
     # Copy AutomatedTestRunner.cs
     automated_test_runner_cs_src = self.git_repo_dir / "scripts" / "gha" / \
       "integration_testing" / "automated_testapp" / "AutomatedTestRunner.cs"
-    automated_test_runner_cs_dest = dest_dir / "Assets" / "Firebase" / \
+    automated_test_runner_cs_dest = self.dest_dir / "Assets" / "Firebase" / \
       "Sample" / "AutomatedTestRunner.cs"
     self._copy_file(automated_test_runner_cs_src, automated_test_runner_cs_dest)
 
     # Copy ftl_testapp_files directory.
     ftl_testapp_files_src = self.git_repo_dir / "scripts" / "gha" / \
       "integration_testing" / "automated_testapp" / "ftl_testapp_files"
-    ftl_testapp_files_dest = dest_dir / "Assets" / "Firebase" / \
+    ftl_testapp_files_dest = self.dest_dir / "Assets" / "Firebase" / \
       "Sample" / "FirebaseTestLab"
     self._copy_tree(ftl_testapp_files_src, ftl_testapp_files_dest)
-
-    # Delete Builder.cs in Unity 2017 since it doesn't compile
-    if unity_version == 2017:
-      builder_cs_file = dest_dir / "Assets" / "Firebase" / "Editor" / "Builder.cs"
-      builder_cs_file.unlink()
 
     if self.google_services_json_file is None:
       android_package_name = None
     else:
-      google_services_json_dest_file = dest_dir / "Assets" / "Firebase" / \
+      google_services_json_dest_file = self.dest_dir / "Assets" / "Firebase" / \
         "Sample" / "Firestore" / "google-services.json"
       self._copy_file(self.google_services_json_file, google_services_json_dest_file)
       android_package_name = self._load_android_package_name(google_services_json_dest_file)
@@ -356,13 +179,13 @@ class UnityTestappCopier:
     if self.google_service_info_plist_file is None:
       bundle_id = None
     else:
-      google_service_info_plist_dest_file = dest_dir / "Assets" / "Firebase" / \
-        "Sample" / "Firestore" / "GoogleService-Info.plist"
+      google_service_info_plist_dest_file = self.dest_dir / "Assets" / \
+        "Firebase" / "Sample" / "Firestore" / "GoogleService-Info.plist"
       self._copy_file(self.google_service_info_plist_file, google_service_info_plist_dest_file)
       bundle_id = self._load_bundle_id(google_service_info_plist_dest_file)
 
     if android_package_name is not None or bundle_id is not None:
-      project_settings_file = dest_dir / "ProjectSettings" / "ProjectSettings.asset"
+      project_settings_file = self.dest_dir / "ProjectSettings" / "ProjectSettings.asset"
       self._update_unity_app_info(project_settings_file, android_package_name, bundle_id)
 
   # A drop-in replacement for `shutil.copy()` that creates hard links for some files

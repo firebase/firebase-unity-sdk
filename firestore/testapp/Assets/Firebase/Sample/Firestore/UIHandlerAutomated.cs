@@ -177,7 +177,8 @@ namespace Firebase.Sample.Firestore {
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: testFilter.Length > 0 ? testFilter : tests,
-        logFunc: LogInBatches
+        logFunc: LogInBatches,
+        maxAttempts: 3
       );
 
       Debug.Log("NOTE: Some API calls report failures using UnityEngine.Debug.LogError which will " +

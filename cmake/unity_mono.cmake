@@ -275,6 +275,7 @@ macro(mono_add_internal name output_type)
   set(VAR_DEFINES "TRACE")
   set(VAR_OUTPUT_TYPE ${output_type})
 
+  string(APPEND VAR_REFERENCE "    <Reference Include=\"netstandard\" />\n")
   string(APPEND VAR_REFERENCE "    <Reference Include=\"System\" />\n")
   string(APPEND VAR_REFERENCE "    <Reference Include=\"System.Core\" />\n")
 
