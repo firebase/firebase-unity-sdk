@@ -131,26 +131,7 @@ public class FirebaseMessagingActivityGenerator : IPreprocessBuildWithReport {
       return;
     }
 
-    // Check if the file has already been generated.
-    string[] oldAssetGuids = AssetDatabase.FindAssets("l:" + GeneratedFileTag);
-    if (oldAssetGuids != null && oldAssetGuids.Length > 0) {
-      if (oldAssetGuids.Length != 1) {
-        Debug.LogWarning("FirebaseMessagingActivityEditor found multiple generated files with the label: " +
-                         GeneratedFileTag + " \nNo changes will be made.");
-        return;
-      }
-      string oldAssetPath = AssetDatabase.GUIDToAssetPath(oldAssetGuids[0]);
-      Object oldAsset = AssetDatabase.LoadMainAssetAtPath(oldAssetPath);
-      // If the generated file has been tagged to be preserved, don't change it.
-      string[] labelList = AssetDatabase.GetLabels(oldAsset);
-      if (labelList.Contains(PreserveTag)) {
-        return;
-      }
-      // Delete the old asset.
-      AssetDatabase.DeleteAsset(oldAssetPath);
-    }
-
-    // Generate the new file.
+    // Determine what the contents of the generated file should be.
     string baseClass = BaseActivityClass;
 #if UNITY_2023_1_OR_NEWER
     // If using the new GameActivity logic, we want to generate with that base class.
@@ -159,6 +140,36 @@ public class FirebaseMessagingActivityGenerator : IPreprocessBuildWithReport {
     }
 #endif
     string fileContents = System.String.Format(System.String.Join("\n", ActivityClassContents), baseClass);
+
+    // Check if the file has already been generated.
+    string[] oldAssetGuids = AssetDatabase.FindAssets("l:" + GeneratedFileTag);
+    if (oldAssetGuids != null && oldAssetGuids.Length > 0) {
+      if (oldAssetGuids.Length != 1) {
+        Debug.LogWarning("FirebaseMessagingActivityEditor found multiple generated files with the label: " +
+                         GeneratedFileTag + " \n" +
+                         "No changes will be made, but this can potentially cause problems on Android with duplicate classes.");
+        return;
+      }
+      string oldAssetPath = AssetDatabase.GUIDToAssetPath(oldAssetGuids[0]);
+      Object oldAsset = AssetDatabase.LoadMainAssetAtPath(oldAssetPath);
+      string oldAssetFullPath = Path.Combine(Application.dataPath, "..", oldAssetPath);
+      string oldFileContents = System.IO.File.ReadAllText(oldAssetFullPath);
+      // If the old file matches what we would generate, exit early.
+      if (oldFileContents == fileContents) {
+        return;
+      }
+      // If the generated file has been tagged to be preserved, don't change it.
+      string[] labelList = AssetDatabase.GetLabels(oldAsset);
+      if (labelList.Contains(PreserveTag)) {
+        return;
+      }
+      // Delete the old asset.
+      Debug.Log("Changes detected, regenerating " + oldAssetPath + "\n" +
+                "To preserve local changes to that file, add the label: " + PreserveTag);
+      AssetDatabase.DeleteAsset(oldAssetPath);
+    }
+
+    // Generate the new file.
     string newAssetFullDirectory = Path.Combine(Application.dataPath, OutputPath);
     System.IO.Directory.CreateDirectory(newAssetFullDirectory);
     System.IO.File.WriteAllText(Path.Combine(newAssetFullDirectory, OutputFilename), fileContents);
