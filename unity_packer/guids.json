@@ -530,6 +530,8 @@
         "Firebase/Editor/FirebaseMessaging_version-10.6.0_manifest.txt": "0992fabc0ba8451ba12ebc0ff86d8952",
         "Firebase/Editor/FirebaseRemoteConfig_version-10.6.0_manifest.txt": "bd609ed590784691960483599ff2bf00",
         "Firebase/Editor/FirebaseStorage_version-10.6.0_manifest.txt": "7fc8962be9e2405aba8fef4093514b8c",
+        "Firebase/Editor/Messaging/FirebaseMessagingActivityGenerator.asmdef": "23dad9d59a474cb6a052bb9322271ae3",
+        "Firebase/Editor/Messaging/FirebaseMessagingActivityGenerator.cs": "38cf8316372e4943aee735c624262e05",
         "Firebase/Plugins/x86_64/FirebaseCppApp-10_6_0.bundle": "ddb54d0bdc3444589f5a78560cb74a11",
         "Firebase/Plugins/x86_64/FirebaseCppApp-10_6_0.dll": "f87e7bd2dcf0465da8ea618bcbe52973",
         "Firebase/Plugins/x86_64/FirebaseCppApp-10_6_0.so": "117087a4ebb144a1a75007f8fc5d6822",
