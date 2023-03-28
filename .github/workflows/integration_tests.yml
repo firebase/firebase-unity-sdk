@@ -198,6 +198,15 @@ jobs:
         shell: bash
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+      - name: Setup Android keystore
+        if: ${{ contains('Android', matrix.platform) }}
+        shell: bash
+        run: |
+          # The android directory might not exist, so make it
+          mkdir -p ~/.android
+          # Restore the secret debug keystore
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.TEST_SECRET }}" \
+              --output ~/.android/debug.keystore "scripts/gha-encrypted/debug_keystore.gpg"
       - name: Fetch prebuilt packaged SDK from previous run
         if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
         uses: dawidd6/action-download-artifact@v2
