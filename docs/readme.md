@@ -71,6 +71,7 @@ Release Notes
 -------------
 ### 10.7.0
 - Changes
+    - General: Update to Firebase C++ SDK version 10.7.0.
     - General (Android): Update Firebase Android BoM dependencies to v31.3.0.
     - General (iOS): Update Firebase Cocoapods dependencies to v10.7.0.
     - Messaging (Android): Generate the custom MessagingUnityPlayerActivity
