@@ -547,7 +547,8 @@ def patch_android_env(unity_version):
     # If this continues to be a problem, this logic might need to be smarter, to remove all versions newer than 32,
     # but currently the GitHub runners have 33 as their max.
     logging.info("Uninstall Android platform android-33")
-    _run([sdkmanager_path, "--uninstall", "platforms;android-33", "platforms;android-33-ext4"], check=False)
+    _run([sdkmanager_path, "--uninstall",
+          "platforms;android-33", "platforms;android-33-ext4", "platforms;android-33-ext5"], check=False)
   except Exception as e:
     logging.exception("Failed to uninstall Android platform android-33")
 
