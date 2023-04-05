@@ -32,13 +32,13 @@ from absl import app, flags, logging
 
 SUPPORT_PLATFORMS = ("linux", "macos", "windows", "ios", "tvos", "android")
 SUPPORT_TARGETS = [
-    "analytics", "auth", "crashlytics", "database", "dynamic_links",
+    "analytics", "app_check", "auth", "crashlytics", "database", "dynamic_links",
     "firestore", "functions", "installations", "messaging", "remote_config",
     "storage"
 ]
 TVOS_SUPPORT_TARGETS = [
-    "analytics", "auth", "crashlytics", "database", "firestore", "functions",
-    "installations", "messaging", "remote_config", "storage"
+    "analytics", "app_check", "auth", "crashlytics", "database", "firestore",
+    "functions", "installations", "messaging", "remote_config", "storage"
 ]
 SUPPORT_DEVICE = ["device", "simulator"]
 
