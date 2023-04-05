@@ -4,6 +4,9 @@ using Firebase.Firestore.Internal;
 using System.Threading.Tasks;
 
 namespace Firebase.Firestore {
+    /// <summary>
+    /// A query that calculates aggregations over an underlying query.
+    /// </summary>
     public sealed class AggregateQuery
     {
         private readonly AggregateQueryProxy _proxy;

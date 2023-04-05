@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using BclType = System.Type;
 using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
+  /// <summary>
+  /// The results of executing an <c>AggregateQuerySnapshot</c>.
+  /// </summary>
   public sealed class AggregateQuerySnapshot {
     private readonly AggregateQuerySnapshotProxy _proxy;
     private readonly FirebaseFirestore _firestore;

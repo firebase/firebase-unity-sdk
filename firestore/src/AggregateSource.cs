@@ -18,7 +18,6 @@ namespace Firebase.Firestore {
   /// The sources from which an <see cref="AggregateQuery.GetSnapshotAsync"/> can retrieve its
   /// results.
   /// </summary>
-
   public enum AggregateSource {
     /// Perform the aggregation on the server and download the result.
     /// The result received from the server is presented, unaltered, without
