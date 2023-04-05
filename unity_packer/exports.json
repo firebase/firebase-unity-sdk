@@ -731,6 +731,8 @@
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Editor/MessagingDependencies.xml",
+            "Firebase/Editor/Messaging/FirebaseMessagingActivityGenerator.asmdef",
+            "Firebase/Editor/Messaging/FirebaseMessagingActivityGenerator.cs",
             "Firebase/m2repository/com/google/firebase/firebase-messaging-unity/"
           ]
         },
@@ -747,7 +749,6 @@
           "platforms": ["Android"],
           "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/Android/MessagingUnityPlayerActivity.java",
             "Firebase/Plugins/Android/firebase-messaging-cpp.aar"
           ]
         },

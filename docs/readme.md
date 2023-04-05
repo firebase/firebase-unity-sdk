@@ -69,11 +69,15 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 10.7.0
 - Changes
-    - Messaging (Android): Provide the custom MessagingUnityPlayerActivity
+    - General: Update to Firebase C++ SDK version 10.7.0.
+    - General (Android): Update Firebase Android BoM dependencies to v31.3.0.
+    - General (iOS): Update Firebase Cocoapods dependencies to v10.7.0.
+    - Messaging (Android): Generate the custom MessagingUnityPlayerActivity
       as a Java file instead of precompiling it. This is to better support
-      changes with the UnityPlayerActivity in the Unity 2023 editor.
+      changes with the UnityPlayerActivity, and GameActivity options, in
+      the Unity 2023 editor.
     - Firestore: Added `Count()`, which fetches the number of documents in
       the result set without actually downloading the documents.
 
