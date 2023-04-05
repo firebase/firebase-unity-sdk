@@ -74,6 +74,8 @@ Release Notes
     - Messaging (Android): Provide the custom MessagingUnityPlayerActivity
       as a Java file instead of precompiling it. This is to better support
       changes with the UnityPlayerActivity in the Unity 2023 editor.
+    - Firestore: Added `Count()`, which fetches the number of documents in
+      the result set without actually downloading the documents.
 
 ### 10.6.0
 - Changes

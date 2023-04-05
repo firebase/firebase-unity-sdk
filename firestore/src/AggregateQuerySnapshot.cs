@@ -12,11 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
-using System.Collections.Generic;
 using BclType = System.Type;
 using Firebase.Firestore.Internal;
-using System.Threading.Tasks;
 
 namespace Firebase.Firestore {
   public sealed class AggregateQuerySnapshot {
@@ -28,7 +25,7 @@ namespace Firebase.Firestore {
       _firestore = Util.NotNull(firestore);
     }
     /// <summary>
-    /// The aggregate query producing this snapshot.
+    /// Returns the query that was executed to produce this result.
     /// </summary>
     public AggregateQuery Query {
       get {
@@ -36,6 +33,9 @@ namespace Firebase.Firestore {
       }
     }
 
+    /// <summary>
+    /// Returns the number of documents in the result set of the underlying query.
+    /// </summary>
     public long Count {
       get {
         return _proxy.count();
@@ -45,7 +45,12 @@ namespace Firebase.Firestore {
     /// <inheritdoc />
     public override bool Equals(object obj) => Equals(obj as AggregateQuerySnapshot);
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Compares this aggregate snapshot with another for equality.
+    /// </summary>
+    /// <param name="other">The aggregate snapshot to compare this one with.</param>
+    /// <returns><c>true</c> if this aggregate snapshot is equal to <paramref name="other"/>;
+    /// <c>false</c> otherwise.</returns>
     public bool Equals(AggregateQuerySnapshot other) =>
       other != null && FirestoreCpp.AggregateQuerySnapshotEquals(_proxy, other._proxy);
     
