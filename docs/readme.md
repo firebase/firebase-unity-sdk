@@ -78,6 +78,9 @@ Release Notes
       as a Java file instead of precompiling it. This is to better support
       changes with the UnityPlayerActivity, and GameActivity options, in
       the Unity 2023 editor.
+    - Firestore: Added `Query.Count()`, which fetches the number of documents in
+      the result set without actually downloading the documents
+      ([#659](https://github.com/firebase/firebase-unity-sdk/pull/659)).
 
 ### 10.6.0
 - Changes

@@ -54,6 +54,27 @@ namespace Firebase.Firestore {
     }
 
     /// <summary>
+    /// Returns a query that counts the documents in the result set of this query.
+    ///
+    /// The returned query, when executed, counts the documents in the result set
+    /// of this query without actually downloading the documents.
+    ///
+    /// Using the returned query to count the documents is efficient because only
+    /// the final count, not the documents' data, is downloaded. The returned query
+    /// can even count the documents if the result set would be prohibitively large
+    /// to download entirely (e.g. thousands of documents).
+    /// </summary>
+    /// <returns>
+    /// An aggregate query that counts the documents in the result set of this query.
+    /// </returns>
+    public AggregateQuery Count {
+      get {
+        return new AggregateQuery(_proxy.Count(), _firestore);
+      }
+    }
+
+
+    /// <summary>
     /// Creates and returns a new <c>Query</c> with the additional filter that documents must
     /// contain the specified field and the value should be equal to the specified value.
     /// </summary>

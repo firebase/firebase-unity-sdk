@@ -23,6 +23,9 @@ set(firebase_firestore_swig
 
 # Firebase Firestore CSharp files that should be included in reference docs
 set(firebase_firestore_src_documented
+  src/AggregateQuery.cs
+  src/AggregateQuerySnapshot.cs
+  src/AggregateSource.cs
   src/Blob.cs
   src/CollectionReference.cs
   src/DocumentChange.cs

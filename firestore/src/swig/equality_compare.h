@@ -1,6 +1,8 @@
 #ifndef FIREBASE_FIRESTORE_CLIENT_UNITY_SRC_SWIG_EQUALITY_COMPARE_H_
 #define FIREBASE_FIRESTORE_CLIENT_UNITY_SRC_SWIG_EQUALITY_COMPARE_H_
 
+#include "firestore/src/include/firebase/firestore/aggregate_query.h"
+#include "firestore/src/include/firebase/firestore/aggregate_query_snapshot.h"
 #include "firestore/src/include/firebase/firestore/document_change.h"
 #include "firestore/src/include/firebase/firestore/document_snapshot.h"
 #include "firestore/src/include/firebase/firestore/query.h"
@@ -10,7 +12,15 @@ namespace firebase {
 namespace firestore {
 namespace csharp {
 
-// Compares two `Query` objects for equality using their `==` operator, handling
+// Compares two `AggregateQuery` objects for equality using their `==` operator, handling
+// one or both of them being `nullptr`.
+bool AggregateQueryEquals(const AggregateQuery* lhs, const AggregateQuery* rhs);
+
+// Compares two `AggregateQuerySnapshot` objects for equality using their `==` operator,
+// handling one or both of them being `nullptr`.
+bool AggregateQuerySnapshotEquals(const AggregateQuerySnapshot* lhs, const AggregateQuerySnapshot* rhs);
+
+    // Compares two `Query` objects for equality using their `==` operator, handling
 // one or both of them being `nullptr`.
 bool QueryEquals(const Query* lhs, const Query* rhs);
 
