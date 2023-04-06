@@ -58,6 +58,9 @@
 %rename("PlayIntegrityProviderFactoryInternal")
   firebase::app_check::PlayIntegrityProviderFactory;
 
+// Ignore the Error enum, since it will just be done by hand.
+%ignore firebase::app_check::AppCheckError;
+
 // Ignore GetToken, which is going to have to be handled differently
 %ignore GetToken;
 
