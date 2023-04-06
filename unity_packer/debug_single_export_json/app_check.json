@@ -1,0 +1,312 @@
+{
+    "packages": [
+      {
+        "name": "FirebaseApp.unitypackage",
+        "imports": [
+          {
+            "importer": "PluginImporter",
+            "platforms": [
+              "Editor",
+              "Standalone",
+              "Android",
+              "iOS",
+              "tvOS"
+            ],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Firebase/Plugins/Firebase.Platform.dll",
+              "Firebase/Plugins/Firebase.Platform.pdb",
+              "Firebase/Plugins/Google.MiniJson.dll"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": [
+              "Editor",
+              "Standalone",
+              "Android"
+            ],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Firebase/Plugins/Firebase.App.dll",
+              "Firebase/Plugins/Firebase.App.pdb"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": [
+              "iOS",
+              "tvOS"
+            ],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Firebase/Plugins/iOS/Firebase.App.dll",
+              "Firebase/Plugins/iOS/Firebase.App.pdb"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": [
+              "iOS"
+            ],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Plugins/iOS/Firebase/libFirebaseCppApp.a"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": [
+              "tvOS"
+            ],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Plugins/tvOS/Firebase/libFirebaseCppApp.a"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": [],
+            "labels": [
+              "gvh_targets-editor"
+            ],
+            "paths": [
+              "Firebase/Editor/Firebase.Editor.dll",
+              "Firebase/Editor/Firebase.Editor.pdb"
+            ],
+            "override_metadata_upm": {
+              "PluginImporter": {
+                "platformData": {
+                  "Editor": {
+                    "enabled": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": [
+              "Editor",
+              "Standalone",
+              "Android",
+              "iOS",
+              "tvOS"
+            ],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Firebase/Plugins/Firebase.TaskExtension.dll",
+              "Firebase/Plugins/Firebase.TaskExtension.pdb"
+            ]
+          },
+          {
+            "importer": "DefaultImporter",
+            "paths": [
+              "Editor Default Resources/",
+              "Firebase/Editor/generate_xml_from_google_services_json.exe",
+              "Firebase/Editor/generate_xml_from_google_services_json.py",
+              "Firebase/Editor/network_request.exe",
+              "Firebase/Editor/network_request.py",
+              "Firebase/Editor/AppDependencies.xml",
+              "Firebase/m2repository/com/google/firebase/firebase-app-unity/"
+            ]
+          },
+          {
+            "importer": "DefaultImporter",
+            "sections": [
+              "documentation"
+            ],
+            "paths": [
+              "Firebase/Editor/readme.md",
+              "Firebase/Editor/LICENSE"
+            ]
+          },
+          {
+            "importer": "DefaultImporter",
+            "sections": [
+              "asset_package_only"
+            ],
+            "paths": [
+              "ExternalDependencyManager/"
+            ]
+          },
+          {
+            "importer": "DefaultImporter",
+            "sections": [
+              "internal"
+            ],
+            "paths": [
+              "Firebase/Editor/InternalArtifactReposDependencies.xml"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": [
+              "Editor",
+              "Standalone"
+            ],
+            "cpu": "x86_64",
+            "paths": [
+              "Firebase/Plugins/x86_64/FirebaseCppApp*"
+            ]
+          },
+          {
+            "labels": [
+              "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
+            ],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Firebase/Plugins/link.xml"
+            ]
+          }
+        ],
+        "export": 0,
+        "readme": "Firebase/Editor/readme.md",
+        "changelog": "Firebase/Editor/readme.md",
+        "license": "Firebase/Editor/LICENSE",
+        "documentation": "Firebase/Editor/readme.md",
+        "common_manifest": {
+          "name": "com.google.firebase.app",
+          "display_name": "Firebase App (Core)",
+          "description": [
+            "Firebase App is the core library every Firebase package depends on."
+          ],
+          "keywords": [
+            "Google",
+            "Firebase",
+            "FirebaseApp",
+            "App"
+          ],
+          "author": {
+            "name": "Google LLC",
+            "url": "https://firebase.google.com/docs/unity/setup"
+          }
+        },
+        "export_upm": 1,
+        "upm_package_config": {
+          "manifest": {
+            "unity": "2018.1",
+            "dependencies": {
+              "com.google.external-dependency-manager": "1.2.172"
+            }
+          }
+        }
+      },
+      {
+        "name": "SampleCommon.unitypackage",
+        "imports": [
+          {
+            "sections": [
+              "samples"
+            ],
+            "importer": "DefaultImporter",
+            "paths": [
+              "Firebase/Sample/CONTRIBUTING.md",
+              "Firebase/Sample/GuiSkin.guiskin",
+              "Firebase/Sample/LICENSE",
+              "Firebase/Sample/readme.md"
+            ]
+          }
+        ],
+        "export": 0
+      },
+      {
+        "name": "FirebaseAppCheck.unitypackage",
+        "imports": [
+          {
+            "importer": "PluginImporter",
+            "platforms": ["Editor", "Standalone", "Android"],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Firebase/Plugins/Firebase.AppCheck.dll",
+              "Firebase/Plugins/Firebase.AppCheck.pdb"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": ["iOS", "tvOS"],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Firebase/Plugins/iOS/Firebase.AppCheck.dll",
+              "Firebase/Plugins/iOS/Firebase.AppCheck.pdb"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": ["iOS"],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Plugins/iOS/Firebase/libFirebaseCppAppCheck.a"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": ["tvOS"],
+            "cpu": "AnyCPU",
+            "paths": [
+              "Plugins/tvOS/Firebase/libFirebaseCppAppCheck.a"
+            ]
+          },
+          {
+            "importer": "DefaultImporter",
+            "paths": [
+              "Firebase/Editor/AppCheckDependencies.xml",
+              "Firebase/m2repository/com/google/firebase/firebase-appcheck-unity/"
+            ]
+          },
+          {
+            "importer": "PluginImporter",
+            "platforms": ["Editor", "Standalone"],
+            "cpu": "x86_64",
+            "paths": [
+              "Firebase/Plugins/x86_64/FirebaseCppAppCheck*"
+            ]
+          },
+          {
+            "importer": "DefaultImporter",
+            "sections": ["samples"],
+            "paths": [
+              "Firebase/Sample/AppCheck/"
+            ]
+          },
+          {
+            "importer": "DefaultImporter",
+            "sections": ["samples", "documentation"],
+            "paths": [
+              "Firebase/Editor/AppCheckReadme.md"
+            ]
+          }
+        ],
+        "includes": [
+          "FirebaseApp.unitypackage",
+          "SampleCommon.unitypackage"
+        ],
+        "manifest_path": "Firebase/Editor",
+        "readme": "Firebase/Editor/AppCheckReadme.md",
+        "changelog" : "Firebase/Editor/readme.md",
+        "license" : "Firebase/Editor/LICENSE",
+        "documentation" : "Firebase/Editor/AppCheckReadme.md",
+        "common_manifest" : {
+          "name": "com.google.firebase.app-check",
+          "display_name": "Firebase App Check",
+          "description": [
+            "App Check helps protect your API resources from abuse by ",
+            "preventing unauthorized clients from accessing your backend ",
+            "resources. It works with both Firebase services, Google Cloud ",
+            "services, and your own APIs to keep your resources safe."
+          ],
+          "keywords": ["Google", "Firebase", "App Check"],
+          "author": {
+            "name" : "Google LLC",
+            "url": "https://firebase.google.com/docs/app-check"
+          }
+        },
+        "export_upm": 1,
+        "upm_package_config" : {
+          "manifest" : {
+            "unity": "2018.1"
+          }
+        }
+      }
+    ]
+  }

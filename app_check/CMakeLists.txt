@@ -77,7 +77,7 @@ if(FIREBASE_IOS_BUILD)
 else()
 build_firebase_shared(
   app_check
-  app_check
+  appcheck
   FirebaseCppAppCheck
 )
 endif()
