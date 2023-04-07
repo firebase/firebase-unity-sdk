@@ -668,6 +668,10 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
           "analytics"
         ),
         new EnableModuleParams(
+          "Firebase.AppCheck.FirebaseAppCheck, Firebase.AppCheck",
+          "app_check"
+        ),
+        new EnableModuleParams(
           "Firebase.Auth.FirebaseAuth, Firebase.Auth",
           "auth"
         ),

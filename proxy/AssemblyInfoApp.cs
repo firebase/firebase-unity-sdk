@@ -32,6 +32,7 @@ using System.Runtime.CompilerServices;
 // Firebase App contains internals that need to be visibly to the other
 // Firebase Unity projects, so mark them as friends.
 [assembly: InternalsVisibleTo("Firebase.Analytics")]
+[assembly: InternalsVisibleTo("Firebase.AppCheck")]
 [assembly: InternalsVisibleTo("Firebase.Auth")]
 [assembly: InternalsVisibleTo("Firebase.Crash")]
 [assembly: InternalsVisibleTo("Firebase.Crashlytics")]

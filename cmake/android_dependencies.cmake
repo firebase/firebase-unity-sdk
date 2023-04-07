@@ -24,6 +24,13 @@ set(FIREBASE_ANALYTICS_ANDROID_DEPS
     "com.google.firebase:firebase-analytics:21.2.1"
 )
 
+set(FIREBASE_APP_CHECK_ANDROID_DEPS
+    "com.google.firebase:firebase-appcheck"
+    "com.google.firebase:firebase-appcheck-debug"
+    "com.google.firebase:firebase-appcheck-playintegrity"
+    "com.google.firebase:firebase-analytics:21.2.1"
+)
+
 set(FIREBASE_AUTH_ANDROID_DEPS
     "com.google.firebase:firebase-auth:21.2.0"
     "com.google.firebase:firebase-analytics:21.2.1"

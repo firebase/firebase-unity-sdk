@@ -30,6 +30,7 @@ from absl import logging
 
 API_PACKAGE_MAP = {
     "analytics": "FirebaseAnalytics.unitypackage",
+    "app_check": "FirebaseAppCheck.unitypackage",
     "auth": "FirebaseAuth.unitypackage",
     "crashlytics": "FirebaseCrashlytics.unitypackage",
     "database": "FirebaseDatabase.unitypackage",

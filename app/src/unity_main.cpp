@@ -105,6 +105,7 @@ jint JNI_OnLoad(JavaVM *jvm, void *reserved) {
       const char *module_name;
     } kJavaClassModuleMap[] = {
         {"com/google/firebase/analytics/FirebaseAnalytics", "analytics"},
+        {"com/google/firebase/appcheck/FirebaseAppCheck", "app_check"},
         {"com/google/firebase/auth/FirebaseAuth", "auth"},
         {"com/google/firebase/crashlytics/FirebaseCrashlytics", "crashlytics"},
         {"com/google/firebase/database/FirebaseDatabase", "database"},

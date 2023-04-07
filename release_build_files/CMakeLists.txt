@@ -31,6 +31,11 @@ unity_pack_file(
 )
 
 unity_pack_file(
+  "${FIREBASE_UNITY_DIR}/docs/app_check/AppCheckReadme.md"
+  PACK_PATH "Firebase/Editor"
+)
+
+unity_pack_file(
   "${FIREBASE_UNITY_DIR}/docs/auth/AuthReadme.md"
   PACK_PATH "Firebase/Editor"
 )

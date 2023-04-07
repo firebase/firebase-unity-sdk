@@ -35,6 +35,9 @@ option(FIREBASE_INCLUDE_LIBRARY_DEFAULT
 option(FIREBASE_INCLUDE_ANALYTICS
        "Include the Google Analytics for Firebase library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
+option(FIREBASE_INCLUDE_APP_CHECK
+       "Include the Firebase App Check library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_AUTH
        "Include the Firebase Authentication library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
@@ -264,6 +267,12 @@ if (FIREBASE_INCLUDE_ANALYTICS)
   list(APPEND TARGET_LINK_LIB_NAMES "firebase_analytics" "firebase_analytics_swig")
   list(APPEND DOCUMENTATION_ONLY_LIB_NAMES "firebase_analytics_swig")
   list(APPEND PROJECT_LIST_HEADER "  X(Analytics)")
+endif()
+if (FIREBASE_INCLUDE_APP_CHECK)
+  add_subdirectory(app_check)
+  list(APPEND TARGET_LINK_LIB_NAMES "firebase_app_check" "firebase_app_check_swig")
+  list(APPEND DOCUMENTATION_ONLY_LIB_NAMES "firebase_app_check_swig")
+  list(APPEND PROJECT_LIST_HEADER "  X(AppCheck)")
 endif()
 if (FIREBASE_INCLUDE_AUTH)
   add_subdirectory(auth)

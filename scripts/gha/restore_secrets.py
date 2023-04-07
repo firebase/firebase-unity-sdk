@@ -53,6 +53,7 @@ flags.DEFINE_string("artifact", None, "Artifact Path, google-services.json will 
 
 CAPITALIZATIONS = {
   "analytics": "Analytics",
+  "app_check": "AppCheck",
   "auth": "Auth",
   "crashlytics": "Crashlytics",
   "database": "Database",
