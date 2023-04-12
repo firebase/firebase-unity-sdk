@@ -17,12 +17,18 @@
 include(build_shared)
 
 # Firebase App Check Swig input files
-set(firebase_app_check_swig
+set(firebase_app_check_swig_files
   src/swig/app_check.i
 )
 
 # Firebase App Check CSharp files
 set(firebase_app_check_src
+  src/AppCheckError.cs
+  src/AppCheckToken.cs
+  src/FirebaseAppCheck.cs
+  src/IAppCheckProvider.cs
+  src/IAppCheckProviderFactory.cs
+  src/TokenChangedEventArgs.cs
 )
 
 if(NOT FIREBASE_UNI_LIBRARY AND APPLE AND NOT IOS)
@@ -40,7 +46,7 @@ firebase_swig_add_library(firebase_app_check_swig
   MODULE
     FirebaseCppAppCheck
   SOURCES
-    ${firebase_app_check_swig}
+    ${firebase_app_check_swig_files}
   DEPENDS
     firebase_app_check
   SYSTEM_DEPS
