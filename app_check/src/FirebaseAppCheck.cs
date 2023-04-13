@@ -24,12 +24,18 @@ public sealed class FirebaseAppCheck {
   // The C++ object that this wraps.
   private AppCheckInternal appCheckInternal;
 
-  private static Dictionary<FirebaseApp, FirebaseAppCheck> appCheckMap =
-    new Dictionary<FirebaseApp, FirebaseAppCheck>();
+  // Use the FirebaseApp's name instead of the App itself, to not
+  // keep it alive unnecessarily.
+  private static Dictionary<string, FirebaseAppCheck> appCheckMap =
+    new Dictionary<string, FirebaseAppCheck>();
   // The user provided Factory.
   private static IAppCheckProviderFactory appCheckFactory;
-  private static Dictionary<FirebaseApp, IAppCheckProvider> providerMap =
-    new Dictionary<FirebaseApp, IAppCheckProvider>();
+  private static Dictionary<string, IAppCheckProvider> providerMap =
+    new Dictionary<string, IAppCheckProvider>();
+  private static AppCheckUtil.GetTokenFromCSharpDelegate getTokenDelegate =
+    new AppCheckUtil.GetTokenFromCSharpDelegate(GetTokenFromCSharpMethod);
+
+  private static readonly DateTime s_unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
   // Make the constructor private, since users aren't meant to make it.
   private FirebaseAppCheck(AppCheckInternal internalObject) {
@@ -55,11 +61,10 @@ public sealed class FirebaseAppCheck {
   /// {@link FirebaseApp} instance.
   public static FirebaseAppCheck GetInstance(FirebaseApp app) {
     FirebaseAppCheck result;
-    if (!appCheckMap.TryGetValue(app, out result)) {
+    if (!appCheckMap.TryGetValue(app.Name, out result)) {
       AppCheckInternal internalObject = AppCheckInternal.GetInstance(app);
       result = new FirebaseAppCheck(internalObject);
-      appCheckMap[app] = result;
-      // TODO(amaurice): Logic to remove from map when App is destroyed?
+      appCheckMap[app.Name] = result;
     }
     return result;
   }
@@ -79,8 +84,18 @@ public sealed class FirebaseAppCheck {
   ///
   /// This method should be called before initializing the Firebase App.
   public static void SetAppCheckProviderFactory(IAppCheckProviderFactory factory) {
+    if (appCheckFactory == factory) return;
+
     appCheckFactory = factory;
-    // TODO(amaurice): Clear the provider map when the factory changes?
+    // Clear out the Providers that were previously made
+    providerMap.Clear();
+
+    // Register the callback for C++ SDK to use that will reach this factory.
+    if (factory == null) {
+      AppCheckUtil.SetAppCheckCallbacks(null);
+    } else {
+      AppCheckUtil.SetAppCheckCallbacks(getTokenDelegate);
+    }
   }
 
   /// Sets the {@code isTokenAutoRefreshEnabled} flag.
@@ -95,11 +110,58 @@ public sealed class FirebaseAppCheck {
   public System.Threading.Tasks.Task<AppCheckToken>
       GetAppCheckTokenAsync(bool forceRefresh) {
     ThrowIfNull();
-    throw new NotImplementedException();
+    return appCheckInternal.GetAppCheckTokenAsync(forceRefresh).ContinueWith(task => {
+      if (task.IsFaulted) {
+        throw task.Exception;
+      }
+      AppCheckTokenInternal tokenInternal = task.Result;
+      return new AppCheckToken {
+        Token = tokenInternal.token,
+        ExpireTime = s_unixEpoch.AddMilliseconds((double)tokenInternal.expire_time_millis)
+      };
+    });
   }
 
   /// Called on the client when an AppCheckToken is created or changed.
   public System.EventHandler<TokenChangedEventArgs> TokenChanged;
+
+  [MonoPInvokeCallback(typeof(AppCheckUtil.GetTokenFromCSharpDelegate))]
+  private static void GetTokenFromCSharpMethod(string appName, int key) {
+    UnityEngine.Debug.Log("GetTokenFromCSharpMethod called");
+    if (appCheckFactory == null) {
+      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+        (int)AppCheckError.InvalidConfiguration,
+        "Missing IAppCheckProviderFactory.");
+    }
+    FirebaseApp app = FirebaseApp.GetInstance(appName);
+    if (app == null) {
+      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+        (int)AppCheckError.Unknown,
+        "Unable to find App with name: " + appName);
+    }
+    IAppCheckProvider provider;
+    if (!providerMap.TryGetValue(app.Name, out provider)) {
+      provider = appCheckFactory.CreateProvider(app);
+      if (provider == null) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.InvalidConfiguration,
+          "Failed to create IAppCheckProvider for App: " + appName);
+      }
+      providerMap[app.Name] = provider;
+    }
+    provider.GetTokenAsync().ContinueWith(task => {
+      if (task.IsFaulted) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.Unknown,
+          "Provider returned an Exception: " + task.Exception);
+      } else {
+        AppCheckToken token = task.Result;
+        TimeSpan ts = token.ExpireTime - s_unixEpoch;
+        AppCheckUtil.FinishGetTokenCallback(key, token.Token,
+          (long)ts.TotalMilliseconds, 0, "");
+      }
+    });
+  }
 }
 
 }
