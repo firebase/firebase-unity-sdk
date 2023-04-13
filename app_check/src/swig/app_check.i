@@ -30,7 +30,7 @@
 %{
 #include <map>
 
-#include "app/src/log.h"
+#include "app/src/callback.h"
 #include "app_check/src/include/firebase/app_check.h"
 #include "app_check/src/include/firebase/app_check/app_attest_provider.h"
 #include "app_check/src/include/firebase/app_check/debug_provider.h"
@@ -49,6 +49,31 @@ static std::map<int, std::function<void(AppCheckToken, int, const std::string&)>
 
 static TokenChanged g_token_changed = nullptr;
 
+// Called from C# when a token is fetched, to callback into the C++ SDK.
+void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
+                            int error_code, const char* error_message) {
+  // Get the function from the map, and erase it
+  auto callback = g_pending_get_tokens[key];
+  g_pending_get_tokens.erase(key);
+
+  AppCheckToken app_check_token;
+  app_check_token.token = token;
+  app_check_token.expire_time_millis = expire_ms;
+  callback(app_check_token, error_code, error_message);
+}
+
+// Wrapper that calls g_get_token_from_csharp. Should be used with the
+// callback logic to guarantee it is on the Unity thread.
+static void CallGetTokenFromCSharp(int key, const char* name) {
+  if (g_get_token_from_csharp) {
+    g_get_token_from_csharp(name, key);
+  } else {
+    // The C# callback has disappeared, so fail the C++ call.
+    FinishGetTokenCallback(key, "", 0, kAppCheckErrorInvalidConfiguration,
+      "Missing AppCheckProvider C# configuration");
+  }
+}
+
 // C++ implementation of the AppCheckProvider that calls up to the
 // C# library.
 class SwigAppCheckProvider : public AppCheckProvider {
@@ -64,8 +89,10 @@ class SwigAppCheckProvider : public AppCheckProvider {
       // Save the callback in the map, and generate a key
       int key = g_pending_token_keys++;
       g_pending_get_tokens[key] = completion_callback;
-      // Call the C# function that will generate the token, passing the key.
-      g_get_token_from_csharp(app_->name(), key);
+      // Queue a call to the C# function that will generate the token.
+      firebase::callback::AddCallback(
+        new firebase::callback::CallbackValue1String1<int>(
+          key, app_->name(), CallGetTokenFromCSharp));
     } else {
       completion_callback({}, kAppCheckErrorInvalidConfiguration,
         "Missing AppCheckProvider C# configuration");
@@ -121,17 +148,12 @@ void SetGetTokenCallback(GetTokenFromCSharp get_token_callback) {
   }
 }
 
-// Called from C# when a token is fetched, to callback into the C++ SDK.
-void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
-                            int error_code, const char* error_message) {
-  // Get the function from the map, and erase it
-  auto callback = g_pending_get_tokens[key];
-  g_pending_get_tokens.erase(key);
-
-  AppCheckToken app_check_token;
-  app_check_token.token = token;
-  app_check_token.expire_time_millis = expire_ms;
-  callback(app_check_token, error_code, error_message);
+// Wrapper that calls g_token_changed. Should be used with the
+// callback logic to guarantee it is on the Unity thread.
+static void CallTokenChanged(AppCheckToken token, const char* name) {
+  if (g_token_changed) {
+    g_token_changed(name, &token);
+  }
 }
 
 class SwigAppCheckListener : public AppCheckListener {
@@ -142,7 +164,10 @@ class SwigAppCheckListener : public AppCheckListener {
   void OnAppCheckTokenChanged(const AppCheckToken& token) override {
     if (g_token_changed) {
       AppCheckToken localToken = token;
-      g_token_changed(app_->name(), &localToken);
+      // Queue a call to the C# function to pass along the new token.
+      firebase::callback::AddCallback(
+        new firebase::callback::CallbackValue1String1<AppCheckToken>(
+          localToken, app_->name(), CallTokenChanged));
     }
   }
   
