@@ -105,7 +105,7 @@ class SwigAppCheckProviderFactory : public AppCheckProviderFactory {
 static SwigAppCheckProviderFactory g_swig_factory;
 
 // Called from C# to register the C# to call to get a token.
-void SetAppCheckCallbacks(GetTokenFromCSharp get_token_callback) {
+void SetGetTokenCallback(GetTokenFromCSharp get_token_callback) {
   g_get_token_from_csharp = get_token_callback;
 
   if (get_token_callback) {
@@ -188,7 +188,7 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(
 // to expose to C#.
 namespace firebase {
 namespace app_check {
-void SetAppCheckCallbacks(firebase::app_check::GetTokenFromCSharp get_token_callback);
+void SetGetTokenCallback(firebase::app_check::GetTokenFromCSharp get_token_callback);
 void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
                             int error_code, const char* error_message);
 }  // app_check
