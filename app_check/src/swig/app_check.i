@@ -30,6 +30,7 @@
 %{
 #include <map>
 
+#include "app/src/log.h"
 #include "app_check/src/include/firebase/app_check.h"
 #include "app_check/src/include/firebase/app_check/app_attest_provider.h"
 #include "app_check/src/include/firebase/app_check/debug_provider.h"
@@ -40,10 +41,13 @@ namespace firebase {
 namespace app_check {
 
 typedef void (SWIGSTDCALL *GetTokenFromCSharp)(const char* app_name, int key);
+typedef void (SWIGSTDCALL *TokenChanged)(const char* app_name, AppCheckToken* token);
 
 static GetTokenFromCSharp g_get_token_from_csharp = nullptr;
 static int g_pending_token_keys = 0;
 static std::map<int, std::function<void(AppCheckToken, int, const std::string&)>> g_pending_get_tokens;
+
+static TokenChanged g_token_changed = nullptr;
 
 // C++ implementation of the AppCheckProvider that calls up to the
 // C# library.
@@ -130,6 +134,45 @@ void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
   callback(app_check_token, error_code, error_message);
 }
 
+class SwigAppCheckListener : public AppCheckListener {
+ public:
+  SwigAppCheckListener(App* app) : app_(app) {}
+  ~SwigAppCheckListener() override {}
+
+  void OnAppCheckTokenChanged(const AppCheckToken& token) override {
+    if (g_token_changed) {
+      AppCheckToken localToken = token;
+      g_token_changed(app_->name(), &localToken);
+    }
+  }
+  
+ private:
+  App* app_;
+};
+
+static std::map<App*, SwigAppCheckListener*> g_registered_listeners;
+
+void SetTokenChangedCallback(AppCheck* app_check, TokenChanged token_changed_callback) {
+  if (token_changed_callback) {
+    // Save the callback, and register a new lister for the given app_check
+    g_token_changed = token_changed_callback;
+
+    SwigAppCheckListener* listener = new SwigAppCheckListener(app_check->app());
+    g_registered_listeners[app_check->app()] = listener;
+
+    app_check->AddAppCheckListener(listener);
+  } else {
+    // Remove the listener, and cleanup the callback if no more remain.
+    SwigAppCheckListener* listener = g_registered_listeners[app_check->app()];
+    g_registered_listeners.erase(app_check->app());
+    app_check->RemoveAppCheckListener(listener);
+
+    if (g_registered_listeners.empty()) {
+      g_token_changed = nullptr;
+    }
+  }
+}
+
 }  // namespace app_check
 }  // firebase
 %}  // End of C++ code
@@ -171,12 +214,17 @@ void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
 
 %pragma(csharp) modulecode=%{
   internal delegate void GetTokenFromCSharpDelegate(string appName, int key);
+
+  internal delegate void TokenChangedDelegate(string appName, System.IntPtr tokenCPtr);
 %}
 
 // Map callback function types to delegates.
 SWIG_MAP_CFUNC_TO_CSDELEGATE(
   firebase::app_check::GetTokenFromCSharp,
   Firebase.AppCheck.AppCheckUtil.GetTokenFromCSharpDelegate)
+SWIG_MAP_CFUNC_TO_CSDELEGATE(
+  firebase::app_check::TokenChanged,
+  Firebase.AppCheck.AppCheckUtil.TokenChangedDelegate)
 
 %include "app_check/src/include/firebase/app_check/app_attest_provider.h"
 %include "app_check/src/include/firebase/app_check/debug_provider.h"
@@ -191,5 +239,8 @@ namespace app_check {
 void SetGetTokenCallback(firebase::app_check::GetTokenFromCSharp get_token_callback);
 void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
                             int error_code, const char* error_message);
+
+void SetTokenChangedCallback(firebase::app_check::AppCheck* app_check,
+                             firebase::app_check::TokenChanged token_changed_callback);
 }  // app_check
 }  // firebase

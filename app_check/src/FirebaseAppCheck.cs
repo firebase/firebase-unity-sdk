@@ -32,10 +32,13 @@ public sealed class FirebaseAppCheck {
   private static IAppCheckProviderFactory appCheckFactory;
   private static Dictionary<string, IAppCheckProvider> providerMap =
     new Dictionary<string, IAppCheckProvider>();
+
+  // Function for C++ to call when it needs to fetch a Token.
   private static AppCheckUtil.GetTokenFromCSharpDelegate getTokenDelegate =
     new AppCheckUtil.GetTokenFromCSharpDelegate(GetTokenFromCSharpMethod);
-
-  private static readonly DateTime s_unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+  // Function for C++ to call when the Token changes.
+  private static AppCheckUtil.TokenChangedDelegate tokenChangedDelegate =
+    new AppCheckUtil.TokenChangedDelegate(TokenChangedMethod);
 
   // Make the constructor private, since users aren't meant to make it.
   private FirebaseAppCheck(AppCheckInternal internalObject) {
@@ -115,19 +118,44 @@ public sealed class FirebaseAppCheck {
         throw task.Exception;
       }
       AppCheckTokenInternal tokenInternal = task.Result;
-      return new AppCheckToken {
-        Token = tokenInternal.token,
-        ExpireTime = s_unixEpoch.AddMilliseconds((double)tokenInternal.expire_time_millis)
-      };
+      return AppCheckToken.FromAppCheckTokenInternal(tokenInternal);
     });
   }
 
   /// Called on the client when an AppCheckToken is created or changed.
-  public System.EventHandler<TokenChangedEventArgs> TokenChanged;
+  private event EventHandler<TokenChangedEventArgs> TokenChangedImpl;
+  public event EventHandler<TokenChangedEventArgs> TokenChanged {
+    add {
+      ThrowIfNull();
+      // If this is the first listener, hook into C++.
+      if (TokenChangedImpl == null ||
+          TokenChangedImpl.GetInvocationList().Length == 0) {
+        AppCheckUtil.SetTokenChangedCallback(appCheckInternal, tokenChangedDelegate);
+      }
+
+      TokenChangedImpl += value;
+    }
+    remove {
+      ThrowIfNull();
+      TokenChangedImpl -= value;
+
+      // If that was the last listener, remove the C++ hooks.
+      if (TokenChangedImpl == null ||
+          TokenChangedImpl.GetInvocationList().Length == 0) {
+        AppCheckUtil.SetTokenChangedCallback(appCheckInternal, null);
+      }
+    }
+  }
+
+  internal void OnTokenChanged(AppCheckToken token) {
+    EventHandler<TokenChangedEventArgs> handler = TokenChangedImpl;
+    if (handler != null) {
+      handler(this, new TokenChangedEventArgs() { Token = token });
+    }
+  }
 
   [MonoPInvokeCallback(typeof(AppCheckUtil.GetTokenFromCSharpDelegate))]
   private static void GetTokenFromCSharpMethod(string appName, int key) {
-    UnityEngine.Debug.Log("GetTokenFromCSharpMethod called");
     if (appCheckFactory == null) {
       AppCheckUtil.FinishGetTokenCallback(key, "", 0,
         (int)AppCheckError.InvalidConfiguration,
@@ -156,11 +184,21 @@ public sealed class FirebaseAppCheck {
           "Provider returned an Exception: " + task.Exception);
       } else {
         AppCheckToken token = task.Result;
-        TimeSpan ts = token.ExpireTime - s_unixEpoch;
         AppCheckUtil.FinishGetTokenCallback(key, token.Token,
-          (long)ts.TotalMilliseconds, 0, "");
+          token.ExpireTimeMs, 0, "");
       }
     });
+  }
+
+  [MonoPInvokeCallback(typeof(AppCheckUtil.TokenChangedDelegate))]
+  private static void TokenChangedMethod(string appName, System.IntPtr tokenCPtr) {
+    AppCheckTokenInternal tokenInternal = new AppCheckTokenInternal(tokenCPtr, false);
+    AppCheckToken token = AppCheckToken.FromAppCheckTokenInternal(tokenInternal);
+
+    FirebaseAppCheck appCheck;
+    if (appCheckMap.TryGetValue(appName, out appCheck)) {
+      appCheck.OnTokenChanged(token);
+    }
   }
 }
 

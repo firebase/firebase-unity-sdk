@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+using System;
+
 namespace Firebase.AppCheck {
 
 /// @brief Token used by the Firebase App Check service.
@@ -28,6 +30,24 @@ public struct AppCheckToken {
 
   /// The time at which the token will expire.
   public System.DateTime ExpireTime { get; set; }
+
+  internal static readonly DateTime s_unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+  // Construct an AppCheckToken given the swig generated class for one.
+  internal static AppCheckToken FromAppCheckTokenInternal(AppCheckTokenInternal tokenInternal) {
+    return new AppCheckToken {
+      Token = tokenInternal.token,
+      ExpireTime = s_unixEpoch.AddMilliseconds((double)tokenInternal.expire_time_millis)
+    };
+  }
+
+  // Get the expire time in milliseconds since Epoch, which is used by C++.
+  internal long ExpireTimeMs {
+    get {
+      TimeSpan ts = ExpireTime - s_unixEpoch;
+      return (long)ts.TotalMilliseconds;
+    }
+  }
 }
 
 }
