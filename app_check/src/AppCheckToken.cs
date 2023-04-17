@@ -29,7 +29,7 @@ public struct AppCheckToken {
   public string Token { get; set; }
 
   /// The time at which the token will expire.
-  public System.DateTime ExpireTime { get; set; }
+  public DateTime ExpireTime { get; set; }
 
   internal static readonly DateTime s_unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 

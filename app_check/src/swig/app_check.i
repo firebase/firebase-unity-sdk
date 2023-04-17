@@ -62,8 +62,10 @@ void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
   callback(app_check_token, error_code, error_message);
 }
 
-// Wrapper that calls g_get_token_from_csharp. Should be used with the
-// callback logic to guarantee it is on the Unity thread.
+// Wrapper that calls g_get_token_from_csharp, to get a new AppCheckToken
+// from the C# implementation. Logic to determine the provider is done on
+// the C# side.
+// Should be used with the callback logic to guarantee it is on the Unity thread.
 static void CallGetTokenFromCSharp(int key, const char* name) {
   if (g_get_token_from_csharp) {
     g_get_token_from_csharp(name, key);
@@ -75,7 +77,9 @@ static void CallGetTokenFromCSharp(int key, const char* name) {
 }
 
 // C++ implementation of the AppCheckProvider that calls up to the
-// C# library.
+// C# library. Note that this isn't meant to wrap the C# providers
+// directly, but instead all pass into the C# library itself, which
+// then forwards calls to the approprate C# provider.
 class SwigAppCheckProvider : public AppCheckProvider {
  public:
   SwigAppCheckProvider(App* app)
@@ -104,7 +108,9 @@ class SwigAppCheckProvider : public AppCheckProvider {
 };
 
 // C++ implementation of the AppCheckProviderFactory that can
-// forward to the C# implementation.
+// forward to the C# implementation. Note that this does not wrap
+// the C# factory directly, but instead wraps over the C# library
+// itself, which will then forward the call into the set C# factory.
 class SwigAppCheckProviderFactory : public AppCheckProviderFactory {
  public:
   SwigAppCheckProviderFactory()
@@ -177,6 +183,8 @@ class SwigAppCheckListener : public AppCheckListener {
 
 static std::map<App*, SwigAppCheckListener*> g_registered_listeners;
 
+// Called by C# to register an AppCheck instance for token change updates,
+// provided via the callback method provided.
 void SetTokenChangedCallback(AppCheck* app_check, TokenChanged token_changed_callback) {
   if (token_changed_callback) {
     // Save the callback, and register a new lister for the given app_check

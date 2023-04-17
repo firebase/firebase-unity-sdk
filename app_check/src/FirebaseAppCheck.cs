@@ -90,7 +90,9 @@ public sealed class FirebaseAppCheck {
     if (appCheckFactory == factory) return;
 
     appCheckFactory = factory;
-    // Clear out the Providers that were previously made
+    // Clear out the Providers that were previously made. When future calls to
+    // GetToken fails to find a provider in the map, it will use the new factory
+    // to create a new provider.
     providerMap.Clear();
 
     // Register the callback for C++ SDK to use that will reach this factory.
