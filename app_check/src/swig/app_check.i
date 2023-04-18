@@ -43,10 +43,12 @@ namespace app_check {
 typedef void (SWIGSTDCALL *GetTokenFromCSharp)(const char* app_name, int key);
 typedef void (SWIGSTDCALL *TokenChanged)(const char* app_name, AppCheckToken* token);
 
+// Should be set to the C# function FirebaseAppCheck.GetTokenFromCSharpMethod
 static GetTokenFromCSharp g_get_token_from_csharp = nullptr;
 static int g_pending_token_keys = 0;
 static std::map<int, std::function<void(AppCheckToken, int, const std::string&)>> g_pending_get_tokens;
 
+// Should be set to the C# function FirebaseAppCheck.TokenChangedMethod
 static TokenChanged g_token_changed = nullptr;
 
 // Called from C# when a token is fetched, to callback into the C++ SDK.
@@ -68,6 +70,7 @@ void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
 // Should be used with the callback logic to guarantee it is on the Unity thread.
 static void CallGetTokenFromCSharp(int key, const char* name) {
   if (g_get_token_from_csharp) {
+    // Should be calling FirebaseAppCheck.GetTokenFromCSharpMethod
     g_get_token_from_csharp(name, key);
   } else {
     // The C# callback has disappeared, so fail the C++ call.
@@ -158,6 +161,7 @@ void SetGetTokenCallback(GetTokenFromCSharp get_token_callback) {
 // callback logic to guarantee it is on the Unity thread.
 static void CallTokenChanged(AppCheckToken token, const char* name) {
   if (g_token_changed) {
+    // Should be calling FirebaseAppCheck.TokenChangedMethod
     g_token_changed(name, &token);
   }
 }
