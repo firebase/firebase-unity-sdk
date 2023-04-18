@@ -24,12 +24,21 @@ public sealed class FirebaseAppCheck {
   // The C++ object that this wraps.
   private AppCheckInternal appCheckInternal;
 
-  private static Dictionary<FirebaseApp, FirebaseAppCheck> appCheckMap =
-    new Dictionary<FirebaseApp, FirebaseAppCheck>();
+  // Use the FirebaseApp's name instead of the App itself, to not
+  // keep it alive unnecessarily.
+  private static Dictionary<string, FirebaseAppCheck> appCheckMap =
+    new Dictionary<string, FirebaseAppCheck>();
   // The user provided Factory.
   private static IAppCheckProviderFactory appCheckFactory;
-  private static Dictionary<FirebaseApp, IAppCheckProvider> providerMap =
-    new Dictionary<FirebaseApp, IAppCheckProvider>();
+  private static Dictionary<string, IAppCheckProvider> providerMap =
+    new Dictionary<string, IAppCheckProvider>();
+
+  // Function for C++ to call when it needs to fetch a Token.
+  private static AppCheckUtil.GetTokenFromCSharpDelegate getTokenDelegate =
+    new AppCheckUtil.GetTokenFromCSharpDelegate(GetTokenFromCSharpMethod);
+  // Function for C++ to call when the Token changes.
+  private static AppCheckUtil.TokenChangedDelegate tokenChangedDelegate =
+    new AppCheckUtil.TokenChangedDelegate(TokenChangedMethod);
 
   // Make the constructor private, since users aren't meant to make it.
   private FirebaseAppCheck(AppCheckInternal internalObject) {
@@ -55,11 +64,10 @@ public sealed class FirebaseAppCheck {
   /// {@link FirebaseApp} instance.
   public static FirebaseAppCheck GetInstance(FirebaseApp app) {
     FirebaseAppCheck result;
-    if (!appCheckMap.TryGetValue(app, out result)) {
+    if (!appCheckMap.TryGetValue(app.Name, out result)) {
       AppCheckInternal internalObject = AppCheckInternal.GetInstance(app);
       result = new FirebaseAppCheck(internalObject);
-      appCheckMap[app] = result;
-      // TODO(amaurice): Logic to remove from map when App is destroyed?
+      appCheckMap[app.Name] = result;
     }
     return result;
   }
@@ -79,8 +87,20 @@ public sealed class FirebaseAppCheck {
   ///
   /// This method should be called before initializing the Firebase App.
   public static void SetAppCheckProviderFactory(IAppCheckProviderFactory factory) {
+    if (appCheckFactory == factory) return;
+
     appCheckFactory = factory;
-    // TODO(amaurice): Clear the provider map when the factory changes?
+    // Clear out the Providers that were previously made. When future calls to
+    // GetToken fails to find a provider in the map, it will use the new factory
+    // to create a new provider.
+    providerMap.Clear();
+
+    // Register the callback for C++ SDK to use that will reach this factory.
+    if (factory == null) {
+      AppCheckUtil.SetGetTokenCallback(null);
+    } else {
+      AppCheckUtil.SetGetTokenCallback(getTokenDelegate);
+    }
   }
 
   /// Sets the {@code isTokenAutoRefreshEnabled} flag.
@@ -95,11 +115,93 @@ public sealed class FirebaseAppCheck {
   public System.Threading.Tasks.Task<AppCheckToken>
       GetAppCheckTokenAsync(bool forceRefresh) {
     ThrowIfNull();
-    throw new NotImplementedException();
+    return appCheckInternal.GetAppCheckTokenAsync(forceRefresh).ContinueWith(task => {
+      if (task.IsFaulted) {
+        throw task.Exception;
+      }
+      AppCheckTokenInternal tokenInternal = task.Result;
+      return AppCheckToken.FromAppCheckTokenInternal(tokenInternal);
+    });
   }
 
   /// Called on the client when an AppCheckToken is created or changed.
-  public System.EventHandler<TokenChangedEventArgs> TokenChanged;
+  private event EventHandler<TokenChangedEventArgs> TokenChangedImpl;
+  public event EventHandler<TokenChangedEventArgs> TokenChanged {
+    add {
+      ThrowIfNull();
+      // If this is the first listener, hook into C++.
+      if (TokenChangedImpl == null ||
+          TokenChangedImpl.GetInvocationList().Length == 0) {
+        AppCheckUtil.SetTokenChangedCallback(appCheckInternal, tokenChangedDelegate);
+      }
+
+      TokenChangedImpl += value;
+    }
+    remove {
+      ThrowIfNull();
+      TokenChangedImpl -= value;
+
+      // If that was the last listener, remove the C++ hooks.
+      if (TokenChangedImpl == null ||
+          TokenChangedImpl.GetInvocationList().Length == 0) {
+        AppCheckUtil.SetTokenChangedCallback(appCheckInternal, null);
+      }
+    }
+  }
+
+  internal void OnTokenChanged(AppCheckToken token) {
+    EventHandler<TokenChangedEventArgs> handler = TokenChangedImpl;
+    if (handler != null) {
+      handler(this, new TokenChangedEventArgs() { Token = token });
+    }
+  }
+
+  [MonoPInvokeCallback(typeof(AppCheckUtil.GetTokenFromCSharpDelegate))]
+  private static void GetTokenFromCSharpMethod(string appName, int key) {
+    if (appCheckFactory == null) {
+      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+        (int)AppCheckError.InvalidConfiguration,
+        "Missing IAppCheckProviderFactory.");
+    }
+    FirebaseApp app = FirebaseApp.GetInstance(appName);
+    if (app == null) {
+      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+        (int)AppCheckError.Unknown,
+        "Unable to find App with name: " + appName);
+    }
+    IAppCheckProvider provider;
+    if (!providerMap.TryGetValue(app.Name, out provider)) {
+      provider = appCheckFactory.CreateProvider(app);
+      if (provider == null) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.InvalidConfiguration,
+          "Failed to create IAppCheckProvider for App: " + appName);
+      }
+      providerMap[app.Name] = provider;
+    }
+    provider.GetTokenAsync().ContinueWith(task => {
+      if (task.IsFaulted) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.Unknown,
+          "Provider returned an Exception: " + task.Exception);
+      } else {
+        AppCheckToken token = task.Result;
+        AppCheckUtil.FinishGetTokenCallback(key, token.Token,
+          token.ExpireTimeMs, 0, "");
+      }
+    });
+  }
+
+  [MonoPInvokeCallback(typeof(AppCheckUtil.TokenChangedDelegate))]
+  private static void TokenChangedMethod(string appName, System.IntPtr tokenCPtr) {
+    AppCheckTokenInternal tokenInternal = new AppCheckTokenInternal(tokenCPtr, false);
+    AppCheckToken token = AppCheckToken.FromAppCheckTokenInternal(tokenInternal);
+
+    FirebaseAppCheck appCheck;
+    if (appCheckMap.TryGetValue(appName, out appCheck)) {
+      appCheck.OnTokenChanged(token);
+    }
+  }
 }
 
 }
