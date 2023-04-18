@@ -282,6 +282,7 @@ void GetTokenFromBuiltInProvider(AppCheckProvider* provider, int key) {
 // Ignore GetToken, which is going to have to be handled differently
 %ignore GetToken;
 
+// This code block is added directly to the C# module class (AppCheckUtil)
 %pragma(csharp) modulecode=%{
   internal delegate void GetTokenFromCSharpDelegate(string appName, int key);
 
