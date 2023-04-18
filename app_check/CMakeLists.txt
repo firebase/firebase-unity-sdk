@@ -29,6 +29,13 @@ set(firebase_app_check_src
   src/IAppCheckProvider.cs
   src/IAppCheckProviderFactory.cs
   src/TokenChangedEventArgs.cs
+
+  # Built In Providers
+  src/BuiltInProviderWrapper.cs
+  src/AppAttestProviderFactory.cs
+  src/DebugAppCheckProviderFactory.cs
+  src/DeviceCheckProviderFactory.cs
+  src/PlayIntegrityProviderFactory.cs
 )
 
 if(NOT FIREBASE_UNI_LIBRARY AND APPLE AND NOT IOS)
