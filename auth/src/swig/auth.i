@@ -483,8 +483,8 @@ static CppInstanceManager<Auth> g_auth_instances;
   /// platforms. On other platforms this method will return a Future with a
   /// preset error code: kAuthErrorUnimplemented.
   ///
-  /// @deprecated This function is deprecated in favor of `Task<AuthResult>`
-  /// return type. Please use
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
   /// `Task<AuthResult> SignInWithProviderAsync(FederatedAuthProvider)` instead.
   [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInWithProviderAsync(FederatedAuthProvider)` instead", false)]
   public System.Threading.Tasks.Task<SignInResult> SignInWithProviderAsync_DEPRECATED(
@@ -812,8 +812,8 @@ static CppInstanceManager<Auth> g_auth_instances;
   /// An error is returned, if the token is invalid, expired or otherwise
   /// not accepted by the server.
   ///
-  /// @deprecated This function is deprecated in favor of `Task<AuthResult>`
-  /// return type. Please use
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
   /// `Task<AuthResult> SignInWithCustomTokenAsync(string)` instead.
   [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInWithCustomTokenAsync(string)` instead", false)]
   public System.Threading.Tasks.Task<FirebaseUser> SignInWithCustomTokenAsync_DEPRECATED(
@@ -832,8 +832,8 @@ static CppInstanceManager<Auth> g_auth_instances;
   /// An error is returned, if the token is invalid, expired or otherwise not
   /// accepted by the server.
   ///
-  /// @deprecated This function is deprecated in favor of `Task<AuthResult>`
-  /// return type. Please use
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
   /// `Task<AuthResult> SignInWithCredentialAsync(Credential)` instead.
   [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInWithCredentialAsync(Credential)` instead", false)]
   public System.Threading.Tasks.Task<FirebaseUser> SignInWithCredentialAsync_DEPRECATED(
@@ -859,8 +859,8 @@ static CppInstanceManager<Auth> g_auth_instances;
   /// An error is returned if the token is invalid, expired, or otherwise not
   /// accepted by the server.
   ///
-  /// @deprecated This function is deprecated in favor of `Task<AuthResult>`
-  /// return type. Please use
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
   /// `Task<AuthResult> SignInAndRetrieveDataWithCredentialAsync(Credential)`
   /// instead.
   [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInAndRetrieveDataWithCredentialAsync(Credential)` instead", false)]
@@ -896,8 +896,8 @@ static CppInstanceManager<Auth> g_auth_instances;
   ///  }
   /// @endcode
   ///
-  /// @deprecated This function is deprecated in favor of `Task<AuthResult>`
-  /// return type. Please use
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
   /// `Task<AuthResult> SignInAnonymouslyAsync()` instead.
   [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInAnonymouslyAsync()` instead", false)]
   public System.Threading.Tasks.Task<FirebaseUser> SignInAnonymouslyAsync_DEPRECATED() {
@@ -914,8 +914,8 @@ static CppInstanceManager<Auth> g_auth_instances;
   /// An error is returned if the password is wrong or otherwise not accepted
   /// by the server.
   ///
-  /// @deprecated This function is deprecated in favor of `Task<AuthResult>`
-  /// return type. Please use `Task<AuthResult> SignInAnonymouslyAsync()`
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use `Task<AuthResult> SignInAnonymouslyAsync()`
   /// instead.
   [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInWithEmailAndPasswordAsync(string, string)` instead", false)]
   public System.Threading.Tasks.Task<FirebaseUser> SignInWithEmailAndPasswordAsync_DEPRECATED(
@@ -936,8 +936,8 @@ static CppInstanceManager<Auth> g_auth_instances;
   /// An error is returned when account creation is unsuccessful
   /// (due to another existing account, invalid password, etc.).
   ///
-  /// @deprecated This function is deprecated in favor of `Task<AuthResult>`
-  /// return type. Please use
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
   /// `Task<AuthResult> CreateUserWithEmailAndPasswordAsync(string, string)`
   /// instead.
   [System.ObsoleteAttribute("Please use `Task<AuthResult> CreateUserWithEmailAndPasswordAsync(string, string)` instead", false)]
@@ -1135,8 +1135,8 @@ static CppInstanceManager<Auth> g_auth_instances;
   /// platforms. On other platforms this method will return a Future with a
   /// preset error code: kAuthErrorUnimplemented.
   ///
-  /// @deprecated This function is deprecated in favor of `Task<AuthResult>`
-  /// return type. Please use
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
   /// `Task<AuthResult> ReauthenticateWithProviderAsync(FederatedAuthProvider)`
   /// instead.
   [System.ObsoleteAttribute("Please use `Task<AuthResult> ReauthenticateWithProviderAsync(FederatedAuthProvider)` instead", false)]
@@ -1164,8 +1164,8 @@ static CppInstanceManager<Auth> g_auth_instances;
   /// platforms. On other platforms this method will return a Future with a
   /// preset error code: kAuthErrorUnimplemented.
   ///
-  /// @deprecated This function is deprecated in favor of `Task<AuthResult>`
-  /// return type. Please use
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
   /// `Task<AuthResult> LinkWithProviderAsync(FederatedAuthProvider)`
   /// instead.
   [System.ObsoleteAttribute("Please use `Task<AuthResult> LinkWithProviderAsync(FederatedAuthProvider)` instead", false)]
@@ -1375,8 +1375,8 @@ class PhoneAuthListenerImpl
   virtual void OnVerificationCompleted(Credential credential) {
     // Both `OnVerificationCompleted(Credential) and
     // OnVerificationCompleted(PhoneAuthCredential) will be triggered. We
-    // should support both delegates but the user needs to choose to use
-    // only one of them.
+    // support both delegates but the user needs to choose to use only one of
+    // them.
     if (g_verification_completed_callback) {
       firebase::callback::AddCallback(
           new firebase::callback::CallbackValue2<int, Credential>(
@@ -1387,8 +1387,8 @@ class PhoneAuthListenerImpl
   virtual void OnVerificationCompleted(PhoneAuthCredential credential) {
     // Both `OnVerificationCompleted(Credential) and
     // OnVerificationCompleted(PhoneAuthCredential) will be triggered. We
-    // should support both delegates but the user needs to choose to use
-    // only one of them.
+    // support both delegates but the user needs to choose to use only one of
+    // them.
 
     // TODO(IO2023): Add hooks to new PhoneAuthCredential. Need new delegates.
   }
