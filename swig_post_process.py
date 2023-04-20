@@ -320,9 +320,16 @@ class RenameAsyncMethods(SWIGPostProcessingInterface):
           # If the function name already ends with Async or is GetTask
           # (since it's from a Future result class) don't replace it.
           function_name = m.groups()[1]
-          if function_name.endswith('Async') or function_name == 'GetTask':
+          if (function_name.endswith('Async') or
+              function_name.endswith('Async_DEPRECATED') or
+              function_name == 'GetTask'):
             break
+          is_deprecated = function_name.endswith('_DEPRECATED')
           line = regexp.sub(r'\g<1>\g<2>Async\g<3>', line)
+          if function_name.endswith('_DEPRECATED'):
+            # Swap the location of 'Async' and '_DEPRECATED'
+            line = line.replace('_DEPRECATEDAsync', 'Async_DEPRECATED')
+
           break
       output.append(line)
     return '\n'.join(output)
@@ -512,7 +519,7 @@ class StaticFunctionKInitRemoval(SWIGPostProcessingInterface):
                         line[match.end(2):]])
       output.append(line)
     return '\n'.join(output)
-    
+
 class DynamicToReinterpretCast(SWIGPostProcessingInterface):
   """Changes the use of dynamic_cast in SWIG generated code to reinterpret_cast.
 
