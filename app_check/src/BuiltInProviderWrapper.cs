@@ -49,25 +49,38 @@ internal class BuiltInProviderWrapper : IAppCheckProvider {
   }
 
   public System.Threading.Tasks.Task<AppCheckToken> GetTokenAsync() {
-    int key = s_pendingGetTokenKey++;
-    TaskCompletionSource<AppCheckToken> tcs = new TaskCompletionSource<AppCheckToken>();
-    s_pendingGetTokens[key] = tcs;
+    ThrowIfNull();
+
+    int key;
+    TaskCompletionSource<AppCheckToken> tcs;
+    lock (s_pendingGetTokens) {
+      key = s_pendingGetTokenKey++;
+      tcs = new TaskCompletionSource<AppCheckToken>();
+      s_pendingGetTokens[key] = tcs;
+    }
     AppCheckUtil.GetTokenFromBuiltInProvider(providerInternal, key);
     return tcs.Task;
   }
 
+  // This is called from the C++ implementation, on the Unity main thread.
   private static void CompleteBuiltInGetTokenMethod(int key, System.IntPtr tokenCPtr,
                                                     int error, string errorMessage) {
     TaskCompletionSource<AppCheckToken> tcs;
-    if (s_pendingGetTokens.TryGetValue(key, out tcs)) {
-      s_pendingGetTokens.Remove(key);
-      if (error == 0) {
-        AppCheckTokenInternal tokenInternal = new AppCheckTokenInternal(tokenCPtr, false);
-        AppCheckToken token = AppCheckToken.FromAppCheckTokenInternal(tokenInternal);
-        tcs.TrySetResult(token);
-      } else {
-        tcs.TrySetException(new FirebaseException(error, errorMessage));
+    lock (s_pendingGetTokens) {
+      if (!s_pendingGetTokens.TryGetValue(key, out tcs)) {
+        return;
       }
+    }
+
+    s_pendingGetTokens.Remove(key);
+    if (error == 0) {
+      // Create the C# object that wraps the Token's C++ pointer, passing false for ownership
+      // to prevent the cleanup of the C# object from deleting the C++ object when done.
+      AppCheckTokenInternal tokenInternal = new AppCheckTokenInternal(tokenCPtr, false);
+      AppCheckToken token = AppCheckToken.FromAppCheckTokenInternal(tokenInternal);
+      tcs.TrySetResult(token);
+    } else {
+      tcs.TrySetException(new FirebaseException(error, errorMessage));
     }
   }
 
