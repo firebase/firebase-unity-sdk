@@ -271,7 +271,7 @@ namespace Firebase.Sample.Auth {
     }
 
     // Create a user with the email and password.
-    public Task CreateUserWithEmailAsync() {
+    public Task CreateUserWithEmailAsync_DEPRECATED() {
       DebugLog(String.Format("Attempting to create user {0}...", email));
       DisableUI();
 
@@ -279,7 +279,7 @@ namespace Firebase.Sample.Auth {
       // so that it can be passed to UpdateUserProfile().  displayName will be
       // reset by AuthStateChanged() when the new user is created and signed in.
       string newDisplayName = displayName;
-      return auth.CreateUserWithEmailAndPasswordAsync(email, password)
+      return auth.CreateUserWithEmailAndPasswordAsync_DEPRECATED(email, password)
         .ContinueWithOnMainThread((task) => {
           EnableUI();
           if (LogTaskCompletion(task, "User Creation")) {
@@ -312,15 +312,15 @@ namespace Firebase.Sample.Auth {
     }
 
     // Sign-in with an email and password.
-    public Task SigninWithEmailAsync() {
+    public Task SigninWithEmailAsync_DEPRECATED() {
       DebugLog(String.Format("Attempting to sign in as {0}...", email));
       DisableUI();
       if (signInAndFetchProfile) {
-        return auth.SignInAndRetrieveDataWithCredentialAsync(
+        return auth.SignInAndRetrieveDataWithCredentialAsync_DEPRECATED(
           Firebase.Auth.EmailAuthProvider.GetCredential(email, password)).ContinueWithOnMainThread(
             HandleSignInWithSignInResult);
       } else {
-        return auth.SignInWithEmailAndPasswordAsync(email, password)
+        return auth.SignInWithEmailAndPasswordAsync_DEPRECATED(email, password)
           .ContinueWithOnMainThread(HandleSignInWithUser);
       }
     }
@@ -328,25 +328,25 @@ namespace Firebase.Sample.Auth {
     // This is functionally equivalent to the Signin() function.  However, it
     // illustrates the use of Credentials, which can be aquired from many
     // different sources of authentication.
-    public Task SigninWithEmailCredentialAsync() {
+    public Task SigninWithEmailCredentialAsync_DEPRECATED() {
       DebugLog(String.Format("Attempting to sign in as {0}...", email));
       DisableUI();
       if (signInAndFetchProfile) {
-        return auth.SignInAndRetrieveDataWithCredentialAsync(
+        return auth.SignInAndRetrieveDataWithCredentialAsync_DEPRECATED(
           Firebase.Auth.EmailAuthProvider.GetCredential(email, password)).ContinueWithOnMainThread(
             HandleSignInWithSignInResult);
       } else {
-        return auth.SignInWithCredentialAsync(
+        return auth.SignInWithCredentialAsync_DEPRECATED(
           Firebase.Auth.EmailAuthProvider.GetCredential(email, password)).ContinueWithOnMainThread(
             HandleSignInWithUser);
       }
     }
 
     // Attempt to sign in anonymously.
-    public Task SigninAnonymouslyAsync() {
+    public Task SigninAnonymouslyAsync_DEPRECATED() {
       DebugLog("Attempting to sign anonymously...");
       DisableUI();
-      return auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(HandleSignInWithUser);
+      return auth.SignInAnonymouslyAsync_DEPRECATED().ContinueWithOnMainThread(HandleSignInWithUser);
     }
 
     public void AuthenticateToGameCenter() {
@@ -359,7 +359,7 @@ namespace Firebase.Sample.Auth {
       #endif
     }
 
-    public Task SignInWithGameCenterAsync() {
+    public Task SignInWithGameCenterAsync_DEPRECATED() {
       var credentialTask = Firebase.Auth.GameCenterAuthProvider.GetCredentialAsync();
       var continueTask = credentialTask.ContinueWithOnMainThread(task => {
         if(!task.IsCompleted)
@@ -370,7 +370,7 @@ namespace Firebase.Sample.Auth {
 
         var credential = task.Result;
 
-        var loginTask = auth.SignInWithCredentialAsync(credential);
+        var loginTask = auth.SignInWithCredentialAsync_DEPRECATED(credential);
         return loginTask.ContinueWithOnMainThread(HandleSignInWithUser);
       });
 
@@ -394,7 +394,7 @@ namespace Firebase.Sample.Auth {
     }
 
     // Link the current user with an email / password credential.
-    protected Task LinkWithEmailCredentialAsync() {
+    protected Task LinkWithEmailCredentialAsync_DEPRECATED() {
       if (auth.CurrentUser == null) {
         DebugLog("Not signed in, unable to link credential to user.");
         var tcs = new TaskCompletionSource<bool>();
@@ -406,7 +406,7 @@ namespace Firebase.Sample.Auth {
         Firebase.Auth.EmailAuthProvider.GetCredential(email, password);
       if (signInAndFetchProfile) {
         return
-          auth.CurrentUser.LinkAndRetrieveDataWithCredentialAsync(cred).ContinueWithOnMainThread(
+          auth.CurrentUser.LinkAndRetrieveDataWithCredentialAsync_DEPRECATED(cred).ContinueWithOnMainThread(
             task => {
               if (LogTaskCompletion(task, "Link Credential")) {
                 DisplaySignInResult(task.Result, 1);
@@ -414,7 +414,7 @@ namespace Firebase.Sample.Auth {
             }
           );
       } else {
-        return auth.CurrentUser.LinkWithCredentialAsync(cred).ContinueWithOnMainThread(task => {
+        return auth.CurrentUser.LinkWithCredentialAsync_DEPRECATED(cred).ContinueWithOnMainThread(task => {
           if (LogTaskCompletion(task, "Link Credential")) {
               DisplayDetailedUserInfo(task.Result, 1);
           }
@@ -423,7 +423,7 @@ namespace Firebase.Sample.Auth {
     }
 
     // Reauthenticate the user with the current email / password.
-    protected Task ReauthenticateAsync() {
+    protected Task ReauthenticateAsync_DEPRECATED() {
       var user = auth.CurrentUser;
       if (user == null) {
         DebugLog("Not signed in, unable to reauthenticate user.");
@@ -435,7 +435,7 @@ namespace Firebase.Sample.Auth {
       DisableUI();
       Firebase.Auth.Credential cred = Firebase.Auth.EmailAuthProvider.GetCredential(email, password);
       if (signInAndFetchProfile) {
-        return user.ReauthenticateAndRetrieveDataAsync(cred).ContinueWithOnMainThread(task => {
+        return user.ReauthenticateAndRetrieveDataAsync_DEPRECATED(cred).ContinueWithOnMainThread(task => {
           EnableUI();
           if (LogTaskCompletion(task, "Reauthentication")) {
             DisplaySignInResult(task.Result, 1);
@@ -492,7 +492,7 @@ namespace Firebase.Sample.Auth {
     }
 
     // Unlink the email credential from the currently logged in user.
-    protected Task UnlinkEmailAsync() {
+    protected Task UnlinkEmailAsync_DEPRECATED() {
       if (auth.CurrentUser == null) {
         DebugLog("Not signed in, unable to unlink");
         var tcs = new TaskCompletionSource<bool>();
@@ -501,7 +501,7 @@ namespace Firebase.Sample.Auth {
       }
       DebugLog("Unlinking email credential");
       DisableUI();
-      return auth.CurrentUser.UnlinkAsync(
+      return auth.CurrentUser.UnlinkAsync_DEPRECATED(
         Firebase.Auth.EmailAuthProvider.GetCredential(email, password).Provider)
           .ContinueWithOnMainThread(task => {
             EnableUI();
@@ -574,9 +574,9 @@ namespace Firebase.Sample.Auth {
 
       return  new Firebase.Auth.FederatedOAuthProvider(data);
     }
-    protected void SignInWithProvider(string providerId) {
+    protected void SignInWithProvider_DEPRECATED(string providerId) {
       Firebase.Auth.FederatedOAuthProvider provider = BuildFederatedOAuthProvider(providerId);
-      auth.SignInWithProviderAsync(provider).ContinueWithOnMainThread(signin_task => {
+      auth.SignInWithProviderAsync_DEPRECATED(provider).ContinueWithOnMainThread(signin_task => {
           if (LogTaskCompletion(signin_task, "SignInWithProvider")) {
             DebugLog("SignInWithProviderTask Completed:" + signin_task.IsCompleted);
           }
@@ -589,7 +589,7 @@ namespace Firebase.Sample.Auth {
       });
     }
 
-    protected void ReauthenticateWithProvider(string providerId) {
+    protected void ReauthenticateWithProvider_DEPRECATED(string providerId) {
       if(auth.CurrentUser == null) {
         DebugLog("Login with user before re-authenticating");
         return;
@@ -597,7 +597,7 @@ namespace Firebase.Sample.Auth {
 
       Firebase.Auth.FederatedOAuthProvider provider = BuildFederatedOAuthProvider(providerId);
 
-      auth.CurrentUser.ReauthenticateWithProviderAsync(provider).ContinueWithOnMainThread(task => {
+      auth.CurrentUser.ReauthenticateWithProviderAsync_DEPRECATED(provider).ContinueWithOnMainThread(task => {
         if (LogTaskCompletion(task, "ReauthenticateWithProvider")) {
           DebugLog("ReauthenticateWithProvider Completed:" + task.IsCompleted);
         }
@@ -609,14 +609,14 @@ namespace Firebase.Sample.Auth {
       });
     }
 
-    protected void LinkWithProvider(string providerId) {
+    protected void LinkWithProvider_DEPRECATED(string providerId) {
       if(auth.CurrentUser == null) {
         DebugLog("Login with user before linking.");
         return;
       }
 
       Firebase.Auth.FederatedOAuthProvider provider = BuildFederatedOAuthProvider(providerId);
-      auth.CurrentUser.LinkWithProviderAsync(provider).ContinueWithOnMainThread(task => {
+      auth.CurrentUser.LinkWithProviderAsync_DEPRECATED(provider).ContinueWithOnMainThread(task => {
         if (LogTaskCompletion(task, "LinkWithProvider")) {
           DebugLog("LinkWithProvider Completed:" + task.IsCompleted);
         }
@@ -628,7 +628,7 @@ namespace Firebase.Sample.Auth {
       });
     }
 
-    protected void UnlinkUser(string providerId) {
+    protected void UnlinkUser_DEPRECATED(string providerId) {
       if(auth.CurrentUser == null) {
         DebugLog("Login with user before un-linking.");
         return;
@@ -637,7 +637,7 @@ namespace Firebase.Sample.Auth {
       if (auth.CurrentUser != null) {
         DebugLog("Attempting to ulink user from provider: " + providerId);
         DisableUI();
-        auth.CurrentUser.UnlinkAsync(providerId).ContinueWithOnMainThread( task => {
+        auth.CurrentUser.UnlinkAsync_DEPRECATED(providerId).ContinueWithOnMainThread( task => {
           EnableUI();
           DebugLog("Unlink Complete");
         });
@@ -647,16 +647,16 @@ namespace Firebase.Sample.Auth {
     }
 
     // Begin authentication with the phone number.
-    protected void VerifyPhoneNumber() {
+    protected void VerifyPhoneNumber_DEPRECATED() {
       var phoneAuthProvider = Firebase.Auth.PhoneAuthProvider.GetInstance(auth);
       phoneAuthProvider.VerifyPhoneNumber(phoneNumber, phoneAuthTimeoutMs, null,
         verificationCompleted: (cred) => {
           DebugLog("Phone Auth, auto-verification completed");
           if (signInAndFetchProfile) {
-            auth.SignInAndRetrieveDataWithCredentialAsync(cred).ContinueWithOnMainThread(
+            auth.SignInAndRetrieveDataWithCredentialAsync_DEPRECATED(cred).ContinueWithOnMainThread(
               HandleSignInWithSignInResult);
           } else {
-            auth.SignInWithCredentialAsync(cred).ContinueWithOnMainThread(HandleSignInWithUser);
+            auth.SignInWithCredentialAsync_DEPRECATED(cred).ContinueWithOnMainThread(HandleSignInWithUser);
           }
         },
         verificationFailed: (error) => {
@@ -672,15 +672,15 @@ namespace Firebase.Sample.Auth {
     }
 
     // Sign in using phone number authentication using code input by the user.
-    protected void VerifyReceivedPhoneCode() {
+    protected void VerifyReceivedPhoneCode_DEPRECATED() {
       var phoneAuthProvider = Firebase.Auth.PhoneAuthProvider.GetInstance(auth);
       // receivedCode should have been input by the user.
-      var cred = phoneAuthProvider.GetCredential(phoneAuthVerificationId, receivedCode);
+      var cred = phoneAuthProvider.GetCredential_DEPRECATED(phoneAuthVerificationId, receivedCode);
       if (signInAndFetchProfile) {
-        auth.SignInAndRetrieveDataWithCredentialAsync(cred).ContinueWithOnMainThread(
+        auth.SignInAndRetrieveDataWithCredentialAsync_DEPRECATED(cred).ContinueWithOnMainThread(
           HandleSignInWithSignInResult);
       } else {
-        auth.SignInWithCredentialAsync(cred).ContinueWithOnMainThread(HandleSignInWithUser);
+        auth.SignInWithCredentialAsync_DEPRECATED(cred).ContinueWithOnMainThread(HandleSignInWithUser);
       }
     }
 
@@ -718,7 +718,7 @@ namespace Firebase.Sample.Auth {
             tooltip = "No Game Center player authenticated.";
           }
           if (GUILayout.Button(new GUIContent("Sign In With Game Center", tooltip))) {
-            SignInWithGameCenterAsync();
+            SignInWithGameCenterAsync_DEPRECATED();
           }
         }
       }
@@ -774,22 +774,22 @@ namespace Firebase.Sample.Auth {
         GUILayout.Space(20);
 
         if (GUILayout.Button("Create User")) {
-          CreateUserWithEmailAsync();
+          CreateUserWithEmailAsync_DEPRECATED();
         }
         if (GUILayout.Button("Sign In Anonymously")) {
-          SigninAnonymouslyAsync();
+          SigninAnonymouslyAsync_DEPRECATED();
         }
         if (GUILayout.Button("Sign In With Email")) {
-          SigninWithEmailAsync();
+          SigninWithEmailAsync_DEPRECATED();
         }
         if (GUILayout.Button("Sign In With Email Credential")) {
-          SigninWithEmailCredentialAsync();
+          SigninWithEmailCredentialAsync_DEPRECATED();
         }
         if (GUILayout.Button("Link With Email Credential")) {
-          LinkWithEmailCredentialAsync();
+          LinkWithEmailCredentialAsync_DEPRECATED();
         }
         if (GUILayout.Button("Reauthenticate with Email")) {
-          ReauthenticateAsync();
+          ReauthenticateAsync_DEPRECATED();
         }
         GUIDisplayGameCenterControls();
         if (GUILayout.Button("Reload User")) {
@@ -802,7 +802,7 @@ namespace Firebase.Sample.Auth {
           GetUserInfo();
         }
         if (GUILayout.Button("Unlink Email Credential")) {
-          UnlinkEmailAsync();
+          UnlinkEmailAsync_DEPRECATED();
         }
         if (GUILayout.Button("Sign Out")) {
           SignOut();
@@ -817,10 +817,10 @@ namespace Firebase.Sample.Auth {
           SendPasswordResetEmail();
         }
         if (GUILayout.Button("Authenticate Phone Number")) {
-          VerifyPhoneNumber();
+          VerifyPhoneNumber_DEPRECATED();
         }
         if (GUILayout.Button("Verify Received Phone Code")) {
-          VerifyReceivedPhoneCode();
+          VerifyReceivedPhoneCode_DEPRECATED();
         }
         if (GUILayout.Button(String.Format("Fetch Profile on Sign-in {0}",
                                             signInAndFetchProfile ?
@@ -878,28 +878,28 @@ namespace Firebase.Sample.Auth {
 
         GUILayout.Space(20);
         if (GUILayout.Button("SignInWith | Microsoft")) {
-          SignInWithProvider(Firebase.Auth.MicrosoftAuthProvider.ProviderId);
+          SignInWithProvider_DEPRECATED(Firebase.Auth.MicrosoftAuthProvider.ProviderId);
         }
         if (GUILayout.Button("SignInWith | Yahoo")) {
-          SignInWithProvider(Firebase.Auth.YahooAuthProvider.ProviderId);
+          SignInWithProvider_DEPRECATED(Firebase.Auth.YahooAuthProvider.ProviderId);
         }
         if (GUILayout.Button("ReauthWith | Microsoft")) {
-          ReauthenticateWithProvider(Firebase.Auth.MicrosoftAuthProvider.ProviderId);
+          ReauthenticateWithProvider_DEPRECATED(Firebase.Auth.MicrosoftAuthProvider.ProviderId);
         }
         if (GUILayout.Button("ReauthWith | Yahoo")) {
-          ReauthenticateWithProvider(Firebase.Auth.YahooAuthProvider.ProviderId);
+          ReauthenticateWithProvider_DEPRECATED(Firebase.Auth.YahooAuthProvider.ProviderId);
         }
         if (GUILayout.Button("LinkWith | Microsoft")) {
-          LinkWithProvider(Firebase.Auth.MicrosoftAuthProvider.ProviderId);
+          LinkWithProvider_DEPRECATED(Firebase.Auth.MicrosoftAuthProvider.ProviderId);
         }
         if (GUILayout.Button("LinkWith | Yahoo")) {
-          LinkWithProvider(Firebase.Auth.YahooAuthProvider.ProviderId);
+          LinkWithProvider_DEPRECATED(Firebase.Auth.YahooAuthProvider.ProviderId);
         }
         if (GUILayout.Button("Unlink User | Microsoft")) {
-          UnlinkUser(Firebase.Auth.MicrosoftAuthProvider.ProviderId);
+          UnlinkUser_DEPRECATED(Firebase.Auth.MicrosoftAuthProvider.ProviderId);
         }
         if (GUILayout.Button("Unlink User | Yahoo")) {
-          UnlinkUser(Firebase.Auth.YahooAuthProvider.ProviderId);
+          UnlinkUser_DEPRECATED(Firebase.Auth.YahooAuthProvider.ProviderId);
         }
 
         GUIDisplayCustomControls();
