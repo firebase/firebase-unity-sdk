@@ -70,9 +70,9 @@ internal class BuiltInProviderWrapper : IAppCheckProvider {
       if (!s_pendingGetTokens.TryGetValue(key, out tcs)) {
         return;
       }
+      s_pendingGetTokens.Remove(key);
     }
 
-    s_pendingGetTokens.Remove(key);
     if (error == 0) {
       // Create the C# object that wraps the Token's C++ pointer, passing false for ownership
       // to prevent the cleanup of the C# object from deleting the C++ object when done.
