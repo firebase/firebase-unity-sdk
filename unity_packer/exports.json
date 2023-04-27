@@ -144,7 +144,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1",
+          "unity": "2019.1",
           "dependencies": {
             "com.google.external-dependency-manager" : "1.2.176"
           }
@@ -270,7 +270,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -374,7 +374,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -480,7 +480,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -565,7 +565,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -668,7 +668,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -801,7 +801,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -915,7 +915,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -1016,7 +1016,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -1130,7 +1130,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -1232,7 +1232,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -1335,7 +1335,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -1437,7 +1437,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -1541,7 +1541,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     },
@@ -1639,7 +1639,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     }
