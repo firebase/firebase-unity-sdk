@@ -42,6 +42,7 @@ namespace app_check {
 
 typedef void (SWIGSTDCALL *GetTokenFromCSharp)(const char* app_name, int key);
 typedef void (SWIGSTDCALL *TokenChanged)(const char* app_name, AppCheckToken* token);
+typedef void (SWIGSTDCALL *CompleteBuiltInGetToken)(int key, AppCheckToken* token, int error, const char* error_message);
 
 // Should be set to the C# function FirebaseAppCheck.GetTokenFromCSharpMethod
 static GetTokenFromCSharp g_get_token_from_csharp = nullptr;
@@ -50,6 +51,9 @@ static std::map<int, std::function<void(AppCheckToken, int, const std::string&)>
 
 // Should be set to the C# function FirebaseAppCheck.TokenChangedMethod
 static TokenChanged g_token_changed = nullptr;
+
+// Should be set to the C# function BuiltInProviderWrapper.CompleteBuiltInGetTokenMethod
+static CompleteBuiltInGetToken g_complete_built_in_get_token = nullptr;
 
 // Called from C# when a token is fetched, to callback into the C++ SDK.
 void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
@@ -210,6 +214,35 @@ void SetTokenChangedCallback(AppCheck* app_check, TokenChanged token_changed_cal
   }
 }
 
+// Called from C# to register the C# function to call to complete pending
+// GetToken calls from the built in providers.
+void SetCompleteBuiltInGetTokenCallback(CompleteBuiltInGetToken get_token_callback) {
+  g_complete_built_in_get_token = get_token_callback;
+}
+
+// Calls into C# to complete a call to GetToken on one of the built in provider types.
+// Should be used with the callback logic to guarantee it is on the Unity thread.
+void CallCompleteBuiltInGetToken(int key, AppCheckToken token, int error, const char* error_message) {
+  if (g_complete_built_in_get_token) {
+    // Should be calling BuiltInProviderWrapper.CompleteBuiltInGetTokenMethod
+    g_complete_built_in_get_token(key, &token, error, error_message);
+  }
+}
+
+// Called from C# to call the built in provider's GetToken function, and then pass the
+// result back to C# when done.
+void GetTokenFromBuiltInProvider(AppCheckProvider* provider, int key) {
+  auto token_callback{
+    [key](firebase::app_check::AppCheckToken token,
+          int error_code, const std::string& error_message) {
+    // Queue a call to the C# function to pass along the new token.
+    firebase::callback::AddCallback(
+      new firebase::callback::CallbackValue3String1<int, AppCheckToken, int>(
+        key, token, error_code, error_message.c_str(), CallCompleteBuiltInGetToken));
+  }};
+  provider->GetToken(token_callback);
+}
+
 }  // namespace app_check
 }  // firebase
 %}  // End of C++ code
@@ -249,10 +282,13 @@ void SetTokenChangedCallback(AppCheck* app_check, TokenChanged token_changed_cal
 // Ignore GetToken, which is going to have to be handled differently
 %ignore GetToken;
 
+// This code block is added directly to the C# module class (AppCheckUtil)
 %pragma(csharp) modulecode=%{
   internal delegate void GetTokenFromCSharpDelegate(string appName, int key);
 
   internal delegate void TokenChangedDelegate(string appName, System.IntPtr tokenCPtr);
+
+  internal delegate void CompleteBuiltInGetTokenDelegate(int key, System.IntPtr tokenCPtr, int error, string errorMessage);
 %}
 
 // Map callback function types to delegates.
@@ -262,6 +298,9 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(
 SWIG_MAP_CFUNC_TO_CSDELEGATE(
   firebase::app_check::TokenChanged,
   Firebase.AppCheck.AppCheckUtil.TokenChangedDelegate)
+SWIG_MAP_CFUNC_TO_CSDELEGATE(
+  firebase::app_check::CompleteBuiltInGetToken,
+  Firebase.AppCheck.AppCheckUtil.CompleteBuiltInGetTokenDelegate)
 
 %include "app_check/src/include/firebase/app_check/app_attest_provider.h"
 %include "app_check/src/include/firebase/app_check/debug_provider.h"
@@ -279,5 +318,8 @@ void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
 
 void SetTokenChangedCallback(firebase::app_check::AppCheck* app_check,
                              firebase::app_check::TokenChanged token_changed_callback);
+
+void SetCompleteBuiltInGetTokenCallback(firebase::app_check::CompleteBuiltInGetToken);
+void GetTokenFromBuiltInProvider(AppCheckProvider* provider, int key);
 }  // app_check
 }  // firebase
