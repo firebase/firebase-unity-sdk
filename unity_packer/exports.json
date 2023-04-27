@@ -146,7 +146,7 @@
         "manifest" : {
           "unity": "2018.1",
           "dependencies": {
-            "com.google.external-dependency-manager" : "1.2.175"
+            "com.google.external-dependency-manager" : "1.2.176"
           }
         }
       }
