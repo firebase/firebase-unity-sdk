@@ -25,7 +25,8 @@ namespace Firebase.Auth {
 ///
 /// This class is not supported on tvOS and Desktop platforms.
 ///
-/// The verification flow results in a Credential that can be used to,
+/// The verification flow results in a @ref PhoneAuthCredential that can be
+/// used to,
 /// * Sign in to an existing phone number account/sign up with a new
 ///   phone number
 /// * Link a phone number to a current user. This provider will be added to
@@ -43,21 +44,25 @@ namespace Firebase.Auth {
 ///       phone number. App receives verification id via @ref CodeSent.
 ///     - User receives SMS and enters verification code in app's GUI.
 ///     - App uses user's verification code to call
-///       @ref PhoneAuthProvider::GetCredential.
+///       @ref PhoneAuthProvider.GetCredential.
 ///
 /// (2) SMS is automatically retrieved (Android only).
-///     - App calls @ref VerifyPhoneNumber with `timeout_ms` > 0.
+///     - App calls @ref VerifyPhoneNumber with `autoVerifyTimeOutMs` > 0.
 ///     - Auth server sends the verification code via SMS to the provided
 ///       phone number.
 ///     - SMS arrives and is automatically retrieved by the operating system.
-///       Credential is automatically created and passed to the app via
-///       @ref VerificationCompleted_DEPRECATED.
+///       @ref PhoneAuthCredential is automatically created and passed to the
+///       app via @ref VerificationCompleted.
 ///
 /// (3) Phone number is instantly verified (Android only).
 ///     - App calls @ref VerifyPhoneNumber.
 ///     - The operating system validates the phone number without having to
-///       send an SMS. Credential is automatically created and passed to
-///       the app via @ref VerificationCompleted_DEPRECATED.
+///       send an SMS. @ref PhoneAuthCredential is automatically created and
+///       passed to the app via @ref VerificationCompleted.
+///
+/// Note: Both @ref VerificationCompleted_DEPRECATED and
+/// @ref VerificationCompleted will be triggered upon completion. Developer
+/// should only use only one of them to prevent duplicated event handling.
 public sealed class PhoneAuthProvider : global::System.IDisposable {
   /// @deprecated This is a deprecated delegate. Please use @ref
   /// VerificationCompleted instead.
@@ -198,10 +203,9 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
     }
   }
 
-  /// @deprecated This is a deprecated method. Please use @ref
-  /// VerifyPhoneNumber(PhoneAuthOptions, ForceResendingToken,
-  ///   VerificationCompleted, VerificationFailed, CodeSent,
-  ///   CodeAutoRetrievalTimeOut) instead.
+  /// @deprecated This is a deprecated method. Please use
+  /// @ref VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed)
+  /// instead.
   ///
   /// Start the phone number authentication operation.
   ///
@@ -228,7 +232,7 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   /// @param[in] verificationFailed Phone number verification failed with an
   ///    error. For example, quota exceeded or unknown phone number format.
   ///    Provided with a description of the error.
-  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, ForceResendingToken, VerificationCompleted, VerificationFailed, CodeSent, CodeAutoRetrievalTimeOut)` instead", false)]
+  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed)` instead", false)]
   public void VerifyPhoneNumber(string phoneNumber, uint autoVerifyTimeOutMs,
                                 ForceResendingToken forceResendingToken,
                                 VerificationCompleted_DEPRECATED verificationCompleted,
@@ -238,10 +242,9 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
                       null, null);
   }
 
-  /// @deprecated This is a deprecated method. Please use @ref
-  /// VerifyPhoneNumber(PhoneAuthOptions, ForceResendingToken,
-  ///   VerificationCompleted, VerificationFailed, CodeSent,
-  ///   CodeAutoRetrievalTimeOut) instead.
+  /// @deprecated This is a deprecated method. Please use
+  /// @ref VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed)
+  /// instead.
   ///
   /// Start the phone number authentication operation.
   ///
@@ -272,7 +275,7 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   ///    number. Provided with the verification id to pass along to
   ///    `GetCredential` along with the sent code, and a token to use if
   ///    the user requests another SMS message be sent.
-  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, ForceResendingToken, VerificationCompleted, VerificationFailed, CodeSent, CodeAutoRetrievalTimeOut)` instead", false)]
+  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed)` instead", false)]
   public void VerifyPhoneNumber(string phoneNumber, uint autoVerifyTimeOutMs,
                                 ForceResendingToken forceResendingToken,
                                 VerificationCompleted_DEPRECATED verificationCompleted,
@@ -283,10 +286,9 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
                       codeSent, null);
   }
 
-  /// @deprecated This is a deprecated method. Please use @ref
-  /// VerifyPhoneNumber(PhoneAuthOptions, ForceResendingToken,
-  ///   VerificationCompleted, VerificationFailed, CodeSent,
-  ///   CodeAutoRetrievalTimeOut) instead.
+  /// @deprecated This is a deprecated method. Please use
+  /// @ref VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed)
+  /// instead.
   ///
   /// Start the phone number authentication operation.
   ///
@@ -313,7 +315,7 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   /// @param[in] verificationFailed Phone number verification failed with an
   ///    error. For example, quota exceeded or unknown phone number format.
   ///    Provided with a description of the error.
-  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, ForceResendingToken, VerificationCompleted, VerificationFailed, CodeSent, CodeAutoRetrievalTimeOut)` instead", false)]
+  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed)` instead", false)]
   public void VerifyPhoneNumber(string phoneNumber, uint autoVerifyTimeOutMs,
                                 ForceResendingToken forceResendingToken,
                                 VerificationCompleted_DEPRECATED verificationCompleted,
@@ -324,10 +326,9 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
                       null, codeAutoRetrievalTimeOut);
   }
 
-  /// @deprecated This is a deprecated method. Please use @ref
-  /// VerifyPhoneNumber(PhoneAuthOptions, ForceResendingToken,
-  ///   VerificationCompleted, VerificationFailed, CodeSent,
-  ///   CodeAutoRetrievalTimeOut) instead.
+  /// @deprecated This is a deprecated method. Please use
+  /// @ref VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed)
+  /// instead.
   ///
   /// Start the phone number authentication operation.
   ///
@@ -361,7 +362,7 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   ///    the user requests another SMS message be sent.
   /// @param[in] codeAutoRetrievalTimeOut The timeout specified has expired.
   ///    Provided with the verification id for the transaction that timed out.
-  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, ForceResendingToken, VerificationCompleted, VerificationFailed, CodeSent, CodeAutoRetrievalTimeOut)` instead", false)]
+  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed)` instead", false)]
   public void VerifyPhoneNumber(string phoneNumber, uint autoVerifyTimeOutMs,
                                 ForceResendingToken forceResendingToken,
                                 VerificationCompleted_DEPRECATED verificationCompleted,

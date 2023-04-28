@@ -1199,12 +1199,12 @@ static CppInstanceManager<Auth> g_auth_instances;
   /// Data from the Identity Provider used to sign-in is returned in the
   /// @ref AdditionalUserInfo inside @ref SignInResult.
   [System.Obsolete("Please use `Task<AuthResult> LinkWithProviderAsync(Credential)` instead", false)]
-  public System.Threading.Tasks.Task<SignInResult> LinkAndRetrieveDataWithCredentialAsync_DEPRECATED(
+  public System.Threading.Tasks.Task<SignInResult> LinkAndRetrieveDataWithCredentialAsync(
       Credential credential) {
     ThrowIfNull();
     var taskCompletionSource =
         new System.Threading.Tasks.TaskCompletionSource<SignInResult>();
-    LinkAndRetrieveDataWithCredentialInternalAsync_DEPRECATED(credential).ContinueWith(task => {
+    LinkAndRetrieveDataWithCredentialInternalAsync(credential).ContinueWith(task => {
         CompleteSignInResultTask(task, taskCompletionSource);
       });
     return taskCompletionSource.Task;
@@ -1225,6 +1225,12 @@ static CppInstanceManager<Auth> g_auth_instances;
         task => {
           if(authProxy != null) {
               authProxy.CompleteFirebaseUserTask(task, taskCompletionSource);
+          } else {
+            // This should not happen. But if it does, throw exception and
+            // notify the team.
+            taskCompletionSource.TrySetException(new FirebaseException(0,
+                "Cannot complete 'LinkWithCredentialAsync_DEPRECATED()' " +
+                "because the authProxy is null."));
           }
         });
     return taskCompletionSource.Task;
@@ -1244,7 +1250,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   ///
   /// @note: The current user may be signed out if this operation fails on
   /// Android and desktop platforms.
-  [System.Obsolete("Please use `Task<AuthResult> LinkWithCredentialAsync(Credential)` instead", false)]
+  [System.Obsolete("Please use `Task<AuthResult> ReauthenticateAndRetrieveDataAsync(Credential)` instead", false)]
   public System.Threading.Tasks.Task<SignInResult> ReauthenticateAndRetrieveDataAsync_DEPRECATED(
       Credential credential) {
     ThrowIfNull();
@@ -1257,8 +1263,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   }
 
   /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// @ref UnlinkAsync(string) instead.
+  /// `Task<AuthResult>`. Please use @ref UnlinkAsync(string) instead.
   ///
   /// Unlinks the current user from the provider specified.
   /// Status will be an error if the user is not linked to the given provider.
@@ -1271,7 +1276,13 @@ static CppInstanceManager<Auth> g_auth_instances;
     UnlinkInternalAsync_DEPRECATED(provider).ContinueWith(
         task => {
           if(authProxy != null) {
-              authProxy.CompleteFirebaseUserTask(task, taskCompletionSource);
+            authProxy.CompleteFirebaseUserTask(task, taskCompletionSource);
+          } else {
+            // This should not happen. But if it does, throw exception and
+            // notify the team.
+            taskCompletionSource.TrySetException(new FirebaseException(0,
+                "Cannot complete 'UnlinkAsync_DEPRECATED()' " +
+                "because the authProxy is null."));
           }
         });
     return taskCompletionSource.Task;
@@ -1295,7 +1306,13 @@ static CppInstanceManager<Auth> g_auth_instances;
     UpdatePhoneNumberCredentialInternalAsync_DEPRECATED(credential).ContinueWith(
         task => {
           if(authProxy != null) {
-              authProxy.CompleteFirebaseUserTask(task, taskCompletionSource);
+            authProxy.CompleteFirebaseUserTask(task, taskCompletionSource);
+          } else {
+            // This should not happen. But if it does, throw exception and
+            // notify the team.
+            taskCompletionSource.TrySetException(new FirebaseException(0,
+                "Cannot complete 'UpdatePhoneNumberCredentialAsync_DEPRECATED()' " +
+                "because the authProxy is null."));
           }
         });
     return taskCompletionSource.Task;
@@ -1337,8 +1354,8 @@ static CppInstanceManager<Auth> g_auth_instances;
 %rename(LinkWithProviderInternalAsync_DEPRECATED)
   firebase::auth::User::LinkWithProvider_DEPRECATED;
 
-%rename(LinkAndRetrieveDataWithCredentialInternalAsync_DEPRECATED)
-  firebase::auth::User::LinkAndRetrieveDataWithCredential_DEPRECATED;
+%rename(LinkAndRetrieveDataWithCredentialInternalAsync)
+  firebase::auth::User::LinkAndRetrieveDataWithCredential;
 %rename(LinkWithCredentialInternalAsync_DEPRECATED)
   firebase::auth::User::LinkWithCredential_DEPRECATED;
 %rename(ReauthenticateAndRetrieveDataInternalAsync_DEPRECATED)

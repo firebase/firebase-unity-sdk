@@ -406,7 +406,7 @@ namespace Firebase.Sample.Auth {
         Firebase.Auth.EmailAuthProvider.GetCredential(email, password);
       if (signInAndFetchProfile) {
         return
-          auth.CurrentUser.LinkAndRetrieveDataWithCredentialAsync_DEPRECATED(cred).ContinueWithOnMainThread(
+          auth.CurrentUser.LinkAndRetrieveDataWithCredentialAsync(cred).ContinueWithOnMainThread(
             task => {
               if (LogTaskCompletion(task, "Link Credential")) {
                 DisplaySignInResult(task.Result, 1);
