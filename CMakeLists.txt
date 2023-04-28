@@ -154,8 +154,8 @@ else()
 endif()
 
 if(APPLE)
-  # For some reason, GHA macOS build treats deprecation message as error.
-  # This is a quick solution to downgrade it to a warning.
+  # GHA macOS build treats deprecation warning as error.
+  # This is a quick way to suppress the warning so that the build won't fail.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 endif()
