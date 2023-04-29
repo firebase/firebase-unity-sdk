@@ -4,3 +4,4 @@ pyyaml
 pytz
 requests
 PyGithub
+packaging
