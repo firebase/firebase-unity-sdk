@@ -477,16 +477,16 @@ static CppInstanceManager<Auth> g_auth_instances;
     }
   }
 
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref SignInWithProviderAsync(FederatedAuthProvider) instead.
+  ///
   /// Sign-in a user authenticated via a federated auth provider.
   ///
   /// @note: This operation is supported only on iOS, tvOS and Android
   /// platforms. On other platforms this method will return a Future with a
   /// preset error code: kAuthErrorUnimplemented.
-  ///
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// `Task<AuthResult> SignInWithProviderAsync(FederatedAuthProvider)` instead.
-  [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInWithProviderAsync(FederatedAuthProvider)` instead", false)]
+  [System.Obsolete("Please use `Task<AuthResult> SignInWithProviderAsync(FederatedAuthProvider)` instead", false)]
   public System.Threading.Tasks.Task<SignInResult> SignInWithProviderAsync_DEPRECATED(
       FederatedAuthProvider provider) {
     ThrowIfNull();
@@ -807,15 +807,15 @@ static CppInstanceManager<Auth> g_auth_instances;
     }
   }
 
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref SignInWithCustomTokenAsync(string) instead.
+  ///
   /// Asynchronously logs into Firebase with the given Auth token.
   ///
   /// An error is returned, if the token is invalid, expired or otherwise
   /// not accepted by the server.
-  ///
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// `Task<AuthResult> SignInWithCustomTokenAsync(string)` instead.
-  [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInWithCustomTokenAsync(string)` instead", false)]
+  [System.Obsolete("Please use `Task<AuthResult> SignInWithCustomTokenAsync(string)` instead", false)]
   public System.Threading.Tasks.Task<FirebaseUser> SignInWithCustomTokenAsync_DEPRECATED(
       string token) {
     ThrowIfNull();
@@ -827,15 +827,15 @@ static CppInstanceManager<Auth> g_auth_instances;
     return taskCompletionSource.Task;
   }
 
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref SignInWithCredentialAsync(Credential) instead.
+  ///
   /// @brief Asynchronously logs into Firebase with the given `Auth` token.
   ///
   /// An error is returned, if the token is invalid, expired or otherwise not
   /// accepted by the server.
-  ///
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// `Task<AuthResult> SignInWithCredentialAsync(Credential)` instead.
-  [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInWithCredentialAsync(Credential)` instead", false)]
+  [System.Obsolete("Please use `Task<AuthResult> SignInWithCredentialAsync(Credential)` instead", false)]
   public System.Threading.Tasks.Task<FirebaseUser> SignInWithCredentialAsync_DEPRECATED(
       Credential credential) {
     ThrowIfNull();
@@ -847,6 +847,11 @@ static CppInstanceManager<Auth> g_auth_instances;
     return taskCompletionSource.Task;
   }
 
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref SignInAndRetrieveDataWithCredentialAsync(Credential)
+  /// instead.
+  ///
   /// Asynchronously logs into Firebase with the given credentials.
   ///
   /// For example, the credential could wrap a Facebook login access token,
@@ -858,12 +863,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   ///
   /// An error is returned if the token is invalid, expired, or otherwise not
   /// accepted by the server.
-  ///
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// `Task<AuthResult> SignInAndRetrieveDataWithCredentialAsync(Credential)`
-  /// instead.
-  [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInAndRetrieveDataWithCredentialAsync(Credential)` instead", false)]
+  [System.Obsolete("Please use `Task<AuthResult> SignInAndRetrieveDataWithCredentialAsync(Credential)` instead", false)]
   public System.Threading.Tasks.Task<SignInResult>
       SignInAndRetrieveDataWithCredentialAsync_DEPRECATED(Credential credential) {
     ThrowIfNull();
@@ -874,6 +874,10 @@ static CppInstanceManager<Auth> g_auth_instances;
     return taskCompletionSource.Task;
   }
 
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref SignInAnonymouslyAsync() instead.
+  ///
   /// Asynchronously creates and becomes an anonymous user.
   /// If there is already an anonymous user signed in, that user will be
   /// returned instead.
@@ -895,11 +899,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   ///    });
   ///  }
   /// @endcode
-  ///
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// `Task<AuthResult> SignInAnonymouslyAsync()` instead.
-  [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInAnonymouslyAsync()` instead", false)]
+  [System.Obsolete("Please use `Task<AuthResult> SignInAnonymouslyAsync()` instead", false)]
   public System.Threading.Tasks.Task<FirebaseUser> SignInAnonymouslyAsync_DEPRECATED() {
     ThrowIfNull();
     var taskCompletionSource =
@@ -910,14 +910,14 @@ static CppInstanceManager<Auth> g_auth_instances;
     return taskCompletionSource.Task;
   }
 
-  /// Signs in using provided email address and password.
-  /// An error is returned if the password is wrong or otherwise not accepted
-  /// by the server.
-  ///
   /// @deprecated This method is deprecated in favor of methods that return
   /// `Task<AuthResult>`. Please use `Task<AuthResult> SignInAnonymouslyAsync()`
   /// instead.
-  [System.ObsoleteAttribute("Please use `Task<AuthResult> SignInWithEmailAndPasswordAsync(string, string)` instead", false)]
+  ///
+  /// Signs in using provided email address and password.
+  /// An error is returned if the password is wrong or otherwise not accepted
+  /// by the server.
+  [System.Obsolete("Please use `Task<AuthResult> SignInWithEmailAndPasswordAsync(string, string)` instead", false)]
   public System.Threading.Tasks.Task<FirebaseUser> SignInWithEmailAndPasswordAsync_DEPRECATED(
       string email, string password) {
     ThrowIfNull();
@@ -930,17 +930,17 @@ static CppInstanceManager<Auth> g_auth_instances;
     return taskCompletionSource.Task;
   }
 
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// `Task<AuthResult> CreateUserWithEmailAndPasswordAsync(string, string)`
+  /// instead.
+  ///
   /// Creates, and on success, logs in a user with the given email address
   /// and password.
   ///
   /// An error is returned when account creation is unsuccessful
   /// (due to another existing account, invalid password, etc.).
-  ///
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// `Task<AuthResult> CreateUserWithEmailAndPasswordAsync(string, string)`
-  /// instead.
-  [System.ObsoleteAttribute("Please use `Task<AuthResult> CreateUserWithEmailAndPasswordAsync(string, string)` instead", false)]
+  [System.Obsolete("Please use `Task<AuthResult> CreateUserWithEmailAndPasswordAsync(string, string)` instead", false)]
   public System.Threading.Tasks.Task<FirebaseUser>
       CreateUserWithEmailAndPasswordAsync_DEPRECATED(string email, string password) {
     ThrowIfNull();
@@ -954,7 +954,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   }
 
   // Complete a task that returns a FirebaseUser.
-  private void CompleteFirebaseUserTask(
+  internal void CompleteFirebaseUserTask(
       System.Threading.Tasks.Task<FirebaseUser> task,
       System.Threading.Tasks.TaskCompletionSource<FirebaseUser>
         taskCompletionSource) {
@@ -1037,6 +1037,11 @@ static CppInstanceManager<Auth> g_auth_instances;
 %rename(ProviderId) firebase::auth::PhoneAuthProvider::kProviderId;
 %rename(ProviderId) firebase::auth::PlayGamesAuthProvider::kProviderId;
 %rename(ProviderId) firebase::auth::TwitterAuthProvider::kProviderId;
+%typemap(csclassmodifiers) firebase::auth::YahooAuthProvider "
+  /// @deprecated This class is no longer used and will be removed in a future release.
+  /// Please use the OAuthProvider to create credentials for Yahoo.
+  [System.Obsolete(\"Please use the OAuthProvider to create credentials for Yahoo.\")]
+  public class";
 %rename(ProviderId) firebase::auth::YahooAuthProvider::kProviderId;
 
 %STATIC_CLASS(EmailAuthProvider(), firebase::auth::EmailAuthProvider)
@@ -1129,17 +1134,16 @@ static CppInstanceManager<Auth> g_auth_instances;
     }
   }
 
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref ReauthenticateWithProviderAsync(FederatedAuthProvider) instead.
+  ///
   /// Reauthenticate a user via a federated auth provider.
   ///
   /// @note: This operation is supported only on iOS, tvOS and Android
   /// platforms. On other platforms this method will return a Future with a
   /// preset error code: kAuthErrorUnimplemented.
-  ///
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// `Task<AuthResult> ReauthenticateWithProviderAsync(FederatedAuthProvider)`
-  /// instead.
-  [System.ObsoleteAttribute("Please use `Task<AuthResult> ReauthenticateWithProviderAsync(FederatedAuthProvider)` instead", false)]
+  [System.Obsolete("Please use `Task<AuthResult> ReauthenticateWithProviderAsync(FederatedAuthProvider)` instead", false)]
   public System.Threading.Tasks.Task<SignInResult>
       ReauthenticateWithProviderAsync_DEPRECATED(FederatedAuthProvider provider) {
     ThrowIfNull();
@@ -1158,17 +1162,16 @@ static CppInstanceManager<Auth> g_auth_instances;
     }
   }
 
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref LinkWithProviderAsync(FederatedAuthProvider) instead.
+  ///
   /// Link a user via a federated auth provider.
   ///
   /// @note: This operation is supported only on iOS, tvOS and Android
   /// platforms. On other platforms this method will return a Future with a
   /// preset error code: kAuthErrorUnimplemented.
-  ///
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// `Task<AuthResult> LinkWithProviderAsync(FederatedAuthProvider)`
-  /// instead.
-  [System.ObsoleteAttribute("Please use `Task<AuthResult> LinkWithProviderAsync(FederatedAuthProvider)` instead", false)]
+  [System.Obsolete("Please use `Task<AuthResult> LinkWithProviderAsync(FederatedAuthProvider)` instead", false)]
   public System.Threading.Tasks.Task<SignInResult> LinkWithProviderAsync_DEPRECATED(
       FederatedAuthProvider provider) {
     ThrowIfNull();
@@ -1177,6 +1180,141 @@ static CppInstanceManager<Auth> g_auth_instances;
     LinkWithProviderInternalAsync_DEPRECATED(provider).ContinueWith(task => {
         CompleteSignInResultTask(task, taskCompletionSource);
       });
+    return taskCompletionSource.Task;
+  }
+
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref LinkWithCredentialAsync(Credential) instead.
+  ///
+  /// Links the user with the given 3rd party credentials.
+  ///
+  /// For example, a Facebook login access token, a Twitter token/token-secret
+  /// pair.
+  /// Status will be an error if the token is invalid, expired, or otherwise
+  /// not accepted by the server as well as if the given 3rd party
+  /// user id is already linked with another user account or if the current user
+  /// is already linked with another id from the same provider.
+  ///
+  /// Data from the Identity Provider used to sign-in is returned in the
+  /// @ref AdditionalUserInfo inside @ref SignInResult.
+  [System.Obsolete("Please use `Task<AuthResult> LinkWithProviderAsync(Credential)` instead", false)]
+  public System.Threading.Tasks.Task<SignInResult> LinkAndRetrieveDataWithCredentialAsync(
+      Credential credential) {
+    ThrowIfNull();
+    var taskCompletionSource =
+        new System.Threading.Tasks.TaskCompletionSource<SignInResult>();
+    LinkAndRetrieveDataWithCredentialInternalAsync(credential).ContinueWith(task => {
+        CompleteSignInResultTask(task, taskCompletionSource);
+      });
+    return taskCompletionSource.Task;
+  }
+
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref LinkWithCredentialAsync(Credential) instead.
+  ///
+  /// Associates a user account from a third-party identity provider.
+  [System.Obsolete("Please use `Task<AuthResult> LinkWithCredentialAsync(Credential)` instead", false)]
+  public System.Threading.Tasks.Task<FirebaseUser> LinkWithCredentialAsync_DEPRECATED(
+      Credential credential) {
+    ThrowIfNull();
+    var taskCompletionSource =
+        new System.Threading.Tasks.TaskCompletionSource<FirebaseUser>();
+    LinkWithCredentialInternalAsync_DEPRECATED(credential).ContinueWith(
+        task => {
+          if(authProxy != null) {
+              authProxy.CompleteFirebaseUserTask(task, taskCompletionSource);
+          } else {
+            // This should not happen. But if it does, throw exception and
+            // notify the team.
+            taskCompletionSource.TrySetException(new FirebaseException(0,
+                "Cannot complete 'LinkWithCredentialAsync_DEPRECATED()' " +
+                "because the authProxy is null."));
+          }
+        });
+    return taskCompletionSource.Task;
+  }
+
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref ReauthenticateAndRetrieveDataAsync(Credential) instead.
+  ///
+  /// Reauthenticate using a credential.
+  ///
+  /// Data from the Identity Provider used to sign-in is returned in the
+  /// AdditionalUserInfo inside the returned SignInResult.
+  ///
+  /// Returns an error if the existing credential is not for this user
+  /// or if sign-in with that credential failed.
+  ///
+  /// @note: The current user may be signed out if this operation fails on
+  /// Android and desktop platforms.
+  [System.Obsolete("Please use `Task<AuthResult> ReauthenticateAndRetrieveDataAsync(Credential)` instead", false)]
+  public System.Threading.Tasks.Task<SignInResult> ReauthenticateAndRetrieveDataAsync_DEPRECATED(
+      Credential credential) {
+    ThrowIfNull();
+    var taskCompletionSource =
+        new System.Threading.Tasks.TaskCompletionSource<SignInResult>();
+    ReauthenticateAndRetrieveDataInternalAsync_DEPRECATED(credential).ContinueWith(task => {
+        CompleteSignInResultTask(task, taskCompletionSource);
+      });
+    return taskCompletionSource.Task;
+  }
+
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use @ref UnlinkAsync(string) instead.
+  ///
+  /// Unlinks the current user from the provider specified.
+  /// Status will be an error if the user is not linked to the given provider.
+  [System.Obsolete("Please use `Task<AuthResult> UnlinkAsync(string)` instead", false)]
+  public System.Threading.Tasks.Task<FirebaseUser> UnlinkAsync_DEPRECATED(
+      string provider) {
+    ThrowIfNull();
+    var taskCompletionSource =
+        new System.Threading.Tasks.TaskCompletionSource<FirebaseUser>();
+    UnlinkInternalAsync_DEPRECATED(provider).ContinueWith(
+        task => {
+          if(authProxy != null) {
+            authProxy.CompleteFirebaseUserTask(task, taskCompletionSource);
+          } else {
+            // This should not happen. But if it does, throw exception and
+            // notify the team.
+            taskCompletionSource.TrySetException(new FirebaseException(0,
+                "Cannot complete 'UnlinkAsync_DEPRECATED()' " +
+                "because the authProxy is null."));
+          }
+        });
+    return taskCompletionSource.Task;
+  }
+
+  /// @deprecated This method is deprecated in favor of methods that return
+  /// `Task<AuthResult>`. Please use
+  /// @ref UpdatePhoneNumberCredentialAsync(PhoneAuthCredential) instead.
+  ///
+  /// Updates the currently linked phone number on the user.
+  /// This is useful when a user wants to change their phone number. It is a
+  /// shortcut to calling `UnlinkAsync_DEPRECATED(phoneCredential.Provider)`
+  /// and then `LinkWithCredentialAsync_DEPRECATED(phoneCredential)`.
+  /// `phoneCredential` must have been created with @ref PhoneAuthProvider.
+  [System.Obsolete("Please use `Task<AuthResult> UpdatePhoneNumberCredentialAsync(PhoneAuthCredential)` instead", false)]
+  public System.Threading.Tasks.Task<FirebaseUser> UpdatePhoneNumberCredentialAsync_DEPRECATED(
+      Credential credential) {
+    ThrowIfNull();
+    var taskCompletionSource =
+        new System.Threading.Tasks.TaskCompletionSource<FirebaseUser>();
+    UpdatePhoneNumberCredentialInternalAsync_DEPRECATED(credential).ContinueWith(
+        task => {
+          if(authProxy != null) {
+            authProxy.CompleteFirebaseUserTask(task, taskCompletionSource);
+          } else {
+            // This should not happen. But if it does, throw exception and
+            // notify the team.
+            taskCompletionSource.TrySetException(new FirebaseException(0,
+                "Cannot complete 'UpdatePhoneNumberCredentialAsync_DEPRECATED()' " +
+                "because the authProxy is null."));
+          }
+        });
     return taskCompletionSource.Task;
   }
 %}
@@ -1215,6 +1353,17 @@ static CppInstanceManager<Auth> g_auth_instances;
   firebase::auth::User::ReauthenticateWithProvider_DEPRECATED;
 %rename(LinkWithProviderInternalAsync_DEPRECATED)
   firebase::auth::User::LinkWithProvider_DEPRECATED;
+
+%rename(LinkAndRetrieveDataWithCredentialInternalAsync)
+  firebase::auth::User::LinkAndRetrieveDataWithCredential;
+%rename(LinkWithCredentialInternalAsync_DEPRECATED)
+  firebase::auth::User::LinkWithCredential_DEPRECATED;
+%rename(ReauthenticateAndRetrieveDataInternalAsync_DEPRECATED)
+  firebase::auth::User::ReauthenticateAndRetrieveData_DEPRECATED;
+%rename(UnlinkInternalAsync_DEPRECATED)
+  firebase::auth::User::Unlink_DEPRECATED;
+%rename(UpdatePhoneNumberCredentialInternalAsync_DEPRECATED)
+  firebase::auth::User::UpdatePhoneNumberCredential_DEPRECATED;
 
 // Rename token retrieval method.
 // NOTE: This is not a property as it is an asynchronous operation.
@@ -1293,7 +1442,9 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(::firebase::auth::AuthStateChangedDelegateFunc,
 // The classes should be sealed.
 %typemap(csclassmodifiers) firebase::auth::AdditionalUserInfo
   "public sealed class";
-%typemap(csclassmodifiers) firebase::auth::SignInResult "public sealed class";
+%typemap(csclassmodifiers) firebase::auth::SignInResult "
+  [System.Obsolete(\"Please use the Auth methods which return instances of `AuthResult` instead.\")]
+  public sealed class";
 // The classes are not meant to be publicly constructable.
 %ignore firebase::auth::AdditionalUserInfo::AdditionalUserInfo;
 %ignore firebase::auth::SignInResult::SignInResult;
@@ -1524,7 +1675,7 @@ TimeOutCallback PhoneAuthListenerImpl::g_time_out_callback = nullptr;
 }
 
 %typemap(cscode) firebase::auth::PhoneAuthProvider %{
-public delegate void VerificationCompletedDelegate(int callbackId, System.IntPtr credential);
+public delegate void VerificationCompletedDelegate_DEPRECATED(int callbackId, System.IntPtr credential);
 public delegate void VerificationFailedDelegate(int callbackId, string error);
 public delegate void CodeSentDelegate(int callbackId, string verificationId, System.IntPtr token);
 public delegate void TimeOutDelegate(int callbackId, string verificationId);
@@ -1533,7 +1684,7 @@ public delegate void TimeOutDelegate(int callbackId, string verificationId);
 // Map callback function types delegates.
 SWIG_MAP_CFUNC_TO_CSDELEGATE(
     ::firebase::auth::VerificationCompletedCallback,
-    Firebase.Auth.PhoneAuthProviderInternal.VerificationCompletedDelegate)
+    Firebase.Auth.PhoneAuthProviderInternal.VerificationCompletedDelegate_DEPRECATED)
 SWIG_MAP_CFUNC_TO_CSDELEGATE(
     ::firebase::auth::VerificationFailedCallback,
     Firebase.Auth.PhoneAuthProviderInternal.VerificationFailedDelegate)
