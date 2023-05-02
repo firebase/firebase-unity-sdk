@@ -49,9 +49,14 @@ struct ConfigValueInternal {
   ValueSource source;
 };
 
+void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
+                             firebase::remote_config::OnConfigUpdateListener config_listener);
+
 }  // remote_config
 }  // firebase
-%}
+
+
+%} // C++ code
 
 // All outputs of CharVector should instead be IEnumerable<byte>
 %typemap(cstype, out="global::System.Collections.Generic.IEnumerable<byte>") std::vector<unsigned char> "CharVector";
@@ -79,6 +84,7 @@ struct ConfigValueInternal {
 %ignore firebase::remote_config::ValueInfo;
 %ignore firebase::remote_config::ConfigKeyValue;
 %ignore firebase::remote_config::ConfigSetting;
+%ignore firebase::remote_config::RemoteConfigError;
 
 // Configure the ConfigInfo class
 %csmethodmodifiers fetch_time "internal";
@@ -130,6 +136,9 @@ struct ConfigValueInternal {
 %rename (FirebaseRemoteConfigInternal) firebase::remote_config::RemoteConfig;
 
 %rename (ConfigSettingsInternal) firebase::remote_config::ConfigSettings;
+
+%rename(ConfigUpdateListenerRegistration)
+  firebase::remote_config::ConfigUpdateListener;
 
 // Configure properties for get / set methods on the FirebaseRemoteConfigInternal class.
 %attribute(firebase::remote_config::RemoteConfig, firebase::App*, App, app);
@@ -186,10 +195,40 @@ struct ConfigValueInternal {
   ValueSource source;
 };
 
+static std::map<App*, OnConfigUpdateListener*> g_registered_listeners;
+
+// Called by C# to register a RemoteConfig instance for token change updates,
+// provided via the callback method provided.
+void SetConfigUpdateCallback(RemoteConfig* rc, OnConfigUpdateListener config_listner) {
+  if (config_listner) {
+
+
+    ConfigUpdateListener* listener = rc->AddOnConfigUpdateListener(config_listner);
+    g_registered_listeners[rc->app()] = listener;
+
+    
+  } else {
+    // Remove the listener, and cleanup the callback if no more remain.
+    ConfigUpdateListener* listener = g_registered_listeners[rc->app()];
+    g_registered_listeners.erase(rc->app());
+    listener->Remove();
+
+    if (g_registered_listeners.empty()) {
+      g_token_changed = nullptr;
+    }
+  }
+}
+
 }
 }
 
 %pragma(csharp) modulecode=%{
+
+  internal delegate void ConfigUpdateDelegate(string appName, System.IntPtr tokenCPtr);
+  SWIG_MAP_CFUNC_TO_CSDELEGATE(
+    firebase::remote_config::OnConfigUpdateListener,
+    Firebase.RemoteConfig.ConfigUpdateDelegate)
+
   /// The C++ mapping requires a StringStringMap, so convert the more generic
   /// dictionary into that map.
   internal static StringStringMap ConvertDictionaryToMap(

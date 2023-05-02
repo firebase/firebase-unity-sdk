@@ -39,6 +39,32 @@ namespace Firebase.RemoteConfig {
       get { return firebaseApp; }
     }
 
+    private event EventHandler<ConfigUpdateEventArgs> ConfigUpdateListnerImpl;
+    // EventHandlers that will be used as ConfigUpdateListeners. The first listener added will open 
+    // the stream connection and the last removed will close the stream.
+    public event EventHandler<ConfigUpdateEventArgs> OnConfigUpdateListener {
+      add {
+        ThrowIfNull();
+        // If this is the first listener, hook into C++.
+        if (ConfigUpdateListnerImpl == null ||
+            ConfigUpdateListnerImpl.GetInvocationList().Length == 0) {
+          // TODO
+        }
+
+        ConfigUpdateListnerImpl += value;
+      }
+      remove {
+        ThrowIfNull();
+        ConfigUpdateListnerImpl -= value;
+
+        // If that was the last listener, remove the C++ hooks.
+        if (ConfigUpdateListnerImpl == null ||
+            ConfigUpdateListnerImpl.GetInvocationList().Length == 0) {
+          // TODO
+        }
+      }
+  }
+
     private FirebaseRemoteConfig(FirebaseRemoteConfigInternal remoteConfig, FirebaseApp app) {
       firebaseApp = app;
       firebaseApp.AppDisposed += OnAppDisposed;
