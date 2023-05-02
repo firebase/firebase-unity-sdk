@@ -9,6 +9,7 @@ Note: Firebase Dynamic Links is not supported on tvOS.
 | Feature                            | Unity Package                     |
 |:----------------------------------:|:---------------------------------:|
 | Firebase Analytics                 | FirebaseAnalytics.unitypackage    |
+| Firebase App Check                 | FirebaseAppCheck.unitypackage     |
 | Firebase Authentication            | FirebaseAuth.unitypackage         |
 | Firebase Crashlytics               | FirebaseCrashlytics.unitypackage  |
 | Firebase Dynamic Links             | FirebaseDynamicLinks.unitypackage |
@@ -31,6 +32,7 @@ desktop builds on Windows, OS X, and Linux:
 | Feature                            | Unity Package                     |
 |:----------------------------------:|:---------------------------------:|
 | Firebase Authentication            | FirebaseAuth.unitypackage         |
+| Firebase App Check                 | FirebaseAppCheck.unitypackage     |
 | Firebase Realtime Database*        | FirebaseDatabase.unitypackage     |
 | Cloud Firestore                    | FirebaseFirestore.unitypackage    |
 | Firebase Functions                 | FirebaseFunctions.unitypackage    |
@@ -69,6 +71,11 @@ Support
 
 Release Notes
 -------------
+### 11.0.0
+- Changes
+    - App Check: Adds support for Firebase App Check on Android, iOS, tvOS,
+      and desktop platforms.
+
 ### 10.7.0
 - Changes
     - General: Update to Firebase C++ SDK version 10.7.0.

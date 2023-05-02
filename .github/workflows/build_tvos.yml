@@ -20,7 +20,7 @@ on:
         type: string
       apis:
         description: 'CSV of apis to build and test'
-        default: 'analytics,auth,crashlytics,database,firestore,functions,installations,messaging,remote_config,storage'
+        default: 'analytics,app_check,auth,crashlytics,database,firestore,functions,installations,messaging,remote_config,storage'
         required: true
         type: string
       unity_platform_name:
@@ -47,7 +47,7 @@ on:
         type: string
       apis:
         description: 'CSV of apis to build and test'
-        default: 'analytics,auth,crashlytics,database,firestore,functions,installations,messaging,remote_config,storage'
+        default: 'analytics,app_check,auth,crashlytics,database,firestore,functions,installations,messaging,remote_config,storage'
         required: true
         type: string
       unity_platform_name:
