@@ -777,16 +777,15 @@ static CppInstanceManager<Auth> g_auth_instances;
   // Update the cached user proxy for this object.
   private FirebaseUser UpdateCurrentUser(FirebaseUser proxy) {
     lock (appCPtrToAuth) {
-      if (proxy == null) {
+      if (proxy == null || !proxy.IsValid) {
         // If there is no current user, remove the cached proxy.
         currentUser = null;
-      } else if (currentUser == null) {
+      } else if (currentUser == null || !currentUser.IsValid) {
         // If no proxy is cached, cache the current proxy.
         currentUser = proxy;
       } else {
         // If the user changed, update the cached proxy.
-        if (FirebaseUser.getCPtr(currentUser).Handle !=
-            FirebaseUser.getCPtr(proxy).Handle) {
+        if (!currentUser.EqualToInternal(proxy)) {
           currentUser.Dispose();
           currentUser = proxy;
         }
@@ -1105,6 +1104,15 @@ static CppInstanceManager<Auth> g_auth_instances;
   }
 %}
 
+%extend firebase::auth::User {
+  // Get a C++ instance and increment the reference count to it
+  %csmethodmodifiers EqualToInternal(const firebase::auth::User& user) "internal";
+  bool EqualToInternal(const firebase::auth::User& user) const {
+    return *($self) == user;
+  }
+}
+
+
 %typemap(cscode) firebase::auth::User %{
   // Holds a reference to the FirebaseAuth proxy object so that it isn't
   // garbage collected while the application holds a reference to this object.
@@ -1414,6 +1422,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   std::vector<firebase::auth::UserInfoInterface>, ProviderData, provider_data);
 %attributestring(firebase::auth::User, std::string, ProviderId, provider_id);
 %attributestring(firebase::auth::User, std::string, UserId, uid);
+%attribute(firebase::auth::User, bool, IsValid, is_valid);
 
 // Change the fields on UserInfoInterface and inheritors to use Properties.
 %attributestring(firebase::auth::UserInfoInterface, std::string, UserId, uid);
