@@ -63,6 +63,7 @@ internal class BuiltInProviderWrapper : IAppCheckProvider {
   }
 
   // This is called from the C++ implementation, on the Unity main thread.
+  [MonoPInvokeCallback(typeof(AppCheckUtil.CompleteBuiltInGetTokenDelegate))]
   private static void CompleteBuiltInGetTokenMethod(int key, System.IntPtr tokenCPtr,
                                                     int error, string errorMessage) {
     TaskCompletionSource<AppCheckToken> tcs;
