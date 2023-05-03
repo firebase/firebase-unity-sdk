@@ -48,20 +48,22 @@ public sealed class DeviceCheckProviderFactory : IAppCheckProviderFactory {
   * Gets an instance of this class for installation into a
   * FirebaseAppCheck instance.
   */
-  public static DeviceCheckProviderFactory GetInstance() {
-    if (s_factoryInstance != null) {
+  public static DeviceCheckProviderFactory Instance {
+    get {
+      if (s_factoryInstance != null) {
+        return s_factoryInstance;
+      }
+
+      // Get the C++ Factory, and wrap it
+      DeviceCheckProviderFactoryInternal factoryInternal = DeviceCheckProviderFactoryInternal.GetInstance();
+      // The returned factory can be null, if the platform isn't supported.
+      if (factoryInternal == null) {
+        throw new FirebaseException((int)AppCheckError.UnsupportedProvider,
+          "Device Check is only supported on iOS+ platforms.");
+      }
+      s_factoryInstance = new DeviceCheckProviderFactory(factoryInternal);
       return s_factoryInstance;
     }
-
-    // Get the C++ Factory, and wrap it
-    DeviceCheckProviderFactoryInternal factoryInternal = DeviceCheckProviderFactoryInternal.GetInstance();
-    // The returned factory can be null, if the platform isn't supported.
-    if (factoryInternal == null) {
-      throw new FirebaseException((int)AppCheckError.UnsupportedProvider,
-        "Device Check is only supported on iOS+ platforms.");
-    }
-    s_factoryInstance = new DeviceCheckProviderFactory(factoryInternal);
-    return s_factoryInstance;
   }
 
   /**
