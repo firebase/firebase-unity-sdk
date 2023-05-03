@@ -17,18 +17,13 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace Firebase.RemoteConfig {
-   // Object passed to ConfigUpdateEventHandlers that contains ConfigUpdate arguments.
-   public sealed class ConfigUpdateEventArgs : System.EventArgs {
-        // The keys that have changes in the config.
-        public readonly IList<string> UpdatedKeys;
-        
-        // Remote Config Errors that may have come up while listening for updates.
-        public readonly RemoteConfigError Error;
-
-        public ConfigUpdateEventArgs(IList<string> keys, RemoteConfigError error) {
-            UpdatedKeys = keys;
-            Error = error;
-        }
-   }
+  // Object passed to ConfigUpdateEventHandlers that contains ConfigUpdate arguments.
+  public sealed class ConfigUpdateEventArgs : System.EventArgs {
+    // The keys that have changes in the config.
+    public IEnumerable<string> UpdatedKeys { get; set; }
+    
+    // Remote Config Errors that may have come up while listening for updates.
+    public RemoteConfigError Error { get; set; }
+  }
 }
 

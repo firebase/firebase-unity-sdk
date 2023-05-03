@@ -27,7 +27,7 @@
 %include "app/src/swig/serial_dispose.i"
 %include "app/src/swig/future.i"
 
-%rename (ConfigUpdateInternal) firebase::remote_config::ConfigUpdate;
+// Start of code added to the C++ module file
 %{
 #include <algorithm>
 #include <map>
@@ -39,7 +39,7 @@
 namespace firebase {
 namespace remote_config {
 
-// Declare the C++ callback delegate to C# RemoteConfig.OnConfigUpdateListener
+// Declare the C++ callback delegate equivalent to C# RemoteConfigUtil.ConfigUpdateDelegate
 typedef void (SWIGSTDCALL *ConfigUpdateListener)(const char* app_name, ConfigUpdate* config_update, int error);
 
 // Reference count manager for C++ RemoteConfig instance, using pointer as the
@@ -47,9 +47,9 @@ typedef void (SWIGSTDCALL *ConfigUpdateListener)(const char* app_name, ConfigUpd
 static CppInstanceManager<RemoteConfig> g_rc_instances;
 
 // App -> C++ ConfigUpdateListener map.
-static std::map<App*, firebase::remote_config::ConfigUpdateListenerRegistration*> g_registered_listeners;
+static std::map<App*, firebase::remote_config::ConfigUpdateListenerRegistration> g_registered_listeners;
 
-// Should be set to the C# function FirebaseRemoteConfig.ConfigUpdateListener
+// Should be set to the C# function FirebaseRemoteConfig.ConfigUpdateMethod
 static ConfigUpdateListener g_config_updated = nullptr;
 
 // Internal struct used to pass the Remote Config stored data from C++ to C#.
@@ -70,15 +70,14 @@ static void CallConfigUpdate(ConfigUpdate cu, RemoteConfigError error, const cha
 }
 // Called by C# to register a RemoteConfig instance for token change updates,
 // provided via the callback method provided.
-void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUpdateListener config_listner) {
-
-  if (config_listner) {
+void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUpdateListener on_config_updated) {
+  // If given a method, save it, and add a new listener for Config Updates.
+  if (on_config_updated) {
     if (!g_config_updated) {
-      g_config_updated = config_listner;
-      
+      g_config_updated = on_config_updated;
     }
     std::string app_name = rc->app()->name();
-    ConfigUpdateListenerRegistration registation = rc->AddOnConfigUpdateListener([app_name](ConfigUpdate&& cu, RemoteConfigError error) {
+    ConfigUpdateListenerRegistration registration = rc->AddOnConfigUpdateListener([app_name](ConfigUpdate&& cu, RemoteConfigError error) {
       // Queue up a call to g_config_updated
       ConfigUpdate cuLocal = std::move(cu);
       firebase::callback::AddCallback(
@@ -86,15 +85,13 @@ void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUp
           cuLocal, error, app_name.c_str(), CallConfigUpdate));
     });
     
-    
-    g_registered_listeners[rc->app()] = &registation;
-
-    
+    // Save the registration in a map so that it can be removed later if needed.
+    g_registered_listeners[rc->app()] = registration;
   } else {
     // Remove the listener, and cleanup the callback if no more remain.
-    ConfigUpdateListenerRegistration* registration = g_registered_listeners[rc->app()];
+    ConfigUpdateListenerRegistration registration = g_registered_listeners[rc->app()];
     g_registered_listeners.erase(rc->app());
-    registration->Remove();
+    registration.Remove();
 
     if (g_registered_listeners.empty()) {
       g_config_updated = nullptr;
@@ -102,13 +99,10 @@ void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUp
   }
 }
 
-
-
 }  // remote_config
 }  // firebase
 
-
-%} // Cpp implementation
+%} // End of code added to the C++ module file
 
 // All outputs of CharVector should instead be IEnumerable<byte>
 %typemap(cstype, out="global::System.Collections.Generic.IEnumerable<byte>") std::vector<unsigned char> "CharVector";
@@ -120,7 +114,6 @@ void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUp
 %ignore firebase::remote_config::ConfigKeyValue;
 %ignore firebase::remote_config::ConfigSetting;
 %ignore firebase::remote_config::RemoteConfigError;
-// %ignore firebase::remote_config::ConfigUpdate;
 %ignore firebase::remote_config::ConfigUpdateListenerRegistration;
 
 // Configure the ConfigInfo class
@@ -174,7 +167,7 @@ void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUp
 
 %rename (ConfigSettingsInternal) firebase::remote_config::ConfigSettings;
 
-
+%rename (ConfigUpdateInternal) firebase::remote_config::ConfigUpdate;
 
 // Configure properties for get / set methods on the FirebaseRemoteConfigInternal class.
 %attribute(firebase::remote_config::RemoteConfig, firebase::App*, App, app);
@@ -228,6 +221,7 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(
 
 %include "remote_config/src/include/firebase/remote_config.h"
 
+// Start of C++ definitions that Swig needs to know of, to generate C# for
 namespace firebase {
 namespace remote_config {
 
@@ -240,7 +234,7 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
                              firebase::remote_config::ConfigUpdateListener config_listener);
 
 }
-} // telling swig this function exists
+} // End of C++ definitions
 
 
 %pragma(csharp) modulecode=%{

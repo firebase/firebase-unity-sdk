@@ -14,21 +14,21 @@
  * limitations under the License. */
 
 namespace Firebase.RemoteConfig {
-    /// <summary>
-    /// Describes the error codes returned by Remote Config.
-    /// </summary>
-    public enum RemoteConfigError {
-        // No error.
-        RemoteConfigErrorNone = 0,
-        // Unimplemented error found.
-        RemoteConfigErrorUnimplemented = -1,
-        // Unable to make a connection to the Remote Config backend.
-        RemoteConfigErrorConfigUpdateStreamError,
-        // The ConfigUpdate message was unparsable.
-        RemoteConfigErrorConfigUpdateMessageInvalid,
-        // Unable to fetch the latest version of the config.
-        RemoteConfigErrorConfigUpdateNotFetched,
-        // The Remote Config real-time config update service is unavailable.
-        RemoteConfigErrorConfigUpdateUnavailable,
-    }
+  /// <summary>
+  /// Describes the error codes returned by Remote Config.
+  /// </summary>
+  public enum RemoteConfigError {
+    // No error.
+    RemoteConfigErrorNone = 0,
+    // Unimplemented error found.
+    RemoteConfigErrorUnimplemented = -1,
+    // Unable to make a connection to the Remote Config backend.
+    RemoteConfigErrorConfigUpdateStreamError = 1,
+    // The ConfigUpdate message was unparsable.
+    RemoteConfigErrorConfigUpdateMessageInvalid,
+    // Unable to fetch the latest version of the config.
+    RemoteConfigErrorConfigUpdateNotFetched,
+    // The Remote Config real-time config update service is unavailable.
+    RemoteConfigErrorConfigUpdateUnavailable,
+  }
 }

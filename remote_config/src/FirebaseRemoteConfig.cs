@@ -344,28 +344,27 @@ namespace Firebase.RemoteConfig {
       get { return RemoteConfigUtil.kDefaultTimeoutInMilliseconds; }
     }
 
-    internal void OnConfigUpdate(ConfigUpdate configUpdate, RemoteConfigError error) {
+    internal void OnConfigUpdate(ConfigUpdateInternal configUpdate, RemoteConfigError error) {
       EventHandler<ConfigUpdateEventArgs> handler = ConfigUpdateListnerImpl;
       if (handler != null) {
-        handler(this, new ConfigUpdateEventArgs(configUpdate.UpdatedKeys, error));
+        // Make a copy of the list, to not rely on the Swig list
+        List<string> updatedKeys = new List<string>(configUpdate.updated_keys);
+        handler(this, new ConfigUpdateEventArgs {
+          UpdatedKeys = updatedKeys,
+          Error = error
+        });
       }
     }
 
     [MonoPInvokeCallback(typeof(RemoteConfigUtil.ConfigUpdateDelegate))]
     private static void ConfigUpdateMethod(string appName, ConfigUpdateInternal configUpdate, 
         int error) {
-      // convert ConfigUpdateInternal to ConfigUpdate
-      ConfigUpdate cuInternal = new ConfigUpdate();
-      cuInternal.UpdatedKeys = new List<string>();
-      foreach(var key in configUpdate.updated_keys) {
-        cuInternal.UpdatedKeys.Add(key);
-      }
       // convert error to RemoteConfigError
       RemoteConfigError errorInternal = (RemoteConfigError)error;
 
       FirebaseRemoteConfig rc;
       if (remoteConfigByInstanceKey.TryGetValue(appName, out rc)) {
-        rc.OnConfigUpdate(cuInternal, errorInternal);
+        rc.OnConfigUpdate(configUpdate, errorInternal);
       }
     }
   }

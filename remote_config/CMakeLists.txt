@@ -24,7 +24,6 @@ set(firebase_remote_config_swig
 # Firebase RemoteConfig CSharp files
 set(firebase_remote_config_src
   src/ConfigSettings.cs
-  src/ConfigUpdate.cs
   src/ConfigUpdateEventArgs.cs
   src/ConfigValue.cs
   src/FirebaseRemoteConfig.cs
