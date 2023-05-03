@@ -43,27 +43,27 @@ namespace Firebase.RemoteConfig {
       get { return firebaseApp; }
     }
 
-    private event EventHandler<ConfigUpdateEventArgs> ConfigUpdateListnerImpl;
+    private event EventHandler<ConfigUpdateEventArgs> ConfigUpdateListenerImpl;
     // EventHandlers that will be used as ConfigUpdateListeners. The first listener added will open 
     // the stream connection and the last removed will close the stream.
     public event EventHandler<ConfigUpdateEventArgs> OnConfigUpdateListener {
       add {
         ThrowIfNull();
         // If this is the first listener, hook into C++.
-        if (ConfigUpdateListnerImpl == null ||
-            ConfigUpdateListnerImpl.GetInvocationList().Length == 0) {
+        if (ConfigUpdateListenerImpl == null ||
+            ConfigUpdateListenerImpl.GetInvocationList().Length == 0) {
           RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, configUpdateDelegate);
         }
 
-        ConfigUpdateListnerImpl += value;
+        ConfigUpdateListenerImpl += value;
       }
       remove {
         ThrowIfNull();
-        ConfigUpdateListnerImpl -= value;
+        ConfigUpdateListenerImpl -= value;
 
         // If that was the last listener, remove the C++ hooks.
-        if (ConfigUpdateListnerImpl == null ||
-            ConfigUpdateListnerImpl.GetInvocationList().Length == 0) {
+        if (ConfigUpdateListenerImpl == null ||
+            ConfigUpdateListenerImpl.GetInvocationList().Length == 0) {
           RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, null);
         }
       }
@@ -345,7 +345,7 @@ namespace Firebase.RemoteConfig {
     }
 
     internal void OnConfigUpdate(ConfigUpdateInternal configUpdate, RemoteConfigError error) {
-      EventHandler<ConfigUpdateEventArgs> handler = ConfigUpdateListnerImpl;
+      EventHandler<ConfigUpdateEventArgs> handler = ConfigUpdateListenerImpl;
       if (handler != null) {
         // Make a copy of the list, to not rely on the Swig list
         List<string> updatedKeys = new List<string>(configUpdate.updated_keys);
