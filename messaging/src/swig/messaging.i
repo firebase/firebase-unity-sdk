@@ -543,39 +543,6 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
   }
 #endif  // DOXYGEN
 
-#if DOXYGEN
-  /// @brief Subscribe to receive all messages to the specified topic.
-  ///
-  /// Subscribes an app instance to a topic, enabling it to receive messages sent to that topic.
-  ///
-  /// Call this function from the main thread. FCM is not thread safe.
-  ///
-  /// @param[in] topic The name of the topic to subscribe. Must match the following regular expression: `[a-zA-Z0-9-_.~%]{1,900}`.
-  [System.Obsolete("FirebaseMessaging.Subscribe is deprecated. Please use FirebaseMessaging.SubscribeAsync() instead")]
-  public static void Subscribe(string topic);
-#else
-  [System.Obsolete("FirebaseMessaging.Subscribe is deprecated. Please use FirebaseMessaging.SubscribeAsync() instead")]
-  public static void Subscribe(string topic) {
-    SubscribeAsync(topic);
-  }
-#endif
-
-#if DOXYGEN
-  /// @brief Unsubscribe from a topic.
-  ///
-  /// Unsubscribes an app instance from a topic, stopping it from receiving any further messages sent to that topic.
-  ///
-  /// Call this function from the main thread. FCM is not thread safe.
-  ///
-  /// @param[in] topic The name of the topic to unsubscribe from. Must match the following regular expression: `[a-zA-Z0-9-_.~%]{1,900}`.
-  [System.Obsolete("FirebaseMessaging.Unsubscribe is deprecated. Please use FirebaseMessaging.UnsubscribeAsync() instead")]
-  public static void Unsubscribe(string topic);
-#else
-  [System.Obsolete("FirebaseMessaging.Unsubscribe is deprecated. Please use FirebaseMessaging.UnsubscribeAsync() instead")]
-  public static void Unsubscribe(string topic) {
-    UnsubscribeAsync(topic);
-  }
-#endif
 %}
 
 %typemap(cscode) firebase::messaging::Message %{
@@ -694,9 +661,6 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
     "internal"
 %csmethodmodifiers firebase::messaging::DeleteToken()
     "internal"
-
-%csmethodmodifiers firebase::messaging::Send(const Message&)
-    "[System.Obsolete(\"FirebaseMessaging.Send is deprecated and will be removed in a future version.\")]\n  "
 
 // Messaging has a lot of read-only properties, so make all immutable
 // and call out the mutable ones.
