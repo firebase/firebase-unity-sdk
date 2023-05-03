@@ -69,6 +69,10 @@ Support
 
 Release Notes
 -------------
+### 11.0.0
+- Changes
+    - Messaging: Remove deprecated calls `Send`, `Subscribe`, and `Unsubscribe`.
+
 ### 10.7.0
 - Changes
     - General: Update to Firebase C++ SDK version 10.7.0.
