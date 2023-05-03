@@ -18,12 +18,12 @@ namespace Firebase.RemoteConfig {
   /// Describes the error codes returned by Remote Config.
   /// </summary>
   public enum RemoteConfigError {
-    // No error.
-    RemoteConfigErrorNone = 0,
     // Unimplemented error found.
     RemoteConfigErrorUnimplemented = -1,
+    // No error.
+    RemoteConfigErrorNone = 0,
     // Unable to make a connection to the Remote Config backend.
-    RemoteConfigErrorConfigUpdateStreamError = 1,
+    RemoteConfigErrorConfigUpdateStreamError,
     // The ConfigUpdate message was unparsable.
     RemoteConfigErrorConfigUpdateMessageInvalid,
     // Unable to fetch the latest version of the config.
