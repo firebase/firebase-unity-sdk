@@ -11,24 +11,13 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
-
+ * limitations under the License.
+ */
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Firebase.RemoteConfig {
-   // Object passed to ConfigUpdateEventHandlers that contains ConfigUpdate arguments.
-   public sealed class ConfigUpdateEventArgs : System.EventArgs {
-        // The keys that have changes in the config.
-        public readonly IList<string> UpdatedKeys;
-        
-        // Remote Config Errors that may have come up while listening for updates.
-        public readonly RemoteConfigError Error;
-
-        public ConfigUpdateEventArgs(IList<string> keys, RemoteConfigError error) {
-            UpdatedKeys = keys;
-            Error = error;
-        }
-   }
+    public struct ConfigUpdate {
+        public IList<string> UpdatedKeys;
+    }
 }
-

@@ -34,6 +34,10 @@ namespace Firebase.RemoteConfig {
     // Key of this instance within remoteConfigByInstanceKey.
     private string instanceKey;
 
+    // Function for C++ to call when the config is updated.
+    private static RemoteConfigUtil.ConfigUpdateDelegate configUpdateDelegate =
+    new RemoteConfigUtil.ConfigUpdateDelegate(ConfigUpdateMethod);
+
     /// @brief App object associated with this FirebaseRemoteConfig.
     public FirebaseApp App {
       get { return firebaseApp; }
@@ -48,7 +52,7 @@ namespace Firebase.RemoteConfig {
         // If this is the first listener, hook into C++.
         if (ConfigUpdateListnerImpl == null ||
             ConfigUpdateListnerImpl.GetInvocationList().Length == 0) {
-          // TODO
+          RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, configUpdateDelegate);
         }
 
         ConfigUpdateListnerImpl += value;
@@ -60,10 +64,10 @@ namespace Firebase.RemoteConfig {
         // If that was the last listener, remove the C++ hooks.
         if (ConfigUpdateListnerImpl == null ||
             ConfigUpdateListnerImpl.GetInvocationList().Length == 0) {
-          // TODO
+          RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, null);
         }
       }
-  }
+    }
 
     private FirebaseRemoteConfig(FirebaseRemoteConfigInternal remoteConfig, FirebaseApp app) {
       firebaseApp = app;
@@ -338,6 +342,31 @@ namespace Firebase.RemoteConfig {
     /// in milliseconds.
     public static ulong DefaultTimeoutInMilliseconds {
       get { return RemoteConfigUtil.kDefaultTimeoutInMilliseconds; }
+    }
+
+    internal void OnConfigUpdate(ConfigUpdate configUpdate, RemoteConfigError error) {
+      EventHandler<ConfigUpdateEventArgs> handler = ConfigUpdateListnerImpl;
+      if (handler != null) {
+        handler(this, new ConfigUpdateEventArgs(configUpdate.UpdatedKeys, error));
+      }
+    }
+
+    [MonoPInvokeCallback(typeof(RemoteConfigUtil.ConfigUpdateDelegate))]
+    private static void ConfigUpdateMethod(string appName, ConfigUpdateInternal configUpdate, 
+        int error) {
+      // convert ConfigUpdateInternal to ConfigUpdate
+      ConfigUpdate cuInternal = new ConfigUpdate();
+      cuInternal.UpdatedKeys = new List<string>();
+      foreach(var key in configUpdate.updated_keys) {
+        cuInternal.UpdatedKeys.Add(key);
+      }
+      // convert error to RemoteConfigError
+      RemoteConfigError errorInternal = (RemoteConfigError)error;
+
+      FirebaseRemoteConfig rc;
+      if (remoteConfigByInstanceKey.TryGetValue(appName, out rc)) {
+        rc.OnConfigUpdate(cuInternal, errorInternal);
+      }
     }
   }
 }  // namespace Firebase.RemoteConfig
