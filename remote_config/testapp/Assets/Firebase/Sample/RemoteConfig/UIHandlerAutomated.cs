@@ -14,6 +14,7 @@ namespace Firebase.Sample.RemoteConfig {
         TestDisplayData,
         TestDisplayAllKeys,
         TestFetchData,
+        TestAddOnConfigUpdateListener,
       };
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
@@ -55,6 +56,13 @@ namespace Firebase.Sample.RemoteConfig {
                Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_bool").BooleanValue
       }));
       });
+    }
+
+    Task TestAddOnConfigUpdateListener() {
+      // TODO: Verify that an automatic fetch actually occurred
+      EnableAutoFetch();
+      DisableAutoFetch();
+      return Task.FromResult(true);
     }
   }
 }

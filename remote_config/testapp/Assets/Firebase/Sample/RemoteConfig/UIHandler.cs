@@ -113,6 +113,32 @@ namespace Firebase.Sample.RemoteConfig {
       }
     }
 
+    public void EnableAutoFetch() {
+      DebugLog("Enabling auto-fetch:");
+      Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.OnConfigUpdateListener
+          += ConfigUpdateListenerEventHandler;
+    }
+
+    public void DisableAutoFetch() {
+      DebugLog("Enabling auto-fetch:");
+      Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.OnConfigUpdateListener
+          -= ConfigUpdateListenerEventHandler;
+    }
+
+    private void ConfigUpdateListenerEventHandler(object sender, RemoteConfigUpdateEventArgs args) {
+      if (args.Error) {
+        DebugLog("Error occurred while listening: {0}", args.Error);
+        return;
+      }
+      DebugLog("Auto-fetch has received a new config. Updated keys: {0}", args.UpdatedKeys);
+      var info = Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.Info;
+      Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.ActivateAsync()
+        .ContinueWithOnMainThread(task => {
+          DebugLog(String.Format("Remote data loaded and ready (last fetch time {0}).",
+                                info.FetchTime));
+        });
+    }
+
     // [START fetch_async]
     // Start a fetch request.
     // FetchAsync only fetches new data if the current data is older than the provided
@@ -208,6 +234,12 @@ namespace Firebase.Sample.RemoteConfig {
         }
         if (GUILayout.Button("Fetch Remote Data")) {
           FetchDataAsync();
+        }
+        if (GUILayout.Button("Enable Auto-Fetch")) {
+          EnableAutoFetch();
+        }
+        if (GUILayout.Button("Disable Auto-Fetch")) {
+          DisableAutoFetch();
         }
         GUILayout.EndVertical();
         GUILayout.EndScrollView();
