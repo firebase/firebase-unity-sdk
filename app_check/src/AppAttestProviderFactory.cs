@@ -48,20 +48,22 @@ public sealed class AppAttestProviderFactory : IAppCheckProviderFactory {
   * Gets an instance of this class for installation into a
   * FirebaseAppCheck instance.
   */
-  public static AppAttestProviderFactory GetInstance() {
-    if (s_factoryInstance != null) {
+  public static AppAttestProviderFactory Instance {
+    get {
+      if (s_factoryInstance != null) {
+        return s_factoryInstance;
+      }
+
+      // Get the C++ Factory, and wrap it
+      AppAttestProviderFactoryInternal factoryInternal = AppAttestProviderFactoryInternal.GetInstance();
+      // The returned factory can be null, if the platform isn't supported.
+      if (factoryInternal == null) {
+        throw new FirebaseException((int)AppCheckError.UnsupportedProvider,
+          "App Attest is only supported on iOS+ platforms.");
+      }
+      s_factoryInstance = new AppAttestProviderFactory(factoryInternal);
       return s_factoryInstance;
     }
-
-    // Get the C++ Factory, and wrap it
-    AppAttestProviderFactoryInternal factoryInternal = AppAttestProviderFactoryInternal.GetInstance();
-    // The returned factory can be null, if the platform isn't supported.
-    if (factoryInternal == null) {
-      throw new FirebaseException((int)AppCheckError.UnsupportedProvider,
-        "App Attest is only supported on iOS+ platforms.");
-    }
-    s_factoryInstance = new AppAttestProviderFactory(factoryInternal);
-    return s_factoryInstance;
   }
 
   /**

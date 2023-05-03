@@ -48,20 +48,22 @@ public sealed class PlayIntegrityProviderFactory : IAppCheckProviderFactory {
   * Gets an instance of this class for installation into a
   * FirebaseAppCheck instance.
   */
-  public static PlayIntegrityProviderFactory GetInstance() {
-    if (s_factoryInstance != null) {
+  public static PlayIntegrityProviderFactory Instance {
+    get {
+      if (s_factoryInstance != null) {
+        return s_factoryInstance;
+      }
+
+      // Get the C++ Factory, and wrap it
+      PlayIntegrityProviderFactoryInternal factoryInternal = PlayIntegrityProviderFactoryInternal.GetInstance();
+      // The returned factory can be null, if the platform isn't supported.
+      if (factoryInternal == null) {
+        throw new FirebaseException((int)AppCheckError.UnsupportedProvider,
+          "Play Integrity is only supported on Android platforms.");
+      }
+      s_factoryInstance = new PlayIntegrityProviderFactory(factoryInternal);
       return s_factoryInstance;
     }
-
-    // Get the C++ Factory, and wrap it
-    PlayIntegrityProviderFactoryInternal factoryInternal = PlayIntegrityProviderFactoryInternal.GetInstance();
-    // The returned factory can be null, if the platform isn't supported.
-    if (factoryInternal == null) {
-      throw new FirebaseException((int)AppCheckError.UnsupportedProvider,
-        "Play Integrity is only supported on Android platforms.");
-    }
-    s_factoryInstance = new PlayIntegrityProviderFactory(factoryInternal);
-    return s_factoryInstance;
   }
 
   /**

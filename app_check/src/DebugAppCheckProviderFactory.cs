@@ -53,15 +53,17 @@ public sealed class DebugAppCheckProviderFactory : IAppCheckProviderFactory {
   * Gets an instance of this class for installation into a
   * FirebaseAppCheck instance.
   */
-  public static DebugAppCheckProviderFactory GetInstance() {
-    if (s_factoryInstance != null) {
+  public static DebugAppCheckProviderFactory Instance {
+    get {
+      if (s_factoryInstance != null) {
+        return s_factoryInstance;
+      }
+
+      // Get the C++ Factory, and wrap it
+      DebugAppCheckProviderFactoryInternal factoryInternal = DebugAppCheckProviderFactoryInternal.GetInstance();
+      s_factoryInstance = new DebugAppCheckProviderFactory(factoryInternal);
       return s_factoryInstance;
     }
-
-    // Get the C++ Factory, and wrap it
-    DebugAppCheckProviderFactoryInternal factoryInternal = DebugAppCheckProviderFactoryInternal.GetInstance();
-    s_factoryInstance = new DebugAppCheckProviderFactory(factoryInternal);
-    return s_factoryInstance;
   }
 
   /**
@@ -79,6 +81,16 @@ public sealed class DebugAppCheckProviderFactory : IAppCheckProviderFactory {
     provider = new BuiltInProviderWrapper(providerInternal);
     providerMap[app.Name] = provider;
     return provider;
+  }
+
+  /**
+  * Sets the Debug Token to use when communicating with the backend.
+  * This should match a debug token set in the Firebase console for your
+  * App.
+  */
+  public void SetDebugToken(string token) {
+    ThrowIfNull();
+    factoryInternal.SetDebugToken(token);
   }
 }
 
