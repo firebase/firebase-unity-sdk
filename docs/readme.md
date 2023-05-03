@@ -75,6 +75,7 @@ Release Notes
 - Changes
     - App Check: Adds support for Firebase App Check on Android, iOS, tvOS,
       and desktop platforms.
+    - Messaging: Remove deprecated calls `Send`, `Subscribe`, and `Unsubscribe`.
 
 ### 10.7.0
 - Changes
