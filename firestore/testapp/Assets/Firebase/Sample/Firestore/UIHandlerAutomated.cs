@@ -1800,7 +1800,7 @@ namespace Firebase.Sample.Firestore {
         // TODO(mikelehen): Check for permission_denied once we plumb errors through somehow.
         AssertException(typeof(Exception), () => Await(doc.SetAsync(data)));
 
-        Await(firebaseAuth.SignInAnonymouslyAsync());
+        Await(firebaseAuth.SignInAnonymouslyAsync_DEPRECATED());
 
         // Write should now succeed.
         Await(doc.SetAsync(data));
@@ -3577,7 +3577,7 @@ namespace Firebase.Sample.Firestore {
         AssertNe(query6.GetHashCode(), query7.GetHashCode());
       });
     }
-    
+
     Task TestAggregateQueryEqualsAndGetHashCode() {
       return Async(() => {
         var collection = TestCollection();
@@ -4035,7 +4035,7 @@ namespace Firebase.Sample.Firestore {
       for (int i = 0; i < snapshot.Count; i++) {
         AssertEq(desc + ": Document ID " + i, docIds[i], snapshot[i].Id);
       }
-      
+
       var aggregateSnapshot = Await(query.Count.GetSnapshotAsync(AggregateSource.Server));
       AssertEq(desc + ": Aggregate query count", aggregateSnapshot.Count, docIds.Count);
     }
