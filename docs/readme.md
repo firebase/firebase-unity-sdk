@@ -9,6 +9,7 @@ Note: Firebase Dynamic Links is not supported on tvOS.
 | Feature                            | Unity Package                     |
 |:----------------------------------:|:---------------------------------:|
 | Firebase Analytics                 | FirebaseAnalytics.unitypackage    |
+| Firebase App Check                 | FirebaseAppCheck.unitypackage     |
 | Firebase Authentication            | FirebaseAuth.unitypackage         |
 | Firebase Crashlytics               | FirebaseCrashlytics.unitypackage  |
 | Firebase Dynamic Links             | FirebaseDynamicLinks.unitypackage |
@@ -31,6 +32,7 @@ desktop builds on Windows, OS X, and Linux:
 | Feature                            | Unity Package                     |
 |:----------------------------------:|:---------------------------------:|
 | Firebase Authentication            | FirebaseAuth.unitypackage         |
+| Firebase App Check                 | FirebaseAppCheck.unitypackage     |
 | Firebase Realtime Database*        | FirebaseDatabase.unitypackage     |
 | Cloud Firestore                    | FirebaseFirestore.unitypackage    |
 | Firebase Functions                 | FirebaseFunctions.unitypackage    |
@@ -71,6 +73,9 @@ Release Notes
 -------------
 ### 11.0.0
 - Changes
+    - App Check: Adds support for Firebase App Check on Android, iOS, tvOS,
+      and desktop platforms. To learn more, see
+      https://firebase.google.com/docs/app-check
     - Messaging: Remove deprecated calls `Send`, `Subscribe`, and `Unsubscribe`.
     - Remote Config (Android/iOS): Added support for real-time config updates. Use the new
       `OnConfigUpdateListener` API to get real-time updates. Existing

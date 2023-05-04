@@ -5,6 +5,7 @@ iOS, and desktop platforms. Note that desktop is ***only supported for developme
 purposes***. It includes the following Firebase libraries:
 
 - [Google Analytics for Firebase](https://firebase.google.com/docs/analytics/)
+- [Firebase App Check](https://firebase.google.com/docs/app-check/)
 - [Firebase Authentication](https://firebase.google.com/docs/auth/)
 - [Firebase Crashlytics](https://firebase.google.com/docs/crashlytics)
 - [Firebase Realtime Database](https://firebase.google.com/docs/database/)
@@ -85,7 +86,7 @@ Expected output artifact is
 python scripts/build_scripts/build_zips.py --platform=<target platform> --targets=<lib1> --targets=<lib2>
 ```
 
-> **Note:** Supported library names: analytics, auth, crashlytics, database, dynamic_links, firestore, functions, installations, messaging, remote_config, storage
+> **Note:** Supported library names: analytics, app_check, auth, crashlytics, database, dynamic_links, firestore, functions, installations, messaging, remote_config, storage
 
 ## Packaging
 

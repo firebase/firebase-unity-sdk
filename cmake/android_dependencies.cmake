@@ -25,9 +25,9 @@ set(FIREBASE_ANALYTICS_ANDROID_DEPS
 )
 
 set(FIREBASE_APP_CHECK_ANDROID_DEPS
-    "com.google.firebase:firebase-appcheck"
-    "com.google.firebase:firebase-appcheck-debug"
-    "com.google.firebase:firebase-appcheck-playintegrity"
+    "com.google.firebase:firebase-appcheck:17.0.0"
+    "com.google.firebase:firebase-appcheck-debug:17.0.0"
+    "com.google.firebase:firebase-appcheck-playintegrity:17.0.0"
     "com.google.firebase:firebase-analytics:21.2.1"
 )
 

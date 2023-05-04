@@ -18,6 +18,23 @@
       ]
     },
     {
+      "name": "app_check",
+      "full_name": "FirebaseAppCheck",
+      "captial_name": "AppCheck",
+      "bundle_id": "com.google.firebase.unity.appcheck.testapp",
+      "testapp_path": "app_check/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
+      "plugins": [
+        "FirebaseAppCheck.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.app-check-*.tgz"
+      ]
+    },
+    {
       "name": "auth",
       "full_name": "FirebaseAuth",
       "captial_name": "Auth",
