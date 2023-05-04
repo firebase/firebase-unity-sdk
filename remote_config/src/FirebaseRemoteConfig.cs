@@ -36,7 +36,7 @@ namespace Firebase.RemoteConfig {
 
     // Function for C++ to call when the config is updated.
     private static RemoteConfigUtil.ConfigUpdateDelegate configUpdateDelegate =
-    new RemoteConfigUtil.ConfigUpdateDelegate(ConfigUpdateMethod);
+      new RemoteConfigUtil.ConfigUpdateDelegate(ConfigUpdateMethod);
 
     /// @brief App object associated with this FirebaseRemoteConfig.
     public FirebaseApp App {
