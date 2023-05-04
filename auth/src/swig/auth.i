@@ -1235,6 +1235,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   "public sealed class";
 %typemap(csclassmodifiers) firebase::auth::Credential "public class";
 %typemap(csclassmodifiers) firebase::auth::PhoneAuthCredential "public sealed class";
+%attributestring(firebase::auth::PhoneAuthCredential, std::string, SmsCode, sms_code);
 
 %attributestring(firebase::auth::PhoneAuthCredential, std::string, SmsCodeInternal, sms_code);
 %typemap(cscode) firebase::auth::PhoneAuthCredential %{
