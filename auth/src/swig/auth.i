@@ -1019,6 +1019,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   "public sealed class";
 %typemap(csclassmodifiers) firebase::auth::Credential "public class";
 %typemap(csclassmodifiers) firebase::auth::PhoneAuthCredential "public sealed class";
+%attributestring(firebase::auth::PhoneAuthCredential, std::string, SmsCode, sms_code);
 
 %typemap(csclassmodifiers) firebase::auth::FederatedAuthProvider "public class";
 
@@ -1514,6 +1515,8 @@ namespace auth {
 
 // The callbacks that are used by the Phone Auth Listener, that need to reach
 // back to C# callbacks.
+typedef void (SWIGSTDCALL *VerificationCompletedCallback_DEPRECATED)(
+    int callback_id, void* credential);
 typedef void (SWIGSTDCALL *VerificationCompletedCallback)(
     int callback_id, void* credential);
 typedef void (SWIGSTDCALL *VerificationFailedCallback)(
@@ -1537,10 +1540,10 @@ class PhoneAuthListenerImpl
     // OnVerificationCompleted(PhoneAuthCredential) will be triggered. We
     // support both delegates but the user needs to choose to use only one of
     // them.
-    if (g_verification_completed_callback) {
+    if (g_verification_completed_callback_DEPRECATED) {
       firebase::callback::AddCallback(
           new firebase::callback::CallbackValue2<int, Credential>(
-              callback_id_, credential, VerificationCompleted));
+              callback_id_, credential, VerificationCompleted_DEPRECATED));
     }
   }
 
@@ -1549,8 +1552,11 @@ class PhoneAuthListenerImpl
     // OnVerificationCompleted(PhoneAuthCredential) will be triggered. We
     // support both delegates but the user needs to choose to use only one of
     // them.
-
-    // TODO(IO2023): Add hooks to new PhoneAuthCredential. Need new delegates.
+    if (g_verification_completed_callback) {
+      firebase::callback::AddCallback(
+          new firebase::callback::CallbackValue2<int, PhoneAuthCredential>(
+              callback_id_, credential, VerificationCompleted));
+    }
   }
 
   virtual void OnVerificationFailed(const std::string& error) {
@@ -1584,11 +1590,13 @@ class PhoneAuthListenerImpl
   }
 
   // Called from C# to pass along the C# functions to be called.
-  static void SetCallbacks(VerificationCompletedCallback completed_callback,
+  static void SetCallbacks(VerificationCompletedCallback_DEPRECATED completed_callback_DEPRECATED,
+                           VerificationCompletedCallback completed_callback,
                            VerificationFailedCallback failed_callback,
                            CodeSentCallback sent_callback,
                            TimeOutCallback time_callback) {
     MutexLock lock(g_mutex);
+    g_verification_completed_callback_DEPRECATED = completed_callback_DEPRECATED;
     g_verification_completed_callback = completed_callback;
     g_verification_failed_callback = failed_callback;
     g_code_sent_callback = sent_callback;
@@ -1598,16 +1606,26 @@ class PhoneAuthListenerImpl
   int callback_id_;
 
   static Mutex g_mutex;
+  static VerificationCompletedCallback_DEPRECATED g_verification_completed_callback_DEPRECATED;
   static VerificationCompletedCallback g_verification_completed_callback;
   static VerificationFailedCallback g_verification_failed_callback;
   static CodeSentCallback g_code_sent_callback;
   static TimeOutCallback g_time_out_callback;
 
-  static void VerificationCompleted(int callback_id, Credential credential) {
+  static void VerificationCompleted_DEPRECATED(int callback_id, Credential credential) {
+    MutexLock lock(g_mutex);
+    if (g_verification_completed_callback_DEPRECATED) {
+      // Copy the credential so it can be owned by the C# proxy object.
+      Credential* copy = new Credential(credential);
+      g_verification_completed_callback_DEPRECATED(callback_id, copy);
+    }
+  }
+
+  static void VerificationCompleted(int callback_id, PhoneAuthCredential credential) {
     MutexLock lock(g_mutex);
     if (g_verification_completed_callback) {
       // Copy the credential so it can be owned by the C# proxy object.
-      Credential* copy = new Credential(credential);
+      PhoneAuthCredential* copy = new PhoneAuthCredential(credential);
       g_verification_completed_callback(callback_id, copy);
     }
   }
@@ -1643,6 +1661,7 @@ class PhoneAuthListenerImpl
 };
 
 Mutex PhoneAuthListenerImpl::g_mutex;
+VerificationCompletedCallback_DEPRECATED PhoneAuthListenerImpl::g_verification_completed_callback_DEPRECATED = nullptr;
 VerificationCompletedCallback PhoneAuthListenerImpl::g_verification_completed_callback = nullptr;
 VerificationFailedCallback PhoneAuthListenerImpl::g_verification_failed_callback = nullptr;
 CodeSentCallback PhoneAuthListenerImpl::g_code_sent_callback = nullptr;
@@ -1674,17 +1693,20 @@ TimeOutCallback PhoneAuthListenerImpl::g_time_out_callback = nullptr;
 
   // Save the C# callbacks so they can be called later.
   static void SetCallbacks(
+      firebase::auth::VerificationCompletedCallback_DEPRECATED completed_callback_DEPRECATED,
       firebase::auth::VerificationCompletedCallback completed_callback,
       firebase::auth::VerificationFailedCallback failed_callback,
       firebase::auth::CodeSentCallback sent_callback,
       firebase::auth::TimeOutCallback time_out_callback) {
     firebase::auth::PhoneAuthListenerImpl::SetCallbacks(
-        completed_callback, failed_callback, sent_callback, time_out_callback);
+        completed_callback_DEPRECATED, completed_callback, failed_callback,
+        sent_callback, time_out_callback);
   }
 }
 
 %typemap(cscode) firebase::auth::PhoneAuthProvider %{
 public delegate void VerificationCompletedDelegate_DEPRECATED(int callbackId, System.IntPtr credential);
+public delegate void VerificationCompletedDelegate(int callbackId, System.IntPtr credential);
 public delegate void VerificationFailedDelegate(int callbackId, string error);
 public delegate void CodeSentDelegate(int callbackId, string verificationId, System.IntPtr token);
 public delegate void TimeOutDelegate(int callbackId, string verificationId);
@@ -1692,8 +1714,11 @@ public delegate void TimeOutDelegate(int callbackId, string verificationId);
 
 // Map callback function types delegates.
 SWIG_MAP_CFUNC_TO_CSDELEGATE(
-    ::firebase::auth::VerificationCompletedCallback,
+    ::firebase::auth::VerificationCompletedCallback_DEPRECATED,
     Firebase.Auth.PhoneAuthProviderInternal.VerificationCompletedDelegate_DEPRECATED)
+SWIG_MAP_CFUNC_TO_CSDELEGATE(
+    ::firebase::auth::VerificationCompletedCallback,
+    Firebase.Auth.PhoneAuthProviderInternal.VerificationCompletedDelegate)
 SWIG_MAP_CFUNC_TO_CSDELEGATE(
     ::firebase::auth::VerificationFailedCallback,
     Firebase.Auth.PhoneAuthProviderInternal.VerificationFailedDelegate)

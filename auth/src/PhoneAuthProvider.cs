@@ -70,6 +70,8 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   /// Callback used when phone number auto-verification succeeded.
   [System.Obsolete("Please use `VerificationCompleted(PhoneAuthCredential)` instead", false)]
   public delegate void VerificationCompleted_DEPRECATED(Credential credential);
+  /// Callback used when phone number auto-verification succeeded.
+  public delegate void VerificationCompleted(PhoneAuthCredential credential);
   /// Callback used when phone number verification fails.
   public delegate void VerificationFailed(string error);
   /// Callback used when a verification code is sent to the given number.
@@ -82,7 +84,8 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
 
   // Class to hold the delegates the user provides to the verification flow.
   private class PhoneAuthDelegates {
-    public VerificationCompleted_DEPRECATED verificationCompleted;
+    public VerificationCompleted_DEPRECATED verificationCompleted_DEPRECATED;
+    public VerificationCompleted verificationCompleted;
     public VerificationFailed verificationFailed;
     public CodeSent codeSent;
     public CodeAutoRetrievalTimeOut timeOut;
@@ -99,12 +102,14 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   /// when the C++ library indicates a callback.
   ///
   /// @return The unique identifier for the cached callbacks.
-  private static int SaveCallbacks(VerificationCompleted_DEPRECATED verificationCompleted,
+  private static int SaveCallbacks(VerificationCompleted_DEPRECATED verificationCompleted_DEPRECATED,
+                                   VerificationCompleted verificationCompleted,
                                    VerificationFailed verificationFailed,
                                    CodeSent codeSent,
                                    CodeAutoRetrievalTimeOut timeOut) {
     int uid = uidGenerator++;
     var delegates = new PhoneAuthDelegates {
+      verificationCompleted_DEPRECATED = verificationCompleted_DEPRECATED,
       verificationCompleted = verificationCompleted,
       verificationFailed = verificationFailed,
       codeSent = codeSent,
@@ -117,10 +122,27 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   }
 
   [MonoPInvokeCallback(typeof(PhoneAuthProviderInternal.VerificationCompletedDelegate_DEPRECATED))]
-  private static void VerificationCompleted_DEPRECATEDHandler(int callbackId,
+  private static void VerificationCompletedHandler_DEPRECATED(int callbackId,
                                                    System.IntPtr credential) {
     ExceptionAggregator.Wrap(() => {
         Credential c = new Credential(credential, true);
+        lock (authCallbacks) {
+          PhoneAuthDelegates callbacks;
+          if (authCallbacks.TryGetValue(callbackId, out callbacks) &&
+              callbacks.verificationCompleted_DEPRECATED != null) {
+            callbacks.verificationCompleted_DEPRECATED(c);
+          } else {
+            c.Dispose();
+          }
+        }
+      });
+  }
+
+  [MonoPInvokeCallback(typeof(PhoneAuthProviderInternal.VerificationCompletedDelegate))]
+  private static void VerificationCompletedHandler(int callbackId,
+                                                   System.IntPtr credential) {
+    ExceptionAggregator.Wrap(() => {
+        PhoneAuthCredential c = new PhoneAuthCredential(credential, true);
         lock (authCallbacks) {
           PhoneAuthDelegates callbacks;
           if (authCallbacks.TryGetValue(callbackId, out callbacks) &&
@@ -178,7 +200,11 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   private static PhoneAuthProviderInternal.VerificationCompletedDelegate_DEPRECATED
       verificationCompletedDelegate_DEPRECATED =
           new PhoneAuthProviderInternal.VerificationCompletedDelegate_DEPRECATED(
-              VerificationCompleted_DEPRECATEDHandler);
+              VerificationCompletedHandler_DEPRECATED);
+  private static PhoneAuthProviderInternal.VerificationCompletedDelegate
+      verificationCompletedDelegate =
+          new PhoneAuthProviderInternal.VerificationCompletedDelegate(
+              VerificationCompletedHandler);
   private static PhoneAuthProviderInternal.VerificationFailedDelegate
       verificationFailedDelegate =
           new PhoneAuthProviderInternal.VerificationFailedDelegate(
@@ -197,6 +223,7 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
     if (!callbacksInitialized) {
       callbacksInitialized = true;
       PhoneAuthProviderInternal.SetCallbacks(verificationCompletedDelegate_DEPRECATED,
+                                             verificationCompletedDelegate,
                                              verificationFailedDelegate,
                                              codeSentDelegate,
                                              timeOutDelegate);
@@ -369,8 +396,12 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
                                 VerificationFailed verificationFailed,
                                 CodeSent codeSent,
                                 CodeAutoRetrievalTimeOut codeAutoRetrievalTimeOut) {
-    int callbackId = SaveCallbacks(verificationCompleted, verificationFailed,
-                                   codeSent, codeAutoRetrievalTimeOut);
+    int callbackId = SaveCallbacks(
+        verificationCompleted_DEPRECATED: verificationCompleted,
+        verificationCompleted: null,
+        verificationFailed: verificationFailed,
+        codeSent: codeSent,
+        timeOut: codeAutoRetrievalTimeOut);
     System.IntPtr listener = InternalProvider.VerifyPhoneNumberInternal(
         phoneNumber, autoVerifyTimeOutMs, forceResendingToken, callbackId);
     lock (cppListeners) {
