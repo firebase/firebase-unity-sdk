@@ -60,7 +60,7 @@ struct ConfigValueInternal {
   ValueSource source;
 };
 
-// Wrapper that calls g_token_changed. Should be used with the
+// Wrapper that calls g_config_updated. Should be used with the
 // callback logic to guarantee it is on the Unity thread.
 static void CallConfigUpdate(ConfigUpdate cu, RemoteConfigError error, const char* name) {
   if (g_config_updated) {
@@ -68,7 +68,7 @@ static void CallConfigUpdate(ConfigUpdate cu, RemoteConfigError error, const cha
     g_config_updated(name, &cu, static_cast<int>(error));
   }
 }
-// Called by C# to register a RemoteConfig instance for token change updates,
+// Called by C# to register a RemoteConfig instance for config updates,
 // provided via the callback method provided.
 void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUpdateListener on_config_updated) {
   // If given a method, save it, and add a new listener for Config Updates.
