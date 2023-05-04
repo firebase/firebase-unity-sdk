@@ -27,19 +27,30 @@
 %include "app/src/swig/serial_dispose.i"
 %include "app/src/swig/future.i"
 
+// Start of code added to the C++ module file
 %{
 #include <algorithm>
 #include <map>
 #include <vector>
+#include "app/src/callback.h"
 #include "app/src/cpp_instance_manager.h"
 #include "remote_config/src/include/firebase/remote_config.h"
 
 namespace firebase {
 namespace remote_config {
 
+// Declare the C++ callback delegate equivalent to C# RemoteConfigUtil.ConfigUpdateDelegate
+typedef void (SWIGSTDCALL *ConfigUpdateListener)(const char* app_name, ConfigUpdate* config_update, int error);
+
 // Reference count manager for C++ RemoteConfig instance, using pointer as the
 // key for searching.
 static CppInstanceManager<RemoteConfig> g_rc_instances;
+
+// App -> C++ ConfigUpdateListener map.
+static std::map<App*, firebase::remote_config::ConfigUpdateListenerRegistration> g_registered_listeners;
+
+// Should be set to the C# function FirebaseRemoteConfig.ConfigUpdateMethod
+static ConfigUpdateListener g_config_updated = nullptr;
 
 // Internal struct used to pass the Remote Config stored data from C++ to C#.
 struct ConfigValueInternal {
@@ -49,36 +60,61 @@ struct ConfigValueInternal {
   ValueSource source;
 };
 
+// Wrapper that calls g_config_updated. Should be used with the
+// callback logic to guarantee it is on the Unity thread.
+static void CallConfigUpdate(ConfigUpdate cu, RemoteConfigError error, const char* name) {
+  if (g_config_updated) {
+    // Should be calling FirebaseRemoteConfig.ConfigUpdateMethod
+    g_config_updated(name, &cu, static_cast<int>(error));
+  }
+}
+// Called by C# to register a RemoteConfig instance for config updates,
+// provided via the callback method provided.
+void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUpdateListener on_config_updated) {
+  // If given a method, save it, and add a new listener for Config Updates.
+  if (on_config_updated) {
+    if (!g_config_updated) {
+      g_config_updated = on_config_updated;
+    }
+    std::string app_name = rc->app()->name();
+    ConfigUpdateListenerRegistration registration = rc->AddOnConfigUpdateListener([app_name](ConfigUpdate&& cu, RemoteConfigError error) {
+      // Queue up a call to g_config_updated
+      ConfigUpdate cuLocal = std::move(cu);
+      firebase::callback::AddCallback(
+        new firebase::callback::CallbackValue2String1<ConfigUpdate, RemoteConfigError>(
+          cuLocal, error, app_name.c_str(), CallConfigUpdate));
+    });
+    
+    // Save the registration in a map so that it can be removed later if needed.
+    g_registered_listeners[rc->app()] = registration;
+  } else {
+    // Remove the listener, and cleanup the callback if no more remain.
+    ConfigUpdateListenerRegistration registration = g_registered_listeners[rc->app()];
+    g_registered_listeners.erase(rc->app());
+    registration.Remove();
+
+    if (g_registered_listeners.empty()) {
+      g_config_updated = nullptr;
+    }
+  }
+}
+
 }  // remote_config
 }  // firebase
-%}
+
+%} // End of code added to the C++ module file
 
 // All outputs of CharVector should instead be IEnumerable<byte>
 %typemap(cstype, out="global::System.Collections.Generic.IEnumerable<byte>") std::vector<unsigned char> "CharVector";
 // All outputs of StringList should instead be IEnumerable<string>
 %typemap(cstype, out="global::System.Collections.Generic.IEnumerable<string>") std::vector<std::string> "StringList";
 
-// Ignore all the deprecated static functions
-%ignore firebase::remote_config::Initialize;
-%ignore firebase::remote_config::Terminate;
-%ignore firebase::remote_config::SetDefaults;
-%ignore firebase::remote_config::GetConfigSetting;
-%ignore firebase::remote_config::SetConfigSetting;
-%ignore firebase::remote_config::GetBoolean;
-%ignore firebase::remote_config::GetLong;
-%ignore firebase::remote_config::GetDouble;
-%ignore firebase::remote_config::GetString;
-%ignore firebase::remote_config::GetData;
-%ignore firebase::remote_config::GetKeysByPrefix;
-%ignore firebase::remote_config::GetKeys;
-%ignore firebase::remote_config::Fetch;
-%ignore firebase::remote_config::ActivateFetched;
-%ignore firebase::remote_config::GetInfo;
-
 // Ignore unused structs and enums
 %ignore firebase::remote_config::ValueInfo;
 %ignore firebase::remote_config::ConfigKeyValue;
 %ignore firebase::remote_config::ConfigSetting;
+%ignore firebase::remote_config::RemoteConfigError;
+%ignore firebase::remote_config::ConfigUpdateListenerRegistration;
 
 // Configure the ConfigInfo class
 %csmethodmodifiers fetch_time "internal";
@@ -131,6 +167,8 @@ struct ConfigValueInternal {
 
 %rename (ConfigSettingsInternal) firebase::remote_config::ConfigSettings;
 
+%rename (ConfigUpdateInternal) firebase::remote_config::ConfigUpdate;
+
 // Configure properties for get / set methods on the FirebaseRemoteConfigInternal class.
 %attribute(firebase::remote_config::RemoteConfig, firebase::App*, App, app);
 
@@ -147,6 +185,7 @@ struct ConfigValueInternal {
 %ignore firebase::remote_config::RemoteConfig::GetData;
 // Ignore GetAll, as we do not rely on the C++ function for it.
 %ignore firebase::remote_config::RemoteConfig::GetAll;
+%ignore firebase::remote_config::RemoteConfig::AddOnConfigUpdateListener;
 
 %typemap(cscode) firebase::remote_config::RemoteConfig %{
   // Generates a key that uniquely identifies this instance.
@@ -176,8 +215,13 @@ struct ConfigValueInternal {
   System.GC.SuppressFinalize(this);
 }
 
+SWIG_MAP_CFUNC_TO_CSDELEGATE(
+    firebase::remote_config::ConfigUpdateListener,
+    Firebase.RemoteConfig.RemoteConfigUtil.ConfigUpdateDelegate)
+
 %include "remote_config/src/include/firebase/remote_config.h"
 
+// Start of C++ definitions that Swig needs to know of, to generate C# for
 namespace firebase {
 namespace remote_config {
 
@@ -186,10 +230,17 @@ struct ConfigValueInternal {
   ValueSource source;
 };
 
+void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
+                             firebase::remote_config::ConfigUpdateListener config_listener);
+
 }
-}
+} // End of C++ definitions
+
 
 %pragma(csharp) modulecode=%{
+
+  internal delegate void ConfigUpdateDelegate(string appName, System.IntPtr configUpdatePtr, int error);
+  
   /// The C++ mapping requires a StringStringMap, so convert the more generic
   /// dictionary into that map.
   internal static StringStringMap ConvertDictionaryToMap(

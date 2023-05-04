@@ -34,9 +34,39 @@ namespace Firebase.RemoteConfig {
     // Key of this instance within remoteConfigByInstanceKey.
     private string instanceKey;
 
+    // Function for C++ to call when the config is updated.
+    private static RemoteConfigUtil.ConfigUpdateDelegate configUpdateDelegate =
+      new RemoteConfigUtil.ConfigUpdateDelegate(ConfigUpdateMethod);
+
     /// @brief App object associated with this FirebaseRemoteConfig.
     public FirebaseApp App {
       get { return firebaseApp; }
+    }
+
+    private event EventHandler<ConfigUpdateEventArgs> ConfigUpdateListenerImpl;
+    // EventHandlers that will be used as ConfigUpdateListeners. The first listener added will open 
+    // the stream connection and the last removed will close the stream.
+    public event EventHandler<ConfigUpdateEventArgs> OnConfigUpdateListener {
+      add {
+        ThrowIfNull();
+        // If this is the first listener, hook into C++.
+        if (ConfigUpdateListenerImpl == null ||
+            ConfigUpdateListenerImpl.GetInvocationList().Length == 0) {
+          RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, configUpdateDelegate);
+        }
+
+        ConfigUpdateListenerImpl += value;
+      }
+      remove {
+        ThrowIfNull();
+        ConfigUpdateListenerImpl -= value;
+
+        // If that was the last listener, remove the C++ hooks.
+        if (ConfigUpdateListenerImpl == null ||
+            ConfigUpdateListenerImpl.GetInvocationList().Length == 0) {
+          RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, null);
+        }
+      }
     }
 
     private FirebaseRemoteConfig(FirebaseRemoteConfigInternal remoteConfig, FirebaseApp app) {
@@ -312,6 +342,32 @@ namespace Firebase.RemoteConfig {
     /// in milliseconds.
     public static ulong DefaultTimeoutInMilliseconds {
       get { return RemoteConfigUtil.kDefaultTimeoutInMilliseconds; }
+    }
+
+    internal void OnConfigUpdate(ConfigUpdateInternal configUpdate, RemoteConfigError error) {
+      EventHandler<ConfigUpdateEventArgs> handler = ConfigUpdateListenerImpl;
+      if (handler != null) {
+        // Make a copy of the list, to not rely on the Swig list
+        List<string> updatedKeys = new List<string>(configUpdate.updated_keys);
+        handler(this, new ConfigUpdateEventArgs {
+          UpdatedKeys = updatedKeys,
+          Error = error
+        });
+      }
+    }
+
+    [MonoPInvokeCallback(typeof(RemoteConfigUtil.ConfigUpdateDelegate))]
+    private static void ConfigUpdateMethod(string appName, System.IntPtr configUpdatePtr, 
+        int error) {
+      FirebaseRemoteConfig rc;
+      if (remoteConfigByInstanceKey.TryGetValue(appName, out rc)) {
+        // Create a ConfigUpdateInternal with the given pointer
+        ConfigUpdateInternal configUpdate = new ConfigUpdateInternal(configUpdatePtr, false);
+        // convert error to RemoteConfigError
+        RemoteConfigError errorInternal = (RemoteConfigError)error;
+
+        rc.OnConfigUpdate(configUpdate, errorInternal);
+      }
     }
   }
 }  // namespace Firebase.RemoteConfig
