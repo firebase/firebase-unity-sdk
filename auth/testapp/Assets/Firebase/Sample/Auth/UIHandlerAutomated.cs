@@ -35,10 +35,10 @@ namespace Firebase.Sample.Auth {
       // non-static.
       Func<Task>[] tests = {
         TestCreateDestroy,
-        TestSignInAnonymouslyAsync,
-        TestSignInEmailAsync,
-        TestSignInCredentialAsync,
-        TestUpdateUserProfileAsync,
+        TestSignInAnonymouslyAsync_DEPRECATED,
+        TestSignInEmailAsync_DEPRECATED,
+        TestSignInCredentialAsync_DEPRECATED,
+        TestUpdateUserProfileAsync_DEPRECATED,
         // TODO(b/132083720) This test is currently broken, so disable it until it is fixed.
         // TestSignInAnonymouslyWithExceptionsInEventHandlersAsync,
       };
@@ -210,7 +210,7 @@ namespace Firebase.Sample.Auth {
 
     // Perform the standard sign in flow with an Anonymous account.
     // Tests: SignInAnonymouslyAsync, DeleteUserAsync.
-    Task TestSignInAnonymouslyAsync() {
+    Task TestSignInAnonymouslyAsync_DEPRECATED() {
       TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
 
       // We don't want to be signed in at the start of this test.
@@ -219,7 +219,7 @@ namespace Firebase.Sample.Auth {
       }
 
       // First, sign in anonymously.
-      SigninAnonymouslyAsync().ContinueWithOnMainThread(t1 => {
+      SigninAnonymouslyAsync_DEPRECATED().ContinueWithOnMainThread(t1 => {
         if (ForwardTaskException(tcs, t1)) return;
         // Confirm that the current user is correct.
         if (!ConfirmAnonymousCurrentUser(tcs)) return;
@@ -240,7 +240,7 @@ namespace Firebase.Sample.Auth {
     // Goes over the standard create/signout/signin flow, using the provided function to sign in.
     // Tests: CreateUserWithEmailAndPasswordAsync, SignOut, the given signin function,
     // and DeleteUserAsync.
-    Task TestSignInFlowAsync(Func<Task> signInFunc) {
+    Task TestSignInFlowAsync_DEPRECATED(Func<Task> signInFunc) {
       TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
 
       // We don't want to be signed in at the start of this test.
@@ -251,7 +251,7 @@ namespace Firebase.Sample.Auth {
       // Set up the test email/password/etc fields.
       SetDefaultUIFields();
 
-      CreateUserWithEmailAsync().ContinueWithOnMainThread(createTask => {
+      CreateUserWithEmailAsync_DEPRECATED().ContinueWithOnMainThread(createTask => {
         // Confirm that the current user is correct
         if (!ConfirmDefaultCurrentUser(tcs)) return;
         // Sign out of the user
@@ -277,20 +277,20 @@ namespace Firebase.Sample.Auth {
 
     // Perform the standard sign in flow, using Email/Password.
     // Tests: SignInWithEmailAndPasswordAsync.
-    Task TestSignInEmailAsync() {
-      return TestSignInFlowAsync(SigninWithEmailAsync);
+    Task TestSignInEmailAsync_DEPRECATED() {
+      return TestSignInFlowAsync_DEPRECATED(SigninWithEmailAsync_DEPRECATED);
     }
 
     // Perform the standard sign in flow, using a credential generated from the Email/Password.
     // Tests: SignInWithCredentialAsync (Email credential).
-    Task TestSignInCredentialAsync() {
-      return TestSignInFlowAsync(SigninWithEmailCredentialAsync);
+    Task TestSignInCredentialAsync_DEPRECATED() {
+      return TestSignInFlowAsync_DEPRECATED(SigninWithEmailCredentialAsync_DEPRECATED);
     }
 
     // Update the user profile.
-    Task TestUpdateUserProfileAsync() {
+    Task TestUpdateUserProfileAsync_DEPRECATED() {
       TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
-      SigninAnonymouslyAsync().ContinueWithOnMainThread(t1 => {
+      SigninAnonymouslyAsync_DEPRECATED().ContinueWithOnMainThread(t1 => {
         if (ForwardTaskException(tcs, t1)) return;
         const string ExpectedDisplayName = "Test Name";
         const string ExpectedPhotoUrl = "http://test.com/image.jpg";
@@ -318,7 +318,7 @@ namespace Firebase.Sample.Auth {
 
     // Anonymous sign-in with exceptions being thrown by auth state and token event handlers.
     // The sign-in process should continue uninterrupted.
-    Task TestSignInAnonymouslyWithExceptionsInEventHandlersAsync() {
+    Task TestSignInAnonymouslyWithExceptionsInEventHandlersAsync_DEPRECATED() {
       SignOut();
 
       var exceptions = new List<Exception>();
@@ -336,7 +336,7 @@ namespace Firebase.Sample.Auth {
       auth.StateChanged += stateChangedThrowException;
       auth.IdTokenChanged += idTokenChangedThrowException;
 
-      SigninAnonymouslyAsync().ContinueWithOnMainThread(t => {
+      SigninAnonymouslyAsync_DEPRECATED().ContinueWithOnMainThread(t => {
           auth.StateChanged -= stateChangedThrowException;
           auth.IdTokenChanged -= idTokenChangedThrowException;
           var exceptionMessages = new HashSet<string>();

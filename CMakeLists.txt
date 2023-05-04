@@ -153,6 +153,13 @@ else()
   set(DESKTOP OFF)
 endif()
 
+if(APPLE)
+  # GHA macOS build treats deprecation warning as error (-Werror,-Wdeprecated-declarations)
+  # This is a quick way to suppress the warning so that the build won't fail.
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+endif()
+
 # Define the Python executable before including the subprojects
 find_program(FIREBASE_PYTHON_EXECUTABLE
   NAMES python3 python
