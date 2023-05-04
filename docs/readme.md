@@ -72,7 +72,7 @@ Release Notes
 ### 11.0.0
 - Changes
     - Messaging: Remove deprecated calls `Send`, `Subscribe`, and `Unsubscribe`.
-    - Remote Config: Added support for real-time config updates. Use the new
+    - Remote Config (Android/iOS): Added support for real-time config updates. Use the new
       `OnConfigUpdateListener` API to get real-time updates. Existing
       `FetchAsync` and `ActivateAsync` APIs aren't affected by this change.
       To learn more, see
