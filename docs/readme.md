@@ -74,7 +74,8 @@ Release Notes
 ### 11.0.0
 - Changes
     - App Check: Adds support for Firebase App Check on Android, iOS, tvOS,
-      and desktop platforms.
+      and desktop platforms. To learn more, see
+      https://firebase.google.com/docs/app-check
     - Messaging: Remove deprecated calls `Send`, `Subscribe`, and `Unsubscribe`.
     - Remote Config (Android/iOS): Added support for real-time config updates. Use the new
       `OnConfigUpdateListener` API to get real-time updates. Existing
