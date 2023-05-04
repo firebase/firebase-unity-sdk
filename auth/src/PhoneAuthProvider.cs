@@ -409,6 +409,46 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
     }
   }
 
+
+  /// Start the phone number authentication operation.
+  ///
+  /// @note  On iOS the verificationCompleted callback is never invoked and the
+  ///    codeAutoRetrievalTimeOut callback is invoked immediately since auto-validation is not
+  ///    supported on that platform.
+  ///
+  /// @param[in] options The PhoneAuthOptions struct with a verification
+  ///    configuration.
+  /// @param[in] verificationCompleted Phone number auto-verification succeeded.
+  ///    Called when auto-sms-retrieval or instant validation succeeds.
+  ///    Provided with the completed credential.
+  /// @param[in] verificationFailed Phone number verification failed with an
+  ///    error. For example, quota exceeded or unknown phone number format.
+  ///    Provided with a description of the error.
+  /// @param[in] codeSent SMS message with verification code sent to phone
+  ///    number. Provided with the verification id to pass along to
+  ///    `GetCredential` along with the sent code, and a token to use if
+  ///    the user requests another SMS message be sent.
+  /// @param[in] codeAutoRetrievalTimeOut The timeout specified has expired.
+  ///    Provided with the verification id for the transaction that timed out.
+  public void VerifyPhoneNumber(
+    PhoneAuthOptions options,
+    VerificationCompleted verificationCompleted,
+    VerificationFailed verificationFailed,
+    CodeSent codeSent,
+    CodeAutoRetrievalTimeOut codeAuthRetrievalTimeOut) {
+    int callbackId = SaveCallbacks(
+        verificationCompleted_DEPRECATED: null,
+        verificationCompleted: verificationCompleted,
+        verificationFailed: verificationFailed,
+        codeSent: codeSent,
+        timeOut: codeAutoRetrievalTimeOut);
+    System.IntPtr listener = InternalProvider.VerifyPhoneNumberInternal(
+        options, callbackId);
+    lock (cppListeners) {
+      cppListeners.Add(callbackId, listener);
+    }
+  }
+
   // The SWIG generated PhoneAuthProvider which contains the C++ object.
   private PhoneAuthProviderInternal InternalProvider;
   internal PhoneAuthProvider(FirebaseAuth auth) {
@@ -465,6 +505,20 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   public Credential GetCredential_DEPRECATED(string verificationId,
                                   string verificationCode) {
     return InternalProvider.GetCredential_DEPRECATED(verificationId, verificationCode);
+  }
+
+  /// Generate a credential for the given phone number.
+  ///
+  /// @param[in] verification_id The id returned when sending the verification
+  ///    code. Sent to the caller via @ref Listener::OnCodeSent.
+  /// @param[in] verification_code The verification code supplied by the user,
+  ///    most likely by a GUI where the user manually enters the code
+  ///    received in the SMS sent by @ref VerifyPhoneNumber.
+  ///
+  /// @returns New PhoneAuthCredential.
+  public PhoneAuthCredential GetCredential(string verificationId,
+                                           string verificationCode) {
+    return InternalProvider.GetCredential(verificationId, verificationCode);
   }
 }
 
