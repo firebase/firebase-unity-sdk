@@ -357,13 +357,15 @@ namespace Firebase.RemoteConfig {
     }
 
     [MonoPInvokeCallback(typeof(RemoteConfigUtil.ConfigUpdateDelegate))]
-    private static void ConfigUpdateMethod(string appName, ConfigUpdateInternal configUpdate, 
+    private static void ConfigUpdateMethod(string appName, System.IntPtr configUpdatePtr, 
         int error) {
-      // convert error to RemoteConfigError
-      RemoteConfigError errorInternal = (RemoteConfigError)error;
-
       FirebaseRemoteConfig rc;
       if (remoteConfigByInstanceKey.TryGetValue(appName, out rc)) {
+        // Create a ConfigUpdateInternal with the given pointer
+        ConfigUpdateInternal configUpdate = new ConfigUpdateInternal(configUpdatePtr, false);
+        // convert error to RemoteConfigError
+        RemoteConfigError errorInternal = (RemoteConfigError)error;
+
         rc.OnConfigUpdate(configUpdate, errorInternal);
       }
     }

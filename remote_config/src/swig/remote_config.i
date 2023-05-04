@@ -64,7 +64,7 @@ struct ConfigValueInternal {
 // callback logic to guarantee it is on the Unity thread.
 static void CallConfigUpdate(ConfigUpdate cu, RemoteConfigError error, const char* name) {
   if (g_config_updated) {
-    // Should be calling FirebaseAppCheck.TokenChangedMethod
+    // Should be calling FirebaseRemoteConfig.ConfigUpdateMethod
     g_config_updated(name, &cu, static_cast<int>(error));
   }
 }
@@ -239,7 +239,7 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
 
 %pragma(csharp) modulecode=%{
 
-  internal delegate void ConfigUpdateDelegate(string appName, ConfigUpdateInternal config_update, int error);
+  internal delegate void ConfigUpdateDelegate(string appName, System.IntPtr configUpdatePtr, int error);
   
   /// The C++ mapping requires a StringStringMap, so convert the more generic
   /// dictionary into that map.
