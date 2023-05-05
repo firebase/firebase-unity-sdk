@@ -1747,10 +1747,24 @@ static CppInstanceManager<Auth> g_auth_instances;
 %}
 
 %typemap(cscode) firebase::auth::UserInfoInterface %{
+  /// Gets the photo url associated with the user, if any.
   public System.Uri PhotoUrl {
     get {
       return Firebase.FirebaseApp.UrlStringToUri(PhotoUrlInternal);
     }
+  }
+
+  /// @deprecated Please use @ref PhoneNumber instead.
+  ///
+  /// Gets the phone number for the user, in E.164 format.
+  [System.Obsolete("Please use `PhoneNumber` instead", false)]
+  public string phone_number {
+    get { return PhoneNumberInternal; }
+  }
+
+  /// Gets the phone number for the user, in E.164 format.
+  public string PhoneNumber {
+    get { return PhoneNumberInternal; }
   }
 %}
 
@@ -1861,6 +1875,7 @@ static CppInstanceManager<Auth> g_auth_instances;
 %attributestring(firebase::auth::UserInfoInterface, std::string, DisplayName, display_name);
 %attributestring(firebase::auth::UserInfoInterface, std::string, PhotoUrlInternal, photo_url);
 %attributestring(firebase::auth::UserInfoInterface, std::string, ProviderId, provider_id);
+%attributestring(firebase::auth::UserInfoInterface, std::string, PhoneNumberInternal, phone_number);
 
 
 %typemap(csinterfaces) firebase::auth::UserInfoInterface
