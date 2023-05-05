@@ -1,4 +1,5 @@
 namespace Firebase.Sample.RemoteConfig {
+  using Firebase.RemoteConfig;
   using Firebase.Extensions;
   using System;
   using System.Linq;
@@ -58,15 +59,15 @@ namespace Firebase.Sample.RemoteConfig {
     }
 
     private void ConfigUpdateListenerEventHandler(
-        object sender, Firebase.RemoteConfig.ConfigUpdateEventArgs args) {
-      if (args.Error != Firebase.RemoteConfig.RemoteConfigError.None) {
+        object sender, ConfigUpdateEventArgs args) {
+      if (args.Error != RemoteConfigError.None) {
         DebugLog(String.Format("Error occurred while listening: {0}", args.Error));
         return;
       }
       DebugLog(String.Format("Auto-fetch has received a new config. Updated keys: {0}",
           string.Join(", ", args.UpdatedKeys)));
-      var info = Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.Info;
-      Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.ActivateAsync()
+      var info = FirebaseRemoteConfig.DefaultInstance.Info;
+      FirebaseRemoteConfig.DefaultInstance.ActivateAsync()
         .ContinueWithOnMainThread(task => {
           DebugLog(String.Format("Remote data loaded and ready (last fetch time {0}).",
                                 info.FetchTime));
@@ -75,17 +76,20 @@ namespace Firebase.Sample.RemoteConfig {
 
     Task TestAddOnConfigUpdateListener() {
       bool hasDefaultValue =
-          Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_string").Source
-          == Firebase.RemoteConfig.ValueSource.DefaultValue;
+          FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_string").Source
+          == ValueSource.DefaultValue;
       if (!hasDefaultValue) {
-        // Some previous run of the integration test already has cached local data. This can happen if the test is run twice in a row on the same device.
-        DebugLog("WARNING: The device already has fetched data from a previous run of the test. To test config update listener, clear app data and re-run the test.");
+        // Some previous run of the integration test already has cached local data.
+        // This can happen if the test is run twice in a row on the same device.
+        DebugLog("WARNING: The device already has fetched data from a previous "
+          + "run of the test. To test config update listener, clear app data and "
+          + "re-run the test.");
         return Task.FromResult(true);
       }
 
       TaskCompletionSource<bool> test_success = new TaskCompletionSource<bool>();
-      EventHandler<Firebase.RemoteConfig.ConfigUpdateEventArgs> myHandler =
-          (object sender, Firebase.RemoteConfig.ConfigUpdateEventArgs args) => {
+      EventHandler<ConfigUpdateEventArgs> myHandler =
+          (object sender, ConfigUpdateEventArgs args) => {
             DebugLog(String.Format("Auto-fetch has received a config"));
             // Verify that the config update contains all expected keys.
             String[] expectedKeys = new String[] {
@@ -101,20 +105,20 @@ namespace Firebase.Sample.RemoteConfig {
             test_success.SetResult(true);
           };
       DebugLog("Enabling auto-fetch:");
-      Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.OnConfigUpdateListener
+      FirebaseRemoteConfig.DefaultInstance.OnConfigUpdateListener
           += myHandler;
       return test_success.Task;
     }
 
     Task TestAddAndRemoveConfigUpdateListener() {
       // This test just verifies that listeners can be added and removed.
-      EventHandler<Firebase.RemoteConfig.ConfigUpdateEventArgs> myHandler =
-          (object sender, Firebase.RemoteConfig.ConfigUpdateEventArgs args) => {};
+      EventHandler<ConfigUpdateEventArgs> myHandler =
+          (object sender, ConfigUpdateEventArgs args) => {};
       DebugLog("Adding a config update listener");
-      Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.OnConfigUpdateListener
+      FirebaseRemoteConfig.DefaultInstance.OnConfigUpdateListener
           += myHandler;
       DebugLog("Removing a config update listener");
-      Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.OnConfigUpdateListener
+      FirebaseRemoteConfig.DefaultInstance.OnConfigUpdateListener
           -= myHandler;
       return Task.FromResult(true);
     }
@@ -122,16 +126,15 @@ namespace Firebase.Sample.RemoteConfig {
     Task TestFetchData() {
       // Note: FetchDataAsync calls both Fetch and Activate.
       return FetchDataAsync().ContinueWithOnMainThread((_) => {
-        // Verify that last fetch time has increased.
         // Verify that RemoteConfig now has the expected values.
         AssertEq("Unexpected value for config_test_string", "Hello from the new cloud x3",
-          Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_string").StringValue);
+          FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_string").StringValue);
         AssertEq("Unexpected value for config_test_int", 42,
-          Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_int").LongValue);
+          FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_int").LongValue);
         AssertEq("Unexpected value for config_test_float", 3.14,
-          Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_float").DoubleValue);
+          FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_float").DoubleValue);
         AssertEq("Unexpected value for config_test_bool", true,
-          Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_bool").BooleanValue);
+          FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_bool").BooleanValue);
       });
     }
   }
