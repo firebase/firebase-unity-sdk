@@ -435,7 +435,7 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
     VerificationCompleted verificationCompleted,
     VerificationFailed verificationFailed,
     CodeSent codeSent,
-    CodeAutoRetrievalTimeOut codeAuthRetrievalTimeOut) {
+    CodeAutoRetrievalTimeOut codeAutoRetrievalTimeOut) {
     int callbackId = SaveCallbacks(
         verificationCompleted_DEPRECATED: null,
         verificationCompleted: verificationCompleted,
