@@ -82,6 +82,13 @@ Release Notes
       `FetchAsync` and `ActivateAsync` APIs aren't affected by this change.
       To learn more, see
       [Get started with Firebase Remote Config](https://firebase.google.com/docs/remote-config/get-started?platform=unity#add-real-time-listener).
+    - Auth: Deprecated a number of methods, appending `_DEPRECATED` to some of
+      their names. This is a breaking change; you must either modify your code
+      to refer to the `_DEPRECATED` methods, or switch to the new methods, which
+      have new return types `AuthResult` (rather than `SignInResult`). The
+      deprecated methods will be removed in the *next* major release of the
+      Firebase Unity SDK. *(Note: do not mix and match using the old
+      and new methods or undefined behavior may result.)*
 
 ### 10.7.0
 - Changes
