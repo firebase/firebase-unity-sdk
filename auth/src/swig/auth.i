@@ -1252,6 +1252,22 @@ static CppInstanceManager<Auth> g_auth_instances;
   public string SmsCode { get { return SmsCodeInternal; } }
 %}
 
+%attributestring(firebase::auth::PhoneAuthCredential, std::string, SmsCodeInternal, sms_code);
+%typemap(cscode) firebase::auth::PhoneAuthCredential %{
+  /// Gets the auto-retrieved SMS verification code if applicable.
+  ///
+  /// This method is supported on Android devices only. It will return empty strings on
+  /// other platforms.
+  ///
+  /// When SMS verification is used, you will be called back first via
+  /// @ref PhoneAuthProvider.CodeSent, and later
+  /// PhoneAuthProvider.VerificationCompleted with a PhoneAuthCredential containing
+  /// a non-null SMS code if auto-retrieval succeeded. If Firebase used another approach
+  /// to verify the phone number and triggers a callback via
+  /// @ref PhoneAuthProvider.VerificationCompleted, then the SMS code can be null.
+  public string SmsCode { get { return SmsCodeInternal; } }
+%}
+
 %typemap(csclassmodifiers) firebase::auth::FederatedAuthProvider "public class";
 
 %typemap(csclassmodifiers) firebase::auth::FederatedOAuthProvider
@@ -1731,10 +1747,24 @@ static CppInstanceManager<Auth> g_auth_instances;
 %}
 
 %typemap(cscode) firebase::auth::UserInfoInterface %{
+  /// Gets the photo url associated with the user, if any.
   public System.Uri PhotoUrl {
     get {
       return Firebase.FirebaseApp.UrlStringToUri(PhotoUrlInternal);
     }
+  }
+
+  /// @deprecated Please use @ref PhoneNumber instead.
+  ///
+  /// Gets the phone number for the user, in E.164 format.
+  [System.Obsolete("Please use `PhoneNumber` instead", false)]
+  public string phone_number {
+    get { return PhoneNumberInternal; }
+  }
+
+  /// Gets the phone number for the user, in E.164 format.
+  public string PhoneNumber {
+    get { return PhoneNumberInternal; }
   }
 %}
 
@@ -1845,6 +1875,7 @@ static CppInstanceManager<Auth> g_auth_instances;
 %attributestring(firebase::auth::UserInfoInterface, std::string, DisplayName, display_name);
 %attributestring(firebase::auth::UserInfoInterface, std::string, PhotoUrlInternal, photo_url);
 %attributestring(firebase::auth::UserInfoInterface, std::string, ProviderId, provider_id);
+%attributestring(firebase::auth::UserInfoInterface, std::string, PhoneNumberInternal, phone_number);
 
 
 %typemap(csinterfaces) firebase::auth::UserInfoInterface
