@@ -43,7 +43,7 @@ jobs:
       fail-fast: false
 
     env:
-      xcodeVersion: "13.3.1"
+      xcodeVersion: "14.1"
   
     steps:
       - name: Checkout Unity Repo
