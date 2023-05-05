@@ -880,10 +880,10 @@ static CppInstanceManager<Auth> g_auth_instances;
   // Update the cached user proxy for this object.
   private FirebaseUser UpdateCurrentUser(FirebaseUser proxy) {
     lock (appCPtrToAuth) {
-      if (proxy == null || !proxy.IsValid) {
+      if (proxy == null || !proxy.IsValid()) {
         // If there is no current user, remove the cached proxy.
         currentUser = null;
-      } else if (currentUser == null || !currentUser.IsValid) {
+      } else if (currentUser == null || !currentUser.IsValid()) {
         // If no proxy is cached, cache the current proxy.
         currentUser = proxy;
       } else {
@@ -1371,7 +1371,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   public FirebaseUser User {
     // Both FirebaseAuth.CurrentUser and AuthResult.User returns null if the
     // user is invalid.
-    get { return (UserInternal != null && UserInternal.IsValid) ? UserInternal : null; }
+    get { return (UserInternal != null && UserInternal.IsValid()) ? UserInternal : null; }
   }
 %}
 %typemap(csclassmodifiers) firebase::auth::AuthResult "public sealed class";
@@ -1883,7 +1883,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   std::vector<firebase::auth::UserInfoInterface>, ProviderData, provider_data);
 %attributestring(firebase::auth::User, std::string, ProviderId, provider_id);
 %attributestring(firebase::auth::User, std::string, UserId, uid);
-%attribute(firebase::auth::User, bool, IsValid, is_valid);
+%rename(IsValid) firebase::auth::User::is_valid;
 
 // Change the fields on UserInfoInterface and inheritors to use Properties.
 %attributestring(firebase::auth::UserInfoInterface, std::string, UserId, uid);
