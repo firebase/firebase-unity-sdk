@@ -39,11 +39,9 @@ namespace Firebase.Sample.Auth {
         TestSignInEmailAsync,
         TestSignInCredentialAsync,
         TestUpdateUserProfileAsync,
-        TestSignInAnonymouslyAndLinkCredential,
         TestSignInAnonymouslyAsync_DEPRECATED,
         TestSignInEmailAsync_DEPRECATED,
         TestSignInCredentialAsync_DEPRECATED,
-        TestSignInAnonymouslyAndLinkCredential_DEPRECATED,
         // TODO(b/132083720) This test is currently broken, so disable it until it is fixed.
         // TestSignInAnonymouslyWithExceptionsInEventHandlersAsync,
         // TODO(b/281153256): Add more test cases
@@ -266,72 +264,6 @@ namespace Firebase.Sample.Auth {
             ConfirmNoCurrentUser(tcs);
             // The tests are done
             tcs.TrySetResult(0);
-        });
-      });
-
-      return tcs.Task;
-    }
-
-    // Perform the standard sign in flow with an Anonymous account, then link to a email credential.
-    // Tests: SignInAnonymouslyAsync_DEPRECATED, LinkWithCredentialAsync_DEPRECATED, DeleteUserAsync.
-    Task TestSignInAnonymouslyAndLinkCredential_DEPRECATED() {
-      TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
-
-      // We don't want to be signed in at the start of this test.
-      if (!TestSetupClearUser(tcs)) {
-          return tcs.Task;
-      }
-
-      // First, sign in anonymously.
-      SigninAnonymouslyAsync_DEPRECATED().ContinueWithOnMainThread(signinTask => {
-        if (ForwardTaskException(tcs, signinTask)) return;
-        // Confirm that the current user is correct.
-        if (!ConfirmAnonymousCurrentUser(tcs)) return;
-
-        LinkWithEmailCredentialAsync_DEPRECATED().ContinueWithOnMainThread(linkTask => {
-          if (ForwardTaskException(tcs, linkTask)) return;
-          if (!ConfirmDefaultCurrentUser(tcs)) return;
-            // Delete the user, as we are done.
-            DeleteUserAsync().ContinueWithOnMainThread(deleteTask => {
-                if (ForwardTaskException(tcs, deleteTask)) return;
-                // Confirm that there is no user set anymore.
-                ConfirmNoCurrentUser(tcs);
-                // The tests are done
-                tcs.TrySetResult(0);
-            });
-        });
-      });
-
-      return tcs.Task;
-    }
-
-    // Perform the standard sign in flow with an Anonymous account, then link to a email credential.
-    // Tests: SignInAnonymouslyAsync, LinkWithCredentialAsync, DeleteUserAsync.
-   Task TestSignInAnonymouslyAndLinkCredential() {
-      TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
-
-      // We don't want to be signed in at the start of this test.
-      if (!TestSetupClearUser(tcs)) {
-          return tcs.Task;
-      }
-
-      // First, sign in anonymously.
-      SigninAnonymouslyAsync().ContinueWithOnMainThread(signinTask => {
-        if (ForwardTaskException(tcs, signinTask)) return;
-        // Confirm that the current user is correct.
-        if (!ConfirmAnonymousCurrentUser(tcs)) return;
-
-        LinkWithEmailCredentialAsync().ContinueWithOnMainThread(linkTask => {
-          if (ForwardTaskException(tcs, linkTask)) return;
-          if (!ConfirmDefaultCurrentUser(tcs)) return;
-            // Delete the user, as we are done.
-            DeleteUserAsync().ContinueWithOnMainThread(deleteTask => {
-                if (ForwardTaskException(tcs, deleteTask)) return;
-                // Confirm that there is no user set anymore.
-                ConfirmNoCurrentUser(tcs);
-                // The tests are done
-                tcs.TrySetResult(0);
-            });
         });
       });
 
