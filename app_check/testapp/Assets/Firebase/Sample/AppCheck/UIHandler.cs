@@ -40,16 +40,103 @@ namespace Firebase.Sample.AppCheck {
 
     private DependencyStatus dependencyStatus = DependencyStatus.UnavailableOther;
 
+    // Your Firebase project's Debug token goes here.
+    // You can get this from Firebase Console, in the App Check settings.
+    private string appCheckDebugToken = "REPLACE_WITH_APP_CHECK_TOKEN";
+
+    // If the App Check factory has been set
+    protected bool factoryConfigured = false;
+
+    // If the testapp is running automated tests
+    protected bool runningAutomatedTests = false;
+
+    public class TestAppCheckProvider : IAppCheckProvider {
+      public TestAppCheckProvider() {}
+
+      public System.Threading.Tasks.Task<AppCheckToken> GetTokenAsync() {
+        // In a normal app, you would connect to the attestation service,
+        // and get a valid token to return.
+        AppCheckToken token = new AppCheckToken() {
+          Token = "TEST_TOKEN",
+          ExpireTime = DateTime.UtcNow.AddMinutes(60)
+        };
+        return Task<AppCheckToken>.FromResult(token);
+      }
+    }
+
+    public class TestAppCheckProviderFactory : IAppCheckProviderFactory {
+      public TestAppCheckProvider provider;
+
+      public TestAppCheckProviderFactory() {
+        provider = new TestAppCheckProvider();
+      }
+
+      public IAppCheckProvider CreateProvider(FirebaseApp app) {
+        return provider;
+      }
+    }
+
+    protected void PrintToken(string prefix, AppCheckToken token) {
+      DebugLog(prefix + "\n" +
+               "  " + token.Token + "\n" +
+               "  " + token.ExpireTime);
+    }
+
+    void OnTokenChanged(object sender, TokenChangedEventArgs tokenArgs) {
+      PrintToken("OnTokenChanged called:", tokenArgs.Token);
+    }
+
     // When the app starts, check to make sure that we have
     // the required dependencies to use Firebase, and if not,
     // add them if possible.
     protected virtual void Start() {
-      // TODO(amaurice): Add App Check initialization logic here
+      UIEnabled = true;
 
+      // Configure the Debug Factory with the Token
+      DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugToken);
+    }
+
+    void UseTestFactory() {
+      DebugLog("Using Test Factory");
+      FirebaseAppCheck.SetAppCheckProviderFactory(new TestAppCheckProviderFactory());
+      InitializeFirebase();
+      factoryConfigured = true;
+    }
+
+    void UseDebugFactory() {
+      DebugLog("Using Debug Factory");
+      FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
+      InitializeFirebase();
+      factoryConfigured = true;
+    }
+
+    void GetTokenFromDebug() {
+      DebugLog("Getting token from Debug factory");
+      IAppCheckProvider provider = DebugAppCheckProviderFactory.Instance.CreateProvider(FirebaseApp.DefaultInstance);
+      provider.GetTokenAsync().ContinueWithOnMainThread(task => {
+        if (task.IsFaulted) {
+          DebugLog("GetTokenFromDebug failed: " + task.Exception);
+        } else {
+          PrintToken("GetTokenFromDebug:", task.Result);
+        }
+      });
+    }
+
+    void AddTokenChangedListener() {
+      DebugLog("Adding token changed listener");
+      FirebaseAppCheck.DefaultInstance.TokenChanged += OnTokenChanged;
+    }
+
+    void RemoveTokenChangedListener() {
+      DebugLog("Removing token changed listener");
+      FirebaseAppCheck.DefaultInstance.TokenChanged -= OnTokenChanged;
+    }
+
+    protected void InitializeFirebase() {
       FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task => {
         dependencyStatus = task.Result;
         if (dependencyStatus == DependencyStatus.Available) {
-          UIEnabled = true;
+          DebugLog("Firebase Ready: " + FirebaseApp.DefaultInstance);
         } else {
           Debug.LogError(
             "Could not resolve all Firebase dependencies: " + dependencyStatus);
@@ -84,17 +171,54 @@ namespace Firebase.Sample.AppCheck {
       GUILayout.EndScrollView();
     }
 
+    void HandleGetAppCheckToken(Task<AppCheckToken> task) {
+      if (task.IsFaulted) {
+        DebugLog("GetAppCheckToken failed: " + task.Exception);
+      } else {
+        PrintToken("GetAppCheckToken succeeded:", task.Result);
+      }
+    }
+
     // Render the buttons and other controls.
     void GUIDisplayControls() {
       if (UIEnabled) {
+
+        if (runningAutomatedTests) {
+          GUILayout.Label("Running automated tests");
+          return;
+        }
 
         controlsScrollViewVector = GUILayout.BeginScrollView(controlsScrollViewVector);
 
         GUILayout.BeginVertical();
 
-        if (GUILayout.Button("Get App Check Token")) {
-          // TODO(amaurice): That
-          DebugLog("GetAppCheckToken unimplemented!");
+        if (!factoryConfigured) {
+          if (GUILayout.Button("Use Test Provider")) {
+            UseTestFactory();
+          }
+          if (GUILayout.Button("Use Debug Provider")) {
+            UseDebugFactory();
+          }
+        } else {
+          if (GUILayout.Button("Get App Check Token")) {
+            DebugLog("GetAppCheckTokenAsync(false) triggered!");
+            FirebaseAppCheck.DefaultInstance.GetAppCheckTokenAsync(false).ContinueWithOnMainThread(HandleGetAppCheckToken);
+          }
+          if (GUILayout.Button("Force New App Check Token")) {
+            DebugLog("GetAppCheckTokenAsync(true) triggered!");
+            FirebaseAppCheck.DefaultInstance.GetAppCheckTokenAsync(true).ContinueWithOnMainThread(HandleGetAppCheckToken);
+          }
+          if (GUILayout.Button("Add Token Changed Listener")) {
+            AddTokenChangedListener();
+          }
+          if (GUILayout.Button("Remove Token Changed Listener")) {
+            RemoveTokenChangedListener();
+          }
+        }
+
+        // Can be called regardless of Factory status
+        if (GUILayout.Button("Get App Check Token from Debug Provider")) {
+          GetTokenFromDebug();
         }
 
         GUILayout.EndVertical();
@@ -105,11 +229,6 @@ namespace Firebase.Sample.AppCheck {
     // Render the GUI:
     void OnGUI() {
       GUI.skin = fb_GUISkin;
-      if (dependencyStatus != Firebase.DependencyStatus.Available) {
-        GUILayout.Label("One or more Firebase dependencies are not present.");
-        GUILayout.Label("Current dependency status: " + dependencyStatus.ToString());
-        return;
-      }
 
       GUI.skin.textArea.fontSize = GUI.skin.textField.fontSize;
       // Reduce the text size on the desktop.
