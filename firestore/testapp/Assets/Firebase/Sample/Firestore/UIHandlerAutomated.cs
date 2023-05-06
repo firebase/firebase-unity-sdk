@@ -1800,7 +1800,7 @@ namespace Firebase.Sample.Firestore {
         // TODO(mikelehen): Check for permission_denied once we plumb errors through somehow.
         AssertException(typeof(Exception), () => Await(doc.SetAsync(data)));
 
-        Await(firebaseAuth.SignInAnonymouslyAsync_DEPRECATED());
+        Await(firebaseAuth.SignInAnonymouslyAsync());
 
         // Write should now succeed.
         Await(doc.SetAsync(data));
