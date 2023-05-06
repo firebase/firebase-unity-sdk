@@ -475,7 +475,7 @@ namespace Firebase.Sample.Auth {
     void HandleSignInWithAuthResult(Task<Firebase.Auth.AuthResult> task) {
       EnableUI();
       if (LogTaskCompletion(task, "Sign-in")) {
-        if(task.Result.User != null && task.Result.User.IsValid) {
+        if(task.Result.User != null && task.Result.User.IsValid()) {
           DisplayAuthResult(task.Result, 1);
           DebugLog(String.Format("{0} signed in", task.Result.User.DisplayName));
         } else {
