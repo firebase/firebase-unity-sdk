@@ -310,30 +310,6 @@ static CppInstanceManager<Auth> g_auth_instances;
   }
 %}
 
-// The following block related to UserInfoInterfaceList_DEPRECATED can be 
-// deleted when ProviderData_DEPRECATED is deleted.
-// Don't expose UserInfoInterfaceList_DEPRECATED externally.
-%typemap(csclassmodifiers) std::vector<firebase::auth::UserInfoInterface*> "internal class"
-%template(UserInfoInterfaceList_DEPRECATED) std::vector<firebase::auth::UserInfoInterface*>;
-// All outputs of UserInfoInterfaceList_DEPRECATED should be IEnumerable<IUserInfo>
-%typemap(cstype,
-         out="global::System.Collections.Generic.IEnumerable<IUserInfo>")
-  std::vector<firebase::auth::UserInfoInterface*>&
-  "UserInfoInterfaceList_DEPRECATED";
-%typemap(csvarout) std::vector<firebase::auth::UserInfoInterface*>& %{
-  get {
-    // Convert the UserInfoInterfaceList_DEPRECATED into a List<IUserInfo>, as we don't
-    // expose UserInfoInterface, which inherites from the public IUserInfo.
-    UserInfoInterfaceList_DEPRECATED oldList = new UserInfoInterfaceList_DEPRECATED($imcall, false);
-    System.Collections.Generic.List<IUserInfo> newList =
-      new System.Collections.Generic.List<IUserInfo>();
-    foreach (IUserInfo info in oldList) {
-      newList.Add(info);
-    }
-    return newList;
-  }
-%}
-
 %typemap(csclassmodifiers) firebase::auth::PhoneAuthOptions "public sealed class";
 %rename(ForceResendingToken) firebase::auth::PhoneAuthOptions::force_resending_token;
 %rename(PhoneNumber) firebase::auth::PhoneAuthOptions::phone_number;
@@ -1906,8 +1882,6 @@ static CppInstanceManager<Auth> g_auth_instances;
 %attributestring(firebase::auth::User, std::string, PhotoUrlInternal, photo_url);
 %attributeval(firebase::auth::User,
   std::vector<firebase::auth::UserInfoInterface>, ProviderData, provider_data);
-%attribute(firebase::auth::User,
-  std::vector<firebase::auth::UserInfoInterface*>&, ProviderData_DEPRECATED, provider_data_DEPRECATED);
 %attributestring(firebase::auth::User, std::string, ProviderId, provider_id);
 %attributestring(firebase::auth::User, std::string, UserId, uid);
 %rename(IsValid) firebase::auth::User::is_valid;
