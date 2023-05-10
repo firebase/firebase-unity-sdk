@@ -85,6 +85,7 @@ namespace auth {
 %ignore User::GetTokenThreadSafe;
 %ignore User::GetTokenLastResult;
 %ignore User::provider_data;
+%ignore User::provider_data_DEPRECATED;
 %ignore User::is_email_verified;
 %ignore User::is_anonymous;
 %ignore User::metadata;
@@ -300,6 +301,30 @@ static CppInstanceManager<Auth> g_auth_instances;
     // Convert the UserInfoInterfaceList into a List<IUserInfo>, as we don't
     // expose UserInfoInterface, which inherites from the public IUserInfo.
     UserInfoInterfaceList oldList = new UserInfoInterfaceList($imcall, false);
+    System.Collections.Generic.List<IUserInfo> newList =
+      new System.Collections.Generic.List<IUserInfo>();
+    foreach (IUserInfo info in oldList) {
+      newList.Add(info);
+    }
+    return newList;
+  }
+%}
+
+// The following block related to UserInfoInterfaceList_DEPRECATED can be 
+// deleted when ProviderData_DEPRECATED is deleted.
+// Don't expose UserInfoInterfaceList_DEPRECATED externally.
+%typemap(csclassmodifiers) std::vector<firebase::auth::UserInfoInterface*> "internal class"
+%template(UserInfoInterfaceList_DEPRECATED) std::vector<firebase::auth::UserInfoInterface*>;
+// All outputs of UserInfoInterfaceList_DEPRECATED should be IEnumerable<IUserInfo>
+%typemap(cstype,
+         out="global::System.Collections.Generic.IEnumerable<IUserInfo>")
+  std::vector<firebase::auth::UserInfoInterface*>&
+  "UserInfoInterfaceList_DEPRECATED";
+%typemap(csvarout) std::vector<firebase::auth::UserInfoInterface*>& %{
+  get {
+    // Convert the UserInfoInterfaceList_DEPRECATED into a List<IUserInfo>, as we don't
+    // expose UserInfoInterface, which inherites from the public IUserInfo.
+    UserInfoInterfaceList_DEPRECATED oldList = new UserInfoInterfaceList_DEPRECATED($imcall, false);
     System.Collections.Generic.List<IUserInfo> newList =
       new System.Collections.Generic.List<IUserInfo>();
     foreach (IUserInfo info in oldList) {
@@ -1881,6 +1906,8 @@ static CppInstanceManager<Auth> g_auth_instances;
 %attributestring(firebase::auth::User, std::string, PhotoUrlInternal, photo_url);
 %attributeval(firebase::auth::User,
   std::vector<firebase::auth::UserInfoInterface>, ProviderData, provider_data);
+%attribute(firebase::auth::User,
+  std::vector<firebase::auth::UserInfoInterface*>&, ProviderData_DEPRECATED, provider_data_DEPRECATED);
 %attributestring(firebase::auth::User, std::string, ProviderId, provider_id);
 %attributestring(firebase::auth::User, std::string, UserId, uid);
 %rename(IsValid) firebase::auth::User::is_valid;
