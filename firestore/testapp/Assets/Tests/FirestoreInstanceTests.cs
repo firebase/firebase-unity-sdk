@@ -37,7 +37,7 @@ namespace Tests {
       AssertTaskFaulted(setTask, FirestoreError.PermissionDenied);
 
       try {
-        yield return AwaitSuccess(firebaseAuth.SignInAnonymouslyAsync_DEPRECATED());
+        yield return AwaitSuccess(firebaseAuth.SignInAnonymouslyAsync());
 
         // Write should now succeed.
         yield return AwaitSuccess(doc.SetAsync(data));

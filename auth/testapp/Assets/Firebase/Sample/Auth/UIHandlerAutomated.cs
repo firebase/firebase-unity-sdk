@@ -35,12 +35,16 @@ namespace Firebase.Sample.Auth {
       // non-static.
       Func<Task>[] tests = {
         TestCreateDestroy,
+        TestSignInAnonymouslyAsync,
+        TestSignInEmailAsync,
+        TestSignInCredentialAsync,
+        TestUpdateUserProfileAsync,
         TestSignInAnonymouslyAsync_DEPRECATED,
         TestSignInEmailAsync_DEPRECATED,
         TestSignInCredentialAsync_DEPRECATED,
-        TestUpdateUserProfileAsync_DEPRECATED,
         // TODO(b/132083720) This test is currently broken, so disable it until it is fixed.
         // TestSignInAnonymouslyWithExceptionsInEventHandlersAsync,
+        // TODO(b/281153256): Add more test cases
       };
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
@@ -209,7 +213,7 @@ namespace Firebase.Sample.Auth {
     }
 
     // Perform the standard sign in flow with an Anonymous account.
-    // Tests: SignInAnonymouslyAsync, DeleteUserAsync.
+    // Tests: SignInAnonymouslyAsync_DEPRECATED, DeleteUserAsync.
     Task TestSignInAnonymouslyAsync_DEPRECATED() {
       TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
 
@@ -237,8 +241,37 @@ namespace Firebase.Sample.Auth {
       return tcs.Task;
     }
 
+    // Perform the standard sign in flow with an Anonymous account.
+    // Tests: SignInAnonymouslyAsync, DeleteUserAsync.
+    Task TestSignInAnonymouslyAsync() {
+      TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
+
+      // We don't want to be signed in at the start of this test.
+      if (!TestSetupClearUser(tcs)) {
+          return tcs.Task;
+      }
+
+      // First, sign in anonymously.
+      SigninAnonymouslyAsync().ContinueWithOnMainThread(t1 => {
+        if (ForwardTaskException(tcs, t1)) return;
+        // Confirm that the current user is correct.
+        if (!ConfirmAnonymousCurrentUser(tcs)) return;
+
+        // Delete the user, as we are done.
+        DeleteUserAsync().ContinueWithOnMainThread(t2 => {
+            if (ForwardTaskException(tcs, t2)) return;
+            // Confirm that there is no user set anymore.
+            ConfirmNoCurrentUser(tcs);
+            // The tests are done
+            tcs.TrySetResult(0);
+        });
+      });
+
+      return tcs.Task;
+    }
+
     // Goes over the standard create/signout/signin flow, using the provided function to sign in.
-    // Tests: CreateUserWithEmailAndPasswordAsync, SignOut, the given signin function,
+    // Tests: CreateUserWithEmailAndPasswordAsync_DEPRECATED, SignOut, the given signin function,
     // and DeleteUserAsync.
     Task TestSignInFlowAsync_DEPRECATED(Func<Task> signInFunc) {
       TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
@@ -275,22 +308,72 @@ namespace Firebase.Sample.Auth {
       return tcs.Task;
     }
 
+    // Goes over the standard create/signout/signin flow, using the provided function to sign in.
+    // Tests: CreateUserWithEmailAndPasswordAsync, SignOut, the given signin function,
+    // and DeleteUserAsync.
+    Task TestSignInFlowAsync(Func<Task> signInFunc) {
+      TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
+
+      // We don't want to be signed in at the start of this test.
+      if (!TestSetupClearUser(tcs)) {
+        return tcs.Task;
+      }
+
+      // Set up the test email/password/etc fields.
+      SetDefaultUIFields();
+
+      CreateUserWithEmailAsync().ContinueWithOnMainThread(createTask => {
+        // Confirm that the current user is correct
+        if (!ConfirmDefaultCurrentUser(tcs)) return;
+        // Sign out of the user
+        SignOut();
+        // Confirm no user
+        if (!ConfirmNoCurrentUser(tcs)) return;
+        // Sign back in
+        signInFunc().ContinueWithOnMainThread(signinTask => {
+          // Confirm that the current user is correct
+          if (!ConfirmDefaultCurrentUser(tcs)) return;
+          // Delete the user
+          DeleteUserAsync().ContinueWithOnMainThread(deleteTask => {
+            // Confirm no user
+            ConfirmNoCurrentUser(tcs);
+            // Tests are done.
+            tcs.TrySetResult(0);
+          });
+        });
+      });
+
+      return tcs.Task;
+    }
+
     // Perform the standard sign in flow, using Email/Password.
-    // Tests: SignInWithEmailAndPasswordAsync.
+    // Tests: SignInWithEmailAndPasswordAsync_DEPRECATED.
     Task TestSignInEmailAsync_DEPRECATED() {
       return TestSignInFlowAsync_DEPRECATED(SigninWithEmailAsync_DEPRECATED);
     }
 
+    // Perform the standard sign in flow, using Email/Password.
+    // Tests: SignInWithEmailAndPasswordAsync.
+    Task TestSignInEmailAsync() {
+      return TestSignInFlowAsync(SigninWithEmailAsync);
+    }
+
     // Perform the standard sign in flow, using a credential generated from the Email/Password.
-    // Tests: SignInWithCredentialAsync (Email credential).
+    // Tests: SignInWithCredentialAsync_DEPRECATED (Email credential).
     Task TestSignInCredentialAsync_DEPRECATED() {
       return TestSignInFlowAsync_DEPRECATED(SigninWithEmailCredentialAsync_DEPRECATED);
     }
 
+    // Perform the standard sign in flow, using a credential generated from the Email/Password.
+    // Tests: SignInWithCredentialAsync (Email credential).
+    Task TestSignInCredentialAsync() {
+      return TestSignInFlowAsync(SigninWithEmailCredentialAsync);
+    }
+
     // Update the user profile.
-    Task TestUpdateUserProfileAsync_DEPRECATED() {
+    Task TestUpdateUserProfileAsync() {
       TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
-      SigninAnonymouslyAsync_DEPRECATED().ContinueWithOnMainThread(t1 => {
+      SigninAnonymouslyAsync().ContinueWithOnMainThread(t1 => {
         if (ForwardTaskException(tcs, t1)) return;
         const string ExpectedDisplayName = "Test Name";
         const string ExpectedPhotoUrl = "http://test.com/image.jpg";

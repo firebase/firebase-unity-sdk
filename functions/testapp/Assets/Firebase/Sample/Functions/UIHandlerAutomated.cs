@@ -82,7 +82,7 @@ namespace Firebase.Sample.Functions {
     protected override void InitializeFirebase() {
       // One of the automated tests requires Auth, so we want to sign in before running it.
       firebaseAuth = Firebase.Auth.FirebaseAuth.DefaultInstance;
-      firebaseAuth.SignInAnonymouslyAsync_DEPRECATED().ContinueWithOnMainThread(
+      firebaseAuth.SignInAnonymouslyAsync().ContinueWithOnMainThread(
         t => base.InitializeFirebase());
     }
 
