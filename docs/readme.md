@@ -73,7 +73,7 @@ Release Notes
 -------------
 # 11.0.1
 - Changes
-    - Auth: Hide accidentally exposed methods.
+    - Auth: Remove internal methods.
 
 ### 11.0.0
 - Changes
