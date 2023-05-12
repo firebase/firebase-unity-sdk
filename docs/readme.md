@@ -71,6 +71,10 @@ Support
 
 Release Notes
 -------------
+# TBA
+- Changes
+    - Auth: Hide accidentally exposed methods.
+
 ### 11.0.0
 - Changes
     - App Check: Adds support for Firebase App Check on Android, iOS, tvOS,
