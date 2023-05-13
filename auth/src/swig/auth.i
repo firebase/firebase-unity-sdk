@@ -85,6 +85,7 @@ namespace auth {
 %ignore User::GetTokenThreadSafe;
 %ignore User::GetTokenLastResult;
 %ignore User::provider_data;
+%ignore User::provider_data_DEPRECATED;
 %ignore User::is_email_verified;
 %ignore User::is_anonymous;
 %ignore User::metadata;
@@ -1814,7 +1815,6 @@ static CppInstanceManager<Auth> g_auth_instances;
 %ignore firebase::auth::User::EmailVerified;
 %ignore firebase::auth::User::Anonymous;
 %ignore firebase::auth::User::RefreshToken;
-%ignore firebase::auth::User::provider_data_DEPRECATED;
 // NOTE: It's not necesaary to ignore the following methods
 // as they're replaced by the attributes below:
 // * firebase::auth::User::Email
@@ -1833,7 +1833,8 @@ static CppInstanceManager<Auth> g_auth_instances;
 // * firebase::auth::UserInfoInterface::ProviderId
 
 // Deprecated method that conflicts with the CurrentUser property.
-%ignore firebase::auth::Auth::CurrentUser;
+%ignore firebase::auth::Auth::current_user;
+%ignore firebase::auth::Auth::current_user_DEPRECATED;
 // Make basic getters use C# Properties instead.
 %attributeval(firebase::auth::Auth, firebase::auth::User,
               CurrentUserInternal, current_user);

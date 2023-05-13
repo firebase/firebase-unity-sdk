@@ -319,6 +319,7 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
 %warnfilter(844);
 // Ignore all methods ending in LastResult.
 %rename("$ignore", regextarget=1) "LastResult$";
+%rename("$ignore", regextarget=1) "LastResult_DEPRECATED$";
 
 %rename(FirebaseApp) firebase::App;
 %typemap(csclassmodifiers) firebase::App "public sealed class";
