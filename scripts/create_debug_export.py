@@ -18,7 +18,7 @@
 export config for each product.
 
 Example usage:
-  python scripts/build_scripts/create_debug_export.py
+  python scripts/create_debug_export.py
 """
 
 import os
@@ -78,7 +78,6 @@ def main(argv):
         elif package_dict["name"] == package_name:
           output_package_list.append(packages[idx])
       output_dict["packages"] = output_package_list
-      output_dict["builds"] = builds
 
       with open(output_path, 'w', encoding='utf-8') as fout:
         fout.write(json.dumps(output_dict, indent=2))

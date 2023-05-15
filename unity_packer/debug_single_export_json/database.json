@@ -147,7 +147,7 @@
           ],
           "cpu": "x86_64",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppApp*"
+            "Firebase/Plugins/x86_64/FirebaseCppApp[-.]*"
           ]
         },
         {
@@ -185,9 +185,9 @@
       "export_upm": 1,
       "upm_package_config": {
         "manifest": {
-          "unity": "2018.1",
+          "unity": "2019.1",
           "dependencies": {
-            "com.google.external-dependency-manager": "1.2.172"
+            "com.google.external-dependency-manager": "1.2.176"
           }
         }
       }
@@ -350,7 +350,7 @@
       "export_upm": 1,
       "upm_package_config": {
         "manifest": {
-          "unity": "2018.1"
+          "unity": "2019.1"
         }
       }
     }
