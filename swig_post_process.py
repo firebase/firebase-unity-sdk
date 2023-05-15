@@ -462,7 +462,7 @@ class InternalMethodsToInternalVisibility(SWIGPostProcessingInterface):
   def __init__(self):
     """Initialize the instance."""
     self.function_property_regexp = re.compile(
-        r'(public.*? )([^ )]+Internal)($| +|[({])')
+        r'(public.*? )([^ )]+Internal(Async)?(_DEPRECATED)?)($| +|[({])')
 
   def __call__(self, file_str, filename, iteration):
     """Change "Internal" methods and properties to internal visibility.

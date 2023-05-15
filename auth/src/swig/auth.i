@@ -1252,38 +1252,6 @@ static CppInstanceManager<Auth> g_auth_instances;
   public string SmsCode { get { return SmsCodeInternal; } }
 %}
 
-%attributestring(firebase::auth::PhoneAuthCredential, std::string, SmsCodeInternal, sms_code);
-%typemap(cscode) firebase::auth::PhoneAuthCredential %{
-  /// Gets the auto-retrieved SMS verification code if applicable.
-  ///
-  /// This method is supported on Android devices only. It will return empty strings on
-  /// other platforms.
-  ///
-  /// When SMS verification is used, you will be called back first via
-  /// @ref PhoneAuthProvider.CodeSent, and later
-  /// PhoneAuthProvider.VerificationCompleted with a PhoneAuthCredential containing
-  /// a non-null SMS code if auto-retrieval succeeded. If Firebase used another approach
-  /// to verify the phone number and triggers a callback via
-  /// @ref PhoneAuthProvider.VerificationCompleted, then the SMS code can be null.
-  public string SmsCode { get { return SmsCodeInternal; } }
-%}
-
-%attributestring(firebase::auth::PhoneAuthCredential, std::string, SmsCodeInternal, sms_code);
-%typemap(cscode) firebase::auth::PhoneAuthCredential %{
-  /// Gets the auto-retrieved SMS verification code if applicable.
-  ///
-  /// This method is supported on Android devices only. It will return empty strings on
-  /// other platforms.
-  ///
-  /// When SMS verification is used, you will be called back first via
-  /// @ref PhoneAuthProvider.CodeSent, and later
-  /// PhoneAuthProvider.VerificationCompleted with a PhoneAuthCredential containing
-  /// a non-null SMS code if auto-retrieval succeeded. If Firebase used another approach
-  /// to verify the phone number and triggers a callback via
-  /// @ref PhoneAuthProvider.VerificationCompleted, then the SMS code can be null.
-  public string SmsCode { get { return SmsCodeInternal; } }
-%}
-
 %typemap(csclassmodifiers) firebase::auth::FederatedAuthProvider "public class";
 
 %typemap(csclassmodifiers) firebase::auth::FederatedOAuthProvider
