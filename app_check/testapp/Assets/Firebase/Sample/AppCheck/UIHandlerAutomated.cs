@@ -31,12 +31,20 @@ namespace Firebase.Sample.AppCheck {
 
     private Firebase.Sample.AutomatedTestRunner testRunner;
 
+    // Your Firebase project's Debug token goes here.
+    // You can get this from Firebase Console, in the App Check settings.
+    private string appCheckDebugTokenForAutomated = "REPLACE_WITH_APP_CHECK_TOKEN";
+
     protected override void Start() {
+      // Set up the debug token, and install it as the factory to use.
+      DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugTokenForAutomated);
+      FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
+
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       Func<Task>[] tests = {
-        // Add tests here
-        TestDummyTest
+        TestGetDebugToken,
+        TestGetAppCheckToken
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -49,6 +57,9 @@ namespace Firebase.Sample.AppCheck {
                 "enabled.  `Error Pause` should be disabled to execute this test.");
 
       UIEnabled = true;
+      // Set this state to true, since App Check is a bit finicky around start up,
+      // this will just disable the usual UIHandler UI, since it won't work as expected.
+      runningAutomatedTests = true;
       // Do not call base.Start(), as we don't want to initialize Firebase (and instead do it in the tests).
     }
 
@@ -76,11 +87,50 @@ namespace Firebase.Sample.AppCheck {
       }
     }
 
-    // Placeholder dummy test
-    Task TestDummyTest() {
-      return Task.Run(() => {
-        DebugLog("Ran the dummy test");
+    Task TestGetDebugToken() {
+      IAppCheckProvider provider = DebugAppCheckProviderFactory.Instance.CreateProvider(FirebaseApp.DefaultInstance);
+      return provider.GetTokenAsync().ContinueWithOnMainThread(task => {
+        if (task.IsFaulted) {
+          throw task.Exception;
+        } else {
+          Assert("Debug token is empty", task.Result.Token != "");
+
+          // The expire time should be within roughly an hour, so check for that.
+          DateTime time = DateTime.UtcNow.AddMinutes(120);
+          Assert("Debug token time is too long", task.Result.ExpireTime < time);
+        }
       });
+    }
+
+    Task TestGetAppCheckToken() {
+      TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+
+      FirebaseAppCheck.DefaultInstance.GetAppCheckTokenAsync(true).ContinueWithOnMainThread(t1 => {
+        if (t1.IsFaulted) {
+          tcs.TrySetException(t1.Exception);
+        } else {
+          FirebaseAppCheck.DefaultInstance.GetAppCheckTokenAsync(false).ContinueWithOnMainThread(t2 => {
+            if (t2.IsFaulted) {
+              tcs.TrySetException(t2.Exception);
+            } else if (t1.Result.Token != t2.Result.Token) {
+              tcs.TrySetException(new Exception("GetAppCheckTokenAsync(false) returned a different token"));
+            } else {
+              FirebaseAppCheck.DefaultInstance.GetAppCheckTokenAsync(true).ContinueWithOnMainThread(t3 => {
+                if (t3.IsFaulted) {
+                  throw t3.Exception;
+                } else if (t1.Result.Token == t3.Result.Token) {
+                  tcs.TrySetException(new Exception("GetAppCheckTokenAsync(true) returned the same token"));
+                } else {
+                  // Done with the test
+                  tcs.TrySetResult(true);
+                }
+              });
+            }
+          });
+        }
+      });
+
+      return tcs.Task;
     }
   }
 }
