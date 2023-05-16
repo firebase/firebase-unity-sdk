@@ -147,7 +147,8 @@
           ],
           "cpu": "x86_64",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppApp[-.]*"
+            "Firebase/Plugins/x86_64/FirebaseCppApp-*",
+            "Firebase/Plugins/x86_64/FirebaseCppApp.*"
           ]
         },
         {
