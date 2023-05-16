@@ -57,6 +57,9 @@ namespace Firebase.Sample.AppCheck {
                 "enabled.  `Error Pause` should be disabled to execute this test.");
 
       UIEnabled = true;
+      // Set this state to true, since App Check is a bit finicky around start up,
+      // this will just disable the usual UIHandler UI, since it won't work as expected.
+      runningAutomatedTests = true;
       // Do not call base.Start(), as we don't want to initialize Firebase (and instead do it in the tests).
     }
 

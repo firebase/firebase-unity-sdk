@@ -58,6 +58,12 @@ Once you have done this, you can run the Unity Editor and test the application.
       into the folder.
       - NOTE: `GoogleService-Info.plist` can be placed anywhere under the
         `Assets` folder.
+  - Setup your project's debug token
+    - Generate a debug token for your Firebase project by following the
+      instructions laid out in the
+      [App Check documentation](https://firebase.google.com/docs/app-check/unity/debug-provider)
+    - Edit `Assets/Firebase/Sample/AppCheck/UIHandler.cs`, replacing
+      REPLACE_WITH_APP_CHECK_TOKEN with the debug token you have generated.
   - Optional: Update the Project Bundle Identifier
     - If you did not use `com.google.firebase.unity.appcheck.testapp`
       as the iOS bundle ID when creating your app in the Firebase
