@@ -85,7 +85,6 @@ namespace auth {
 %ignore User::GetTokenThreadSafe;
 %ignore User::GetTokenLastResult;
 %ignore User::provider_data;
-%ignore User::provider_data_DEPRECATED;
 %ignore User::is_email_verified;
 %ignore User::is_anonymous;
 %ignore User::metadata;
@@ -1815,6 +1814,7 @@ static CppInstanceManager<Auth> g_auth_instances;
 %ignore firebase::auth::User::EmailVerified;
 %ignore firebase::auth::User::Anonymous;
 %ignore firebase::auth::User::RefreshToken;
+%ignore firebase::auth::User::provider_data_DEPRECATED;
 // NOTE: It's not necesaary to ignore the following methods
 // as they're replaced by the attributes below:
 // * firebase::auth::User::Email
