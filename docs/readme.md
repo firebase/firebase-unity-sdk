@@ -74,7 +74,7 @@ Release Notes
 # Upcoming release
 - Changes
     - Auth: Remove internal methods.
-    - General: Fix an [issue](https://github.com/firebase/firebase-unity-sdk/issues/726))
+    - General: Fix an [issue](https://github.com/firebase/firebase-unity-sdk/issues/726)
       where AppCheck bundles were unintentionally included in App.
 
 ### 11.0.0
