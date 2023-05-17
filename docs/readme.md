@@ -71,9 +71,11 @@ Support
 
 Release Notes
 -------------
-# 11.0.1
+# Upcoming release
 - Changes
     - Auth: Remove internal methods.
+    - General: Fix an [issue](https://github.com/firebase/firebase-unity-sdk/issues/726)
+      where AppCheck bundles were unintentionally included in App in the tgz.
 
 ### 11.0.0
 - Changes

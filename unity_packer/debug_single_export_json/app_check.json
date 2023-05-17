@@ -147,7 +147,8 @@
           ],
           "cpu": "x86_64",
           "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppApp*"
+            "Firebase/Plugins/x86_64/FirebaseCppApp-*",
+            "Firebase/Plugins/x86_64/FirebaseCppApp.*"
           ]
         },
         {
@@ -185,9 +186,9 @@
       "export_upm": 1,
       "upm_package_config": {
         "manifest": {
-          "unity": "2018.1",
+          "unity": "2019.1",
           "dependencies": {
-            "com.google.external-dependency-manager": "1.2.172"
+            "com.google.external-dependency-manager": "1.2.176"
           }
         }
       }
@@ -215,7 +216,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.AppCheck.dll",
@@ -224,7 +229,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.AppCheck.dll",
@@ -233,7 +241,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppAppCheck.a"
@@ -241,7 +251,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppAppCheck.a"
@@ -256,7 +268,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppAppCheck*"
@@ -264,14 +279,19 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/AppCheck/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/AppCheckReadme.md"
           ]
@@ -283,10 +303,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/AppCheckReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/AppCheckReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/AppCheckReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.app-check",
         "display_name": "Firebase App Check",
         "description": [
@@ -295,16 +315,20 @@
           "resources. It works with both Firebase services, Google Cloud ",
           "services, and your own APIs to keep your resources safe."
         ],
-        "keywords": ["Google", "Firebase", "App Check"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "App Check"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/app-check"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
-          "unity": "2018.1"
+      "upm_package_config": {
+        "manifest": {
+          "unity": "2019.1"
         }
       }
     }
