@@ -1833,7 +1833,8 @@ static CppInstanceManager<Auth> g_auth_instances;
 // * firebase::auth::UserInfoInterface::ProviderId
 
 // Deprecated method that conflicts with the CurrentUser property.
-%ignore firebase::auth::Auth::CurrentUser;
+%ignore firebase::auth::Auth::current_user;
+%ignore firebase::auth::Auth::current_user_DEPRECATED;
 // Make basic getters use C# Properties instead.
 %attributeval(firebase::auth::Auth, firebase::auth::User,
               CurrentUserInternal, current_user);
