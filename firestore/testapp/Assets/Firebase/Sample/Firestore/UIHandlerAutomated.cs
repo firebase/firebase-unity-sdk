@@ -3903,6 +3903,14 @@ namespace Firebase.Sample.Firestore {
           customApp.Dispose();
         }
 
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-same-instance");
+          FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance(customApp,"test-db");
+          FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance(customApp,"test-db");
+          Assert("GetInstance() should return the same instance", customDb1 == customDb2);
+          customApp.Dispose();
+        }
+        
         // Verify that invoking `FirebaseFirestore.GetInstance()` with different `FirebaseApp`
         // instances return distinct and consistent `FirebaseFirestore` instances.
         {

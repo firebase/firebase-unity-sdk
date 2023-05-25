@@ -628,9 +628,10 @@ namespace Firebase.Sample.Firestore {
       handler.AssertException(typeof(ArgumentNullException), () => FieldValue.ArrayUnion(null));
     }
 
+    //TODO(Mila) populate invalid test cases
     private static void FirebaseFirestore_GetInstance_Null(UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-                              () => FirebaseFirestore.GetInstance(null));
+                              () => FirebaseFirestore.GetInstance((FirebaseApp)null));
     }
 
     private static void FirebaseFirestore_GetInstance_DisposedApp(UIHandlerAutomated handler) {
