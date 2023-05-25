@@ -77,9 +77,6 @@ namespace Firebase.Sample.Messaging {
     void InitializeFirebase() {
       Firebase.Messaging.FirebaseMessaging.MessageReceived += OnMessageReceived;
       Firebase.Messaging.FirebaseMessaging.TokenReceived += OnTokenReceived;
-      Firebase.Messaging.FirebaseMessaging.SubscribeAsync(topic).ContinueWithOnMainThread(task => {
-        LogTaskCompletion(task, "SubscribeAsync");
-      });
       DebugLog("Firebase Messaging Initialized");
 
       // This will display the prompt to request permission to receive
@@ -89,6 +86,10 @@ namespace Firebase.Sample.Messaging {
       Firebase.Messaging.FirebaseMessaging.RequestPermissionAsync().ContinueWithOnMainThread(
         task => {
           LogTaskCompletion(task, "RequestPermissionAsync");
+
+          Firebase.Messaging.FirebaseMessaging.SubscribeAsync(topic).ContinueWithOnMainThread(task => {
+            LogTaskCompletion(task, "SubscribeAsync");
+          });
         }
       );
       isFirebaseInitialized = true;
