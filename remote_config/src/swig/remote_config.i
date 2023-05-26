@@ -265,10 +265,10 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
         foreach (object obj in list) {
           stringBuilder.Append(obj);
         }
-        newMap[pair.Key] = stringBuilder.ToString();
+        newMap[pair.Key] = stringBuilder.ToString(CultureInfo.InvariantCulture);
       } else {
         // For everything else, go straight to a string.
-        newMap[pair.Key] = pair.Value.ToString();
+        newMap[pair.Key] = pair.Value.ToString(CultureInfo.InvariantCulture);
       }
     }
 
