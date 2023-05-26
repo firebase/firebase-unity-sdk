@@ -44,15 +44,15 @@ namespace Firebase.Firestore {
     private readonly FirebaseFirestoreSettings _settings;
     private readonly TransactionManager _transactionManager;
 
-    private static readonly IDictionary<FirestoreInstanceKey, FirebaseFirestore> _instanceCache =
-        new Dictionary<FirestoreInstanceKey, FirebaseFirestore>();
+    private static readonly IDictionary<FirestoreInstanceCacheKey, FirebaseFirestore> _instanceCache =
+        new Dictionary<FirestoreInstanceCacheKey, FirebaseFirestore>();
 
     private const string kDefaultDatabase = "(default)";
     
     /// <summary>
     /// Returns the <c>database name</c> of this <c>FirebaseFirestore</c> .
     /// </summary>
-    private string DatabaseName { get;  set; }
+    public string DatabaseName { get;  private set; }
 
     // //TODO(Mila)->update
     // We rely on e.g. firestore.Document("a/b").Firestore returning the original Firestore
@@ -173,7 +173,7 @@ namespace Firebase.Firestore {
 
       while (true) {
         FirebaseFirestore firestore;
-        FirestoreInstanceKey key = new FirestoreInstanceKey{App = app,  DatabaseName = database};
+        FirestoreInstanceCacheKey key = new FirestoreInstanceCacheKey{App = app,  DatabaseName = database};
         // Acquire the lock on `_instanceCache` to see if the given `FirebaseApp` is in
         // `_instanceCache`; if it isn't then create the `FirebaseFirestore` instance, put it in the
         // cache, and return it.
@@ -700,14 +700,14 @@ namespace Firebase.Firestore {
     private void RemoveSelfFromInstanceCache() {
       lock (_instanceCache) {
         FirebaseFirestore cachedFirestore;
-        FirestoreInstanceKey key = new FirestoreInstanceKey{App = App, DatabaseName = DatabaseName};
+        FirestoreInstanceCacheKey key = new FirestoreInstanceCacheKey{App = App, DatabaseName = DatabaseName};
         if (_instanceCache.TryGetValue(key, out cachedFirestore) && cachedFirestore == this) {
           _instanceCache.Remove(key);
         }
       }
     }
     
-    private struct FirestoreInstanceKey : IEquatable<FirestoreInstanceKey> {
+    private struct FirestoreInstanceCacheKey : IEquatable<FirestoreInstanceCacheKey> {
       public FirebaseApp App { get; set; }
       public string DatabaseName { get; set; }
 
@@ -715,16 +715,16 @@ namespace Firebase.Firestore {
         return App.GetHashCode() + DatabaseName.GetHashCode();
       }
       public override bool Equals(object obj) {
-        return obj is FirestoreInstanceKey && Equals((FirestoreInstanceKey)obj);
+        return obj is FirestoreInstanceCacheKey && Equals((FirestoreInstanceCacheKey)obj);
       }
-      public bool Equals(FirestoreInstanceKey other) {
+      public bool Equals(FirestoreInstanceCacheKey other) {
         return App == other.App && DatabaseName == other.DatabaseName;
       }
       
-      public static bool operator ==(FirestoreInstanceKey lhs, FirestoreInstanceKey rhs) {
+      public static bool operator ==(FirestoreInstanceCacheKey lhs, FirestoreInstanceCacheKey rhs) {
         return lhs.Equals(rhs);
       }
-      public static bool operator !=(FirestoreInstanceKey lhs, FirestoreInstanceKey rhs) {
+      public static bool operator !=(FirestoreInstanceCacheKey lhs, FirestoreInstanceCacheKey rhs) {
         return !lhs.Equals(rhs);
       }
       public override string ToString() {

@@ -2668,12 +2668,26 @@ namespace Firebase.Sample.Firestore {
         string path;
 
         // Verify that ClearPersistenceAsync() succeeds when invoked on a newly-created
-        // FirebaseFirestore instance.
+        // FirebaseFirestore instance using different GetInstance methods.
+        {
+          var db = FirebaseFirestore.DefaultInstance;
+          AssertTaskSucceeds(db.ClearPersistenceAsync());
+        }
         {
           var app = FirebaseApp.Create(defaultOptions, "TestClearPersistenceApp");
           var db = FirebaseFirestore.GetInstance(app);
           AssertTaskSucceeds(db.ClearPersistenceAsync());
           app.Dispose();
+        }
+        {
+          var app = FirebaseApp.Create(defaultOptions, "TestClearPersistenceApp");
+          var db = FirebaseFirestore.GetInstance(app, "test-db");
+          AssertTaskSucceeds(db.ClearPersistenceAsync());
+          app.Dispose();
+        }
+        {
+          var db = FirebaseFirestore.GetInstance("test-db");
+          AssertTaskSucceeds(db.ClearPersistenceAsync());
         }
 
         // Create a document to use to verify the behavior of ClearPersistenceAsync().
@@ -3896,19 +3910,44 @@ namespace Firebase.Sample.Firestore {
         // Verify that invoking `FirebaseFirestore.GetInstance()` with the same `FirebaseApp`
         // returns the exact same `FirebaseFirestore` instance.
         {
+          FirebaseFirestore defaultDb1 = FirebaseFirestore.DefaultInstance;
+          FirebaseFirestore defaultDb2 = FirebaseFirestore.DefaultInstance;
+          Assert("DefaultInstance should return the same default instance", defaultDb1 == defaultDb2);
+        }
+        {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-same-instance");
           FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance(customApp);
           FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance(customApp);
-          Assert("GetInstance() should return the same instance", customDb1 == customDb2);
+          Assert("GetInstance() should return the same instance when app is the same", customDb1 == customDb2);
           customApp.Dispose();
         }
-
+        {
+          FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance("test-db");
+          FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance("test-db");
+          Assert("GetInstance() should return the same instance when database name is the same", customDb1 == customDb2);
+        }
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-same-instance");
-          FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance(customApp,"test-db");
-          FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance(customApp,"test-db");
-          Assert("GetInstance() should return the same instance", customDb1 == customDb2);
+          FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance(customApp, "test-db");
+          FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance(customApp, "test-db");
+          Assert("GetInstance() should return the same instance when app and database name are the same", customDb1 == customDb2);
           customApp.Dispose();
+        }
+        
+        // Verify that invoking `FirebaseFirestore.GetInstance()` with default `FirebaseApp`
+        // instances and fefault database name return same `FirebaseFirestore` instances.
+        {
+          FirebaseApp defaultApp = FirebaseApp.DefaultInstance;
+          const string defaultDatabaseName = "(default)";
+
+          FirebaseFirestore defaultDb1 = FirebaseFirestore.DefaultInstance;
+          FirebaseFirestore defaultDb2 = FirebaseFirestore.GetInstance(defaultApp);
+          FirebaseFirestore defaultDb3 = FirebaseFirestore.GetInstance(defaultDatabaseName);
+          FirebaseFirestore defaultDb4 = FirebaseFirestore.GetInstance(defaultApp, defaultDatabaseName);
+          Assert("GetInstance() should return the same default instance between 1 and 2", defaultDb1 == defaultDb2);
+          Assert("GetInstance() should return the same default instance between 1 and 3", defaultDb1 == defaultDb3);
+          Assert("GetInstance() should return the same default instance between 1 and 4", defaultDb1 == defaultDb4);
+          defaultApp.Dispose();
         }
         
         // Verify that invoking `FirebaseFirestore.GetInstance()` with different `FirebaseApp`
@@ -3926,12 +3965,26 @@ namespace Firebase.Sample.Firestore {
           customAppB.Dispose();
           customAppA.Dispose();
         }
-
+        
+        // Verify that invoking `FirebaseFirestore.GetInstance()` with same `FirebaseApp` instance
+        // but different database name return distinct and consistent `FirebaseFirestore` instances.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-multi-db");
+          FirebaseFirestore customDbA1 = FirebaseFirestore.GetInstance(customApp,"test-db-A");
+          FirebaseFirestore customDbA2 = FirebaseFirestore.GetInstance(customApp,"test-db-A");
+          FirebaseFirestore customDbB1 = FirebaseFirestore.GetInstance(customApp,"test-db-B");
+          FirebaseFirestore customDbB2 = FirebaseFirestore.GetInstance(customApp, "test-db-B");
+          Assert("GetInstance() should return the same instance A", customDbA1 == customDbA2);
+          Assert("GetInstance() should return the same instance B", customDbB1 == customDbB2);
+          Assert("GetInstance() should return distinct instances", customDbA1 != customDbB1);
+          customApp.Dispose();
+        }
+        
         // Verify that invoking `FirebaseFirestore.GetInstance()` with a disposed `FirebaseApp`
         // does not crash.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-disposed-app");
-          FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore.GetInstance(customApp, "test-db");
           customApp.Dispose();
           AssertException(typeof(ArgumentException),
                           () => FirebaseFirestore.GetInstance(customApp));
@@ -3945,6 +3998,26 @@ namespace Firebase.Sample.Firestore {
           Task terminateTask = customDbBefore.TerminateAsync();
           FirebaseFirestore customDbAfter = FirebaseFirestore.GetInstance(customApp);
           FirebaseFirestore customDbAfter2 = FirebaseFirestore.GetInstance(customApp);
+          // Wait for completion of the `Task` returned from `TerminateAsync()` *after* calling
+          // `GetInstance()` to ensure that `TerminateAsync()` *synchronously* evicts the
+          // "firestore" objects from both the C++ and C# instance caches (as opposed to evicting
+          // from the caches *asynchronously*).
+          AssertTaskSucceeds(terminateTask);
+          Assert("GetInstance() should return a new instance", customDbBefore != customDbAfter);
+          Assert("GetInstance() should return the same instance", customDbAfter == customDbAfter2);
+          DocumentReference doc = customDbAfter.Collection("a").Document();
+          AssertTaskSucceeds(doc.SetAsync(TestData(1)));
+          customApp.Dispose();
+        }
+        
+        // Verify that invoking `FirebaseFirestore.GetInstance()` with custom database name after
+        // `TerminateAsync()` results in a distinct, functional `FirebaseFirestore` instance.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-after-terminate");
+          FirebaseFirestore customDbBefore = FirebaseFirestore.GetInstance(customApp, "test-db");
+          Task terminateTask = customDbBefore.TerminateAsync();
+          FirebaseFirestore customDbAfter = FirebaseFirestore.GetInstance(customApp,"test-db");
+          FirebaseFirestore customDbAfter2 = FirebaseFirestore.GetInstance(customApp,"test-db");
           // Wait for completion of the `Task` returned from `TerminateAsync()` *after* calling
           // `GetInstance()` to ensure that `TerminateAsync()` *synchronously* evicts the
           // "firestore" objects from both the C++ and C# instance caches (as opposed to evicting

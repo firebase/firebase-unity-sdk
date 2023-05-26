@@ -284,8 +284,24 @@ namespace Tests {
     }
 
     [Test]
-    public void FirebaseFirestore_GetInstance_Null() {
-      Assert.Throws<ArgumentNullException>(() => FirebaseFirestore.GetInstance(null));
+    public void FirebaseFirestore_GetInstance_Null_App() {
+      Assert.Throws<ArgumentNullException>(() => FirebaseFirestore.GetInstance((FirebaseApp)null));
+    }
+
+        [Test]
+    public void FirebaseFirestore_GetInstance_Null_Database_Name() {
+      Assert.Throws<ArgumentNullException>(() => FirebaseFirestore.GetInstance((string)null));
+    }
+
+        [Test]
+    public void FirebaseFirestore_GetInstance_Null_App_With_Database_Name() {
+      Assert.Throws<ArgumentNullException>(() => FirebaseFirestore.GetInstance((FirebaseApp)null,"foo"));
+    }
+
+        [Test]
+    public void FirebaseFirestore_GetInstance_App_With_Null_Database_Name() {
+      FirebaseApp app = FirebaseApp.DefaultInstance;
+      Assert.Throws<ArgumentNullException>(() => FirebaseFirestore.GetInstance(app,(string)null));
     }
 
     [Test]
