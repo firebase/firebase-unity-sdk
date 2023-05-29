@@ -52,7 +52,7 @@ namespace Firebase.Firestore {
     /// <summary>
     /// Returns the <c>database name</c> of this <c>FirebaseFirestore</c> .
     /// </summary>
-    public string DatabaseName { get;  private set; }
+    private string DatabaseName { get; set; }
 
     // //TODO(Mila)->update
     // We rely on e.g. firestore.Document("a/b").Firestore returning the original Firestore
@@ -594,7 +594,7 @@ namespace Firebase.Firestore {
     /// used. Calling any other method will result in an error.
     ///
     /// To restart after termination, simply create a new instance of <c>FirebaseFirestore</c> with
-    /// <c>GetInstance()</c> or <c>GetInstance(FirebaseApp)</c>.
+    /// <c>GetInstance</c> methods.
     ///
     /// <c>Terminate()</c> does not cancel any pending writes, and any tasks that are awaiting a
     /// response from the server will not be resolved. The next time you start this instance, it
