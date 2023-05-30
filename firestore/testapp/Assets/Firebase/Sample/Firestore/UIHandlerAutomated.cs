@@ -1712,8 +1712,9 @@ namespace Firebase.Sample.Firestore {
         List<Task> tasks = new List<Task>();
         for (int i = 0; i < numTransactionsPerFirestore; i++)
         {
-          foreach (var (firestore, currentDoc) in documentPerFirestoreMap)
-          {
+          foreach (var item in documentPerFirestoreMap) {
+            FirebaseFirestore firestore = item.Key;
+            DocumentReference currentDoc = item.Value;
             Task txnTask = firestore.RunTransactionAsync(transaction => {
               return transaction.GetSnapshotAsync(currentDoc).ContinueWith(task => {
                 DocumentSnapshot currentSnapshot = task.Result;
