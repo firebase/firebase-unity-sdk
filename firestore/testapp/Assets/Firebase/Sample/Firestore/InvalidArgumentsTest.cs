@@ -645,7 +645,7 @@ namespace Firebase.Sample.Firestore {
     }
     private static void FirebaseFirestore_GetInstance_Null_App_With_Database_Name(UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-        () => FirebaseFirestore.GetInstance((FirebaseApp)null, "foo"));
+        () => FirebaseFirestore.GetInstance((FirebaseApp)null, "a"));
     }
     private static void FirebaseFirestore_GetInstance_App_With_Null_Database_Name(UIHandlerAutomated handler)
     {
