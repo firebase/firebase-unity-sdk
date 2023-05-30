@@ -4212,12 +4212,12 @@ namespace Firebase.Sample.Firestore {
         // instances and fefault database name return same `FirebaseFirestore` instances.
         {
           FirebaseApp defaultApp = FirebaseApp.DefaultInstance;
-          const string defaultDatabaseName = "(default)";
+          const string DefaultDatabaseName = "(default)";
 
           FirebaseFirestore defaultDb1 = FirebaseFirestore.DefaultInstance;
           FirebaseFirestore defaultDb2 = FirebaseFirestore.GetInstance(defaultApp);
-          FirebaseFirestore defaultDb3 = FirebaseFirestore.GetInstance(defaultDatabaseName);
-          FirebaseFirestore defaultDb4 = FirebaseFirestore.GetInstance(defaultApp, defaultDatabaseName);
+          FirebaseFirestore defaultDb3 = FirebaseFirestore.GetInstance(DefaultDatabaseName);
+          FirebaseFirestore defaultDb4 = FirebaseFirestore.GetInstance(defaultApp, DefaultDatabaseName);
           Assert("GetInstance() should return the same default instance between 1 and 2", defaultDb1 == defaultDb2);
           Assert("GetInstance() should return the same default instance between 1 and 3", defaultDb1 == defaultDb3);
           Assert("GetInstance() should return the same default instance between 1 and 4", defaultDb1 == defaultDb4);
