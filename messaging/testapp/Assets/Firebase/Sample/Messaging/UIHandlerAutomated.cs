@@ -39,7 +39,7 @@ namespace Firebase.Sample.Messaging {
 #if (UNITY_IOS || UNITY_TVOS)
       // Messaging on iOS requires user interaction to give permissions
       // So if running on CI, just run a dummy test instead.
-      Func<Test>[] tests = {
+      Func<Task>[] tests = {
         MakeTest(TestDummy)
       };
       string[] customTests = {
@@ -53,9 +53,9 @@ namespace Firebase.Sample.Messaging {
       // Don't use base.Start(), since that will trigger the permission request.
       DebugLog("Skipping usual Messaging tests on CI + iOS");
       isFirebaseInitialized = true;
-      return;
+
 #endif // (UNITY_IOS || UNITY_TVOS)
-#endif // FIREBASE_RUNNING_FROM_CI
+#else // FIREBASE_RUNNING_FROM_CI
 
       Func<Task>[] tests = {
         // Disable these tests on desktop, as desktop never receives a token, and so WaitForToken
@@ -104,6 +104,7 @@ namespace Firebase.Sample.Messaging {
       );
 
       base.Start();
+#endif // FIREBASE_RUNNING_FROM_CI
     }
 
     protected override void Update() {

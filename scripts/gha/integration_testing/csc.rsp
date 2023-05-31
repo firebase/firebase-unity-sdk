@@ -1,0 +1,4 @@
+# MSBuild response file used by the Testapp Builder to let the Unity testapps
+# identify when they are being run from CI, regardless of platform.
+# For more info, see: https://docs.unity3d.com/Manual/CustomScriptingSymbols.html
+-define:FIREBASE_RUNNING_FROM_CI
