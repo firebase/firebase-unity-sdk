@@ -217,7 +217,7 @@ namespace Firebase.Sample.Firestore {
     // Force the test case to run against local firestore emulator.
     private void UseFirestoreEmulator(FirebaseFirestore firestore) {
       firestore.Settings.Host = "localhost:8080";
-      firestore.Settings.SslEnabled = true;
+      firestore.Settings.SslEnabled = false;
     }
 
     // Fails the test by throwing an exception with the given `reason` string.

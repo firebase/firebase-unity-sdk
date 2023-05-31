@@ -78,6 +78,7 @@ Release Notes
     - Auth: Remove internal methods.
     - General: Fix an [issue](https://github.com/firebase/firebase-unity-sdk/issues/726)
       where AppCheck bundles were unintentionally included in App in the tgz.
+    - Firestore: Add multi-database support. ([#738](https://github.com/firebase/firebase-unity-sdk/pull/738)).
 
 ### 11.0.0
 - Changes
