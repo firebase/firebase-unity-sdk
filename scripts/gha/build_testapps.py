@@ -427,6 +427,7 @@ def setup_unity_project(dir_helper, setup_options):
   _add_menu_scene(dir_helper)
   _add_automated_test_runner(dir_helper)
   # If running on CI, copy over the file that defines that custom scripting symbol
+  # For more info, see: https://docs.unity3d.com/Manual/CustomScriptingSymbols.html
   if FLAGS.ci:
     shutil.copy(
         os.path.join(dir_helper.builder_dir, "csc.rsp"),
