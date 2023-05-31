@@ -73,6 +73,8 @@ Release Notes
 -------------
 # Upcoming release
 - Changes
+    - Auth: Fix a [crash](https://github.com/firebase/firebase-unity-sdk/issues/733)
+      that could occur when referencing CurrentUser. 
     - Auth: Remove internal methods.
     - General: Fix an [issue](https://github.com/firebase/firebase-unity-sdk/issues/726)
       where AppCheck bundles were unintentionally included in App in the tgz.
