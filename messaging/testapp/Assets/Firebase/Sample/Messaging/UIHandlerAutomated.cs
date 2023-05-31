@@ -35,8 +35,7 @@ namespace Firebase.Sample.Messaging {
     private FirebaseMessage lastReceivedMessage;
 
     protected override void Start() {
-#if FIREBASE_RUNNING_FROM_CI
-#if (UNITY_IOS || UNITY_TVOS)
+#if FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
       // Messaging on iOS requires user interaction to give permissions
       // So if running on CI, just run a dummy test instead.
       Func<Task>[] tests = {
@@ -54,8 +53,7 @@ namespace Firebase.Sample.Messaging {
       DebugLog("Skipping usual Messaging tests on CI + iOS");
       isFirebaseInitialized = true;
 
-#endif // (UNITY_IOS || UNITY_TVOS)
-#else // FIREBASE_RUNNING_FROM_CI
+#else // FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
 
       Func<Task>[] tests = {
         // Disable these tests on desktop, as desktop never receives a token, and so WaitForToken
