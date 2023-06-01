@@ -1701,20 +1701,22 @@ namespace Firebase.Sample.Firestore {
         int numOfFirestores = 3;
         int numTransactionsPerFirestore = 3;
 
-        Dictionary<FirebaseFirestore, DocumentReference> documentPerFirestoreMap = new Dictionary<FirebaseFirestore, DocumentReference>(3);
+        FirebaseFirestore[] firestores = new FirebaseFirestore[3];
+        DocumentReference[] docs = new DocumentReference[3];
         for (int i = 0; i < numOfFirestores; i++)
         {
           FirebaseFirestore firestore = FirebaseFirestore.GetInstance(app, "transactions-in-parallel" + (i));
           UseFirestoreEmulator(firestore);
-          documentPerFirestoreMap[firestore] = firestore.Collection("foo").Document();
+          firestores[i] = firestore;
+          docs[i] = firestore.Collection("foo").Document();
         }
         
         List<Task> tasks = new List<Task>();
         for (int i = 0; i < numTransactionsPerFirestore; i++)
         {
-          foreach (KeyValuePair<FirebaseFirestore, DocumentReference> item in documentPerFirestoreMap) {
-            FirebaseFirestore firestore = item.Key;
-            DocumentReference currentDoc = item.Value;
+          for(int j = 0; j < numOfFirestores; j++) {
+            FirebaseFirestore firestore = firestores[j];
+            DocumentReference currentDoc = docs[j];
             Task txnTask = firestore.RunTransactionAsync(transaction => {
               return transaction.GetSnapshotAsync(currentDoc).ContinueWith(task => {
                 DocumentSnapshot currentSnapshot = task.Result;
@@ -1736,7 +1738,7 @@ namespace Firebase.Sample.Firestore {
           AssertTaskSucceeds(task);
         }
 
-        foreach (DocumentReference doc in documentPerFirestoreMap.Values)
+        foreach (DocumentReference doc in docs)
         {
           DocumentSnapshot snapshot = AssertTaskSucceeds(doc.GetSnapshotAsync(Source.Server));
           int actualValue = snapshot.GetValue<int>("count", ServerTimestampBehavior.None);
