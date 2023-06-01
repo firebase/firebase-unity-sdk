@@ -13,7 +13,7 @@ namespace Firebase.Sample.Messaging {
 
     private const string TestTopic = "TestTopic";
     private const string ServerKey = "REPLACE_WITH_YOUR_SERVER_KEY";
-    private const string FirebaseBackendUrl = "REPLACE_WITH_YOUR_BACKEND_URL";
+    private const string FirebaseBackendUrl = "https://fcm.googleapis.com/fcm/send";
 
     private const string MessageFoo = "This is a test message";
     private const string MessageBar = "It contains some data";
@@ -35,6 +35,26 @@ namespace Firebase.Sample.Messaging {
     private FirebaseMessage lastReceivedMessage;
 
     protected override void Start() {
+#if FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
+      // Messaging on iOS requires user interaction to give permissions
+      // So if running on CI, just run a dummy test instead.
+      Func<Task>[] tests = {
+        MakeTest(TestDummy)
+      };
+      string[] customTests = {
+        "TestDummy"
+      };
+      testRunner = AutomatedTestRunner.CreateTestRunner(
+        testsToRun: tests,
+        logFunc: DebugLog,
+        testNames: customTests
+      );
+      // Don't use base.Start(), since that will trigger the permission request.
+      DebugLog("Skipping usual Messaging tests on CI + iOS");
+      isFirebaseInitialized = true;
+
+#else // FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
+
       Func<Task>[] tests = {
         // Disable these tests on desktop, as desktop never receives a token, and so WaitForToken
         // (called by all of these tests) stalls forever.
@@ -82,6 +102,7 @@ namespace Firebase.Sample.Messaging {
       );
 
       base.Start();
+#endif // FIREBASE_RUNNING_FROM_CI
     }
 
     protected override void Update() {
