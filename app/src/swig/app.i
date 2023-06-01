@@ -374,6 +374,8 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
 // Remove GetInstance() as it's replaced by the DefaultInstance property below.
 %ignore firebase::App::GetInstance();
 %ignore firebase::App::GetInstance(const char*);
+// Remove GetApps() until it is ready to be released.
+%ignore firebase::App::GetApps();
 
 %typemap(cscode) firebase::App %{
   // Static constructor to initialize C# logging
