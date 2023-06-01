@@ -426,6 +426,12 @@ def setup_unity_project(dir_helper, setup_options):
   _copy_unity_assets(dir_helper, setup_options.testapp_file_filters)
   _add_menu_scene(dir_helper)
   _add_automated_test_runner(dir_helper)
+  # If running on CI, copy over the file that defines that custom scripting symbol
+  # For more info, see: https://docs.unity3d.com/Manual/CustomScriptingSymbols.html
+  if FLAGS.ci:
+    shutil.copy(
+        os.path.join(dir_helper.builder_dir, "csc.rsp"),
+        dir_helper.unity_project_assets_dir)
   # This is the editor script that performs builds.
   app_builder = dir_helper.copy_editor_script("AppBuilderHelper.cs")
   if not setup_options.enable_firebase:
