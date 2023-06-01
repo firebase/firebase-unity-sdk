@@ -1712,7 +1712,7 @@ namespace Firebase.Sample.Firestore {
         List<Task> tasks = new List<Task>();
         for (int i = 0; i < numTransactionsPerFirestore; i++)
         {
-          foreach (var item in documentPerFirestoreMap) {
+          foreach (KeyValuePair<FirebaseFirestore, DocumentReference> item in documentPerFirestoreMap) {
             FirebaseFirestore firestore = item.Key;
             DocumentReference currentDoc = item.Value;
             Task txnTask = firestore.RunTransactionAsync(transaction => {
