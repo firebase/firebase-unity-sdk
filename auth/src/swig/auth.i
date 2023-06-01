@@ -616,8 +616,6 @@ static CppInstanceManager<Auth> g_auth_instances;
   private System.IntPtr authStateListener;
   // Pointer to IdTokenListenerImpl.
   private System.IntPtr idTokenListener;
-  // Proxy for the current user object.
-  private FirebaseUser currentUser;
 
   // Retrieve a reference to the auth object associated with the specified app.
   private static FirebaseAuth ProxyFromAppCPtr(System.IntPtr appCPtr) {
@@ -690,16 +688,6 @@ static CppInstanceManager<Auth> g_auth_instances;
           appProxy = null;
           appCPtr = System.IntPtr.Zero;
 
-          // Detatch the user proxy from the C++ object as it will no longer
-          // be valid.  FirebaseUser never owns the C++ object and so will never
-          // delete it.
-          // NOTE: This uses the cached currentUser as the auth object may be
-          // destroyed at this point.
-          if (currentUser != null) {
-            currentUser.Dispose();
-            currentUser = null;
-          }
-
           // Destroy token and auth state listeners.
           if (authStateListener != System.IntPtr.Zero) {
             AuthUtil.DestroyAuthStateListener(this, authStateListener);
@@ -734,9 +722,6 @@ static CppInstanceManager<Auth> g_auth_instances;
     ForwardStateChange(appCPtr, (auth) => {
         // If any state changed events are registered, signal them.
         if (auth.stateChangedImpl != null) {
-          lock (appCPtrToAuth) {
-            auth.UpdateCurrentUser(auth.CurrentUserInternal);
-          }
           auth.stateChangedImpl(auth, System.EventArgs.Empty);
         }
 
@@ -877,25 +862,17 @@ static CppInstanceManager<Auth> g_auth_instances;
     return taskCompletionSource.Task;
   }
 
-  // Update the cached user proxy for this object.
-  private FirebaseUser UpdateCurrentUser(FirebaseUser proxy) {
-    lock (appCPtrToAuth) {
-      if (proxy == null || !proxy.IsValid()) {
-        // If there is no current user, remove the cached proxy.
-        currentUser = null;
-      } else if (currentUser == null || !currentUser.IsValid()) {
-        // If no proxy is cached, cache the current proxy.
-        currentUser = proxy;
-      } else {
-        // If the user changed, update the cached proxy.
-        if (!currentUser.EqualToInternal(proxy)) {
-          currentUser.Dispose();
-          currentUser = proxy;
-        }
+  // Does additional work to set up the FirebaseUser.
+  private FirebaseUser SetupUser(FirebaseUser user) {
+    if (user != null) {
+      // If the user isn't valid, switch to use null instead
+      if (!user.IsValid()) {
+        return null;
       }
-      if (currentUser != null) currentUser.authProxy = this;
+      // Set the Auth object in the user
+      user.authProxy = this;
     }
-    return currentUser;
+    return user;
   }
 
   /// @brief Synchronously gets the cached current user, or null if there is none.
@@ -905,7 +882,7 @@ static CppInstanceManager<Auth> g_auth_instances;
   public FirebaseUser CurrentUser {
     get {
       var user = swigCPtr.Handle != System.IntPtr.Zero ? CurrentUserInternal : null;
-      return UpdateCurrentUser(user);
+      return SetupUser(user);
     }
   }
 
@@ -1160,7 +1137,7 @@ static CppInstanceManager<Auth> g_auth_instances;
       Firebase.Internal.TaskCompletionSourceCompat<FirebaseUser>.SetException(
           taskCompletionSource, task.Exception);
     } else {
-      taskCompletionSource.SetResult(UpdateCurrentUser(task.Result));
+      taskCompletionSource.SetResult(SetupUser(task.Result));
     }
   }
 
@@ -1195,7 +1172,7 @@ static CppInstanceManager<Auth> g_auth_instances;
       AuthResult result = task.Result;
       // This assume all the users from AuthResult points to current users.
       // TODO(AuthRewrite): Update this logic when we can have multile FirebaseUser.
-      result.UserInternal = UpdateCurrentUser(result.User);
+      result.UserInternal = SetupUser(result.User);
       taskCompletionSource.SetResult(result);
     }
   }
@@ -1314,7 +1291,7 @@ static CppInstanceManager<Auth> g_auth_instances;
 
   /// The currently signed-in FirebaseUser, or null if there isn't any (i.e.
   /// the user is signed out).
-  public FirebaseUser User { get { return authProxy.CurrentUser; } }
+  public FirebaseUser User { get { return authProxy != null ? authProxy.CurrentUser : null; } }
 %}
 
 // AuthResult

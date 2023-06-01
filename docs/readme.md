@@ -71,11 +71,22 @@ Support
 
 Release Notes
 -------------
-# Upcoming release
+### 11.1.0
 - Changes
-    - Auth: Remove internal methods.
+    - General: Update to Firebase C++ SDK version 11.1.0.
+    - General (Android): Update Firebase Android BoM dependencies to v32.1.0.
+    - General (iOS): Update Firebase Cocoapods dependencies to v10.10.0.
+    - General (Android): Fix for deadlock within JniResultCallback, commonly seen
+      within Messaging, but affecting other products as well.
     - General: Fix an [issue](https://github.com/firebase/firebase-unity-sdk/issues/726)
       where AppCheck bundles were unintentionally included in App in the tgz.
+    - Auth: Fix a [crash](https://github.com/firebase/firebase-unity-sdk/issues/733)
+      that could occur when referencing CurrentUser. 
+    - Auth: Remove internal methods.
+    - Database/Firestore (Desktop): Fixed a crash on Windows when the user's home
+      directory contains non-ANSI characters (Unicode above U+00FF).
+    - Storage (Desktop): Fixed a crash on Windows when uploading files from a path
+      containing non-ANSI characters (Unicode above U+00FF).
 
 ### 11.0.0
 - Changes
