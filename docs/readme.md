@@ -71,6 +71,14 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+- Changes
+    - Remote Config (Desktop): Fixed numeric conversion when the system
+      language's number format uses commas as decimal points.
+    - Remote Config (Desktop): Fixed handling of time zones on Windows when the
+      time zone name in the current system language contains an accented
+      character or apostrophe.
+
 ### 11.1.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.1.0.
