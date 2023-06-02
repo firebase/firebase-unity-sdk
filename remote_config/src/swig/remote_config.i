@@ -263,12 +263,12 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
         var list = pair.Value as System.Collections.IEnumerable;
         var stringBuilder = new System.Text.StringBuilder();
         foreach (object obj in list) {
-          stringBuilder.Append(obj);
+          stringBuilder.Append(System.Convert.ToString(obj, System.Globalization.CultureInfo.InvariantCulture));
         }
         newMap[pair.Key] = stringBuilder.ToString();
       } else {
         // For everything else, go straight to a string.
-        newMap[pair.Key] = pair.Value.ToString();
+        newMap[pair.Key] = System.Convert.ToString(pair.Value, System.Globalization.CultureInfo.InvariantCulture);
       }
     }
 
