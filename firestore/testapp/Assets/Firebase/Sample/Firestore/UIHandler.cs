@@ -58,6 +58,8 @@ namespace Firebase.Sample.Firestore {
     // Previously completed task.
     protected Task previousTask;
 
+    private static readonly IDictionary<FirebaseApp, FirebaseFirestore> _firestores =
+        new Dictionary<FirebaseApp, FirebaseFirestore>();
     /**
      * Compares two objects for deep equality.
      */
@@ -199,11 +201,70 @@ namespace Firebase.Sample.Firestore {
       }
     }
 
-    protected internal FirebaseFirestore db {
+    protected internal FirebaseFirestore TestFirestore {
       get {
-        return FirebaseFirestore.DefaultInstance;
+        FirebaseApp app = FirebaseApp.DefaultInstance;
+        return TestFirestoreWithCustomApp(app);
       }
     }
+
+    protected internal FirebaseFirestore TestFirestoreWithCustomApp(FirebaseApp app) {
+      FirebaseFirestore firestore;
+      lock (_firestores) {
+        if (!_firestores.TryGetValue(app, out firestore)) {
+          firestore = FirebaseFirestore.GetInstance(app);
+          UseTargetBackend(firestore);
+          _firestores[app] = firestore;
+        }
+      }
+      
+      return firestore; 
+    }
+
+    protected internal void DeleteFirestore(FirebaseFirestore db) {
+      lock (_firestores) {
+        foreach (var item in _firestores.Where(kvp => kvp.Value == db).ToList()) {
+          _firestores.Remove(item.Key);
+        }
+      }
+    }
+
+    protected internal void DeleteApp(FirebaseApp app) {
+      lock (_firestores) {
+        _firestores.Remove(app);
+        app.Dispose();
+      }
+    }
+    
+    // Check if the `USE_FIRESTORE_EMULATOR` environment variable is set regardsless
+    // of its value.
+    protected internal bool IsUsingFirestoreEmulator() { 
+      return (Environment.GetEnvironmentVariable("USE_FIRESTORE_EMULATOR") != null);
+    }
+
+    // Force the Firestore instance to use local firestore emulator as host.
+    protected internal void UseTargetBackend(FirebaseFirestore db) {
+      if (!this.IsUsingFirestoreEmulator()) {
+        return;
+      }
+
+      #if UNITY_ANDROID
+        // Special IP to access the hosting OS from Android Emulator.
+        string localHost = "10.0.2.2";
+      #else
+        string localHost = "localhost";
+      #endif  // UNITY_ANDROID
+
+      // Use FIRESTORE_EMULATOR_PORT if it is set to non empty string,
+      // otherwise use the default port.
+      string port = Environment.GetEnvironmentVariable("FIRESTORE_EMULATOR_PORT") ?? "8080";
+      string address =  localHost + ":" + port;
+
+      db.Settings.Host = address;
+      // Emulator does not support ssl.
+      db.Settings.SslEnabled = false;
+    }
+
 
     // Cancel the currently running operation.
     protected void CancelOperation() {
@@ -222,7 +283,7 @@ namespace Firebase.Sample.Firestore {
     }
 
     private CollectionReference GetCollectionReference() {
-      return db.Collection(collectionPath);
+      return TestFirestore.Collection(collectionPath);
     }
 
     private DocumentReference GetDocumentReference() {
@@ -303,9 +364,9 @@ namespace Firebase.Sample.Firestore {
 
     // Perform a batch write.
     private IEnumerator PerformBatchWrite() {
-      DocumentReference doc1 = db.Collection("col2").Document("batch_doc1");
-      DocumentReference doc2 = db.Collection("col2").Document("batch_doc2");
-      DocumentReference doc3 = db.Collection("col2").Document("batch_doc3");
+      DocumentReference doc1 = TestFirestore.Collection("col2").Document("batch_doc1");
+      DocumentReference doc2 = TestFirestore.Collection("col2").Document("batch_doc2");
+      DocumentReference doc3 = TestFirestore.Collection("col2").Document("batch_doc3");
 
       // Initialize doc1 and doc2 with some data.
       var initialData = new Dictionary<string, object>{
@@ -397,9 +458,9 @@ namespace Firebase.Sample.Firestore {
     }
 
     private IEnumerator PerformTransaction() {
-      DocumentReference doc1 = db.Collection("col3").Document("txn_doc1");
-      DocumentReference doc2 = db.Collection("col3").Document("txn_doc2");
-      DocumentReference doc3 = db.Collection("col3").Document("txn_doc3");
+      DocumentReference doc1 = TestFirestore.Collection("col3").Document("txn_doc1");
+      DocumentReference doc2 = TestFirestore.Collection("col3").Document("txn_doc2");
+      DocumentReference doc3 = TestFirestore.Collection("col3").Document("txn_doc3");
 
       // Initialize doc1 and doc2 with some data.
       var initialData = new Dictionary<string, object>{
