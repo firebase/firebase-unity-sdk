@@ -173,7 +173,7 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
         BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
         if ((buildTarget == BuildTarget.iOS || buildTarget == BuildTarget.tvOS) &&
             Application.platform == RuntimePlatform.WindowsEditor) {
-            Debug.LogError(DocRef.IOSNotSupportedOnWindows);
+            Debug.LogWarning(DocRef.IOSNotSupportedOnWindows);
         }
     }
 
