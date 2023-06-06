@@ -699,38 +699,35 @@ namespace Firebase.Firestore {
         }
       }
     }
-    
-    private readonly struct  FirestoreInstanceCacheKey : IEquatable<FirestoreInstanceCacheKey> {
-      public readonly FirebaseApp App { get; }
-      public readonly string DatabaseName { get; }
-
-      public FirestoreInstanceCacheKey(FirebaseApp app, string databaseName)
-      {
-        App = app;
-        DatabaseName = databaseName;
-      }
-      
-      public override int GetHashCode() {
-        return App.Name.GetHashCode() + DatabaseName.GetHashCode();
-      }
-      public override bool Equals(object obj) {
-        return obj is FirestoreInstanceCacheKey && Equals((FirestoreInstanceCacheKey)obj);
-      }
-      public bool Equals(FirestoreInstanceCacheKey other) {
-        return App.Name == other.App.Name && DatabaseName == other.DatabaseName;
-      }
-      
-      public static bool operator ==(FirestoreInstanceCacheKey lhs, FirestoreInstanceCacheKey rhs) {
-        return lhs.Equals(rhs);
-      }
-      public static bool operator !=(FirestoreInstanceCacheKey lhs, FirestoreInstanceCacheKey rhs) {
-        return !lhs.Equals(rhs);
-      }
-      public override string ToString() {
-        return String.Format("FirestoreInstanceKey: App = {0}, DatabaseName = {1}", App.Name, DatabaseName);
-      }
-    }
-    
   }
+  public readonly struct  FirestoreInstanceCacheKey : IEquatable<FirestoreInstanceCacheKey> {
+    public readonly FirebaseApp App { get; }
+    public readonly string DatabaseName { get; }
 
+    public FirestoreInstanceCacheKey(FirebaseApp app, string databaseName)
+    {
+      App = app;
+      DatabaseName = databaseName;
+    }
+      
+    public override int GetHashCode() {
+      return App.Name.GetHashCode() + DatabaseName.GetHashCode();
+    }
+    public override bool Equals(object obj) {
+      return obj is FirestoreInstanceCacheKey && Equals((FirestoreInstanceCacheKey)obj);
+    }
+    public bool Equals(FirestoreInstanceCacheKey other) {
+      return App.Name == other.App.Name && DatabaseName == other.DatabaseName;
+    }
+      
+    public static bool operator ==(FirestoreInstanceCacheKey lhs, FirestoreInstanceCacheKey rhs) {
+      return lhs.Equals(rhs);
+    }
+    public static bool operator !=(FirestoreInstanceCacheKey lhs, FirestoreInstanceCacheKey rhs) {
+      return !lhs.Equals(rhs);
+    }
+    public override string ToString() {
+      return String.Format("FirestoreInstanceKey: App = {0}, DatabaseName = {1}", App.Name, DatabaseName);
+    }
+  }
 }

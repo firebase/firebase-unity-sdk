@@ -415,19 +415,19 @@ namespace Firebase.Sample.Firestore {
     }
 
     private static void CollectionReference_AddAsync_NullDocumentData(UIHandlerAutomated handler) {
-      CollectionReference collection = handler.db.Collection("a");
+      CollectionReference collection = handler.TestFirestore().Collection("a");
       handler.AssertException(typeof(ArgumentNullException), () => collection.AddAsync(null));
     }
 
     private static void CollectionReference_AddAsync_DocumentDataWithEmptyKey(
         UIHandlerAutomated handler) {
-      CollectionReference collection = handler.db.Collection("a");
+      CollectionReference collection = handler.TestFirestore().Collection("a");
       handler.AssertTaskFaults(collection.AddAsync(new Dictionary<string, object> { { "", 42 } }));
     }
 
     private static void CollectionReference_AddAsync_InvalidDocumentDataType(
         UIHandlerAutomated handler) {
-      CollectionReference collection = handler.db.Collection("a");
+      CollectionReference collection = handler.TestFirestore().Collection("a");
       handler.AssertException(typeof(ArgumentException), () => collection.AddAsync(42));
     }
 
@@ -656,109 +656,109 @@ namespace Firebase.Sample.Firestore {
     
     private static void FirebaseFirestore_GetInstance_DisposedApp(UIHandlerAutomated handler) {
       FirebaseApp disposedApp =
-          FirebaseApp.Create(handler.db.App.Options, "test-getinstance-disposedapp");
+          FirebaseApp.Create(handler.TestFirestore().App.Options, "test-getinstance-disposedapp");
       disposedApp.Dispose();
       handler.AssertException(typeof(ArgumentException),
                               () => FirebaseFirestore.GetInstance(disposedApp));
     }
 
     private static void FirebaseFirestore_Collection_NullStringPath(UIHandlerAutomated handler) {
-      handler.AssertException(typeof(ArgumentNullException), () => handler.db.Collection(null));
+      handler.AssertException(typeof(ArgumentNullException), () => handler.TestFirestore().Collection(null));
     }
 
     private static void FirebaseFirestore_Collection_EmptyStringPath(UIHandlerAutomated handler) {
-      handler.AssertException(typeof(ArgumentException), () => handler.db.Collection(""));
+      handler.AssertException(typeof(ArgumentException), () => handler.TestFirestore().Collection(""));
     }
 
     private static void FirebaseFirestore_Collection_EvenNumberOfPathSegments(
         UIHandlerAutomated handler) {
-      handler.AssertException(typeof(ArgumentException), () => handler.db.Collection("a/b"));
+      handler.AssertException(typeof(ArgumentException), () => handler.TestFirestore().Collection("a/b"));
     }
 
     private static void FirebaseFirestore_CollectionGroup_NullCollectionId(
         UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.CollectionGroup(null));
+                              () => handler.TestFirestore().CollectionGroup(null));
     }
 
     private static void FirebaseFirestore_CollectionGroup_EmptyCollectionId(
         UIHandlerAutomated handler) {
-      handler.AssertException(typeof(ArgumentException), () => handler.db.CollectionGroup(""));
+      handler.AssertException(typeof(ArgumentException), () => handler.TestFirestore().CollectionGroup(""));
     }
 
     private static void FirebaseFirestore_CollectionGroup_CollectionIdContainsSlash(
         UIHandlerAutomated handler) {
-      handler.AssertException(typeof(ArgumentException), () => handler.db.CollectionGroup("a/b"));
+      handler.AssertException(typeof(ArgumentException), () => handler.TestFirestore().CollectionGroup("a/b"));
     }
 
     private static void FirebaseFirestore_Document_NullStringPath(UIHandlerAutomated handler) {
-      handler.AssertException(typeof(ArgumentNullException), () => handler.db.Document(null));
+      handler.AssertException(typeof(ArgumentNullException), () => handler.TestFirestore().Document(null));
     }
 
     private static void FirebaseFirestore_Document_EmptyStringPath(UIHandlerAutomated handler) {
-      handler.AssertException(typeof(ArgumentException), () => handler.db.Document(""));
+      handler.AssertException(typeof(ArgumentException), () => handler.TestFirestore().Document(""));
     }
 
     private static void FirebaseFirestore_Document_OddNumberOfPathSegments(
         UIHandlerAutomated handler) {
-      handler.AssertException(typeof(ArgumentException), () => handler.db.Document("a/b/c"));
+      handler.AssertException(typeof(ArgumentException), () => handler.TestFirestore().Document("a/b/c"));
     }
 
     private static void FirebaseFirestore_ListenForSnapshotsInSync_NullCallback(
         UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.ListenForSnapshotsInSync(null));
+                              () => handler.TestFirestore().ListenForSnapshotsInSync(null));
     }
 
     private static void FirebaseFirestore_RunTransactionAsync_WithoutTypeParameter_NullCallback(
         UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.RunTransactionAsync(null));
+                              () => handler.TestFirestore().RunTransactionAsync(null));
     }
 
     private static void FirebaseFirestore_RunTransactionAsync_WithTypeParameter_NullCallback(
         UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.RunTransactionAsync<object>(null));
+                              () => handler.TestFirestore().RunTransactionAsync<object>(null));
     }
 
     private static void FirebaseFirestore_RunTransactionAsync_WithoutTypeParameter_WithOptions_NullCallback(
         UIHandlerAutomated handler) {
       var options = new TransactionOptions();
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.RunTransactionAsync(options, null));
+                              () => handler.TestFirestore().RunTransactionAsync(options, null));
     }
 
     private static void FirebaseFirestore_RunTransactionAsync_WithTypeParameter_WithOptions_NullCallback(
         UIHandlerAutomated handler) {
       var options = new TransactionOptions();
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.RunTransactionAsync<object>(options, null));
+                              () => handler.TestFirestore().RunTransactionAsync<object>(options, null));
     }
 
     private static void FirebaseFirestore_RunTransactionAsync_WithoutTypeParameter_WithOptions_NullOptions(
         UIHandlerAutomated handler) {
       DocumentReference doc = handler.TestDocument();
       handler.AssertException(typeof(ArgumentNullException),
-          () => handler.db.RunTransactionAsync(null, tx => tx.GetSnapshotAsync(doc)));
+          () => handler.TestFirestore().RunTransactionAsync(null, tx => tx.GetSnapshotAsync(doc)));
     }
 
     private static void FirebaseFirestore_RunTransactionAsync_WithTypeParameter_WithOptions_NullOptions(
         UIHandlerAutomated handler) {
       DocumentReference doc = handler.TestDocument();
       handler.AssertException(typeof(ArgumentNullException),
-          () => handler.db.RunTransactionAsync<object>(null, tx => tx.GetSnapshotAsync(doc)
+          () => handler.TestFirestore().RunTransactionAsync<object>(null, tx => tx.GetSnapshotAsync(doc)
               .ContinueWith(snapshot => new object()))
       );
     }
 
     private static void FirebaseFirestoreSettings_Host_Null(UIHandlerAutomated handler) {
-      FirebaseFirestoreSettings settings = handler.db.Settings;
+      FirebaseFirestoreSettings settings = handler.TestFirestore().Settings;
       handler.AssertException(typeof(ArgumentNullException), () => settings.Host = null);
     }
 
     private static void FirebaseFirestoreSettings_Host_EmptyString(UIHandlerAutomated handler) {
-      FirebaseFirestoreSettings settings = handler.db.Settings;
+      FirebaseFirestoreSettings settings = handler.TestFirestore().Settings;
       handler.AssertException(typeof(ArgumentException), () => settings.Host = "");
     }
 
@@ -1163,7 +1163,7 @@ namespace Firebase.Sample.Firestore {
         UIHandlerAutomated handler) {
       DocumentReference doc = handler.TestDocument();
       handler.AssertTaskSucceeds(doc.SetAsync(handler.TestData(), null));
-      handler.AssertTaskSucceeds(handler.db.RunTransactionAsync(transaction => {
+      handler.AssertTaskSucceeds(handler.TestFirestore().RunTransactionAsync(transaction => {
         return transaction.GetSnapshotAsync(doc).ContinueWith(
             snapshot => { transaction.Update(doc, new Dictionary<string, object>()); });
       }));
@@ -1220,32 +1220,32 @@ namespace Firebase.Sample.Firestore {
         UIHandlerAutomated handler) {
       DocumentReference doc = handler.TestDocument();
       handler.AssertTaskSucceeds(doc.SetAsync(handler.TestData(), null));
-      handler.AssertTaskSucceeds(handler.db.RunTransactionAsync(transaction => {
+      handler.AssertTaskSucceeds(handler.TestFirestore().RunTransactionAsync(transaction => {
         return transaction.GetSnapshotAsync(doc).ContinueWith(
             snapshot => { transaction.Update(doc, new Dictionary<FieldPath, object>()); });
       }));
     }
 
     private static void WriteBatch_Delete_NullDocumentReference(UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       handler.AssertException(typeof(ArgumentNullException), () => writeBatch.Delete(null));
     }
 
     private static void WriteBatch_Set_NullDocumentReference(UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       var nonNullDocumentData = handler.TestData();
       handler.AssertException(typeof(ArgumentNullException),
                               () => writeBatch.Set(null, nonNullDocumentData, null));
     }
 
     private static void WriteBatch_Set_NullDocumentData(UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       DocumentReference doc = handler.TestDocument();
       handler.AssertException(typeof(ArgumentNullException), () => writeBatch.Set(doc, null, null));
     }
 
     private static void WriteBatch_Set_DocumentDataWithEmptyKey(UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       DocumentReference doc = handler.TestDocument();
       handler.AssertException(
           typeof(ArgumentException),
@@ -1253,14 +1253,14 @@ namespace Firebase.Sample.Firestore {
     }
 
     private static void WriteBatch_Set_InvalidDocumentDataType(UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       DocumentReference doc = handler.TestDocument();
       handler.AssertException(typeof(ArgumentException), () => writeBatch.Set(doc, 42, null));
     }
 
     private static void WriteBatch_Update_NullDocumentReference_NonNullStringKeyDictionary(
         UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       handler.AssertException(
           typeof(ArgumentNullException),
           () => writeBatch.Update(null, new Dictionary<string, object> { { "key", 42 } }));
@@ -1268,7 +1268,7 @@ namespace Firebase.Sample.Firestore {
 
     private static void WriteBatch_Update_NonNullDocumentReference_NullStringKeyDictionary(
         UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       DocumentReference doc = handler.TestDocument();
       handler.AssertException(typeof(ArgumentNullException),
                               () => writeBatch.Update(doc, (IDictionary<string, object>)null));
@@ -1276,7 +1276,7 @@ namespace Firebase.Sample.Firestore {
 
     private static void WriteBatch_Update_NonNullDocumentReference_EmptyStringKeyDictionary(
         UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       DocumentReference doc = handler.TestDocument();
       handler.AssertTaskSucceeds(doc.SetAsync(handler.TestData(), null));
       writeBatch.Update(doc, new Dictionary<string, object>());
@@ -1285,7 +1285,7 @@ namespace Firebase.Sample.Firestore {
 
     private static void WriteBatch_Update_NonNullDocumentReference_StringKeyDictionaryWithEmptyKey(
         UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       DocumentReference doc = handler.TestDocument();
       handler.AssertException(
           typeof(ArgumentException),
@@ -1294,14 +1294,14 @@ namespace Firebase.Sample.Firestore {
 
     private static void WriteBatch_Update_NullDocumentReference_NonNullFieldString(
         UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       handler.AssertException(typeof(ArgumentNullException),
                               () => writeBatch.Update(null, "fieldName", 42));
     }
 
     private static void WriteBatch_Update_NonNullDocumentReference_NullFieldString(
         UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       DocumentReference doc = handler.TestDocument();
       handler.AssertException(typeof(ArgumentNullException),
                               () => writeBatch.Update(doc, (string)null, 42));
@@ -1309,7 +1309,7 @@ namespace Firebase.Sample.Firestore {
 
     private static void WriteBatch_Update_NullDocumentReference_NonNullFieldPathKeyDictionary(
         UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       var nonNullFieldPathKeyDictionary =
           new Dictionary<FieldPath, object> { { new FieldPath(new string[] { "a", "b" }), 42 } };
       handler.AssertException(typeof(ArgumentNullException),
@@ -1318,7 +1318,7 @@ namespace Firebase.Sample.Firestore {
 
     private static void WriteBatch_Update_NonNullDocumentReference_NullFieldPathKeyDictionary(
         UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       DocumentReference doc = handler.TestDocument();
       handler.AssertException(typeof(ArgumentNullException),
                               () => writeBatch.Update(doc, (IDictionary<FieldPath, object>)null));
@@ -1326,7 +1326,7 @@ namespace Firebase.Sample.Firestore {
 
     private static void WriteBatch_Update_NonNullDocumentReference_EmptyFieldPathKeyDictionary(
         UIHandlerAutomated handler) {
-      WriteBatch writeBatch = handler.db.StartBatch();
+      WriteBatch writeBatch = handler.TestFirestore().StartBatch();
       DocumentReference doc = handler.TestDocument();
       handler.AssertTaskSucceeds(doc.SetAsync(handler.TestData(), null));
       writeBatch.Update(doc, new Dictionary<FieldPath, object>());
@@ -1335,29 +1335,29 @@ namespace Firebase.Sample.Firestore {
 
     private static void FirebaseFirestore_LoadBundleAsync_NullBundle(UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.LoadBundleAsync(null as string));
+                              () => handler.TestFirestore().LoadBundleAsync(null as string));
       handler.AssertException(
           typeof(ArgumentNullException),
-          () => handler.db.LoadBundleAsync(null as string, (sender, progress) => {}));
+          () => handler.TestFirestore().LoadBundleAsync(null as string, (sender, progress) => {}));
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.LoadBundleAsync(null as byte[]));
+                              () => handler.TestFirestore().LoadBundleAsync(null as byte[]));
       handler.AssertException(
           typeof(ArgumentNullException),
-          () => handler.db.LoadBundleAsync(null as byte[], (sender, progress) => {}));
+          () => handler.TestFirestore().LoadBundleAsync(null as byte[], (sender, progress) => {}));
     }
 
     private static void FirebaseFirestore_LoadBundleAsync_NonNullBundle_NullHandler(
         UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.LoadBundleAsync("", null));
+                              () => handler.TestFirestore().LoadBundleAsync("", null));
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.LoadBundleAsync(new byte[] {}, null));
+                              () => handler.TestFirestore().LoadBundleAsync(new byte[] {}, null));
     }
 
     private static void FirebaseFirestore_GetNamedQueryAsync_NullQueryName(
         UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-                              () => handler.db.GetNamedQueryAsync(null));
+                              () => handler.TestFirestore().GetNamedQueryAsync(null));
     }
 
     /**
@@ -1369,7 +1369,7 @@ namespace Firebase.Sample.Firestore {
       var taskCompletionSource = new TaskCompletionSource<object>();
       Transaction capturedTransaction = null;
 
-      Task transactionTask = handler.db.RunTransactionAsync(lambdaTransaction => {
+      Task transactionTask = handler.TestFirestore().RunTransactionAsync(lambdaTransaction => {
         Interlocked.Exchange(ref capturedTransaction, lambdaTransaction);
         return taskCompletionSource.Task;
       });
