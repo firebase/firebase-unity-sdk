@@ -213,8 +213,8 @@ namespace Firebase.Sample.Firestore {
       return firestore; 
     }
 
-    // Update the `Settings` of a Firestore instance based on the environment variable
-    // `FIRESTORE_EMULATOR_PORT`, to run tests against production or Firestore emulator backend.
+    // Update the `Settings` of a Firestore instance to run tests against the production or
+    // Firestore emulator backend.
     protected internal void SetTargetBackend(FirebaseFirestore db) {
       string targetHost = GetTargetHost();
       

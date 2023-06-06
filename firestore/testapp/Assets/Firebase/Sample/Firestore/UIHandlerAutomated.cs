@@ -203,7 +203,6 @@ namespace Firebase.Sample.Firestore {
                 "enabled.  `Error Pause` should be disabled to execute this test.");
 
       UIEnabled = false;
-
       base.Start();
     }
     
@@ -839,7 +838,7 @@ namespace Firebase.Sample.Firestore {
         db2DocAccumulator.ThrowOnAnyEvent();
 
         app2.Dispose();
-        
+
         Await(db1Doc.SetAsync(TestData(2)));
 
         db1DocAccumulator.Await();
@@ -873,7 +872,7 @@ namespace Firebase.Sample.Firestore {
         db2CollAccumulator.ThrowOnAnyEvent();
 
         app2.Dispose();
-        
+
         Await(db1Coll.Document().SetAsync(TestData(1)));
 
         db1CollAccumulator.Await();
@@ -1361,9 +1360,7 @@ namespace Firebase.Sample.Firestore {
           } finally {
             barrier.SignalAndWait();
           }
-
           customApp.Dispose();
-
           // TODO(b/171568274): Add an assertion that the Task returned from RunTransactionAsync()
           // either completes or faults once the inconsistent behavior is fixed.
         }
@@ -1395,7 +1392,6 @@ namespace Firebase.Sample.Firestore {
             barrier.SignalAndWait();
           }
           AssertTaskSucceeds(capturedTask);
-
           // TODO(b/171568274): Add an assertion that the Task returned from RunTransactionAsync()
           // either completes or faults once the inconsistent behavior is fixed.
         }
@@ -1410,7 +1406,7 @@ namespace Firebase.Sample.Firestore {
           Transaction capturedTransaction = null;
           customDb.RunTransactionAsync(transaction => {
             capturedTransaction = transaction;
-            customApp.Dispose();;
+            customApp.Dispose();
             barrier.SignalAndWait();
             barrier.SignalAndWait();
             var taskCompletionSource = new TaskCompletionSource<object>();
@@ -1439,7 +1435,7 @@ namespace Firebase.Sample.Firestore {
           customDb.RunTransactionAsync(transaction => {
             capturedTask = Task.Factory.StartNew<object>(() => {
               capturedTransaction = transaction;
-              customApp.Dispose();;
+              customApp.Dispose();
               barrier.SignalAndWait();
               barrier.SignalAndWait();
               return null;
@@ -3492,7 +3488,6 @@ namespace Firebase.Sample.Firestore {
         var db = TestFirestoreWithCustomApp(FirebaseApp.DefaultInstance);
         Await(db.TerminateAsync());
         Await(db.ClearPersistenceAsync());
-
         db = TestFirestoreWithCustomApp(FirebaseApp.DefaultInstance);
 
         var collection = db.Collection("coll-1");
@@ -3842,7 +3837,6 @@ namespace Firebase.Sample.Firestore {
           var doc2 = customDb.Document("ColA/DocA/ColB/DocC");
           var collection = doc.Parent;
           var writeBatch = customDb.StartBatch();
-
           customApp.Dispose();
 
           // Verify that the `App` property is null valid after `FirebaseFirestore` is disposed.
