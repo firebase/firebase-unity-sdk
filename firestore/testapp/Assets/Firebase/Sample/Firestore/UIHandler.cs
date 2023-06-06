@@ -213,9 +213,14 @@ namespace Firebase.Sample.Firestore {
       return firestore; 
     }
 
-    // Force the Firestore instance to use local firestore emulator as host.
+    // Update the `Settings` of a Firestore instance based on the environment variable
+    // `FIRESTORE_EMULATOR_PORT`, to run tests against production or Firestore emulator backend.
     protected internal void SetTargetBackend(FirebaseFirestore db) {
       string targetHost = GetTargetHost();
+      
+      // Avoid updating `Settings` if not required. No changes are allowed to be made to the
+      // settings of a <c>FirebaseFirestore</c> instance if it has invoked any non-static method.
+      /// Attempting to do so will result in an exception.
       if (db.Settings.Host == targetHost) {
         return;
       }
@@ -234,8 +239,8 @@ namespace Firebase.Sample.Firestore {
           string localHost = "localhost";
         #endif // UNITY_ANDROID
 
-        // Use FIRESTORE_EMULATOR_PORT if it is set to non empty string,
-        // otherwise use the default port.
+        // Use FIRESTORE_EMULATOR_PORT if it is set to non empty string, otherwise use the
+        // default port.
         string port = Environment.GetEnvironmentVariable("FIRESTORE_EMULATOR_PORT") ?? "8080";
         return localHost + ":" + port;
       }

@@ -167,8 +167,7 @@ namespace Firebase.Sample.Firestore {
       
       // For local development convenience, manually change the flag and port number to run tests against
       // Firestore emulator or production backend. Port number is default to 8080 unless specified. 
-      // THIS FLAG MUST BE SET TO FALSE WHEN CHECKED INTO SOURCE CONTROL!
-      bool useFirestoreEmulator = false;
+      bool useFirestoreEmulator = false; // THIS MUST BE SET TO FALSE WHEN CHECKED INTO SOURCE CONTROL!
       string firestoreEmulatorPort = "";
 
       if (useFirestoreEmulator) {
@@ -176,7 +175,7 @@ namespace Firebase.Sample.Firestore {
         DebugLog("Using Firestore Emulator for testing." );
       } else {
         RemoveFirestoreEmulatorEnv();
-        DebugLog("Using Firestore Prod for testing.");
+        DebugLog("Using Firestore Production for testing.");
       }
       
       // Unity "helpfully" adds stack traces whenever you call Debug.Log. Unfortunately, these stack
