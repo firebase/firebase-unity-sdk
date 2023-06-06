@@ -58,8 +58,6 @@ namespace Firebase.Sample.Firestore {
     // Previously completed task.
     protected Task previousTask;
 
-    private static readonly IDictionary<FirebaseApp, FirebaseFirestore> _firestores =
-        new Dictionary<FirebaseApp, FirebaseFirestore>();
     /**
      * Compares two objects for deep equality.
      */
@@ -203,68 +201,53 @@ namespace Firebase.Sample.Firestore {
 
     protected internal FirebaseFirestore TestFirestore {
       get {
-        FirebaseApp app = FirebaseApp.DefaultInstance;
-        return TestFirestoreWithCustomApp(app);
+        FirebaseFirestore firestore = FirebaseFirestore.DefaultInstance;
+        SetTargetBackend(firestore);
+        return firestore;
       }
     }
 
     protected internal FirebaseFirestore TestFirestoreWithCustomApp(FirebaseApp app) {
-      FirebaseFirestore firestore;
-      lock (_firestores) {
-        if (!_firestores.TryGetValue(app, out firestore)) {
-          firestore = FirebaseFirestore.GetInstance(app);
-          UseTargetBackend(firestore);
-          _firestores[app] = firestore;
-        }
-      }
-      
+      FirebaseFirestore firestore = FirebaseFirestore.GetInstance(app);
+      SetTargetBackend(firestore);
       return firestore; 
     }
 
-    protected internal void DeleteFirestore(FirebaseFirestore db) {
-      lock (_firestores) {
-        foreach (var item in _firestores.Where(kvp => kvp.Value == db).ToList()) {
-          _firestores.Remove(item.Key);
-        }
+    // Force the Firestore instance to use local firestore emulator as host.
+    protected internal void SetTargetBackend(FirebaseFirestore db) {
+      string targetHost = GetTargetHost();
+      if (db.Settings.Host == targetHost) {
+        return;
       }
+  
+      db.Settings.Host = targetHost;
+      // Emulator does not support ssl.
+      db.Settings.SslEnabled = IsUsingFirestoreEmulator() ? false : true;
     }
 
-    protected internal void DeleteApp(FirebaseApp app) {
-      lock (_firestores) {
-        _firestores.Remove(app);
-        app.Dispose();
+    private string GetTargetHost() {
+      if (IsUsingFirestoreEmulator()) {
+        #if UNITY_ANDROID
+          // Special IP to access the hosting OS from Android Emulator.
+          string localHost = "10.0.2.2";
+        #else
+          string localHost = "localhost";
+        #endif // UNITY_ANDROID
+
+        // Use FIRESTORE_EMULATOR_PORT if it is set to non empty string,
+        // otherwise use the default port.
+        string port = Environment.GetEnvironmentVariable("FIRESTORE_EMULATOR_PORT") ?? "8080";
+        return localHost + ":" + port;
       }
+      
+      return FirebaseFirestore.DefaultInstance.Settings.Host;
     }
-    
+
     // Check if the `USE_FIRESTORE_EMULATOR` environment variable is set regardsless
     // of its value.
     protected internal bool IsUsingFirestoreEmulator() { 
       return (Environment.GetEnvironmentVariable("USE_FIRESTORE_EMULATOR") != null);
     }
-
-    // Force the Firestore instance to use local firestore emulator as host.
-    protected internal void UseTargetBackend(FirebaseFirestore db) {
-      if (!this.IsUsingFirestoreEmulator()) {
-        return;
-      }
-
-      #if UNITY_ANDROID
-        // Special IP to access the hosting OS from Android Emulator.
-        string localHost = "10.0.2.2";
-      #else
-        string localHost = "localhost";
-      #endif  // UNITY_ANDROID
-
-      // Use FIRESTORE_EMULATOR_PORT if it is set to non empty string,
-      // otherwise use the default port.
-      string port = Environment.GetEnvironmentVariable("FIRESTORE_EMULATOR_PORT") ?? "8080";
-      string address =  localHost + ":" + port;
-
-      db.Settings.Host = address;
-      // Emulator does not support ssl.
-      db.Settings.SslEnabled = false;
-    }
-
 
     // Cancel the currently running operation.
     protected void CancelOperation() {

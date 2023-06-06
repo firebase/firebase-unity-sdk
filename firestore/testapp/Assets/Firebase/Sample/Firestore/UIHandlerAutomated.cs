@@ -801,8 +801,7 @@ namespace Firebase.Sample.Firestore {
 
         db2SyncAccumulator.ThrowOnAnyEvent();
 
-        // Dispose the app and remove it from test cache.
-        DeleteApp(app2);
+        app2.Dispose();
 
         Await(db1Doc.SetAsync(TestData(2)));
 
@@ -840,8 +839,7 @@ namespace Firebase.Sample.Firestore {
 
         db2DocAccumulator.ThrowOnAnyEvent();
 
-        // Dispose the app and remove it from test cache.
-        DeleteApp(app2);
+        app2.Dispose();
         
         Await(db1Doc.SetAsync(TestData(2)));
 
@@ -875,8 +873,7 @@ namespace Firebase.Sample.Firestore {
 
         db2CollAccumulator.ThrowOnAnyEvent();
 
-        // Dispose the app and remove it from test cache.
-        DeleteApp(app2);
+        app2.Dispose();
         
         Await(db1Coll.Document().SetAsync(TestData(1)));
 
@@ -1353,7 +1350,6 @@ namespace Firebase.Sample.Firestore {
           try {
             barrier.SignalAndWait();
             AssertTaskSucceeds(customDb.TerminateAsync());
-            DeleteFirestore(customDb);
             // TODO(b/201415845) Remove the following two assertions once the commented call to
             // `AssertTaskFaults` below is uncommented. With that code commented the C# compiler
             // complains about these two variables being "unused".
@@ -1366,8 +1362,9 @@ namespace Firebase.Sample.Firestore {
           } finally {
             barrier.SignalAndWait();
           }
-          // Dispose the app and remove it from test cache.
-          DeleteApp(customApp);
+
+          customApp.Dispose();
+
           // TODO(b/171568274): Add an assertion that the Task returned from RunTransactionAsync()
           // either completes or faults once the inconsistent behavior is fixed.
         }
@@ -1391,8 +1388,7 @@ namespace Firebase.Sample.Firestore {
           });
           try {
             barrier.SignalAndWait();
-            // Dispose the app and remove it from test cache.
-            DeleteApp(customApp);
+            customApp.Dispose();
             AssertTaskIsPending(capturedTask);
             AssertTransactionMethodsThrow(capturedTransaction, doc);
             AssertTaskIsPending(capturedTask);
@@ -1415,8 +1411,7 @@ namespace Firebase.Sample.Firestore {
           Transaction capturedTransaction = null;
           customDb.RunTransactionAsync(transaction => {
             capturedTransaction = transaction;
-            // Dispose the app and remove it from test cache.
-            DeleteApp(customApp);
+            customApp.Dispose();;
             barrier.SignalAndWait();
             barrier.SignalAndWait();
             var taskCompletionSource = new TaskCompletionSource<object>();
@@ -1445,8 +1440,7 @@ namespace Firebase.Sample.Firestore {
           customDb.RunTransactionAsync(transaction => {
             capturedTask = Task.Factory.StartNew<object>(() => {
               capturedTransaction = transaction;
-              // Dispose the app and remove it from test cache.
-              DeleteApp(customApp);
+              customApp.Dispose();;
               barrier.SignalAndWait();
               barrier.SignalAndWait();
               return null;
@@ -1511,8 +1505,7 @@ namespace Firebase.Sample.Firestore {
         AssertEq<int>(actualValue, expectedValue);
 
         foreach (FirebaseApp app in apps) {
-          // Dispose the app and remove it from test cache.
-          DeleteApp(app);
+          app.Dispose();
         }
       });
     }
@@ -2585,9 +2578,6 @@ namespace Firebase.Sample.Firestore {
         // Multiple calls to terminate should go through.
         AssertTaskSucceeds(db1.TerminateAsync());
         AssertTaskSucceeds(db1.TerminateAsync());
-        
-        // Remove terminated firestore instance from test cache.
-        DeleteFirestore(db1);
 
         // Can call registration.Stop multiple times even after termination.
         registration.Stop();
@@ -2698,7 +2688,7 @@ namespace Firebase.Sample.Firestore {
         AssertTaskSucceeds(db2.DisableNetworkAsync());
         AssertTaskSucceeds(db2.EnableNetworkAsync());
 
-        DeleteApp(app);
+        app.Dispose();
       });
     }
 
@@ -2729,7 +2719,7 @@ namespace Firebase.Sample.Firestore {
           // SetAsync() returns.
           doc.SetAsync(docContents);
           AssertTaskSucceeds(db.TerminateAsync());
-          DeleteApp(app);
+          app.Dispose();
         }
 
         // As a sanity check, verify that the document created in the previous block exists.
@@ -2903,8 +2893,7 @@ namespace Firebase.Sample.Firestore {
           AssertStringContainsNoCase(customDb.Settings.ToString(), "SslEnabled=true");
           AssertStringContainsNoCase(customDb.Settings.ToString(), "PersistenceEnabled=false");
           AssertStringContainsNoCase(customDb.Settings.ToString(), "CacheSizeBytes=9876543");
-          // Delete the app and remove it from test firestores cache.
-          DeleteApp(customApp);
+          customApp.Dispose();
         }
 
         // Verify the default FirebaseFirestoreSettings values.
@@ -2920,7 +2909,7 @@ namespace Firebase.Sample.Firestore {
           }
           AssertEq(customDb.Settings.PersistenceEnabled, true);
           AssertEq(customDb.Settings.CacheSizeBytes, 100 * 1024 * 1024);
-          DeleteApp(customApp);
+          customApp.Dispose();
         }
 
         // Verify that the FirebaseFirestoreSettings written are read back.
@@ -2948,7 +2937,7 @@ namespace Firebase.Sample.Firestore {
           customDb.Settings.CacheSizeBytes = 1234567;
           AssertEq<long>(customDb.Settings.CacheSizeBytes, 1234567);
 
-          DeleteApp(customApp);
+          customApp.Dispose();
         }
 
         // Verify the FirebaseFirestoreSettings behavior after the FirebaseFirestore is disposed.
@@ -2962,7 +2951,7 @@ namespace Firebase.Sample.Firestore {
           var oldPersistenceEnabled = settings.PersistenceEnabled;
           var oldCacheSizeBytes = settings.CacheSizeBytes;
 
-          DeleteApp(customApp);
+          customApp.Dispose();
 
           AssertException(typeof(InvalidOperationException), () => { settings.Host = "a.b.c"; });
           AssertException(typeof(InvalidOperationException),
@@ -3008,7 +2997,7 @@ namespace Firebase.Sample.Firestore {
           AssertEq<bool>(customDb.Settings.PersistenceEnabled, oldPersistenceEnabled);
           AssertEq<long>(customDb.Settings.CacheSizeBytes, oldCacheSizeBytes);
 
-          DeleteApp(customApp);
+          customApp.Dispose();
         }
         
         // Verify that FirebaseFirestoreSettings.PersistenceEnabled is respected.
@@ -3023,8 +3012,6 @@ namespace Firebase.Sample.Firestore {
             AssertTaskSucceeds(doc.SetAsync(TestData(1)));
             AssertTaskSucceeds(doc.GetSnapshotAsync(Source.Cache));
             AssertTaskSucceeds(customDb.TerminateAsync());
-            // Remove terminated firestore instance from test cache.
-            DeleteFirestore(customDb);
           }
           {
             FirebaseFirestore customDb = TestFirestoreWithCustomApp(customApp);
@@ -3033,10 +3020,8 @@ namespace Firebase.Sample.Firestore {
             AssertTaskSucceeds(doc.SetAsync(TestData(1)));
             AssertTaskFaults(doc.GetSnapshotAsync(Source.Cache));
             AssertTaskSucceeds(customDb.TerminateAsync());
-            // Remove terminated firestore instance from test cache.
-            DeleteFirestore(customDb);
           }
-          DeleteApp(customApp);
+          customApp.Dispose();
         }
       });
     }
@@ -3500,7 +3485,6 @@ namespace Firebase.Sample.Firestore {
         AssertEq(progresses[0].State, LoadBundleTaskProgress.LoadBundleTaskState.InProgress);
         AssertEq(progresses[1].State, LoadBundleTaskProgress.LoadBundleTaskState.Error);
         // clang-format on
-        DeleteFirestore(db);
       });
     }
 
@@ -3509,8 +3493,6 @@ namespace Firebase.Sample.Firestore {
         var db = TestFirestoreWithCustomApp(FirebaseApp.DefaultInstance);
         Await(db.TerminateAsync());
         Await(db.ClearPersistenceAsync());
-        // Remove terminated firestore instance from test cache.
-        DeleteFirestore(db);
 
         db = TestFirestoreWithCustomApp(FirebaseApp.DefaultInstance);
 
@@ -3843,8 +3825,7 @@ namespace Firebase.Sample.Firestore {
         {
           FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "dispose-app-to-firestore");
           FirebaseFirestore customDb = TestFirestoreWithCustomApp(customApp);
-          // Dispose the app and remove it from test firestores cache.
-          DeleteApp(customApp);
+          customApp.Dispose();
           Assert("App property should be null", customDb.App == null);
         }
 
@@ -3863,8 +3844,7 @@ namespace Firebase.Sample.Firestore {
           var collection = doc.Parent;
           var writeBatch = customDb.StartBatch();
 
-          // Dispose the app and remove it from test cache.
-          DeleteApp(customApp);
+          customApp.Dispose();
 
           // Verify that the `App` property is null valid after `FirebaseFirestore` is disposed.
           Assert("App property should be null", customDb.App == null);
