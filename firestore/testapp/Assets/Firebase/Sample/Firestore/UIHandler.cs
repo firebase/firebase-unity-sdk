@@ -199,7 +199,7 @@ namespace Firebase.Sample.Firestore {
       }
     }
 
-    protected internal FirebaseFirestore TestFirestore {
+    protected internal FirebaseFirestore db {
       get {
         FirebaseFirestore firestore = FirebaseFirestore.DefaultInstance;
         SetTargetBackend(firestore);
@@ -207,7 +207,7 @@ namespace Firebase.Sample.Firestore {
       }
     }
 
-    protected internal FirebaseFirestore TestFirestoreWithCustomApp(FirebaseApp app) {
+    protected internal FirebaseFirestore TestFirestore(FirebaseApp app) {
       FirebaseFirestore firestore = FirebaseFirestore.GetInstance(app);
       SetTargetBackend(firestore);
       return firestore; 
@@ -250,7 +250,7 @@ namespace Firebase.Sample.Firestore {
 
     // Check if the `USE_FIRESTORE_EMULATOR` environment variable is set regardsless
     // of its value.
-    protected internal bool IsUsingFirestoreEmulator() { 
+    protected internal bool IsUsingFirestoreEmulator() {
       return (Environment.GetEnvironmentVariable("USE_FIRESTORE_EMULATOR") != null);
     }
 
@@ -271,7 +271,7 @@ namespace Firebase.Sample.Firestore {
     }
 
     private CollectionReference GetCollectionReference() {
-      return TestFirestore.Collection(collectionPath);
+      return db.Collection(collectionPath);
     }
 
     private DocumentReference GetDocumentReference() {
@@ -352,9 +352,9 @@ namespace Firebase.Sample.Firestore {
 
     // Perform a batch write.
     private IEnumerator PerformBatchWrite() {
-      DocumentReference doc1 = TestFirestore.Collection("col2").Document("batch_doc1");
-      DocumentReference doc2 = TestFirestore.Collection("col2").Document("batch_doc2");
-      DocumentReference doc3 = TestFirestore.Collection("col2").Document("batch_doc3");
+      DocumentReference doc1 = db.Collection("col2").Document("batch_doc1");
+      DocumentReference doc2 = db.Collection("col2").Document("batch_doc2");
+      DocumentReference doc3 = db.Collection("col2").Document("batch_doc3");
 
       // Initialize doc1 and doc2 with some data.
       var initialData = new Dictionary<string, object>{
@@ -446,9 +446,9 @@ namespace Firebase.Sample.Firestore {
     }
 
     private IEnumerator PerformTransaction() {
-      DocumentReference doc1 = TestFirestore.Collection("col3").Document("txn_doc1");
-      DocumentReference doc2 = TestFirestore.Collection("col3").Document("txn_doc2");
-      DocumentReference doc3 = TestFirestore.Collection("col3").Document("txn_doc3");
+      DocumentReference doc1 = db.Collection("col3").Document("txn_doc1");
+      DocumentReference doc2 = db.Collection("col3").Document("txn_doc2");
+      DocumentReference doc3 = db.Collection("col3").Document("txn_doc3");
 
       // Initialize doc1 and doc2 with some data.
       var initialData = new Dictionary<string, object>{

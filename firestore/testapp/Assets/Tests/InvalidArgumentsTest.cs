@@ -29,19 +29,19 @@ namespace Tests {
   public class InvalidArgumentsTest : FirestoreIntegrationTests {
     [Test]
     public void CollectionReference_AddAsync_NullDocumentData() {
-      CollectionReference collection = TestFirestore.Collection("a");
+      CollectionReference collection = db.Collection("a");
       Assert.Throws<ArgumentNullException>(() => collection.AddAsync(null));
     }
 
     [UnityTest]
     public IEnumerator CollectionReference_AddAsync_DocumentDataWithEmptyKey() {
-      CollectionReference collection = TestFirestore.Collection("a");
+      CollectionReference collection = db.Collection("a");
       yield return AwaitFaults(collection.AddAsync(new Dictionary<string, object> { { "", 42 } }));
     }
 
     [UnityTest]
     public IEnumerator CollectionReference_AddAsync_InvalidDocumentDataType() {
-      CollectionReference collection = TestFirestore.Collection("a");
+      CollectionReference collection = db.Collection("a");
       yield return AwaitFaults(collection.AddAsync(42));
     }
 
@@ -290,80 +290,80 @@ namespace Tests {
 
     [Test]
     public void FirebaseFirestore_GetInstance_DisposedApp() {
-      FirebaseApp disposedApp = FirebaseApp.Create(TestFirestore.App.Options, "test-getinstance-disposedapp");
+      FirebaseApp disposedApp = FirebaseApp.Create(db.App.Options, "test-getinstance-disposedapp");
       disposedApp.Dispose();
       Assert.Throws<ArgumentException>(() => FirebaseFirestore.GetInstance(disposedApp));
     }
 
     [Test]
     public void FirebaseFirestore_Collection_NullStringPath() {
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.Collection(null));
+      Assert.Throws<ArgumentNullException>(() => db.Collection(null));
     }
 
     [Test]
     public void FirebaseFirestore_Collection_EmptyStringPath() {
-      Assert.Throws<ArgumentException>(() => TestFirestore.Collection(""));
+      Assert.Throws<ArgumentException>(() => db.Collection(""));
     }
 
     [Test]
     public void FirebaseFirestore_Collection_EvenNumberOfPathSegments() {
-      Assert.Throws<ArgumentException>(() => TestFirestore.Collection("a/b"));
+      Assert.Throws<ArgumentException>(() => db.Collection("a/b"));
     }
 
     [Test]
     public void FirebaseFirestore_CollectionGroup_NullCollectionId() {
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.CollectionGroup(null));
+      Assert.Throws<ArgumentNullException>(() => db.CollectionGroup(null));
     }
 
     [Test]
     public void FirebaseFirestore_CollectionGroup_EmptyCollectionId() {
-      Assert.Throws<ArgumentException>(() => TestFirestore.CollectionGroup(""));
+      Assert.Throws<ArgumentException>(() => db.CollectionGroup(""));
     }
 
     [Test]
     public void FirebaseFirestore_CollectionGroup_CollectionIdContainsSlash() {
-      Assert.Throws<ArgumentException>(() => TestFirestore.CollectionGroup("a/b"));
+      Assert.Throws<ArgumentException>(() => db.CollectionGroup("a/b"));
     }
 
     [Test]
     public void FirebaseFirestore_Document_NullStringPath() {
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.Document(null));
+      Assert.Throws<ArgumentNullException>(() => db.Document(null));
     }
 
     [Test]
     public void FirebaseFirestore_Document_EmptyStringPath() {
-      Assert.Throws<ArgumentException>(() => TestFirestore.Document(""));
+      Assert.Throws<ArgumentException>(() => db.Document(""));
     }
 
     [Test]
     public void FirebaseFirestore_Document_OddNumberOfPathSegments() {
-      Assert.Throws<ArgumentException>(() => TestFirestore.Document("a/b/c"));
+      Assert.Throws<ArgumentException>(() => db.Document("a/b/c"));
     }
 
     [Test]
     public void FirebaseFirestore_ListenForSnapshotsInSync_NullCallback() {
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.ListenForSnapshotsInSync(null));
+      Assert.Throws<ArgumentNullException>(() => db.ListenForSnapshotsInSync(null));
     }
 
     [Test]
     public void FirebaseFirestore_RunTransactionAsync_WithoutTypeParameter_NullCallback() {
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.RunTransactionAsync(null));
+      Assert.Throws<ArgumentNullException>(() => db.RunTransactionAsync(null));
     }
 
     [Test]
     public void FirebaseFirestore_RunTransactionAsync_WithTypeParameter_NullCallback() {
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.RunTransactionAsync<object>(null));
+      Assert.Throws<ArgumentNullException>(() => db.RunTransactionAsync<object>(null));
     }
 
     [Test]
     public void FirebaseFirestoreSettings_Host_Null() {
-      FirebaseFirestoreSettings settings = TestFirestore.Settings;
+      FirebaseFirestoreSettings settings = db.Settings;
       Assert.Throws<ArgumentNullException>(() => settings.Host = null);
     }
 
     [Test]
     public void FirebaseFirestoreSettings_Host_EmptyString() {
-      FirebaseFirestoreSettings settings = TestFirestore.Settings;
+      FirebaseFirestoreSettings settings = db.Settings;
       Assert.Throws<ArgumentException>(() => settings.Host = "");
     }
 
@@ -795,7 +795,7 @@ namespace Tests {
     public IEnumerator Transaction_Update_NonNullDocumentReference_EmptyStringKeyDictionary() {
       DocumentReference doc = TestDocument();
       yield return AwaitSuccess(doc.SetAsync(TestData(), null));
-      yield return AwaitSuccess(TestFirestore.RunTransactionAsync(transaction => {
+      yield return AwaitSuccess(db.RunTransactionAsync(transaction => {
         return transaction.GetSnapshotAsync(doc).ContinueWith(
             snapshot => { transaction.Update(doc, new Dictionary<string, object>()); });
       }));
@@ -854,7 +854,7 @@ namespace Tests {
     public IEnumerator Transaction_Update_NonNullDocumentReference_EmptyFieldPathKeyDictionary() {
       DocumentReference doc = TestDocument();
       yield return AwaitSuccess(doc.SetAsync(TestData(), null));
-      yield return AwaitSuccess(TestFirestore.RunTransactionAsync(transaction => {
+      yield return AwaitSuccess(db.RunTransactionAsync(transaction => {
         return transaction.GetSnapshotAsync(doc).ContinueWith(
             snapshot => { transaction.Update(doc, new Dictionary<FieldPath, object>()); });
       }));
@@ -870,7 +870,7 @@ namespace Tests {
       var taskCompletionSource = new TaskCompletionSource<object>();
       Transaction capturedTransaction = null;
 
-      Task transactionTask = TestFirestore.RunTransactionAsync(lambdaTransaction => {
+      Task transactionTask = db.RunTransactionAsync(lambdaTransaction => {
         Interlocked.Exchange(ref capturedTransaction, lambdaTransaction);
         return taskCompletionSource.Task;
       });
@@ -894,27 +894,27 @@ namespace Tests {
 
     [Test]
     public void WriteBatch_Delete_NullDocumentReference() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       Assert.Throws<ArgumentNullException>(() => writeBatch.Delete(null));
     }
 
     [Test]
     public void WriteBatch_Set_NullDocumentReference() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       var nonNullDocumentData = TestData();
       Assert.Throws<ArgumentNullException>(() => writeBatch.Set(null, nonNullDocumentData, null));
     }
 
     [Test]
     public void WriteBatch_Set_NullDocumentData() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       DocumentReference doc = TestDocument();
       Assert.Throws<ArgumentNullException>(() => writeBatch.Set(doc, null, null));
     }
 
     [Test]
     public void WriteBatch_Set_DocumentDataWithEmptyKey() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       DocumentReference doc = TestDocument();
       Assert.Throws<ArgumentException>(
           () => writeBatch.Set(doc, new Dictionary<string, object> { { "", 42 } }, null));
@@ -922,21 +922,21 @@ namespace Tests {
 
     [Test]
     public void WriteBatch_Set_InvalidDocumentDataType() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       DocumentReference doc = TestDocument();
       Assert.Throws<ArgumentException>(() => writeBatch.Set(doc, 42, null));
     }
 
     [Test]
     public void WriteBatch_Update_NullDocumentReference_NonNullStringKeyDictionary() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       Assert.Throws<ArgumentNullException>(
           () => writeBatch.Update(null, new Dictionary<string, object> { { "key", 42 } }));
     }
 
     [Test]
     public void WriteBatch_Update_NonNullDocumentReference_NullStringKeyDictionary() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       DocumentReference doc = TestDocument();
       Assert.Throws<ArgumentNullException>(
           () => writeBatch.Update(doc, (IDictionary<string, object>)null));
@@ -944,7 +944,7 @@ namespace Tests {
 
     [UnityTest]
     public IEnumerator WriteBatch_Update_NonNullDocumentReference_EmptyStringKeyDictionary() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       DocumentReference doc = TestDocument();
       yield return AwaitSuccess(doc.SetAsync(TestData(), null));
       writeBatch.Update(doc, new Dictionary<string, object>());
@@ -953,7 +953,7 @@ namespace Tests {
 
     [Test]
     public void WriteBatch_Update_NonNullDocumentReference_StringKeyDictionaryWithEmptyKey() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       DocumentReference doc = TestDocument();
       Assert.Throws<ArgumentException>(
           () => writeBatch.Update(doc, new Dictionary<string, object> { { "", 42 } }));
@@ -961,20 +961,20 @@ namespace Tests {
 
     [Test]
     public void WriteBatch_Update_NullDocumentReference_NonNullFieldString() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       Assert.Throws<ArgumentNullException>(() => writeBatch.Update(null, "fieldName", 42));
     }
 
     [Test]
     public void WriteBatch_Update_NonNullDocumentReference_NullFieldString() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       DocumentReference doc = TestDocument();
       Assert.Throws<ArgumentNullException>(() => writeBatch.Update(doc, (string)null, 42));
     }
 
     [Test]
     public void WriteBatch_Update_NullDocumentReference_NonNullFieldPathKeyDictionary() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       var nonNullFieldPathKeyDictionary =
           new Dictionary<FieldPath, object> { { new FieldPath(new string[] { "a", "b" }), 42 } };
       Assert.Throws<ArgumentNullException>(
@@ -983,7 +983,7 @@ namespace Tests {
 
     [Test]
     public void WriteBatch_Update_NonNullDocumentReference_NullFieldPathKeyDictionary() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       DocumentReference doc = TestDocument();
       Assert.Throws<ArgumentNullException>(
           () => writeBatch.Update(doc, (IDictionary<FieldPath, object>)null));
@@ -991,7 +991,7 @@ namespace Tests {
 
     [UnityTest]
     public IEnumerator WriteBatch_Update_NonNullDocumentReference_EmptyFieldPathKeyDictionary() {
-      WriteBatch writeBatch = TestFirestore.StartBatch();
+      WriteBatch writeBatch = db.StartBatch();
       DocumentReference doc = TestDocument();
       yield return AwaitSuccess(doc.SetAsync(TestData(), null));
       writeBatch.Update(doc, new Dictionary<FieldPath, object>());
@@ -1000,23 +1000,23 @@ namespace Tests {
 
     [Test]
     public void FirebaseFirestore_LoadBundleAsync_NullBundle() {
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.LoadBundleAsync(null as string));
+      Assert.Throws<ArgumentNullException>(() => db.LoadBundleAsync(null as string));
       Assert.Throws<ArgumentNullException>(
-          () => TestFirestore.LoadBundleAsync(null as string, (sender, progress) => {}));
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.LoadBundleAsync(null as byte[]));
+          () => db.LoadBundleAsync(null as string, (sender, progress) => {}));
+      Assert.Throws<ArgumentNullException>(() => db.LoadBundleAsync(null as byte[]));
       Assert.Throws<ArgumentNullException>(
-          () => TestFirestore.LoadBundleAsync(null as byte[], (sender, progress) => {}));
+          () => db.LoadBundleAsync(null as byte[], (sender, progress) => {}));
     }
 
     [Test]
     public void FirebaseFirestore_LoadBundleAsync_NonNullBundle_NullHandler() {
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.LoadBundleAsync("", null));
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.LoadBundleAsync(new byte[] {}, null));
+      Assert.Throws<ArgumentNullException>(() => db.LoadBundleAsync("", null));
+      Assert.Throws<ArgumentNullException>(() => db.LoadBundleAsync(new byte[] {}, null));
     }
 
     [Test]
     public void FirebaseFirestore_GetNamedQueryAsync_NullQueryName() {
-      Assert.Throws<ArgumentNullException>(() => TestFirestore.GetNamedQueryAsync(null));
+      Assert.Throws<ArgumentNullException>(() => db.GetNamedQueryAsync(null));
     }
   }
 }
