@@ -1315,7 +1315,7 @@ namespace Firebase.Sample.Firestore {
 
         // Verify that the Transaction is disposed when the Firestore instance terminated.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "transaction-terminate");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-terminate");
           FirebaseFirestore customDb = TestFirestore(customApp);
           DocumentReference doc = customDb.Document(TestDocument().Path);
           var barrier = new BarrierCompat(2);
@@ -1350,7 +1350,7 @@ namespace Firebase.Sample.Firestore {
 
         // Verify that the Transaction is disposed when the Firestore instance is disposed.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "transaction-dispose1");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-dispose1");
           FirebaseFirestore customDb = TestFirestore(customApp);
           DocumentReference doc = customDb.Document(TestDocument().Path);
           var barrier = new BarrierCompat(2);
@@ -1382,7 +1382,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that the Transaction is disposed when the Firestore instance is disposed
         // directly from the transaction callback.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "transaction-dispose2");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-dispose2");
           FirebaseFirestore customDb = TestFirestore(customApp);
           DocumentReference doc = customDb.Document(TestDocument().Path);
           var barrier = new BarrierCompat(2);
@@ -1409,7 +1409,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that the Transaction is disposed when the Firestore instance is disposed
         // from the task returned from the transaction callback.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "transaction-dispose3");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-dispose3");
           FirebaseFirestore customDb = TestFirestore(customApp);
           DocumentReference doc = customDb.Document(TestDocument().Path);
           var barrier = new BarrierCompat(2);
@@ -1444,7 +1444,7 @@ namespace Firebase.Sample.Firestore {
 
         FirebaseApp[] apps = new FirebaseApp[3];
         for (int i = 0; i < apps.Length; i++) {
-          apps[i] = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "transactions-in-parallel" + (i + 1));
+          apps[i] = FirebaseApp.Create(db.App.Options, "transactions-in-parallel" + (i + 1));
         }
         FirebaseFirestore[] firestores = new FirebaseFirestore[apps.Length];
         for (int i = 0; i < firestores.Length; i++) {
@@ -2860,7 +2860,7 @@ namespace Firebase.Sample.Firestore {
       return Async(() => {
         // Verify that ToString() returns a meaningful value.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "settings-tostring-test");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-tostring-test");
           FirebaseFirestore customDb = TestFirestore(customApp);
           customDb.Settings.Host = "a.b.c";
           customDb.Settings.SslEnabled = true;
@@ -2876,7 +2876,7 @@ namespace Firebase.Sample.Firestore {
 
         // Verify the default FirebaseFirestoreSettings values.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "settings-defaults-test");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-defaults-test");
           FirebaseFirestore customDb = TestFirestore(customApp);
           // While using Firestore Emulator, the host and SslEnabled fields are different from prod. 
           if(IsUsingFirestoreEmulator()){
@@ -2893,7 +2893,7 @@ namespace Firebase.Sample.Firestore {
 
         // Verify that the FirebaseFirestoreSettings written are read back.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "settings-readwrite-test");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-readwrite-test");
           FirebaseFirestore customDb = TestFirestore(customApp);
 
           customDb.Settings.Host = "a.b.c";
@@ -2921,7 +2921,7 @@ namespace Firebase.Sample.Firestore {
 
         // Verify the FirebaseFirestoreSettings behavior after the FirebaseFirestore is disposed.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "settings-dispose-test");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-dispose-test");
           FirebaseFirestore customDb = TestFirestore(customApp);
           FirebaseFirestoreSettings settings = customDb.Settings;
 
@@ -2950,7 +2950,7 @@ namespace Firebase.Sample.Firestore {
 
         // Verify the FirebaseFirestoreSettings behavior after the FirebaseFirestore is used.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "settings-toolate-test");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-toolate-test");
           FirebaseFirestore customDb = TestFirestore(customApp);
           var oldHost = customDb.Settings.Host;
           var oldSslEnabled = customDb.Settings.SslEnabled;
@@ -2981,7 +2981,7 @@ namespace Firebase.Sample.Firestore {
         
         // Verify that FirebaseFirestoreSettings.PersistenceEnabled is respected.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "settings-persistence-test");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-persistence-test");
           string docPath;
           {
             FirebaseFirestore customDb = TestFirestore(customApp);
@@ -3803,7 +3803,7 @@ namespace Firebase.Sample.Firestore {
       return Async(() => {
         // Verify that disposing the `FirebaseApp` in turn disposes the `FirebaseFirestore` object.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "dispose-app-to-firestore");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "dispose-app-to-firestore");
           FirebaseFirestore customDb = TestFirestore(customApp);
           customApp.Dispose();
           Assert("App property should be null", customDb.App == null);
@@ -3817,7 +3817,7 @@ namespace Firebase.Sample.Firestore {
           Task sampleUntypedTask = taskCompletionSource.Task;
           Task<string> sampleTypedTask = taskCompletionSource.Task;
 
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "dispose-exceptions");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "dispose-exceptions");
           FirebaseFirestore customDb = TestFirestore(customApp);
           var doc = customDb.Document("ColA/DocA/ColB/DocB");
           var doc2 = customDb.Document("ColA/DocA/ColB/DocC");
@@ -3916,7 +3916,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that invoking `FirebaseFirestore.GetInstance()` with the same `FirebaseApp`
         // returns the exact same `FirebaseFirestore` instance.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "getinstance-same-instance");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-same-instance");
           FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance(customApp);
           FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance(customApp);
           Assert("GetInstance() should return the same instance", customDb1 == customDb2);
@@ -3926,8 +3926,8 @@ namespace Firebase.Sample.Firestore {
         // Verify that invoking `FirebaseFirestore.GetInstance()` with different `FirebaseApp`
         // instances return distinct and consistent `FirebaseFirestore` instances.
         {
-          FirebaseApp customAppA = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "getinstance-multi-a");
-          FirebaseApp customAppB = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "getinstance-multi-b");
+          FirebaseApp customAppA = FirebaseApp.Create(db.App.Options, "getinstance-multi-a");
+          FirebaseApp customAppB = FirebaseApp.Create(db.App.Options, "getinstance-multi-b");
           FirebaseFirestore customDbA1 = FirebaseFirestore.GetInstance(customAppA);
           FirebaseFirestore customDbB1 = FirebaseFirestore.GetInstance(customAppB);
           FirebaseFirestore customDbA2 = FirebaseFirestore.GetInstance(customAppA);
@@ -3942,7 +3942,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that invoking `FirebaseFirestore.GetInstance()` with a disposed `FirebaseApp`
         // does not crash.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "getinstance-disposed-app");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-disposed-app");
           FirebaseFirestore.GetInstance(customApp);
           customApp.Dispose();
           AssertException(typeof(ArgumentException),
@@ -3952,7 +3952,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that invoking `FirebaseFirestore.GetInstance()` after `TerminateAsync()` results
         // in a distinct, functional `FirebaseFirestore` instance.
         {
-          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "getinstance-after-terminate");
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-after-terminate");
           FirebaseFirestore customDbBefore = FirebaseFirestore.GetInstance(customApp);
           Task terminateTask = customDbBefore.TerminateAsync();
           FirebaseFirestore customDbAfter = FirebaseFirestore.GetInstance(customApp);
