@@ -755,7 +755,7 @@ namespace Firebase.Sample.Firestore {
         var app1 = db1.App;
 
         var app2 = FirebaseApp.Create(app1.Options, "MultiInstanceSnapshotsInSyncTest");
-        var db2 =  TestFirestore(app2);
+        var db2 = TestFirestore(app2);
         var db2Doc = db2.Collection(db1Doc.Parent.Id).Document(db1Doc.Id);
 
         var db1SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
