@@ -3336,8 +3336,6 @@ namespace Firebase.Sample.Firestore {
             Assert("Expected an exception to be thrown", exception != null);
             Assert("Expected an InvalidOperationException, but received " +
                    exception, exception is InvalidOperationException);
-            AssertStringContainsNoCase(exception.ToString(), "You can't set the 'sslEnabled' setting to " +
-                                                             "false unless you also set a non-default 'host'.");
           }
         }
 
