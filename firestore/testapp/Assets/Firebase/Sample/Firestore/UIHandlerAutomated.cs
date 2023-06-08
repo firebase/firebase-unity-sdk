@@ -220,6 +220,14 @@ namespace Firebase.Sample.Firestore {
       testRunner.FailTest(reason);
     }
 
+    public Task RunAgainstEmulatorOnly(Task task) {
+      if (IsUsingFirestoreEmulator()) {
+        return task;
+      }
+      DebugLog("Test is skipped as it should only run against Firestore Emulator.");
+      return Task.CompletedTask;
+    }
+    
     // Throw when condition is false.
     private void Assert(string message, bool condition) {
       if (!condition) {
@@ -616,172 +624,164 @@ namespace Firebase.Sample.Firestore {
     }
 
     Task TestReadDocumentFromMultiDB() {
-      return Async(() => {
-        // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
-        // by production.
-        if (!IsFirestoreEmulatorAvailable()) {
-          return;
-        }
-        
-        // Create 2 firestore instances and populate with documents.
-        FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "Interact-multi-DB");
-        FirebaseFirestore customDb1 = TestFirestore(customApp, "test-db-1");
-        FirebaseFirestore customDb2 = TestFirestore(customApp, "test-db-2");
+      // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
+      // by production.
+      return RunAgainstEmulatorOnly(
+          Async(() => {
+            // Create 2 firestore instances and populate with documents.
+            FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "Interact-multi-DB");
+            FirebaseFirestore customDb1 = TestFirestore(customApp, "test-db-1");
+            FirebaseFirestore customDb2 = TestFirestore(customApp, "test-db-2");
 
-        DocumentReference doc1 = customDb1.Collection("foo").Document();
-        var data1 = TestData(1);
-        Await(doc1.SetAsync(data1));
-        
-        DocumentReference doc2 = customDb2.Collection("foo").Document();
-        var data2 =TestData(2);
-        Await(doc2.SetAsync(data2));
-        
-        // Documents from different databases should be able to get written and read
-        // without interfering with each other.
-        DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
-        Assert("Written document in the first firestore should exist", snap1.Exists);
-        AssertDeepEq(snap1.ToDictionary(), data1);
-        DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
-        Assert("Written document in the second firestore should exist", snap2.Exists);
-        AssertDeepEq(snap2.ToDictionary(), data2);
-        AssertEq(snap1.Equals(snap2), false);
+            DocumentReference doc1 = customDb1.Collection("foo").Document();
+            var data1 = TestData(1);
+            Await(doc1.SetAsync(data1));
 
-        // Delete one of the document.
-        Await(doc1.DeleteAsync());
-        
-        // Mutating documents in one database should not affect other databases. 
-        DocumentSnapshot snap3 = Await(doc1.GetSnapshotAsync());
-        Assert("Deleted document should not exist", !snap3.Exists);
-        AssertEq(snap3.ToDictionary(), null);
-        
-        DocumentSnapshot snap4 = Await(doc2.GetSnapshotAsync());
-        Assert("Dcoument in the other database should not be affected", snap4.Exists);
-        AssertDeepEq(snap4.ToDictionary(), data2);
-        AssertEq(snap2.Equals(snap4), true);
-        customApp.Dispose();
-      });
+            DocumentReference doc2 = customDb2.Collection("foo").Document();
+            var data2 = TestData(2);
+            Await(doc2.SetAsync(data2));
+
+            // Documents from different databases should be able to get written and read
+            // without interfering with each other.
+            DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
+            Assert("Written document in the first firestore should exist", snap1.Exists);
+            AssertDeepEq(snap1.ToDictionary(), data1);
+            DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
+            Assert("Written document in the second firestore should exist", snap2.Exists);
+            AssertDeepEq(snap2.ToDictionary(), data2);
+            AssertEq(snap1.Equals(snap2), false);
+
+            // Delete one of the document.
+            Await(doc1.DeleteAsync());
+
+            // Mutating documents in one database should not affect other databases. 
+            DocumentSnapshot snap3 = Await(doc1.GetSnapshotAsync());
+            Assert("Deleted document should not exist", !snap3.Exists);
+            AssertEq(snap3.ToDictionary(), null);
+
+            DocumentSnapshot snap4 = Await(doc2.GetSnapshotAsync());
+            Assert("Dcoument in the other database should not be affected", snap4.Exists);
+            AssertDeepEq(snap4.ToDictionary(), data2);
+            AssertEq(snap2.Equals(snap4), true);
+            customApp.Dispose();
+          })
+      );
     }
 
     Task TestTerminateMultiDBIndependently() {
-      return Async(() => {
-        // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
-        // by production.
-        if (!IsFirestoreEmulatorAvailable()) {
-          return;
-        }
-        // Create 2 firestore instances and populate with documents.
-        FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "terminate-multi-DB-independently");
-        FirebaseFirestore customDb1 = TestFirestore(customApp, "test-db-1");
-        FirebaseFirestore customDb2 = TestFirestore(customApp, "test-db-2");
+      // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
+      // by production.
+      return RunAgainstEmulatorOnly(
+          Async(() => {
+            // Create 2 firestore instances and populate with documents.
+            FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "terminate-multi-DB-independently");
+            FirebaseFirestore customDb1 = TestFirestore(customApp, "test-db-1");
+            FirebaseFirestore customDb2 = TestFirestore(customApp, "test-db-2");
 
-        DocumentReference doc1 = customDb1.Collection("foo").Document();
-        var data1 = TestData(1);
-        Await(doc1.SetAsync(data1));
-        
-        DocumentReference doc2 = customDb2.Collection("foo").Document();
-        var data2 = TestData(2);
-        Await(doc2.SetAsync(data2));
-        
-        // Documents from different databases should be able to get written and read
-        // without interfering with each other.
-        DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
-        Assert("Written document in the first firestore should exist", snap1.Exists);
-        AssertDeepEq(snap1.ToDictionary(), data1);
-        DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
-        Assert("Written document in the second firestore should exist", snap2.Exists);
-        AssertDeepEq(snap2.ToDictionary(), data2);
-        AssertEq(snap1.Equals(snap2), false);
+            DocumentReference doc1 = customDb1.Collection("foo").Document();
+            var data1 = TestData(1);
+            Await(doc1.SetAsync(data1));
+            
+            DocumentReference doc2 = customDb2.Collection("foo").Document();
+            var data2 = TestData(2);
+            Await(doc2.SetAsync(data2));
+            
+            // Documents from different databases should be able to get written and read
+            // without interfering with each other.
+            DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
+            Assert("Written document in the first firestore should exist", snap1.Exists);
+            AssertDeepEq(snap1.ToDictionary(), data1);
+            DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
+            Assert("Written document in the second firestore should exist", snap2.Exists);
+            AssertDeepEq(snap2.ToDictionary(), data2);
+            AssertEq(snap1.Equals(snap2), false);
 
 
-        // Terminate one of the database.
-        AssertTaskSucceeds(customDb1.TerminateAsync());
-        DeleteFirestore(customDb1);
+            // Terminate one of the database.
+            AssertTaskSucceeds(customDb1.TerminateAsync());
 
-        // One database should not be affected by the termination of other databases.
-        DocumentSnapshot snap3 = Await(doc2.GetSnapshotAsync());
-        Assert("Dcoument in other database should not be affected", snap3.Exists);
-        AssertDeepEq(snap3.ToDictionary(), data2);
-        AssertEq(snap2.Equals(snap3), true);
-        
-        customApp.Dispose();
-      });
+            // One database should not be affected by the termination of other databases.
+            DocumentSnapshot snap3 = Await(doc2.GetSnapshotAsync());
+            Assert("Dcoument in other database should not be affected", snap3.Exists);
+            AssertDeepEq(snap3.ToDictionary(), data2);
+            AssertEq(snap2.Equals(snap3), true);
+            
+            customApp.Dispose();
+          })
+      );
     }
      
-     Task TestTerminateAppWithMultiDB() {
-       return Async(() => {
-         // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
-         // by production.
-         if (!IsFirestoreEmulatorAvailable()) {
-           return;
-         }
-         // Create 2 firestore instances and populate with documents.
-         FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "terminate-app-with-multi-DB");
-         FirebaseFirestore defaultDb = TestFirestore(customApp);
-         FirebaseFirestore customDb = TestFirestore(customApp,"test-db");
+    Task TestTerminateAppWithMultiDB() {
+      // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
+      // by production.
+      return RunAgainstEmulatorOnly(
+          Async(() => {
+            // Create 2 firestore instances and populate with documents.
+            FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "terminate-app-with-multi-DB");
+            FirebaseFirestore defaultDb = TestFirestore(customApp);
+            FirebaseFirestore customDb = TestFirestore(customApp,"test-db");
 
-         DocumentReference doc1 = defaultDb.Collection("foo").Document();
-         var data1 = TestData(1);
-         Await(doc1.SetAsync(data1));
-        
-         DocumentReference doc2 = customDb.Collection("foo").Document();
-         var data2 = TestData(2);
-         Await(doc2.SetAsync(data2));
-        
-         // Documents from different databases should be able to get written and read
-         // without interfering with each other.
-         DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
-         Assert("Written document in the first firestore should exist", snap1.Exists);
-         AssertDeepEq(snap1.ToDictionary(), data1);
-         DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
-         Assert("Written document in the second firestore should exist", snap2.Exists);
-         AssertDeepEq(snap2.ToDictionary(), data2);
-         AssertEq(snap1.Equals(snap2), false);
-         
-         // Terminate the app.
-         customApp.Dispose();
-        
-         // All databases under the app should be disposed.
-         Assert("App property should be null in default database", defaultDb.App == null);
-         Assert("App property should be null in custom database", customDb.App == null);
-         AssertException(typeof(InvalidOperationException), () => defaultDb.Collection("foo"));
-         AssertException(typeof(InvalidOperationException), () => customDb.Collection("foo"));
-       });
-     }
+            DocumentReference doc1 = defaultDb.Collection("foo").Document();
+            var data1 = TestData(1);
+            Await(doc1.SetAsync(data1));
+            
+            DocumentReference doc2 = customDb.Collection("foo").Document();
+            var data2 = TestData(2);
+            Await(doc2.SetAsync(data2));
+            
+            // Documents from different databases should be able to get written and read
+            // without interfering with each other.
+            DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
+            Assert("Written document in the first firestore should exist", snap1.Exists);
+            AssertDeepEq(snap1.ToDictionary(), data1);
+            DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
+            Assert("Written document in the second firestore should exist", snap2.Exists);
+            AssertDeepEq(snap2.ToDictionary(), data2);
+            AssertEq(snap1.Equals(snap2), false);
+            
+            // Terminate the app.
+            customApp.Dispose();
+            
+            // All databases under the app should be disposed.
+            Assert("App property should be null in default database", defaultDb.App == null);
+            Assert("App property should be null in custom database", customDb.App == null);
+            AssertException(typeof(InvalidOperationException), () => defaultDb.Collection("foo"));
+            AssertException(typeof(InvalidOperationException), () => customDb.Collection("foo"));
+          })
+      );
+    }
      
-     Task TestRestartCustomFirestore() {
-      return Async(() => {
-        // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
-        // by production.
-        if (!IsFirestoreEmulatorAvailable()) {
-          return;
-        }
-        
-        // Create a firestore instance and populate it with a document.
-        FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "getinstance-restart");
-        FirebaseFirestore customDb1 = TestFirestore(customApp, "test-db");
-        
-        DocumentReference doc1 = customDb1.Collection("foo").Document();
-        var data = TestData();
-        Await(doc1.SetAsync(data));
-        DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
-        Assert("Written document in the firestore should exist", snap1.Exists);
-        AssertDeepEq(snap1.ToDictionary(), data);
+    Task TestRestartCustomFirestore() {
+      // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
+      // by production.
+      return RunAgainstEmulatorOnly(
+          Async(() => {
+            // Create a firestore instance and populate it with a document.
+            FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "getinstance-restart");
+            FirebaseFirestore customDb1 = TestFirestore(customApp, "test-db");
+            
+            DocumentReference doc1 = customDb1.Collection("foo").Document();
+            var data = TestData();
+            Await(doc1.SetAsync(data));
+            DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
+            Assert("Written document in the firestore should exist", snap1.Exists);
+            AssertDeepEq(snap1.ToDictionary(), data);
 
-        // Terminate the database and re-create a new instance with same app and same database name.
-        AssertTaskSucceeds(customDb1.TerminateAsync());
-        DeleteFirestore(customDb1);
+            // Terminate the database and re-create a new instance with same app and same database name.
+            AssertTaskSucceeds(customDb1.TerminateAsync());
 
-        FirebaseFirestore customDb2 = TestFirestore(customApp, "test-db");
-        Assert("GetInstance() should return a different instance when firestore is re-started", customDb1 != customDb2);
-        
-        // The new firestore instance can read previously saved documents.
-        DocumentReference doc2 = customDb2.Document(doc1.Path);
-        DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
-        Assert("Written document in the firestore should exist", snap2.Exists);
-        AssertDeepEq(snap2.ToDictionary(), data);
-        
-        customApp.Dispose();
-      });
+            FirebaseFirestore customDb2 = TestFirestore(customApp, "test-db");
+            Assert("GetInstance() should return a different instance when firestore is re-started", customDb1 != customDb2);
+            
+            // The new firestore instance can read previously saved documents.
+            DocumentReference doc2 = customDb2.Document(doc1.Path);
+            DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
+            Assert("Written document in the firestore should exist", snap2.Exists);
+            AssertDeepEq(snap2.ToDictionary(), data);
+            
+            customApp.Dispose();
+          })
+      );
     }
 
     Task TestWriteDocument() {
@@ -970,52 +970,49 @@ namespace Firebase.Sample.Firestore {
     }
 
     Task TestMultiDBSnapshotsInSyncListeners() {
-      return Async(() => {
-        // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
-        // by production.
-        if (!IsFirestoreEmulatorAvailable()) {
-          return;
-        }
-        
-        FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "multi-DB-snapshots-in-sync");
-        FirebaseFirestore customDb1 = TestFirestore(customApp, "test-db-1");
-        FirebaseFirestore customDb2 = TestFirestore(customApp, "test-db-2");
-        
-        DocumentReference db1Doc = customDb1.Collection("foo").Document();
-        DocumentReference db2Doc = customDb2.Collection("foo").Document();
+      // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
+      // by production.
+      return RunAgainstEmulatorOnly (
+          Async(() => {
+            FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "multi-DB-snapshots-in-sync");
+            FirebaseFirestore customDb1 = TestFirestore(customApp, "test-db-1");
+            FirebaseFirestore customDb2 = TestFirestore(customApp, "test-db-2");
+            
+            DocumentReference db1Doc = customDb1.Collection("foo").Document();
+            DocumentReference db2Doc = customDb2.Collection("foo").Document();
 
-        var db1SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
-        var db1SyncListener = customDb1.ListenForSnapshotsInSync(() => {
-          db1SyncAccumulator.Listener("customDb1 in sync");
-        });
-        db1SyncAccumulator.Await();
+            var db1SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
+            var db1SyncListener = customDb1.ListenForSnapshotsInSync(() => {
+              db1SyncAccumulator.Listener("customDb1 in sync");
+            });
+            db1SyncAccumulator.Await();
 
-        var db2SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
-        customDb2.ListenForSnapshotsInSync(() => { db2SyncAccumulator.Listener("customDb2 in sync"); });
-        db2SyncAccumulator.Await();
+            var db2SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
+            customDb2.ListenForSnapshotsInSync(() => { db2SyncAccumulator.Listener("customDb2 in sync"); });
+            db2SyncAccumulator.Await();
 
-        db1Doc.Listen((snap) => { });
-        db1SyncAccumulator.Await();
+            db1Doc.Listen((snap) => { });
+            db1SyncAccumulator.Await();
 
-        db2Doc.Listen((snap) => { });
-        db2SyncAccumulator.Await();
+            db2Doc.Listen((snap) => { });
+            db2SyncAccumulator.Await();
 
-        // At this point we have two firestore instances and separate listeners
-        // attached to each one and all are in an idle state. Once the second
-        // instance is disposed the listeners on the first instance should
-        // continue to operate normally.
-        db2SyncAccumulator.ThrowOnAnyEvent();
-        customDb2.TerminateAsync();
-        DeleteFirestore(customDb2);
+            // At this point we have two firestore instances and separate listeners
+            // attached to each one and all are in an idle state. Once the second
+            // instance is disposed the listeners on the first instance should
+            // continue to operate normally.
+            db2SyncAccumulator.ThrowOnAnyEvent();
+            customDb2.TerminateAsync();
 
-        Await(db1Doc.SetAsync(TestData(2)));
-        db1SyncAccumulator.Await();
+            Await(db1Doc.SetAsync(TestData(2)));
+            db1SyncAccumulator.Await();
 
-        // TODO(b/158580488): Remove this line once the null ref exception
-        // during snapshots-in-sync listener cleanup is fixed in C++.
-        db1SyncListener.Stop();
-        customApp.Dispose();
-      });
+            // TODO(b/158580488): Remove this line once the null ref exception
+            // during snapshots-in-sync listener cleanup is fixed in C++.
+            db1SyncListener.Stop();
+            customApp.Dispose();
+          })
+      );
     }
 
     Task TestMultiInstanceDocumentReferenceListeners() {
@@ -1041,7 +1038,6 @@ namespace Firebase.Sample.Firestore {
         // instance is disposed the listeners on the first instance should
         // continue to operate normally and the listeners on the second
         // instance should not receive any more events.
-
         db2DocAccumulator.ThrowOnAnyEvent();
 
         app2.Dispose();
@@ -1711,66 +1707,65 @@ namespace Firebase.Sample.Firestore {
         }
       });
     }
+
     Task TestTransactionsFromMultiDBInParallel() {
-      return Async(() => {
-        // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
-        // by production.
-        if (!IsFirestoreEmulatorAvailable()) {
-          return;
-        }
-        FirebaseApp app =  FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "multi-DB-transactions-in-parallel");
+      // TODO(b/284877917): Remove the Firestore emulator check when multi-db is supported
+      // by production.
+      return RunAgainstEmulatorOnly(
+          Async(() => {
+            FirebaseApp app =  FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "multi-DB-transactions-in-parallel");
 
-        int numOfFirestores = 3;
-        int numTransactionsPerFirestore = 3;
+            int numOfFirestores = 3;
+            int numTransactionsPerFirestore = 3;
 
-        FirebaseFirestore[] firestores = new FirebaseFirestore[3];
-        DocumentReference[] docs = new DocumentReference[3];
-        for (int i = 0; i < numOfFirestores; i++)
-        {
-          FirebaseFirestore firestore = TestFirestore(app, "transactions-in-parallel" + (i));
-          firestores[i] = firestore;
-          docs[i] = firestore.Collection("foo").Document();
-        }
-        
-        List<Task> tasks = new List<Task>();
-        for (int i = 0; i < numTransactionsPerFirestore; i++)
-        {
-          for(int j = 0; j < numOfFirestores; j++) {
-            FirebaseFirestore firestore = firestores[j];
-            DocumentReference currentDoc = docs[j];
-            Task txnTask = firestore.RunTransactionAsync(transaction => {
-              return transaction.GetSnapshotAsync(currentDoc).ContinueWith(task => {
-                DocumentSnapshot currentSnapshot = task.Result;
-                int currentValue;
-                if (currentSnapshot.TryGetValue("count", out currentValue)) {
-                  transaction.Update(currentDoc, "count", currentValue + 1);
-                } else {
-                  var data = new Dictionary<string, object> { { "count", 1 } };
-                  transaction.Set(currentDoc, data);
-                }
-              });
-            });
-            tasks.Add(txnTask);
-          }
-        }
+            FirebaseFirestore[] firestores = new FirebaseFirestore[3];
+            DocumentReference[] docs = new DocumentReference[3];
+            for (int i = 0; i < numOfFirestores; i++)
+            {
+              FirebaseFirestore firestore = TestFirestore(app, "transactions-in-parallel" + (i));
+              firestores[i] = firestore;
+              docs[i] = firestore.Collection("foo").Document();
+            }
+            
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < numTransactionsPerFirestore; i++)
+            {
+              for(int j = 0; j < numOfFirestores; j++) {
+                FirebaseFirestore firestore = firestores[j];
+                DocumentReference currentDoc = docs[j];
+                Task txnTask = firestore.RunTransactionAsync(transaction => {
+                  return transaction.GetSnapshotAsync(currentDoc).ContinueWith(task => {
+                    DocumentSnapshot currentSnapshot = task.Result;
+                    int currentValue;
+                    if (currentSnapshot.TryGetValue("count", out currentValue)) {
+                      transaction.Update(currentDoc, "count", currentValue + 1);
+                    } else {
+                      var data = new Dictionary<string, object> { { "count", 1 } };
+                      transaction.Set(currentDoc, data);
+                    }
+                  });
+                });
+                tasks.Add(txnTask);
+              }
+            }
 
-        foreach (Task task in tasks)
-        {
-          AssertTaskSucceeds(task);
-        }
+            foreach (Task task in tasks)
+            {
+              AssertTaskSucceeds(task);
+            }
 
-        foreach (DocumentReference doc in docs)
-        {
-          DocumentSnapshot snapshot = AssertTaskSucceeds(doc.GetSnapshotAsync(Source.Server));
-          int actualValue = snapshot.GetValue<int>("count", ServerTimestampBehavior.None);
-          int expectedValue = numTransactionsPerFirestore;
-          AssertEq<int>(actualValue, expectedValue);
-        }
+            foreach (DocumentReference doc in docs)
+            {
+              DocumentSnapshot snapshot = AssertTaskSucceeds(doc.GetSnapshotAsync(Source.Server));
+              int actualValue = snapshot.GetValue<int>("count", ServerTimestampBehavior.None);
+              int expectedValue = numTransactionsPerFirestore;
+              AssertEq<int>(actualValue, expectedValue);
+            }
 
-        app.Dispose();
-      });
+            app.Dispose();
+          })
+      );
     }
-
     Task TestTransactionWithExplicitMaxAttempts() {
       return Async(() => {
         var options = new TransactionOptions();
