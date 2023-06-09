@@ -1100,7 +1100,7 @@ def _fix_path(path):
 
 def _run(args, timeout=_DEFAULT_TIMEOUT_SECONDS, capture_output=False, text=None, check=True):
   """Executes a command in a subprocess."""
-  logging.info("Running in subprocess: %s, timeout:%d", " ".join(args), timeout)
+  logging.info("Running in subprocess: %s", " ".join(args))
   return subprocess.run(
       args=args,
       timeout=timeout,
