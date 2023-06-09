@@ -149,6 +149,8 @@ _SUPPORTED_PLATFORMS = (
 _SUPPORTED_XCODE_CONFIGURATIONS = (
     "ReleaseForRunning", "Release", "Debug", "ReleaseForProfiling")
 
+_DEFAULT_TIMEOUT_SECONDS = 1200
+
 FLAGS = flags.FLAGS
 
 flags.DEFINE_list(
@@ -643,6 +645,10 @@ def run_xcodebuild(dir_helper, ios_config, device_type, target_os):
     build_output_dir = os.path.join(dir_helper.output_dir, "tvos_output_"+device_type)
   else:
     build_output_dir = os.path.join(dir_helper.output_dir, "ios_output_"+device_type)
+  if "firestore" in dir_helper.unity_project_assets_dir.lower():
+    timeout_seconds = 1800
+  else:
+    timeout_seconds = _DEFAULT_TIMEOUT_SECONDS
   _run(
       xcodebuild.get_args_for_build(
           path=dir_helper.xcode_path,
@@ -650,7 +656,8 @@ def run_xcodebuild(dir_helper, ios_config, device_type, target_os):
           output_dir=build_output_dir,
           ios_sdk=_IOS_SDK[device_type],
           target_os=target_os,
-          configuration=ios_config.configuration))
+          configuration=ios_config.configuration),
+      timeout=timeout_seconds)
   if device_type == _DEVICE_REAL:
     xcodebuild.generate_unsigned_ipa(
         output_dir=build_output_dir,
@@ -1091,9 +1098,9 @@ def _fix_path(path):
   return os.path.abspath(os.path.expanduser(path))
 
 
-def _run(args, timeout=1200, capture_output=False, text=None, check=True):
+def _run(args, timeout=_DEFAULT_TIMEOUT_SECONDS, capture_output=False, text=None, check=True):
   """Executes a command in a subprocess."""
-  logging.info("Running in subprocess: %s", " ".join(args))
+  logging.info("Running in subprocess: %s, timeout:%d", " ".join(args), timeout)
   return subprocess.run(
       args=args,
       timeout=timeout,
