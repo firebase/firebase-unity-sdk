@@ -701,8 +701,8 @@ namespace Firebase.Firestore {
     }
 
     private struct FirestoreInstanceCacheKey : IEquatable<FirestoreInstanceCacheKey> {
-      public readonly FirebaseApp App { get; }
-      public readonly string DatabaseName { get; }
+      public FirebaseApp App { get; }
+      public string DatabaseName { get; }
 
       public FirestoreInstanceCacheKey(FirebaseApp app, string databaseName)
       {
