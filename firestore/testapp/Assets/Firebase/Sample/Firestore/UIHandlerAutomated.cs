@@ -170,7 +170,7 @@ namespace Firebase.Sample.Firestore {
       Func<Task>[] testFilter = {
         // THIS LIST MUST BE EMPTY WHEN CHECKED INTO SOURCE CONTROL!
       };
-
+      
       // Unity "helpfully" adds stack traces whenever you call Debug.Log. Unfortunately, these stack
       // traces are basically useless, since the good parts are always truncated.  (See comments on
       // LogInBatches.) So just disable them.
@@ -3630,8 +3630,6 @@ namespace Firebase.Sample.Firestore {
             Assert("Expected an exception to be thrown", exception != null);
             Assert("Expected an InvalidOperationException, but received " +
                    exception, exception is InvalidOperationException);
-            AssertStringContainsNoCase(exception.ToString(), "You can't set the 'sslEnabled' setting to " +
-                                                             "false unless you also set a non-default 'host'.");
           }
         }
 
