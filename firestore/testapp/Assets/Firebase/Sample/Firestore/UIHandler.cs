@@ -201,8 +201,57 @@ namespace Firebase.Sample.Firestore {
 
     protected internal FirebaseFirestore db {
       get {
-        return FirebaseFirestore.DefaultInstance;
+        FirebaseFirestore firestore = FirebaseFirestore.DefaultInstance;
+        SetTargetBackend(firestore);
+        return firestore;
       }
+    }
+
+    protected internal FirebaseFirestore TestFirestore(FirebaseApp app) {
+      FirebaseFirestore firestore = FirebaseFirestore.GetInstance(app);
+      SetTargetBackend(firestore);
+      return firestore; 
+    }
+
+    // Update the `Settings` of a Firestore instance to run tests against the production or
+    // Firestore emulator backend.
+    protected internal void SetTargetBackend(FirebaseFirestore db) {
+      string targetHost = GetTargetHost();
+      
+      // Avoid updating `Settings` if not required. No changes are allowed to be made to the
+      // settings of a <c>FirebaseFirestore</c> instance if it has invoked any non-static method.
+      /// Attempting to do so will result in an exception.
+      if (db.Settings.Host == targetHost) {
+        return;
+      }
+  
+      db.Settings.Host = targetHost;
+      // Emulator does not support ssl.
+      db.Settings.SslEnabled = IsUsingFirestoreEmulator() ? false : true;
+    }
+
+    private string GetTargetHost() {
+      if (IsUsingFirestoreEmulator()) {
+        #if UNITY_ANDROID
+          // Special IP to access the hosting OS from Android Emulator.
+          string localHost = "10.0.2.2";
+        #else
+          string localHost = "localhost";
+        #endif // UNITY_ANDROID
+
+        // Use FIRESTORE_EMULATOR_PORT if it is set to non empty string, otherwise use the
+        // default port.
+        string port = Environment.GetEnvironmentVariable("FIRESTORE_EMULATOR_PORT") ?? "8080";
+        return localHost + ":" + port;
+      }
+      
+      return FirebaseFirestore.DefaultInstance.Settings.Host;
+    }
+
+    // Check if the `USE_FIRESTORE_EMULATOR` environment variable is set regardsless
+    // of its value.
+    protected internal bool IsUsingFirestoreEmulator() {
+      return (Environment.GetEnvironmentVariable("USE_FIRESTORE_EMULATOR") != null);
     }
 
     // Cancel the currently running operation.

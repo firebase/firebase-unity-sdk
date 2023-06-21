@@ -164,7 +164,7 @@ namespace Firebase.Sample.Firestore {
       Func<Task>[] testFilter = {
         // THIS LIST MUST BE EMPTY WHEN CHECKED INTO SOURCE CONTROL!
       };
-
+      
       // Unity "helpfully" adds stack traces whenever you call Debug.Log. Unfortunately, these stack
       // traces are basically useless, since the good parts are always truncated.  (See comments on
       // LogInBatches.) So just disable them.
@@ -191,6 +191,14 @@ namespace Firebase.Sample.Firestore {
 
       UIEnabled = false;
       base.Start();
+      
+      /*
+       * THIS MUST BE COMMENTED OUT WHEN CHECKED INTO SOURCE CONTROL!
+       * 
+       * To run tests against Firestore emulator locally, set `USE_FIRESTORE_EMULATOR` to "true".
+       * To switch back to run against prod, set it back to null.
+       */
+      // Environment.SetEnvironmentVariable("USE_FIRESTORE_EMULATOR", "true");
     }
 
     // Passes along the update call to automated test runner.
@@ -747,7 +755,7 @@ namespace Firebase.Sample.Firestore {
         var app1 = db1.App;
 
         var app2 = FirebaseApp.Create(app1.Options, "MultiInstanceSnapshotsInSyncTest");
-        var db2 = FirebaseFirestore.GetInstance(app2);
+        var db2 = TestFirestore(app2);
         var db2Doc = db2.Collection(db1Doc.Parent.Id).Document(db1Doc.Id);
 
         var db1SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
@@ -793,7 +801,7 @@ namespace Firebase.Sample.Firestore {
         var app1 = db1.App;
 
         var app2 = FirebaseApp.Create(app1.Options, "MultiInstanceDocumentReferenceListenersTest");
-        var db2 = FirebaseFirestore.GetInstance(app2);
+        var db2 = TestFirestore(app2);
         var db2Doc = db2.Collection(db1Doc.Parent.Id).Document(db1Doc.Id);
 
         var db1DocAccumulator = new EventAccumulator<DocumentSnapshot>(MainThreadId, FailTest);
@@ -827,7 +835,7 @@ namespace Firebase.Sample.Firestore {
         var app1 = db1.App;
 
         var app2 = FirebaseApp.Create(app1.Options, "MultiInstanceQueryListenersTest");
-        var db2 = FirebaseFirestore.GetInstance(app2);
+        var db2 = TestFirestore(app2);
         var db2Coll = db2.Collection(db1Coll.Id);
 
         var db1CollAccumulator = new EventAccumulator<QuerySnapshot>(MainThreadId, FailTest);
@@ -1308,7 +1316,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that the Transaction is disposed when the Firestore instance terminated.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-terminate");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
           DocumentReference doc = customDb.Document(TestDocument().Path);
           var barrier = new BarrierCompat(2);
           Transaction capturedTransaction = null;
@@ -1343,7 +1351,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that the Transaction is disposed when the Firestore instance is disposed.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-dispose1");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
           DocumentReference doc = customDb.Document(TestDocument().Path);
           var barrier = new BarrierCompat(2);
           Transaction capturedTransaction = null;
@@ -1375,7 +1383,7 @@ namespace Firebase.Sample.Firestore {
         // directly from the transaction callback.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-dispose2");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
           DocumentReference doc = customDb.Document(TestDocument().Path);
           var barrier = new BarrierCompat(2);
           Transaction capturedTransaction = null;
@@ -1402,7 +1410,7 @@ namespace Firebase.Sample.Firestore {
         // from the task returned from the transaction callback.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "transaction-dispose3");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
           DocumentReference doc = customDb.Document(TestDocument().Path);
           var barrier = new BarrierCompat(2);
           Transaction capturedTransaction = null;
@@ -1440,7 +1448,7 @@ namespace Firebase.Sample.Firestore {
         }
         FirebaseFirestore[] firestores = new FirebaseFirestore[apps.Length];
         for (int i = 0; i < firestores.Length; i++) {
-          firestores[i] = FirebaseFirestore.GetInstance(apps[i]);
+          firestores[i] = TestFirestore(apps[i]);
         }
 
         int numTransactionsPerFirestore = 3;
@@ -2453,8 +2461,8 @@ namespace Firebase.Sample.Firestore {
 
     Task TestDefaultInstanceStable() {
       return Async(() => {
-        FirebaseFirestore db1 = FirebaseFirestore.DefaultInstance;
-        FirebaseFirestore db2 = FirebaseFirestore.DefaultInstance;
+        FirebaseFirestore db1 = db;
+        FirebaseFirestore db2 = db;
         AssertEq("FirebaseFirestore.DefaultInstance's not stable", db1, db2);
       });
     }
@@ -2653,7 +2661,7 @@ namespace Firebase.Sample.Firestore {
                !docListenerInvoked);
 
         // Create a new functional instance.
-        var db2 = FirebaseFirestore.GetInstance(app);
+        var db2 = TestFirestore(app);
         Assert("Should create a new instance.", db1 != db2);
         AssertTaskSucceeds(db2.DisableNetworkAsync());
         AssertTaskSucceeds(db2.EnableNetworkAsync());
@@ -2679,7 +2687,7 @@ namespace Firebase.Sample.Firestore {
         // Create a document to use to verify the behavior of ClearPersistenceAsync().
         {
           var app = FirebaseApp.Create(defaultOptions, "TestClearPersistenceApp");
-          var db = FirebaseFirestore.GetInstance(app);
+          var db = TestFirestore(app);
           var docContents = new Dictionary<string, object> { { "foo", 42 } };
 
           var doc = db.Collection("TestCollection").Document();
@@ -2839,12 +2847,12 @@ namespace Firebase.Sample.Firestore {
     // Verify Firestore instances are singletons.
     Task TestFirestoreSingleton() {
       return Async(() => {
-        FirebaseFirestore db2 = FirebaseFirestore.DefaultInstance;
+        FirebaseFirestore db2 = db;
         Assert("FirebaseFirestore.DefaultInstance returns a singleton", db == db2);
         Assert("Query.Firestore returns the same instance",
-            db == db.Collection("a").WhereEqualTo("x", 1).Firestore);
+               db == db.Collection("a").WhereEqualTo("x", 1).Firestore);
         Assert("DocumentReference.Firestore returns the same instance",
-            db == db.Document("a/b").Firestore);
+               db == db.Document("a/b").Firestore);
       });
     }
 
@@ -2853,7 +2861,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that ToString() returns a meaningful value.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-tostring-test");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
           customDb.Settings.Host = "a.b.c";
           customDb.Settings.SslEnabled = true;
           customDb.Settings.PersistenceEnabled = false;
@@ -2869,9 +2877,15 @@ namespace Firebase.Sample.Firestore {
         // Verify the default FirebaseFirestoreSettings values.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-defaults-test");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
-          AssertEq(customDb.Settings.Host, "firestore.googleapis.com");
-          AssertEq(customDb.Settings.SslEnabled, true);
+          FirebaseFirestore customDb = TestFirestore(customApp);
+          // While using Firestore Emulator, the host and SslEnabled fields are different from prod. 
+          if(IsUsingFirestoreEmulator()){
+            AssertStringContainsNoCase(customDb.Settings.ToString(), "Host=localhost:");
+            AssertEq(customDb.Settings.SslEnabled, false);
+          } else {
+            AssertEq(customDb.Settings.Host, "firestore.googleapis.com");
+            AssertEq(customDb.Settings.SslEnabled, true);
+          }
           AssertEq(customDb.Settings.PersistenceEnabled, true);
           AssertEq(customDb.Settings.CacheSizeBytes, 100 * 1024 * 1024);
           customApp.Dispose();
@@ -2880,7 +2894,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that the FirebaseFirestoreSettings written are read back.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-readwrite-test");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
 
           customDb.Settings.Host = "a.b.c";
           AssertEq<string>(customDb.Settings.Host, "a.b.c");
@@ -2908,7 +2922,7 @@ namespace Firebase.Sample.Firestore {
         // Verify the FirebaseFirestoreSettings behavior after the FirebaseFirestore is disposed.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-dispose-test");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
           FirebaseFirestoreSettings settings = customDb.Settings;
 
           var oldHost = settings.Host;
@@ -2937,7 +2951,7 @@ namespace Firebase.Sample.Firestore {
         // Verify the FirebaseFirestoreSettings behavior after the FirebaseFirestore is used.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-toolate-test");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
           var oldHost = customDb.Settings.Host;
           var oldSslEnabled = customDb.Settings.SslEnabled;
           var oldPersistenceEnabled = customDb.Settings.PersistenceEnabled;
@@ -2964,13 +2978,13 @@ namespace Firebase.Sample.Firestore {
 
           customApp.Dispose();
         }
-
+        
         // Verify that FirebaseFirestoreSettings.PersistenceEnabled is respected.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "settings-persistence-test");
           string docPath;
           {
-            FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+            FirebaseFirestore customDb = TestFirestore(customApp);
             customDb.Settings.PersistenceEnabled = true;
             DocumentReference doc = customDb.Collection("settings-persistence-test").Document();
             docPath = doc.Path;
@@ -2979,7 +2993,7 @@ namespace Firebase.Sample.Firestore {
             AssertTaskSucceeds(customDb.TerminateAsync());
           }
           {
-            FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+            FirebaseFirestore customDb = TestFirestore(customApp);
             customDb.Settings.PersistenceEnabled = false;
             DocumentReference doc = customDb.Document(docPath);
             AssertTaskSucceeds(doc.SetAsync(TestData(1)));
@@ -3288,7 +3302,7 @@ namespace Firebase.Sample.Firestore {
 
         // Invalid argument.
         try {
-          var db1 = FirebaseFirestore.DefaultInstance;
+          var db1 = db;
           var db2 = NonDefaultFirestore("InvalidArgument");
 
           var batch = db1.StartBatch();
@@ -3304,28 +3318,32 @@ namespace Firebase.Sample.Firestore {
               exception, exception is ArgumentException);
         }
 
-        // Illegal state.
-        exception = null;
-        try {
-          var db = NonDefaultFirestore("IllegalState");
-          db.Settings.SslEnabled = false;
-          // Make sure the Firestore client is initialized.
-          db.Collection("foo").Document("bar");
+        // While running against Firestore emulator, the 'sslEnabled' is already set to "false". No exception
+        // will be thrown.
+        if (!IsUsingFirestoreEmulator()) {
+          // Illegal state.
+          exception = null;
+          try {
+            var db = NonDefaultFirestore("IllegalState");
+            db.Settings.SslEnabled = false;
+            // Make sure the Firestore client is initialized.
+            db.Collection("foo").Document("bar");
 
-        } catch (Exception e) {
-          exception = e;
+          } catch (Exception e) {
+            exception = e;
 
-        } finally {
-          Assert("Expected an exception to be thrown", exception != null);
-          Assert("Expected an InvalidOperationException, but received " +
-              exception, exception is InvalidOperationException);
+          } finally {
+            Assert("Expected an exception to be thrown", exception != null);
+            Assert("Expected an InvalidOperationException, but received " +
+                   exception, exception is InvalidOperationException);
+          }
         }
 
         // Exception in an async method.
         exception = null;
 
         {
-          var db1 = FirebaseFirestore.DefaultInstance;
+          var db1 = db;
           var db2 = NonDefaultFirestore("InternalAssertion");
 
           DocumentReference doc1 = db1.Collection("foo").Document("bar");
@@ -3451,10 +3469,10 @@ namespace Firebase.Sample.Firestore {
 
     Task LoadedBundleDocumentsAlreadyPulledFromBackend_ShouldNotOverwrite() {
       return Async(() => {
-        var db = FirebaseFirestore.GetInstance(FirebaseApp.DefaultInstance);
+        var db = TestFirestore(FirebaseApp.DefaultInstance);
         Await(db.TerminateAsync());
         Await(db.ClearPersistenceAsync());
-        db = FirebaseFirestore.GetInstance(FirebaseApp.DefaultInstance);
+        db = TestFirestore(FirebaseApp.DefaultInstance);
 
         var collection = db.Collection("coll-1");
         Await(collection.Document("a").SetAsync(new Dictionary<string, object> {
@@ -3784,7 +3802,7 @@ namespace Firebase.Sample.Firestore {
         // Verify that disposing the `FirebaseApp` in turn disposes the `FirebaseFirestore` object.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "dispose-app-to-firestore");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
           customApp.Dispose();
           Assert("App property should be null", customDb.App == null);
         }
@@ -3798,7 +3816,7 @@ namespace Firebase.Sample.Firestore {
           Task<string> sampleTypedTask = taskCompletionSource.Task;
 
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "dispose-exceptions");
-          FirebaseFirestore customDb = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp);
           var doc = customDb.Document("ColA/DocA/ColB/DocB");
           var doc2 = customDb.Document("ColA/DocA/ColB/DocC");
           var collection = doc.Parent;
@@ -4045,7 +4063,7 @@ namespace Firebase.Sample.Firestore {
       // Setting a ProjectId is required (b/158838266).
       appOptions.ProjectId = appName;
       var app = FirebaseApp.Create(appOptions, appName);
-      return FirebaseFirestore.GetInstance(app);
+      return TestFirestore(app);
     }
 
     /// Wraps IEnumerator in an exception handling Task.
