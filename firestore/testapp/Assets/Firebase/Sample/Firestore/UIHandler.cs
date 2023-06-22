@@ -58,6 +58,36 @@ namespace Firebase.Sample.Firestore {
     // Previously completed task.
     protected Task previousTask;
 
+    private enum Backend {
+      Production = 0,
+      Emulator = 1
+      // Nightly and stage can be added later.
+    }
+
+    private Backend TargetBackend = GetTargetBackend();
+    // For local testing purpose, manually modify the port number if Firestore
+    // emulator is running at a different port.
+    private string EmulatorPort = "8080";
+
+    private static Backend GetTargetBackend() {
+      // Set Firestore emulator as default backend.
+      Backend targetBackend = Backend.Emulator;
+
+      // Use production backend if not running on Unity editor or standalone platform (Mac OS X,
+      // Windows or Linux).
+      #if !UNITY_EDITOR && !UNITY_STANDALONE
+        Debug.Log("a");
+        targetBackend = Backend.Production;
+      // Set custom script `RUN_AGAINST_PRODUCTION` to run tests against the productions. Refer to
+      // unity documents for guidance:https://docs.unity3d.com/Manual/CustomScriptingSymbols.html
+      #elif RUN_AGAINST_PRODUCTION
+        Debug.Log("b");
+        targetBackend = Backend.Production;
+      #endif 
+
+      return targetBackend;
+    }
+    
     /**
      * Compares two objects for deep equality.
      */
@@ -213,18 +243,23 @@ namespace Firebase.Sample.Firestore {
       return firestore; 
     }
 
+    // Check if Firestore emulator is the target backend.
+    protected bool IsUsingFirestoreEmulator() {
+        return (TargetBackend == Backend.Emulator);
+    }
+
     // Update the `Settings` of a Firestore instance to run tests against the production or
     // Firestore emulator backend.
     protected internal void SetTargetBackend(FirebaseFirestore db) {
       string targetHost = GetTargetHost();
-      
+
       // Avoid updating `Settings` if not required. No changes are allowed to be made to the
       // settings of a <c>FirebaseFirestore</c> instance if it has invoked any non-static method.
       /// Attempting to do so will result in an exception.
       if (db.Settings.Host == targetHost) {
         return;
       }
-  
+
       db.Settings.Host = targetHost;
       // Emulator does not support ssl.
       db.Settings.SslEnabled = IsUsingFirestoreEmulator() ? false : true;
@@ -238,20 +273,10 @@ namespace Firebase.Sample.Firestore {
         #else
           string localHost = "localhost";
         #endif // UNITY_ANDROID
-
-        // Use FIRESTORE_EMULATOR_PORT if it is set to non empty string, otherwise use the
-        // default port.
-        string port = Environment.GetEnvironmentVariable("FIRESTORE_EMULATOR_PORT") ?? "8080";
-        return localHost + ":" + port;
+        return localHost + ":" + EmulatorPort;
       }
-      
-      return FirebaseFirestore.DefaultInstance.Settings.Host;
-    }
 
-    // Check if the `USE_FIRESTORE_EMULATOR` environment variable is set regardsless
-    // of its value.
-    protected internal bool IsUsingFirestoreEmulator() {
-      return (Environment.GetEnvironmentVariable("USE_FIRESTORE_EMULATOR") != null);
+      return FirebaseFirestore.DefaultInstance.Settings.Host;
     }
 
     // Cancel the currently running operation.
