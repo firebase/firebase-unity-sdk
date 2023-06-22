@@ -78,12 +78,10 @@ namespace Firebase.Sample.Firestore {
       // Use production backend if not running on Unity editor or standalone platform (Mac OS X,
       // Windows or Linux).
       #if !UNITY_EDITOR && !UNITY_STANDALONE
-        Debug.Log("a");
         targetBackend = Backend.Production;
       // Set custom script `RUN_AGAINST_PRODUCTION` to run tests against the productions. Refer to
       // unity documents for guidance:https://docs.unity3d.com/Manual/CustomScriptingSymbols.html
       #elif RUN_AGAINST_PRODUCTION
-        Debug.Log("b");
         targetBackend = Backend.Production;
       #endif 
 
