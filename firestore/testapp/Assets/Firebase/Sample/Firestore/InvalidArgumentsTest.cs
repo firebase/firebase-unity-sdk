@@ -127,8 +127,14 @@ namespace Firebase.Sample.Firestore {
                                          action = FieldValue_ArrayRemove_NullArray },
           new InvalidArgumentsTestCase { name = "FieldValue_ArrayUnion_NullArray",
                                          action = FieldValue_ArrayUnion_NullArray },
-          new InvalidArgumentsTestCase { name = "FirebaseFirestore_GetInstance_Null",
-                                         action = FirebaseFirestore_GetInstance_Null },
+          new InvalidArgumentsTestCase { name = "FirebaseFirestore_GetInstance_Null_App",
+                                         action = FirebaseFirestore_GetInstance_Null_App },
+          new InvalidArgumentsTestCase { name = "FirebaseFirestore_GetInstance_Null_Database_Name",
+            action = FirebaseFirestore_GetInstance_Null_Database_Name },
+          new InvalidArgumentsTestCase { name = "FirebaseFirestore_GetInstance_App_With_Null_Database_Name",
+            action = FirebaseFirestore_GetInstance_App_With_Null_Database_Name},
+          new InvalidArgumentsTestCase { name = "FirebaseFirestore_GetInstance_Null_App_With_Database_Name",
+            action = FirebaseFirestore_GetInstance_Null_App_With_Database_Name },
           new InvalidArgumentsTestCase { name = "FirebaseFirestore_GetInstance_DisposedApp",
                                          action = FirebaseFirestore_GetInstance_DisposedApp },
           new InvalidArgumentsTestCase { name = "FirebaseFirestore_Collection_NullStringPath",
@@ -628,11 +634,26 @@ namespace Firebase.Sample.Firestore {
       handler.AssertException(typeof(ArgumentNullException), () => FieldValue.ArrayUnion(null));
     }
 
-    private static void FirebaseFirestore_GetInstance_Null(UIHandlerAutomated handler) {
+    private static void FirebaseFirestore_GetInstance_Null_App(UIHandlerAutomated handler) {
       handler.AssertException(typeof(ArgumentNullException),
-                              () => FirebaseFirestore.GetInstance(null));
+                              () => FirebaseFirestore.GetInstance((FirebaseApp)null));
     }
 
+    private static void FirebaseFirestore_GetInstance_Null_Database_Name(UIHandlerAutomated handler) {
+      handler.AssertException(typeof(ArgumentNullException),
+        () => FirebaseFirestore.GetInstance((string)null));
+    }
+    private static void FirebaseFirestore_GetInstance_Null_App_With_Database_Name(UIHandlerAutomated handler) {
+      handler.AssertException(typeof(ArgumentNullException),
+        () => FirebaseFirestore.GetInstance((FirebaseApp)null, "a"));
+    }
+    private static void FirebaseFirestore_GetInstance_App_With_Null_Database_Name(UIHandlerAutomated handler)
+    {
+      FirebaseApp app = FirebaseApp.DefaultInstance;
+      handler.AssertException(typeof(ArgumentNullException),
+        () => FirebaseFirestore.GetInstance(app, (string)null));
+    }
+    
     private static void FirebaseFirestore_GetInstance_DisposedApp(UIHandlerAutomated handler) {
       FirebaseApp disposedApp =
           FirebaseApp.Create(handler.db.App.Options, "test-getinstance-disposedapp");

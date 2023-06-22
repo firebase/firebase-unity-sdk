@@ -32,6 +32,8 @@ namespace Firebase.Sample.Firestore {
   public class UIHandler : MonoBehaviour {
     private const int kMaxLogSize = 16382;
 
+    private const string DefaultDatabase = "(default)";
+
     public GUISkin fb_GUISkin;
     private Vector2 controlsScrollViewVector = Vector2.zero;
     private string logText = "";
@@ -213,6 +215,18 @@ namespace Firebase.Sample.Firestore {
       return firestore; 
     }
 
+    protected internal FirebaseFirestore TestFirestore(string database) {
+      FirebaseFirestore firestore = FirebaseFirestore.GetInstance(database);
+      SetTargetBackend(firestore);
+      return firestore;
+    }
+    
+    protected internal FirebaseFirestore TestFirestore(FirebaseApp app, string database) {
+      FirebaseFirestore firestore = FirebaseFirestore.GetInstance(app, database);
+      SetTargetBackend(firestore);
+      return firestore;
+    }
+    
     // Update the `Settings` of a Firestore instance to run tests against the production or
     // Firestore emulator backend.
     protected internal void SetTargetBackend(FirebaseFirestore db) {

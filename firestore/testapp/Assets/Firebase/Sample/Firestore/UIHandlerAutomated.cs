@@ -158,13 +158,33 @@ namespace Firebase.Sample.Firestore {
         TestFirestoreGetInstance,
         // clang-format on
       };
+      
+      // Set the list of tests to run against Firestore Emulator only.
+      Func<Task>[] testsToRunAgainstFirestoreEmulatorOnly = {
+        // TODO(b/284877917): Move these tests into the `tests` above when production backend doesn't
+        // require databases to be created in advance.
+        TestMultiDBSnapshotsInSyncListeners,
+        TestTransactionsFromMultiDBInParallel,
+        TestReadDocumentFromMultiDB,
+        TestTerminateMultiDBIndependently,
+        TestTerminateAppWithMultiDB,
+        TestRestartCustomFirestore,
+      };
 
       // For local development convenience, populate `testFilter` with the tests that you would like
       // to run (instead of running the entire suite).
       Func<Task>[] testFilter = {
         // THIS LIST MUST BE EMPTY WHEN CHECKED INTO SOURCE CONTROL!
       };
-      
+
+      /*
+       * THIS MUST BE COMMENTED OUT WHEN CHECKED INTO SOURCE CONTROL!
+       * 
+       * To run tests against Firestore emulator locally, set `USE_FIRESTORE_EMULATOR` to "true".
+       * To switch back to run against prod, set it back to null.
+       */
+      // Environment.SetEnvironmentVariable("USE_FIRESTORE_EMULATOR", "true");
+
       // Unity "helpfully" adds stack traces whenever you call Debug.Log. Unfortunately, these stack
       // traces are basically useless, since the good parts are always truncated.  (See comments on
       // LogInBatches.) So just disable them.
@@ -179,6 +199,13 @@ namespace Firebase.Sample.Firestore {
         MainThreadId = Thread.CurrentThread.ManagedThreadId;
       });
 
+      // If the target backend is Firestore Emulator, include the tests in
+      // `testsToRunAgainstFirestoreEmulatorOnly` list.
+      if (IsUsingFirestoreEmulator()) {
+        Debug.Log("Running tests against Firestore Emulator.");
+        tests = tests.Concat(testsToRunAgainstFirestoreEmulatorOnly).ToArray();
+      }
+
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: testFilter.Length > 0 ? testFilter : tests,
         logFunc: LogInBatches,
@@ -191,14 +218,6 @@ namespace Firebase.Sample.Firestore {
 
       UIEnabled = false;
       base.Start();
-      
-      /*
-       * THIS MUST BE COMMENTED OUT WHEN CHECKED INTO SOURCE CONTROL!
-       * 
-       * To run tests against Firestore emulator locally, set `USE_FIRESTORE_EMULATOR` to "true".
-       * To switch back to run against prod, set it back to null.
-       */
-      // Environment.SetEnvironmentVariable("USE_FIRESTORE_EMULATOR", "true");
     }
 
     // Passes along the update call to automated test runner.
@@ -540,6 +559,10 @@ namespace Firebase.Sample.Firestore {
       return elements.ToList();
     }
 
+    private const string DEFAULT_DATABASE = "(default)";
+    private const string MULTI_DATABASE_ONE = "test-db-1";
+    private const string MULTI_DATABASE_TWO = "test-db-2";
+
     private const int AUTO_ID_LENGTH = 20;
     private const string AUTO_ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static System.Random rand = new System.Random();
@@ -606,6 +629,151 @@ namespace Firebase.Sample.Firestore {
         Assert("Deleted document should not exist", !snap.Exists);
 
         AssertEq(snap.ToDictionary(), null);
+      });
+    }
+
+    Task TestReadDocumentFromMultiDB() {
+      return Async(() => {
+        // Create 2 firestore instances and populate with documents.
+        FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "Interact-multi-DB");
+        FirebaseFirestore customDb1 = TestFirestore(customApp, MULTI_DATABASE_ONE);
+        FirebaseFirestore customDb2 = TestFirestore(customApp, MULTI_DATABASE_TWO);
+
+        DocumentReference doc1 = customDb1.Collection("foo").Document();
+        var data1 = TestData(1);
+        Await(doc1.SetAsync(data1));
+
+        DocumentReference doc2 = customDb2.Collection("foo").Document();
+        var data2 = TestData(2);
+        Await(doc2.SetAsync(data2));
+
+        // Documents from different databases should be able to get written and read
+        // without interfering with each other.
+        DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
+        Assert("Written document in the first firestore should exist", snap1.Exists);
+        AssertDeepEq(snap1.ToDictionary(), data1);
+        DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
+        Assert("Written document in the second firestore should exist", snap2.Exists);
+        AssertDeepEq(snap2.ToDictionary(), data2);
+        AssertEq(snap1.Equals(snap2), false);
+
+        // Delete one of the document.
+        Await(doc1.DeleteAsync());
+
+        // Mutating documents in one database should not affect other databases. 
+        DocumentSnapshot snap3 = Await(doc1.GetSnapshotAsync());
+        Assert("Deleted document should not exist", !snap3.Exists);
+        AssertEq(snap3.ToDictionary(), null);
+
+        DocumentSnapshot snap4 = Await(doc2.GetSnapshotAsync());
+        Assert("Dcoument in the other database should not be affected", snap4.Exists);
+        AssertDeepEq(snap4.ToDictionary(), data2);
+        AssertEq(snap2.Equals(snap4), true);
+        customApp.Dispose();
+      });
+    }
+
+    Task TestTerminateMultiDBIndependently() {
+      return Async(() => {
+        // Create 2 firestore instances and populate with documents.
+        FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "terminate-multi-DB-independently");
+        FirebaseFirestore customDb1 = TestFirestore(customApp, MULTI_DATABASE_ONE);
+        FirebaseFirestore customDb2 = TestFirestore(customApp, MULTI_DATABASE_TWO);
+
+        DocumentReference doc1 = customDb1.Collection("foo").Document();
+        var data1 = TestData(1);
+        Await(doc1.SetAsync(data1));
+
+        DocumentReference doc2 = customDb2.Collection("foo").Document();
+        var data2 = TestData(2);
+        Await(doc2.SetAsync(data2));
+
+        // Documents from different databases should be able to get written and read
+        // without interfering with each other.
+        DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
+        Assert("Written document in the first firestore should exist", snap1.Exists);
+        AssertDeepEq(snap1.ToDictionary(), data1);
+        DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
+        Assert("Written document in the second firestore should exist", snap2.Exists);
+        AssertDeepEq(snap2.ToDictionary(), data2);
+        AssertEq(snap1.Equals(snap2), false);
+
+
+        // Terminate one of the database.
+        AssertTaskSucceeds(customDb1.TerminateAsync());
+
+        // One database should not be affected by the termination of other databases.
+        DocumentSnapshot snap3 = Await(doc2.GetSnapshotAsync());
+        Assert("Dcoument in other database should not be affected", snap3.Exists);
+        AssertDeepEq(snap3.ToDictionary(), data2);
+        AssertEq(snap2.Equals(snap3), true);
+
+        customApp.Dispose();
+      });
+    }
+     
+    Task TestTerminateAppWithMultiDB() {
+      return Async(() => {
+        // Create 2 firestore instances and populate with documents.
+        FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "terminate-app-with-multi-DB");
+        FirebaseFirestore defaultDb = TestFirestore(customApp);
+        FirebaseFirestore customDb = TestFirestore(customApp, "test-db");
+
+        DocumentReference doc1 = defaultDb.Collection("foo").Document();
+        var data1 = TestData(1);
+        Await(doc1.SetAsync(data1));
+
+        DocumentReference doc2 = customDb.Collection("foo").Document();
+        var data2 = TestData(2);
+        Await(doc2.SetAsync(data2));
+
+        // Documents from different databases should be able to get written and read
+        // without interfering with each other.
+        DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
+        Assert("Written document in the first firestore should exist", snap1.Exists);
+        AssertDeepEq(snap1.ToDictionary(), data1);
+        DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
+        Assert("Written document in the second firestore should exist", snap2.Exists);
+        AssertDeepEq(snap2.ToDictionary(), data2);
+        AssertEq(snap1.Equals(snap2), false);
+
+        // Terminate the app.
+        customApp.Dispose();
+
+        // All databases under the app should be disposed.
+        Assert("App property should be null in default database", defaultDb.App == null);
+        Assert("App property should be null in custom database", customDb.App == null);
+        AssertException(typeof(InvalidOperationException), () => defaultDb.Collection("foo"));
+        AssertException(typeof(InvalidOperationException), () => customDb.Collection("foo"));
+      });
+    }
+     
+    Task TestRestartCustomFirestore() {
+      return Async(() => {
+        // Create a firestore instance and populate it with a document.
+        FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "getinstance-restart");
+        FirebaseFirestore customDb1 = TestFirestore(customApp, "test-db");
+
+        DocumentReference doc1 = customDb1.Collection("foo").Document();
+        var data = TestData();
+        Await(doc1.SetAsync(data));
+        DocumentSnapshot snap1 = Await(doc1.GetSnapshotAsync());
+        Assert("Written document in the firestore should exist", snap1.Exists);
+        AssertDeepEq(snap1.ToDictionary(), data);
+
+        // Terminate the database and re-create a new instance with same app and same database name.
+        AssertTaskSucceeds(customDb1.TerminateAsync());
+
+        FirebaseFirestore customDb2 = TestFirestore(customApp, "test-db");
+        Assert("GetInstance() should return a different instance when firestore is re-started", customDb1 != customDb2);
+
+        // The new firestore instance can read previously saved documents.
+        DocumentReference doc2 = customDb2.Document(doc1.Path);
+        DocumentSnapshot snap2 = Await(doc2.GetSnapshotAsync());
+        Assert("Written document in the firestore should exist", snap2.Exists);
+        AssertDeepEq(snap2.ToDictionary(), data);
+
+        customApp.Dispose();
       });
     }
 
@@ -794,6 +962,48 @@ namespace Firebase.Sample.Firestore {
       });
     }
 
+    Task TestMultiDBSnapshotsInSyncListeners() {
+      return Async(() => {
+        FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "multi-DB-snapshots-in-sync");
+        FirebaseFirestore customDb1 = TestFirestore(customApp, MULTI_DATABASE_ONE);
+        FirebaseFirestore customDb2 = TestFirestore(customApp, MULTI_DATABASE_TWO);
+
+        DocumentReference db1Doc = customDb1.Collection("foo").Document();
+        DocumentReference db2Doc = customDb2.Collection("foo").Document();
+
+        var db1SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
+        var db1SyncListener = customDb1.ListenForSnapshotsInSync(() => {
+          db1SyncAccumulator.Listener("customDb1 in sync");
+        });
+        db1SyncAccumulator.Await();
+
+        var db2SyncAccumulator = new EventAccumulator<string>(MainThreadId, FailTest);
+        customDb2.ListenForSnapshotsInSync(() => { db2SyncAccumulator.Listener("customDb2 in sync"); });
+        db2SyncAccumulator.Await();
+
+        db1Doc.Listen((snap) => { });
+        db1SyncAccumulator.Await();
+
+        db2Doc.Listen((snap) => { });
+        db2SyncAccumulator.Await();
+
+        // At this point we have two firestore instances and separate listeners
+        // attached to each one and all are in an idle state. Once the second
+        // instance is disposed the listeners on the first instance should
+        // continue to operate normally.
+        db2SyncAccumulator.ThrowOnAnyEvent();
+        customDb2.TerminateAsync();
+
+        Await(db1Doc.SetAsync(TestData(2)));
+        db1SyncAccumulator.Await();
+
+        // TODO(b/158580488): Remove this line once the null ref exception
+        // during snapshots-in-sync listener cleanup is fixed in C++.
+        db1SyncListener.Stop();
+        customApp.Dispose();
+      });
+    }
+
     Task TestMultiInstanceDocumentReferenceListeners() {
       return Async(() => {
         var db1Doc = TestDocument();
@@ -817,7 +1027,6 @@ namespace Firebase.Sample.Firestore {
         // instance is disposed the listeners on the first instance should
         // continue to operate normally and the listeners on the second
         // instance should not receive any more events.
-
         db2DocAccumulator.ThrowOnAnyEvent();
 
         app2.Dispose();
@@ -1485,6 +1694,57 @@ namespace Firebase.Sample.Firestore {
         foreach (FirebaseApp app in apps) {
           app.Dispose();
         }
+      });
+    }
+
+    Task TestTransactionsFromMultiDBInParallel() {
+      return Async(() => {
+        FirebaseApp app = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "multi-DB-transactions-in-parallel");
+
+        int numOfFirestores = 3;
+        int numTransactionsPerFirestore = 3;
+
+        FirebaseFirestore[] firestores = new FirebaseFirestore[3];
+        DocumentReference[] docs = new DocumentReference[3];
+        for (int i = 0; i < numOfFirestores; i++) {
+          FirebaseFirestore firestore = TestFirestore(app, "test-db" + ( i==0 ? "" : "-" + i ));
+          firestores[i] = firestore;
+          docs[i] = firestore.Collection("foo").Document();
+        }
+
+        List<Task> tasks = new List<Task>();
+        for (int i = 0; i < numTransactionsPerFirestore; i++) {
+          for (int j = 0; j < numOfFirestores; j++) {
+            FirebaseFirestore firestore = firestores[j];
+            DocumentReference currentDoc = docs[j];
+            Task txnTask = firestore.RunTransactionAsync(transaction => {
+              return transaction.GetSnapshotAsync(currentDoc).ContinueWith(task => {
+                DocumentSnapshot currentSnapshot = task.Result;
+                int currentValue;
+                if (currentSnapshot.TryGetValue("count", out currentValue)) {
+                  transaction.Update(currentDoc, "count", currentValue + 1);
+                } else {
+                  var data = new Dictionary<string, object> { { "count", 1 } };
+                  transaction.Set(currentDoc, data);
+                }
+              });
+            });
+            tasks.Add(txnTask);
+          }
+        }
+
+        foreach (Task task in tasks) {
+          AssertTaskSucceeds(task);
+        }
+
+        foreach (DocumentReference doc in docs) {
+          DocumentSnapshot snapshot = AssertTaskSucceeds(doc.GetSnapshotAsync(Source.Server));
+          int actualValue = snapshot.GetValue<int>("count", ServerTimestampBehavior.None);
+          int expectedValue = numTransactionsPerFirestore;
+          AssertEq<int>(actualValue, expectedValue);
+        }
+
+        app.Dispose();
       });
     }
 
@@ -2676,10 +2936,26 @@ namespace Firebase.Sample.Firestore {
         string path;
 
         // Verify that ClearPersistenceAsync() succeeds when invoked on a newly-created
-        // FirebaseFirestore instance.
+        // FirebaseFirestore instance using different GetInstance methods.
+        {
+          var db = FirebaseFirestore.DefaultInstance;
+          AssertTaskSucceeds(db.TerminateAsync());
+          AssertTaskSucceeds(db.ClearPersistenceAsync());
+          
+        }
+        {
+          var db = FirebaseFirestore.GetInstance("test-db");
+          AssertTaskSucceeds(db.ClearPersistenceAsync());
+        }
         {
           var app = FirebaseApp.Create(defaultOptions, "TestClearPersistenceApp");
           var db = FirebaseFirestore.GetInstance(app);
+          AssertTaskSucceeds(db.ClearPersistenceAsync());
+          app.Dispose();
+        }
+        {
+          var app = FirebaseApp.Create(defaultOptions, "TestClearPersistenceApp");
+          var db = FirebaseFirestore.GetInstance(app, "test-db");
           AssertTaskSucceeds(db.ClearPersistenceAsync());
           app.Dispose();
         }
@@ -3806,7 +4082,13 @@ namespace Firebase.Sample.Firestore {
           customApp.Dispose();
           Assert("App property should be null", customDb.App == null);
         }
-
+        {
+          FirebaseApp customApp = FirebaseApp.Create(FirebaseApp.DefaultInstance.Options, "dispose-app-to-multiDB-firestore");
+          FirebaseFirestore defaultDb = TestFirestore(customApp);
+          FirebaseFirestore customDb = TestFirestore(customApp, "test-db");
+          customApp.Dispose();
+          Assert("App property should be null", defaultDb.App == null);
+        }
         // Verify that all non-static methods in `FirebaseFirestore` throw if invoked after
         // the instance is disposed.
         {
@@ -3914,13 +4196,45 @@ namespace Firebase.Sample.Firestore {
         // Verify that invoking `FirebaseFirestore.GetInstance()` with the same `FirebaseApp`
         // returns the exact same `FirebaseFirestore` instance.
         {
+          FirebaseFirestore defaultDb1 = FirebaseFirestore.DefaultInstance;
+          FirebaseFirestore defaultDb2 = FirebaseFirestore.DefaultInstance;
+          Assert("DefaultInstance() should return the same default instance", defaultDb1 == defaultDb2);
+        }
+        {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-same-instance");
           FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance(customApp);
           FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance(customApp);
-          Assert("GetInstance() should return the same instance", customDb1 == customDb2);
+          Assert("GetInstance(app) should return the same instance when app is the same", customDb1 == customDb2);
           customApp.Dispose();
         }
-
+        {
+          FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance("test-db");
+          FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance("test-db");
+          Assert("GetInstance(database) should return the same instance when database name is the same", customDb1 == customDb2);
+        }
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-same-instance");
+          FirebaseFirestore customDb1 = FirebaseFirestore.GetInstance(customApp, "test-db");
+          FirebaseFirestore customDb2 = FirebaseFirestore.GetInstance(customApp, "test-db");
+          Assert("GetInstance(app, database) should return the same instance when app and database name are the same", customDb1 == customDb2);
+          customApp.Dispose();
+        }
+        
+        // Verify that invoking `FirebaseFirestore.GetInstance()` with default `FirebaseApp`
+        // instances and fefault database name return same `FirebaseFirestore` instances.
+        {
+          FirebaseApp defaultApp = FirebaseApp.DefaultInstance;
+        
+          FirebaseFirestore defaultDb1 = FirebaseFirestore.DefaultInstance;
+          FirebaseFirestore defaultDb2 = FirebaseFirestore.GetInstance(defaultApp);
+          FirebaseFirestore defaultDb3 = FirebaseFirestore.GetInstance(DEFAULT_DATABASE);
+          FirebaseFirestore defaultDb4 = FirebaseFirestore.GetInstance(defaultApp, DEFAULT_DATABASE);
+          Assert("GetInstance() should return the same default instance between 1 and 2", defaultDb1 == defaultDb2);
+          Assert("GetInstance() should return the same default instance between 1 and 3", defaultDb1 == defaultDb3);
+          Assert("GetInstance() should return the same default instance between 1 and 4", defaultDb1 == defaultDb4);
+          defaultApp.Dispose();
+        }
+        
         // Verify that invoking `FirebaseFirestore.GetInstance()` with different `FirebaseApp`
         // instances return distinct and consistent `FirebaseFirestore` instances.
         {
@@ -3936,25 +4250,40 @@ namespace Firebase.Sample.Firestore {
           customAppB.Dispose();
           customAppA.Dispose();
         }
-
+        
+        // Verify that invoking `FirebaseFirestore.GetInstance()` with same `FirebaseApp` instance
+        // but different database name return distinct and consistent `FirebaseFirestore` instances.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-multi-db");
+          FirebaseFirestore customDbA1 = FirebaseFirestore.GetInstance(customApp,"test-db-a");
+          FirebaseFirestore customDbB1 = FirebaseFirestore.GetInstance(customApp,"test-db-b");
+          FirebaseFirestore customDbA2 = FirebaseFirestore.GetInstance(customApp,"test-db-a");
+          FirebaseFirestore customDbB2 = FirebaseFirestore.GetInstance(customApp, "test-db-b");
+          Assert("GetInstance() should return the same instance A", customDbA1 == customDbA2);
+          Assert("GetInstance() should return the same instance B", customDbB1 == customDbB2);
+          Assert("GetInstance() should return distinct instances", customDbA1 != customDbB1);
+          customApp.Dispose();
+        }
+        
         // Verify that invoking `FirebaseFirestore.GetInstance()` with a disposed `FirebaseApp`
         // does not crash.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-disposed-app");
-          FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore.GetInstance(customApp, "test-db");
           customApp.Dispose();
           AssertException(typeof(ArgumentException),
                           () => FirebaseFirestore.GetInstance(customApp));
         }
-
+        
         // Verify that invoking `FirebaseFirestore.GetInstance()` after `TerminateAsync()` results
         // in a distinct, functional `FirebaseFirestore` instance.
         {
           FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-after-terminate");
-          FirebaseFirestore customDbBefore = FirebaseFirestore.GetInstance(customApp);
+          FirebaseFirestore customDbBefore = TestFirestore(customApp);
           Task terminateTask = customDbBefore.TerminateAsync();
-          FirebaseFirestore customDbAfter = FirebaseFirestore.GetInstance(customApp);
-          FirebaseFirestore customDbAfter2 = FirebaseFirestore.GetInstance(customApp);
+          
+          FirebaseFirestore customDbAfter = TestFirestore(customApp);
+          FirebaseFirestore customDbAfter2 = TestFirestore(customApp);
           // Wait for completion of the `Task` returned from `TerminateAsync()` *after* calling
           // `GetInstance()` to ensure that `TerminateAsync()` *synchronously* evicts the
           // "firestore" objects from both the C++ and C# instance caches (as opposed to evicting
@@ -3964,6 +4293,25 @@ namespace Firebase.Sample.Firestore {
           Assert("GetInstance() should return the same instance", customDbAfter == customDbAfter2);
           DocumentReference doc = customDbAfter.Collection("a").Document();
           AssertTaskSucceeds(doc.SetAsync(TestData(1)));
+          customApp.Dispose();
+        }
+        
+        // Verify that invoking  `FirebaseFirestore.GetInstance()` with custom database name after
+        // `TerminateAsync()` results in a distinct, functional `FirebaseFirestore` instance.
+        {
+          FirebaseApp customApp = FirebaseApp.Create(db.App.Options, "getinstance-after-terminate");
+          FirebaseFirestore customDbBefore = FirebaseFirestore.GetInstance(customApp, "test-db");
+          Task terminateTask = customDbBefore.TerminateAsync();
+
+          FirebaseFirestore customDbAfter1 = FirebaseFirestore.GetInstance(customApp,"test-db");
+          FirebaseFirestore customDbAfter2 = FirebaseFirestore.GetInstance(customApp,"test-db");
+          // Wait for completion of the `Task` returned from `TerminateAsync()` *after* calling
+          // `GetInstance()` to ensure that `TerminateAsync()` *synchronously* evicts the
+          // "firestore" objects from both the C++ and C# instance caches (as opposed to evicting
+          // from the caches *asynchronously*).
+          AssertTaskSucceeds(terminateTask);
+          Assert("GetInstance() should return a new instance", customDbBefore != customDbAfter1);
+          Assert("GetInstance() should return the same instance", customDbAfter1 == customDbAfter2);
           customApp.Dispose();
         }
       });
