@@ -15,7 +15,7 @@
 # This file defines the Android dependencies needed by all the modules.
 
 set(FIREBASE_APP_ANDROID_DEPS
-    "com.google.firebase:firebase-common:20.3.2"
+    "com.google.firebase:firebase-common:20.3.3"
     "com.google.firebase:firebase-analytics:21.3.0"
     "com.google.android.gms:play-services-base:18.2.0"
 )
@@ -81,6 +81,6 @@ set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
 )
 
 set(FIREBASE_STORAGE_ANDROID_DEPS
-    "com.google.firebase:firebase-storage:20.2.0"
+    "com.google.firebase:firebase-storage:20.2.1"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
