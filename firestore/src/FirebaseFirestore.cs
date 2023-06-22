@@ -44,13 +44,16 @@ namespace Firebase.Firestore {
     private readonly FirebaseFirestoreSettings _settings;
     private readonly TransactionManager _transactionManager;
 
-    private static readonly IDictionary<FirebaseApp, FirebaseFirestore> _instanceCache =
-        new Dictionary<FirebaseApp, FirebaseFirestore>();
+    private static readonly IDictionary<FirestoreInstanceCacheKey, FirebaseFirestore> _instanceCache =
+        new Dictionary<FirestoreInstanceCacheKey, FirebaseFirestore>();
+
+    private const string DefaultDatabase = "(default)";
+
+    private string _databaseName;
 
     // We rely on e.g. firestore.Document("a/b").Firestore returning the original Firestore
-    // instance so it's important the constructor remains private and we only create one
-    // FirebaseFirestore instance per FirebaseApp instance.
-    private FirebaseFirestore(FirestoreProxy proxy, FirebaseApp app) {
+    // instance so it's important the constructor remains private.
+    private FirebaseFirestore(FirestoreProxy proxy, FirebaseApp app, string database) {
       _proxy = Util.NotNull(proxy);
       App = app;
       app.AppDisposed += OnAppDisposed;
@@ -63,6 +66,7 @@ namespace Firebase.Firestore {
 
       _settings = new FirebaseFirestoreSettings(proxy);
       _transactionManager = new TransactionManager(this, proxy);
+      _databaseName = database;
     }
 
     /// <summary>
@@ -99,9 +103,11 @@ namespace Firebase.Firestore {
           _isInCppInstanceCache = false;
           RemoveSelfFromInstanceCache();
         }
-
+        
         _proxy = null;
         App = null;
+        _databaseName = null;
+
       } finally {
         _disposeLock.ReleaseWriterLock();
       }
@@ -115,41 +121,65 @@ namespace Firebase.Firestore {
     public FirebaseApp App { get; private set; }
 
     /// <summary>
-    /// Gets the instance of <c>FirebaseFirestore</c> for the default <c>FirebaseApp</c>.
+    /// Gets the instance of <c>FirebaseFirestore</c> for the default <c>FirebaseApp</c> with the default <c>database name</c>.
     /// </summary>
     /// <value>A <c>FirebaseFirestore</c> instance.</value>
     public static FirebaseFirestore DefaultInstance {
       get {
         FirebaseApp app = Util.NotNull(FirebaseApp.DefaultInstance);
-        return GetInstance(app);
+        return GetInstance(app, DefaultDatabase);
       }
     }
 
     /// <summary>
-    /// Gets an instance of <c>FirebaseFirestore</c> for a specific <c>FirebaseApp</c>.
+    /// Gets an instance of <c>FirebaseFirestore</c> for a specific <c>FirebaseApp</c> with the default <c>database name</c>.
     /// </summary>
     /// <param name="app">The <c>FirebaseApp</c> for which to get a <c>FirebaseFirestore</c>
     /// instance.</param>
     /// <returns>A <c>FirebaseFirestore</c> instance.</returns>
     public static FirebaseFirestore GetInstance(FirebaseApp app) {
+        return GetInstance(app, DefaultDatabase);
+    }
+    
+    
+    /// <summary>
+    /// Gets an instance of <c>FirebaseFirestore</c> for the default <c>FirebaseApp</c> with a spesific <c>database name</c>.
+    /// </summary>
+    /// <param name="database">The customized name for the <c>database</c>.
+    /// instance.</param>
+    /// <returns>A <c>FirebaseFirestore</c> instance.</returns>
+    public static FirebaseFirestore GetInstance(string database) {
+      FirebaseApp app = Util.NotNull(FirebaseApp.DefaultInstance);
+      return GetInstance(app, database);
+    }
+    
+    /// <summary>
+    /// Gets an instance of <c>FirebaseFirestore</c> for a specific <c>FirebaseApp</c> with a spesific <c>database name</c>.
+    /// </summary>
+    /// <param name="app">The <c>FirebaseApp</c> for which to get a <c>FirebaseFirestore</c>
+    /// <param name="database">The customized name for the <c>database</c>.
+    /// instance.</param>
+    /// <returns>A <c>FirebaseFirestore</c> instance.</returns>
+    public static FirebaseFirestore GetInstance(FirebaseApp app, string database) {
       Preconditions.CheckNotNull(app, nameof(app));
+      Preconditions.CheckNotNull(database, nameof(database));
 
       while (true) {
         FirebaseFirestore firestore;
-
-        // Acquire the lock on `_instanceCache` to see if the given `FirebaseApp` is in
+        FirestoreInstanceCacheKey key = new FirestoreInstanceCacheKey(app, database);
+        // Acquire the lock on `_instanceCache` to see if the given `FirestoreInstanceCacheKey` is in
         // `_instanceCache`; if it isn't then create the `FirebaseFirestore` instance, put it in the
         // cache, and return it.
         lock (_instanceCache) {
-          if (!_instanceCache.TryGetValue(app, out firestore)) {
+          if (!_instanceCache.TryGetValue(key, out firestore)) {
             // NOTE: FirestoreProxy.GetInstance() returns an *owning* reference (see the %newobject
             // directive in firestore.SWIG); therefore, we must make sure that we *never* call
             // FirestoreProxy.GetInstance() when it would return a proxy for a C++ object that it
             // previously returned. Otherwise, if it did, then that C++ object would be deleted
             // twice, causing a crash.
-            FirestoreProxy firestoreProxy = Util.NotNull(FirestoreProxy.GetInstance(app));
-            firestore = new FirebaseFirestore(firestoreProxy, app);
-            _instanceCache[app] = firestore;
+            FirestoreProxy firestoreProxy = Util.NotNull(FirestoreProxy.GetInstance(app, database));
+            firestore = new FirebaseFirestore(firestoreProxy, app, database);
+            _instanceCache[key] = firestore;
             return firestore;
           }
         }
@@ -557,7 +587,7 @@ namespace Firebase.Firestore {
     /// used. Calling any other method will result in an error.
     ///
     /// To restart after termination, simply create a new instance of <c>FirebaseFirestore</c> with
-    /// <c>GetInstance()</c> or <c>GetInstance(FirebaseApp)</c>.
+    /// <c>GetInstance()</c> methods.
     ///
     /// <c>Terminate()</c> does not cancel any pending writes, and any tasks that are awaiting a
     /// response from the server will not be resolved. The next time you start this instance, it
@@ -663,9 +693,41 @@ namespace Firebase.Firestore {
     private void RemoveSelfFromInstanceCache() {
       lock (_instanceCache) {
         FirebaseFirestore cachedFirestore;
-        if (_instanceCache.TryGetValue(App, out cachedFirestore) && cachedFirestore == this) {
-          _instanceCache.Remove(App);
+        FirestoreInstanceCacheKey key = new FirestoreInstanceCacheKey(App, _databaseName);
+        if (_instanceCache.TryGetValue(key, out cachedFirestore) && cachedFirestore == this) {
+          _instanceCache.Remove(key);
         }
+      }
+    }
+
+    private struct FirestoreInstanceCacheKey : IEquatable<FirestoreInstanceCacheKey> {
+      public FirebaseApp App { get; }
+      public string DatabaseName { get; }
+
+      public FirestoreInstanceCacheKey(FirebaseApp app, string databaseName)
+      {
+        App = app;
+        DatabaseName = databaseName;
+      }
+        
+      public override int GetHashCode() {
+        return App.Name.GetHashCode() + DatabaseName.GetHashCode();
+      }
+      public override bool Equals(object obj) {
+        return obj is FirestoreInstanceCacheKey && Equals((FirestoreInstanceCacheKey)obj);
+      }
+      public bool Equals(FirestoreInstanceCacheKey other) {
+        return App.Name == other.App.Name && DatabaseName == other.DatabaseName;
+      }
+        
+      public static bool operator ==(FirestoreInstanceCacheKey lhs, FirestoreInstanceCacheKey rhs) {
+        return lhs.Equals(rhs);
+      }
+      public static bool operator !=(FirestoreInstanceCacheKey lhs, FirestoreInstanceCacheKey rhs) {
+        return !lhs.Equals(rhs);
+      }
+      public override string ToString() {
+        return String.Format("FirestoreInstanceKey: App = {0}, DatabaseName = {1}", App.Name, DatabaseName);
       }
     }
   }

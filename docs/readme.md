@@ -98,6 +98,7 @@ Release Notes
       directory contains non-ANSI characters (Unicode above U+00FF).
     - Storage (Desktop): Fixed a crash on Windows when uploading files from a path
       containing non-ANSI characters (Unicode above U+00FF).
+    - Firestore: Add multi-database support. ([#738](https://github.com/firebase/firebase-unity-sdk/pull/738)).
 
 ### 11.0.0
 - Changes
