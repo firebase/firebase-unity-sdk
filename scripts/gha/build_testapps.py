@@ -551,17 +551,23 @@ def patch_android_env(unity_version):
       logging.info(str(e))
 
   try:
-    # The platform android-33 includes libraries that were built with Java 11, and require a newer version of gradle
-    # than Unity comes with. Note this only happens when using minification.
-    list_installed_result = _run([sdkmanager_path, "--list"], capture_output=True, text=True, check=False)
-    matches = re.findall(r'(platforms;android-(\d+)-?\w*)', list_installed_result.stdout)
-    installed_versions = [android_platform for android_platform, version in matches if int(version) >= 33]
+    # The platform android-33 includes libraries that were built with Java 11,
+    # and require a newer version of gradle than Unity comes with. Note this
+    # only happens when using minification.
+    list_installed_result = _run(
+        [sdkmanager_path, "--list"], capture_output=True, text=True, check=False)
+    # This should match both platforms;android-33 and platforms;android-33-ext4.
+    matches = re.findall(
+        r'(platforms;android-(\d+)-?\w*)', list_installed_result.stdout)
+    installed_versions = [
+        platform for platform, version in matches if int(version) >= 33]
     if installed_versions:
       _run([sdkmanager_path, "--uninstall"] + installed_versions, check=False)
   except Exception as e:
     logging.exception("Failed to uninstall Android platforms;android-33")
   try:
-    # List the installed packages to make it easier to notice if any incompatible packages are present.
+    # List the installed packages to make it easier to debug if any incompatible
+    # packages are present.
     logging.info("Listing installed sdks")
     _run([sdkmanager_path, "--list"], check=False)
   except Exception as e:
