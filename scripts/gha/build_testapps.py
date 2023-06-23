@@ -557,8 +557,8 @@ def patch_android_env(unity_version):
     list_installed_result = _run(
         [sdkmanager_path, "--list"], capture_output=True, text=True, check=False)
     # This should match both platforms;android-33 and platforms;android-33-ext4.
-    matches = re.findall(
-        r'(platforms;android-(\d+)-?\w*)', list_installed_result.stdout)
+    matches = set(re.findall(
+        r'(platforms;android-(\d+)-?\w*)', list_installed_result.stdout))
     installed_versions = [
         platform for platform, version in matches if int(version) >= 33]
     if installed_versions:
