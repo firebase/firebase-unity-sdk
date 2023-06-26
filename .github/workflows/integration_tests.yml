@@ -395,7 +395,7 @@ jobs:
           command: npm install -g firebase-tools     
       - name: Start Firestore Emulator
         run: |
-          firebase emulators:start --only firestore --project demo-example &
+          firebase emulators:start --only firestore
       - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
