@@ -393,12 +393,10 @@ jobs:
           timeout_minutes: 5
           max_attempts: 3
           command: npm install -g firebase-tools     
-      - name: Start Firestore Emulator
-        run: |
-          firebase emulators:start --only firestore
       - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
+          firebase emulators:start --only firestore &
           if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
             unzip -q firebase_unity_sdk.zip -d ~/Downloads/
           else
