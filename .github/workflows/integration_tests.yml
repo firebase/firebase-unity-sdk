@@ -392,13 +392,11 @@ jobs:
           shell: bash
           timeout_minutes: 5
           max_attempts: 3
-          command: npm install -g firebase-tools
-      - name: Start Firestore Emulator
-        run: |
-          firebase emulators:start --only firestore &   
+          command: npm install -g firebase-tools 
       - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
+          firebase emulators:start --only firestore &
           if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
             unzip -q firebase_unity_sdk.zip -d ~/Downloads/
           else
@@ -503,16 +501,13 @@ jobs:
           shell: bash
           timeout_minutes: 5
           max_attempts: 3
-          command: npm install -g firebase-tools
-      - name: Start Firestore Emulator
-        if: ${{ matrix.test_device == 'github_runner'  }}
-        run: |
-          firebase emulators:start --only firestore & 
+          command: npm install -g firebase-tools  
       - name: Run Desktop integration tests
         if: ${{ matrix.test_device == 'github_runner'  }}
         timeout-minutes: 30
         shell: bash
         run: |
+          firebase emulators:start --only firestore &
           python scripts/gha/desktop_tester.py --testapp_dir testapps \
             --logfile_name "${{ steps.matrix_info.outputs.info }}"
       - name: Run Mobile integration tests on real device via FTL
