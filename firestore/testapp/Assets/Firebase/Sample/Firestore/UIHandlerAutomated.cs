@@ -115,7 +115,6 @@ namespace Firebase.Sample.Firestore {
         TestDocumentSnapshotDoubleIncrementBehavior,
         TestDocumentSnapshotServerTimestampBehavior,
         TestSnapshotMetadataEqualsAndGetHashCode,
-        TestAuthIntegration,
         TestDocumentListen,
         TestDocumentListenWithMetadataChanges,
         TestQueryListen,
@@ -170,6 +169,12 @@ namespace Firebase.Sample.Firestore {
         TestTerminateAppWithMultiDB,
         TestRestartCustomFirestore,
       };
+      
+      // Set the list of tests to run against Production only.
+      Func<Task>[] testsToRunAgainstProductionOnly = {
+        // While running on CI, this test case passes only if it is tested against the production.
+        TestAuthIntegration,
+      };
 
       // For local development convenience, populate `testFilter` with the tests that you would like
       // to run (instead of running the entire suite).
@@ -196,6 +201,8 @@ namespace Firebase.Sample.Firestore {
       if (IsUsingFirestoreEmulator()) {
         Debug.Log("Running tests against Firestore Emulator.");
         tests = tests.Concat(testsToRunAgainstFirestoreEmulatorOnly).ToArray();
+      } else {
+        tests = tests.Concat(testsToRunAgainstProductionOnly).ToArray();
       }
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
