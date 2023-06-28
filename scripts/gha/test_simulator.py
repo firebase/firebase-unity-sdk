@@ -408,11 +408,10 @@ def _create_and_boot_simulator(apple_platform, device_name, device_os):
     if (device_os not in available_versions):
       logging.warning("Unable to find version %s, will fall back to %s", device_os, available_versions[-1])
       device_os = available_versions[-1]
-    logging.info("Will try to use %s", device_os)
 
     args = ["xcodes", "runtimes", "install", "%s %s" % (apple_platform, device_os)]
     logging.info("Download simulator: %s", " ".join(args))
-    subprocess.run(args=args, check=True)
+    subprocess.run(args=args, check=False)
     
     args = ["xcrun", "simctl", "create", "test_simulator", device_name, "%s%s" % (apple_platform, device_os)]
     logging.info("Create test simulator: %s", " ".join(args))
