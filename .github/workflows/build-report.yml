@@ -49,15 +49,13 @@ jobs:
         max_attempts: 3
         shell: bash
         command: |
-          cd firebase-cpp-sdk
           python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --write_cache build_status_short.cache
-          cd ..
     - name: Generate report files
       run: |
-        python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --output_markdown --read_cache build_status_short.cache > report_short.md
-        python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache > report_extended.md
-        python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache --report=test_summary --summary_count=${{ env.numTestsSummary }} > test_summary.md
-        python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --nooutput_header --read_cache build_status_short.cache > report.txt
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --output_markdown --read_cache build_status_short.cache > report_short.md
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache > report_extended.md
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache --report=test_summary --summary_count=${{ env.numTestsSummary }} > test_summary.md
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --nooutput_header --read_cache build_status_short.cache > report.txt
     - name: Generate comment string
       run: |
         echo -n > comment.md
@@ -96,4 +94,4 @@ jobs:
         timeout_minutes: 5
         max_attempts: 3
         shell: bash
-        command: python3 firebase-cpp-sdk/scripts/gha/update_issue_comment.py --token ${{ github.token }} --issue_title '[Unity] Nightly Integration Testing Report' --start_tag build-dashboard-comment-start --end_tag build-dashboard-comment-end < comment.md
+        command: python3 scripts/gha/update_issue_comment.py --token ${{ github.token }} --issue_title '[Unity] Nightly Integration Testing Report' --start_tag build-dashboard-comment-start --end_tag build-dashboard-comment-end < comment.md
