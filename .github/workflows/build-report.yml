@@ -48,14 +48,10 @@ jobs:
         timeout_minutes: 20
         max_attempts: 3
         shell: bash
-        command: python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --write_cache build_status_short.cache
-    - name: Fetch extended GitHub jobs (with retry)
-      uses: nick-invision/retry@v2
-      with:
-        timeout_minutes: 80
-        max_attempts: 3
-        shell: bash
-        command: python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --write_cache build_status.cache
+        command: |
+          cd firebase-cpp-sdk
+          python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --write_cache build_status_short.cache
+          cd ..
     - name: Generate report files
       run: |
         python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --output_markdown --read_cache build_status_short.cache > report_short.md
