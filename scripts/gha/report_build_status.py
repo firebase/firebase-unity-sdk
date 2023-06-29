@@ -393,9 +393,9 @@ def main(argv):
         if run['status'] != 'completed': continue
         if run['day'] < start_date or run['day'] > end_date: continue
         run['duration'] = dateutil.parser.parse(run['updated_at'], ignoretz=True) - run['date']
-        if general_test_time in str(run['date']):
-          source_tests[day] = run
-          all_days.add(day)
+        #if general_test_time in str(run['date']):
+        source_tests[day] = run
+        all_days.add(day)
         # elif firestore_test_time in str(run['date']):
         #   firestore_tests[day] = run
 
