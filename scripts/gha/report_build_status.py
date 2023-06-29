@@ -46,7 +46,7 @@ from absl import app
 from absl import flags
 from absl import logging
 
-import github
+import firebase_github
 import summarize_test_results
 
 FLAGS = flags.FLAGS
@@ -382,24 +382,24 @@ def main(argv):
     _cache = {}
 
     with progress.bar.Bar('Reading jobs...', max=3) as bar:
-      all_runs = github.list_workflow_runs(FLAGS.token, FLAGS.test_workflow, _BRANCH, 'schedule', _LIMIT)
-      bar.next()
-      source_tests = {}
-      for run in reversed(all_runs):
-        run['date'] = dateutil.parser.parse(run['created_at'], ignoretz=True)
-        run['day'] = run['date'].date()
-        day = str(run['date'].date())
-        if day in source_tests: continue
-        if run['status'] != 'completed': continue
-        if run['day'] < start_date or run['day'] > end_date: continue
-        run['duration'] = dateutil.parser.parse(run['updated_at'], ignoretz=True) - run['date']
-        #if general_test_time in str(run['date']):
-        source_tests[day] = run
-        all_days.add(day)
-        # elif firestore_test_time in str(run['date']):
-        #   firestore_tests[day] = run
+      # all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.test_workflow, branch=_BRANCH, limit=_LIMIT)
+      # bar.next()
+      # source_tests = {}
+      # for run in reversed(all_runs):
+      #   run['date'] = dateutil.parser.parse(run['created_at'], ignoretz=True)
+      #   run['day'] = run['date'].date()
+      #   day = str(run['date'].date())
+      #   if day in source_tests: continue
+      #   if run['status'] != 'completed': continue
+      #   if run['day'] < start_date or run['day'] > end_date: continue
+      #   run['duration'] = dateutil.parser.parse(run['updated_at'], ignoretz=True) - run['date']
+      #   #if general_test_time in str(run['date']):
+      #   source_tests[day] = run
+      #   all_days.add(day)
+      #   # elif firestore_test_time in str(run['date']):
+      #   #   firestore_tests[day] = run
 
-      all_runs = github.list_workflow_runs(FLAGS.token, FLAGS.build_workflow, _BRANCH, 'schedule', _LIMIT)
+      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.build_workflow, _BRANCH, 'schedule', _LIMIT)
       bar.next()
       packaging_runs = {}
       packaging_run_ids = set()
@@ -415,7 +415,7 @@ def main(argv):
         packaging_runs[day] = run
         packaging_run_ids.add(str(run['id']))
 
-      all_runs = github.list_workflow_runs(FLAGS.token, FLAGS.test_workflow, _BRANCH, 'workflow_dispatch', _LIMIT)
+      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.test_workflow, _BRANCH, 'workflow_dispatch', _LIMIT)
       bar.next()
       package_tests_all = []
       for run in reversed(all_runs):
@@ -428,12 +428,13 @@ def main(argv):
         if run['triggering_actor']['login'] != _TRIGGER_USER: continue
         package_tests_all.append(run)
 
+
+
+    #logging.info("Source tests: %s %s", list(source_tests.keys()),  [source_tests[r]['id'] for r in source_tests.keys()])
+    logging.info("Packaging runs: %s %s", list(packaging_runs.keys()), [packaging_runs[r]['id'] for r in packaging_runs.keys()])
+    logging.info("Integration Test runs: %s", list(test_run['id'] for test_run in package_tests_all))
     # For each workflow_trigger run of the tests, determine which packaging run it goes with.
     package_tests = {}
-
-    logging.info("Source tests: %s %s", list(source_tests.keys()),  [source_tests[r]['id'] for r in source_tests.keys()])
-    logging.info("Packaging runs: %s %s", list(packaging_runs.keys()), [packaging_runs[r]['id'] for r in packaging_runs.keys()])
-
     with progress.bar.Bar('Downloading triggered workflow logs...', max=len(package_tests_all)) as bar:
       for run in package_tests_all:
         day = str(run['date'].date())
@@ -467,10 +468,10 @@ def main(argv):
           run = tests[day]
           run['log_success'] = True
           run['log_results'] = ''
-          artifacts = github.list_artifacts(FLAGS.token, run['id'])
+          artifacts = firebase_github.list_artifacts(FLAGS.token, run['id'])
           if 'log-artifact' in [a['name'] for a in artifacts]:
             artifact_id = [a['id'] for a in artifacts if a['name'] == 'log-artifact'][0]
-            artifact_contents = github.download_artifact(FLAGS.token, artifact_id)
+            artifact_contents = firebase_github.download_artifact(FLAGS.token, artifact_id)
             if artifact_contents:
               artifact_data = io.BytesIO(artifact_contents)
               artifact_zip = zipfile.ZipFile(artifact_data)
