@@ -92,6 +92,9 @@ jobs:
         else
           # Triggered manually
           echo "trigger=manual_trigger" >> $GITHUB_OUTPUT
+          if [[ -n "${{ github.event.inputs.packaged_sdk_run_id != '' }}" ]]; then
+            echo "::warning ::Downloading SDK package from previous run: https://github.com/${{github.repository}}/actions/runs/${{ github.event.inputs.packaged_sdk_run_id }}"
+          fi
           if [[ "${{ github.event.inputs.use_expanded_matrix }}" == "1" ]]; then
             echo "requested_tests=expanded" >> $GITHUB_OUTPUT
           fi
