@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A utility for GitHub REST API.
+"""A utility for GitHub REST API for firebase repos.
 
 This script handles GitHub Issue, Pull Request, Comment, Label and Artifact
 
