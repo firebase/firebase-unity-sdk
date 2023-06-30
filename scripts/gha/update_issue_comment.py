@@ -35,7 +35,7 @@ from absl import app
 from absl import flags
 from absl import logging
 
-import github
+import firebase_github
 
 FLAGS = flags.FLAGS
 
@@ -83,7 +83,7 @@ def main(argv):
                   FLAGS.issue_title)
   logging.info("Found issue number: %d", issue_number)
   
-  previous_comment = github.get_issue_body(FLAGS.token, issue_number)
+  previous_comment = firebase_github.get_issue_body(FLAGS.token, issue_number)
   if comment_start not in previous_comment:
     logging.fatal("Couldn't find start tag '%s' in previous comment", comment_start)
   if comment_end not in previous_comment:
@@ -98,7 +98,7 @@ def main(argv):
   new_text = sys.stdin.read()
   comment = prefix + comment_start + new_text + comment_end + suffix
 
-  github.update_issue_comment(FLAGS.token, issue_number, comment)
+  firebase_github.update_issue_comment(FLAGS.token, issue_number, comment)
 
 
 
