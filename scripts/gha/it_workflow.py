@@ -44,6 +44,7 @@ import pytz
 
 from absl import app
 from absl import flags
+from absl import logging
 
 import firebase_github
 import summarize_test_results as summarize
@@ -65,7 +66,11 @@ _COMMENT_TITLE_FAIL = "### ❌&nbsp; Integration test FAILED\n"
 _COMMENT_TITLE_SUCCEED = "### ✅&nbsp; Integration test succeeded!\n"
 
 _COMMENT_IDENTIFIER = "integration-test-status-comment"
-_COMMENT_SUFFIX = f'\n<hidden value="{_COMMENT_IDENTIFIER}"></hidden>'
+_COMMENT_HIDDEN_DIVIDER = f'\r\n<hidden value="{_COMMENT_IDENTIFIER}"></hidden>\r\n'
+
+_COMMENT_IDENTIFIER_DASHBOARD = "build-dashboard-comment"
+_COMMENT_DASHBOARD_START = f'\r\n<hidden value="{_COMMENT_IDENTIFIER_DASHBOARD}-start"></hidden>\r\n'
+_COMMENT_DASHBOARD_END = f'\r\n<hidden value="{_COMMENT_IDENTIFIER_DASHBOARD}-end"></hidden>\r\n'
 
 _LOG_ARTIFACT_NAME = "log-artifact"
 _LOG_OUTPUT_DIR = "test_results"
@@ -116,7 +121,7 @@ def test_start(token, issue_number, actor, commit, run_id):
 
   comment = (_COMMENT_TITLE_PROGESS +
              _get_description(actor, commit, run_id) +
-             _COMMENT_SUFFIX)
+             _COMMENT_HIDDEN_DIVIDER)
   _update_comment(token, issue_number, comment)
 
 
@@ -138,7 +143,7 @@ def test_progress(token, issue_number, actor, commit, run_id):
     comment = (title +
                _get_description(actor, commit, run_id) +
                log_summary +
-               _COMMENT_SUFFIX)
+               _COMMENT_HIDDEN_DIVIDER)
     _update_comment(token, issue_number, comment)
 
 
@@ -152,7 +157,7 @@ def test_end(token, issue_number, actor, commit, run_id, new_token):
     firebase_github.add_label(token, issue_number, _LABEL_SUCCEED)
     comment = (_COMMENT_TITLE_SUCCEED +
                _get_description(actor, commit, run_id) +
-               _COMMENT_SUFFIX)
+               _COMMENT_HIDDEN_DIVIDER)
     _update_comment(token, issue_number, comment)
   else:
     if success_or_only_flakiness:
@@ -166,7 +171,7 @@ def test_end(token, issue_number, actor, commit, run_id, new_token):
     comment = (title +
                _get_description(actor, commit, run_id) +
                log_summary +
-               _COMMENT_SUFFIX)
+               _COMMENT_HIDDEN_DIVIDER)
     _update_comment(token, issue_number, comment)
 
   firebase_github.delete_label(new_token, issue_number, _LABEL_PROGRESS)
@@ -178,18 +183,34 @@ def test_report(token, actor, commit, run_id):
   https://github.com/firebase/firebase-unity-sdk/issues?q=is%3Aissue+label%3Anightly-testing
   """
   issue_number = _get_issue_number(token, _REPORT_TITLE, _REPORT_LABEL)
+  previous_comment = firebase_github.get_issue_body(token, issue_number)
+  [previous_prefix, previous_comment_test_result] = previous_comment.split(_COMMENT_HIDDEN_DIVIDER) # TODO add more content
+  logging.info("Previous prefix: %s", previous_prefix)
+  # If there is a build dashboard, preserve it.
+  if (_COMMENT_DASHBOARD_START in previous_prefix and
+      _COMMENT_DASHBOARD_END in previous_prefix):
+    logging.info("Found dashboard comment, preserving.")
+    [_, previous_dashboard_plus_the_rest] = previous_prefix.split(_COMMENT_DASHBOARD_START)
+    [previous_dashboard, _] = previous_dashboard_plus_the_rest.split(_COMMENT_DASHBOARD_END)
+    prefix = prefix + _COMMENT_DASHBOARD_START + previous_dashboard + _COMMENT_DASHBOARD_END
+    logging.info("New prefix: %s", prefix)
+  else:
+    logging.info("No dashboard comment '%s' or '%s'", _COMMENT_DASHBOARD_START, _COMMENT_DASHBOARD_END)
+
   success_or_only_flakiness, log_summary = _get_summary_table(token, run_id)
   if success_or_only_flakiness:
     if not log_summary:
       # succeeded (without flakiness)
       title = _COMMENT_TITLE_SUCCEED
-      comment = title + _get_description(actor, commit, run_id)
+      test_result = title + _get_description(actor, commit, run_id)
     else:
       title = _COMMENT_TITLE_FLAKY
-      comment = title + _get_description(actor, commit, run_id) + log_summary
+      test_result = title + _get_description(actor, commit, run_id) + log_summary
   else:
     title = _COMMENT_TITLE_FAIL
-    comment = title + _get_description(actor, commit, run_id) + log_summary
+    test_result = title + _get_description(actor, commit, run_id) + log_summary
+
+  comment = prefix + _COMMENT_HIDDEN_DIVIDER + test_result
 
   if title == _COMMENT_TITLE_SUCCEED:
     firebase_github.close_issue(token, issue_number)

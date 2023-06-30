@@ -135,8 +135,6 @@ _FLAKY_TEXT = "Pass (flaky)"
 general_test_time = ' 09:0'
 firestore_test_time = ' 10:0'
 
-logging.set_verbosity(logging.DEBUG)
-
 def rename_key(old_dict,old_name,new_name):
     """Rename a key in a dictionary, preserving the order."""
     new_dict = {}
@@ -437,7 +435,7 @@ def main(argv):
             m = get_message_from_github_log(
               logs_zip,
               r'check_and_prepare/.*Run if.*\.txt',
-              r'\[warning\]Downloading SDK package from previous run:[^\n]*/([0-9]*)$', True)
+              r'\[warning\]Downloading SDK package from previous run:[^\n]*/([0-9]*)$')
             if m:
               packaging_run = m.group(1)
         if str(packaging_run) in packaging_run_ids:
