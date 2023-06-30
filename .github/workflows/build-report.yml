@@ -65,12 +65,6 @@ jobs:
         <details><summary>View extended history (last ${{ env.numDaysExtended }} days)</summary>
 
         EOF
-        cat report_extended.md >> comment.md
-        cat >> comment.md <<EOF
-        </details>
-        <details><summary>Top ${{ env.numTestsSummary }} flakes/failures (last ${{ env.numDaysExtended }} days)</summary>
-
-        EOF
         cat test_summary.md >> comment.md
         cat >> comment.md <<EOF
         </details>
