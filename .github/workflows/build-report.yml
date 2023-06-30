@@ -53,8 +53,6 @@ jobs:
     - name: Generate report files
       run: |
         python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --output_markdown --read_cache build_status_short.cache > report_short.md
-        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache > report_extended.md
-        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache --report=test_summary --summary_count=${{ env.numTestsSummary }} > test_summary.md
         python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --nooutput_header --read_cache build_status_short.cache > report.txt
     - name: Generate comment string
       run: |
