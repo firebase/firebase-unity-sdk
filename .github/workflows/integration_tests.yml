@@ -61,6 +61,9 @@ jobs:
     ### trigger value: manual_trigger, scheduled_trigger, label_trigger, postsubmit_trigger
     - id: set_outputs
       run: |
+        if [[ "${{ github.event.inputs.packaged_sdk_run_id }}" != "" ]]; then
+          echo "::warning ::Downloading SDK package from previous run: https://github.com/${{github.repository}}/actions/runs/${{ github.event.inputs.packaged_sdk_run_id }}"
+        fi
         if [[ "${{ github.event.inputs.test_pull_request }}" == *"label-quick-packaging" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=label_trigger" >> $GITHUB_OUTPUT
@@ -89,15 +92,9 @@ jobs:
           echo "trigger=manual_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=auto" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
-          if [[ "${{ github.event.inputs.packaged_sdk_run_id != '' }}" ]]; then
-            echo "::warning ::Downloading SDK package from previous run: https://github.com/${{github.repository}}/actions/runs/${{ github.event.inputs.packaged_sdk_run_id }}"
-          fi
         else
           # Triggered manually
           echo "trigger=manual_trigger" >> $GITHUB_OUTPUT
-          if [[ "${{ github.event.inputs.packaged_sdk_run_id != '' }}" ]]; then
-            echo "::warning ::Downloading SDK package from previous run: https://github.com/${{github.repository}}/actions/runs/${{ github.event.inputs.packaged_sdk_run_id }}"
-          fi
           if [[ "${{ github.event.inputs.use_expanded_matrix }}" == "1" ]]; then
             echo "requested_tests=expanded" >> $GITHUB_OUTPUT
           fi
