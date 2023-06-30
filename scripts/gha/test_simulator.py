@@ -409,7 +409,7 @@ def _create_and_boot_simulator(apple_platform, device_name, device_os):
       logging.warning("Unable to find version %s, will fall back to %s", device_os, available_versions[-1])
       device_os = available_versions[-1]
 
-    args = ["xcodes", "runtimes", "install", "%s %s" % (apple_platform, device_os)]
+    args = ["sudo", "xcodes", "runtimes", "install", "%s %s" % (apple_platform, device_os)]
     logging.info("Download simulator: %s", " ".join(args))
     subprocess.run(args=args, check=False)
     
