@@ -23,7 +23,6 @@ USAGE:
     --token ${{github.token}}
 """
 
-import datetime
 import dateutil
 import dateutil.parser
 import dateutil.relativedelta
@@ -36,8 +35,6 @@ import progress
 import progress.bar
 import re
 import requests
-import shutil
-import sys
 import tempfile
 import zipfile
 import pickle
@@ -126,7 +123,9 @@ flags.DEFINE_bool(
     "Only runs for script iterate purpose.")
 
 _TRIGGER_USER = 'firebase-workflow-trigger[bot]'
-_BRANCH = 'cj_testboard'
+_BRANCH = 'main'
+_WORKFLOW_SCHEDULED = 'schedule'
+_WORKFLOW_DISPATCHED = 'workflow_dispatch'
 _LIMIT = 400  # Hard limit on how many jobs to fetch.
 
 _PASS_TEXT = "Pass"
@@ -382,7 +381,7 @@ def main(argv):
 
     with progress.bar.Bar('Reading jobs...', max=3) as bar:
 
-      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.build_workflow, _BRANCH, None, _LIMIT)
+      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.build_workflow, _BRANCH, _WORKFLOW_SCHEDULED, _LIMIT)
       bar.next()
       packaging_runs = {}
       packaging_run_ids = set()
@@ -398,7 +397,7 @@ def main(argv):
         packaging_runs[day] = run
         packaging_run_ids.add(str(run['id']))
 
-      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.test_workflow, _BRANCH, None, _LIMIT)
+      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.test_workflow, _BRANCH, _WORKFLOW_DISPATCHED, _LIMIT)
       bar.next()
       package_tests_all = []
       for run in reversed(all_runs):
