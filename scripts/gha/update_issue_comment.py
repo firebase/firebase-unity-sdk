@@ -62,7 +62,7 @@ flags.DEFINE_string(
 
 def get_issue_number(token, title, label):
   """Get the GitHub isssue number for a given issue title and label"""
-  issues = github.search_issues_by_label(label)
+  issues = firebase_github.search_issues_by_label(label)
   for issue in issues:
     if issue["title"] == title:
       return issue["number"]
