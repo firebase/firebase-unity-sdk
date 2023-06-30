@@ -62,13 +62,6 @@ jobs:
         cat report_short.md >> comment.md
         cat >> comment.md <<EOF
 
-        <details><summary>View extended history (last ${{ env.numDaysExtended }} days)</summary>
-
-        EOF
-        cat test_summary.md >> comment.md
-        cat >> comment.md <<EOF
-        </details>
-        <details><summary>📄</summary><pre>
         EOF
         cat report.txt >> comment.md
         cat >> comment.md <<EOF
