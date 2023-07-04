@@ -4317,6 +4317,19 @@ namespace Firebase.Sample.Firestore {
       });
     }
 
+    // Regression test for https://github.com/firebase/firebase-unity-sdk/issues/569
+    // As long as this test doesn't crash, then it passes.
+    Task TestAndroidGlobalRefsExhaustionBugFix() {
+      return Async(() => {
+        DocumentReference doc = db.Collection("col").Document();
+        var numbers = new List<object>();
+        for (int i = 0; i < 60000; i++) {
+          numbers.Add(i);
+        }
+        Await(doc.SetAsync(new Dictionary<string, object>{{"foo", numbers}});
+      });
+    }
+
     private void RoundtripValue(DocumentReference doc, object input, out object nativeOutput, out object convertedOutput) {
       SerializeToDoc(doc, input);
 
