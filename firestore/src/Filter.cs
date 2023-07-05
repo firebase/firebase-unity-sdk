@@ -17,6 +17,9 @@ using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
     
+    /// <summary>
+    /// A Filter represents a restriction on one or more field values and can be used to refine the results of a Query.
+    /// </summary>
     public sealed class Filter {
         private Filter(FilterProxy proxy) {
             Proxy = proxy;
