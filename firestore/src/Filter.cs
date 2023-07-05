@@ -1,4 +1,4 @@
-// Copyright 2017 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,12 +24,24 @@ namespace Firebase.Firestore {
         
         internal FilterProxy Proxy { get; }
 
+        /// <summary>
+        /// Creates a new filter for checking that the given array field contains the given value.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field containing an array to search.</param>
+        /// <param name="value">The value that must be contained in the array.</param>
+        /// <returns></returns>
         public static Filter ArrayContains(string fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.ArrayContains(fieldPath,
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
 
+        /// <summary>
+        /// Creates a new filter for checking that the given array field contains any of the given values.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field containing an array to search.</param>
+        /// <param name="values">The list of values to match.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter ArrayContainsAny(string fieldPath, IEnumerable<object> values) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             Preconditions.CheckNotNull(values, nameof(values));
@@ -37,42 +49,84 @@ namespace Firebase.Firestore {
             return new Filter(FirestoreCpp.FilterArrayContainsAny(fieldPath, array));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is equal to the given value.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter EqualTo(string fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.EqualTo(fieldPath,
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is not equal to the given value.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter NotEqualTo(string fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.NotEqualTo(fieldPath,
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is greater than the given value.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter GreaterThan(string fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.GreaterThan(fieldPath,
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is greater than or equal to the given value.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter GreaterThanOrEqualTo(string fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.GreaterThanOrEqualTo(fieldPath,
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is less than the given value.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter LessThan(string fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.LessThan(fieldPath,
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is less than or equal to the given value.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter LessThanOrEqualTo(string fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.LessThanOrEqualTo(fieldPath,
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field equals any of the given values.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field to compare.</param>
+        /// <param name="values">The list of values to match.</param>
+        /// <returns></returns>
         public static Filter In(string fieldPath, IEnumerable<object> values) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             Preconditions.CheckNotNull(values, nameof(values));
@@ -80,6 +134,12 @@ namespace Firebase.Firestore {
             return new Filter(FirestoreCpp.FilterIn(fieldPath, array));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field does not equal any of the given values.
+        /// </summary>
+        /// <param name="fieldPath">The name of the field to compare.</param>
+        /// <param name="values">The list of values to match.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter NotIn(string fieldPath, IEnumerable<object> values) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             Preconditions.CheckNotNull(values, nameof(values));
@@ -87,12 +147,24 @@ namespace Firebase.Firestore {
             return new Filter(FirestoreCpp.FilterNotIn(fieldPath, array));
         }
 
+        /// <summary>
+        /// Creates a new filter for checking that the given array field contains the given value.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field containing an array to search.</param>
+        /// <param name="value">The value that must be contained in the array.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter ArrayContains(FieldPath fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.ArrayContains(fieldPath.ConvertToProxy(),
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given array field contains any of the given values.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field containing an array to search.</param>
+        /// <param name="values">The list of values to match.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter ArrayContainsAny(FieldPath fieldPath, IEnumerable<object> values) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             Preconditions.CheckNotNull(values, nameof(values));
@@ -100,42 +172,84 @@ namespace Firebase.Firestore {
             return new Filter(FirestoreCpp.FilterArrayContainsAny(fieldPath.ConvertToProxy(), array));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is equal to the given value.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field containing an array to search.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter EqualTo(FieldPath fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.EqualTo(fieldPath.ConvertToProxy(),
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is not equal to the given value.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter NotEqualTo(FieldPath fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.NotEqualTo(fieldPath.ConvertToProxy(),
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is greater than the given value.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter GreaterThan(FieldPath fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.GreaterThan(fieldPath.ConvertToProxy(),
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is greater than or equal to the given value.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter GreaterThanOrEqualTo(FieldPath fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.GreaterThanOrEqualTo(fieldPath.ConvertToProxy(),
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is less than the given value.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter LessThan(FieldPath fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.LessThan(fieldPath.ConvertToProxy(),
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field is less than or equal to the given value.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field to compare.</param>
+        /// <param name="value">The value for comparison.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter LessThanOrEqualTo(FieldPath fieldPath, object value) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             return new Filter(FilterProxy.LessThanOrEqualTo(fieldPath.ConvertToProxy(),
                 ValueSerializer.Serialize(SerializationContext.Default, value)));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field equals any of the given values.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field to compare.</param>
+        /// <param name="values">The list of values to match.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter In(FieldPath fieldPath, IEnumerable<object> values) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             Preconditions.CheckNotNull(values, nameof(values));
@@ -143,6 +257,12 @@ namespace Firebase.Firestore {
             return new Filter(FirestoreCpp.FilterIn(fieldPath.ConvertToProxy(), array));
         }
         
+        /// <summary>
+        /// Creates a new filter for checking that the given field does not equal any of the given values.
+        /// </summary>
+        /// <param name="fieldPath">The path of the field to compare.</param>
+        /// <param name="values">The list of values to match.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter NotIn(FieldPath fieldPath, IEnumerable<object> values) {
             Preconditions.CheckNotNull(fieldPath, nameof(fieldPath));
             Preconditions.CheckNotNull(values, nameof(values));
@@ -150,17 +270,15 @@ namespace Firebase.Firestore {
             return new Filter(FirestoreCpp.FilterNotIn(fieldPath.ConvertToProxy(), array));
         }
 
-        public static Filter Or(params Filter[] filters) {
-            if (filters.Length == 1) {
-                return filters[0];
-            }
-            var filterVector = new FilterVector();
-            foreach (Filter filter in filters) {
-                filterVector.PushBack(filter.Proxy);
-            }
-            return new Filter(FirestoreCpp.FilterOr(filterVector));
-        }
-
+        /// <summary>
+        /// Creates a new filter that is a conjunction of the given filters. A conjunction filter includes a document
+        /// if it satisfies all of the given filters.
+        ///
+        /// If no filter is given, the composite filter is a no-op, and if only one filter is given, the composite
+        /// filter has the same behavior as the underlying filter.
+        /// </summary>
+        /// <param name="filters">The filters to perform a conjunction for.</param>
+        /// <returns>The newly created filter.</returns>
         public static Filter And(params Filter[] filters) {
             if (filters.Length == 1) {
                 return filters[0];
@@ -170,6 +288,26 @@ namespace Firebase.Firestore {
                 filterVector.PushBack(filter.Proxy);
             }
             return new Filter(FirestoreCpp.FilterAnd(filterVector));
+        }
+
+        /// <summary>
+        /// Creates a new filter that is a disjunction of the given filters. A disjunction filter includes a document
+        /// if it satisfies <em>any</em> of the given filters.
+        ///
+        /// If no filter is given, the composite filter is a no-op, and if only one filter is given, the composite
+        /// filter has the same behavior as the underlying filter.
+        /// </summary>
+        /// <param name="filters">The filters to perform a disjunction for.</param>
+        /// <returns>The newly created filter.</returns>
+        public static Filter Or(params Filter[] filters) {
+            if (filters.Length == 1) {
+                return filters[0];
+            }
+            var filterVector = new FilterVector();
+            foreach (Filter filter in filters) {
+                filterVector.PushBack(filter.Proxy);
+            }
+            return new Filter(FirestoreCpp.FilterOr(filterVector));
         }
     }
     
