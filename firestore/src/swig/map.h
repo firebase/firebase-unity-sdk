@@ -26,6 +26,7 @@
 #include "firestore/src/include/firebase/firestore/document_snapshot.h"
 #include "firestore/src/include/firebase/firestore/field_path.h"
 #include "firestore/src/include/firebase/firestore/field_value.h"
+#include "firestore/src/include/firebase/firestore/filter.h"
 #include "firestore/src/include/firebase/firestore/query.h"
 #include "firestore/src/include/firebase/firestore/set_options.h"
 #include "firestore/src/include/firebase/firestore/write_batch.h"
@@ -174,6 +175,30 @@ inline Future<void> DocumentReferenceUpdate(
 inline Future<void> DocumentReferenceUpdate(
     DocumentReference& doc, const Map<FieldPath, FieldValue>& wrapper) {
   return doc.Update(wrapper.Unwrap());
+}
+
+inline Filter FilterArrayContainsAny(const std::string& field, const FieldValue& values) {
+  return Filter::ArrayContainsAny(field, values.array_value());
+}
+
+inline Filter FilterArrayContainsAny(const FieldPath& field, const FieldValue& values) {
+  return Filter::ArrayContainsAny(field, values.array_value());
+}
+
+inline Filter FilterIn(const std::string& field, const FieldValue& values) {
+  return Filter::In(field, values.array_value());
+}
+
+inline Filter FilterIn(const FieldPath& field, const FieldValue& values) {
+  return Filter::In(field, values.array_value());
+}
+
+inline Filter FilterNotIn(const std::string& field, const FieldValue& values) {
+  return Filter::NotIn(field, values.array_value());
+}
+
+inline Filter FilterNotIn(const FieldPath& field, const FieldValue& values) {
+  return Filter::NotIn(field, values.array_value());
 }
 
 inline Query QueryWhereArrayContainsAny(Query& query,

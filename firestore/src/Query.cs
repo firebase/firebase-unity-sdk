@@ -73,6 +73,9 @@ namespace Firebase.Firestore {
       }
     }
 
+    public Query Where(Filter filter) {
+      return new Query(_proxy.Where(filter.Proxy), Firestore);
+    }
 
     /// <summary>
     /// Creates and returns a new <c>Query</c> with the additional filter that documents must
