@@ -73,6 +73,13 @@ namespace Firebase.Firestore {
       }
     }
 
+    /// <summary>
+    /// Creates and returns a new Query with the additional filter.
+    /// </summary>
+    /// <param name="filter">The new filter to apply to the existing query.</param>
+    /// <returns>
+    /// The created Query.
+    /// </returns>
     public Query Where(Filter filter) {
       return new Query(_proxy.Where(filter.Proxy), Firestore);
     }
