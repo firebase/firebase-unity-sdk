@@ -4326,7 +4326,7 @@ namespace Firebase.Sample.Firestore {
         for (int i = 0; i < 60000; i++) {
           numbers.Add(i);
         }
-        Await(doc.SetAsync(new Dictionary<string, object>{{"foo", numbers}});
+        Await(doc.SetAsync(new Dictionary<string, object>{{"foo", numbers}}));
       });
     }
 
