@@ -354,8 +354,20 @@ SWIG_CREATE_PROXY(firebase::firestore::WriteBatch);
 SWIG_CREATE_PROXY(firebase::firestore::MetadataChanges)
 %include "firestore/src/include/firebase/firestore/metadata_changes.h"
 
+// Generate a C# wrapper for Filter. Must be above Query.
+SWIG_CREATE_PROXY(firebase::firestore::Filter);
+%rename("%s") firebase::firestore::Filter::ArrayContains;
+%rename("%s") firebase::firestore::Filter::EqualTo;
+%rename("%s") firebase::firestore::Filter::NotEqualTo;
+%rename("%s") firebase::firestore::Filter::GreaterThan;
+%rename("%s") firebase::firestore::Filter::GreaterThanOrEqualTo;
+%rename("%s") firebase::firestore::Filter::LessThan;
+%rename("%s") firebase::firestore::Filter::LessThanOrEqualTo;
+%include "firestore/src/include/firebase/firestore/filter.h"
+
 // Generate a C# wrapper for Query and Query::Direction. Must be above CollectionReference.
 SWIG_CREATE_PROXY(firebase::firestore::Query);
+%rename("%s") firebase::firestore::Query::Where;
 %rename("%s") firebase::firestore::Query::WhereEqualTo;
 %rename("%s") firebase::firestore::Query::WhereNotEqualTo;
 %rename("%s") firebase::firestore::Query::WhereLessThan;
@@ -541,6 +553,7 @@ namespace firestore {
 %template(DocumentSnapshotVector) csharp::Vector<DocumentSnapshot>;
 %template(FieldPathVector) csharp::Vector<FieldPath>;
 %template(FieldValueVector) csharp::Vector<FieldValue>;
+%template(FilterVector) csharp::Vector<Filter>;
 
 } // namespace firestore
 } // namespace firebase
