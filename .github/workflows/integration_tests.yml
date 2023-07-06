@@ -121,6 +121,10 @@ jobs:
       run: pip install -r scripts/gha/requirements.txt
     - id: matrix_config
       run: |
+        # Log that we ran against a given packaged SDK.
+        if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
+          echo "::warning ::Downloading package from previous run: https://github.com/${{github.repository}}/actions/runs/${{ github.event.inputs.packaged_sdk_run_id }}"
+        fi
         if [[ "${{ steps.set_outputs.outputs.requested_tests }}" == "expanded" ]]; then 
           TEST_MATRIX_PARAM=-m=expanded
           echo "::warning ::Running on the expanded matrix"
