@@ -204,7 +204,7 @@ def format_errors(all_errors, severity, event):
 
     if 'iOS' in platforms:
       all_simulator = True
-      for descriptors in platform_dict['iOS']:
+      for descriptors in platform_dict['iOS']['description']:
         if 'simulator_' not in descriptors:
           all_simulator = False
       if all_simulator:
@@ -213,7 +213,7 @@ def format_errors(all_errors, severity, event):
 
     if 'Android' in platforms:
       all_emulator = True
-      for descriptors in platform_dict['Android']:
+      for descriptors in platform_dict['Android']['description']:
         if 'emulator_' not in descriptors:
           all_emulator = False
       if all_emulator:
@@ -289,6 +289,12 @@ def aggregate_errors_from_log(text, debug=False):
           platform_list = m.group(3).split(" ")
           other = m.group(4)
           product = current_product
+
+          # If both iOS and tvOS are in the platform list, merge them.
+          if 'iOS' in platform_list and 'tvOS' in platform_list:
+            platform_list.remove('iOS')
+            platform_list.remove('tvOS')
+            platform_list.append('iOS/tvOS')
 
           if severity not in errors:
             errors[severity] = {}
