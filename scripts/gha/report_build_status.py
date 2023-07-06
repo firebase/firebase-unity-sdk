@@ -264,25 +264,29 @@ def aggregate_errors_from_log(text, debug=False):
   other = None
   product = None
 
+  logging.info("Starting log file parse of: %s", text);
   for line in lines:
     if debug: print(line)
     if not current_product:
       m = re.search(r'^([a-z_]+):', line)
+      # Workaround for app_check testapp name bug.
+      if not m: m = re.search(r'^.*runner/work/.*/testapps/.*/(app_check)/.*:', line)
       if m:
         current_product = m.group(1)
+        logging.info("Got product: %s", current_product)
     else:
       # Got a current product
       if len(line) == 0:
         current_product = None
       else:
         m = re.search(
-          r'\[(BUILD|TEST)\] \[(ERROR|FAILURE|FLAKINESS)\] \[([a-zA-Z]+)\] (\[.*\])',
+          r'\[(BUILD|TEST)\] \[(ERROR|FAILURE|FLAKINESS)\] .* \[[^]]+ Platform\(s\): ([a-zA-Z ]+)\] (.*)$',
           line)
         if m:
           event = m.group(1)
           severity = m.group(2)
           if severity == "FAILURE": severity = "ERROR"
-          platform = m.group(3)
+          platform_list = m.group(3).split(" ")
           other = m.group(4)
           product = current_product
 
@@ -292,11 +296,12 @@ def aggregate_errors_from_log(text, debug=False):
             errors[severity][event] = {}
           if product not in errors[severity][event]:
             errors[severity][event][product] = {}
-          if platform not in errors[severity][event][product]:
-            errors[severity][event][product][platform] = {}
-            errors[severity][event][product][platform]['description'] = set()
-            errors[severity][event][product][platform]['test_list'] = set()
-          errors[severity][event][product][platform]['description'].add(other)
+          for platform in platform_list:
+            if platform not in errors[severity][event][product]:
+              errors[severity][event][product][platform] = {}
+              errors[severity][event][product][platform]['description'] = set()
+              errors[severity][event][product][platform]['test_list'] = set()
+            errors[severity][event][product][platform]['description'].add(other)
         else:
           m2 = re.search(r"failed tests: \[\'(.*)\'\]", line)
           if m2:
@@ -349,8 +354,8 @@ def get_message_from_github_log(logs_zip,
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
-  #if not FLAGS.verbosity:
-  #  logging.set_verbosity(logging.WARN)
+  if not FLAGS.verbosity:
+    logging.set_verbosity(logging.WARN)
   end_date = (dateutil.parser.parse(FLAGS.end) if FLAGS.end else dateutil.utils.today()).date()
   start_date = (dateutil.parser.parse(FLAGS.start) if FLAGS.start else dateutil.utils.today() - dateutil.relativedelta.relativedelta(days=int(FLAGS.days)-1)).date()
   all_days = set()
@@ -574,7 +579,7 @@ def main(argv):
   elif FLAGS.report == "test_summary":
     test_list = {}
     for day in days_sorted:
-      if package_tests[day]['log_results']:
+      if day in package_tests and package_tests[day]['log_results']:
         errors = aggregate_errors_from_log(package_tests[day]['log_results'])
         test_link = package_tests[day]['html_url']
       else:
