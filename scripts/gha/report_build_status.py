@@ -518,7 +518,7 @@ def main(argv):
       ["Date"] +
       (["Username"] if FLAGS.output_username else ([] if FLAGS.output_markdown else [""])) +
       ([""] if FLAGS.include_blank_column and not FLAGS.output_markdown else []) +
-      ["Build ", "Test Build", "Test Run", "Notes"]
+      ["SDK Build ", "Test Build", "Test Run", "Notes"]
   )
   if FLAGS.output_markdown:
       row_prefix = "| "
