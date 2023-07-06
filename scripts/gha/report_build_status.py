@@ -446,8 +446,8 @@ def main(argv):
         run['log_success'] = True
         run['log_results'] = ''
         artifacts = firebase_github.list_artifacts(FLAGS.token, run['id'])
-        if 'log-artifact' in [a['name'] for a in artifacts]:
-          artifact_id = [a['id'] for a in artifacts if a['name'] == 'log-artifact'][0]
+        if 'build_and_test_results' in [a['name'] for a in artifacts]:
+          artifact_id = [a['id'] for a in artifacts if a['name'] == 'build_and_test_results'][0]
           artifact_contents = firebase_github.download_artifact(FLAGS.token, artifact_id)
           if artifact_contents:
             artifact_data = io.BytesIO(artifact_contents)
@@ -457,6 +457,7 @@ def main(argv):
               (success, results) = summarize_test_results.summarize_logs(tmpdir, False, False, True)
               run['log_success'] = success
               run['log_results'] = results
+              logging.info("Integration test %s results (via artifact): %s", run['id'], run['log_results'])
           else:
             # Artifacts expire after some time, so if they are gone, we need
             # to read the GitHub logs instead.  This is much slower, so we
@@ -480,7 +481,7 @@ def main(argv):
                     run['log_results'] = m2.group(1)
                   else:
                     run['log_results'] = m.group(1)
-                  logging.debug("Integration test results: %s", run['log_results'])
+                  logging.info("Integration test %s results (via log): %s", run['id'], run['log_results'])
         bar.next()
 
     _cache['all_days'] = all_days
@@ -530,7 +531,8 @@ def main(argv):
     day_str = day
     if FLAGS.output_markdown:
         day_str = day_str.replace("-", "&#8209;")  # non-breaking hyphen.
-    if day not in package_tests or day not in packaging_runs :
+    if day not in package_tests and day not in packaging_runs :
+      # If neither day has a log, skip it and use the last day's log.
       day = last_good_day
     if not day: continue
     last_good_day = day
@@ -539,9 +541,15 @@ def main(argv):
     else:
       package_build_log = _FAILURE_TEXT
     package_build_log = decorate_url(package_build_log, packaging_runs[day]['html_url'])
-    package_tests_log = analyze_log(package_tests[day]['log_results'], package_tests[day]['html_url'])
+    if day in package_tests:
+      package_tests_log = analyze_log(package_tests[day]['log_results'], package_tests[day]['html_url'])
 
-    notes = create_notes(package_tests[day]['log_results'])
+      notes = create_notes(package_tests[day]['log_results'])
+    else:
+      # Tests were never triggered today
+      package_tests_log = analyze_log("[BUILD] [ERROR] [TEST] [ERROR]", packaging_runs[day]['html_url'])
+      notes = "SDK package build failed."
+
     if FLAGS.output_markdown and notes:
         notes = "<details><summary>&nbsp;</summary>" + notes + "</details>"
     if notes == prev_notes and not FLAGS.output_markdown:

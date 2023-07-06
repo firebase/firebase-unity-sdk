@@ -31,6 +31,7 @@ RETRIES = 3
 BACKOFF = 5
 RETRY_STATUS = (403, 500, 502, 504)
 TIMEOUT = 5
+TIMEOUT_LONG = 20
 
 OWNER = 'firebase'
 REPO = 'firebase-unity-sdk'
@@ -40,7 +41,7 @@ GITHUB_API_URL = '%s/repos/%s/%s' % (BASE_URL, OWNER, REPO)
 logging.set_verbosity(logging.INFO)
 
 
-def set_repo_url(repo):  
+def set_repo_url(repo):
   match = re.match(r'https://github\.com/([^/]+)/([^/.]+)', repo)
   if not match:
     logging.info('Error, only pattern https://github.com/\{repo_owner\}/\{repo_name\} are allowed.')
@@ -178,14 +179,18 @@ def list_artifacts(token, run_id):
     return response.json()["artifacts"]
 
 
-def download_artifact(token, artifact_id, output_path):
+def download_artifact(token, artifact_id, output_path=None):
   """https://docs.github.com/en/rest/reference/actions#download-an-artifact"""
   url = f'{GITHUB_API_URL}/actions/artifacts/{artifact_id}/zip'
   headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {token}'}
-  with requests.get(url, headers=headers, stream=True, timeout=TIMEOUT) as response:
+  with requests_retry_session().get(url, headers=headers, stream=True, timeout=TIMEOUT_LONG) as response:
     logging.info("download_artifact: %s response: %s", url, response)
-    with open(output_path, 'wb') as file:
-        shutil.copyfileobj(response.raw, file)
+    if output_path:
+      with open(output_path, 'wb') as file:
+          shutil.copyfileobj(response.raw, file)
+    elif response.status_code == 200:
+      return response.content
+  return None
 
 
 def dismiss_review(token, pull_number, review_id, message):
