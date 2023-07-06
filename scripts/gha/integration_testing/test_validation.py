@@ -323,6 +323,8 @@ def get_name(testapp_path):
   for testapp in testapps:
     if testapp.replace("_", "") in testapp_path.lower():
       return testapp
+    elif testapp in testapp_path.lower():
+      return testapp
   return testapp_path
 
 
