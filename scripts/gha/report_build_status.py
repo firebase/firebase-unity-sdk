@@ -349,8 +349,8 @@ def get_message_from_github_log(logs_zip,
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
-  if not FLAGS.verbosity:
-    logging.set_verbosity(logging.WARN)
+  #if not FLAGS.verbosity:
+  #  logging.set_verbosity(logging.WARN)
   end_date = (dateutil.parser.parse(FLAGS.end) if FLAGS.end else dateutil.utils.today()).date()
   start_date = (dateutil.parser.parse(FLAGS.start) if FLAGS.start else dateutil.utils.today() - dateutil.relativedelta.relativedelta(days=int(FLAGS.days)-1)).date()
   all_days = set()
@@ -377,7 +377,7 @@ def main(argv):
   else:
     _cache = {}
 
-    with progress.bar.Bar('Reading jobs...', max=3) as bar:
+    with progress.bar.Bar('Reading jobs...', max=2) as bar:
 
       all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.build_workflow, _BRANCH, _WORKFLOW_SCHEDULED, _LIMIT)
       bar.next()
@@ -399,9 +399,6 @@ def main(argv):
       bar.next()
       package_tests_all = []
       for run in reversed(all_runs):
-        if run['id'] == 5424798480:
-          package_tests_all.append(run)
-          continue
         run['date'] = dateutil.parser.parse(run['created_at'], ignoretz=True)
         day = str(run['date'].date())
         run['day'] = run['date'].date()
@@ -434,8 +431,8 @@ def main(argv):
             logs_zip = zipfile.ZipFile(logs_compressed_data)
             m = get_message_from_github_log(
               logs_zip,
-              r'check_and_prepare/.*Run if.*\.txt',
-              r'\[warning\]Downloading SDK package from previous run:[^\n]*/([0-9]*)$')
+              r'build-20.*/.*Fetch prebuilt.*\.txt',
+              r'run_id: ([0-9]+)$')
             if m:
               packaging_run = m.group(1)
         if str(packaging_run) in packaging_run_ids:
