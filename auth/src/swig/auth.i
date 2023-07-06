@@ -51,14 +51,15 @@
 #include "app/src/cleanup_notifier.h"
 #include "app/src/log.h"
 #include "app/src/include/firebase/internal/mutex.h"
-#include "app/memory/shared_ptr.h"
 #include "app/src/cpp_instance_manager.h"
 #include "auth/src/include/firebase/auth.h"
 
+#include <assert.h>
+
 #include <stdexcept>
 #include <algorithm>
-
-#include <assert.h>
+#include <memory>
+#include <utility>
 %}
 
 %import "app/src/swig/app.i"
@@ -116,7 +117,7 @@ class AuthNotifier {
                AuthStateChangedDelegateFunc state_changed_delegate) {
     assert(auth);
     assert(state_changed_delegate);
-    data_ = ::firebase::MakeShared<CallbackData>();
+    data_ = std::make_shared<CallbackData>();
     data_->app = &auth->app();
     data_->state_changed_delegate = state_changed_delegate;
     data_->callback_reference = nullptr;
@@ -156,13 +157,13 @@ class AuthNotifier {
     if (!data_) return;
 
     data_->callback_reference = firebase::callback::AddCallback(
-        new firebase::callback::CallbackValue1<::firebase::SharedPtr<CallbackData>>(
+        new firebase::callback::CallbackValue1<std::shared_ptr<CallbackData>>(
             data_, NotifyOnTheMainThread));
   }
 
  private:
   // Thunk which converts from the current calling convention to SWIGSTDCALL.
-  static void NotifyOnTheMainThread(::firebase::SharedPtr<CallbackData> data) {
+  static void NotifyOnTheMainThread(std::shared_ptr<CallbackData> data) {
     {
       ::firebase::MutexLock lock(g_auth_notifier_mutex);
       if (!data->callback_reference) return;
@@ -172,7 +173,7 @@ class AuthNotifier {
   }
 
  private:
-  ::firebase::SharedPtr<CallbackData> data_;
+  std::shared_ptr<CallbackData> data_;
 };
 
 // Generate a Auth listener implementation and the methods to instance it.
