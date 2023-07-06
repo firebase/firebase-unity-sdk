@@ -71,6 +71,13 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+- Changes
+    - Firestore (Android) Fix the intermittent global references exhaustion
+      crash when working with documents with a large number of keys and/or large
+      map and/or array fields.
+      ([#1364](https://github.com/firebase/firebase-cpp-sdk/pull/1364)).
+
 ### 11.2.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.2.0.
