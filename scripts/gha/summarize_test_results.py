@@ -259,7 +259,6 @@ def summarize_logs(dir, markdown=False, github_log=False, quiet=False):
   # log_results format:
   #   { testapps: {configs: [failed tests]} }
   all_tested_configs = reorganize_all_tested_configs(all_tested_configs)
-  print(log_data)
   log_results = reorganize_log(log_data, all_tested_configs)
   log_lines = []
   if markdown:
