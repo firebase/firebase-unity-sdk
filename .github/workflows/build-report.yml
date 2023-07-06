@@ -48,11 +48,19 @@ jobs:
         timeout_minutes: 20
         max_attempts: 3
         shell: bash
-        command: |
-          python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --write_cache build_status_short.cache
+        command: python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --write_cache build_status_short.cache
+    - name: Fetch extended GitHub jobs (with retry)
+      uses: nick-invision/retry@v2
+      with:
+        timeout_minutes: 80
+        max_attempts: 3
+        shell: bash
+        command: python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --write_cache build_status.cache
     - name: Generate report files
       run: |
         python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --output_markdown --read_cache build_status_short.cache > report_short.md
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache > report_extended.md
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache --report=test_summary --summary_count=${{ env.numTestsSummary }} > test_summary.md
         python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --nooutput_header --read_cache build_status_short.cache > report.txt
     - name: Generate comment string
       run: |
@@ -62,6 +70,19 @@ jobs:
         cat report_short.md >> comment.md
         cat >> comment.md <<EOF
 
+        <details><summary>View extended history (last ${{ env.numDaysExtended }} days)</summary>
+
+        EOF
+        cat report_extended.md >> comment.md
+        cat >> comment.md <<EOF
+        </details>
+        <details><summary>Top ${{ env.numTestsSummary }} flakes/failures (last ${{ env.numDaysExtended }} days)</summary>
+
+        EOF
+        cat test_summary.md >> comment.md
+        cat >> comment.md <<EOF
+        </details>
+        <details><summary>📄</summary><pre>
         EOF
         cat report.txt >> comment.md
         cat >> comment.md <<EOF
