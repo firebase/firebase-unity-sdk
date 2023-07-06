@@ -243,7 +243,7 @@ def list_workflows(token, workflow_id, branch):
   headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {token}'}
   data = {'event': 'workflow_dispatch', 'branch': branch}
   with requests.get(url, headers=headers, data=json.dumps(data),
-                    stream=True, timeout=TIMEOUT) as response:
+                    stream=True, timeout=TIMEOUT_LONG) as response:
     logging.info("list_workflows: %s response: %s", url, response)
     return response.json()
 
@@ -277,7 +277,7 @@ def list_pull_requests(token, state, head, base):
     keep_going = False
     with requests_retry_session().get(url, headers=headers, params=params,
                       stream=True, timeout=TIMEOUT) as response:
-      logging.info("get_reviews: %s response: %s", url, response)
+      logging.info("list_pull_requests: %s response: %s", url, response)
       results = results + response.json()
       # If exactly per_page results were retrieved, read the next page.
       keep_going = (len(response.json()) == per_page)
@@ -310,4 +310,3 @@ def list_workflow_runs(token, workflow_id, branch=None, event=None, limit=200):
         keep_going = False
         results = results[:limit]
   return results
-
