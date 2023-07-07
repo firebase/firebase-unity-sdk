@@ -104,6 +104,12 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
 
+      - name: Pod repo add
+        shell: bash
+        # The pod install fails during the cmake build, so preinstall it.
+        run: |
+          pod repo add cocoapods https://github.com/CocoaPods/Specs.git
+
       - id: unity_setup
         uses: ./gha/unity
         timeout-minutes: 30
