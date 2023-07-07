@@ -108,7 +108,9 @@ jobs:
         shell: bash
         # The pod install fails during the cmake build, so preinstall it.
         run: |
+          rm -rf ~/Library/Caches/CocoaPods/* || true
           pod repo add cocoapods https://github.com/CocoaPods/Specs.git
+          pod repo update
 
       - id: unity_setup
         uses: ./gha/unity
