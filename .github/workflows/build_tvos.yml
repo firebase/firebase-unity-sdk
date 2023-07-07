@@ -110,7 +110,7 @@ jobs:
         run: |
           rm -rf ~/Library/Caches/CocoaPods/* || true
           pod repo add cocoapods https://github.com/CocoaPods/Specs.git
-	  pod repo update
+          pod repo update
 
       - id: unity_setup
         uses: ./gha/unity
