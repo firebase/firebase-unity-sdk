@@ -67,6 +67,13 @@ jobs:
       xcodeVersion: "14.1"
 
     steps:
+      - name: Store git credentials for all git commands
+        # Forces all git commands to use authenticated https, to prevent throttling.
+        shell: bash
+        run: |
+          git config --global credential.helper 'store --file /tmp/git-credentials'
+          echo 'https://${{ github.token }}@github.com' > /tmp/git-credentials
+
       - name: Checkout Unity Repo
         uses: actions/checkout@v3
         with:
