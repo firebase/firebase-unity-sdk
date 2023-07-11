@@ -104,6 +104,12 @@ jobs:
         run: |
           pip install -r scripts/gha/requirements.txt
 
+      - name: Pod repo add
+        shell: bash
+        # The pod install fails during the cmake build, so preinstall it.
+        run: |
+          pod repo update
+
       - id: unity_setup
         uses: ./gha/unity
         timeout-minutes: 30
@@ -117,6 +123,11 @@ jobs:
         run: |
           # TODO add handling cmake_extras
           python scripts/build_scripts/build_zips.py --gha --platform=tvos --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
+
+      - name: Print info
+        shell: bash
+        run: |
+          find tvos_unity
 
       - name: Check zip file
         shell: bash
