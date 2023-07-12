@@ -255,8 +255,6 @@ if(FIREBASE_UNI_LIBRARY)
   set(FIREBASE_SWIG_OVERRIDE_IMPORT_MODULE "${FIREBASE_APP_UNI_VERSIONED}")
 endif()
 
-message(FATAL_ERROR "=-=-= Stop early")
-
 # Includes platform which needs to be invoked first
 add_subdirectory(app)
 set(TARGET_LINK_LIB_NAMES "firebase_app" "firebase_app_swig")
