@@ -597,9 +597,10 @@ def make_tvos_multi_arch_build(cmake_args):
       t = threading.Thread(target=make_tvos_target, args=(device, arch, cmake_args))
       t.start()
       threads.append(t)
+      t.join()
 
-  for t in threads:
-    t.join()
+  #for t in threads:
+  #  t.join()
 
   # Merge the different zip files together, using lipo on the library files
   zip_base_name = ""
