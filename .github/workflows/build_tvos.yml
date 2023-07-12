@@ -115,7 +115,7 @@ jobs:
         shell: bash
         # The pod install fails during the cmake build, so preinstall it.
         run: |
-          pod repo update
+          pod repo list
 
       - id: unity_setup
         uses: ./gha/unity
