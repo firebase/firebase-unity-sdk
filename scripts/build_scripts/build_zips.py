@@ -609,7 +609,7 @@ def make_tvos_multi_arch_build(cmake_args):
       # Run the configure step sequentially, since they can clobber the shared Cocoapod cache
       build_dir = configure_tvos_target(device, arch, cmake_args)
       # Run the builds in parallel, since they can be
-      t = threading.Thread(target=make_tvos_target, args=(build_dir))
+      t = threading.Thread(target=make_tvos_target, args=(build_dir,))
       t.start()
       threads.append(t)
 
