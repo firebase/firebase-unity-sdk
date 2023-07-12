@@ -1380,9 +1380,9 @@ namespace callback {
 
   %csmethodmodifiers AppSetDefaultConfigPath(const char* path) "internal";
   static void AppSetDefaultConfigPath(const char* path) {
-    LogInfo("path = %s", path);
+    firebase::LogInfo("path = %s", path);
     for (int i=0; i < strlen(path); i++) {
-      LogInfo("path[%d] = %d", i, static_cast<int>(path[i]));
+      firebase::LogInfo("path[%d] = %d", i, static_cast<int>(path[i]));
     }
     firebase::App::SetDefaultConfigPath(path);
   }
