@@ -33,7 +33,7 @@ namespace Firebase.Sample.DynamicLinks {
       Func<Task>[] tests = {
         TestCreateLongLinkAsync,
 // TODO(b/264533368) Enable theses tests when the issue has been fixed.
-#if (false)  // (UNITY_ANDROID || UNITY_IOS)
+#if (UNITY_ANDROID || UNITY_IOS)
         // Link shortening does not work on desktop builds, so only test that for mobile.
         TestCreateShortLinkAsync,
         TestCreateUnguessableShortLinkAsync,
@@ -71,12 +71,12 @@ namespace Firebase.Sample.DynamicLinks {
 
       // This is taken from the values given in UIHandler.
       var expected =
-        urlHost + "/?afl=https://mysite/fallback&" +
+        urlHost + "/?afl=https://google.com/fallback&" +
         "amv=12&apn=" + identifier + "&at=abcdefg&ct=hijklmno&" +
-        "ibi=" + identifier + "&ifl=https://mysite/fallback&imv=1.2.3&" +
+        "ibi=" + identifier + "&ifl=https://google.com/fallback&imv=1.2.3&" +
         "ipbi=" + identifier + "&" +
-        "ipfl=https://mysite/fallbackipad&ius=mycustomscheme&link=https://google.com/abc&" +
-        "pt=pq-rstuv&sd=My app is awesome!&si=https://mysite.com/someimage.jpg&st=My App!&" +
+        "ipfl=https://google.com/fallbackipad&ius=mycustomscheme&link=https://google.com/abc&" +
+        "pt=pq-rstuv&sd=My app is awesome!&si=https://google.com/someimage.jpg&st=My App!&" +
         "utm_campaign=mycampaign&utm_content=mycontent&utm_medium=mymedium&utm_source=mysource&" +
         "utm_term=myterm";
       // The order of URL parameters is different between desktop and mobile implementations, and
