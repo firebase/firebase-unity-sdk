@@ -181,7 +181,8 @@ namespace Firebase.Sample.Installations {
               installations.GetIdAsync();
             } catch (System.NullReferenceException) {
               // Possible NullReferenceException because installations might be still
-              // being disposed from the previous loop.
+              // being disposed from the previous loop, but not ideal.
+              DebugLog("WARNING: GetIdAsync threw a NullReferenceException");
             }
 
             app = null;
