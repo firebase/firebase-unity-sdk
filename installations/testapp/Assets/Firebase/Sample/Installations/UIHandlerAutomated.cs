@@ -177,9 +177,13 @@ namespace Firebase.Sample.Installations {
             var app = Firebase.FirebaseApp.DefaultInstance;
             installations = Firebase.Installations.FirebaseInstallations.GetInstance(app);
 
-            // Even though the app is destroyed, this call should not result in
-            // any problems, other than returning a potentially faulted task.
-            installations.GetIdAsync();
+            try {
+              installations.GetIdAsync();
+            } catch (System.NullReferenceException) {
+              // Possible NullReferenceException because installations might be still
+              // being disposed from the previous loop, but not ideal.
+              DebugLog("WARNING: GetIdAsync threw a NullReferenceException");
+            }
 
             app = null;
             installations = null;
