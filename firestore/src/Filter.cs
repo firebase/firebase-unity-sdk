@@ -21,11 +21,18 @@ namespace Firebase.Firestore {
     /// A Filter represents a restriction on one or more field values and can be used to refine the results of a Query.
     /// </summary>
     public sealed class Filter {
+        private readonly FilterProxy _proxy;
+
         private Filter(FilterProxy proxy) {
-            Proxy = proxy;
+            _proxy = Util.NotNull(proxy);
         }
-        
-        internal FilterProxy Proxy { get; }
+
+        internal FilterProxy Proxy {
+            get {
+                return _proxy;
+            }
+        }
+
 
         /// <summary>
         /// Creates a new filter for checking that the given array field contains the given value.
@@ -295,7 +302,7 @@ namespace Firebase.Firestore {
 
         /// <summary>
         /// Creates a new filter that is a disjunction of the given filters. A disjunction filter includes a document
-        /// if it satisfies <em>any</em> of the given filters.
+        /// if it satisfies any of the given filters.
         ///
         /// If no filter is given, the composite filter is a no-op, and if only one filter is given, the composite
         /// filter has the same behavior as the underlying filter.
