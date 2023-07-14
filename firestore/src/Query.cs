@@ -81,6 +81,7 @@ namespace Firebase.Firestore {
     /// The created Query.
     /// </returns>
     public Query Where(Filter filter) {
+      Preconditions.CheckNotNull(filter, nameof(filter));
       return new Query(_proxy.Where(filter.Proxy), Firestore);
     }
 

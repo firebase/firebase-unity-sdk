@@ -2595,7 +2595,7 @@ namespace Firebase.Sample.Firestore {
 
         AssertQueryResults(
           desc: "Empty Or",
-          query: c.Where(Filter.And()),
+          query: c.Where(Filter.Or()),
           docIds: AsList("a", "b", "c"));
 
         AssertQueryResults(
@@ -2621,6 +2621,24 @@ namespace Firebase.Sample.Firestore {
             Filter.GreaterThan("num", 2),
             Filter.LessThan("num", 2))),
           docIds: AsList("a", "c"));
+        
+        AssertQueryResults(
+          desc: "AND (OR)",
+          query: c.Where(Filter.And(
+            Filter.EqualTo("state", "done")  
+            Filter.Or(
+              Filter.GreaterThan("num", 2),
+              Filter.LessThan("num", 2)))),
+          docIds: AsList("c"));
+
+        AssertQueryResults(
+          desc: "OR (AND)",
+          query: c.Where(Filter.Or(
+            Filter.EqualTo("nullable", "value"),
+            Filter.And(
+              Filter.EqualTo("state", "done"),
+              Filter.EqualTo("active", false)))),
+          docIds: AsList("a", "b"));
       });
     }
 
