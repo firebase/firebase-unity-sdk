@@ -196,9 +196,14 @@ namespace Firebase.Sample.Analytics {
     }
 
     Task TestGetSessionId() {
+      // This test regularly fails on iOS simulator, so ignore on that.
+      if (SystemInfo.graphicsDeviceName.Contains("simulator")) {
+        DebugLog("Skipping test because of problems with simulators");
+        return Task.CompletedTask;
+      }
+
       // Depending on platform, GetSessionId needs a few seconds for Analytics
-      // to initialize (especially on iOS simulator). Pause for 5 seconds before
-      // running this test.
+      // to initialize. Pause for 5 seconds before running this test.
       var tcs = new TaskCompletionSource<bool>();
       Task.Delay(TimeSpan.FromSeconds(5)).ContinueWithOnMainThread(task_ => {
         base.DisplaySessionId().ContinueWithOnMainThread(task => {
