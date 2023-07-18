@@ -30,7 +30,12 @@ namespace Firebase.Sample.Analytics {
         TestAnalyticsScoreDoesNotThrow,
         TestAnalyticsGroupJoinDoesNotThrow,
         TestAnalyticsLevelUpDoesNotThrow,
+        // This test regularly fails on iOS simulator, and there isn't a great way
+        // to determine if this is on a device or simulator, so just disable on
+        // GHA iOS and tvOS for now.
+#if FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
         TestGetSessionId,
+#endif  // (UNITY_IOS || UNITY_TVOS)
         TestAnalyticsSetConsentDoesNotThrow,
         TestInstanceIdChangeAfterReset,
         TestResetAnalyticsData,
@@ -196,11 +201,12 @@ namespace Firebase.Sample.Analytics {
     }
 
     Task TestGetSessionId() {
-      // This test regularly fails on iOS simulator, so ignore on that.
-      if (SystemInfo.graphicsDeviceName.Contains("simulator")) {
-        DebugLog("Skipping test because of problems with simulators");
-        return Task.CompletedTask;
-      }
+      // This test regularly fails on iOS simulator, and there isn't a great way
+      // to determine if this is on a device or simulator, so just disable on iOS
+      // for now
+      #if (UNITY_IOS || UNITY_TVOS)
+      ret
+      #endif  // (UNITY_IOS || UNITY_TVOS)
 
       // Depending on platform, GetSessionId needs a few seconds for Analytics
       // to initialize. Pause for 5 seconds before running this test.
