@@ -35,7 +35,7 @@ namespace Firebase.Sample.Analytics {
         // GHA iOS and tvOS for now.
 #if FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
         TestGetSessionId,
-#endif  // (UNITY_IOS || UNITY_TVOS)
+#endif  // FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
         TestAnalyticsSetConsentDoesNotThrow,
         TestInstanceIdChangeAfterReset,
         TestResetAnalyticsData,
