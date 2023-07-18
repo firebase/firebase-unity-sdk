@@ -37,6 +37,9 @@
  * Set to 'proguard' to cause unity to use proguarding for the android
  * minification stage. The default is to not minify.
  *
+ * -AppBuilderHelper.buildForCI (optional)
+ * Flag to determine if the apps are being built for use with a CI.
+ *
  * In addition to flags, this script depends on optional environment variables:
  *
  * UNITY_ANDROID_SDK
@@ -73,6 +76,7 @@ public sealed class AppBuilderHelper {
   static readonly bool symlinkLibraries = true;
   static readonly bool forceXcodeProject;
   static readonly string minify;
+  static readonly bool buildForCI = false;
 
   // General extensionless name for a testapp executable, apk, ipa, etc.
   // Having a unified name makes it easier to grab artifacts with a script.
@@ -115,6 +119,10 @@ public sealed class AppBuilderHelper {
       }
       if (args[i] == "-buildTarget") {
         buildTarget = args[++i];
+        continue;
+      }
+      if (args[i] == "-AppBuilderHelper.buildForCI") {
+        buildForCI = true;
         continue;
       }
     }
@@ -407,7 +415,11 @@ public sealed class AppBuilderHelper {
     playerOptions.scenes = GetScenes();
     playerOptions.locationPathName = buildPath;
     playerOptions.target = target;
-    playerOptions.options |= BuildOptions.Development;
+    // Development builds on iOS can trigger a user permission prompt for Local Network access,
+    // so when running on CI we do not want to include it.
+    if (!(buildForCI && target == BuildTarget.iOS && targetIosSdk == "device")) {
+      playerOptions.options |= BuildOptions.Development;
+    }
     playerOptions.options |= BuildOptions.StrictMode;
     if (symlinkLibraries) {
       playerOptions.options |= BuildOptions.SymlinkLibraries;
