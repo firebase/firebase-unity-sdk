@@ -33,9 +33,9 @@ namespace Firebase.Sample.Analytics {
         // This test regularly fails on iOS simulator, and there isn't a great way
         // to determine if this is on a device or simulator, so just disable on
         // GHA iOS and tvOS for now.
-#if !FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
+#if !(FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS))
         TestGetSessionId,
-#endif  // FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
+#endif  // !(FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS))
         TestAnalyticsSetConsentDoesNotThrow,
         TestInstanceIdChangeAfterReset,
         TestResetAnalyticsData,
