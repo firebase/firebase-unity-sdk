@@ -177,7 +177,11 @@ namespace Firebase.Sample.Messaging {
     // waits until the app receives the message and verifies the contents are the same as were sent.
     IEnumerator TestSendJsonMessageToSubscribedTopic(TaskCompletionSource<string> tcs) {
       yield return StartCoroutine(WaitForToken());
-      SendJsonMessageToTopicAsync(JsonMessageB, TestTopic);
+      // Combine the TestTopic and registrationToken to generate a unique topic
+      string testTopic = TestTopic + registrationToken;
+      Firebase.Messaging.FirebaseMessaging.SubscribeAsync(testTopic).ContinueWithOnMainThread(t => {
+        SendJsonMessageToTopicAsync(JsonMessageB, testTopic);
+      });
       // TODO(b/65218400): check message id.
       while (lastReceivedMessage == null) {
         yield return new WaitForSeconds(0.5f);
