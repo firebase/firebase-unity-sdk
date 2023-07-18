@@ -71,8 +71,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
+### 11.3.0
 - Changes
+    - General: Update to Firebase C++ SDK version 11.3.0.
+    - General (Android): Update to Firebase Android BoM version 32.2.0.
+    - General (iOS): Update to Firebase Cocoapods version 10.12.0.
     - Firestore (Android) Fix the intermittent global references exhaustion
       crash when working with documents with a large number of keys and/or large
       map and/or array fields.
