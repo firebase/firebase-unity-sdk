@@ -201,13 +201,6 @@ namespace Firebase.Sample.Analytics {
     }
 
     Task TestGetSessionId() {
-      // This test regularly fails on iOS simulator, and there isn't a great way
-      // to determine if this is on a device or simulator, so just disable on iOS
-      // for now
-      #if (UNITY_IOS || UNITY_TVOS)
-      ret
-      #endif  // (UNITY_IOS || UNITY_TVOS)
-
       // Depending on platform, GetSessionId needs a few seconds for Analytics
       // to initialize. Pause for 5 seconds before running this test.
       var tcs = new TaskCompletionSource<bool>();
