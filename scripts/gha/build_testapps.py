@@ -472,6 +472,8 @@ def build_testapp(dir_helper, api_config, ios_config, target):
       "-AppBuilderHelper.outputDir", dir_helper.output_dir,
       "-buildTarget", target
   ]
+  if FLAGS.ci:
+    build_flags.append("-AppBuilderHelper.buildForCI")
   if target == _IOS or target == _TVOS:
     for device_type in ios_config.ios_sdk:
       build_flags += ["-AppBuilderHelper.targetIosSdk", _IOS_SDK[device_type]]
