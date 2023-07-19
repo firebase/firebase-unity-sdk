@@ -86,7 +86,7 @@ Release Notes
     - Firestore (Android) Fix the intermittent global references exhaustion
       crash when working with documents with a large number of keys and/or large
       map and/or array fields.
-      ([#1364](https://github.com/firebase/firebase-cpp-sdk/pull/1364)).
+      ([#569](https://github.com/firebase/firebase-unity-sdk/issues/569)).
     - Remote Config (Desktop): Additional fix for handling of non-English time
       zone names on Windows.
 
