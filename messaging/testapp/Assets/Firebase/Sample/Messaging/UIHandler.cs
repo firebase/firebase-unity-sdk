@@ -33,6 +33,13 @@ namespace Firebase.Sample.Messaging {
     private string topic = "TestTopic";
     private bool UIEnabled = true;
 
+    // Should this Subscribe to the topic on startup.
+    protected virtual bool SubscribeToTopicOnStart {
+      get {
+        return true;
+      }
+    }
+
     // Log the result of the specified task, returning true if the task
     // completed successfully, false otherwise.
     protected bool LogTaskCompletion(Task task, string operation) {
@@ -87,9 +94,11 @@ namespace Firebase.Sample.Messaging {
         task => {
           LogTaskCompletion(task, "RequestPermissionAsync");
 
-          Firebase.Messaging.FirebaseMessaging.SubscribeAsync(topic).ContinueWithOnMainThread(task => {
-            LogTaskCompletion(task, "SubscribeAsync");
-          });
+          if (SubscribeToTopicOnStart) {
+            Firebase.Messaging.FirebaseMessaging.SubscribeAsync(topic).ContinueWithOnMainThread(task => {
+              LogTaskCompletion(task, "SubscribeAsync");
+            });
+          }
         }
       );
       isFirebaseInitialized = true;
