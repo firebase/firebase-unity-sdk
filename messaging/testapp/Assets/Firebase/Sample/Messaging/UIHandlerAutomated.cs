@@ -197,8 +197,8 @@ namespace Firebase.Sample.Messaging {
       // Subsubscribe from the test topic, to make sure that other messages aren't received.
       Firebase.Messaging.FirebaseMessaging.UnsubscribeAsync(TestTopic).ContinueWithOnMainThread(t => {
         ValidateJsonMessageB(tcs, lastReceivedMessage);
+        lastReceivedMessage = null;
       });
-      lastReceivedMessage = null;
     }
 
     // Fake test (always passes immediately). Can be used on platforms with no other tests.
