@@ -194,7 +194,7 @@ namespace Firebase.Sample.Messaging {
       while (lastReceivedMessage == null) {
         yield return new WaitForSeconds(0.5f);
       }
-      // Subsubscribe from the test topic, to make sure that other messages aren't received.
+      // Unsubscribe from the test topic, to make sure that other messages aren't received.
       Firebase.Messaging.FirebaseMessaging.UnsubscribeAsync(TestTopic).ContinueWithOnMainThread(t => {
         ValidateJsonMessageB(tcs, lastReceivedMessage);
         lastReceivedMessage = null;
