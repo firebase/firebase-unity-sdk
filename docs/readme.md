@@ -72,7 +72,6 @@ Support
 Release Notes
 -------------
 ### 11.3.0
-### 11.3.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.3.0.
     - General (Android): Update to Firebase Android BoM version 32.2.0.
