@@ -131,7 +131,11 @@ class Test(object):
           self.logs = f.read()
         test_running = "All tests finished" not in self.logs
     open_process.kill()
-    logging.info("Test result: %s", self.logs)
+    if platform.system() == 'Linux':
+      # Linux seems to have a problem printing out too much information, so truncate it
+      logging.info("Test result: %s (Log might be truncated)", self.logs[:64000])
+    else:
+      logging.info("Test result: %s", self.logs)
     logging.info("Finished running %s", self.testapp_path)
 
 
