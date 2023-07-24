@@ -57,6 +57,14 @@ namespace Firebase.Crashlytics.Editor {
 
     private const string ShellPath = "/bin/sh -x";
 
+    private const ImmutableList<string> InputFiles = ImmutableList<string>.Create(
+      "$(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+      "$(BUILT_PRODUCTS_DIR)/$(EXECUTABLE_PATH)",
+      "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+      "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+      "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+    );
+
     /// <summary>
     /// When building out to iOS, write Firebase specific values to the appropriate Plist files.
     /// </summary>
@@ -137,11 +145,11 @@ namespace Firebase.Crashlytics.Editor {
 
     internal static iOSBuildPhaseMethodCall GetBuildPhaseMethodCall(string unityVersion, string targetGuid, string completeRunScriptBody) {
       if (VersionInfo.GetUnityMajorVersion(unityVersion) >= 2019) {
-        Debug.Log("Using AddShellScriptBuildPhase to add the Crashlytics Run Script");
+        Debug.Log("Using AddShellScriptBuildPhase with Input Files to add the Crashlytics Run Script");
         return new iOSBuildPhaseMethodCall {
           MethodName = "AddShellScriptBuildPhase",
-          ArgumentTypes = new [] { typeof(string), typeof(string), typeof(string), typeof(string) },
-          Arguments = new object [] { targetGuid, RunScriptName, ShellPath, completeRunScriptBody },
+          ArgumentTypes = new [] { typeof(string), typeof(string), typeof(string), typeof(string), typeof(List<string>) },
+          Arguments = new object [] { targetGuid, RunScriptName, ShellPath, completeRunScriptBody, InputFiles },
         };
       } else {
         Debug.Log("Using AppendShellScriptBuildPhase to add the Crashlytics Run Script");
