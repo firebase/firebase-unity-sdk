@@ -29,34 +29,39 @@ jobs:
         path: firebase-cpp-sdk
         submodules: true
         fetch-depth: 0
-    - name: Install Desktop SDK prerequisites
-      uses: nick-invision/retry@v2
+    - name: Setup python
+      uses: actions/setup-python@v4
       with:
-        timeout_minutes: 15
-        max_attempts: 3
-        command: |
-          python3 firebase-cpp-sdk/scripts/gha/install_prereqs_desktop.py --gha_build
-          python3 -m pip install requests python-dateutil progress attrs
+        python-version: '3.7'
+
+    - name: Install prerequisites
+      shell: bash
+      run: |
+        echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
+        cd firebase-cpp-sdk
+        python3 scripts/gha/install_prereqs_desktop.py --gha_build
+        python3 -m pip install requests python-dateutil progress attrs
+        cd ..
     - name: Fetch GitHub jobs (with retry)
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 20
         max_attempts: 3
         shell: bash
-        command: python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --write_cache build_status_short.cache
+        command: python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --write_cache build_status_short.cache
     - name: Fetch extended GitHub jobs (with retry)
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 80
         max_attempts: 3
         shell: bash
-        command: python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --write_cache build_status.cache
+        command: python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --write_cache build_status.cache
     - name: Generate report files
       run: |
-        python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --output_markdown --read_cache build_status_short.cache > report_short.md
-        python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache > report_extended.md
-        python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache --report=test_summary --summary_count=${{ env.numTestsSummary }} > test_summary.md
-        python3 firebase-cpp-sdk/scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --nooutput_header --read_cache build_status_short.cache > report.txt
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --output_markdown --read_cache build_status_short.cache > report_short.md
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache > report_extended.md
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDaysExtended }} --output_markdown --read_cache build_status.cache --report=test_summary --summary_count=${{ env.numTestsSummary }} > test_summary.md
+        python3 scripts/gha/report_build_status.py --token ${{ github.token }} --days ${{ env.numDays }} --nooutput_header --read_cache build_status_short.cache > report.txt
     - name: Generate comment string
       run: |
         echo -n > comment.md
@@ -95,4 +100,4 @@ jobs:
         timeout_minutes: 5
         max_attempts: 3
         shell: bash
-        command: python3 firebase-cpp-sdk/scripts/gha/update_issue_comment.py --token ${{ github.token }} --issue_title '[Unity] Nightly Integration Testing Report' --start_tag build-dashboard-comment-start --end_tag build-dashboard-comment-end < comment.md
+        command: python3 scripts/gha/update_issue_comment.py --token ${{ github.token }} --issue_title '[Unity] Nightly Integration Testing Report' --start_tag build-dashboard-comment-start --end_tag build-dashboard-comment-end < comment.md

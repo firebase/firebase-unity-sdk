@@ -34,6 +34,13 @@ namespace Firebase.Sample.Messaging {
     private string registrationToken;
     private FirebaseMessage lastReceivedMessage;
 
+    // Don't subscribe to a topic, since it might confuse the tests.
+    protected override bool SubscribeToTopicOnStart {
+      get {
+        return false;
+      }
+    }
+
     protected override void Start() {
 #if FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
       // Messaging on iOS requires user interaction to give permissions
@@ -177,13 +184,21 @@ namespace Firebase.Sample.Messaging {
     // waits until the app receives the message and verifies the contents are the same as were sent.
     IEnumerator TestSendJsonMessageToSubscribedTopic(TaskCompletionSource<string> tcs) {
       yield return StartCoroutine(WaitForToken());
-      SendJsonMessageToTopicAsync(JsonMessageB, TestTopic);
+      // Note: Ideally this would use a more unique topic, but topic creation and subscription
+      // takes additional time, so instead this only subscribes during this one test, and doesn't
+      // fully test unsubscribing.
+      Firebase.Messaging.FirebaseMessaging.SubscribeAsync(TestTopic).ContinueWithOnMainThread(t => {
+        SendJsonMessageToTopicAsync(JsonMessageB, TestTopic);
+      });
       // TODO(b/65218400): check message id.
       while (lastReceivedMessage == null) {
         yield return new WaitForSeconds(0.5f);
       }
-      ValidateJsonMessageB(tcs, lastReceivedMessage);
-      lastReceivedMessage = null;
+      // Unsubscribe from the test topic, to make sure that other messages aren't received.
+      Firebase.Messaging.FirebaseMessaging.UnsubscribeAsync(TestTopic).ContinueWithOnMainThread(t => {
+        ValidateJsonMessageB(tcs, lastReceivedMessage);
+        lastReceivedMessage = null;
+      });
     }
 
     // Fake test (always passes immediately). Can be used on platforms with no other tests.

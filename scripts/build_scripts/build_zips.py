@@ -551,13 +551,17 @@ def make_macos_multi_arch_build(cmake_args):
                ",".join(g_target_architectures), final_zip_path)
 
 
-def make_tvos_target(device, arch, cmake_args):
-  """Make the tvos build for the given device and architecture.
+def configure_tvos_target(device, arch, cmake_args):
+  """Configure the tvos build for the given device and architecture.
      Assumed to be called from the build directory.
 
     Args:
+      device: Building for device or simulator.
       arch: The architecture to build for.
       cmake_args: Additional cmake arguments to use.
+
+    Returns:
+      The directory that the project is configured in.
   """
   build_args = cmake_args.copy()
   build_args.append("-DCMAKE_OSX_ARCHITECTURES=" + arch)
@@ -574,6 +578,14 @@ def make_tvos_target(device, arch, cmake_args):
     os.makedirs(arch)
   build_dir = os.path.join(os.getcwd(), arch)
   subprocess.call(build_args, cwd=build_dir)
+  return build_dir
+
+def make_tvos_target(build_dir):
+  """Builds the previously configured cmake project in the given directory.
+
+    Args:
+      The full path to the directory to perform the build in.
+  """
   subprocess.call('make', cwd=build_dir)
   subprocess.call(['cpack', '.'], cwd=build_dir)
 
@@ -594,10 +606,14 @@ def make_tvos_multi_arch_build(cmake_args):
   for device in g_target_devices:
     for arch in TVOS_CONFIG_DICT[device]["architecture"]:
       target_architectures.append(arch)
-      t = threading.Thread(target=make_tvos_target, args=(device, arch, cmake_args))
+      # Run the configure step sequentially, since they can clobber the shared Cocoapod cache
+      build_dir = configure_tvos_target(device, arch, cmake_args)
+      # Run the builds in parallel, since they can be
+      t = threading.Thread(target=make_tvos_target, args=(build_dir,))
       t.start()
       threads.append(t)
 
+  # Wait for the builds to be finished
   for t in threads:
     t.join()
 

@@ -19,8 +19,8 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 
-#include "app/meta/move.h"
 #include "firestore/src/common/futures.h"
 #include "firestore/src/include/firebase/firestore/document_reference.h"
 #include "firestore/src/include/firebase/firestore/document_snapshot.h"

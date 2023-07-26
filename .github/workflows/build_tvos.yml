@@ -72,6 +72,7 @@ jobs:
         with:
           submodules: true
           ref: ${{ inputs.unity_branch }}
+          fetch-depth: 0
 
       - name: Checkout CPP Repo
         uses: actions/checkout@v3
@@ -80,6 +81,7 @@ jobs:
           path: firebase-cpp-sdk
           ref: ${{ inputs.firebase_cpp_sdk_version }}
           submodules: true
+          fetch-depth: 0
 
       - name: Setup python
         uses: actions/setup-python@v4
@@ -101,12 +103,6 @@ jobs:
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-
-      - name: Pod repo add
-        shell: bash
-        # The pod install fails during the cmake build, so preinstall it.
-        run: |
-          pod repo add cocoapods https://github.com/CocoaPods/Specs.git
 
       - id: unity_setup
         uses: ./gha/unity
