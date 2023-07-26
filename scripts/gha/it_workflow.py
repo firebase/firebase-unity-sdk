@@ -186,6 +186,7 @@ def test_report(token, actor, commit, run_id):
   previous_comment = firebase_github.get_issue_body(token, issue_number)
   [previous_prefix, previous_comment_test_result] = previous_comment.split(_COMMENT_HIDDEN_DIVIDER) # TODO add more content
   logging.info("Previous prefix: %s", previous_prefix)
+  prefix = ""
   # If there is a build dashboard, preserve it.
   if (_COMMENT_DASHBOARD_START in previous_prefix and
       _COMMENT_DASHBOARD_END in previous_prefix):
