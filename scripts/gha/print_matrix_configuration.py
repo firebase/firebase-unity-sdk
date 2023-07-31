@@ -96,7 +96,7 @@ TEST_DEVICES = {
   "emulator_32bit": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
   "ios_min": {"platform": IOS, "type": "real", "device": "model=iphone8,version=14.7"},
   "ios_target": {"platform": IOS, "type": "real", "device": "model=iphone13pro,version=15.7"},
-  "ios_latest": {"platform": IOS, "type": "real", "device": "model=iphone11pro,version=16.3"},
+  "ios_latest": {"platform": IOS, "type": "real", "device": "model=iphone11pro,version=16.5"},
   "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 8", "version": "15.2"},
   "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "16.1"},
   "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "16.2"},
