@@ -71,6 +71,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming changes
+- Changes
+    - General (iOS): 32-bit iOS builds (i386 and armv7) are no longer supported.
+
 ### 11.3.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.3.0.
