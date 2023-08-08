@@ -42,18 +42,18 @@ TVOS_SUPPORT_TARGETS = [
 ]
 SUPPORT_DEVICE = ["device", "simulator"]
 
-IOS_SUPPORT_ARCHITECTURE = ["arm64", "armv7", "x86_64", "i386"]
-IOS_DEVICE_ARCHITECTURE = ["arm64", "armv7"]
-IOS_SIMULATOR_ARCHITECTURE = ["arm64", "x86_64", "i386"]
+IOS_SUPPORT_ARCHITECTURE = ["arm64", "x86_64"]
+IOS_DEVICE_ARCHITECTURE = ["arm64"]
+IOS_SIMULATOR_ARCHITECTURE = ["arm64", "x86_64"]
 
 IOS_CONFIG_DICT = {
     "device": {
-        "architecture": ["arm64", "armv7"],
+        "architecture": ["arm64"],
         "ios_platform_location": "iPhoneOS.platform",
         "osx_sysroot": "iphoneos",
     },
     "simulator": {
-        "architecture": ["arm64", "x86_64", "i386"],
+        "architecture": ["arm64", "x86_64"],
         "ios_platform_location": "iPhoneSimulator.platform",
         "osx_sysroot": "iphonesimulator",
     }
