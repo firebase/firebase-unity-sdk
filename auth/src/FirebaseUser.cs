@@ -42,10 +42,6 @@ public sealed class FirebaseUser : UserInfoInterface {
     }
   }
 
-  public override void Dispose() {
-    // Nothing to do, but kept for backwards compatibility
-  }
-
   private void CompleteSignInResult(SignInResult signInResult) {
     if (signInResult != null) {
       // Cache the authProxy in the SignInResult
