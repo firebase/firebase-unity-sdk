@@ -21,7 +21,7 @@ set(FIREBASE_IOS_POD_VERSION "10.12.0"
     CACHE STRING "The version of the top-level Firebase Cocoapod to use.")
 
 # https://github.com/googlesamples/unity-jar-resolver
-set(FIREBASE_UNITY_JAR_RESOLVER_VERSION "1.2.176"
+set(FIREBASE_UNITY_JAR_RESOLVER_VERSION "1.2.177"
    CACHE STRING
   "Version tag of Play Services Resolver to download and use (no trailing .0)"
 )
