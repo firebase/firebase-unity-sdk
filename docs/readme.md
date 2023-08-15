@@ -74,6 +74,8 @@ Release Notes
 ### Upcoming changes
 - Changes
     - General (iOS): 32-bit iOS builds (i386 and armv7) are no longer supported.
+    - Auth: Fixed a potential crash with holding onto FirebaseUser objects
+      after the AuthResult has been disposed.
 
 ### 11.3.0
 - Changes
