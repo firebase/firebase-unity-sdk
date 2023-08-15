@@ -1117,7 +1117,7 @@ static CppInstanceManager<Auth> g_auth_instances;
 }
 
 %typemap(csclassmodifiers) firebase::auth::Auth "public sealed class";
-%typemap(csclassmodifiers) firebase::auth::User "public sealed class";
+%typemap(csclassmodifiers) firebase::auth::User "internal sealed class";
 %rename(FirebaseUserInternal) firebase::auth::User;
 
 %typemap(csclassmodifiers) firebase::auth::User::UserProfile
