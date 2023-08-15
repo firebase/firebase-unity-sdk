@@ -1120,20 +1120,6 @@ static CppInstanceManager<Auth> g_auth_instances;
 %typemap(csclassmodifiers) firebase::auth::User "public sealed class";
 %rename(FirebaseUserInternal) firebase::auth::User;
 
-// TODO(butterfield): Aren't these all redundant? -- ignored via the C scope / name
-//%ignore FirebaseUser::uid;
-//%ignore FirebaseUser::email;
-//%ignore FirebaseUser::display_name;
-//%ignore FirebaseUser::photo_url;
-//%ignore FirebaseUser::provider_id;
-//%ignore FirebaseUser::GetToken;
-//%ignore FirebaseUser::GetTokenThreadSafe;
-//%ignore FirebaseUser::GetTokenLastResult;
-//%ignore FirebaseUser::provider_data;
-//%ignore FirebaseUser::is_email_verified;
-//%ignore FirebaseUser::is_anonymous;
-//%ignore FirebaseUser::metadata;
-
 %typemap(csclassmodifiers) firebase::auth::User::UserProfile
   "public sealed class";
 %typemap(csclassmodifiers) firebase::auth::Credential "public class";
