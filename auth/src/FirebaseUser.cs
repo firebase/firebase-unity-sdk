@@ -252,6 +252,9 @@ public sealed class FirebaseUser : UserInfoInterface {
     return this;
   }
 
+  /// Returns whether this FirebaseUser object represents a valid user. Could be
+  /// false on FirebaseUsers contained with AuthResult structures from failed Auth
+  /// operations.
   public bool IsValid() {
     if (authProxy != null) {
       FirebaseUserInternal userInternal = authProxy.CurrentUserInternal;
@@ -262,68 +265,104 @@ public sealed class FirebaseUser : UserInfoInterface {
     return false;
   }
 
+  /// The Java Web Token (JWT) that can be used to identify the user to
+  /// the backend.
+  ///
+  /// If a current ID token is still believed to be valid (i.e. it has not yet
+  /// expired), that token will be returned immediately.
+  /// A developer may set the optional force_refresh flag to get a new ID token,
+  /// whether or not the existing token has expired. For example, a developer
+  /// may use this when they have discovered that the token is invalid for some
+  /// other reason.
   public Task<string> TokenAsync(bool forceRefresh) {
     return GetValidFirebaseUserInternal().TokenAsync(forceRefresh);
   }
 
+  /// Sets the email address for the user.
+  ///
+  /// May fail if there is already an email/password-based account for the same
+  /// email address.
   public Task UpdateEmailAsync(string email) {
     return GetValidFirebaseUserInternal().UpdateEmailAsync(email);
   }
 
+  /// Attempts to change the password for the current user.
+  ///
+  /// For an account linked to an Identity Provider (IDP) with no password,
+  /// this will result in the account becoming an email/password-based account
+  /// while maintaining the IDP link. May fail if the password is invalid,
+  /// if there is a conflicting email/password-based account, or if the token
+  /// has expired.
+  /// To retrieve fresh tokens, call ReauthenticateAsync.
   public Task UpdatePasswordAsync(string password) {
     return GetValidFirebaseUserInternal().UpdatePasswordAsync(password);
   }
 
+  /// Convenience function for ReauthenticateAndRetrieveData that discards
+  /// the returned AdditionalUserInfo data.
   public Task ReauthenticateAsync(Credential credential) {
     return GetValidFirebaseUserInternal().ReauthenticateAsync(credential);
   }
 
+  /// Initiates email verification for the user.
   public Task SendEmailVerificationAsync() {
     return GetValidFirebaseUserInternal().SendEmailVerificationAsync();
   }
 
+  /// Updates a subset of user profile information.
   public Task UpdateUserProfileAsync(UserProfile profile) {
     return GetValidFirebaseUserInternal().UpdateUserProfileAsync(profile);
   }
 
+  /// Refreshes the data for this user.
+  ///
+  /// For example, the attached providers, email address, display name, etc.
   public System.Threading.Tasks.Task ReloadAsync() {
     return GetValidFirebaseUserInternal().ReloadAsync();
   }
 
+  /// Deletes the user account.
   public System.Threading.Tasks.Task DeleteAsync() {
     return GetValidFirebaseUserInternal().DeleteAsync();
   }
 
+  /// Gets the display name associated with the user, if any.
   public string DisplayName {
     get {
       return GetValidFirebaseUserInternal().DisplayName;
     } 
   }
 
+  /// Gets email associated with the user, if any.
   public string Email {
     get {
       return GetValidFirebaseUserInternal().Email;
     } 
   }
 
+  /// Returns true if user signed in anonymously.
   public bool IsAnonymous {
     get {
       return GetValidFirebaseUserInternal().IsAnonymous;
     } 
   }
 
+  /// Returns true if the email address associated with this user has been
+  /// verified.
   public bool IsEmailVerified {
     get {
       return GetValidFirebaseUserInternal().IsEmailVerified;
     } 
   }
 
+  /// Gets the metadata for this user account.
   public UserMetadata Metadata {
     get {
       return GetValidFirebaseUserInternal().Metadata;
     } 
   }
 
+  /// Gets the phone number for the user, in E.164 format.
   public string PhoneNumber {
     get {
       return GetValidFirebaseUserInternal().PhoneNumber;
@@ -337,18 +376,27 @@ public sealed class FirebaseUser : UserInfoInterface {
     }
   }
 
+  /// Gets the third party profile data associated with this user returned by
+  /// the authentication server, if any.
   public System.Collections.Generic.IEnumerable<IUserInfo> ProviderData {
     get {
       return GetValidFirebaseUserInternal().ProviderData;
     }
   }
 
+  /// Gets the provider ID for the user (For example, "Facebook").
   public string ProviderId {
     get {
       return GetValidFirebaseUserInternal().ProviderId;
     } 
   }
 
+  /// Gets the unique Firebase user ID for the user.
+  ///
+  /// @note The user's ID, unique to the Firebase project.
+  /// Do NOT use this value to authenticate with your backend server, if you
+  /// have one.
+  /// Use FirebaseUser.TokenAsync instead.
   public string UserId {
     get {
       return GetValidFirebaseUserInternal().UserId;
