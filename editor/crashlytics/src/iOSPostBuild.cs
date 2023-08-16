@@ -57,13 +57,13 @@ namespace Firebase.Crashlytics.Editor {
 
     private const string ShellPath = "/bin/sh -x";
 
-    private const ImmutableList<string> InputFiles = ImmutableList<string>.Create(
+    private static List<string> InputFiles = new List<string>(new [] {
       "$(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
       "$(BUILT_PRODUCTS_DIR)/$(EXECUTABLE_PATH)",
       "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
       "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
-      "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
-    );
+      "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}"
+    });
 
     /// <summary>
     /// When building out to iOS, write Firebase specific values to the appropriate Plist files.
