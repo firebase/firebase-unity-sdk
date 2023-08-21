@@ -71,6 +71,12 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+- Changes
+    - Analytics (iOS): Added InitiateOnDeviceConversionMeasurementWithPhoneNumber
+      function to facilitate the [on-device conversion
+      measurement](https://support.google.com/google-ads/answer/12119136) API.
+
 ### 11.4.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.4.0.
