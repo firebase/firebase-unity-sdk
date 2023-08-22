@@ -165,11 +165,27 @@ def decorate_url(text, url):
   return ("[%s](%s)" % (text.replace(" ", "&nbsp;"), url))
 
 
-def analyze_log(text, url):
+def analyze_log(text, url, firestore_only):
   """Do a simple analysis of the log summary text to determine if the build
      or test succeeded, flaked, or failed.
   """
   if not text: text = ""
+  # Regex string is assuming the text is formatted like
+  # product:
+  #   Errors and Failures (2):
+  #   - [BUILD] [ERROR] ...
+  #   - [TEST] [ERROR] ...
+  #
+  # Assuming that each product begins with no spaces, and all subsequent lines will be indented
+  regex_line = r"firestore:\n(  .[^\n]*\n)*"
+  if firestore_only:
+    # Reduce the text log to just what is matched (if no match, just use everything)
+    match = re.search(regex_line, text, re.MULTILINE)
+    if match:
+      text = match[0]
+  else:
+    # Replace the match with an empty string, thus leaving the remaining products
+    text = re.sub(regex_line, r"", text, flags=re.MULTILINE)
   build_status = decorate_url(_PASS_TEXT, url)
   test_status = decorate_url(_PASS_TEXT, url)
   if '[BUILD] [ERROR]' in text or '[BUILD] [FAILURE]' in text:
@@ -518,7 +534,7 @@ def main(argv):
       ["Date"] +
       (["Username"] if FLAGS.output_username else ([] if FLAGS.output_markdown else [""])) +
       ([""] if FLAGS.include_blank_column and not FLAGS.output_markdown else []) +
-      ["SDK Build ", "Test Build", "Test Run", "Notes"]
+      ["SDK Build ", "Test Build", "Test Run", "Firestore Test Build", "Firestore Test Run", "Notes"]
   )
   if FLAGS.output_markdown:
       row_prefix = "| "
@@ -553,12 +569,14 @@ def main(argv):
       package_build_log = _FAILURE_TEXT
     package_build_log = decorate_url(package_build_log, packaging_runs[day]['html_url'])
     if day in package_tests:
-      package_tests_log = analyze_log(package_tests[day]['log_results'], package_tests[day]['html_url'])
+      package_tests_log = analyze_log(package_tests[day]['log_results'], package_tests[day]['html_url'], False)
+      firestore_tests_log = analyze_log(package_tests[day]['log_results'], package_tests[day]['html_url'], True)
 
       notes = create_notes(package_tests[day]['log_results'])
     else:
       # Tests were never triggered today
-      package_tests_log = analyze_log("[BUILD] [ERROR] [TEST] [ERROR]", packaging_runs[day]['html_url'])
+      package_tests_log = analyze_log("[BUILD] [ERROR] [TEST] [ERROR]", packaging_runs[day]['html_url'], False)
+      firestore_tests_log = analyze_log("[BUILD] [ERROR] [TEST] [ERROR]", packaging_runs[day]['html_url'], True)
       notes = "SDK package build failed."
 
     if FLAGS.output_markdown and notes:
@@ -576,6 +594,8 @@ def main(argv):
          package_build_log,
          package_tests_log[0],
          package_tests_log[1],
+         firestore_tests_log[0],
+         firestore_tests_log[1],
          notes]
     )
     output += (table_row_fmt % tuple(table_row_contents)) + "\n"
