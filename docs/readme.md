@@ -71,9 +71,20 @@ Support
 
 Release Notes
 -------------
-### Upcoming changes
+### Upcoming Release
 - Changes
+    - Analytics (iOS): Added InitiateOnDeviceConversionMeasurementWithPhoneNumber
+      function to facilitate the [on-device conversion
+      measurement](https://support.google.com/google-ads/answer/12119136) API.
+
+### 11.4.0
+- Changes
+    - General: Update to Firebase C++ SDK version 11.4.0.
+    - General (Android): Update to Firebase Android BoM version 32.2.2.
+    - General (iOS): Update to Firebase Cocoapods version 10.13.0.
     - General (iOS): 32-bit iOS builds (i386 and armv7) are no longer supported.
+    - Auth: Fixed a potential crash with holding onto FirebaseUser objects
+      after the AuthResult has been disposed.
 
 ### 11.3.0
 - Changes

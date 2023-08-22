@@ -62,6 +62,8 @@ namespace Firebase.Sample.Analytics {
       FirebaseAnalytics.SetAnalyticsCollectionEnabled(true);
       DebugLog("Initiate on-device conversion measurement.");
       FirebaseAnalytics.InitiateOnDeviceConversionMeasurementWithEmailAddress("test@testemail.com");
+      DebugLog("Initiate on-device conversion measurement (phone number).");
+      FirebaseAnalytics.InitiateOnDeviceConversionMeasurementWithPhoneNumber("+15551234567");
 
       DebugLog("Set user properties.");
       // Set the user's sign up method.
