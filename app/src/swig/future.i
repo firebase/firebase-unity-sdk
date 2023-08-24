@@ -398,7 +398,7 @@ namespace firebase {
   }
 
   // Deallocate data allocated for the completion callback.
-  void SWIG_FreeCompletionData(void *data) {
+  static void SWIG_FreeCompletionData(void *data) {
     delete reinterpret_cast<CSNAME##CallbackData*>(data);
   }
 
