@@ -42,6 +42,8 @@ namespace Firebase.Sample.Messaging {
     }
 
     protected override void Start() {
+      Firebase.FirebaseApp.LogLevel = Firebase.LogLevel.Verbose;
+
 #if FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
       // Messaging on iOS requires user interaction to give permissions
       // So if running on CI, just run a dummy test instead.
