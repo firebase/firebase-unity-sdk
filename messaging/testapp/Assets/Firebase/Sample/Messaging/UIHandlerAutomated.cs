@@ -63,10 +63,9 @@ namespace Firebase.Sample.Messaging {
 #else // FIREBASE_RUNNING_FROM_CI && (UNITY_IOS || UNITY_TVOS)
 
       Func<Task>[] tests = {
-        // Disable these tests on desktop, as desktop never receives a token, and so WaitForToken
-        // (called by all of these tests) stalls forever.
+        // Disable these tests on desktop, as desktop uses a stub implementation.
 #if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
-        MakeTest(TestWaitForToken),
+        TestGetRegistrationToken,
 #if !(UNITY_IOS || UNITY_TVOS)
         // TODO(b/130674454) This test times out on iOS, disabling until fixed.
         MakeTest(TestSendPlaintextMessageToDevice),
@@ -83,10 +82,9 @@ namespace Firebase.Sample.Messaging {
       };
 
       string[] customTests = {
-        // Disable these tests on desktop, as desktop never receives a token, and so WaitForToken
-        // (called by all of these tests) stalls forever.
+        // Disable these tests on desktop, as desktop uses a stub implementation.
 #if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
-        "TestWaitForToken",
+        "TestGetRegistrationToken",
 #if !(UNITY_IOS || UNITY_TVOS)
         // TODO(b/130674454) This test times out on iOS, disabling until fixed.
         "TestSendPlaintextMessageToDevice",
@@ -140,24 +138,37 @@ namespace Firebase.Sample.Messaging {
       };
     }
 
-    // Waits until the app is given a registration token, expected shortly after startup.
-    IEnumerator TestWaitForToken(TaskCompletionSource<string> tcs) {
-      yield return StartCoroutine(WaitForToken());
-      tcs.SetResult(registrationToken);
+    // Guarantee that the registration token is set, before running other tests.
+    Task TestGetRegistrationToken() {
+      // The registration token might already be set, if gotten via OnTokenReceived
+      if (!string.IsNullOrEmpty(registrationToken)) {
+        DebugLog("Already have a registration token, skipping GetTokenAsync call");
+        return Task.CompletedTask;
+      }
+
+      // Otherwise, call GetTokenAsync, to fetch one. This can happen if the app
+      // already had a token from a previous run, and thus didn't need a new token.
+      return Firebase.Messaging.FirebaseMessaging.GetTokenAsync().ContinueWithOnMainThread(t => {
+        if (t.IsFaulted) {
+          throw t.Exception;
+        }
+
+        registrationToken = t.Result;
+      });
     }
 
-    // Blocks until registrationToken is non-empty. Trying to send a message without a registration
-    // token will fail.
-    IEnumerator WaitForToken() {
-      while (String.IsNullOrEmpty(registrationToken)) {
-        yield return new WaitForSeconds(0.5f);
+    // If the registration token is missing, throw an exception.
+    // Use for tests that require a registration token to function properly.
+    void ThrowIfMissingRegistrationToken() {
+      if (string.IsNullOrEmpty(registrationToken)) {
+        throw new InvalidOperationException("Registration Token is missing.");
       }
     }
 
     // Sends a plaintext message to the server, setting this device as the addressee, waits until the
     // app receives the message and verifies the contents are the same as were sent.
     IEnumerator TestSendPlaintextMessageToDevice(TaskCompletionSource<string> tcs) {
-      yield return StartCoroutine(WaitForToken());
+      ThrowIfMissingRegistrationToken();
       SendPlaintextMessageToDeviceAsync(PlaintextMessage, registrationToken);
       // TODO(b/65218400): check message id.
       while (lastReceivedMessage == null) {
@@ -170,7 +181,7 @@ namespace Firebase.Sample.Messaging {
     // Sends a JSON message to the server, setting this device as the addressee, waits until the app
     // receives the message and verifies the contents are the same as were sent.
     IEnumerator TestSendJsonMessageToDevice(TaskCompletionSource<string> tcs) {
-      yield return StartCoroutine(WaitForToken());
+      ThrowIfMissingRegistrationToken();
       SendJsonMessageToDeviceAsync(JsonMessageA, registrationToken);
       // TODO(b/65218400): check message id.
       while (lastReceivedMessage == null) {
@@ -183,7 +194,7 @@ namespace Firebase.Sample.Messaging {
     // Sends a JSON message to the server, specifying a topic to which this device is subscribed,
     // waits until the app receives the message and verifies the contents are the same as were sent.
     IEnumerator TestSendJsonMessageToSubscribedTopic(TaskCompletionSource<string> tcs) {
-      yield return StartCoroutine(WaitForToken());
+      ThrowIfMissingRegistrationToken();
       // Note: Ideally this would use a more unique topic, but topic creation and subscription
       // takes additional time, so instead this only subscribes during this one test, and doesn't
       // fully test unsubscribing.

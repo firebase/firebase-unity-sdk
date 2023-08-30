@@ -209,9 +209,10 @@ namespace Firebase.Sample.Messaging {
             task => {
               token = task.Result;
               LogTaskCompletion(task, "GetTokenAsync");
+              DebugLog("GetTokenAsync result: " + token);
             }
           );
-          DebugLog("GetTokenAsync " + token);
+          DebugLog("GetTokenAsync called");
         }
 
         if (GUILayout.Button("DeleteToken")) {
