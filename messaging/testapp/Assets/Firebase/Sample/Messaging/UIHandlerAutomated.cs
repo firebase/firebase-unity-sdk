@@ -141,7 +141,8 @@ namespace Firebase.Sample.Messaging {
     // Guarantee that the registration token is set, before running other tests.
     Task TestGetRegistrationToken() {
       // The registration token might already be set, if gotten via OnTokenReceived
-      if (registrationToken != null) {
+      if (!string.IsNullOrEmpty(registrationToken)) {
+        DebugLog("Already have a registration token, skipping GetTokenAsync call");
         return Task.CompletedTask;
       }
 
@@ -159,7 +160,9 @@ namespace Firebase.Sample.Messaging {
     // If the registration token is missing, throw an exception.
     // Use for tests that require a registration token to function properly.
     void ThrowIfMissingRegistrationToken() {
-      throw new InvalidOperationException("Registration Token is missing.");
+      if (string.IsNullOrEmpty(registrationToken)) {
+        throw new InvalidOperationException("Registration Token is missing.");
+      }
     }
 
     // Sends a plaintext message to the server, setting this device as the addressee, waits until the
