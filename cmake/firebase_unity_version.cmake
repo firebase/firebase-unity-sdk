@@ -17,7 +17,7 @@
 set(FIREBASE_UNITY_SDK_VERSION "11.4.0"
     CACHE STRING "The version of the Unity SDK, used in the names of files.")
 
-set(FIREBASE_IOS_POD_VERSION "10.13.0"
+set(FIREBASE_IOS_POD_VERSION "10.14.0"
     CACHE STRING "The version of the top-level Firebase Cocoapod to use.")
 
 # https://github.com/googlesamples/unity-jar-resolver
