@@ -17,7 +17,7 @@
 set(FIREBASE_UNITY_SDK_VERSION "11.4.0"
     CACHE STRING "The version of the Unity SDK, used in the names of files.")
 
-set(FIREBASE_IOS_POD_VERSION "10.13.0"
+set(FIREBASE_IOS_POD_VERSION "10.14.0"
     CACHE STRING "The version of the top-level Firebase Cocoapod to use.")
 
 # https://github.com/googlesamples/unity-jar-resolver
@@ -27,7 +27,7 @@ set(FIREBASE_UNITY_JAR_RESOLVER_VERSION "1.2.177"
 )
 
 # https://github.com/firebase/firebase-cpp-sdk
-set(FIREBASE_CPP_SDK_PRESET_VERSION "v11.4.0"
+set(FIREBASE_CPP_SDK_PRESET_VERSION "ca5cdee69f8ad60955cbfb01801b9161354823aa"
    CACHE STRING
   "Version tag of Firebase CPP SDK to download (if no local or not passed in) and use (no trailing .0)"
 )

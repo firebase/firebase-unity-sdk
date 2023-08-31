@@ -37,7 +37,7 @@ set(FIREBASE_AUTH_ANDROID_DEPS
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:18.4.0"
+    "com.google.firebase:firebase-crashlytics-ndk:18.4.1"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 
@@ -53,7 +53,7 @@ set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:24.7.0"
+    "com.google.firebase:firebase-firestore:24.7.1"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 

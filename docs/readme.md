@@ -71,7 +71,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
+### 11.4.0
 - Changes
     - Analytics (iOS): Added InitiateOnDeviceConversionMeasurementWithPhoneNumber
       function to facilitate the [on-device conversion
