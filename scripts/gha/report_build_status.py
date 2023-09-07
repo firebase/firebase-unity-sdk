@@ -178,6 +178,8 @@ def analyze_log(text, url, firestore_only):
   #
   # Assuming that each product begins with no spaces, and all subsequent lines will be indented
   regex_line = r"firestore:\n(  .[^\n]*\n)*"
+  # Add a newline at the end, to help the regex format check the last line
+  text = text + "\n"
   if firestore_only:
     # Reduce the text log to just what is matched (if no match, just use everything)
     match = re.search(regex_line, text, re.MULTILINE)
