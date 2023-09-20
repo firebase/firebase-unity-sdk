@@ -71,8 +71,13 @@ Support
 
 Release Notes
 -------------
-### 11.4.0
+### 11.5.0
 - Changes
+    - General: Update to Firebase C++ SDK version 11.5.0.
+    - General (Android): Update to Firebase Android BoM version 32.3.1.
+    - General (iOS): Update to Firebase Cocoapods version 10.15.0.
+    - General (Android): Made dynamic code files read only to comply with new
+      Android 14 security requirements. This fixes a crash at API level 34+.
     - Analytics (iOS): Added InitiateOnDeviceConversionMeasurementWithPhoneNumber
       function to facilitate the [on-device conversion
       measurement](https://support.google.com/google-ads/answer/12119136) API.
