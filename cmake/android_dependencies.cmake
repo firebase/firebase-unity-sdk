@@ -32,12 +32,12 @@ set(FIREBASE_APP_CHECK_ANDROID_DEPS
 )
 
 set(FIREBASE_AUTH_ANDROID_DEPS
-    "com.google.firebase:firebase-auth:22.1.1"
+    "com.google.firebase:firebase-auth:22.1.2"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:18.4.1"
+    "com.google.firebase:firebase-crashlytics-ndk:18.4.3"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 
@@ -53,7 +53,7 @@ set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:24.7.1"
+    "com.google.firebase:firebase-firestore:24.8.1"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 
