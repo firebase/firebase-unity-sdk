@@ -2463,6 +2463,216 @@ namespace Firebase.Sample.Firestore {
       });
     }
 
+    Task TestWhereFilterQueries() {
+      return Async(() => {
+        // Initialize collection with a few test documents to query against.
+        var c = TestCollection();
+        Await(c.Document("a").SetAsync(new Dictionary<string, object> {
+          { "num", 1 },
+          { "state", "created" },
+          { "active", true },
+          { "nullable", "value" },
+        }));
+        Await(c.Document("b").SetAsync(new Dictionary<string, object> {
+          { "num", 2 },
+          { "state", "done" },
+          { "active", false },
+          { "nullable", null },
+        }));
+        Await(c.Document("c").SetAsync(new Dictionary<string, object> {
+          { "num", 3 },
+          { "state", "done" },
+          { "active", true },
+          { "nullable", null },
+        }));
+        // Put in a nested collection (with same ID) for testing collection group queries.
+        Await(c.Document("d")
+                  .Collection(c.Id)
+                  .Document("d-nested")
+                  .SetAsync(new Dictionary<string, object> {
+                    { "num", 4 },
+                    { "state", "created" },
+                    { "active", false },
+                    { "nullable", null },
+                  }));
+
+        AssertQueryResults(
+            desc: "EqualTo",
+            query: c.Where(Filter.EqualTo("num", 1)),
+            docIds: AsList("a"));
+        AssertQueryResults(
+            desc: "EqualTo (FieldPath)",
+            query: c.Where(Filter.EqualTo(new FieldPath("num"), 1)),
+            docIds: AsList("a"));
+
+        AssertQueryResults(
+          desc: "NotEqualTo",
+          query: c.Where(Filter.NotEqualTo("num", 1)),
+          docIds: AsList("b", "c"));
+        AssertQueryResults(
+          desc: "NotEqualTo (FieldPath)",
+          query: c.Where(Filter.NotEqualTo(new FieldPath("num"), 1)),
+          docIds: AsList("b", "c"));
+        AssertQueryResults(
+          desc: "NotEqualTo (FieldPath) on nullable",
+          query: c.Where(Filter.NotEqualTo(new FieldPath("nullable"), null)),
+          docIds: AsList("a"));
+
+        AssertQueryResults(
+          desc: "LessThanOrEqualTo",
+          query: c.Where(Filter.LessThanOrEqualTo("num", 2)),
+          docIds: AsList("a", "b"));
+        AssertQueryResults(
+            desc: "LessThanOrEqualTo (FieldPath)",
+            query: c.Where(Filter.LessThanOrEqualTo(new FieldPath("num"), 2)),
+            docIds: AsList("a", "b"));
+
+        AssertQueryResults(
+            desc: "LessThan",
+            query: c.Where(Filter.LessThan("num", 2)),
+            docIds: AsList("a"));
+        AssertQueryResults(
+            desc: "LessThan (FieldPath)",
+            query: c.Where(Filter.LessThan(new FieldPath("num"), 2)),
+            docIds: AsList("a"));
+
+        AssertQueryResults(
+            desc: "GreaterThanOrEqualTo",
+            query: c.Where(Filter.GreaterThanOrEqualTo("num", 2)),
+            docIds: AsList("b", "c"));
+        AssertQueryResults(
+            desc: "GreaterThanOrEqualTo (FieldPath)",
+            query: c.Where(Filter.GreaterThanOrEqualTo(new FieldPath("num"), 2)),
+            docIds: AsList("b", "c"));
+
+        AssertQueryResults(
+            desc: "GreaterThan",
+            query: c.Where(Filter.GreaterThan("num", 2)),
+            docIds: AsList("c"));
+        AssertQueryResults(
+            desc: "GreaterThan (FieldPath)",
+            query: c.Where(Filter.GreaterThan(new FieldPath("num"), 2)),
+            docIds: AsList("c"));
+
+        AssertQueryResults(
+          desc: "two EqualTos",
+          query: c.Where(Filter.EqualTo("state", "done")).Where(Filter.EqualTo("active", false)),
+          docIds: AsList("b"));
+      });
+    }
+
+    Task TestAndOrQueriesNoCompositeIndexes()
+    {
+      return Async(() =>
+      {
+        // Initialize collection with a few test documents to query against.
+        var c = TestCollection();
+        Await(c.Document("a").SetAsync(new Dictionary<string, object>
+        {
+          { "num", 1 },
+          { "state", "created" },
+          { "active", true },
+          { "nullable", "value" },
+        }));
+        Await(c.Document("b").SetAsync(new Dictionary<string, object>
+        {
+          { "num", 2 },
+          { "state", "done" },
+          { "active", false },
+          { "nullable", null },
+        }));
+        Await(c.Document("c").SetAsync(new Dictionary<string, object>
+        {
+          { "num", 3 },
+          { "state", "done" },
+          { "active", true },
+          { "nullable", null },
+        }));
+
+        AssertQueryResults(
+          desc: "Empty And",
+          query: c.Where(Filter.And()),
+          docIds: AsList("a", "b", "c"));
+
+        AssertQueryResults(
+          desc: "Empty Or",
+          query: c.Where(Filter.Or()),
+          docIds: AsList("a", "b", "c"));
+
+        AssertQueryResults(
+          desc: "Single And",
+          query: c.Where(Filter.And(Filter.EqualTo("num", 1))),
+          docIds: AsList("a"));
+
+        AssertQueryResults(
+          desc: "Single Or",
+          query: c.Where(Filter.Or(Filter.EqualTo("num", 1))),
+          docIds: AsList("a"));
+
+        AssertQueryResults(
+          desc: "GreaterThan OR LessThan",
+          query: c.Where(Filter.Or(
+            Filter.GreaterThan("num", 2),
+            Filter.LessThan("num", 2))),
+          docIds: AsList("a", "c"));
+      });
+    }
+
+    Task TestAndOrQueriesCompositeIndexesRequired()
+    {
+      return Async(() =>
+      {
+        // Initialize collection with a few test documents to query against.
+        var c = TestCollection();
+        Await(c.Document("a").SetAsync(new Dictionary<string, object>
+        {
+          { "num", 1 },
+          { "state", "created" },
+          { "active", true },
+          { "nullable", "value" },
+        }));
+        Await(c.Document("b").SetAsync(new Dictionary<string, object>
+        {
+          { "num", 2 },
+          { "state", "done" },
+          { "active", false },
+          { "nullable", null },
+        }));
+        Await(c.Document("c").SetAsync(new Dictionary<string, object>
+        {
+          { "num", 3 },
+          { "state", "done" },
+          { "active", true },
+          { "nullable", null },
+        }));
+
+        AssertQueryResults(
+          desc: "And EqualTos",
+          query: c.Where(Filter.And(
+            Filter.EqualTo("state", "done"),
+            Filter.EqualTo("active", false))),
+          docIds: AsList("b"));
+
+        AssertQueryResults(
+          desc: "AND (OR)",
+          query: c.Where(Filter.And(
+            Filter.EqualTo("state", "done"),
+            Filter.Or(
+              Filter.GreaterThan("num", 2),
+              Filter.LessThan("num", 2)))),
+          docIds: AsList("c"));
+
+        AssertQueryResults(
+          desc: "OR (AND)",
+          query: c.Where(Filter.Or(
+            Filter.EqualTo("nullable", "value"),
+            Filter.And(
+              Filter.EqualTo("state", "done"),
+              Filter.EqualTo("active", false)))),
+          docIds: AsList("a", "b"));
+      });
+    }
+
     Task TestLimitToLast() {
       return Async(() => {
         var c = TestCollection();
