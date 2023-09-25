@@ -156,7 +156,7 @@ namespace Firebase.Sample.Firestore {
         TestFirestoreDispose,
         TestFirestoreGetInstance,
         TestWhereFilterQueries,
-        TestAndOrQueries
+        TestAndOrQueriesNoCompositeIndexes
         // clang-format on
       };
       
@@ -170,6 +170,7 @@ namespace Firebase.Sample.Firestore {
         TestTerminateMultiDBIndependently,
         TestTerminateAppWithMultiDB,
         TestRestartCustomFirestore,
+        TestAndOrQueriesCompositeIndexesRequired
       };
       
       // Set the list of tests to run against Production only.
@@ -2560,7 +2561,7 @@ namespace Firebase.Sample.Firestore {
       });
     }
 
-    Task TestAndOrQueries()
+    Task TestAndOrQueriesNoCompositeIndexes()
     {
       return Async(() =>
       {
@@ -2609,6 +2610,43 @@ namespace Firebase.Sample.Firestore {
           docIds: AsList("a"));
 
         AssertQueryResults(
+          desc: "GreaterThan OR LessThan",
+          query: c.Where(Filter.Or(
+            Filter.GreaterThan("num", 2),
+            Filter.LessThan("num", 2))),
+          docIds: AsList("a", "c"));
+      });
+    }
+
+    Task TestAndOrQueriesCompositeIndexesRequired()
+    {
+      return Async(() =>
+      {
+        // Initialize collection with a few test documents to query against.
+        var c = TestCollection();
+        Await(c.Document("a").SetAsync(new Dictionary<string, object>
+        {
+          { "num", 1 },
+          { "state", "created" },
+          { "active", true },
+          { "nullable", "value" },
+        }));
+        Await(c.Document("b").SetAsync(new Dictionary<string, object>
+        {
+          { "num", 2 },
+          { "state", "done" },
+          { "active", false },
+          { "nullable", null },
+        }));
+        Await(c.Document("c").SetAsync(new Dictionary<string, object>
+        {
+          { "num", 3 },
+          { "state", "done" },
+          { "active", true },
+          { "nullable", null },
+        }));
+
+        AssertQueryResults(
           desc: "And EqualTos",
           query: c.Where(Filter.And(
             Filter.EqualTo("state", "done"),
@@ -2616,16 +2654,9 @@ namespace Firebase.Sample.Firestore {
           docIds: AsList("b"));
 
         AssertQueryResults(
-          desc: "GreaterThan OR LessThan",
-          query: c.Where(Filter.Or(
-            Filter.GreaterThan("num", 2),
-            Filter.LessThan("num", 2))),
-          docIds: AsList("a", "c"));
-        
-        AssertQueryResults(
           desc: "AND (OR)",
           query: c.Where(Filter.And(
-            Filter.EqualTo("state", "done")  
+            Filter.EqualTo("state", "done"),
             Filter.Or(
               Filter.GreaterThan("num", 2),
               Filter.LessThan("num", 2)))),
