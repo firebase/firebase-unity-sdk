@@ -295,9 +295,18 @@ namespace firebase {
   // Free data structure allocated in SetOnCompletionCallback() and save
   // a reference to the current data structure if specified.
   private void SetCompletionData(System.IntPtr data) {
-    ThrowIfDisposed();
-    SWIG_FreeCompletionData(callbackData);
-    callbackData = data;
+    lock (FirebaseApp.disposeLock) {
+      // The callback that was made could theoretically be triggered before this point,
+      // which would Dispose this object. In that case, we want to free the data we
+      // were given, since otherwise it would be leaked.
+      if (swigCPtr.Handle == System.IntPtr.Zero) {
+        SWIG_FreeCompletionData(data);
+      } else {
+        // Free the old data, before saving the new data for deletion
+        SWIG_FreeCompletionData(callbackData);
+        callbackData = data;
+      }
+    }
   }
 
   // Handles the C++ callback, and calls the cached C# callback.
@@ -389,7 +398,7 @@ namespace firebase {
   }
 
   // Deallocate data allocated for the completion callback.
-  void SWIG_FreeCompletionData(void *data) {
+  static void SWIG_FreeCompletionData(void *data) {
     delete reinterpret_cast<CSNAME##CallbackData*>(data);
   }
 

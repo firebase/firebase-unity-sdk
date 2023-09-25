@@ -122,7 +122,7 @@ namespace Firebase.Sample.DynamicLinks {
 #endif
 
       return new DynamicLinkComponents(
-        // The base Link.
+        // The base Link. This should be in your allowlist in the Firebase console.
         new System.Uri("https://google.com/abc"),
         // The dynamic link domain.
         kDomainUriPrefix) {
@@ -134,11 +134,11 @@ namespace Firebase.Sample.DynamicLinks {
           Content = "mycontent"
         },
         IOSParameters = new Firebase.DynamicLinks.IOSParameters(appIdentifier) {
-          FallbackUrl = new System.Uri("https://mysite/fallback"),
+          FallbackUrl = new System.Uri("https://google.com/fallback"),
           CustomScheme = "mycustomscheme",
           MinimumVersion = "1.2.3",
           IPadBundleId = appIdentifier,
-          IPadFallbackUrl = new System.Uri("https://mysite/fallbackipad")
+          IPadFallbackUrl = new System.Uri("https://google.com/fallbackipad")
         },
         ITunesConnectAnalyticsParameters =
           new Firebase.DynamicLinks.ITunesConnectAnalyticsParameters() {
@@ -147,13 +147,13 @@ namespace Firebase.Sample.DynamicLinks {
             ProviderToken = "pq-rstuv"
           },
         AndroidParameters = new Firebase.DynamicLinks.AndroidParameters(appIdentifier) {
-          FallbackUrl = new System.Uri("https://mysite/fallback"),
+          FallbackUrl = new System.Uri("https://google.com/fallback"),
           MinimumVersion = 12
         },
         SocialMetaTagParameters = new Firebase.DynamicLinks.SocialMetaTagParameters() {
           Title = "My App!",
           Description = "My app is awesome!",
-          ImageUrl = new System.Uri("https://mysite.com/someimage.jpg")
+          ImageUrl = new System.Uri("https://google.com/someimage.jpg")
         },
       };
     }

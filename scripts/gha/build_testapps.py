@@ -338,7 +338,7 @@ def main(argv):
           if p == _DESKTOP:  # e.g. 'Desktop' -> 'OSXUniversal'
             p = get_desktop_platform()
           if p == _PLAYMODE:
-            logs = perform_in_editor_tests(dir_helper)
+            logs = perform_in_editor_tests(dir_helper, remaining_retries=2)
             playmode_tests.append(Test(testapp_path=dir_helper.unity_project_dir, logs=logs))
           else:
             build_testapp(
@@ -472,6 +472,8 @@ def build_testapp(dir_helper, api_config, ios_config, target):
       "-AppBuilderHelper.outputDir", dir_helper.output_dir,
       "-buildTarget", target
   ]
+  if FLAGS.ci:
+    build_flags.append("-AppBuilderHelper.buildForCI")
   if target == _IOS or target == _TVOS:
     for device_type in ios_config.ios_sdk:
       build_flags += ["-AppBuilderHelper.targetIosSdk", _IOS_SDK[device_type]]
@@ -578,7 +580,7 @@ def patch_android_env(unity_version):
   os.environ["UNITY_ANDROID_JDK"]=os.environ["JAVA_HOME"]
 
 
-def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
+def perform_in_editor_tests(dir_helper, retry_on_license_check=True, remaining_retries=0):
   """Executes the testapp within the Unity Editor's play mode.
 
   Unity has a feature to run a project within the editor itself,
@@ -594,6 +596,8 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
         the logs, restart the tests. This is because a license check will cause
         a reload of assemblies, which can mess with the tests. The second run
         will not retry if this happens again (which doesn't normally happen).
+    remaining_retries: Number of remaining retries allowed before the test is
+        considered to have failed.
 
   Raises:
     RuntimeError: This error will be thrown if any of the following conditions
@@ -627,7 +631,9 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
       if retry_on_license_check and "License updated successfully" in text:
         logging.info("License check caused assembly reload. Retrying tests.")
         open_process.kill()
-        perform_in_editor_tests(dir_helper, retry_on_license_check=False)
+        # Don't count this against the remaining_retries amount, since the test didn't fail
+        perform_in_editor_tests(dir_helper, retry_on_license_check=False,
+                                remaining_retries=remaining_retries)
         return
   open_process.kill()
   logging.info("Finished running playmode tests")
@@ -637,8 +643,18 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True):
     if results.passes and not results.fails:  # Success
       logging.info(results.summary)
     else:  # Failed
+      if remaining_retries > 0:
+        logging.info("Test failed, but will retry %d more times" % remaining_retries)
+        perform_in_editor_tests(dir_helper, retry_on_license_check=retry_on_license_check,
+                                remaining_retries=remaining_retries-1)
+        return
       raise RuntimeError(results.summary)
   else:  # Generally caused by timeout or crash
+    if remaining_retries > 0:
+      logging.info("Test timed out or crashed, but will retry %d more times" % remaining_retries)
+      perform_in_editor_tests(dir_helper, retry_on_license_check=retry_on_license_check,
+                              remaining_retries=remaining_retries-1)
+      return
     raise RuntimeError(
         "Tests did not finish running. Log tail:\n" + results.summary)
 

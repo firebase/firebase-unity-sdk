@@ -148,7 +148,7 @@
       "name": "installations",
       "full_name": "FirebaseInstallations",
       "captial_name": "Installations",
-      "bundle_id": "com.google.firebase.unity.fis.testapp",
+      "bundle_id": "com.google.firebase.unity.installations.testapp",
       "testapp_path": "installations/testapp",
       "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [

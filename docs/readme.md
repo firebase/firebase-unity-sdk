@@ -71,6 +71,45 @@ Support
 
 Release Notes
 -------------
+### 11.5.0
+- Changes
+    - General: Update to Firebase C++ SDK version 11.5.0.
+    - General (Android): Update to Firebase Android BoM version 32.3.1.
+    - General (iOS): Update to Firebase Cocoapods version 10.15.0.
+    - General (Android): Made dynamic code files read only to comply with new
+      Android 14 security requirements. This fixes a crash at API level 34+.
+    - Analytics (iOS): Added InitiateOnDeviceConversionMeasurementWithPhoneNumber
+      function to facilitate the [on-device conversion
+      measurement](https://support.google.com/google-ads/answer/12119136) API.
+
+### 11.4.0
+- Changes
+    - General: Update to Firebase C++ SDK version 11.4.0.
+    - General (Android): Update to Firebase Android BoM version 32.2.2.
+    - General (iOS): Update to Firebase Cocoapods version 10.13.0.
+    - General (iOS): 32-bit iOS builds (i386 and armv7) are no longer supported.
+    - Auth: Fixed a potential crash with holding onto FirebaseUser objects
+      after the AuthResult has been disposed.
+
+### 11.3.0
+- Changes
+    - General: Update to Firebase C++ SDK version 11.3.0.
+    - General (Android): Update to Firebase Android BoM version 32.2.0.
+    - General (iOS): Update to Firebase Cocoapods version 10.12.0.
+    - General (Desktop): Fixed an error loading google-services.json and
+      google-services-desktop.json from paths with international characters on
+      Windows.
+    - Auth (Android): Fixed an issue where VerifyPhoneNumber's internal builder
+      failed to create PhoneAuthOptions with certain compiler settings.
+    - Auth (iOS): Fixed an issue where functions that return AuthResult were not
+      including updated credentials when encountering errors.
+    - Firestore (Android) Fix the intermittent global references exhaustion
+      crash when working with documents with a large number of keys and/or large
+      map and/or array fields.
+      ([#569](https://github.com/firebase/firebase-unity-sdk/issues/569)).
+    - Remote Config (Desktop): Additional fix for handling of non-English time
+      zone names on Windows.
+
 ### 11.2.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.2.0.

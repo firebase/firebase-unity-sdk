@@ -42,6 +42,7 @@ namespace Firebase.Sample.Auth {
         TestSignInAnonymouslyAsync_DEPRECATED,
         TestSignInEmailAsync_DEPRECATED,
         TestSignInCredentialAsync_DEPRECATED,
+        TestCachingUser,
         // TODO(b/132083720) This test is currently broken, so disable it until it is fixed.
         // TestSignInAnonymouslyWithExceptionsInEventHandlersAsync,
         // TODO(b/281153256): Add more test cases
@@ -447,6 +448,38 @@ namespace Firebase.Sample.Auth {
                 String.Join(", ", (new List<string>(exceptionMessages)).ToArray()))));
           }
         });
+      return tcs.Task;
+    }
+
+    // Test if caching the FirebaseUser object, and then deleting some of the C++ objects, will work.
+    Task TestCachingUser() {
+      SignOut();
+      TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+
+      auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(t => {
+        if (t.IsFaulted) {
+          tcs.SetException(t.Exception);
+          return;
+        } else if (!t.Result.User.IsValid()) {
+          tcs.SetException(new Exception("User wasn't valid after sign in"));
+          return;
+        }
+
+        // Cache the user, and then Dispose the AuthResult, to delete the underlying
+        // C++ AuthResult object.
+        Firebase.Auth.FirebaseUser user = t.Result.User;
+        t.Result.Dispose();
+
+        // Check if the User is still valid, which is should be
+        if (!user.IsValid()) {
+          tcs.SetException(new Exception("User should still be valid after deleting the AuthResult"));
+        }
+
+        user.DeleteAsync().ContinueWithOnMainThread(t2 => {
+          tcs.SetResult(true);
+        });
+      });
+
       return tcs.Task;
     }
   }

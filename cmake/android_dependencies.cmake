@@ -32,12 +32,12 @@ set(FIREBASE_APP_CHECK_ANDROID_DEPS
 )
 
 set(FIREBASE_AUTH_ANDROID_DEPS
-    "com.google.firebase:firebase-auth:22.0.0"
+    "com.google.firebase:firebase-auth:22.1.2"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:18.3.7"
+    "com.google.firebase:firebase-crashlytics-ndk:18.4.3"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 
@@ -53,7 +53,7 @@ set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:24.6.1"
+    "com.google.firebase:firebase-firestore:24.8.1"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 
@@ -63,20 +63,20 @@ set(FIREBASE_FUNCTIONS_ANDROID_DEPS
 )
 
 set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-installations:17.1.3"
+    "com.google.firebase:firebase-installations:17.1.4"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 
 # iid is needed by messaging to avoid a conflict with functions
 set(FIREBASE_MESSAGING_ANDROID_DEPS
-    "com.google.firebase:firebase-messaging:23.1.2"
+    "com.google.firebase:firebase-messaging:23.2.1"
     "com.google.firebase:firebase-analytics:21.3.0"
     "com.google.firebase:firebase-iid:21.1.0"
     "com.google.flatbuffers:flatbuffers-java:1.12.0"
 )
 
 set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
-    "com.google.firebase:firebase-config:21.4.0"
+    "com.google.firebase:firebase-config:21.4.1"
     "com.google.firebase:firebase-analytics:21.3.0"
 )
 

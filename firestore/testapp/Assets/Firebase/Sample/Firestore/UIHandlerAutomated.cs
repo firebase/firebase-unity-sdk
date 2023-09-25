@@ -115,7 +115,6 @@ namespace Firebase.Sample.Firestore {
         TestDocumentSnapshotDoubleIncrementBehavior,
         TestDocumentSnapshotServerTimestampBehavior,
         TestSnapshotMetadataEqualsAndGetHashCode,
-        TestAuthIntegration,
         TestDocumentListen,
         TestDocumentListenWithMetadataChanges,
         TestQueryListen,
@@ -172,20 +171,18 @@ namespace Firebase.Sample.Firestore {
         TestTerminateAppWithMultiDB,
         TestRestartCustomFirestore,
       };
+      
+      // Set the list of tests to run against Production only.
+      Func<Task>[] testsToRunAgainstProductionOnly = {
+        // While running on CI, this test case passes only if it is tested against the production.
+        TestAuthIntegration,
+      };
 
       // For local development convenience, populate `testFilter` with the tests that you would like
       // to run (instead of running the entire suite).
       Func<Task>[] testFilter = {
         // THIS LIST MUST BE EMPTY WHEN CHECKED INTO SOURCE CONTROL!
       };
-
-      /*
-       * THIS MUST BE COMMENTED OUT WHEN CHECKED INTO SOURCE CONTROL!
-       * 
-       * To run tests against Firestore emulator locally, set `USE_FIRESTORE_EMULATOR` to "true".
-       * To switch back to run against prod, set it back to null.
-       */
-      // Environment.SetEnvironmentVariable("USE_FIRESTORE_EMULATOR", "true");
 
       // Unity "helpfully" adds stack traces whenever you call Debug.Log. Unfortunately, these stack
       // traces are basically useless, since the good parts are always truncated.  (See comments on
@@ -206,6 +203,8 @@ namespace Firebase.Sample.Firestore {
       if (IsUsingFirestoreEmulator()) {
         Debug.Log("Running tests against Firestore Emulator.");
         tests = tests.Concat(testsToRunAgainstFirestoreEmulatorOnly).ToArray();
+      } else {
+        tests = tests.Concat(testsToRunAgainstProductionOnly).ToArray();
       }
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -4561,6 +4560,19 @@ namespace Firebase.Sample.Firestore {
           Assert("GetInstance() should return the same instance", customDbAfter1 == customDbAfter2);
           customApp.Dispose();
         }
+      });
+    }
+
+    // Regression test for https://github.com/firebase/firebase-unity-sdk/issues/569
+    // As long as this test doesn't crash, then it passes.
+    Task TestAndroidGlobalRefsExhaustionBugFix() {
+      return Async(() => {
+        DocumentReference doc = db.Collection("col").Document();
+        var numbers = new List<object>();
+        for (int i = 0; i < 60000; i++) {
+          numbers.Add(i);
+        }
+        Await(doc.SetAsync(new Dictionary<string, object>{{"foo", numbers}}));
       });
     }
 
