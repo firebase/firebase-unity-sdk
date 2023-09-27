@@ -33,6 +33,7 @@ set(firebase_firestore_src_documented
   src/DocumentSnapshot.cs
   src/FieldPath.cs
   src/FieldValue.cs
+  src/Filter.cs
   src/FirebaseFirestore.cs
   src/FirebaseFirestoreSettings.cs
   src/FirestoreDataAttribute.cs

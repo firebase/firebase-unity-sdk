@@ -88,6 +88,14 @@ inline FieldValue FieldValueArrayRemove(const Vector<FieldValue>& wrapper) {
   return FieldValue::ArrayRemove(wrapper.Unwrap());
 }
 
+inline Filter FilterAnd(const Vector<Filter>& filters) {
+  return Filter::And(filters.Unwrap());
+}
+
+inline Filter FilterOr(const Vector<Filter>& filters) {
+  return Filter::Or(filters.Unwrap());
+}
+
 inline Vector<DocumentSnapshot> QuerySnapshotDocuments(
     const QuerySnapshot& snapshot) {
   return Vector<DocumentSnapshot>::Wrap(snapshot.documents());
