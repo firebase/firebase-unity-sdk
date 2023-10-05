@@ -58,8 +58,8 @@ namespace Firebase.Crashlytics.Editor {
     private const string ShellPath = "/bin/sh -x";
 
     private static List<string> InputFiles = new List<string>(new [] {
-      "$(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
-      "$(BUILT_PRODUCTS_DIR)/$(EXECUTABLE_PATH)",
+      "$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+      "$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
       "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
       "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
       "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}"
