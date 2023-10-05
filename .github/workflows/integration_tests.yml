@@ -526,6 +526,8 @@ jobs:
           testapp_dir: testapps
           test_type: "game-loop"
           test_devices: ${{ matrix.device_detail }}
+          max_attempts: 3
+          validator: ${GITHUB_WORKSPACE}/scripts/gha/read_ftl_test_result.py
       - name: Read FTL Test Result
         if: ${{ matrix.device_type == 'real' && !cancelled() }}
         timeout-minutes: 60
