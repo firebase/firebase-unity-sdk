@@ -32,11 +32,13 @@ import os
 import attr
 import subprocess
 import json
+import sys
 
 from absl import app
 from absl import flags
 from absl import logging
 
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from integration_testing import test_validation
 from integration_testing import gcs
 
