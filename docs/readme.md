@@ -71,6 +71,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - App Check: Fixed a crash when there are errors creating a provider.
+      ([#877](https://github.com/firebase/firebase-unity-sdk/issues/877))
+
 ### 11.5.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.5.0.
