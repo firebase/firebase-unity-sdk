@@ -162,12 +162,14 @@ public sealed class FirebaseAppCheck {
       AppCheckUtil.FinishGetTokenCallback(key, "", 0,
         (int)AppCheckError.InvalidConfiguration,
         "Missing IAppCheckProviderFactory.");
+      return;
     }
     FirebaseApp app = FirebaseApp.GetInstance(appName);
     if (app == null) {
       AppCheckUtil.FinishGetTokenCallback(key, "", 0,
         (int)AppCheckError.Unknown,
         "Unable to find App with name: " + appName);
+      return;
     }
     IAppCheckProvider provider;
     if (!providerMap.TryGetValue(app.Name, out provider)) {
@@ -176,6 +178,7 @@ public sealed class FirebaseAppCheck {
         AppCheckUtil.FinishGetTokenCallback(key, "", 0,
           (int)AppCheckError.InvalidConfiguration,
           "Failed to create IAppCheckProvider for App: " + appName);
+        return;
       }
       providerMap[app.Name] = provider;
     }
