@@ -32,11 +32,13 @@ import os
 import attr
 import subprocess
 import json
+import sys
 
 from absl import app
 from absl import flags
 from absl import logging
 
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from integration_testing import test_validation
 from integration_testing import gcs
 
@@ -59,18 +61,7 @@ def main(argv):
   test_result = json.loads(FLAGS.test_result)
   tests = []
   for app in test_result.get("apps"):
-    app_path = app.get("testapp_path")
-    return_code = app.get("return_code")
-    logging.info("testapp: %s\nreturn code: %s" % (app_path, return_code))
-    if return_code == 0:
-      gcs_dir = app.get("raw_result_link").replace("https://console.developers.google.com/storage/browser/", "gs://")
-      logging.info("gcs_dir: %s" % gcs_dir)
-      logs = _get_testapp_log_text_from_gcs(gcs_dir)
-      logging.info("Test result: %s", logs)
-      tests.append(Test(testapp_path=app_path, logs=logs))
-    else:
-      logging.error("Test failed: %s", app)
-      tests.append(Test(testapp_path=app_path, logs=None))
+    tests.append(_parse_testapp_to_test(app))
 
   (output_dir, file_name) = os.path.split(os.path.abspath(FLAGS.output_path))
   return test_validation.summarize_test_results(
@@ -78,6 +69,22 @@ def main(argv):
     "unity", 
     output_dir, 
     file_name=file_name)
+
+
+def _parse_testapp_to_test(app):
+  """Parsed the given testapp run into a Test object."""
+  app_path = app.get("testapp_path")
+  return_code = app.get("return_code")
+  logging.info("testapp: %s\nreturn code: %s" % (app_path, return_code))
+  if return_code == 0:
+    gcs_dir = app.get("raw_result_link").replace("https://console.developers.google.com/storage/browser/", "gs://")
+    logging.info("gcs_dir: %s" % gcs_dir)
+    logs = _get_testapp_log_text_from_gcs(gcs_dir)
+    logging.info("Test result: %s", logs)
+    return Test(testapp_path=app_path, logs=logs)
+  else:
+    logging.error("Test failed: %s", app)
+    return Test(testapp_path=app_path, logs=None)
 
 
 def _get_testapp_log_text_from_gcs(gcs_path):
@@ -128,6 +135,18 @@ def _gcs_read_file(gcs_path):
   logging.info("Reading GCS file: %s", " ".join(args))
   result = subprocess.run(args=args, capture_output=True, text=True, check=True)
   return result.stdout
+
+
+
+def validate(test_summary):
+  """Validates a given test summary, assuming it is from a Unity testapp."""
+  if not test_summary:
+    logging.error("Nothing to be validate! Please provide test_summary")
+    return False
+  
+  test = _parse_testapp_to_test(test_summary)
+  result = test_validation.validate_results(test.logs, "unity")
+  return result.complete and result.fails == 0
 
 
 if __name__ == '__main__':
