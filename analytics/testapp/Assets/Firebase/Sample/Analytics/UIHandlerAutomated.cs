@@ -25,8 +25,6 @@ namespace Firebase.Sample.Analytics {
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       Func<Task>[] tests = {
-        TestIntentionalFail,
-        /*
         TestAnalyticsLoginDoesNotThrow,
         TestAnalyticsProgressDoesNotThrow,
         TestAnalyticsScoreDoesNotThrow,
@@ -43,7 +41,7 @@ namespace Firebase.Sample.Analytics {
         TestResetAnalyticsData,
         // Temporarily disabled until this test is deflaked. b/143603151
         //TestCheckAndFixDependenciesInvalidOperation,
-        TestCheckAndFixDependenciesDoubleCall,*/
+        TestCheckAndFixDependenciesDoubleCall,
       };
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
@@ -59,10 +57,6 @@ namespace Firebase.Sample.Analytics {
       if (firebaseInitialized) {
         testRunner.Update();
       }
-    }
-
-    Task TestIntentionalFail() {
-      return Task.FromException(new Exception());
     }
 
     Task TestAnalyticsLoginDoesNotThrow() {
