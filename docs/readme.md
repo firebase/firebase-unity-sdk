@@ -71,8 +71,10 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 11.6.0
 - Changes
+    - General: Update to Firebase C++ SDK version 11.6.0.
+    - General (iOS): Update to Firebase Cocoapods version 10.16.0.
     - App Check: Fixed a crash when there are errors creating a provider.
       ([#877](https://github.com/firebase/firebase-unity-sdk/issues/877))
 
