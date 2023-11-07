@@ -55,15 +55,18 @@ if(IOS)
       # The Firestore core on iOS comes via the FirebaseFirestore CocoaPod, and
       # public headers should come from there.
       ${FIREBASE_POD_DIR}/Pods/FirebaseFirestore/Firestore/core/include
+      ${FIREBASE_POD_DIR}/Pods/FirebaseFirestoreInternal/Firestore/core/include
       ${FIREBASE_POD_DIR}/Pods/FirebaseFirestore/Firestore/Protos/nanopb
+      ${FIREBASE_POD_DIR}/Pods/FirebaseFirestoreInternal/Firestore/Protos/nanopb
     PRIVATE
       # Additionally, the core C++ API is not declared publicly within the
       # FirebaseFirestore pod, so depend on headers available in the source
       # distribution.
       ${FIREBASE_POD_DIR}/Pods/FirebaseFirestore
+      ${FIREBASE_POD_DIR}/Pods/FirebaseFirestoreInternal
   )
   set(FIREBASE_FIRESTORE_CORE_HEADER_DIR
-    ${FIREBASE_POD_DIR}/Pods/FirebaseFirestore/Firestore/core/include
+    ${FIREBASE_POD_DIR}/Pods/FirebaseFirestoreInternal/Firestore/core/include
   )
 else()
   # Desktop and Android get their public headers from the CMake build in
@@ -107,6 +110,7 @@ if(IOS)
     firebase_firestore
     POD_NAMES
       FirebaseFirestore
+      FirebaseFirestoreInternal
   )
 endif()
 
