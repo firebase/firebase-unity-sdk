@@ -87,16 +87,63 @@ PARAMETERS = {
 BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(s)"]
 
 TEST_DEVICES = {
-  "android_min": {"platform": ANDROID, "type": "real", "device": "model=Nexus10,version=19"},
-  "android_target": {"platform": ANDROID, "type": "real", "device": "model=blueline,version=28"},
-  "android_latest": {"platform": ANDROID, "type": "real", "device": "model=oriole,version=33"},
-  "emulator_ftl_target": {"platform": ANDROID, "type": "real", "device": "model=Pixel2,version=28"},
+  "android_min": {"platform": ANDROID, "type": "real",
+                  "device": [
+                    "model=1610,version=23",  # vivo 1610
+                    "model=hammerhead,version=23", # Nexus 5
+                    "model=harpia,version=23",  # Moto G Play
+                  ]},
+  "android_target": {"platform": ANDROID, "type": "real",
+                     "device": [
+                       "model=blueline,version=28", # Pixel 3
+                       "model=dreamlte,version=28",  # Galaxy S8
+                       "model=gts3lltevzw,version=28",  # Galaxy Tab S3
+                       "model=SH-01L,version=28",  # AQUOS sense2 SH-01L
+                     ]},
+  "android_latest": {"platform": ANDROID, "type": "real",
+                     "device": [
+                       "model=oriole,version=33",  # Pixel 6
+                       "model=panther,version=33",  # Pixel 7
+                       "model=lynx,version=33",  # Pixel 7a
+                       "model=cheetah,version=33",  # Pixel 7 Pro
+                       "model=felix,version=33",  # Pixel Fold
+                       "model=tangorpro,version=33",  # Pixel Tablet
+                       "model=gts8uwifi,version=33",  # Galaxy Tab S8 Ultra
+                       "model=b0q,version=33",  # Galaxy S22 Ultra
+                       "model=b4q,version=33",  # Galaxy Z Flip4
+                     ]},
+  "emulator_ftl_target": {"platform": ANDROID, "type": "real",
+                          "device": [
+                            "model=Pixel2,version=28",
+                            "model=Pixel2.arm,version=28",
+                            "model=MediumPhone.arm,version=28",
+                            "model=MediumTablet.arm,version=28",
+                            "model=SmallPhone.arm,version=28",
+                          ]},
   "emulator_target": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
   "emulator_latest": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
   "emulator_32bit": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
-  "ios_min": {"platform": IOS, "type": "real", "device": "model=iphone8,version=14.7"},
-  "ios_target": {"platform": IOS, "type": "real", "device": "model=iphone13pro,version=15.7"},
-  "ios_latest": {"platform": IOS, "type": "real", "device": "model=iphone11pro,version=16.5"},
+  "ios_min": {"platform": IOS, "type": "real",
+              "device": [
+                # Slightly different OS versions because of limited FTL selection.
+                "model=iphone8,version=14.7",
+                "model=iphone11pro,version=14.7",
+                "model=iphone12pro,version=14.8",
+              ]},
+  "ios_target": {"platform": IOS, "type": "real",
+                 "device": [
+                   # Slightly different OS versions because of limited FTL selection.
+                   "model=iphone13pro,version=15.7",
+                   "model=iphone8,version=15.7",
+                   "model=ipadmini4,version=15.4",
+                 ]},
+  "ios_latest": {"platform": IOS, "type": "real",
+                 "device": [
+                   "model=iphone14pro,version=16.6",
+                   "model=iphone11pro,version=16.6",
+                   "model=iphone8,version=16.6",
+                   "model=ipad10,version=16.6",
+                 ]},
   "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 8", "version": "15.2"},
   "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "16.1"},
   "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "16.2"},
@@ -152,10 +199,10 @@ def get_value(workflow, matrix_type, parm_key, config_parms_only=False):
 def filter_devices(devices, device_type, device_platform):
   """ Filter device by device_type
   """
-  filtered_value = filter(lambda device: 
-                          TEST_DEVICES.get(device).get("type") in device_type 
+  filtered_value = filter(lambda device:
+                          TEST_DEVICES.get(device).get("type") in device_type
                           and TEST_DEVICES.get(device).get("platform") in device_platform, devices)
-  return list(filtered_value)  
+  return list(filtered_value)
 
 
 # TODO(sunmou): add auto_diff feature
@@ -166,7 +213,7 @@ def filter_values_on_diff(parm_key, value, auto_diff):
 def filter_non_desktop_platform(platform):
   mobile_platform = [ANDROID, IOS, TVOS]
   filtered_value = filter(lambda p: p in platform, mobile_platform)
-  return list(filtered_value)  
+  return list(filtered_value)
 
 
 def filter_build_platforms(platforms):
@@ -220,13 +267,13 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
     unity_version = li[0]
     platform = li[1]
     os = li[2] if li[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
-    
+
     if platform in [IOS, TVOS]:
-      # for iOS, tvOS platforms, exclude non macOS build_os 
+      # for iOS, tvOS platforms, exclude non macOS build_os
       if os==MACOS_RUNNER:
         for s in ios_sdk:
           # skip tvOS build for real devices
-          if platform==TVOS and s=="real": 
+          if platform==TVOS and s=="real":
             continue
           matrix["include"].append({"unity_version": unity_version, "platform": platform, "os": os, "ios_sdk": s})
     else:
@@ -265,7 +312,7 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
   #   "test_device":"android_target",
   #   "device_detail":"model=blueline,version=28", # secondary info
   #   "device_type":"real",   # secondary info
-  #   "ios_sdk": "NA"          
+  #   "ios_sdk": "NA"
   # }
 
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
@@ -294,7 +341,10 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
       mobile_devices = get_value("integration_tests", matrix_type, "mobile_devices")
       for mobile_device in mobile_devices:
         device_detail = TEST_DEVICES.get(mobile_device).get("device")
-        if not device_detail: device_detail = "NA"
+        if device_detail:
+          device_detail = ';'.join(device_detail)
+        else:
+          device_detail = "NA"
         device_type = TEST_DEVICES.get(mobile_device).get("type")
         device_platform = TEST_DEVICES.get(mobile_device).get("platform")
         # testapp & test device must match. e.g. iOS app only runs on iOS device, and cannot run on Android or tvOS devices
@@ -307,13 +357,13 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
 
 def _get_test_os(platform, mobile_device_type=""):
-  # Desktop platform test on their OS respectivly. 
-  # Mobile platform test on Linux machine if we run tests on FTL, else Mac machine if we run tests on simulators 
+  # Desktop platform test on their OS respectivly.
+  # Mobile platform test on Linux machine if we run tests on FTL, else Mac machine if we run tests on simulators
   if platform == 'Windows':
     return WINDOWS_RUNNER
   elif platform == 'Linux' or (platform in [IOS, ANDROID] and mobile_device_type == 'real'):
     return LINUX_RUNNER
-  else: 
+  else:
     return MACOS_RUNNER
 
 
