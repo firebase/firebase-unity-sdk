@@ -61,8 +61,8 @@ namespace Firebase.Firestore {
     ///
     /// Using the returned query to count the documents is efficient because only
     /// the final count, not the documents' data, is downloaded. The returned query
-    /// can even count the documents if the result set would be prohibitively large
-    /// to download entirely (e.g. thousands of documents).
+    /// can count the documents if the result set would be prohibitively large
+    /// to download entirely (thousands of documents).
     /// </summary>
     /// <returns>
     /// An aggregate query that counts the documents in the result set of this query.
