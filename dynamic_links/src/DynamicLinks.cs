@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 ///
 /// Firebase Dynamic Links is a cross-platform solution for generating and
 /// receiving links, whether or not the app is already installed.
+[System.Obsolete("Firebase Dynamic Links is deprecated and will be removed in a future release..", false)]
 public sealed class DynamicLinks {
   // Keep a reference to FirebaseApp as it initializes this SDK.
   private static Firebase.FirebaseApp app;
@@ -75,6 +76,10 @@ public sealed class DynamicLinks {
   /// and shorten.
   /// @param options Optionally provided options to tweak the short link generation.
   /// If this is not specified the default behavior is for PathLength = PathLength.Unguessable.
+  ///
+  /// @deprecated Dynamic Links is now deprecated. Please see the support
+  /// documentation at https://firebase.google.com/support/dynamic-links-faq
+  /// for more information.
   public static Task<ShortDynamicLink> GetShortLinkAsync(DynamicLinkComponents components,
       DynamicLinkOptions options) {
     return ConvertFromInternalTask(FirebaseDynamicLinks.GetShortLinkInternalAsync(
@@ -85,6 +90,10 @@ public sealed class DynamicLinks {
   ///
   /// @param components The components that define the Dynamic Link to create
   /// and shorten.
+  ///
+  /// @deprecated Dynamic Links is now deprecated. Please see the support
+  /// documentation at https://firebase.google.com/support/dynamic-links-faq
+  /// for more information.
   public static Task<ShortDynamicLink> GetShortLinkAsync(DynamicLinkComponents components) {
     return GetShortLinkAsync(components, new DynamicLinkOptions());
   }
@@ -94,6 +103,10 @@ public sealed class DynamicLinks {
   /// @param url A properly-formatted long Dynamic Link to shorten.
   /// @param options Optionally provided options to tweak the short link generation.
   /// If this is not specified the default behavior is for PathLength = PathLength.Unguessable.
+  ///
+  /// @deprecated Dynamic Links is now deprecated. Please see the support
+  /// documentation at https://firebase.google.com/support/dynamic-links-faq
+  /// for more information.
   public static Task<ShortDynamicLink> GetShortLinkAsync(System.Uri longDynamicLink,
       DynamicLinkOptions options) {
     return ConvertFromInternalTask(FirebaseDynamicLinks.GetShortLinkInternalAsync(
@@ -104,6 +117,10 @@ public sealed class DynamicLinks {
   /// Creates a shortened Dynamic Link from the given long dynamic link.
   ///
   /// @param url A properly-formatted long Dynamic Link to shorten.
+  ///
+  /// @deprecated Dynamic Links is now deprecated. Please see the support
+  /// documentation at https://firebase.google.com/support/dynamic-links-faq
+  /// for more information.
   public static Task<ShortDynamicLink> GetShortLinkAsync(System.Uri long_dynamic_link) {
     return GetShortLinkAsync(long_dynamic_link, new DynamicLinkOptions());
   }
