@@ -71,6 +71,7 @@ _COMMENT_HIDDEN_DIVIDER = f'\r\n<hidden value="{_COMMENT_IDENTIFIER}"></hidden>\
 _COMMENT_IDENTIFIER_DASHBOARD = "build-dashboard-comment"
 _COMMENT_DASHBOARD_START = f'\r\n<hidden value="{_COMMENT_IDENTIFIER_DASHBOARD}-start"></hidden>\r\n'
 _COMMENT_DASHBOARD_END = f'\r\n<hidden value="{_COMMENT_IDENTIFIER_DASHBOARD}-end"></hidden>\r\n'
+_COMMENT_SUFFIX = f'\n<hidden value="{_COMMENT_IDENTIFIER}"></hidden>'
 
 _LOG_ARTIFACT_NAME = "log-artifact"
 _LOG_OUTPUT_DIR = "test_results"
@@ -227,11 +228,18 @@ def _get_issue_number(token, title, label):
     if issue["title"] == title:
       return issue["number"]
 
-  return firebase_github.create_issue(token, title, label, _COMMENT_SUFFIX)["number"]
+  empty_comment = (" " +
+                   _COMMENT_DASHBOARD_START + " " +
+                   _COMMENT_DASHBOARD_END + " " +
+                   _COMMENT_HIDDEN_DIVIDER + " " +
+                   _COMMENT_HIDDEN_DIVIDER + " " +
+                   _COMMENT_HIDDEN_DIVIDER + " "
+                   )
+  return firebase_github.create_issue(token, title, label, empty_comment)["number"]
 
 
 def _update_comment(token, issue_number, comment):
-  comment_id = _get_comment_id(token, issue_number, _COMMENT_SUFFIX)
+  comment_id = _get_comment_id(token, issue_number, _COMMENT_HIDDEN_DIVIDER)
   if not comment_id:
     firebase_github.add_comment(token, issue_number, comment)
   else:
