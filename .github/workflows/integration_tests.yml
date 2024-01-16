@@ -523,12 +523,13 @@ jobs:
       - name: Run Mobile integration tests on real device via FTL
         id: ftl_test
         if: ${{ matrix.device_type == 'real' }}
-        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.2
+        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.3
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
           testapp_dir: testapps
           test_type: "game-loop"
           test_devices: ${{ matrix.device_detail }}
+          test_device_selection: random
           max_attempts: 3
           validator: ${GITHUB_WORKSPACE}/scripts/gha/read_ftl_test_result.py
       - name: Read FTL Test Result
