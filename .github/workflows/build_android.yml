@@ -119,6 +119,12 @@ jobs:
           # TODO add handling cmake_extras
           python scripts/build_scripts/build_zips.py --gha --platform=android --unity_root=$UNITY_ROOT_DIR --apis=${{ inputs.apis }}
 
+      - name: Print info
+        shell: bash
+        if: always()
+        run: |
+          cat android_unity/arm64-v8a/app/swig/Firebase.App_fixed.cs
+
       - name: Check zip file
         shell: bash
         run: |
