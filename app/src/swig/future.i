@@ -113,7 +113,7 @@ namespace firebase {
 // Detect when the CTYPE is void by checking "TYPE_" + CTYPE, which yields:
 // TYPE_void. TYPE_void is only defined for "void" which allows this macro
 // mostly to be used but with some specializations for void.
-#if %mangle(CTYPE)==void
+#if "CTYPE"=="void"
 
 %typemap(cstype, out="System.Threading.Tasks.Task")
   firebase::Future<CTYPE> "CSNAME";
@@ -136,7 +136,7 @@ namespace firebase {
     return CSNAME.GetTask(new CSNAME(future, true));
   }
 
-#endif  //  %mangle(CTYPE)==void
+#endif  //  "CTYPE"=="void"
 
 // Replace the default Dispose() method to delete the callback data if
 // allocated.
@@ -181,7 +181,7 @@ namespace firebase {
 %define %SWIG_FUTURE_GET_TASK(CSNAME, CSTYPE, CTYPE, EXTYPE)
   // Helper for csout typemap to convert futures into tasks.
   // This would be internal, but we need to share it accross assemblies.
-#if %mangle(CTYPE)==void
+#if "CTYPE"=="void"
   static public System.Threading.Tasks.Task GetTask(CSNAME fu) {
     System.Threading.Tasks.TaskCompletionSource<int> tcs =
         new System.Threading.Tasks.TaskCompletionSource<int>();
@@ -189,7 +189,7 @@ namespace firebase {
   static public System.Threading.Tasks.Task<CSTYPE> GetTask(CSNAME fu) {
     System.Threading.Tasks.TaskCompletionSource<CSTYPE> tcs =
         new System.Threading.Tasks.TaskCompletionSource<CSTYPE>();
-#endif  // %mangle(CTYPE)==void
+#endif  // "CTYPE"=="void"
 
     // Check if an exception has occurred previously and propagate it if it has.
     // This has to be done before accessing the future because the future object
@@ -223,11 +223,11 @@ namespace firebase {
             tcs.SetException(new EXTYPE(error, fu.error_message()));
           } else {
             // Success!
-#if %mangle(CTYPE)==void
+#if "CTYPE"=="void"
             tcs.SetResult(0);
 #else
             tcs.SetResult(fu.GetResult());
-#endif  // %mangle(CTYPE)==void
+#endif  // "CTYPE"=="void"
           }
         }
       } catch (System.Exception e) {
@@ -405,7 +405,7 @@ namespace firebase {
 // Detect when the CTYPE is void by checking "TYPE_" + CTYPE, which yields:
 // TYPE_void. TYPE_void is only defined for "void" which allows the result()
 // method to only be generated for non-void types.
-#if %mangle(CTYPE)!=void
+#if "CTYPE"!="void"
 
   // This method copies the value return by Future::result() so that it's
   // possible to marshal the return value to C#.
