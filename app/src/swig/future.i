@@ -113,7 +113,7 @@ namespace firebase {
 // Detect when the CTYPE is void by checking "TYPE_" + CTYPE, which yields:
 // TYPE_void. TYPE_void is only defined for "void" which allows this macro
 // mostly to be used but with some specializations for void.
-#ifdef TYPE_## %mangle(CTYPE)
+#if %mangle(CTYPE)==void
 
 %typemap(cstype, out="System.Threading.Tasks.Task")
   firebase::Future<CTYPE> "CSNAME";
