@@ -67,6 +67,12 @@
 // processing meant for `public` methods doesn't get applied.
 %csmethodmodifiers firebase::firestore::Firestore::GetInstance "internal";
 
+// Override the default FutureVoid with a version that throws FirestoreException.
+// Do this before app.i, since that also defined FutureVoid, and newer versions
+// of swig only use the first definition of templates.
+%include "app/src/swig/future.i"
+%SWIG_FUTURE(Future_FirestoreVoid, void, internal, void, FirestoreException)
+
 %import "app/src/swig/app.i"
 %import "firestore/src/swig/proxy_helpers.i"
 %include "app/src/swig/init_result.i"
@@ -200,7 +206,6 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(::firebase::firestore::csharp::LoadBundleTaskProgre
                              Firebase.Firestore.FirebaseFirestore.LoadBundleTaskProgressDelegate)
 
 // Generate Future instantiations, must be before other wrappers.
-%include "app/src/swig/future.i"
 %SWIG_FUTURE(Future_AggregateQuerySnapshot, AggregateQuerySnapshotProxy, internal,
              firebase::firestore::AggregateQuerySnapshot, FirestoreException)
 %SWIG_FUTURE(Future_QuerySnapshot, QuerySnapshotProxy, internal,
