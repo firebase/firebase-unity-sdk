@@ -53,12 +53,6 @@ namespace firebase {
 %include "app/src/swig/null_check_this.i"
 %include "app/src/swig/serial_dispose.i"
 
-// This is defined so that it's possible to conditionally generate code that is
-// aware of type void. This allows us to different code for the void type as
-// required by "%extend Future<CTYPE>::result" below.
-%ignore TYPE_void;
-#define TYPE_void 1
-
 // The Future implementation is assembled in a series of three macros,
 // The HEADER, the GET_TASK implementation, and the FOOTER. This componentized
 // approach allows for custom GET_TASK implementations for various SDKs
@@ -110,9 +104,7 @@ namespace firebase {
 // 4) The user's callback executes.
 
 
-// Detect when the CTYPE is void by checking "TYPE_" + CTYPE, which yields:
-// TYPE_void. TYPE_void is only defined for "void" which allows this macro
-// mostly to be used but with some specializations for void.
+// void is a special type since it isn't a real returnable type.
 #if "CTYPE"=="void"
 
 %typemap(cstype, out="System.Threading.Tasks.Task")
@@ -402,9 +394,7 @@ namespace firebase {
     delete reinterpret_cast<CSNAME##CallbackData*>(data);
   }
 
-// Detect when the CTYPE is void by checking "TYPE_" + CTYPE, which yields:
-// TYPE_void. TYPE_void is only defined for "void" which allows the result()
-// method to only be generated for non-void types.
+// Only generate the return logic for non-void types.
 #if "CTYPE"!="void"
 
   // This method copies the value return by Future::result() so that it's
@@ -417,7 +407,7 @@ namespace firebase {
     return *$self->result();
   }
 
-#endif // !TYPE_void
+#endif // "CTYPE"!="void"
 }
 
 } // namespace firebase
