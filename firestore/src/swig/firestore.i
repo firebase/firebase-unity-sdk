@@ -72,6 +72,7 @@
 // of swig only use the first definition of templates.
 %include "app/src/swig/future.i"
 %SWIG_FUTURE(Future_FirestoreVoid, void, internal, void, FirestoreException)
+#define USE_FIRESTORE_FUTURE_VOID 1
 
 %import "app/src/swig/app.i"
 %import "firestore/src/swig/proxy_helpers.i"
@@ -214,8 +215,6 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(::firebase::firestore::csharp::LoadBundleTaskProgre
              firebase::firestore::DocumentSnapshot, FirestoreException)
 %SWIG_FUTURE(Future_DocumentReference, DocumentReferenceProxy, internal,
              firebase::firestore::DocumentReference, FirestoreException)
-// Override the default FutureVoid with a version that throws FirestoreException.
-%SWIG_FUTURE(Future_FirestoreVoid, void, internal, void, FirestoreException)
 %SWIG_FUTURE(Future_LoadBundleTaskProgress, LoadBundleTaskProgressProxy,
              internal, firebase::firestore::LoadBundleTaskProgress,
              FirestoreException)
