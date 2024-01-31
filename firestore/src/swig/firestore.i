@@ -68,10 +68,8 @@
 %csmethodmodifiers firebase::firestore::Firestore::GetInstance "internal";
 
 // Override the default FutureVoid with a version that throws FirestoreException.
-// Do this before app.i, since that also defined FutureVoid, and newer versions
+// Do this before app.i, since that will define FutureVoid, and newer versions
 // of swig only use the first definition of templates.
-%include "app/src/swig/future.i"
-%SWIG_FUTURE(Future_FirestoreVoid, void, internal, void, FirestoreException)
 #define USE_FIRESTORE_FUTURE_VOID 1
 
 %import "app/src/swig/app.i"
@@ -207,6 +205,7 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(::firebase::firestore::csharp::LoadBundleTaskProgre
                              Firebase.Firestore.FirebaseFirestore.LoadBundleTaskProgressDelegate)
 
 // Generate Future instantiations, must be before other wrappers.
+%include "app/src/swig/future.i"
 %SWIG_FUTURE(Future_AggregateQuerySnapshot, AggregateQuerySnapshotProxy, internal,
              firebase::firestore::AggregateQuerySnapshot, FirestoreException)
 %SWIG_FUTURE(Future_QuerySnapshot, QuerySnapshotProxy, internal,
@@ -215,6 +214,8 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(::firebase::firestore::csharp::LoadBundleTaskProgre
              firebase::firestore::DocumentSnapshot, FirestoreException)
 %SWIG_FUTURE(Future_DocumentReference, DocumentReferenceProxy, internal,
              firebase::firestore::DocumentReference, FirestoreException)
+// Override the default FutureVoid with a version that throws FirestoreException.
+%SWIG_FUTURE(Future_FirestoreVoid, void, internal, void, FirestoreException)
 %SWIG_FUTURE(Future_LoadBundleTaskProgress, LoadBundleTaskProgressProxy,
              internal, firebase::firestore::LoadBundleTaskProgress,
              FirestoreException)
