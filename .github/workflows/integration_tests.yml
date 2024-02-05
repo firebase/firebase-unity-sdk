@@ -35,7 +35,7 @@ env:
   triggerLabelPrefix: "tests-requested: "
   triggerLabelFull: "tests-requested: full"
   triggerLabelQuick: "tests-requested: quick"
-  pythonVersion: '3.7'
+  pythonVersion: '3.8'
   artifactRetentionDays: 2
 
 jobs:
@@ -185,7 +185,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
@@ -360,7 +360,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
@@ -387,10 +387,10 @@ jobs:
           name: 'firebase_unity_sdk.zip'
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.packaged_sdk_run_id }} 
-      - name: Set up Node (16)
+      - name: Set up Node (18)
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 18.x
       - name: Setup java for Firestore emulator
         uses: actions/setup-java@v3
         with:
@@ -483,7 +483,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
@@ -493,11 +493,11 @@ jobs:
         with:
           path: testapps
           name: ${{ steps.matrix_info.outputs.artifact_path }}
-      - name: Set up Node (16)
+      - name: Set up Node (18)
         if: ${{ matrix.test_device == 'github_runner'  }}
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 18.x
       - name: Setup java for Firestore emulator
         if: ${{ matrix.test_device == 'github_runner'  }}
         uses: actions/setup-java@v3

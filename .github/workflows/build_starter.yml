@@ -56,7 +56,7 @@ on:
         required: true
 
 env:
-  pythonVersion: '3.7'
+  pythonVersion: '3.8'
 
 jobs:
   check_and_prepare:
