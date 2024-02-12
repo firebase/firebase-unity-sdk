@@ -243,6 +243,7 @@ jobs:
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
+            --notimestamp \
             --force_latest_runtime \
             --ci
       - name: Return Unity license
@@ -420,6 +421,7 @@ jobs:
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
+            --notimestamp \
             --force_latest_runtime \
             --ci
       - name: Return Unity license
