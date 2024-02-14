@@ -351,7 +351,9 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
 
 %SWIG_FUTURE(FutureString, string, internal,
              std::string, FirebaseException)  // Future<std::string>
+#ifndef USE_FIRESTORE_FUTURE_VOID
 %SWIG_FUTURE(FutureVoid, void, internal, void, FirebaseException)
+#endif  // USE_FIRESTORE_FUTURE_VOID
 %SWIG_FUTURE(FutureBool, bool, internal, bool, FirebaseException) // Future<bool>
 
 // Internal

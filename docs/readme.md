@@ -77,6 +77,17 @@ Release Notes
       documentation](https://firebase.google.com/support/dynamic-links-faq)
       for more information.
 
+### 11.7.0
+- Changes
+    - General: Update to Firebase C++ SDK version 11.8.0.
+    - General (Android): Update to Firebase Android BoM version 32.7.1.
+    - General (iOS): Update to Firebase Cocoapods version 10.20.0.
+    - Analytics: Updated the consent management API to include new consent
+      signals.
+    - Auth: Fix a bug where an anonymous account can't be linked with
+      email password credential. For background, see [Email Enumeration
+      Protection](https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection)
+
 ### 11.6.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.6.0.

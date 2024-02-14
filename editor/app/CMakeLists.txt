@@ -24,6 +24,7 @@ else()
 endif()
 
 set(firebase_app_editor_src
+    src/AnalyticsFixPropertyRemover.cs
     src/AndroidAPILevelChecker.cs
     src/ApiInfo.cs
     src/AssemblyInfo.cs

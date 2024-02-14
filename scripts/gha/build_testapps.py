@@ -548,6 +548,7 @@ def patch_android_env(unity_version):
       # This is a bug from Unity: 
       # https://issuetracker.unity3d.com/issues/android-android-build-fails-when-targeting-sdk-31-and-using-build-tools-31-dot-0-0
       _run([sdkmanager_path, "--uninstall", "build-tools;31.0.0"], check=False)
+      _run([sdkmanager_path, "--install", "build-tools;30.0.2"])
       logging.info("Uninstall Android build tool 31.0.0")
     except Exception as e:
       logging.info(str(e))
