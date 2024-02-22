@@ -525,7 +525,7 @@ jobs:
       - name: Run Mobile integration tests on real device via FTL
         id: ftl_test
         if: ${{ matrix.device_type == 'real' }}
-        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.3
+        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.4
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
           testapp_dir: testapps
