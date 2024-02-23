@@ -56,6 +56,15 @@ namespace Firebase.Editor {
         return;
       }
 
+      // If the gradle version is newer than 7.0.0, which should have support
+      // for the property tag, there is no reason to add the removeAll logic.
+      var versionComparer = new Google.JarResolver.Dependency.VersionComparer();
+      if (versionComparer.Compare(
+            GooglePlayServices.PlayServicesResolver.AndroidGradlePluginVersion,
+            "7.0.0") >= 0) {
+        return;
+      }
+
       // Locate the AndroidManifest file.
       string androidPluginsDir = Path.Combine(Application.dataPath, "Plugins", "Android");
       string androidManifestPath = Path.Combine(androidPluginsDir, "AndroidManifest.xml");
