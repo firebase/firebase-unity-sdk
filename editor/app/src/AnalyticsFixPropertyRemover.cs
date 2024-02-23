@@ -56,6 +56,8 @@ namespace Firebase.Editor {
         return;
       }
 
+      Debug.Log("====== Found the following Gradle Version: " + GooglePlayServices.PlayServicesResolver.AndroidGradlePluginVersion);
+
       // If the gradle version is newer than 7.0.0, which should have support
       // for the property tag, there is no reason to add the removeAll logic.
       var versionComparer = new Google.JarResolver.Dependency.VersionComparer();
