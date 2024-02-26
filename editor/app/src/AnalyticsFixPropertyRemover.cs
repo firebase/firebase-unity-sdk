@@ -56,7 +56,7 @@ namespace Firebase.Editor {
         return;
       }
 
-      Debug.Log("====== Found the following Gradle Version: " + GooglePlayServices.PlayServicesResolver.AndroidGradlePluginVersion);
+      Debug.Log("=-=-= Found the following Gradle Version: " + GooglePlayServices.PlayServicesResolver.AndroidGradlePluginVersion);
 
       // If the gradle version is newer than 7.0.0, which should have support
       // for the property tag, there is no reason to add the removeAll logic.
@@ -64,6 +64,7 @@ namespace Firebase.Editor {
       if (versionComparer.Compare(
             GooglePlayServices.PlayServicesResolver.AndroidGradlePluginVersion,
             "7.0.0") >= 0) {
+        Debug.Log("=-=-=  Returning early because version is new enough");
         return;
       }
 
@@ -78,6 +79,7 @@ namespace Firebase.Editor {
 
       // Check for the SearchTag, and if present there is nothing to do.
       if (File.ReadAllText(androidManifestPath).Contains(SearchTag)) {
+        Debug.Log("=-=-=  Returning early because found the searchtag");
         return;
       }
 
@@ -109,6 +111,8 @@ namespace Firebase.Editor {
       else {
         Debug.LogError("Could not find the 'application' node in the AndroidManifest.xml file.");
       }
+
+      Debug.Log("=-=-=  The removeAll tag should be added");
     }
   }
 }
