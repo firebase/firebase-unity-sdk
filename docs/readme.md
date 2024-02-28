@@ -73,6 +73,7 @@ Release Notes
 -------------
 ### Upcoming release
 - Changes
+    - General (Android): Improve how property tag logic handles Unity 2022+.
     - Dynamic Links: The Dynamic Links SDK is now deprecated. See the [support
       documentation](https://firebase.google.com/support/dynamic-links-faq)
       for more information.
