@@ -74,6 +74,9 @@ Release Notes
 ### Upcoming release
 - Changes
     - General (Android): Improve how property tag logic handles Unity 2022+.
+    - Auth: Add FirebaseUser.SendEmailVerificationBeforeUpdatingEmailAsync,
+      a new method to verify and change the User's email.
+    - Auth: Deprecate the older method of updating emails, UpdateEmail.
     - Dynamic Links: The Dynamic Links SDK is now deprecated. See the [support
       documentation](https://firebase.google.com/support/dynamic-links-faq)
       for more information.

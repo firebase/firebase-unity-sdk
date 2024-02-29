@@ -278,10 +278,14 @@ public sealed class FirebaseUser : UserInfoInterface {
     return GetValidFirebaseUserInternal().TokenAsync(forceRefresh);
   }
 
+  /// @deprecated This method is deprecated. Please use
+  /// @ref SendEmailVerificationBeforeUpdatingEmailAsync(string) instead.
+  /// 
   /// Sets the email address for the user.
   ///
   /// May fail if there is already an email/password-based account for the same
   /// email address.
+  [System.Obsolete("Please use `Task SendEmailVerificationBeforeUpdatingEmailAsync(string)` instead", false)]
   public Task UpdateEmailAsync(string email) {
     return GetValidFirebaseUserInternal().UpdateEmailAsync(email);
   }
@@ -307,6 +311,12 @@ public sealed class FirebaseUser : UserInfoInterface {
   /// Initiates email verification for the user.
   public Task SendEmailVerificationAsync() {
     return GetValidFirebaseUserInternal().SendEmailVerificationAsync();
+  }
+
+  /// Send an email to verify the ownership of the account, then update
+  /// to the new email.
+  public Task SendEmailVerificationBeforeUpdatingEmailAsync(string email) {
+    return GetValidFirebaseUserInternal().SendEmailVerificationBeforeUpdatingEmailAsync(email);
   }
 
   /// Updates a subset of user profile information.
