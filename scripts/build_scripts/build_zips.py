@@ -27,6 +27,7 @@ import zipfile
 import tempfile
 import threading
 import sys
+import json
 
 from absl import app, flags, logging
 
@@ -82,6 +83,16 @@ g_target_architectures = []
 g_cpp_sdk_realpath = ""
 
 FLAGS = flags.FLAGS
+
+# 
+flags.DEFINE_string(
+    'generator', "Visual Studio 16 2019",
+    "The cmake generator passed with -G flag"
+)
+flags.DEFINE_string(
+    'preset', None,
+    "The cmake --preset name arg from CMakeSettings.json or CMakeUserSettings.json"
+)
 flags.DEFINE_string(
     'platform', None,
     'Which platform to build SDK on. Required one entry from ({})'.format(
@@ -140,6 +151,51 @@ def get_build_path(platform, clean_build=False):
   if not os.path.exists(platform_path):
     os.makedirs(platform_path)
   return platform_path
+
+
+def get_presets_file_path(source_path: str):
+  """Get the cmake args to pass as --preset name from a CMakePresets.json 
+     from that root project folder
+
+    Args:
+      source_path: root source folder to find CMakePresets.json or CMakeUserPresets.json files.
+
+    Returns:
+      camke args with the --preset name that contains variables and others cmake configurations
+  """
+
+  if FLAGS.preset:
+    return f"--preset {FLAGS.preset}"
+
+  preset_files = [
+    source_path + "CMakePresets.json", 
+    source_path + "CMakeUserPresets.json"
+  ]
+  
+  for pfile in preset_files:
+    
+    if not os.path.exists(pfile):
+      continue
+    
+    try:
+      presets_file = open(pfile)
+
+      if presets_file:
+        presets_data = json.load(presets_file)
+        
+        # List comprehension filter
+        matches = [x for x in presets_data['configurePresets'] if x['name'].startswith("firebase-unity-sdk")]
+        if matches and matches[0]:
+          preset = matches[0]
+
+          return f"--preset {preset['name']}"
+
+    except OSError as error:
+      print(
+        f"Error on load file: '{pfile}'", 
+        "Reason => ", 
+        f'[{type(error).__name__}]: {error.strerror}'
+      )
 
 
 def get_cpp_folder_args(source_path):
@@ -430,7 +486,7 @@ def get_windows_args():
       cmake args for windows platform.
   """
   result_args = []
-  result_args.append('-G Visual Studio 16 2019')
+  result_args.append("-G %s" % FLAGS.generator) # Default: -G Visual Studio 16 2019
   result_args.append('-A x64') # TODO flexibily for x32
   result_args.append("-DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=%s" % sys.executable)
   # Use a newer version of the Windows SDK, as the default one has build issues with grpc
@@ -734,6 +790,9 @@ def main(argv):
         platform, ",".join(SUPPORT_PLATFORMS)))
 
   source_path = os.getcwd()
+  relative_path = "." + os.path.sep
+
+  cmake_presets_file_args = get_presets_file_path(relative_path)
   cmake_cpp_folder_args = get_cpp_folder_args(source_path)
   build_path = get_build_path(platform, FLAGS.clean_build)
   if is_android_build() and g_cpp_sdk_realpath:
@@ -746,6 +805,9 @@ def main(argv):
       "cmake",
       source_path
   ]
+
+  if cmake_presets_file_args:
+    cmake_setup_args.append(cmake_presets_file_args)
   
   if FLAGS.verbose:
     cmake_setup_args.append('-DCMAKE_VERBOSE_MAKEFILE=1')
