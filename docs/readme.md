@@ -71,8 +71,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming release
+### 11.8.0
 - Changes
+    - General: Update to Firebase C++ SDK version 11.9.0.
+    - General (Android): Update to Firebase Android BoM version 32.7.3.
+    - General (iOS): Update to Firebase Cocoapods version 10.22.0.
     - General (Android): Improve how property tag logic handles Unity 2022+.
     - Auth: Add FirebaseUser.SendEmailVerificationBeforeUpdatingEmailAsync,
       a new method to verify and change the User's email.
