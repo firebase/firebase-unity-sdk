@@ -169,9 +169,10 @@ namespace Firebase.RemoteConfig {
     /// Use this method to ensure Set/Get call not being blocked.
     ///
     /// @returns A Task contains ConfigInfo.
-    public System.Threading.Tasks.Task<ConfigInfo> EnsureInitializedAsync() {
+    public async System.Threading.Tasks.Task<ConfigInfo> EnsureInitializedAsync() {
       ThrowIfNull();
-      return remoteConfigInternal.EnsureInitializedAsync();
+      ConfigInfoInternal configInfoInternal = await remoteConfigInternal.EnsureInitializedAsync();
+      return new ConfigInfo(configInfoInternal);
     }
 
     /// @brief Asynchronously activates the most recently fetched configs,
@@ -323,11 +324,11 @@ namespace Firebase.RemoteConfig {
     }
 
     /// @brief Returns information about the last fetch request, in the form
-    /// of a @ref ConfigInfo struct.
+    /// of a @ref ConfigInfo object.
     public ConfigInfo Info {
       get {
         ThrowIfNull();
-        return remoteConfigInternal.GetInfo();
+        return new ConfigInfo(remoteConfigInternal.GetInfo());
       }
     }
 
