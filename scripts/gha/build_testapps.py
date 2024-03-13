@@ -504,12 +504,12 @@ def patch_android_env(unity_version):
   # Set ndk env
   UNITY_SETTINGS = {
     "2020": {
-      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip",
-      _MACOS: "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip",
+      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r22b-windows-x86_64.zip",
+      _MACOS: "https://dl.google.com/android/repository/android-ndk-r21-darwin-x86_64.zip",
     },
     "2019": {
-      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip",
-      _MACOS: "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip",
+      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r22b-windows-x86_64.zip",
+      _MACOS: "https://dl.google.com/android/repository/android-ndk-r21-darwin-x86_64.zip",
     },
   }
   url = UNITY_SETTINGS[str(major_version)][get_desktop_platform()]
@@ -521,8 +521,13 @@ def patch_android_env(unity_version):
     with open(ndk_zip_path, 'wb') as fd:
       for chunk in r.iter_content(chunk_size=128):
         fd.write(chunk)
+
     with zipfile.ZipFile(ndk_zip_path, 'r') as zip_ref:
         zip_ref.extractall(ndk_path)
+
+    # Print the contents of the ndk_path
+    print("Contents of ndk_path:", os.listdir(ndk_path))
+
     ndk_direct_folder = ""
     for subfolder in os.listdir(ndk_path):
       if subfolder.startswith("android-ndk-"):
@@ -531,6 +536,7 @@ def patch_android_env(unity_version):
     if ndk_direct_folder:
       os.environ["ANDROID_NDK_HOME"] = os.path.abspath(os.path.join(ndk_path, ndk_direct_folder))
       logging.info("set ANDROID_NDK_HOME: %s", os.environ["ANDROID_NDK_HOME"])
+      print("Contents of ndk_direct_folder:", os.listdir(os.path.join(ndk_path, ndk_direct_folder)))
     else:
       logging.warning("No valid android folder unzipped from url %s, ANDROID_NDK_HOME not overwritten", url) 
 
