@@ -35,7 +35,7 @@ env:
   triggerLabelPrefix: "tests-requested: "
   triggerLabelFull: "tests-requested: full"
   triggerLabelQuick: "tests-requested: quick"
-  pythonVersion: '3.7'
+  pythonVersion: '3.8'
   artifactRetentionDays: 2
 
 jobs:
@@ -123,6 +123,9 @@ jobs:
     - name: Install python deps
       run: pip install -r scripts/gha/requirements.txt
     - id: matrix_config
+      env:
+        HEAD_REF: ${{github.event.pull_request.head.ref}}
+        BASE_REF: ${{github.event.pull_request.base.ref}}
       run: |
         # Log that we ran against a given packaged SDK.
         if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
@@ -137,12 +140,12 @@ jobs:
         elif [[ "${{ steps.set_outputs.outputs.requested_tests }}" == "auto" ]]; then 
           # auto-diff only apply when running in a PR. 
           # diff against the PR's base. "git merge-base main branch_name" will give the common ancestor of both branches.
-          MERGE_BASE=$(git merge-base origin/${{github.event.pull_request.head.ref}} origin/${{github.event.pull_request.base.ref}} || true)
+          MERGE_BASE=$(git merge-base "origin/${HEAD_REF}" "origin/${BASE_REF}" || true)
           # If origin/<branch> is no longer valid, then just run all tests.
           if [[ -n "${MERGE_BASE}" ]]; then
-            echo "::warning ::Auto-diff origin/${{github.event.pull_request.head.ref}}..${MERGE_BASE}"
-            git diff --name-only origin/${{github.event.pull_request.head.ref}}..${MERGE_BASE}
-            TEST_MATRIX_PARAM="--auto_diff origin/${{github.event.pull_request.head.ref}}..${MERGE_BASE}"
+            echo "::warning ::Auto-diff origin/${HEAD_REF}..${MERGE_BASE}"
+            git diff --name-only "origin/${HEAD_REF}..${MERGE_BASE}"
+            TEST_MATRIX_PARAM="--auto_diff origin/${HEAD_REF}..${MERGE_BASE}"
           fi
         fi
         # To feed input into the job matrix, we first need to convert to a JSON
@@ -182,7 +185,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
@@ -240,6 +243,7 @@ jobs:
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
+            --notimestamp \
             --force_latest_runtime \
             --ci
       - name: Return Unity license
@@ -357,7 +361,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
@@ -384,10 +388,10 @@ jobs:
           name: 'firebase_unity_sdk.zip'
           workflow: 'build_starter.yml'
           run_id: ${{ github.event.inputs.packaged_sdk_run_id }} 
-      - name: Set up Node (16)
+      - name: Set up Node (18)
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 18.x
       - name: Setup java for Firestore emulator
         uses: actions/setup-java@v3
         with:
@@ -417,6 +421,7 @@ jobs:
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
+            --notimestamp \
             --force_latest_runtime \
             --ci
       - name: Return Unity license
@@ -480,7 +485,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
@@ -490,11 +495,11 @@ jobs:
         with:
           path: testapps
           name: ${{ steps.matrix_info.outputs.artifact_path }}
-      - name: Set up Node (16)
+      - name: Set up Node (18)
         if: ${{ matrix.test_device == 'github_runner'  }}
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 18.x
       - name: Setup java for Firestore emulator
         if: ${{ matrix.test_device == 'github_runner'  }}
         uses: actions/setup-java@v3
@@ -520,12 +525,13 @@ jobs:
       - name: Run Mobile integration tests on real device via FTL
         id: ftl_test
         if: ${{ matrix.device_type == 'real' }}
-        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.2
+        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.4
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
           testapp_dir: testapps
           test_type: "game-loop"
           test_devices: ${{ matrix.device_detail }}
+          test_device_selection: random
           max_attempts: 3
           validator: ${GITHUB_WORKSPACE}/scripts/gha/read_ftl_test_result.py
       - name: Read FTL Test Result

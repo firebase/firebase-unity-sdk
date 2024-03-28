@@ -67,6 +67,11 @@
 // processing meant for `public` methods doesn't get applied.
 %csmethodmodifiers firebase::firestore::Firestore::GetInstance "internal";
 
+// Override the default FutureVoid with a version that throws FirestoreException.
+// Do this before app.i, since that will define FutureVoid, and newer versions
+// of swig only use the first definition of templates.
+#define USE_FIRESTORE_FUTURE_VOID 1
+
 %import "app/src/swig/app.i"
 %import "firestore/src/swig/proxy_helpers.i"
 %include "app/src/swig/init_result.i"

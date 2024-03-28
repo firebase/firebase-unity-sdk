@@ -6,20 +6,20 @@ features on *iOS*, *tvOS* and *Android*.
 
 Note: Firebase Dynamic Links is not supported on tvOS.
 
-| Feature                            | Unity Package                     |
-|:----------------------------------:|:---------------------------------:|
-| Firebase Analytics                 | FirebaseAnalytics.unitypackage    |
-| Firebase App Check                 | FirebaseAppCheck.unitypackage     |
-| Firebase Authentication            | FirebaseAuth.unitypackage         |
-| Firebase Crashlytics               | FirebaseCrashlytics.unitypackage  |
-| Firebase Dynamic Links             | FirebaseDynamicLinks.unitypackage |
-| Cloud Firestore                    | FirebaseFirestore.unitypackage    |
-| Firebase Functions                 | FirebaseFunctions.unitypackage    |
-| Firebase Installations             | FirebaseInstallations.unitypackage|
-| Firebase Messaging                 | FirebaseMessaging.unitypackage    |
-| Firebase Realtime Database         | FirebaseDatabase.unitypackage     |
-| Firebase Remote Config             | FirebaseRemoteConfig.unitypackage |
-| Firebase Storage                   | FirebaseStorage.unitypackage      |
+| Feature                             | Unity Package                     |
+|:-----------------------------------:|:---------------------------------:|
+| Firebase Analytics                  | FirebaseAnalytics.unitypackage    |
+| Firebase App Check                  | FirebaseAppCheck.unitypackage     |
+| Firebase Authentication             | FirebaseAuth.unitypackage         |
+| Firebase Crashlytics                | FirebaseCrashlytics.unitypackage  |
+| Firebase Dynamic Links (deprecated) | FirebaseDynamicLinks.unitypackage |
+| Cloud Firestore                     | FirebaseFirestore.unitypackage    |
+| Firebase Functions                  | FirebaseFunctions.unitypackage    |
+| Firebase Installations              | FirebaseInstallations.unitypackage|
+| Firebase Messaging                  | FirebaseMessaging.unitypackage    |
+| Firebase Realtime Database          | FirebaseDatabase.unitypackage     |
+| Firebase Remote Config              | FirebaseRemoteConfig.unitypackage |
+| Firebase Storage                    | FirebaseStorage.unitypackage      |
 
 The SDK provides .NET 4.x compatible packages
 
@@ -71,6 +71,35 @@ Support
 
 Release Notes
 -------------
+### 11.8.1
+- Changes
+    - Firestore (iOS): Fix undefined absl symbols error.
+      ([#974](https://github.com/firebase/firebase-unity-sdk/issues/974))
+
+### 11.8.0
+- Changes
+    - General: Update to Firebase C++ SDK version 11.9.0.
+    - General (Android): Update to Firebase Android BoM version 32.7.4.
+    - General (iOS): Update to Firebase Cocoapods version 10.22.0.
+    - General (Android): Improve how property tag logic handles Unity 2022+.
+    - Auth: Add FirebaseUser.SendEmailVerificationBeforeUpdatingEmailAsync,
+      a new method to verify and change the User's email.
+    - Auth: Deprecate the older method of updating emails, UpdateEmail.
+    - Dynamic Links: The Dynamic Links SDK is now deprecated. See the [support
+      documentation](https://firebase.google.com/support/dynamic-links-faq)
+      for more information.
+
+### 11.7.0
+- Changes
+    - General: Update to Firebase C++ SDK version 11.8.0.
+    - General (Android): Update to Firebase Android BoM version 32.7.1.
+    - General (iOS): Update to Firebase Cocoapods version 10.20.0.
+    - Analytics: Updated the consent management API to include new consent
+      signals.
+    - Auth: Fix a bug where an anonymous account can't be linked with
+      email password credential. For background, see [Email Enumeration
+      Protection](https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection)
+
 ### 11.6.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.6.0.
