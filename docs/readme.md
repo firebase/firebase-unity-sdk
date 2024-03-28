@@ -71,6 +71,11 @@ Support
 
 Release Notes
 -------------
+### 11.8.1
+- Changes
+    - Firestore (iOS): Fix undefined absl symbols error.
+      ([#974](https://github.com/firebase/firebase-unity-sdk/issues/974))
+
 ### 11.8.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.9.0.
