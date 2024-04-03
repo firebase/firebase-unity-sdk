@@ -96,7 +96,6 @@ TEST_DEVICES = {
   "android_target": {"platform": ANDROID, "type": "real",
                      "device": [
                        "model=blueline,version=28", # Pixel 3
-                       "model=dreamlte,version=28",  # Galaxy S8
                        "model=gts3lltevzw,version=28",  # Galaxy Tab S3
                        "model=SH-01L,version=28",  # AQUOS sense2 SH-01L
                      ]},

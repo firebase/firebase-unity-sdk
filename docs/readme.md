@@ -71,8 +71,16 @@ Support
 
 Release Notes
 -------------
-### Upcoming release
+### 11.8.1
 - Changes
+    - Firestore (iOS): Fix undefined absl symbols error.
+      ([#974](https://github.com/firebase/firebase-unity-sdk/issues/974))
+
+### 11.8.0
+- Changes
+    - General: Update to Firebase C++ SDK version 11.9.0.
+    - General (Android): Update to Firebase Android BoM version 32.7.4.
+    - General (iOS): Update to Firebase Cocoapods version 10.22.0.
     - General (Android): Improve how property tag logic handles Unity 2022+.
     - Auth: Add FirebaseUser.SendEmailVerificationBeforeUpdatingEmailAsync,
       a new method to verify and change the User's email.
