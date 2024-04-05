@@ -1,47 +1,16 @@
-name: "🐞 Bug Report"
+name: "❓ General question"
 description: Please use this template to report issues with the Firebase Unity SDK.
-title: '[Bug] '
+title: '[Question] '
 labels:
   - new
-  - 'type: bug'
+  - 'type: question'
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Before getting started, make sure you are in the right place by
-        ensuring that filing a bug report is the correct course of
-        action for your issue.
-
-        * For general technical questions, post a question on
-        [StackOverflow](http://stackoverflow.com/) with the `firebase` tag.
-
-        * For backend, console, and other non-SDK issues, reach out to
-        [Firebase Support](https://firebase.google.com/support/) for help.
-
-        If your issue does not fall under the above categories and instead
-        involves code in this repository not working as expected, please
-        complete and submit this bug report. Thank you!
   - type: textarea
     attributes:
-      label: Description
-      description: |
-        Describe the issue. Explain what you _expected_ to happen and what
-        _actually_ happened.
+      label: What is your question?
+      description: Describe the question.
     validations:
       required: true
-  - type: textarea
-    attributes:
-      label: Reproducing the issue
-      description: >
-        Please provide either **steps to reproduce** or a [**minimal
-        reproducible
-        example**](https://stackoverflow.com/help/minimal-reproducible-example).
-
-        Providing a minimal reproducible example will help us triage your issue
-
-        faster.
-    validations:
-      required: false
   - type: input
     attributes:
       label: Firebase Unity SDK Version
@@ -164,23 +133,3 @@ body:
         - Open-source from this repo
     validations:
       required: true
-  - type: textarea
-    attributes:
-      label: Relevant Log Output
-      description: |
-        Please copy and paste any relevant log output. To enable Firebase debug
-        logging, add `-FIRDebugEnabled` to your scheme's launch arguments.
-      placeholder: |
-        Paste your logs here. Please redact any personally identifiable
-        information. This will be automatically formatted into code, so no
-        need for backticks.
-      render: shell
-    validations:
-      required: false
-  - type: textarea
-    attributes:
-      label: 'If using CocoaPods for Apple platforms, the project''s Podfile.lock'
-      description: The `Podfile.lock` can help us debug versioning issues.
-      value: "<!--- Look below for instructions on how to share your Podfile.lock. --->\n\n<details>\n<summary>Expand <code>Podfile.lock</code> snippet</summary>\n<br>\n\n```yml\n\n\U0001F440 Replace this line with the contents of your Podfile.lock!\n\n```\n\n</details>\n"
-    validations:
-      required: false
