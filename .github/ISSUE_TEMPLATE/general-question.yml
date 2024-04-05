@@ -58,6 +58,8 @@ body:
         - Remote Config
         - Storage
         - All
+      validations:
+        required: false
   - type: dropdown
     attributes:
       label: Other Firebase Component(s) in use
@@ -83,7 +85,7 @@ body:
         - Storage
         - All
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Additional SDKs you are using
