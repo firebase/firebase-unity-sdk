@@ -40,6 +40,7 @@ body:
       description: Which Firebase components are causing issues?
       multiple: true
       options:
+        - All
         - AB Testing
         - Analytics
         - App Check
@@ -57,15 +58,13 @@ body:
         - Performance
         - Remote Config
         - Storage
-        - All
-      validations:
-        required: false
   - type: dropdown
     attributes:
       label: Other Firebase Component(s) in use
       description: Which other Firebase components are being used?
       multiple: true
       options:
+        - All
         - AB Testing
         - Analytics
         - App Check
@@ -83,9 +82,6 @@ body:
         - Performance
         - Remote Config
         - Storage
-        - All
-    validations:
-      required: false
   - type: textarea
     attributes:
       label: Additional SDKs you are using
