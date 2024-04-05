@@ -1,4 +1,4 @@
-name: "❓ General question"
+name: ❓ General question
 description: Please use this template to report issues with the Firebase Unity SDK.
 title: '[Question] '
 labels:
