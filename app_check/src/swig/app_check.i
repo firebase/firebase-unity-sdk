@@ -63,7 +63,8 @@ void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
   std::function<void(AppCheckToken, int, const std::string&)> callback;
   {
     MutexLock lock(g_pending_get_tokens_mutex);
-    if (auto it = g_pending_get_tokens.find(key); it != g_pending_get_tokens.end()) {
+    auto it = g_pending_get_tokens.find(key);
+    if (it != g_pending_get_tokens.end()) {
       callback = it->second;
       g_pending_get_tokens.erase(it);
     } else {
