@@ -71,6 +71,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - App Check: Fix potential crash when fetching a token.
+      ([#877](https://github.com/firebase/firebase-unity-sdk/issues/877))
+
 ### 11.8.1
 - Changes
     - Firestore (iOS): Fix undefined absl symbols error.
