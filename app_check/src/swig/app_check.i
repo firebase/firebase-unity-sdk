@@ -48,6 +48,7 @@ typedef void (SWIGSTDCALL *CompleteBuiltInGetToken)(int key, AppCheckToken* toke
 static GetTokenFromCSharp g_get_token_from_csharp = nullptr;
 static int g_pending_token_keys = 0;
 static std::map<int, std::function<void(AppCheckToken, int, const std::string&)>> g_pending_get_tokens;
+static ::firebase::Mutex g_pending_get_tokens_mutex;
 
 // Should be set to the C# function FirebaseAppCheck.TokenChangedMethod
 static TokenChanged g_token_changed = nullptr;
@@ -59,8 +60,19 @@ static CompleteBuiltInGetToken g_complete_built_in_get_token = nullptr;
 void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
                             int error_code, const char* error_message) {
   // Get the function from the map, and erase it
-  auto callback = g_pending_get_tokens[key];
-  g_pending_get_tokens.erase(key);
+  std::function<void(AppCheckToken, int, const std::string&)> callback;
+  {
+    MutexLock lock(g_pending_get_tokens_mutex);
+    auto it = g_pending_get_tokens.find(key);
+    if (it != g_pending_get_tokens.end()) {
+      callback = it->second;
+      g_pending_get_tokens.erase(it);
+    } else {
+      // The callback was missing. This is likely caused by trying to finish the same
+      // callback multiple times, so ignore it.
+      return;
+    }
+  }
 
   AppCheckToken app_check_token;
   app_check_token.token = token;
@@ -98,8 +110,12 @@ class SwigAppCheckProvider : public AppCheckProvider {
                   completion_callback) override {
     if (g_get_token_from_csharp) {
       // Save the callback in the map, and generate a key
-      int key = g_pending_token_keys++;
-      g_pending_get_tokens[key] = completion_callback;
+      int key;
+      {
+        MutexLock lock(g_pending_get_tokens_mutex);
+        key = g_pending_token_keys++;
+        g_pending_get_tokens[key] = completion_callback;
+      }
       // Queue a call to the C# function that will generate the token.
       firebase::callback::AddCallback(
         new firebase::callback::CallbackValue1String1<int>(
