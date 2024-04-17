@@ -71,10 +71,15 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 11.9.0
 - Changes
+    - General: Update to Firebase C++ SDK version 11.10.0.
+    - General (Android): Update to Firebase Android BoM version 32.8.1.
+    - General (iOS): Update to Firebase Cocoapods version 10.24.0.
     - App Check: Fix potential crash when fetching a token.
-      ([#877](https://github.com/firebase/firebase-unity-sdk/issues/877))
+      ([#877](https://github.com/firebase/firebase-unity-sdk/issues/877)).
+    - Storage (Desktop): Removed 5-minute timeout for uploads and downloads.
+      ([#968](https://github.com/firebase/firebase-unity-sdk/issues/968)).
 
 ### 11.8.1
 - Changes
