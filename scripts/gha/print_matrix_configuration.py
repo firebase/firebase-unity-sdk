@@ -134,7 +134,6 @@ TEST_DEVICES = {
                    # Slightly different OS versions because of limited FTL selection.
                    "model=iphone13pro,version=15.7",
                    "model=iphone8,version=15.7",
-                   "model=ipadmini4,version=15.4",
                  ]},
   "ios_latest": {"platform": IOS, "type": "real",
                  "device": [
