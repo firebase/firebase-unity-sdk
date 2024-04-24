@@ -73,6 +73,8 @@ Release Notes
 -------------
 ### Upcoming
 - Changes
+    - Auth: Remove deprecated calls involving `SignInResult`, most of
+      which were appended with `_DEPRECATED`.
     - Remote Config: Remove deprecated `ConfigSettings.MinimumFetchInternalInMilliseconds`,
       use `ConfigSettings.MinimumFetchIntervalInMilliseconds` instead.
 

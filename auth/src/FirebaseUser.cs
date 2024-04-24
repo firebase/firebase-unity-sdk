@@ -42,35 +42,11 @@ public sealed class FirebaseUser : UserInfoInterface {
     }
   }
 
-  private void CompleteSignInResult(SignInResult signInResult) {
-    if (signInResult != null) {
-      // Cache the authProxy in the SignInResult
-      signInResult.authProxy = authProxy;
-    }
-  }
-
   private void CompleteAuthResult(AuthResult authResult) {
     if (authResult != null) {
       // Cache the authProxy in the AuthResult
       authResult.authProxy = authProxy;
     }
-  }
-
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// @ref ReauthenticateWithProviderAsync(FederatedAuthProvider) instead.
-  ///
-  /// Reauthenticate a user via a federated auth provider.
-  ///
-  /// @note: This operation is supported only on iOS, tvOS and Android
-  /// platforms. On other platforms this method will return a Future with a
-  /// preset error code: kAuthErrorUnimplemented.
-  [System.Obsolete("Please use `Task<AuthResult> ReauthenticateWithProviderAsync(FederatedAuthProvider)` instead", false)]
-  public async Task<SignInResult> ReauthenticateWithProviderAsync_DEPRECATED(FederatedAuthProvider provider) {
-    FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
-    SignInResult result = await userInternal.ReauthenticateWithProviderInternalAsync_DEPRECATED(provider);
-    CompleteSignInResult(result);
-    return result;
   }
 
   /// Reauthenticate a user via a federated auth provider.
@@ -82,23 +58,6 @@ public sealed class FirebaseUser : UserInfoInterface {
     FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
     AuthResult result = await userInternal.ReauthenticateWithProviderInternalAsync(provider);
     CompleteAuthResult(result);
-    return result;
-  }
-
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// @ref LinkWithProviderAsync(FederatedAuthProvider) instead.
-  ///
-  /// Link a user via a federated auth provider.
-  ///
-  /// @note: This operation is supported only on iOS, tvOS and Android
-  /// platforms. On other platforms this method will return a Future with a
-  /// preset error code: kAuthErrorUnimplemented.
-  [System.Obsolete("Please use `Task<AuthResult> LinkWithProviderAsync(FederatedAuthProvider)` instead", false)]
-  public async Task<SignInResult> LinkWithProviderAsync_DEPRECATED(FederatedAuthProvider provider) {
-    FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
-    SignInResult result = await userInternal.LinkWithProviderInternalAsync_DEPRECATED(provider);
-    CompleteSignInResult(result);
     return result;
   }
 
@@ -114,70 +73,11 @@ public sealed class FirebaseUser : UserInfoInterface {
     return result;
   }
 
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// @ref LinkWithCredentialAsync(Credential) instead.
-  ///
-  /// Links the user with the given 3rd party credentials.
-  ///
-  /// For example, a Facebook login access token, a Twitter token/token-secret
-  /// pair.
-  /// Status will be an error if the token is invalid, expired, or otherwise
-  /// not accepted by the server as well as if the given 3rd party
-  /// user id is already linked with another user account or if the current user
-  /// is already linked with another id from the same provider.
-  ///
-  /// Data from the Identity Provider used to sign-in is returned in the
-  /// @ref AdditionalUserInfo inside @ref SignInResult.
-  [System.Obsolete("Please use `Task<AuthResult> LinkWithCredentialAsync(Credential)` instead", false)]
-  public async Task<SignInResult> LinkAndRetrieveDataWithCredentialAsync(Credential credential) {
-    FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
-    SignInResult result = await userInternal.LinkAndRetrieveDataWithCredentialInternalAsync(credential);
-    CompleteSignInResult(result);
-    return result;
-  }
-
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// @ref LinkWithCredentialAsync(Credential) instead.
-  ///
-  /// Associates a user account from a third-party identity provider.
-  [System.Obsolete("Please use `Task<AuthResult> LinkWithCredentialAsync(Credential)` instead", false)]
-  public async Task<FirebaseUser> LinkWithCredentialAsync_DEPRECATED(Credential credential) {
-    FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
-    // We don't care about the returned user, since there is currently only meant to
-    // be a single FirebaseUser under the hood.
-    await userInternal.LinkWithCredentialInternalAsync_DEPRECATED(credential);
-    return this;
-  }
-
   /// Associates a user account from a third-party identity provider.
   public async Task<AuthResult> LinkWithCredentialAsync(Credential credential) {
     FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
     AuthResult result = await userInternal.LinkWithCredentialInternalAsync(credential);
     CompleteAuthResult(result);
-    return result;
-  }
-
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// @ref ReauthenticateAndRetrieveDataAsync(Credential) instead.
-  ///
-  /// Reauthenticate using a credential.
-  ///
-  /// Data from the Identity Provider used to sign-in is returned in the
-  /// AdditionalUserInfo inside the returned SignInResult.
-  ///
-  /// Returns an error if the existing credential is not for this user
-  /// or if sign-in with that credential failed.
-  ///
-  /// @note: The current user may be signed out if this operation fails on
-  /// Android and desktop platforms.
-  [System.Obsolete("Please use `Task<AuthResult> ReauthenticateAndRetrieveDataAsync(Credential)` instead", false)]
-  public async Task<SignInResult> ReauthenticateAndRetrieveDataAsync_DEPRECATED(Credential credential) {
-    FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
-    SignInResult result = await userInternal.ReauthenticateAndRetrieveDataInternalAsync_DEPRECATED(credential);
-    CompleteSignInResult(result);
     return result;
   }
 
@@ -198,20 +98,6 @@ public sealed class FirebaseUser : UserInfoInterface {
     return result;
   }
 
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use @ref UnlinkAsync(string) instead.
-  ///
-  /// Unlinks the current user from the provider specified.
-  /// Status will be an error if the user is not linked to the given provider.
-  [System.Obsolete("Please use `Task<AuthResult> UnlinkAsync(string)` instead", false)]
-  public async Task<FirebaseUser> UnlinkAsync_DEPRECATED(string provider) {
-    FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
-    // We don't care about the returned user, since there is currently only meant to
-    // be a single FirebaseUser under the hood.
-    await userInternal.UnlinkInternalAsync_DEPRECATED(provider);
-    return this;
-  }
-
   /// Unlinks the current user from the provider specified.
   /// Status will be an error if the user is not linked to the given provider.
   public async Task<AuthResult> UnlinkAsync(string provider) {
@@ -219,24 +105,6 @@ public sealed class FirebaseUser : UserInfoInterface {
     AuthResult result = await userInternal.UnlinkInternalAsync(provider);
     CompleteAuthResult(result);
     return result;
-  }
-
-  /// @deprecated This method is deprecated in favor of methods that return
-  /// `Task<AuthResult>`. Please use
-  /// @ref UpdatePhoneNumberCredentialAsync(PhoneAuthCredential) instead.
-  ///
-  /// Updates the currently linked phone number on the user.
-  /// This is useful when a user wants to change their phone number. It is a
-  /// shortcut to calling `UnlinkAsync_DEPRECATED(phoneCredential.Provider)`
-  /// and then `LinkWithCredentialAsync_DEPRECATED(phoneCredential)`.
-  /// `phoneCredential` must have been created with @ref PhoneAuthProvider.
-  [System.Obsolete("Please use `Task<AuthResult> UpdatePhoneNumberCredentialAsync(PhoneAuthCredential)` instead", false)]
-  public async Task<FirebaseUser> UpdatePhoneNumberCredentialAsync_DEPRECATED(Credential credential) {
-    FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
-    // We don't care about the returned user, since there is currently only meant to
-    // be a single FirebaseUser under the hood.
-    await userInternal.UpdatePhoneNumberCredentialInternalAsync_DEPRECATED(credential);
-    return this;
   }
 
   /// Updates the currently linked phone number on the user.
@@ -248,7 +116,7 @@ public sealed class FirebaseUser : UserInfoInterface {
     FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
     // We don't care about the returned user, since there is currently only meant to
     // be a single FirebaseUser under the hood.
-    await userInternal.UpdatePhoneNumberCredentialInternalAsync_DEPRECATED(credential);
+    await userInternal.UpdatePhoneNumberCredentialInternalAsync(credential);
     return this;
   }
 

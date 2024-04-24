@@ -26,16 +26,6 @@ public sealed class FirebaseAccountLinkException : System.Exception
 {
   /// Initializes a new FirebaseAccountLinkException, with the given error code and
   /// message and the AdditionalUserInfo returned from the Firebase auth service.
-  [System.Obsolete("Use `FirebaseAccountLinkException(int, string, AuthResult)` instead", false)]
-  public FirebaseAccountLinkException(int errorCode, string message,
-                                      SignInResult signInResult) : base(message)
-  {
-    ErrorCode = errorCode;
-    result_DEPRECATED = signInResult;
-  }
-
-  /// Initializes a new FirebaseAccountLinkException, with the given error code and
-  /// message and the AdditionalUserInfo returned from the Firebase auth service.
   public FirebaseAccountLinkException(int errorCode, string message,
                                       AuthResult authResult) : base(message)
   {
@@ -53,11 +43,9 @@ public sealed class FirebaseAccountLinkException : System.Exception
   /// the credential may be used to sign-in the user into Firebase with
   /// Firebase.Auth.SignInWithCredentialAsync.
   public AdditionalUserInfo UserInfo {
-    get { return (result != null) ? result.AdditionalUserInfoInternal :
-                 (result_DEPRECATED != null) ? result_DEPRECATED.Info : null; }
+    get { return (result != null) ? result.AdditionalUserInfoInternal : null; }
   }
 
-  private SignInResult result_DEPRECATED = null;
   private AuthResult result = null;
 }
 
