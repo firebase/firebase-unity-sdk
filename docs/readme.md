@@ -71,6 +71,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Remote Config: Remove deprecated `ConfigSettings.MinimumFetchInternalInMilliseconds`,
+      use `ConfigSettings.MinimumFetchIntervalInMilliseconds` instead.
+
 ### 11.9.0
 - Changes
     - General: Update to Firebase C++ SDK version 11.10.0.
