@@ -1323,19 +1323,6 @@ TimeOutCallback PhoneAuthListenerImpl::g_time_out_callback = nullptr;
   // Creates a new Listener with the given callback_id to handle the call.
   // Returns that Listener, so the caller can manage that memory.
   void* VerifyPhoneNumberInternal(
-      const char* phone_number, uint32_t auto_verify_time_out_ms,
-      const firebase::auth::PhoneAuthProvider::ForceResendingToken* token,
-      int callback_id) {
-    firebase::auth::PhoneAuthListenerImpl* listener =
-        new firebase::auth::PhoneAuthListenerImpl(callback_id);
-    self->VerifyPhoneNumber(phone_number, auto_verify_time_out_ms,
-                            token, listener);
-    return listener;
-  }
-
-  // Creates a new Listener with the given callback_id to handle the call.
-  // Returns that Listener, so the caller can manage that memory.
-  void* VerifyPhoneNumberInternal(
       const PhoneAuthOptions& options,
       int callback_id) {
     firebase::auth::PhoneAuthListenerImpl* listener =
