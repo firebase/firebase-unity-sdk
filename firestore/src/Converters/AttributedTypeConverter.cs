@@ -136,7 +136,8 @@ namespace Firebase.Firestore.Converters {
                     "No writable property for Firestore field {0} in type {1}", key, TargetType.FullName));
                 break;
               case UnknownPropertyHandling.Throw:
-                throw new ArgumentException(String.Format("No writable property for Firestore field {key} in type {0}", TargetType.FullName));
+                throw new ArgumentException(String.Format(
+                    "No writable property for Firestore field {0} in type {1}", key, TargetType.FullName));
             }
           }
         }
