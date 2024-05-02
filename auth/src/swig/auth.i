@@ -1047,8 +1047,6 @@ static CppInstanceManager<Auth> g_auth_instances;
   %}
 
 // Rename User methods
-%rename(LinkAndRetrieveDataWithCredentialInternalAsync)
-  firebase::auth::User::LinkAndRetrieveDataWithCredential;
 %rename(ReauthenticateAndRetrieveDataInternalAsync)
   firebase::auth::User::ReauthenticateAndRetrieveData;
 %rename(ReauthenticateWithProviderInternalAsync)
