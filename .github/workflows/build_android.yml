@@ -94,6 +94,7 @@ jobs:
           cd ..
           echo "NDK_ROOT=/tmp/android-ndk-r21e" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=/tmp/android-ndk-r21e" >> $GITHUB_ENV
+          brew install swig@4.2
 
       - name: Install python deps
         shell: bash

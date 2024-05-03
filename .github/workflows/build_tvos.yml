@@ -98,6 +98,7 @@ jobs:
           cd firebase-cpp-sdk
           python scripts/gha/install_prereqs_desktop.py
           cd ..
+          brew install swig@4.2
 
       - name: Install python deps
         shell: bash
