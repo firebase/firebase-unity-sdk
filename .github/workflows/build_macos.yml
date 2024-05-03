@@ -38,7 +38,7 @@ on:
 jobs:
   build_desktop:
     name: build-macOS-unity${{ inputs.unity_version}}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: macos-12
+    runs-on: macos-13
     strategy:
       fail-fast: false
 

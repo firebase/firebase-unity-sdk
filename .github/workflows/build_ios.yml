@@ -38,12 +38,12 @@ on:
 jobs:
   build_ios:
     name: build-ios-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: macos-12
+    runs-on: macos-13
     strategy:
       fail-fast: false
 
     env:
-      xcodeVersion: "14.1"
+      xcodeVersion: "15.1"
   
     steps:
       - name: Checkout Unity Repo

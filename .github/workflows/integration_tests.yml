@@ -174,7 +174,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.build_matrix) }}
     env:
-      xcodeVersion: "14.1"
+      xcodeVersion: "15.1"
     steps:
       - id: matrix_info
         shell: bash
