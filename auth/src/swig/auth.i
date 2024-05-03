@@ -66,6 +66,7 @@
 %include "app/src/swig/null_check_this.i"
 %include "app/src/swig/serial_dispose.i"
 %include "stdint.i"
+%include "std_string.i"
 
 %{
 namespace firebase {
@@ -477,6 +478,12 @@ static CppInstanceManager<Auth> g_auth_instances;
 %csmethodmodifiers set_language_code(const char *lagnuage_code) "internal";
 %rename(SetLanguageCodeInternal) set_language_code;
 
+%csmethodmodifiers testrminal_id() "internal";
+%rename(TenantIdInternal) tenant_id;
+
+%csmethodmodifiers set_tenant_id(const char *tenant_id) "internal";
+%rename(SetTenantIdInternal) set_tenant_id;
+
 %include "app/src/swig/init_result.i"
 
 // Implemented inline below.
@@ -564,6 +571,16 @@ static CppInstanceManager<Auth> g_auth_instances;
     }
     set {
       SetLanguageCodeInternal(value);
+    }
+  }
+
+  /// The user-facing terminal id for multi-tenant authentication
+  public System.String TenantId {
+    get {
+      return TenantIdInternal();
+    }
+    set {
+      SetTenantIdInternal(value);
     }
   }
 
