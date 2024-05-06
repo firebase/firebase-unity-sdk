@@ -280,6 +280,14 @@ static CppInstanceManager<Auth> g_auth_instances;
   firebase::auth::Auth::FederatedOAuthProviderData::custom_parameters "public";
 %rename(CustomParameters) custom_parameters;
 
+// Ignore the additional FederatedAuth calls, since they haven't been exposed before.
+%ignore firebase::auth::FederatedAuthProvider::SignIn;
+%ignore firebase::auth::FederatedAuthProvider::Link;
+%ignore firebase::auth::FederatedAuthProvider::Reauthenticate;
+%ignore firebase::auth::FederatedOAuthProvider::SignIn;
+%ignore firebase::auth::FederatedOAuthProvider::SignIn;
+%ignore firebase::auth::FederatedOAuthProvider::SignIn;
+
 // This is here, instead of the src because of b/35780150
 %csmethodmodifiers firebase::auth::Auth::FetchProvidersResult::providers "
   /// The IDPs (identity providers) that can be used for `email`.
