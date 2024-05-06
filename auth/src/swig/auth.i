@@ -932,6 +932,7 @@ static CppInstanceManager<Auth> g_auth_instances;
 %rename(ProviderId) firebase::auth::PhoneAuthProvider::kProviderId;
 %rename(ProviderId) firebase::auth::PlayGamesAuthProvider::kProviderId;
 %rename(ProviderId) firebase::auth::TwitterAuthProvider::kProviderId;
+%ignore firebase::auth::YahooAuthProvider;
 
 %STATIC_CLASS(EmailAuthProvider(), firebase::auth::EmailAuthProvider)
 %STATIC_CLASS(FacebookAuthProvider(), firebase::auth::FacebookAuthProvider)
