@@ -39,9 +39,6 @@ namespace Firebase.Sample.Auth {
         TestSignInEmailAsync,
         TestSignInCredentialAsync,
         TestUpdateUserProfileAsync,
-        TestSignInAnonymouslyAsync_DEPRECATED,
-        TestSignInEmailAsync_DEPRECATED,
-        TestSignInCredentialAsync_DEPRECATED,
         TestCachingUser,
         // TODO(b/132083720) This test is currently broken, so disable it until it is fixed.
         // TestSignInAnonymouslyWithExceptionsInEventHandlersAsync,
@@ -214,35 +211,6 @@ namespace Firebase.Sample.Auth {
     }
 
     // Perform the standard sign in flow with an Anonymous account.
-    // Tests: SignInAnonymouslyAsync_DEPRECATED, DeleteUserAsync.
-    Task TestSignInAnonymouslyAsync_DEPRECATED() {
-      TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
-
-      // We don't want to be signed in at the start of this test.
-      if (!TestSetupClearUser(tcs)) {
-          return tcs.Task;
-      }
-
-      // First, sign in anonymously.
-      SigninAnonymouslyAsync_DEPRECATED().ContinueWithOnMainThread(t1 => {
-        if (ForwardTaskException(tcs, t1)) return;
-        // Confirm that the current user is correct.
-        if (!ConfirmAnonymousCurrentUser(tcs)) return;
-
-        // Delete the user, as we are done.
-        DeleteUserAsync().ContinueWithOnMainThread(t2 => {
-            if (ForwardTaskException(tcs, t2)) return;
-            // Confirm that there is no user set anymore.
-            ConfirmNoCurrentUser(tcs);
-            // The tests are done
-            tcs.TrySetResult(0);
-        });
-      });
-
-      return tcs.Task;
-    }
-
-    // Perform the standard sign in flow with an Anonymous account.
     // Tests: SignInAnonymouslyAsync, DeleteUserAsync.
     Task TestSignInAnonymouslyAsync() {
       TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
@@ -265,44 +233,6 @@ namespace Firebase.Sample.Auth {
             ConfirmNoCurrentUser(tcs);
             // The tests are done
             tcs.TrySetResult(0);
-        });
-      });
-
-      return tcs.Task;
-    }
-
-    // Goes over the standard create/signout/signin flow, using the provided function to sign in.
-    // Tests: CreateUserWithEmailAndPasswordAsync_DEPRECATED, SignOut, the given signin function,
-    // and DeleteUserAsync.
-    Task TestSignInFlowAsync_DEPRECATED(Func<Task> signInFunc) {
-      TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
-
-      // We don't want to be signed in at the start of this test.
-      if (!TestSetupClearUser(tcs)) {
-        return tcs.Task;
-      }
-
-      // Set up the test email/password/etc fields.
-      SetDefaultUIFields();
-
-      CreateUserWithEmailAsync_DEPRECATED().ContinueWithOnMainThread(createTask => {
-        // Confirm that the current user is correct
-        if (!ConfirmDefaultCurrentUser(tcs)) return;
-        // Sign out of the user
-        SignOut();
-        // Confirm no user
-        if (!ConfirmNoCurrentUser(tcs)) return;
-        // Sign back in
-        signInFunc().ContinueWithOnMainThread(signinTask => {
-          // Confirm that the current user is correct
-          if (!ConfirmDefaultCurrentUser(tcs)) return;
-          // Delete the user
-          DeleteUserAsync().ContinueWithOnMainThread(deleteTask => {
-            // Confirm no user
-            ConfirmNoCurrentUser(tcs);
-            // Tests are done.
-            tcs.TrySetResult(0);
-          });
         });
       });
 
@@ -348,21 +278,9 @@ namespace Firebase.Sample.Auth {
     }
 
     // Perform the standard sign in flow, using Email/Password.
-    // Tests: SignInWithEmailAndPasswordAsync_DEPRECATED.
-    Task TestSignInEmailAsync_DEPRECATED() {
-      return TestSignInFlowAsync_DEPRECATED(SigninWithEmailAsync_DEPRECATED);
-    }
-
-    // Perform the standard sign in flow, using Email/Password.
     // Tests: SignInWithEmailAndPasswordAsync.
     Task TestSignInEmailAsync() {
       return TestSignInFlowAsync(SigninWithEmailAsync);
-    }
-
-    // Perform the standard sign in flow, using a credential generated from the Email/Password.
-    // Tests: SignInWithCredentialAsync_DEPRECATED (Email credential).
-    Task TestSignInCredentialAsync_DEPRECATED() {
-      return TestSignInFlowAsync_DEPRECATED(SigninWithEmailCredentialAsync_DEPRECATED);
     }
 
     // Perform the standard sign in flow, using a credential generated from the Email/Password.
@@ -397,57 +315,6 @@ namespace Firebase.Sample.Auth {
             tcs.SetResult(true);
         });
       });
-      return tcs.Task;
-    }
-
-    // Anonymous sign-in with exceptions being thrown by auth state and token event handlers.
-    // The sign-in process should continue uninterrupted.
-    Task TestSignInAnonymouslyWithExceptionsInEventHandlersAsync_DEPRECATED() {
-      SignOut();
-
-      var exceptions = new List<Exception>();
-      TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
-      EventHandler stateChangedThrowException = (object sender, EventArgs e) => {
-        var exception = new Exception("State changed");
-        exceptions.Add(exception);
-        throw exception;
-      };
-      EventHandler idTokenChangedThrowException = (object sender, EventArgs e) => {
-        var exception = new Exception("ID token changed");
-        exceptions.Add(exception);
-        throw exception;
-      };
-      auth.StateChanged += stateChangedThrowException;
-      auth.IdTokenChanged += idTokenChangedThrowException;
-
-      SigninAnonymouslyAsync_DEPRECATED().ContinueWithOnMainThread(t => {
-          auth.StateChanged -= stateChangedThrowException;
-          auth.IdTokenChanged -= idTokenChangedThrowException;
-          var exceptionMessages = new HashSet<string>();
-          foreach (var exception in exceptions) {
-            exceptionMessages.Add(exception.Message);
-          }
-          if (exceptionMessages.Count == 2) {
-            var missingExceptions = new List<string>();
-            foreach (var expectedMessage in new [] { "State changed", "ID token changed" }) {
-              if (!exceptionMessages.Contains(expectedMessage)) {
-                missingExceptions.Add(expectedMessage);
-              }
-            }
-            if (missingExceptions.Count > 0) {
-              tcs.SetException(new Exception(String.Format(
-                  "The following expected exceptions were not thrown: {0}",
-                  String.Join(", ", missingExceptions.ToArray()))));
-            } else {
-              tcs.SetResult(true);
-            }
-          } else {
-            tcs.SetException(new Exception(String.Format(
-                "Unexpected number of exceptions thrown {0} vs. 2 ({1})",
-                exceptionMessages.Count,
-                String.Join(", ", (new List<string>(exceptionMessages)).ToArray()))));
-          }
-        });
       return tcs.Task;
     }
 
