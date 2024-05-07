@@ -204,7 +204,7 @@ jobs:
           password: ${{ secrets.UNITY_PASSWORD }}
           serial_ids: ${{ secrets.SERIAL_ID }}
       - name: Workaround tvOS XCode 15 issue
-        if: ${{ contains(matrix.platform, 'tvOS') }}
+        if: ${{ contains(matrix.platform, 'tvOS') && contains(matrix.unity_version, '2020') }}
         shell: bash
         run: |
           find /Applications/Unity/Hub/Editor -type f -name 'UnityViewControllerBase.h' -exec sed -i '' 's/#import <GameController\/GCController.h>/#import <GameController\/GCEventViewController.h>/g' {} \;
