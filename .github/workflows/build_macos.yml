@@ -38,7 +38,7 @@ on:
 jobs:
   build_desktop:
     name: build-macOS-unity${{ inputs.unity_version}}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: macos-latest
+    runs-on: macos-13
     strategy:
       fail-fast: false
 
@@ -81,6 +81,7 @@ jobs:
           cd firebase-cpp-sdk
           python scripts/gha/install_prereqs_desktop.py
           cd ..
+          brew install swig@4.2
 
       - name: Install python deps
         shell: bash

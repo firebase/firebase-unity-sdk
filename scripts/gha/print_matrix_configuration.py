@@ -56,7 +56,7 @@ PLAYMODE = "Playmode"
 
 # GitHub Runner
 WINDOWS_RUNNER = "windows-latest"
-MACOS_RUNNER = "macos-latest"
+MACOS_RUNNER = "macos-13"
 LINUX_RUNNER = "ubuntu-latest"
 
 PARAMETERS = {
@@ -134,7 +134,6 @@ TEST_DEVICES = {
                    # Slightly different OS versions because of limited FTL selection.
                    "model=iphone13pro,version=15.7",
                    "model=iphone8,version=15.7",
-                   "model=ipadmini4,version=15.4",
                  ]},
   "ios_latest": {"platform": IOS, "type": "real",
                  "device": [
@@ -266,6 +265,11 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
     unity_version = li[0]
     platform = li[1]
     os = li[2] if li[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
+
+    # TODO: Remove this when we can get it working on GHA again
+    # Skip the MacOS + Android combo, because it has been having configuration issues on the GHA machines
+    if platform==ANDROID and os==MACOS_RUNNER:
+      continue
 
     if platform in [IOS, TVOS]:
       # for iOS, tvOS platforms, exclude non macOS build_os

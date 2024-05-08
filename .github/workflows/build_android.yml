@@ -38,7 +38,7 @@ on:
 jobs:
   build_android:
     name: build-android-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: macos-latest
+    runs-on: macos-13
     strategy:
       fail-fast: false
     env:
@@ -94,6 +94,11 @@ jobs:
           cd ..
           echo "NDK_ROOT=/tmp/android-ndk-r21e" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=/tmp/android-ndk-r21e" >> $GITHUB_ENV
+          brew install swig@4.2
+      
+      - name: Force Java 8 (macOS)
+        shell: bash
+        run: echo "JAVA_HOME=${JAVA_HOME_8_X64}" >> $GITHUB_ENV
 
       - name: Install python deps
         shell: bash
