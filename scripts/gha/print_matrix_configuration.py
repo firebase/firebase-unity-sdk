@@ -334,6 +334,11 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
     platform = li[1]
     build_os = li[2] if li[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
 
+    # TODO: Remove this when we can get it working on GHA again
+    # Skip the MacOS + Android combo, because it has been having configuration issues on the GHA machines
+    if platform==ANDROID and os==MACOS_RUNNER:
+      continue
+
     if platform in [WINDOWS, MACOS, LINUX]:
       test_os = _get_test_os(platform)
       matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "device_detail": "NA", "device_type": "NA", "ios_sdk": "NA"})
