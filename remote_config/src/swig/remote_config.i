@@ -18,6 +18,9 @@
 %pragma(csharp) moduleclassmodifiers="internal sealed class"
 %feature("flatnested");
 
+// Change the default class modifier to internal, so that new classes are not accidentally exposed
+%typemap(csclassmodifiers) SWIGTYPE "internal class"
+
 %include "std_vector.i"
 %include "stdint.i"
 
@@ -116,57 +119,12 @@ void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUp
 %ignore firebase::remote_config::RemoteConfigError;
 %ignore firebase::remote_config::ConfigUpdateListenerRegistration;
 
-// Configure the ConfigInfo class
-%csmethodmodifiers fetch_time "internal";
-%rename(FetchTimeInternal) fetch_time;
-%csmethodmodifiers throttled_end_time "internal";
-%rename(ThrottledEndTimeInternal) throttled_end_time;
-
-%typemap(cscode) firebase::remote_config::ConfigInfo %{
-  private System.DateTime UnixEpochUtc =
-      new System.DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-
-  /// @brief The time when the last fetch operation completed.
-  public System.DateTime FetchTime {
-    get {
-      return UnixEpochUtc.AddMilliseconds(FetchTimeInternal);
-    }
-  }
-
-  /// @brief The time when Remote Config data refreshes will no longer
-  /// be throttled.
-  public System.DateTime ThrottledEndTime {
-    get {
-      return UnixEpochUtc.AddMilliseconds(ThrottledEndTimeInternal);
-    }
-  }
-%}
-
-%immutable firebase::remote_config::ConfigInfo::last_fetch_status;
-%immutable firebase::remote_config::ConfigInfo::last_fetch_failure_reason;
-
-// These are here instead of the header due to b/35780150
-%csmethodmodifiers firebase::remote_config::ConfigInfo::last_fetch_status "
-  /// @brief The status of the last fetch request.
-  public";
-%csmethodmodifiers firebase::remote_config::ConfigInfo::last_fetch_failure_reason "
-  /// @brief The reason the most recent fetch failed.
-  public";
-
-// Make snake_case properties into CamelCase.
-// ConfigInfo
-%rename(LastFetchFailureReason) last_fetch_failure_reason;
-%rename(LastFetchStatus) last_fetch_status;
-
-%typemap(csclassmodifiers) firebase::remote_config::ConfigInfo
-  "public sealed class";
-
-%SWIG_FUTURE(Future_ConfigInfo, ConfigInfo, internal, firebase::remote_config::ConfigInfo, FirebaseException) // Future<ConfigInfo>
-
+// Rename the generated classes to *Internal
+%rename (ConfigInfoInternal) firebase::remote_config::ConfigInfo;
+%SWIG_FUTURE(Future_ConfigInfo, ConfigInfoInternal, internal,
+             firebase::remote_config::ConfigInfo, FirebaseException) // Future<ConfigInfoInternal>
 %rename (FirebaseRemoteConfigInternal) firebase::remote_config::RemoteConfig;
-
 %rename (ConfigSettingsInternal) firebase::remote_config::ConfigSettings;
-
 %rename (ConfigUpdateInternal) firebase::remote_config::ConfigUpdate;
 
 // Configure properties for get / set methods on the FirebaseRemoteConfigInternal class.
