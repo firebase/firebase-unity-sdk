@@ -322,7 +322,10 @@ def _build_ios_gameloop(gameloop_project, device_name, device_os):
     "-scheme", "gameloop",
     "build-for-testing", 
     "-destination", "platform=iOS Simulator,name=%s,OS=%s" % (device_name, device_os), 
-    "SYMROOT=%s" % output_path]
+    "SYMROOT=%s" % output_path,
+    'CODE_SIGN_IDENTITY=""',
+    "CODE_SIGNING_REQUIRED=NO",
+    "CODE_SIGNING_ALLOWED=NO"]
   logging.info("Building game-loop test: %s", " ".join(args))
   subprocess.run(args=args, check=True)
   
@@ -345,7 +348,10 @@ def _build_tvos_gameloop(gameloop_project, device_name, device_os):
     "-scheme", "gameloop_tvos",
     "build-for-testing", 
     "-destination", "platform=tvOS Simulator,name=%s,OS=%s" % (device_name, device_os), 
-    "SYMROOT=%s" % output_path]
+    "SYMROOT=%s" % output_path,
+    'CODE_SIGN_IDENTITY=""',
+    "CODE_SIGNING_REQUIRED=NO",
+    "CODE_SIGNING_ALLOWED=NO"]
   logging.info("Building game-loop test: %s", " ".join(args))
   subprocess.run(args=args, check=True)
   
@@ -387,7 +393,7 @@ def _shutdown_simulator():
 def _create_and_boot_simulator(apple_platform, device_name, device_os):
   """Create a simulator locally. Will wait until this simulator booted."""
   _shutdown_simulator()
-  command = "xcrun xctrace list devices 2>&1 | grep \"%s (%s)\" | awk -F'[()]' '{print $4}'" % (device_name, device_os)
+  command = "xcrun xctrace list devices 2>&1 | grep \"%s Simulator (%s)\" | awk -F'[()]' '{print $4}'" % (device_name, device_os)
   logging.info("Get test simulator: %s", command)
   result = subprocess.Popen(command, universal_newlines=True, shell=True, stdout=subprocess.PIPE)
   device_id = result.stdout.read().strip()
