@@ -336,7 +336,7 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
 
     # TODO: Remove this when we can get it working on GHA again
     # Skip the MacOS + Android combo, because it has been having configuration issues on the GHA machines
-    if platform==ANDROID and os==MACOS_RUNNER:
+    if platform==ANDROID and build_os==MACOS_RUNNER:
       continue
 
     if platform in [WINDOWS, MACOS, LINUX]:
