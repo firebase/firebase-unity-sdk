@@ -444,7 +444,7 @@ jobs:
             # No summary was created, make a placeholder one.
             echo "__SUMMARY_MISSING__" > test-results-${{ steps.matrix_info.outputs.info }}.log.json
           fi
-	  return 1 #### REMOVE THIS REMOVE THIS REMOVE THIS
+          return 1 #### REMOVE THIS REMOVE THIS REMOVE THIS
       - name: Upload test results artifact
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
