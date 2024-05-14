@@ -444,7 +444,6 @@ jobs:
             # No summary was created, make a placeholder one.
             echo "__SUMMARY_MISSING__" > test-results-${{ steps.matrix_info.outputs.info }}.log.json
           fi
-          return 1 #### REMOVE THIS REMOVE THIS REMOVE THIS
       - name: Upload test results artifact
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
@@ -651,7 +650,7 @@ jobs:
     name: "attempt-retry"
     needs: [check_and_prepare, summarize_results]
     runs-on: ubuntu-20.04
-    if: ${{ failure() }} ### && needs.check_and_prepare.outputs.trigger == 'scheduled_trigger' }}
+    if: ${{ failure() && needs.check_and_prepare.outputs.trigger == 'scheduled_trigger' }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -675,6 +674,5 @@ jobs:
           python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} \
           -w retry-test-failures.yml \
           -p run_id ${{ github.run_id }} \
-          -b retry-test-failures-attempt-2 \
           -s 10 \
           -A
