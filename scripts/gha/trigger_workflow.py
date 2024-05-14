@@ -70,7 +70,7 @@ def main():
   if "workflow_runs" in workflows:
     for workflow in workflows['workflow_runs']:
       # Use a heuristic to get the new workflow's run ID.
-      # Must match the branch name and commit sha, and be queued/in progress.
+      # Must match the branch name and be queued/in progress.
       if (workflow['status'] in ('queued', 'in_progress') and
           workflow['head_branch'] == args.branch):
         run_id = workflow['id']
