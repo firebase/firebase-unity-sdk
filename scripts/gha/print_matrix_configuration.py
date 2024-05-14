@@ -142,9 +142,9 @@ TEST_DEVICES = {
                    "model=iphone8,version=16.6",
                    "model=ipad10,version=16.6",
                  ]},
-  "simulator_min": [ {"type": "virtual", "name":"iPhone SE (3rd generation)", "version":"17.0.1"} ],
-  "simulator_target": [ {"type": "virtual", "name":"iPhone 15", "version":"17.2"} ],
-  "simulator_latest": [ {"type": "virtual", "name":"iPad Pro (12.9-inch) (6th generation)", "version":"17.4"} ],
+  "simulator_min": [ {"type": "virtual", "name":"iPhone 15 Pro Max", "version":"17.0.1"} ],
+  "simulator_target": [ {"type": "virtual", "name":"iPhone 15 Pro Max", "version":"17.2"} ],
+  "simulator_latest": [ {"type": "virtual", "name":"iPhone 15 Plus", "version":"17.4"} ],
   "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "16.1"},
 }
 
