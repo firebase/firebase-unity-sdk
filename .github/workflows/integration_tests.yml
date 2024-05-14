@@ -660,7 +660,7 @@ jobs:
         with:
           python-version: ${{ env.pythonVersion }}
       - name: Install python deps
-        run: pip install -r scripts/gha/python_requirements.txt
+        run: pip install -r scripts/gha/requirements.txt
       # The default token can't run workflows, so get an alternate token.
       - name: Generate token for GitHub API
         uses: tibdex/github-app-token@v1
