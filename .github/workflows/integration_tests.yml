@@ -674,5 +674,6 @@ jobs:
           python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} \
           -w retry-test-failures.yml \
           -p run_id ${{ github.run_id }} \
+	  -b retry-test-failures-attempt-2 \
           -s 10 \
           -A
