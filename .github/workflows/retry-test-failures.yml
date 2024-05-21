@@ -10,7 +10,31 @@ jobs:
   check_results_and_retry_if_needed:
     name: check-results-and-retry-if-needed
     runs-on: ubuntu-20.04
-    if:
     steps:
-      - name: No-op
-        run: true
+      - name: Get token for firebase-workflow-trigger
+        uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Wait 3 minutes for run to finish
+        run: |
+          sleep 180
+
+      - name: Install python deps
+        run: pip install -r scripts/gha/requirements.txt
+
+      - name: Run test failure retry script
+        run: |
+          python scripts/gha/retry_test_failures.py --token '${{ steps.generate-token.outputs.token }}' --run_id '${{ github.event.inputs.run_id }}'
