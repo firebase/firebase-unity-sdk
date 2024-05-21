@@ -626,8 +626,12 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True, remaining_r
     time.sleep(5)
     time_until_timeout -= 5
     if os.path.exists(log):
-      with open(log) as f:
-        text = f.read()
+      try:
+        with open(log, 'r', encoding='utf-8') as f:
+          text = f.read()
+      except UnicodeDecodeError:
+        with open(log, 'rb') as f:  # Open in binary mode
+          text = f.read().decode('utf-8', errors='replace') 
       test_finished = "All tests finished" in text
       if retry_on_license_check and "License updated successfully" in text:
         logging.info("License check caused assembly reload. Retrying tests.")
