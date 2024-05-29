@@ -641,7 +641,12 @@ jobs:
             --token ${{github.token}} \
             --actor ${{github.actor}} \
             --commit ${{needs.check_and_prepare.outputs.github_ref}} \
-            --run_id ${{github.run_id}} 
+            --run_id ${{github.run_id}}
+      - name: Print SDK package info
+        run: |
+          if [[ "${{ github.event.inputs.packaged_sdk_run_id }}" != "" ]]; then
+            echo "run_id: ${{ github.event.inputs.packaged_sdk_run_id }}"
+          end
       - name: Summarize results into GitHub log
         run: python scripts/gha/summarize_test_results.py --dir test_results --github_log
 
