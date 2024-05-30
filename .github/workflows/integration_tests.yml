@@ -546,6 +546,10 @@ jobs:
         run: |
           python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
             --output_path testapps/test-results-"${{ steps.matrix_info.outputs.info }}".log
+      - name: Print available devices
+        if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
+        run: |
+          xcrun xctrace list devices
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 120
         if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
