@@ -646,7 +646,7 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.packaged_sdk_run_id }}" != "" ]]; then
             echo "run_id: ${{ github.event.inputs.packaged_sdk_run_id }}"
-          end
+          fi
       - name: Summarize results into GitHub log
         run: python scripts/gha/summarize_test_results.py --dir test_results --github_log
 
