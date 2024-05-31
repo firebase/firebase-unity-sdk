@@ -169,6 +169,7 @@
       "testapp_path": "messaging/testapp",
       "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
+        "FirebaseFunctions.unitypackage",
         "FirebaseMessaging.unitypackage"
       ],
       "provision": "Firebase_Unity_Messaging_Test_App_Dev.mobileprovision",

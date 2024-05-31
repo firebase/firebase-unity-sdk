@@ -1,8 +1,10 @@
 namespace Firebase.Sample.Messaging {
   using Firebase.Extensions;
+  using Firebase.Functions;
   using Firebase.Messaging;
   using System;
   using System.Collections;
+  using System.Collections.Generic;
   using System.Text.RegularExpressions;
   using System.Threading.Tasks;
   using UnityEngine;
@@ -12,8 +14,6 @@ namespace Firebase.Sample.Messaging {
     private Firebase.Sample.AutomatedTestRunner testRunner;
 
     private const string TestTopic = "TestTopic";
-    private const string ServerKey = "REPLACE_WITH_YOUR_SERVER_KEY";
-    private const string FirebaseBackendUrl = "https://fcm.googleapis.com/fcm/send";
 
     private const string MessageFoo = "This is a test message";
     private const string MessageBar = "It contains some data";
@@ -22,14 +22,15 @@ namespace Firebase.Sample.Messaging {
 
     private const string MessageNotificationTitle = "JSON message!";
     private const string MessageNotificationBody = "This notification has a body!";
-    private const string JsonMessageNotification = "\"notification\":{\"title\":\"" +
-      MessageNotificationTitle + "\",\"body\":\"" + MessageNotificationBody + "\"}";
 
-    private const string PlaintextMessage = "data.foo=" + MessageFoo + "&data.bar=" + MessageBar;
-    private const string JsonMessageA = "{\"data\":{\"spam\":\"" + MessageSpam + "\", " +
-        "\"eggs\":\"" + MessageEggs + "\"}," + JsonMessageNotification + "}";
-    private const string JsonMessageB = "{\"data\":{\"foo\":\"" + MessageFoo + "\", " +
-        "\"bar\":\"" + MessageBar + "\"}," + JsonMessageNotification + "}";
+    private static readonly Dictionary<string, object> TokenMessageFields = new Dictionary<string, object> {
+      { "spam", MessageSpam },
+      { "eggs", MessageEggs }
+    };
+    private static readonly Dictionary<string, object> TopicMessageFields = new Dictionary<string, object> {
+      { "foo", MessageFoo },
+      { "bar", MessageBar }
+    };
 
     private string registrationToken;
     private FirebaseMessage lastReceivedMessage;
@@ -66,10 +67,6 @@ namespace Firebase.Sample.Messaging {
         // Disable these tests on desktop, as desktop uses a stub implementation.
 #if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
         TestGetRegistrationToken,
-#if !(UNITY_IOS || UNITY_TVOS)
-        // TODO(b/130674454) This test times out on iOS, disabling until fixed.
-        MakeTest(TestSendPlaintextMessageToDevice),
-#endif // !(UNITY_IOS || UNITY_TVOS)
         MakeTest(TestSendJsonMessageToDevice),
         MakeTest(TestSendJsonMessageToSubscribedTopic),
 #else  // (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
@@ -85,10 +82,6 @@ namespace Firebase.Sample.Messaging {
         // Disable these tests on desktop, as desktop uses a stub implementation.
 #if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
         "TestGetRegistrationToken",
-#if !(UNITY_IOS || UNITY_TVOS)
-        // TODO(b/130674454) This test times out on iOS, disabling until fixed.
-        "TestSendPlaintextMessageToDevice",
-#endif // !(UNITY_IOS || UNITY_TVOS)
         "TestSendJsonMessageToDevice",
         "TestSendJsonMessageToSubscribedTopic",
 #else  // #if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID)
@@ -165,51 +158,54 @@ namespace Firebase.Sample.Messaging {
       }
     }
 
-    // Sends a plaintext message to the server, setting this device as the addressee, waits until the
-    // app receives the message and verifies the contents are the same as were sent.
-    IEnumerator TestSendPlaintextMessageToDevice(TaskCompletionSource<string> tcs) {
-      ThrowIfMissingRegistrationToken();
-      SendPlaintextMessageToDeviceAsync(PlaintextMessage, registrationToken);
-      // TODO(b/65218400): check message id.
-      while (lastReceivedMessage == null) {
-        yield return new WaitForSeconds(0.5f);
-      }
-      ValidatePlaintextMessage(tcs, lastReceivedMessage);
-      lastReceivedMessage = null;
-    }
-
     // Sends a JSON message to the server, setting this device as the addressee, waits until the app
     // receives the message and verifies the contents are the same as were sent.
     IEnumerator TestSendJsonMessageToDevice(TaskCompletionSource<string> tcs) {
       ThrowIfMissingRegistrationToken();
-      SendJsonMessageToDeviceAsync(JsonMessageA, registrationToken);
+      bool failedToSend = false;
+      SendMessageToDeviceAsync(registrationToken).ContinueWithOnMainThread(t => {
+        if (t.IsFaulted) {
+          tcs.TrySetException(t.Exception);
+          failedToSend = true;
+        }
+      });
       // TODO(b/65218400): check message id.
-      while (lastReceivedMessage == null) {
+      while (lastReceivedMessage == null && !failedToSend) {
         yield return new WaitForSeconds(0.5f);
       }
-      ValidateJsonMessageA(tcs, lastReceivedMessage);
-      lastReceivedMessage = null;
+      if (lastReceivedMessage != null) {
+        ValidateJsonMessageA(tcs, lastReceivedMessage);
+        lastReceivedMessage = null;
+      }
     }
 
     // Sends a JSON message to the server, specifying a topic to which this device is subscribed,
     // waits until the app receives the message and verifies the contents are the same as were sent.
     IEnumerator TestSendJsonMessageToSubscribedTopic(TaskCompletionSource<string> tcs) {
       ThrowIfMissingRegistrationToken();
+      bool failedToSend = false;
       // Note: Ideally this would use a more unique topic, but topic creation and subscription
       // takes additional time, so instead this only subscribes during this one test, and doesn't
       // fully test unsubscribing.
       Firebase.Messaging.FirebaseMessaging.SubscribeAsync(TestTopic).ContinueWithOnMainThread(t => {
-        SendJsonMessageToTopicAsync(JsonMessageB, TestTopic);
+        SendMessageToTopicAsync(TestTopic).ContinueWithOnMainThread(t2 => {
+          if (t2.IsFaulted) {
+            tcs.TrySetException(t2.Exception);
+            failedToSend = true;
+          }
+        });
       });
       // TODO(b/65218400): check message id.
-      while (lastReceivedMessage == null) {
+      while (lastReceivedMessage == null && !failedToSend) {
         yield return new WaitForSeconds(0.5f);
       }
-      // Unsubscribe from the test topic, to make sure that other messages aren't received.
-      Firebase.Messaging.FirebaseMessaging.UnsubscribeAsync(TestTopic).ContinueWithOnMainThread(t => {
-        ValidateJsonMessageB(tcs, lastReceivedMessage);
-        lastReceivedMessage = null;
-      });
+      if (lastReceivedMessage != null) {
+        // Unsubscribe from the test topic, to make sure that other messages aren't received.
+        Firebase.Messaging.FirebaseMessaging.UnsubscribeAsync(TestTopic).ContinueWithOnMainThread(t => {
+          ValidateJsonMessageB(tcs, lastReceivedMessage);
+          lastReceivedMessage = null;
+        });
+      }
     }
 
     // Fake test (always passes immediately). Can be used on platforms with no other tests.
@@ -234,114 +230,32 @@ namespace Firebase.Sample.Messaging {
       yield break;
     }
 
-    // Sends the given message to targetDevice in plaintext format and gives back the message id iff
-    // the message was sent successfully.
-    Task<string> SendPlaintextMessageToDeviceAsync(string message, string targetDevice) {
-      var payload = "registration_id=" + targetDevice + "&" + message;
-      var request = CreateSendMessageRequest(payload);
-      // Though Firebase docs state that if content type is not specified, it defaults to plaintext,
-      // server actually returns an error without the following line. This likely has something to do
-      // with the way Unity formats the request.
-      request.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
-      return DeliverMessageAsync(request);
+    // Sends a message to the specified target device, using Cloud Functions.
+    // This relies on the sendMessage function that is defined in the C++ repo.
+    Task<HttpsCallableResult> SendMessageToDeviceAsync(string targetDevice) {
+      Dictionary<string, object> data = new Dictionary<string, object>();
+      data["sendTo"] = targetDevice;
+      data["isToken"] = true;
+      data["notificationTitle"] = MessageNotificationTitle;
+      data["notificationBody"] = MessageNotificationBody;
+      data["messageFields"] = TokenMessageFields;
+
+      var callable = FirebaseFunctions.DefaultInstance.GetHttpsCallable("sendMessage");
+      DebugLog("Calling the Cloud Function to send a targeted message");
+      return callable.CallAsync(data);
     }
 
-    // Sends the given message to targetDevice in JSON format and gives back the message id iff the
-    // message was sent successfully.
-    Task<string> SendJsonMessageToDeviceAsync(string message, string targetDevice) {
-      var payload = AddTargetToJsonMessage(message, targetDevice);
-      var request = CreateSendMessageRequest(payload);
-      request.SetRequestHeader("Content-Type", "application/json");
-      return DeliverMessageAsync(request);
-    }
+    Task<HttpsCallableResult> SendMessageToTopicAsync(string topic) {
+      Dictionary<string, object> data = new Dictionary<string, object>();
+      data["sendTo"] = topic;
+      data["isToken"] = false;
+      data["notificationTitle"] = MessageNotificationTitle;
+      data["notificationBody"] = MessageNotificationBody;
+      data["messageFields"] = TopicMessageFields;
 
-    // Sends the given message to the topic in JSON format and gives back the message id iff the
-    // message was sent successfully.
-    Task<string> SendJsonMessageToTopicAsync(string message, string topic) {
-      var payload = AddTargetToJsonMessage(message, "/topics/" + topic);
-      var request = CreateSendMessageRequest(payload);
-      request.SetRequestHeader("Content-Type", "application/json");
-      return DeliverMessageAsync(request);
-    }
-
-    // Inserts "to" field into the given JSON string.
-    string AddTargetToJsonMessage(string message, string target) {
-      return message.Insert(message.IndexOf('{') + 1, "\"to\":\"" + target + "\", ");
-    }
-
-    // Creates a POST request to FCM server with proper authentication.
-    UnityWebRequest CreateSendMessageRequest(string message) {
-      // UnityWebRequest.Post unavoidably applies URL encoding to the payload, which leads to Firebase
-      // server rejecting the resulting garbled JSON. Unfortunately, there is no way to turn it off.
-      // The workaround is instead to create a PUT request instead (which is not encoded) and then
-      // change method to POST.
-      // See this discussion for reference:
-      // https://forum.unity3d.com/threads/unitywebrequest-post-url-jsondata-sending-broken-json.414708/#post-2719900
-      var request = UnityWebRequest.Put(FirebaseBackendUrl, message);
-      request.method = "POST";
-
-      request.SetRequestHeader("Authorization", String.Format("key={0}", ServerKey));
-
-      return request;
-    }
-
-    Task<string> DeliverMessageAsync(UnityWebRequest request) {
-      var tcs = new TaskCompletionSource<string>();
-      StartCoroutine(DeliverMessageCoroutine(request, tcs));
-      return tcs.Task;
-    }
-
-    // Sends the given POST request and gives back the message id iff the message was sent
-    // successfully.
-    IEnumerator DeliverMessageCoroutine(UnityWebRequest request, TaskCompletionSource<string> tcs) {
-      yield return request.Send();
-
-#if UNITY_5
-    if (request.isError) {
-#else
-      // After Unity 2017, the UnityWebRequest API changed isError property to isNetworkError for
-      // system errors, while isHttpError and responseCode is used for server return code such as
-      // 404/Not Found and 500/Internal Server Error.
-      if (request.isNetworkError) {
-#endif
-        DebugLog("The server responded with an error: " + request.error);
-        tcs.TrySetException(new Exception(request.error));
-      }
-
-      DebugLog("Server response code: " + request.responseCode.ToString());
-      DebugLog("Server response contents: " + request.downloadHandler.text);
-
-      // Extract message ID from server response. Unfortunately, there are 3 possible response
-      // formats.
-      var messageIdCaptureGroup = "([0-9a-f:%]+)";
-      // JSON format
-      var messageIdMatch = Regex.Match(request.downloadHandler.text, "\"message_id\":\"" +
-          messageIdCaptureGroup + "\"");
-      // When sending to a topic, a different response format is used, try that.
-      if (!messageIdMatch.Success) {
-        messageIdMatch = Regex.Match(request.downloadHandler.text, "\"message_id\":" +
-          messageIdCaptureGroup);
-      }
-      if (!messageIdMatch.Success) {
-        // Try plaintext format
-        messageIdMatch = Regex.Match(request.downloadHandler.text, "id=" + messageIdCaptureGroup);
-      }
-      if (messageIdMatch.Success) {
-        tcs.TrySetResult(messageIdMatch.Groups[1].Value);
-      } else {
-        tcs.TrySetException(new Exception("Server response doesn't contain message id: " +
-              request.downloadHandler.text));
-      }
-    }
-
-    void ValidatePlaintextMessage(TaskCompletionSource<string> tcs, FirebaseMessage message) {
-      try {
-        ValidateMessageData(message, "foo", MessageFoo);
-        ValidateMessageData(message, "bar", MessageBar);
-        tcs.SetResult(message.MessageId);
-      } catch (Exception e) {
-        tcs.SetException(e);
-      }
+      var callable = FirebaseFunctions.DefaultInstance.GetHttpsCallable("sendMessage");
+      DebugLog("Calling the Cloud Function to send a topic message");
+      return callable.CallAsync(data);
     }
 
     void ValidateJsonMessageA(TaskCompletionSource<string> tcs, FirebaseMessage message) {
