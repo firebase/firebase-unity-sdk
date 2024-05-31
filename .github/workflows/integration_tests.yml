@@ -478,6 +478,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.test_matrix) }}
+    env:
+      xcodeVersion: "15.1"
     steps:
       - id: matrix_info
         shell: bash
@@ -495,6 +497,9 @@ jobs:
         timeout-minutes: 10
         shell: bash
         run:  pip install -r scripts/gha/requirements.txt
+      - name: setup Xcode version
+        if: runner.os == 'macOS'
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
       - name: Download Testapp artifacts
         uses: actions/download-artifact@v3
         with:
