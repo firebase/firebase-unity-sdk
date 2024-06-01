@@ -124,15 +124,6 @@ def main(argv):
   file_path = os.path.join(repo_dir, "dynamic_links", "testapp", "Assets", "Firebase", "Sample", CAPITALIZATIONS["dynamic_links"], "UIHandler.cs")
   _patch_file(file_path, "REPLACE_WITH_YOUR_URI_PREFIX", uri_prefix)
 
-  print("Attempting to patch Messaging server key and uri.")
-  server_key_path = os.path.join(secrets_dir, "messaging", "server_key.txt.gpg")
-  server_key = _decrypt(server_key_path, passphrase)
-  uri_path = os.path.join(secrets_dir, "messaging", "uri.txt.gpg")
-  uri = _decrypt(uri_path, passphrase)
-  file_path = os.path.join(repo_dir, "messaging", "testapp", "Assets", "Firebase", "Sample", CAPITALIZATIONS["messaging"], "UIHandlerAutomated.cs")
-  _patch_file(file_path, "REPLACE_WITH_YOUR_SERVER_KEY", server_key)
-  _patch_file(file_path, "REPLACE_WITH_YOUR_BACKEND_URL", uri)
-
   print("Attempting to patch Storage Bucket.")
   bucket_path = os.path.join(secrets_dir, "storage", "bucket.txt.gpg")
   bucket = _decrypt(bucket_path, passphrase)
