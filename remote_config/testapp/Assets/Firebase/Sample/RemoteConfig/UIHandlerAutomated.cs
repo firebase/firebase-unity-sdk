@@ -75,6 +75,8 @@ namespace Firebase.Sample.RemoteConfig {
     }
 
     Task TestAddOnConfigUpdateListener() {
+      // This test can sometimes take a bit longer than a minute, so increase the timeout.
+      testRunner.TestTimeoutSeconds = 120.0f;
       bool hasDefaultValue =
           FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_string").Source
           == ValueSource.DefaultValue;
