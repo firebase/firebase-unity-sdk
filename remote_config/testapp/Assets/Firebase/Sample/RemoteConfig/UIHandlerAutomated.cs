@@ -17,8 +17,8 @@ namespace Firebase.Sample.RemoteConfig {
         TestDisplayAllKeys,
 // Skip the Realtime RC test on desktop as it is not yet supported.
 #if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) && !UNITY_EDITOR
-        //TestAddOnConfigUpdateListener,
-        //TestAddAndRemoveConfigUpdateListener,
+        TestAddOnConfigUpdateListener,
+        TestAddAndRemoveConfigUpdateListener,
 #endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
         TestFetchData,
       };
@@ -76,7 +76,7 @@ namespace Firebase.Sample.RemoteConfig {
 
     Task TestAddOnConfigUpdateListener() {
       // This test can sometimes take a bit longer than a minute, so increase the timeout.
-      testRunner.TestTimeoutSeconds = 120.0f;
+      testRunner.TestTimeoutSeconds = 300.0f;
       bool hasDefaultValue =
           FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_string").Source
           == ValueSource.DefaultValue;
