@@ -142,8 +142,8 @@ TEST_DEVICES = {
                    "model=iphone8,version=16.6",
                    "model=ipad10,version=16.6",
                  ]},
-  "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Plus", "version": "17.4"},
-  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Plus", "version": "17.4"},
+  "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Pro Max", "version": "17.0.1"},
+  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Pro Max", "version": "17.0.1"},
   "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Plus", "version": "17.4"},
   "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "16.1"},
 }
