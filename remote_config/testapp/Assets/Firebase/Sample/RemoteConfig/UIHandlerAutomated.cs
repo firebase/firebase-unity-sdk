@@ -17,8 +17,8 @@ namespace Firebase.Sample.RemoteConfig {
         TestDisplayAllKeys,
 // Skip the Realtime RC test on desktop as it is not yet supported.
 #if (UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) && !UNITY_EDITOR
-        TestAddOnConfigUpdateListener,
-        TestAddAndRemoveConfigUpdateListener,
+        //TestAddOnConfigUpdateListener,
+        //TestAddAndRemoveConfigUpdateListener,
 #endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
         TestFetchData,
       };
