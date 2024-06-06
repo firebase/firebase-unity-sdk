@@ -13,6 +13,7 @@ namespace Firebase.Sample.RemoteConfig {
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       Func<Task>[] tests = {
+        TestSetConfigSettings,
         TestDisplayData,
         TestDisplayAllKeys,
 // Skip the Realtime RC test on desktop as it is not yet supported.
@@ -48,6 +49,13 @@ namespace Firebase.Sample.RemoteConfig {
       }
     }
 
+    Task TestSetConfigSettings() {
+      var configSettings = new Firebase.RemoteConfig.ConfigSettings();
+      configSettings.FetchTimeoutInMilliseconds = 30 * 1000;
+      configSettings.MinimumFetchIntervalInMilliseconds = 0;
+      return FirebaseRemoteConfig.DefaultInstance.SetConfigSettingsAsync(configSettings);
+    }
+
     Task TestDisplayData() {
       DisplayData();
       return Task.FromResult(true);
@@ -75,8 +83,6 @@ namespace Firebase.Sample.RemoteConfig {
     }
 
     Task TestAddOnConfigUpdateListener() {
-      // This test can sometimes take a bit longer than a minute, so increase the timeout.
-      testRunner.TestTimeoutSeconds = 300.0f;
       bool hasDefaultValue =
           FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_string").Source
           == ValueSource.DefaultValue;
