@@ -291,6 +291,10 @@ class ParameterCopy : private firebase::analytics::Parameter {
   }
 %}
 
+// Mark these as internal, so that we can do the conversion of types manually
+%rename(InitiateOnDeviceConversionMeasurementWithHashedEmailAddressInternal) firebase::analytics::InitiateOnDeviceConversionMeasurementWithHashedEmailAddress;
+%rename(InitiateOnDeviceConversionMeasurementWithHashedPhoneNumberInternal) firebase::analytics::InitiateOnDeviceConversionMeasurementWithHashedPhoneNumber;
+
 // GetSessionId returns Future<long long> in SWIG.
 %include "app/src/swig/future.i"
 %SWIG_FUTURE(Future_LongLong, long, internal, long long, FirebaseException)
@@ -336,6 +340,26 @@ namespace analytics {
       consentSettingsMap[kv.Key] = kv.Value;
     }
     SetConsentInternal(consentSettingsMap);
+  }
+
+  /// Initiates on-device conversion measurement given a sha256-hashed user email address. 
+  /// Requires dependency GoogleAppMeasurementOnDeviceConversion to be linked in, otherwise it is
+  /// a no-op.
+  /// @param hashedEmailAddress User email address as a UTF8-encoded string normalized and 
+  ///   hashed according to the instructions at 
+  ///   https://firebase.google.com/docs/tutorials/ads-ios-on-device-measurement/step-3.
+  public static void InitiateOnDeviceConversionMeasurementWithHashedEmailAddress(byte[] hashedEmailAddress) {
+    InitiateOnDeviceConversionMeasurementWithHashedEmailAddressInternal(new CharVector(hashedEmailAddress));
+  }
+
+  /// Initiates on-device conversion measurement given a sha256-hashed phone number in E.164 
+  /// format. Requires dependency GoogleAppMeasurementOnDeviceConversion to be linked in, 
+  /// otherwise it is a no-op.
+  /// @param hashedPhoneNumber UTF8-encoded user phone number in E.164 format and then hashed 
+  ///   according to the instructions at 
+  ///   https://firebase.google.com/docs/tutorials/ads-ios-on-device-measurement/step-3.
+  public static void InitiateOnDeviceConversionMeasurementWithHashedPhoneNumber(byte[] hashedPhoneNumber) {
+    InitiateOnDeviceConversionMeasurementWithHashedPhoneNumberInternal(new CharVector(hashedPhoneNumber));
   }
 %}
 
