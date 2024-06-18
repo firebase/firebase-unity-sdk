@@ -71,6 +71,12 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Analytics (iOS): Add support for
+      `InitiateOnDeviceConversionMeasurementWithHashedEmailAddress` and
+      `InitiateOnDeviceConversionMeasurementWithHashedPhoneNumber`.
+
 ### 12.0.0
 - Changes
     - General: Update to Firebase C++ SDK version 12.0.0.
