@@ -555,6 +555,25 @@ jobs:
         if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
         run: |
           xcrun xctrace list devices
+      - name: Create keychain (macOS Simulator)
+        if: ${{ contains('iOS,tvOS', matrix.platform) && matrix.device_type == 'virtual'}}
+        shell: bash
+        run: |
+          echo "Creating temporary keychain"
+          # Create a local keychain on Mac:
+          # Clean up previous temp keychain, if any.
+          security delete-keychain tmp-keychain 2> /dev/null || true
+          # Create temp keychain file and unlock it.
+          # (Avoid passing in -p on command line by using interactive mode.)
+          # Also set it to default settings so there is no unlock timeout.
+          security -i <<EOF
+          create-keychain -p ${{ secrets.TEST_SECRET }} tmp-keychain
+          set-keychain-settings tmp-keychain
+          unlock-keychain -p ${{ secrets.TEST_SECRET }} tmp-keychain
+          EOF
+          # Change the keychain list and default keychain to the temp keychain.
+          security list-keychains -d user -s tmp-keychain
+          security default-keychain -s tmp-keychain
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 120
         if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
@@ -565,6 +584,15 @@ jobs:
             --android_device "${{ matrix.test_device }}" \
             --logfile_name ""${{ steps.matrix_info.outputs.info }}"" \
             --ci
+      - name: Delete keychain (macOS Simulator)
+        if: ${{ always() && contains('iOS,tvOS', matrix.platform) && matrix.device_type == 'virtual' }}
+        shell: bash
+        run: |
+          # Remove the local keychain on Mac:
+          # Set back to the default login keychain.
+          security list-keychains -d user -s login.keychain
+          # Delete the temp keychain, if it exists.
+          security delete-keychain tmp-keychain || true
       - name: Prepare results summary artifact
         if: ${{ !cancelled() }}
         shell: bash

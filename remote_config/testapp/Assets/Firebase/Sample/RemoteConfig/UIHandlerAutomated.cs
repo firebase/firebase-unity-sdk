@@ -4,6 +4,7 @@ namespace Firebase.Sample.RemoteConfig {
   using System;
   using System.Linq;
   using System.Threading.Tasks;
+  using UnityEngine;
 
   // An automated version of the UIHandler that runs tests on Firebase Remote Config.
   public class UIHandlerAutomated : UIHandler {
@@ -13,6 +14,7 @@ namespace Firebase.Sample.RemoteConfig {
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       Func<Task>[] tests = {
+        TestSetConfigSettings,
         TestDisplayData,
         TestDisplayAllKeys,
 // Skip the Realtime RC test on desktop as it is not yet supported.
@@ -46,6 +48,13 @@ namespace Firebase.Sample.RemoteConfig {
                                           testRunner.CurrentTestDescription, value1, value2,
                                           message));
       }
+    }
+
+    Task TestSetConfigSettings() {
+      var configSettings = new Firebase.RemoteConfig.ConfigSettings();
+      configSettings.FetchTimeoutInMilliseconds = 30 * 1000;
+      configSettings.MinimumFetchIntervalInMilliseconds = 0;
+      return FirebaseRemoteConfig.DefaultInstance.SetConfigSettingsAsync(configSettings);
     }
 
     Task TestDisplayData() {
@@ -87,6 +96,13 @@ namespace Firebase.Sample.RemoteConfig {
         return Task.FromResult(true);
       }
 
+      if (SystemInfo.graphicsDeviceName.ToLower().Contains("simulator")) {
+        DebugLog("WARNING: iOS simulator can frequently take a significant amount "
+          + "of time to do the fetch, so this is disabled by default. To test, "
+          + "modify the scripts.");
+        return Task.FromResult(true);
+      }
+
       TaskCompletionSource<bool> test_success = new TaskCompletionSource<bool>();
       EventHandler<ConfigUpdateEventArgs> myHandler =
           (object sender, ConfigUpdateEventArgs args) => {
@@ -124,6 +140,13 @@ namespace Firebase.Sample.RemoteConfig {
     }
 
     Task TestFetchData() {
+      if (SystemInfo.graphicsDeviceName.ToLower().Contains("simulator")) {
+        DebugLog("WARNING: iOS simulator can frequently take a significant amount "
+          + "of time to do the fetch, so this is disabled by default. To test, "
+          + "modify the scripts.");
+        return Task.FromResult(true);
+      }
+
       // Note: FetchDataAsync calls both Fetch and Activate.
       return FetchDataAsync().ContinueWithOnMainThread((_) => {
         // Verify that RemoteConfig now has the expected values.
