@@ -71,11 +71,21 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 12.1.0
 - Changes
+    - General: Update to Firebase C++ SDK version 12.1.0.
+    - General (Android): Update to Firebase Android BoM version 33.1.1.
+    - General (iOS): Update to Firebase Cocoapods version 10.28.1.
+    - General: Update to EDM4U version 1.2.181.
     - Analytics (iOS): Add support for
       `InitiateOnDeviceConversionMeasurementWithHashedEmailAddress` and
       `InitiateOnDeviceConversionMeasurementWithHashedPhoneNumber`.
+    - Messaging (Android): Fixed a potential race condition on receiving
+      messages after cleanup.
+      ([#1030](https://github.com/firebase/firebase-unity-sdk/issues/1030)).
+    - Messaging (iOS): Fixed an issue with notifications being lost if they
+      were received before Firebase Messaging was initialized.
+      ([#377](https://github.com/firebase/firebase-unity-sdk/issues/377)).
 
 ### 12.0.0
 - Changes
