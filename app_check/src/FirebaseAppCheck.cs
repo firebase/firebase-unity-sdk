@@ -20,6 +20,14 @@ using System.Collections.Generic;
 namespace Firebase.AppCheck {
 
 /// @brief Firebase App Check object.
+///
+/// App Check helps protect your API resources from abuse by preventing
+/// unauthorized clients from accessing your backend resources.
+///
+/// With App Check, devices running your app will use an AppCheckProvider that
+/// attests to one or both of the following:
+/// * Requests originate from your authentic app
+/// * Requests originate from an authentic, untampered device
 public sealed class FirebaseAppCheck {
   // The C++ object that this wraps.
   private AppCheckInternal appCheckInternal;
