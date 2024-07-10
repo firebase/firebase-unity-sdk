@@ -61,7 +61,7 @@ public sealed class FirebaseAppCheck {
   }
 
   /// Gets the instance of FirebaseAppCheck associated with the default
-  /// {@link FirebaseApp} instance.
+  /// FirebaseApp instance.
   public static FirebaseAppCheck DefaultInstance {
     get {
       return GetInstance(FirebaseApp.DefaultInstance);
@@ -69,7 +69,7 @@ public sealed class FirebaseAppCheck {
   }
 
   /// Gets the instance of FirebaseAppCheck associated with the given
-  /// {@link FirebaseApp} instance.
+  /// FirebaseApp instance.
   public static FirebaseAppCheck GetInstance(FirebaseApp app) {
     FirebaseAppCheck result;
     if (!appCheckMap.TryGetValue(app.Name, out result)) {
@@ -80,18 +80,14 @@ public sealed class FirebaseAppCheck {
     return result;
   }
 
-  /// Installs the given {@link AppCheckProviderFactory}, overwriting any that
-  /// were previously associated with this {@code FirebaseAppCheck} instance.
-  /// Any {@link AppCheckTokenListener}s attached to this
-  /// {@code FirebaseAppCheck} instance will be transferred from existing
-  /// factories to the newly installed one.
+  /// Installs the given IAppCheckProviderFactory, overwriting any that
+  /// were previously associated with this FirebaseAppCheck instance.
   ///
-  /// <p>Automatic token refreshing will only occur if the global {@code
-  /// isDataCollectionDefaultEnabled} flag is set to true. To allow automatic
-  /// token refreshing for Firebase App Check without changing the {@code
-  /// isDataCollectionDefaultEnabled} flag for other Firebase SDKs, call
-  /// {@link #setTokenAutoRefreshEnabled(bool)} after installing the {@code
-  /// factory}.
+  /// Automatic token refreshing will only occur if the global
+  /// isDataCollectionDefaultEnabled flag is set to true. To allow automatic
+  /// token refreshing for Firebase App Check without changing the
+  /// isDataCollectionDefaultEnabled flag for other Firebase SDKs, call
+  /// SetTokenAutoRefreshEnabled(bool) after installing the factory.
   ///
   /// This method should be called before initializing the Firebase App.
   public static void SetAppCheckProviderFactory(IAppCheckProviderFactory factory) {
