@@ -460,7 +460,7 @@ def main(argv):
             logs_zip = zipfile.ZipFile(logs_compressed_data)
             m = get_message_from_github_log(
               logs_zip,
-              r'build-20.*/.*Fetch prebuilt.*\.txt',
+              r'summarize-results/.*Print SDK package info.*\.txt',
               r'run_id: ([0-9]+)$')
             if m:
               packaging_run = m.group(1)

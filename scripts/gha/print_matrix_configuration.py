@@ -56,7 +56,7 @@ PLAYMODE = "Playmode"
 
 # GitHub Runner
 WINDOWS_RUNNER = "windows-latest"
-MACOS_RUNNER = "macos-latest"
+MACOS_RUNNER = "macos-13"
 LINUX_RUNNER = "ubuntu-latest"
 
 PARAMETERS = {
@@ -134,7 +134,6 @@ TEST_DEVICES = {
                    # Slightly different OS versions because of limited FTL selection.
                    "model=iphone13pro,version=15.7",
                    "model=iphone8,version=15.7",
-                   "model=ipadmini4,version=15.4",
                  ]},
   "ios_latest": {"platform": IOS, "type": "real",
                  "device": [
@@ -143,9 +142,9 @@ TEST_DEVICES = {
                    "model=iphone8,version=16.6",
                    "model=ipad10,version=16.6",
                  ]},
-  "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 8", "version": "15.2"},
-  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "16.1"},
-  "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 12", "version": "16.2"},
+  "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Pro Max", "version": "17.0.1"},
+  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Pro Max", "version": "17.2"},
+  "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Plus", "version": "17.4"},
   "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "16.1"},
 }
 
@@ -267,6 +266,11 @@ def get_testapp_build_matrix(matrix_type, unity_versions, platforms, build_os, i
     platform = li[1]
     os = li[2] if li[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
 
+    # TODO: Remove this when we can get it working on GHA again
+    # Skip the MacOS + Android combo, because it has been having configuration issues on the GHA machines
+    if platform==ANDROID and os==MACOS_RUNNER:
+      continue
+
     if platform in [IOS, TVOS]:
       # for iOS, tvOS platforms, exclude non macOS build_os
       if os==MACOS_RUNNER:
@@ -329,6 +333,11 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
     unity_version = li[0]
     platform = li[1]
     build_os = li[2] if li[2] else (MACOS_RUNNER if (platform in [IOS, TVOS]) else WINDOWS_RUNNER)
+
+    # TODO: Remove this when we can get it working on GHA again
+    # Skip the MacOS + Android combo, because it has been having configuration issues on the GHA machines
+    if platform==ANDROID and build_os==MACOS_RUNNER:
+      continue
 
     if platform in [WINDOWS, MACOS, LINUX]:
       test_os = _get_test_os(platform)

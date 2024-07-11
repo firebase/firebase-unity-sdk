@@ -59,17 +59,7 @@ namespace Firebase.Auth {
 ///     - The operating system validates the phone number without having to
 ///       send an SMS. @ref PhoneAuthCredential is automatically created and
 ///       passed to the app via @ref VerificationCompleted.
-///
-/// Note: Both @ref VerificationCompleted_DEPRECATED and
-/// @ref VerificationCompleted will be triggered upon completion. Developer
-/// should only use only one of them to prevent duplicated event handling.
 public sealed class PhoneAuthProvider : global::System.IDisposable {
-  /// @deprecated This is a deprecated delegate. Please use @ref
-  /// VerificationCompleted instead.
-  //
-  /// Callback used when phone number auto-verification succeeded.
-  [System.Obsolete("Please use `VerificationCompleted(PhoneAuthCredential)` instead", false)]
-  public delegate void VerificationCompleted_DEPRECATED(Credential credential);
   /// Callback used when phone number auto-verification succeeded.
   public delegate void VerificationCompleted(PhoneAuthCredential credential);
   /// Callback used when phone number verification fails.
@@ -84,7 +74,6 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
 
   // Class to hold the delegates the user provides to the verification flow.
   private class PhoneAuthDelegates {
-    public VerificationCompleted_DEPRECATED verificationCompleted_DEPRECATED;
     public VerificationCompleted verificationCompleted;
     public VerificationFailed verificationFailed;
     public CodeSent codeSent;
@@ -102,14 +91,12 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   /// when the C++ library indicates a callback.
   ///
   /// @return The unique identifier for the cached callbacks.
-  private static int SaveCallbacks(VerificationCompleted_DEPRECATED verificationCompleted_DEPRECATED,
-                                   VerificationCompleted verificationCompleted,
+  private static int SaveCallbacks(VerificationCompleted verificationCompleted,
                                    VerificationFailed verificationFailed,
                                    CodeSent codeSent,
                                    CodeAutoRetrievalTimeOut timeOut) {
     int uid = uidGenerator++;
     var delegates = new PhoneAuthDelegates {
-      verificationCompleted_DEPRECATED = verificationCompleted_DEPRECATED,
       verificationCompleted = verificationCompleted,
       verificationFailed = verificationFailed,
       codeSent = codeSent,
@@ -119,23 +106,6 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
       authCallbacks[uid] = delegates;
     }
     return uid;
-  }
-
-  [MonoPInvokeCallback(typeof(PhoneAuthProviderInternal.VerificationCompletedDelegate_DEPRECATED))]
-  private static void VerificationCompletedHandler_DEPRECATED(int callbackId,
-                                                   System.IntPtr credential) {
-    ExceptionAggregator.Wrap(() => {
-        Credential c = new Credential(credential, true);
-        lock (authCallbacks) {
-          PhoneAuthDelegates callbacks;
-          if (authCallbacks.TryGetValue(callbackId, out callbacks) &&
-              callbacks.verificationCompleted_DEPRECATED != null) {
-            callbacks.verificationCompleted_DEPRECATED(c);
-          } else {
-            c.Dispose();
-          }
-        }
-      });
   }
 
   [MonoPInvokeCallback(typeof(PhoneAuthProviderInternal.VerificationCompletedDelegate))]
@@ -197,10 +167,6 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
       });
   }
 
-  private static PhoneAuthProviderInternal.VerificationCompletedDelegate_DEPRECATED
-      verificationCompletedDelegate_DEPRECATED =
-          new PhoneAuthProviderInternal.VerificationCompletedDelegate_DEPRECATED(
-              VerificationCompletedHandler_DEPRECATED);
   private static PhoneAuthProviderInternal.VerificationCompletedDelegate
       verificationCompletedDelegate =
           new PhoneAuthProviderInternal.VerificationCompletedDelegate(
@@ -222,193 +188,12 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
   private static void InitializeCallbacks() {
     if (!callbacksInitialized) {
       callbacksInitialized = true;
-      PhoneAuthProviderInternal.SetCallbacks(verificationCompletedDelegate_DEPRECATED,
-                                             verificationCompletedDelegate,
+      PhoneAuthProviderInternal.SetCallbacks(verificationCompletedDelegate,
                                              verificationFailedDelegate,
                                              codeSentDelegate,
                                              timeOutDelegate);
     }
   }
-
-  /// @deprecated This is a deprecated method. Please use @ref
-  /// VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed, CodeSent,
-  /// CodeAutoRetrievalTimeOut) instead.
-  ///
-  /// Start the phone number authentication operation.
-  ///
-  /// @note  The verificationCompleted callback is never invoked on iOS since auto-validation is
-  ///    not supported on that platform.
-  ///
-  /// @param[in] phoneNumber The phone number identifier supplied by the user.
-  ///    Its format is normalized on the server, so it can be in any format
-  ///    here.
-  /// @param[in] autoVerifyTimeOutMs The time out for SMS auto retrieval, in
-  ///    miliseconds. Currently SMS auto retrieval is only supported on Android.
-  ///    If 0, do not do SMS auto retrieval.
-  ///    If positive, try to auto-retrieve the SMS verification code.
-  ///    When the time out is exceeded, `codeAutoRetrievalTimeOut`
-  ///    is called.
-  /// @param[in] forceResendingToken If NULL, assume this is a new phone
-  ///    number to verify. If not-NULL, bypass the verification session deduping
-  ///    and force resending a new SMS.
-  ///    This token is received by the `CodeSent` callback.
-  ///    This should only be used when the user presses a Resend SMS button.
-  /// @param[in] verificationCompleted Phone number auto-verification succeeded.
-  ///    Called when auto-sms-retrieval or instant validation succeeds.
-  ///    Provided with the completed credential.
-  /// @param[in] verificationFailed Phone number verification failed with an
-  ///    error. For example, quota exceeded or unknown phone number format.
-  ///    Provided with a description of the error.
-  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed, CodeSent, CodeAutoRetrievalTimeOut)` instead", false)]
-  public void VerifyPhoneNumber(string phoneNumber, uint autoVerifyTimeOutMs,
-                                ForceResendingToken forceResendingToken,
-                                VerificationCompleted_DEPRECATED verificationCompleted,
-                                VerificationFailed verificationFailed) {
-    VerifyPhoneNumber(phoneNumber, autoVerifyTimeOutMs, forceResendingToken,
-                      verificationCompleted, verificationFailed,
-                      null, null);
-  }
-
-  /// @deprecated This is a deprecated method. Please use @ref
-  /// VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed, CodeSent,
-  /// CodeAutoRetrievalTimeOut) instead.
-  ///
-  /// Start the phone number authentication operation.
-  ///
-  /// @note  The verificationCompleted callback is never invoked on iOS since auto-validation is
-  ///    not supported on that platform.
-  ///
-  /// @param[in] phoneNumber The phone number identifier supplied by the user.
-  ///    Its format is normalized on the server, so it can be in any format
-  ///    here.
-  /// @param[in] autoVerifyTimeOutMs The time out for SMS auto retrieval, in
-  ///    miliseconds. Currently SMS auto retrieval is only supported on Android.
-  ///    If 0, do not do SMS auto retrieval.
-  ///    If positive, try to auto-retrieve the SMS verification code.
-  ///    When the time out is exceeded, `codeAutoRetrievalTimeOut`
-  ///    is called.
-  /// @param[in] forceResendingToken If NULL, assume this is a new phone
-  ///    number to verify. If not-NULL, bypass the verification session deduping
-  ///    and force resending a new SMS.
-  ///    This token is received by the `CodeSent` callback.
-  ///    This should only be used when the user presses a Resend SMS button.
-  /// @param[in] verificationCompleted Phone number auto-verification succeeded.
-  ///    Called when auto-sms-retrieval or instant validation succeeds.
-  ///    Provided with the completed credential.
-  /// @param[in] verificationFailed Phone number verification failed with an
-  ///    error. For example, quota exceeded or unknown phone number format.
-  ///    Provided with a description of the error.
-  /// @param[in] codeSent SMS message with verification code sent to phone
-  ///    number. Provided with the verification id to pass along to
-  ///    `GetCredential` along with the sent code, and a token to use if
-  ///    the user requests another SMS message be sent.
-  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed, CodeSent, CodeAutoRetrievalTimeOut)` instead", false)]
-  public void VerifyPhoneNumber(string phoneNumber, uint autoVerifyTimeOutMs,
-                                ForceResendingToken forceResendingToken,
-                                VerificationCompleted_DEPRECATED verificationCompleted,
-                                VerificationFailed verificationFailed,
-                                CodeSent codeSent) {
-    VerifyPhoneNumber(phoneNumber, autoVerifyTimeOutMs, forceResendingToken,
-                      verificationCompleted, verificationFailed,
-                      codeSent, null);
-  }
-
-  /// @deprecated This is a deprecated method. Please use @ref
-  /// VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed, CodeSent,
-  /// CodeAutoRetrievalTimeOut) instead.
-  ///
-  /// Start the phone number authentication operation.
-  ///
-  /// @note  The verificationCompleted callback is never invoked on iOS since auto-validation is
-  ///    not supported on that platform.
-  ///
-  /// @param[in] phoneNumber The phone number identifier supplied by the user.
-  ///    Its format is normalized on the server, so it can be in any format
-  ///    here.
-  /// @param[in] autoVerifyTimeOutMs The time out for SMS auto retrieval, in
-  ///    miliseconds. Currently SMS auto retrieval is only supported on Android.
-  ///    If 0, do not do SMS auto retrieval.
-  ///    If positive, try to auto-retrieve the SMS verification code.
-  ///    When the time out is exceeded, `codeAutoRetrievalTimeOut`
-  ///    is called.
-  /// @param[in] forceResendingToken If NULL, assume this is a new phone
-  ///    number to verify. If not-NULL, bypass the verification session deduping
-  ///    and force resending a new SMS.
-  ///    This token is received by the `CodeSent` callback.
-  ///    This should only be used when the user presses a Resend SMS button.
-  /// @param[in] verificationCompleted Phone number auto-verification succeeded.
-  ///    Called when auto-sms-retrieval or instant validation succeeds.
-  ///    Provided with the completed credential.
-  /// @param[in] verificationFailed Phone number verification failed with an
-  ///    error. For example, quota exceeded or unknown phone number format.
-  ///    Provided with a description of the error.
-  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed, CodeSent, CodeAutoRetrievalTimeOut)` instead", false)]
-  public void VerifyPhoneNumber(string phoneNumber, uint autoVerifyTimeOutMs,
-                                ForceResendingToken forceResendingToken,
-                                VerificationCompleted_DEPRECATED verificationCompleted,
-                                VerificationFailed verificationFailed,
-                                CodeAutoRetrievalTimeOut codeAutoRetrievalTimeOut) {
-    VerifyPhoneNumber(phoneNumber, autoVerifyTimeOutMs, forceResendingToken,
-                      verificationCompleted, verificationFailed,
-                      null, codeAutoRetrievalTimeOut);
-  }
-
-  /// @deprecated This is a deprecated method. Please use @ref
-  /// VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed, CodeSent,
-  /// CodeAutoRetrievalTimeOut) instead.
-  ///
-  /// Start the phone number authentication operation.
-  ///
-  /// @note  On iOS the verificationCompleted callback is never invoked and the
-  ///    codeAutoRetrievalTimeOut callback is invoked immediately since auto-validation is not
-  ///    supported on that platform.
-  ///
-  /// @param[in] phoneNumber The phone number identifier supplied by the user.
-  ///    Its format is normalized on the server, so it can be in any format
-  ///    here.
-  /// @param[in] autoVerifyTimeOutMs The time out for SMS auto retrieval, in
-  ///    miliseconds. Currently SMS auto retrieval is only supported on Android.
-  ///    If 0, do not do SMS auto retrieval.
-  ///    If positive, try to auto-retrieve the SMS verification code.
-  ///    When the time out is exceeded, `codeAutoRetrievalTimeOut`
-  ///    is called.
-  /// @param[in] forceResendingToken If NULL, assume this is a new phone
-  ///    number to verify. If not-NULL, bypass the verification session deduping
-  ///    and force resending a new SMS.
-  ///    This token is received by the `CodeSent` callback.
-  ///    This should only be used when the user presses a Resend SMS button.
-  /// @param[in] verificationCompleted Phone number auto-verification succeeded.
-  ///    Called when auto-sms-retrieval or instant validation succeeds.
-  ///    Provided with the completed credential.
-  /// @param[in] verificationFailed Phone number verification failed with an
-  ///    error. For example, quota exceeded or unknown phone number format.
-  ///    Provided with a description of the error.
-  /// @param[in] codeSent SMS message with verification code sent to phone
-  ///    number. Provided with the verification id to pass along to
-  ///    `GetCredential` along with the sent code, and a token to use if
-  ///    the user requests another SMS message be sent.
-  /// @param[in] codeAutoRetrievalTimeOut The timeout specified has expired.
-  ///    Provided with the verification id for the transaction that timed out.
-  [System.Obsolete("Please use `VerifyPhoneNumber(PhoneAuthOptions, VerificationCompleted, VerificationFailed, CodeSent, CodeAutoRetrievalTimeOut)` instead", false)]
-  public void VerifyPhoneNumber(string phoneNumber, uint autoVerifyTimeOutMs,
-                                ForceResendingToken forceResendingToken,
-                                VerificationCompleted_DEPRECATED verificationCompleted,
-                                VerificationFailed verificationFailed,
-                                CodeSent codeSent,
-                                CodeAutoRetrievalTimeOut codeAutoRetrievalTimeOut) {
-    int callbackId = SaveCallbacks(
-        verificationCompleted_DEPRECATED: verificationCompleted,
-        verificationCompleted: null,
-        verificationFailed: verificationFailed,
-        codeSent: codeSent,
-        timeOut: codeAutoRetrievalTimeOut);
-    System.IntPtr listener = InternalProvider.VerifyPhoneNumberInternal(
-        phoneNumber, autoVerifyTimeOutMs, forceResendingToken, callbackId);
-    lock (cppListeners) {
-      cppListeners.Add(callbackId, listener);
-    }
-  }
-
 
   /// Start the phone number authentication operation.
   ///
@@ -437,7 +222,6 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
     CodeSent codeSent,
     CodeAutoRetrievalTimeOut codeAutoRetrievalTimeOut) {
     int callbackId = SaveCallbacks(
-        verificationCompleted_DEPRECATED: null,
         verificationCompleted: verificationCompleted,
         verificationFailed: verificationFailed,
         codeSent: codeSent,
@@ -488,23 +272,6 @@ public sealed class PhoneAuthProvider : global::System.IDisposable {
       }
       return provider;
     }
-  }
-
-  /// @deprecated This is a deprecated method. Please use @ref GetCredential instead.
-  ///
-  /// Generate a credential for the given phone number.
-  ///
-  /// @param[in] verification_id The id returned when sending the verification
-  ///    code. Sent to the caller via @ref Listener::OnCodeSent.
-  /// @param[in] verification_code The verification code supplied by the user,
-  ///    most likely by a GUI where the user manually enters the code
-  ///    received in the SMS sent by @ref VerifyPhoneNumber.
-  ///
-  /// @returns New Credential.
-  [System.Obsolete("Please use `PhoneAuthCredential GetCredential(string, string)` instead", false)]
-  public Credential GetCredential_DEPRECATED(string verificationId,
-                                  string verificationCode) {
-    return InternalProvider.GetCredential_DEPRECATED(verificationId, verificationCode);
   }
 
   /// Generate a credential for the given phone number.

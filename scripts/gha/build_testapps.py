@@ -626,8 +626,12 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True, remaining_r
     time.sleep(5)
     time_until_timeout -= 5
     if os.path.exists(log):
-      with open(log) as f:
-        text = f.read()
+      try:
+        with open(log, 'r', encoding='utf-8') as f:
+          text = f.read()
+      except UnicodeDecodeError:
+        with open(log, 'rb') as f:  # Open in binary mode
+          text = f.read().decode('utf-8', errors='replace') 
       test_finished = "All tests finished" in text
       if retry_on_license_check and "License updated successfully" in text:
         logging.info("License check caused assembly reload. Retrying tests.")
@@ -821,6 +825,7 @@ def _switch_to_latest_runtime(dir_helper, arg_builder):
   dir_helper.copy_editor_script("RuntimeSwitcher.cs")
   arg_builder.set_log_file(dir_helper.make_log_path("switch_runtime"))
   _run(arg_builder.get_args_for_method("RuntimeSwitcher.SwitchToLatest"))
+  time.sleep(0.5)
 
 
 def _create_unity_project(dir_helper):
@@ -845,6 +850,7 @@ def _import_unity_plugins(dir_helper, arg_builder):
     name = os.path.splitext(os.path.basename(plugin_path))[0]
     arg_builder.set_log_file(dir_helper.make_log_path("import_" + name))
     _run(arg_builder.get_args_for_import(plugin_path))
+    time.sleep(0.5)
 
 
 # Unity Package Manager is Unity's newer style of packaging.
@@ -861,6 +867,7 @@ def _import_upm_packages(dir_helper, arg_builder):
         arg_builder.get_args_for_method(
             method="PackageImporter.Import",
             method_args=["-PackageImporter.package", package]))
+    time.sleep(0.5)
 
 
 # In an automated context with batchmode, it was found that these
@@ -877,6 +884,7 @@ def _enable_firebase_assemblies(dir_helper, arg_builder):
           method_args=[
               "-PluginToggler.plugins",
               "Firebase.Editor.dll,Google.VersionHandlerImpl"]))
+  time.sleep(0.5)
 
 
 def _edm4u_update(dir_helper, arg_builder):
@@ -884,6 +892,7 @@ def _edm4u_update(dir_helper, arg_builder):
   arg_builder.set_log_file(dir_helper.make_log_path("versionhandler_update"))
   logging.info("Running VersionHandler.UpdateNow...")
   _run(arg_builder.get_args_for_method("Google.VersionHandler.UpdateNow"))
+  time.sleep(0.5)
 
 
 def _copy_unity_assets(dir_helper, files_to_ignore):

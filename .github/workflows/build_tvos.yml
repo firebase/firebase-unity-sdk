@@ -59,12 +59,12 @@ on:
 jobs:
   build_tvos:
     name: build-tvos-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: macos-12
+    runs-on: macos-13
     strategy:
       fail-fast: false
 
     env:
-      xcodeVersion: "14.1"
+      xcodeVersion: "15.1"
 
     steps:
       - name: Checkout Unity Repo
@@ -98,6 +98,7 @@ jobs:
           cd firebase-cpp-sdk
           python scripts/gha/install_prereqs_desktop.py
           cd ..
+          brew install swig@4.2
 
       - name: Install python deps
         shell: bash

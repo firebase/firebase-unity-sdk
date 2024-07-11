@@ -32,15 +32,6 @@ namespace Firebase.RemoteConfig {
     /// fetch. Default is 12 hours.
     public ulong MinimumFetchIntervalInMilliseconds { get; set; }
 
-    /// The minimum interval between successive fetch calls.
-    ///
-    /// @deprecated Use MinimumFetchIntervalInMilliseconds instead. This will be
-    /// removed in the next major release.
-    public ulong MinimumFetchInternalInMilliseconds {
-      get { return MinimumFetchIntervalInMilliseconds; }
-      set { MinimumFetchIntervalInMilliseconds = value; }
-    }
-
     internal static ConfigSettings FromInternal(ConfigSettingsInternal csInternal) {
       return new ConfigSettings {
         FetchTimeoutInMilliseconds = csInternal.fetch_timeout_in_milliseconds,

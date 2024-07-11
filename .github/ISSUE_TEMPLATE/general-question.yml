@@ -1,0 +1,133 @@
+name: ❓ General question
+description: Please use this template to report issues with the Firebase Unity SDK.
+title: '[Question] '
+labels:
+  - new
+  - 'type: question'
+body:
+  - type: textarea
+    attributes:
+      label: What is your question?
+      description: Describe the question.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Firebase Unity SDK Version
+      description: What version of the Firebase Unity SDK has this issue?
+      placeholder: 11.8.1
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Unity editor version
+      description: What version of the Unity editor is being used?
+      placeholder: 2022.3.13f1
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Installation Method
+      description: How did you add Firebase to your project?
+      options:
+        - .unitypackage
+        - Unity Package Manager
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Problematic Firebase Component(s)
+      description: Which Firebase components are causing issues?
+      multiple: true
+      options:
+        - All
+        - AB Testing
+        - Analytics
+        - App Check
+        - App Distribution
+        - Authentication
+        - Crashlytics
+        - Database
+        - DynamicLinks
+        - Firestore
+        - Functions
+        - In-App Messaging
+        - Installations
+        - ML Model Downloader
+        - Messaging
+        - Performance
+        - Remote Config
+        - Storage
+  - type: dropdown
+    attributes:
+      label: Other Firebase Component(s) in use
+      description: Which other Firebase components are being used?
+      multiple: true
+      options:
+        - All
+        - AB Testing
+        - Analytics
+        - App Check
+        - App Distribution
+        - Authentication
+        - Crashlytics
+        - Database
+        - DynamicLinks
+        - Firestore
+        - Functions
+        - In-App Messaging
+        - Installations
+        - ML Model Downloader
+        - Messaging
+        - Performance
+        - Remote Config
+        - Storage
+  - type: textarea
+    attributes:
+      label: Additional SDKs you are using
+      description: 'What additional, non-Firebase SDKs are being used?'
+      placeholder: 'Facebook, AdMob, etc.'
+    validations:
+      required: false
+  - type: dropdown
+    attributes:
+      label: Targeted Platform(s)
+      description: What platform(s) is the issue affecting?
+      multiple: true
+      options:
+        - Apple Platforms
+        - Android
+        - Desktop
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Unity editor platform
+      description: What platform are you using the Unity editor on?
+      multiple: true
+      options:
+        - Mac
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Scripting Runtime
+      description: What scripting runtime is being used?
+      multiple: true
+      options:
+        - Mono
+        - IL2CPP
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Release Distribution Type
+      description: What release distribution is being used?
+      multiple: true
+      options:
+        - 'Pre-built SDK from https://firebase.google.com/download/unity'
+        - Open-source from this repo
+    validations:
+      required: true

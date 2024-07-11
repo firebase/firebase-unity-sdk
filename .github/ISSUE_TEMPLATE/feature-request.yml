@@ -1,0 +1,68 @@
+name: ➕ Feature Request
+description: If you have a feature request for the Firebase Unity SDK, file it here.
+title: "[FR]: "
+labels: ["new", "type: feature request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A good feature request ideally
+        * is either immediately obvious (e.g. _Add Sign in with Apple support_), or
+        * starts with a use case that is not achievable with the existing
+          Firebase API and includes a brief API proposal that would make the use
+          case possible.
+  - type: textarea
+    attributes:
+      label: Description
+      description: |
+        Describe the feature request. Provide the following:
+            1. Use case
+            2. How the Firebase Unity SDK _currently_ handles it
+            3. How you propose the Firebase Unity SDK _should_ handle it
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: API Proposal
+      description: |
+        If your feature request requires API changes, describe the changes and the
+        new API's signature and usage.
+    validations:
+      required: false
+  - type: dropdown
+    attributes:
+      label: Firebase Product(s)
+      description: Which Firebase products does this feature request apply to?
+      multiple: true
+      options:
+        - All
+        - AB Testing
+        - Analytics
+        - App Check
+        - App Distribution
+        - Authentication
+        - Crashlytics
+        - Database
+        - DynamicLinks
+        - Firestore
+        - Functions
+        - In-App Messaging
+        - Installations
+        - ML Model Downloader
+        - Messaging
+        - Performance
+        - Remote Config
+        - Storage
+  - type: dropdown
+    attributes:
+      label: Targeted Platform(s)
+      description: What platform(s) is the feature request for?
+      multiple: true
+      options:
+        - Apple Platforms
+        - Android
+        - Desktop

@@ -145,7 +145,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1",
+          "unity": "2020.1",
           "dependencies": {
             "com.google.external-dependency-manager" : "1.2.177"
           }
@@ -271,7 +271,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -375,7 +375,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -481,7 +481,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -566,7 +566,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -669,7 +669,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -802,7 +802,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -916,7 +916,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -1017,7 +1017,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -1131,7 +1131,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -1233,7 +1233,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -1336,7 +1336,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -1438,7 +1438,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -1542,7 +1542,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     },
@@ -1640,7 +1640,7 @@
       "export_upm": 1,
       "upm_package_config" : {
         "manifest" : {
-          "unity": "2019.1"
+          "unity": "2020.1"
         }
       }
     }
