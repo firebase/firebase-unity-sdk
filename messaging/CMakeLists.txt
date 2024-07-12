@@ -23,7 +23,11 @@ set(firebase_messaging_swig
 
 # Firebase Messaging CSharp files
 set(firebase_messaging_src
+  src/FirebaseMessage.cs
+  src/FirebaseMessaging.cs
+  src/FirebaseNotification.cs
   src/MessagingEventArgs.cs
+  src/MessagingOptions.cs
 )
 
 firebase_swig_add_library(firebase_messaging_swig
