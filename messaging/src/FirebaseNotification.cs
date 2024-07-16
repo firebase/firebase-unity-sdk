@@ -83,7 +83,7 @@ public sealed class FirebaseNotification {
   ///
   /// [1]:
   /// https://developer.android.com/guide/topics/resources/string-resource.html#FormattingAndStyling
-  public IEnumerable<string> BodyLocalizationArgs { get; private set; }
+  public System.Collections.Generic.IEnumerable<string> BodyLocalizationArgs { get; private set; }
 
   /// Indicates the key to the body string for localization.
   ///
@@ -138,7 +138,7 @@ public sealed class FirebaseNotification {
   ///
   /// [1]:
   /// https://developer.android.com/guide/topics/resources/string-resource.html#FormattingAndStyling
-  public IEnumerable<string> TitleLocalizationArgs { get; private set; }
+  public System.Collections.Generic.IEnumerable<string> TitleLocalizationArgs { get; private set; }
 
   /// Indicates the key to the title string for localization.
   ///

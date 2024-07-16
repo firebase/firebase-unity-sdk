@@ -52,7 +52,7 @@ public sealed class FirebaseMessage {
   /// Gets or sets the metadata, including all original key/value pairs.
   /// Includes some of the HTTP headers used when sending the message. `gcm`,
   /// `google` and `goog` prefixes are reserved for internal use.
-  public IDictionary<string, string> Data { get; private set; }
+  public System.Collections.Generic.IDictionary<string, string> Data { get; private set; }
 
   /// Gets the error code. Used in "nack" messages for CCS, and in responses
   /// from the server.

@@ -22,10 +22,6 @@ namespace Firebase.Messaging {
       this.Message = msg;
     }
 
-    internal MessageReceivedEventArgs(FirebaseMessageInternal msg) {
-      this.Message = FirebaseMessage.FromInternal(msg);
-    }
-
     /// Message data passed to the MessageReceived event handler.
     public FirebaseMessage Message { get; set; }
   }

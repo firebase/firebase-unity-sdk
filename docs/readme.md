@@ -71,6 +71,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming release
+- Changes
+    - Messaging: Deprecated the Dispose functions, as they are no longer
+      necessary to use to clean up memory.
+
 ### 12.1.0
 - Changes
     - General: Update to Firebase C++ SDK version 12.1.0.

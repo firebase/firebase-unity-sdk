@@ -320,8 +320,10 @@ void SendPendingEvents() {
           // Use a local copy so another thread cannot unset this before we use it.
           var handler = FirebaseMessagingInternal.MessageReceivedInternal;
           if (handler != null) {
+            FirebaseMessageInternal messageInternal = new FirebaseMessageInternal(message, true);
             handler(null, new Firebase.Messaging.MessageReceivedEventArgs(
-                new FirebaseMessageInternal(message, true)));
+                FirebaseMessage.FromInternal(messageInternal)));
+            messageInternal.Dispose();
             return 1;
           }
           return 0;
