@@ -74,7 +74,7 @@ Release Notes
 ### Upcoming release
 - Changes
     - Messaging: Deprecated the Dispose functions, as they are no longer
-      necessary to use to clean up memory.
+      necessary for cleaning up memory.
 
 ### 12.1.0
 - Changes
