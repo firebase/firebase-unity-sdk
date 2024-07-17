@@ -19,8 +19,9 @@ namespace Firebase.Messaging {
   /// Event argument for the MessageReceived event containing the message data.
   public sealed class MessageReceivedEventArgs : System.EventArgs {
     public MessageReceivedEventArgs(FirebaseMessage msg) {
-        this.Message = msg;
+      this.Message = msg;
     }
+
     /// Message data passed to the MessageReceived event handler.
     public FirebaseMessage Message { get; set; }
   }

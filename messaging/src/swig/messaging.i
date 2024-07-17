@@ -8,7 +8,7 @@
 // Swig Lint doesn't support C#
 //swiglint: disable
 
-%module FirebaseMessaging
+%module FirebaseMessagingInternal
 
 #ifdef USE_EXPORT_FIX
 // Generate a function that we can reference to force linker
@@ -18,13 +18,11 @@
 %{#include "app/src/export_fix.h"%}
 #endif
 
-%pragma(csharp) moduleclassmodifiers="public sealed class"
+%pragma(csharp) moduleclassmodifiers="internal sealed class"
 %feature("flatnested");
 
-%{
-#include "app/src/callback.h"
-#include "messaging/src/include/firebase/messaging.h"
-%}
+// Change the default class modifier to internal, so that new classes are not accidentally exposed
+%typemap(csclassmodifiers) SWIGTYPE "internal class"
 
 %import "app/src/swig/app.i"
 %include "app/src/swig/future.i"
@@ -49,12 +47,15 @@
   }
 %}
 
+// Start of the code added to the C++ module file
 %{
 #include <queue>
 #include <string>
 
+#include "app/src/callback.h"
 #include "app/src/include/firebase/internal/mutex.h"
 #include "app/src/log.h"
+#include "messaging/src/include/firebase/messaging.h"
 
 namespace firebase {
 namespace messaging {
@@ -237,34 +238,12 @@ void SendPendingEvents() {
   ListenerImpl::SendPendingEvents();
 }
 
-// Copy the notification out of a message.
-void* MessageCopyNotification(void* message) {
-  firebase::messaging::Notification *notification =
-      static_cast<firebase::messaging::Message*>(message)->notification;
-  firebase::messaging::Notification *notification_copy = nullptr;
-  if (notification) {
-    notification_copy = new firebase::messaging::Notification;
-    *notification_copy = *notification;
-  }
-  return notification_copy;
-}
-
-// Copy the notification out of a message.
-void* NotificationCopyAndroidNotificationParams(void* notification) {
-  firebase::messaging::AndroidNotificationParams *android =
-      static_cast<firebase::messaging::Notification*>(notification)->android;
-  firebase::messaging::AndroidNotificationParams *android_copy = nullptr;
-  if (android) {
-    android_copy = new firebase::messaging::AndroidNotificationParams;
-    *android_copy = *android;
-  }
-  return android_copy;
-}
-
 }  // messaging
 }  // firebase
-%}
 
+%}  // End of code added to the C++ module file
+
+// Start of the code added to the C# module file
 %pragma(csharp) modulecode=%{
   // Forwards message and token received events from ListenerImpl to
   // Listener.MessageReceivedDelegateMethod and
@@ -315,8 +294,8 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
 
     // Setup callbacks from ListenerImpl C++ class to this object.
     private Listener() {
-      FirebaseMessaging.SetListenerCallbacks(messageReceivedDelegate,
-                                             tokenReceivedDelegate);
+      FirebaseMessagingInternal.SetListenerCallbacks(messageReceivedDelegate,
+                                                     tokenReceivedDelegate);
     }
 
     ~Listener() { Dispose(); }
@@ -326,7 +305,7 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
       lock (typeof(Listener)) {
         if (listener == this) {
           System.Diagnostics.Debug.Assert(app != null);
-          FirebaseMessaging.SetListenerCallbacks(null, null);
+          FirebaseMessagingInternal.SetListenerCallbacks(null, null);
           listener = null;
           app = null;
         }
@@ -339,10 +318,12 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
     private static int MessageReceivedDelegateMethod(System.IntPtr message) {
       return ExceptionAggregator.Wrap(() => {
           // Use a local copy so another thread cannot unset this before we use it.
-          var handler = FirebaseMessaging.MessageReceivedInternal;
+          var handler = FirebaseMessagingInternal.MessageReceivedInternal;
           if (handler != null) {
+            FirebaseMessageInternal messageInternal = new FirebaseMessageInternal(message, true);
             handler(null, new Firebase.Messaging.MessageReceivedEventArgs(
-                new FirebaseMessage(message, true)));
+                FirebaseMessage.FromInternal(messageInternal)));
+            messageInternal.Dispose();
             return 1;
           }
           return 0;
@@ -355,7 +336,7 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
     private static void TokenReceivedDelegateMethod(string token) {
       ExceptionAggregator.Wrap(() => {
           // Use a local copy so another thread cannot unset this before we use it.
-          var handler = FirebaseMessaging.TokenReceivedInternal;
+          var handler = FirebaseMessagingInternal.TokenReceivedInternal;
           if (handler != null) {
             handler(null, new Firebase.Messaging.TokenReceivedEventArgs(token));
           }
@@ -380,10 +361,10 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
       } else {
         Listener.Destroy();
       }
-      FirebaseMessaging.SetListenerCallbacksEnabled(
+      FirebaseMessagingInternal.SetListenerCallbacksEnabled(
           messageReceivedSet, tokenReceivedSet);
       if (messageReceivedSet || tokenReceivedSet) {
-        FirebaseMessaging.SendPendingEvents();
+        FirebaseMessagingInternal.SendPendingEvents();
       }
     }
   }
@@ -392,108 +373,13 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
   private static Listener listener;
 
   // Create the listener and hold a reference.
-  static FirebaseMessaging() {
+  static FirebaseMessagingInternal() {
     listener = Listener.Create();
   }
 
   /// Get the app used by this module.
   /// @return FirebaseApp instance referenced by this module.
   static Firebase.FirebaseApp App { get { return Listener.App; } }
-
-  private FirebaseMessaging() { }
-
-  /// Enable or disable token registration during initialization of Firebase
-  /// Cloud Messaging.
-  ///
-  /// This token is what identifies the user to Firebase, so disabling this
-  /// avoids creating any new identity and automatically sending it to Firebase,
-  /// unless consent has been granted.
-  ///
-  /// If this setting is enabled, it triggers the token registration refresh
-  /// immediately. This setting is persisted across app restarts and overrides
-  /// the setting "firebase_messaging_auto_init_enabled" specified in your
-  /// Android manifest (on Android) or Info.plist (on iOS and tvOS).
-  ///
-  /// <p>By default, token registration during initialization is enabled.
-  ///
-  /// The registration happens before you can programmatically disable it, so
-  /// if you need to change the default, (for example, because you want to
-  /// prompt the user before FCM generates/refreshes a registration token on app
-  /// startup), add to your application’s manifest:
-  ///
-  /// @if NOT_DOXYGEN
-  ///   <meta-data android:name="firebase_messaging_auto_init_enabled"
-  ///   android:value="false" />
-  /// @else
-  /// @code
-  ///   &lt;meta-data android:name="firebase_messaging_auto_init_enabled"
-  ///   android:value="false" /&gt;
-  /// @endcode
-  /// @endif
-  ///
-  /// or on iOS or tvOS to your Info.plist:
-  ///
-  /// @if NOT_DOXYGEN
-  ///   <key>FirebaseMessagingAutoInitEnabled</key>
-  ///   <false/>
-  /// @else
-  /// @code
-  ///   &lt;key&gt;FirebaseMessagingAutoInitEnabled&lt;/key&gt;
-  ///   &lt;false/&gt;
-  /// @endcode
-  /// @endif
-  public static bool TokenRegistrationOnInitEnabled {
-    get {
-      return FirebaseMessaging.IsTokenRegistrationOnInitEnabledInternal();
-    }
-    set {
-      FirebaseMessaging.SetTokenRegistrationOnInitEnabledInternal(value);
-    }
-  }
-
-  /// Enables or disables Firebase Cloud Messaging message delivery metrics
-  /// export to BigQuery.
-  ///
-  /// By default, message delivery metrics are not exported to BigQuery. Use
-  /// this method to enable or disable the export at runtime. In addition, you
-  /// can enable the export by adding to your manifest. Note that the run-time
-  /// method call will override the manifest value.
-  ///
-  /// @code
-  /// <meta-data android:name= "delivery_metrics_exported_to_big_query_enabled"
-  ///            android:value="true"/>
-  /// @endcode
-  ///
-  /// @note This function is currently only implemented on Android, and has no
-  /// behavior on other platforms.
-  public static bool DeliveryMetricsExportedToBigQueryEnabled {
-    get {
-      return FirebaseMessaging.DeliveryMetricsExportToBigQueryEnabledInternal();
-    }
-    set {
-      FirebaseMessaging.SetDeliveryMetricsExportToBigQueryInternal(value);
-    }
-  }
-
-  /// @brief This creates a Firebase Installations ID, if one does not exist, and
-  /// sends information about the application and the device where it's running to
-  /// the Firebase backend.
-  ///
-  /// @return A task with the token.
-  public static System.Threading.Tasks.Task<string> GetTokenAsync() {
-    return FirebaseMessaging.GetTokenInternalAsync();
-  }
-
-  /// @brief Deletes the default token for this Firebase project.
-  ///
-  /// Note that this does not delete the Firebase Installations ID that may have
-  /// been created when generating the token. See Installations.Delete() for
-  /// deleting that.
-  ///
-  /// @return A task that completes when the token is deleted.
-  public static System.Threading.Tasks.Task DeleteTokenAsync() {
-    return FirebaseMessaging.DeleteTokenInternalAsync();
-  }
 
   // NOTE: MessageReceivedEventArgs is defined in
   // firebase/messaging/client/unity/src/MessagingEventArgs.cs.
@@ -543,384 +429,21 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
   }
 #endif  // DOXYGEN
 
-%}
+%}  // End of code added to the C# module file
 
-%typemap(cscode) firebase::messaging::Message %{
-  /// The Time To Live (TTL) for the message.
-  ///
-  /// This field is only used for downstream messages received through
-  /// FirebaseMessaging.MessageReceived().
-  public System.TimeSpan TimeToLive {
-    get {
-      return System.TimeSpan.FromSeconds(TimeToLiveInternal);
-    }
-  }
-
-  private static System.DateTime UnixEpochUtc =
-    new System.DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-
-  /// UTC time when the message was sent.
-  internal System.DateTime SentTime {
-    get {
-      return UnixEpochUtc.AddMilliseconds(SentTimeInternal);
-    }
-  }
-
-  /// Optional notification to show. This only set if a notification was
-  /// received with this message, otherwise it is null.
-  ///
-  /// This field is only used for downstream messages received through
-  /// FirebaseMessaging.MessageReceived.
-  public FirebaseNotification Notification {
-    get {
-      System.IntPtr cPtr =
-          FirebaseMessaging.MessageCopyNotification(swigCPtr.Handle);
-      if (cPtr != System.IntPtr.Zero) {
-        return new FirebaseNotification(cPtr, true);
-      }
-      return null;
-    }
-  }
-
-  /// The link into the app from the message.
-  ///
-  /// This field is only used for downstream messages.
-  public System.Uri Link {
-    get {
-      return Firebase.FirebaseApp.UrlStringToUri(LinkInternal);
-    }
-  }
-
-  /// Gets the binary payload. For webpush and non-json messages, this is the
-  /// body of the request entity.
-  ///
-  /// This field is only used for downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public byte[] RawData {
-    get {
-      byte[] array = new byte[RawDataInternal.Count];
-      RawDataInternal.CopyTo(array);
-      return array;
-    }
-  }
-%}
-
-%typemap(cscode) firebase::messaging::Notification %{
-  /// Android-specific data to show.
-  public AndroidNotificationParams Android {
-    get {
-      System.IntPtr cPtr =
-          FirebaseMessaging.NotificationCopyAndroidNotificationParams(
-              swigCPtr.Handle);
-      if (cPtr != System.IntPtr.Zero) {
-        return new AndroidNotificationParams(cPtr, true);
-      }
-      return null;
-    }
-  }
-%}
-
-%typemap(csclassmodifiers) firebase::messaging::Message
-   "public sealed class";
-%rename(FirebaseMessage) firebase::messaging::Message;
-%typemap(csclassmodifiers) firebase::messaging::Notification
-   "public sealed class";
-%rename(FirebaseNotification) firebase::messaging::Notification;
-
-%rename(IsTokenRegistrationOnInitEnabledInternal)
-    IsTokenRegistrationOnInitEnabled;
-%rename(SetTokenRegistrationOnInitEnabledInternal)
-    SetTokenRegistrationOnInitEnabled;
-
-%rename(DeliveryMetricsExportToBigQueryEnabledInternal)
-    DeliveryMetricsExportToBigQueryEnabled;
-%rename(SetDeliveryMetricsExportToBigQueryInternal)
-    SetDeliveryMetricsExportToBigQuery;
-
-%rename(GetTokenInternalAsync)
-    GetToken;
-%rename(DeleteTokenInternalAsync)
-    DeleteToken;
-
-%typemap(csclassmodifiers) firebase::messaging::MessagingOptions
-   "public sealed class";
-%rename(SuppressNotificationPermissionPrompt)
-    suppress_notification_permission_prompt;
-
-%csmethodmodifiers firebase::messaging::IsTokenRegistrationOnInitEnabled()
-    "internal"
-%csmethodmodifiers firebase::messaging::SetTokenRegistrationOnInitEnabled(bool)
-    "internal"
-
-%csmethodmodifiers firebase::messaging::DeliveryMetricsExportToBigQueryEnabled()
-    "internal"
-%csmethodmodifiers firebase::messaging::SetDeliveryMetricsExportToBigQuery(bool)
-    "internal"
-
-%csmethodmodifiers firebase::messaging::GetToken()
-    "internal"
-%csmethodmodifiers firebase::messaging::DeleteToken()
-    "internal"
+// Rename the generated classes to *Internal
+%rename(FirebaseMessageInternal) firebase::messaging::Message;
+%rename(FirebaseNotificationInternal) firebase::messaging::Notification;
+%rename(AndroidNotificationParamsInternal) firebase::messaging::AndroidNotificationParams;
+%rename(MessagingOptionsInternal) firebase::messaging::MessagingOptions;
 
 // Messaging has a lot of read-only properties, so make all immutable
 // and call out the mutable ones.
 %immutable;
-%feature("immutable","0") firebase::messaging::Message::data;
-%feature("immutable","0") firebase::messaging::Message::message_id;
-%feature("immutable","0") firebase::messaging::Message::to;
 %feature("immutable","0") firebase::messaging::MessagingOptions::suppress_notification_permission_prompt;
 
-// The following docs are all here instead of the header due to b/35780150.
-
-%csmethodmodifiers firebase::messaging::Message::from "
-  /// Gets the authenticated ID of the sender. This is a project number in most cases.
-  ///
-  /// This field is only used for downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::to "
-  /// Gets or sets recipient of a message.
-  ///
-  /// For example it can be a registration token, a topic name, a IID or project
-  /// ID.
-  ///
-  /// This field is used for both upstream messages sent with
-  /// firebase::messaging:Send() and downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event. For upstream messages,
-  /// PROJECT_ID@gcm.googleapis.com or the more general IID format are accepted.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::collapse_key "
-  /// Gets the collapse key used for collapsible messages.
-  ///
-  /// This field is only used for downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::data "
-  /// Gets or sets the metadata, including all original key/value pairs.
-  /// Includes some of the HTTP headers used when sending the message. `gcm`,
-  /// `google` and `goog` prefixes are reserved for internal use.
-  ///
-  /// This field is used for both upstream messages sent with
-  /// firebase::messaging::Send() and downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::message_id "
-  /// Gets or sets the message ID. This can be specified by sender. Internally a
-  /// hash of the message ID and other elements will be used for storage. The ID
-  /// must be unique for each topic subscription - using the same ID may result
-  /// in overriding the original message or duplicate delivery.
-  ///
-  /// This field is used for both upstream messages sent with
-  /// firebase::messaging::Send() and downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::message_type "
-  /// Gets the message type, equivalent with a content-type.
-  /// CCS uses \"ack\", \"nack\" for flow control and error handling.
-  /// \"control\" is used by CCS for connection control.
-  ///
-  /// This field is only used for downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::priority "
-  /// Gets the priority level. Defined values are \"normal\" and \"high\".
-  /// By default messages are sent with normal priority.
-  ///
-  /// This field is only used for downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::time_to_live "
-  /// Gets the time to live, in seconds.
-  ///
-  /// This field is only used for downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::error "
-  /// Gets the error code. Used in \"nack\" messages for CCS, and in responses
-  /// from the server.
-  /// See the CCS specification for the externally-supported list.
-  ///
-  /// This field is only used for downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::error_description "
-  /// Gets the human readable details about the error.
-  ///
-  /// This field is only used for downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::notification "
-  /// Gets the optional notification to show. This only set if a notification
-  /// was received with this message, otherwise it is null.
-  ///
-  /// The notification is only guaranteed to be valid during the call to the
-  /// @ref FirebaseMessaging.MessageReceived event. If you need to keep it
-  /// around longer you will need to make a copy of either the FirebaseMessage
-  /// or FirebaseNotification. Copying the FirebaseMessage object implicitly
-  /// makes a deep copy of the FirebaseNotification which is owned by the
-  /// FirebaseMessage.Message.
-  ///
-  /// This field is only used for downstream messages received through the
-  /// @ref FirebaseMessaging.MessageReceived event.
-  public"
-
-%csmethodmodifiers firebase::messaging::Message::notification_opened "
-  /// Gets a flag indicating whether this message was opened by tapping a
-  /// notification in the OS system tray. If the message was received this way
-  /// this flag is set to true.
-  public"
-
-// Make snake_case properties CamelCase.
-// Message
-%rename(CollapseKey) collapse_key;
-%rename(Data) data;
-%rename(Error) error;
-%rename(ErrorDescription) error_description;
-%rename(From) from;
-%rename(MessageId) message_id;
-%rename(MessageType) message_type;
-%rename(Priority) priority;
-%rename(RawDataInternal) raw_data;
-%rename(NotificationOpened) notification_opened;
-%csmethodmodifiers firebase::messaging::Message::time_to_live "internal";
-%rename(TimeToLiveInternal) time_to_live;
-%rename(SentTimeInternal) sent_time;
-// Hide the string link field as we expose it as a URI in the C# interface.
-%rename(LinkInternal) link;
-%csmethodmodifiers firebase::messaging::Message::link "internal";
-// Notification is manually copied out of the Message so the proxy doesn't
-// reference memory in firebase::messaging::Message.
-%ignore firebase::messaging::Message::notification;
-// AndroidNotificationParams is manually copied out of the Notification so the
-// proxy doesn't reference memory in firebase::messaging::Notification.
-%ignore firebase::messaging::Notification::android;
-%rename(To) to;
-// No reason to export the PollableListener to C#
+// Ignore functions and classes that we don't need to expose to C#
 %ignore firebase::messaging::PollableListener;
-
-// The following docs are all here instead of the header due to b/35780150.
-
-%csmethodmodifiers firebase::messaging::Notification::title "
-  /// Indicates notification title. This field is not visible on tvOS, iOS
-  /// phones and tablets.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::body "
-  /// Indicates notification body text.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::icon "
-  /// Indicates notification icon. Sets value to myicon for drawable resource
-  /// myicon.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::sound "
-  /// Indicates a sound to play when the device receives the notification.
-  /// Supports default, or the filename of a sound resource bundled in the
-  /// app.
-  ///
-  /// Android sound files must reside in /res/raw/, while tvOS and iOS sound
-  /// files can be in the main bundle of the client app or in the
-  /// Library/Sounds folder of the app’s data container.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::badge "
-  /// Indicates the badge on the client app home icon. iOS and tvOS only.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::tag "
-  /// Indicates whether each notification results in a new entry in the
-  /// notification drawer on Android. If not set, each request creates a new
-  /// notification. If set, and a notification with the same tag is already
-  /// being shown, the new notification replaces the existing one in the
-  /// notification drawer.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::color "
-  /// Indicates color of the icon, expressed in \#rrggbb format. Android only.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::click_action "
-  /// The action associated with a user click on the notification.
-  ///
-  /// On Android, if this is set, an activity with a matching intent filter is
-  /// launched when user clicks the notification.
-  ///
-  /// If set on iOS or tvOS, corresponds to category in APNS payload.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::body_loc_key "
-  /// Indicates the key to the body string for localization.
-  ///
-  /// On iOS and tvOS, this corresponds to \"loc-key\" in APNS payload.
-  ///
-  /// On Android, use the key in the app's string resources when populating this
-  /// value.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::body_loc_args "
-  /// Indicates the string value to replace format specifiers in body string
-  /// for localization.
-  ///
-  /// On iOS and tvOS, this corresponds to \"loc-args\" in APNS payload.
-  ///
-  /// On Android, these are the format arguments for the string resource. For
-  /// more information, see [Formatting strings][1].
-  ///
-  /// [1]:
-  /// https://developer.android.com/guide/topics/resources/string-resource.html#FormattingAndStyling
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::title_loc_key "
-  /// Indicates the key to the title string for localization.
-  ///
-  /// On iOS and tvOS, this corresponds to \"title-loc-key\" in APNS payload.
-  ///
-  /// On Android, use the key in the app's string resources when populating this
-  /// value.
-  public"
-
-%csmethodmodifiers firebase::messaging::Notification::title_loc_args "
-  /// Indicates the string value to replace format specifiers in title string
-  /// for localization.
-  ///
-  /// On iOS and tvOS, this corresponds to \"title-loc-args\" in APNS payload.
-  ///
-  /// On Android, these are the format arguments for the string resource. For
-  /// more information, see [Formatting strings][1].
-  ///
-  /// [1]:
-  /// https://developer.android.com/guide/topics/resources/string-resource.html#FormattingAndStyling
-  public"
-
-
-// Notification
-%rename(Badge) firebase::messaging::Notification::badge;
-%rename(Body) firebase::messaging::Notification::body;
-%rename(BodyLocalizationArgs) firebase::messaging::Notification::body_loc_args;
-%rename(BodyLocalizationKey) firebase::messaging::Notification::body_loc_key;
-%rename(ClickAction) firebase::messaging::Notification::click_action;
-%rename(Color) firebase::messaging::Notification::color;
-%rename(Icon) firebase::messaging::Notification::icon;
-%rename(Sound) firebase::messaging::Notification::sound;
-%rename(Tag) firebase::messaging::Notification::tag;
-%rename(Title) firebase::messaging::Notification::title;
-%rename(TitleLocalizationArgs) firebase::messaging::Notification::title_loc_args;
-%rename(TitleLocalizationKey) firebase::messaging::Notification::title_loc_key;
-
-// AndroidNotificationParams
-%rename(ChannelId) firebase::messaging::AndroidNotificationParams::channel_id;
-
 %ignore firebase::messaging::Listener;
 %ignore firebase::messaging::Initialize;
 %ignore firebase::messaging::Terminate;
@@ -931,11 +454,12 @@ void* NotificationCopyAndroidNotificationParams(void* notification) {
 // Map callback function types to delegates.
 SWIG_MAP_CFUNC_TO_CSDELEGATE(
     firebase::messaging::ListenerImpl::MessageReceivedCallback,
-    Firebase.Messaging.FirebaseMessaging.Listener.MessageReceivedDelegate)
+    Firebase.Messaging.FirebaseMessagingInternal.Listener.MessageReceivedDelegate)
 SWIG_MAP_CFUNC_TO_CSDELEGATE(
     firebase::messaging::ListenerImpl::TokenReceivedCallback,
-    Firebase.Messaging.FirebaseMessaging.Listener.TokenReceivedDelegate)
+    Firebase.Messaging.FirebaseMessagingInternal.Listener.TokenReceivedDelegate)
 
+// Declare the functions we added to the C++ module that we want to generate C# for
 namespace firebase {
 namespace messaging {
 %csmethodmodifiers SetListenerCallbacks "private";
@@ -947,10 +471,6 @@ void SetListenerCallbacksEnabled(bool message_callback_enabled,
                                  bool token_callback_enabled);
 %csmethodmodifiers SendPendingEvents "private";
 void SendPendingEvents();
-%csmethodmodifiers MessageCopyNotification "internal";
-void* MessageCopyNotification(void* message);
-%csmethodmodifiers NotificationCopyAndroidNotificationParams "internal";
-void* NotificationCopyAndroidNotificationParams(void* notification);
 
 }  // messaging
 }  // firebase
