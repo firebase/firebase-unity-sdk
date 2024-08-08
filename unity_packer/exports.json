@@ -5,7 +5,13 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Platform.dll",
@@ -15,7 +21,11 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.App.dll",
@@ -24,7 +34,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.App.dll",
@@ -33,7 +46,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppApp.a"
@@ -41,7 +56,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppApp.a"
@@ -50,7 +67,9 @@
         {
           "importer": "PluginImporter",
           "platforms": [],
-          "labels": ["gvh_targets-editor"],
+          "labels": [
+            "gvh_targets-editor"
+          ],
           "paths": [
             "Firebase/Editor/Firebase.Editor.dll",
             "Firebase/Editor/Firebase.Editor.pdb"
@@ -67,7 +86,13 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.TaskExtension.dll",
@@ -88,7 +113,9 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["documentation"],
+          "sections": [
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/readme.md",
             "Firebase/Editor/LICENSE"
@@ -96,21 +123,28 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["asset_package_only"],
+          "sections": [
+            "asset_package_only"
+          ],
           "paths": [
             "ExternalDependencyManager/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["internal"],
+          "sections": [
+            "internal"
+          ],
           "paths": [
             "Firebase/Editor/InternalArtifactReposDependencies.xml"
           ]
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppApp-*",
@@ -118,7 +152,9 @@
           ]
         },
         {
-          "labels": ["gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"],
+          "labels": [
+            "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/link.xml"
@@ -126,28 +162,33 @@
         }
       ],
       "export": 0,
-      "readme" : "Firebase/Editor/readme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/readme.md",
-      "common_manifest" : {
+      "readme": "Firebase/Editor/readme.md",
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/readme.md",
+      "common_manifest": {
         "name": "com.google.firebase.app",
         "display_name": "Firebase App (Core)",
         "description": [
           "Firebase App is the core library every Firebase package depends on."
         ],
-        "keywords": ["Google", "Firebase", "FirebaseApp", "App"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "FirebaseApp",
+          "App"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/unity/setup"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1",
           "dependencies": {
-            "com.google.external-dependency-manager" : "1.2.177"
+            "com.google.external-dependency-manager": "1.2.182"
           }
         }
       }
@@ -156,14 +197,15 @@
       "name": "SampleCommon.unitypackage",
       "imports": [
         {
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "importer": "DefaultImporter",
           "paths": [
             "Firebase/Sample/CONTRIBUTING.md",
             "Firebase/Sample/GuiSkin.guiskin",
             "Firebase/Sample/LICENSE",
             "Firebase/Sample/readme.md"
-
           ]
         }
       ],
@@ -174,7 +216,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Analytics.dll",
@@ -183,7 +229,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Analytics.dll",
@@ -192,7 +241,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppAnalytics.a"
@@ -200,7 +251,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppAnalytics.a"
@@ -215,7 +268,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppAnalytics*"
@@ -223,18 +279,25 @@
         },
         {
           "importer": "DefaultImporter",
-          "paths": ["Firebase/Editor/FirebaseAnalytics*_manifest.txt"]
+          "paths": [
+            "Firebase/Editor/FirebaseAnalytics*_manifest.txt"
+          ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/Analytics/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/AnalyticsReadme.md"
           ]
@@ -246,10 +309,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/AnalyticsReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/AnalyticsReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/AnalyticsReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.analytics",
         "display_name": "Google Analytics",
         "description": [
@@ -262,15 +325,19 @@
           "data with Google Ads to make sure you're running campaigns that ",
           "deliver you high-quality players."
         ],
-        "keywords": ["Google", "Firebase", "Analytics"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Analytics"
+        ],
         "author": {
-          "name" : "Google LLC",
-            "url": "https://firebase.google.com/docs/analytics/unity/start"
+          "name": "Google LLC",
+          "url": "https://firebase.google.com/docs/analytics/unity/start"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -280,7 +347,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Auth.dll",
@@ -289,7 +360,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Auth.dll",
@@ -298,7 +372,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppAuth.a"
@@ -306,7 +382,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppAuth.a"
@@ -321,7 +399,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppAuth*"
@@ -329,18 +410,25 @@
         },
         {
           "importer": "DefaultImporter",
-          "paths": ["Firebase/Editor/FirebaseAuth*_manifest.txt"]
+          "paths": [
+            "Firebase/Editor/FirebaseAuth*_manifest.txt"
+          ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/Auth/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/AuthReadme.md"
           ]
@@ -352,10 +440,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/AuthReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/AuthReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/AuthReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.auth",
         "display_name": "Firebase Authentication",
         "description": [
@@ -365,16 +453,21 @@
           "authentication, Facebook, Google, Twitter, and more. ",
           "Out-of-the-box, you get a secure, end-to-end identity solution."
         ],
-        "keywords": ["Google", "Firebase", "Auth", "Authentication",
-                     "FirebaseAuth"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Auth",
+          "Authentication",
+          "FirebaseAuth"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/auth/unity/start"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -384,7 +477,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Crashlytics.dll",
@@ -393,7 +490,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Crashlytics.dll",
@@ -402,7 +502,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.a"
@@ -410,7 +512,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppCrashlytics.a"
@@ -419,7 +523,9 @@
         {
           "importer": "PluginImporter",
           "platforms": [],
-          "labels": ["gvh_targets-editor"],
+          "labels": [
+            "gvh_targets-editor"
+          ],
           "paths": [
             "Firebase/Editor/Firebase.Crashlytics.Editor.dll",
             "Firebase/Editor/Firebase.Crashlytics.Editor.pdb"
@@ -443,7 +549,10 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/CrashlyticsReadme.md"
           ]
@@ -455,10 +564,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/CrashlyticsReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/CrashlyticsReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/CrashlyticsReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.crashlytics",
         "display_name": "Firebase Crashlytics",
         "description": [
@@ -472,15 +581,20 @@
           "attention to ensure you never miss a critical crash no matter ",
           "where you are."
         ],
-        "keywords": ["Google", "Firebase", "Crashlytics", "Fabric"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Crashlytics",
+          "Fabric"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/crashlytics/unity/start"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -490,7 +604,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.DynamicLinks.dll",
@@ -499,7 +617,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppDynamicLinks.a",
@@ -516,7 +636,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppDynamicLinks*"
@@ -524,14 +647,19 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/DynamicLinks/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/DynamicLinksReadme.md"
           ]
@@ -543,10 +671,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/DynamicLinksReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/DynamicLinksReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/DynamicLinksReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.dynamic-links",
         "display_name": "Firebase Dynamic Links",
         "description": [
@@ -557,15 +685,19 @@
           "they're looking for when they open the game for the first time. ",
           "Dynamic Links are free forever, for any scale."
         ],
-        "keywords": ["Google", "Firebase", "Dynamic Links"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Dynamic Links"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/dynamic-links"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -575,7 +707,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.RemoteConfig.dll",
@@ -584,7 +720,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.RemoteConfig.dll",
@@ -593,7 +732,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppRemoteConfig.a"
@@ -601,7 +742,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppRemoteConfig.a"
@@ -616,7 +759,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppRemoteConfig*"
@@ -624,18 +770,25 @@
         },
         {
           "importer": "DefaultImporter",
-          "paths": ["Firebase/Editor/FirebaseRemoteConfig*_manifest.txt"]
+          "paths": [
+            "Firebase/Editor/FirebaseRemoteConfig*_manifest.txt"
+          ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/RemoteConfig/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/RemoteConfigReadme.md"
           ]
@@ -647,10 +800,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/RemoteConfigReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/RemoteConfigReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/RemoteConfigReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.remote-config",
         "display_name": "Firebase Remote Config",
         "description": [
@@ -660,15 +813,21 @@
           "deliver personalized experiences to players - without waiting for ",
           "app store approval."
         ],
-        "keywords": ["Google", "Firebase", "Remote", "Config", "Remote Config"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Remote",
+          "Config",
+          "Remote Config"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/remote-config/use-config-unity"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -678,7 +837,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Messaging.dll",
@@ -687,7 +850,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Messaging.dll",
@@ -696,7 +862,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppMessaging.a"
@@ -704,7 +872,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppMessaging.a"
@@ -713,7 +883,9 @@
         {
           "importer": "PluginImporter",
           "platforms": [],
-          "labels": ["gvh_targets-editor"],
+          "labels": [
+            "gvh_targets-editor"
+          ],
           "paths": [
             "Firebase/Editor/Firebase.Messaging.Editor.dll",
             "Firebase/Editor/Firebase.Messaging.Editor.pdb"
@@ -739,7 +911,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppMessaging*"
@@ -747,7 +922,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Android"],
+          "platforms": [
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Android/firebase-messaging-cpp.aar"
@@ -755,18 +932,25 @@
         },
         {
           "importer": "DefaultImporter",
-          "paths": ["Firebase/Editor/FirebaseMessaging*_manifest.txt"]
+          "paths": [
+            "Firebase/Editor/FirebaseMessaging*_manifest.txt"
+          ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/Messaging/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/MessagingReadme.md"
           ]
@@ -778,10 +962,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/MessagingReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/MessagingReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/MessagingReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.messaging",
         "display_name": "Firebase Cloud Messaging",
         "description": [
@@ -793,15 +977,20 @@
           "with statistics like click rate, open rate, and the downstream ",
           "effect on conversions."
         ],
-        "keywords": ["Google", "Firebase", "Cloud Messaging", "Messaging"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Cloud Messaging",
+          "Messaging"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/cloud-messaging/unity/client"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -811,7 +1000,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Database.dll",
@@ -820,7 +1013,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Database.dll",
@@ -829,7 +1025,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppDatabase.a"
@@ -837,7 +1035,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppDatabase.a"
@@ -852,7 +1052,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppDatabase*"
@@ -860,10 +1063,14 @@
         },
         {
           "importer": "DefaultImporter",
-          "paths": ["Firebase/Editor/FirebaseDatabase*_manifest.txt"]
+          "paths": [
+            "Firebase/Editor/FirebaseDatabase*_manifest.txt"
+          ]
         },
         {
-          "labels": ["gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"],
+          "labels": [
+            "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Http/link.xml"
@@ -871,30 +1078,37 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/Database/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/DatabaseReadme.md"
           ]
         }
       ],
-      "exclude_paths": ["Firebase/Sample/Auth/.*"],
+      "exclude_paths": [
+        "Firebase/Sample/Auth/.*"
+      ],
       "includes": [
         "FirebaseAuth.unitypackage",
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/DatabaseReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/DatabaseReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/DatabaseReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.database",
         "display_name": "Firebase Realtime Database",
         "description": [
@@ -907,15 +1121,20 @@
           "comes online, the local data is automatically synchronized so ",
           "people can keep playing your game from where they left off."
         ],
-        "keywords": ["Google", "Firebase", "Database", "Realtime"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Database",
+          "Realtime"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/database/unity/start"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -925,7 +1144,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Functions.dll",
@@ -934,7 +1157,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Functions.dll",
@@ -943,7 +1169,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppFunctions.a"
@@ -951,7 +1179,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppFunctions.a"
@@ -966,7 +1196,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppFunctions*"
@@ -974,14 +1207,19 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/Functions/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/FunctionsReadme.md"
           ]
@@ -993,10 +1231,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/FunctionsReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/FunctionsReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/FunctionsReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.functions",
         "display_name": "Cloud Functions for Firebase",
         "description": [
@@ -1008,15 +1246,20 @@
           "engineered. Cloud Functions also automatically scales up computing ",
           "resources to match the usage patterns of your game."
         ],
-        "keywords": ["Google", "Firebase", "Functions", "Cloud"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Functions",
+          "Cloud"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/functions"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -1026,7 +1269,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Storage.dll",
@@ -1035,7 +1282,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Storage.dll",
@@ -1044,7 +1294,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppStorage.a"
@@ -1052,7 +1304,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppStorage.a"
@@ -1060,7 +1314,13 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android", "iOS", "tvOS"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Google.Sharpen.dll",
@@ -1076,7 +1336,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppStorage*"
@@ -1084,34 +1347,43 @@
         },
         {
           "importer": "DefaultImporter",
-          "paths": ["Firebase/Editor/FirebaseStorage*_manifest.txt"]
+          "paths": [
+            "Firebase/Editor/FirebaseStorage*_manifest.txt"
+          ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/Storage/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/StorageReadme.md"
           ]
         }
       ],
-      "exclude_paths": ["Firebase/Sample/Auth/.*"],
+      "exclude_paths": [
+        "Firebase/Sample/Auth/.*"
+      ],
       "includes": [
         "FirebaseAuth.unitypackage",
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/StorageReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/StorageReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/StorageReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.storage",
         "display_name": "Cloud Storage for Firebase",
         "description": [
@@ -1122,15 +1394,20 @@
           "Through an integration with Firebase Authentication, you can use ",
           "our declarative security model to control access and keep data safe."
         ],
-        "keywords": ["Google", "Firebase", "Storage", "Cloud"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Storage",
+          "Cloud"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/storage/unity/start"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -1140,7 +1417,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Installations.dll",
@@ -1149,7 +1430,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Installations.dll",
@@ -1158,7 +1442,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppInstallations.a"
@@ -1166,7 +1452,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppInstallations.a"
@@ -1181,7 +1469,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppInstallations*"
@@ -1189,14 +1480,19 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/Installations/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/InstallationsReadme.md"
           ]
@@ -1208,10 +1504,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/InstallationsReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/InstallationsReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/InstallationsReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.installations",
         "display_name": "Firebase Installations",
         "description": [
@@ -1224,26 +1520,36 @@
           "data tied to it, target specific app installations, and retrieve ",
           "installation auth tokens."
         ],
-        "keywords": ["Google", "Firebase", "Installations"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Installations"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/reference/unity/namespace/firebase/installations"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
     },
     {
       "name": "FirebasePerformance.unitypackage",
-      "sections": ["eap"],
+      "sections": [
+        "eap"
+      ],
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Performance.dll",
@@ -1252,7 +1558,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Performance.dll",
@@ -1261,7 +1570,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppPerformance.a"
@@ -1269,7 +1580,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppPerformance.a"
@@ -1284,7 +1597,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppPerformance*"
@@ -1292,14 +1608,19 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/Performance/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/PerformanceReadme.md"
           ]
@@ -1310,10 +1631,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/PerformanceReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/PerformanceReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/PerformanceReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.performance",
         "display_name": "Firebase Performance Monitoring",
         "description": [
@@ -1327,15 +1648,20 @@
           "network requests made using system libraries on iOS (NSURLSession, ",
           "NSURLConnection) and OkHttp 3.x on Android."
         ],
-        "keywords": ["Google", "Firebase", "Performance", "Monitoring"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Performance",
+          "Monitoring"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/perf-mon"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -1345,7 +1671,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.Firestore.dll",
@@ -1354,7 +1684,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.Firestore.dll",
@@ -1363,7 +1696,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppFirestore.a"
@@ -1371,7 +1706,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppFirestore.a"
@@ -1386,7 +1723,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppFirestore*"
@@ -1394,14 +1734,19 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/Firestore/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/FirestoreReadme.md"
           ]
@@ -1412,10 +1757,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/FirestoreReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/FirestoreReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/FirestoreReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.firestore",
         "display_name": "Cloud Firestore",
         "description": [
@@ -1429,26 +1774,37 @@
           "With Cloud Firestore, your players can access and make changes to ",
           "their data at any time, even when they're offline."
         ],
-        "keywords": ["Google", "Firebase", "Firestore", "Cloud"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Firestore",
+          "Cloud"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/firestore"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
     },
     {
       "name": "FirebaseTestLab.unitypackage",
-      "sections": ["eap"],
+      "sections": [
+        "eap"
+      ],
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.TestLab.dll",
@@ -1457,7 +1813,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.TestLab.dll",
@@ -1466,7 +1825,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppTestlab.a"
@@ -1474,7 +1835,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppTestlab.a"
@@ -1491,7 +1854,9 @@
         {
           "importer": "PluginImporter",
           "platforms": [],
-          "labels": ["gvh_targets-editor"],
+          "labels": [
+            "gvh_targets-editor"
+          ],
           "paths": [
             "Firebase/Editor/Firebase.TestLab.Editor.dll",
             "Firebase/Editor/Firebase.TestLab.Editor.pdb"
@@ -1508,7 +1873,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppTestLab*"
@@ -1519,9 +1887,9 @@
         "FirebaseApp.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "common_manifest": {
         "name": "com.google.firebase.test-lab",
         "display_name": "Firebase Test Lab",
         "description": [
@@ -1533,15 +1901,21 @@
           "Test Lab also provides comprehensive test reports with actionable ",
           "insights that you can use to ensure your game is stable before release."
         ],
-        "keywords": ["Google", "Firebase", "Test", "Lab", "Testing"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Test",
+          "Lab",
+          "Testing"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/test-lab"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }
@@ -1551,7 +1925,11 @@
       "imports": [
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone", "Android"],
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/Firebase.AppCheck.dll",
@@ -1560,7 +1938,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS", "tvOS"],
+          "platforms": [
+            "iOS",
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Firebase/Plugins/iOS/Firebase.AppCheck.dll",
@@ -1569,7 +1950,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["iOS"],
+          "platforms": [
+            "iOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/iOS/Firebase/libFirebaseCppAppCheck.a"
@@ -1577,7 +1960,9 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["tvOS"],
+          "platforms": [
+            "tvOS"
+          ],
           "cpu": "AnyCPU",
           "paths": [
             "Plugins/tvOS/Firebase/libFirebaseCppAppCheck.a"
@@ -1592,7 +1977,10 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": ["Editor", "Standalone"],
+          "platforms": [
+            "Editor",
+            "Standalone"
+          ],
           "cpu": "x86_64",
           "paths": [
             "Firebase/Plugins/x86_64/FirebaseCppAppCheck*"
@@ -1600,14 +1988,19 @@
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples"],
+          "sections": [
+            "samples"
+          ],
           "paths": [
             "Firebase/Sample/AppCheck/"
           ]
         },
         {
           "importer": "DefaultImporter",
-          "sections": ["samples", "documentation"],
+          "sections": [
+            "samples",
+            "documentation"
+          ],
           "paths": [
             "Firebase/Editor/AppCheckReadme.md"
           ]
@@ -1619,10 +2012,10 @@
       ],
       "manifest_path": "Firebase/Editor",
       "readme": "Firebase/Editor/AppCheckReadme.md",
-      "changelog" : "Firebase/Editor/readme.md",
-      "license" : "Firebase/Editor/LICENSE",
-      "documentation" : "Firebase/Editor/AppCheckReadme.md",
-      "common_manifest" : {
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/AppCheckReadme.md",
+      "common_manifest": {
         "name": "com.google.firebase.app-check",
         "display_name": "Firebase App Check",
         "description": [
@@ -1631,15 +2024,19 @@
           "resources. It works with both Firebase services, Google Cloud ",
           "services, and your own APIs to keep your resources safe."
         ],
-        "keywords": ["Google", "Firebase", "App Check"],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "App Check"
+        ],
         "author": {
-          "name" : "Google LLC",
+          "name": "Google LLC",
           "url": "https://firebase.google.com/docs/app-check"
         }
       },
       "export_upm": 1,
-      "upm_package_config" : {
-        "manifest" : {
+      "upm_package_config": {
+        "manifest": {
           "unity": "2020.1"
         }
       }

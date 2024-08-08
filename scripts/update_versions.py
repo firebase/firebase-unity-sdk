@@ -22,6 +22,8 @@ pip install PyGithub
 Example usage (in root folder):
   python scripts/update_versions.py --unity_sdk_version=<version number>
 """
+import json
+import glob
 import os
 import re
 import requests
@@ -214,6 +216,35 @@ def update_readme(unity_sdk_version):
   with open(readme_path, "w") as fout:
     fout.write(replacement)
 
+def update_json_version(json_path, new_version):
+    """
+    Updates the version number associated with "com.google.external-dependency-manager" in a JSON file.
+
+    Args:
+        json_path (str): The path to the JSON file to be modified.
+        new_version (str): The new version number to be set.
+    """
+
+    with open(json_path, 'r') as file:
+        data = json.load(file)
+
+    target_key = "com.google.external-dependency-manager"
+    if target_key in data:
+        data[target_key] = new_version
+
+    with open(json_path, 'w') as file:
+        json.dump(data, file, indent=2)  # Indentation for better readability
+
+def update_export_json_files():
+  jar_version = get_latest_repo_tag('googlesamples/unity-jar-resolver')
+  jar_version = jar_version.lstrip("v") # jar resolver need to strip "v" from the tag
+  primary_path = os.path.join(os.getcwd(), 'unity_packer', 'exports.json')
+  update_json_version(primary_path, jar_version)
+  json_dir = os.path.join(os.getcwd(), 'unity_packer', 'debug_single_export_json')
+  for json_file in glob.glob(os.path.join(json_dir, '*.json')):
+    update_json_version(json_file, jar_version)
+  
+
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
@@ -224,6 +255,7 @@ def main(argv):
   update_unity_version(FLAGS.unity_sdk_version)
   update_android_deps()
   update_readme(FLAGS.unity_sdk_version)
+  update_export_json_files()
 
 if __name__ == '__main__':
   app.run(main)
