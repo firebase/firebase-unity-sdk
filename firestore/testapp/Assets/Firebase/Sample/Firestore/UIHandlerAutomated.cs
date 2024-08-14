@@ -4253,15 +4253,7 @@ namespace Firebase.Sample.Firestore {
         AssertEq(snapshot1.Equals(snapshot3), false);
         AssertEq(snapshot1.Equals(null), false);
 
-        // Note: snapshot3 is not equal to snapshot4 as snapshot3 has `DocumentState` of
-        // `kHasCommittedMutations`, but snapshot4 has `DocumentState` of `kSynced`.
-        // TODO(b/204238341) Remove this #if once the Android and iOS implementations converge.
-#if UNITY_ANDROID
-        AssertEq(snapshot3.Equals(snapshot4), false);
-#else
         AssertEq(snapshot3.Equals(snapshot4), true);
-#endif
-
         AssertEq(snapshot4.Equals(snapshot5), true);
 
         AssertEq(snapshot1.GetHashCode(), snapshot1.GetHashCode());
