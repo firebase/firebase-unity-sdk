@@ -4680,6 +4680,17 @@ namespace Firebase.Sample.Firestore {
     private void AssertQueryResults(string desc, Query query, List<string> docIds, long count) {
       var snapshot = Await(query.GetSnapshotAsync());
 
+      if (docIds.Count != count) {
+        UnityEngine.Debug.Log("=-=-=   WTF!!!");
+      }
+
+      if (snapshot.Count != docIds.Count) {
+        UnityEngine.Debug.Log("=====  Got a snapshot for " + desc + ". Count: " + snapshot.Count + " expected: " + count);
+        for (int i = 0; i < snapshot.Count; i++) {
+          UnityEngine.Debug.Log("=====  snapshot[" + i + "]:  " + snapshot[i].Id);
+        }
+      }
+
       AssertEq(desc + ": Query result count", snapshot.Count, docIds.Count);
       for (int i = 0; i < snapshot.Count; i++) {
         AssertEq(desc + ": Document ID " + i, docIds[i], snapshot[i].Id);
