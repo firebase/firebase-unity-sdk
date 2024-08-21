@@ -2341,6 +2341,12 @@ namespace Firebase.Sample.Firestore {
       return Async(() => {
         // Initialize collection with a few test documents to query against.
         var c = TestCollection();
+
+        string info = "(" + c.Id + ")";
+        Await(db.CollectionGroup(c.Id).GetSnapshotAsync().ContinueWith(t => {
+          info += "[" + t.Result.Count + "]";
+        }));
+
         Await(c.Document("a").SetAsync(new Dictionary<string, object> {
           { "num", 1 },
           { "state", "created" },
@@ -2371,96 +2377,96 @@ namespace Firebase.Sample.Firestore {
                   }));
 
         AssertQueryResults(
-            desc: "EqualTo",
+            desc: "EqualTo" + info,
             query: c.WhereEqualTo("num", 1),
             docIds: AsList("a"));
         AssertQueryResults(
-            desc: "EqualTo (FieldPath)",
+            desc: "EqualTo (FieldPath)" + info,
             query: c.WhereEqualTo(new FieldPath("num"), 1),
             docIds: AsList("a"));
 
-        AssertQueryResults(desc: "NotEqualTo", query: c.WhereNotEqualTo("num", 1),
+        AssertQueryResults(desc: "NotEqualTo" + info, query: c.WhereNotEqualTo("num", 1),
                            docIds: AsList("b", "c"));
-        AssertQueryResults(desc: "NotEqualTo (FieldPath)",
+        AssertQueryResults(desc: "NotEqualTo (FieldPath)" + info,
                            query: c.WhereNotEqualTo(new FieldPath("num"), 1),
                            docIds: AsList("b", "c"));
-        AssertQueryResults(desc: "NotEqualTo (FieldPath) on nullable",
+        AssertQueryResults(desc: "NotEqualTo (FieldPath) on nullable" + info,
                            query: c.WhereNotEqualTo(new FieldPath("nullable"), null),
                            docIds: AsList("a"));
 
-        AssertQueryResults(desc: "LessThanOrEqualTo", query: c.WhereLessThanOrEqualTo("num", 2),
+        AssertQueryResults(desc: "LessThanOrEqualTo" + info, query: c.WhereLessThanOrEqualTo("num", 2),
                            docIds: AsList("a", "b"));
         AssertQueryResults(
-            desc: "LessThanOrEqualTo (FieldPath)",
+            desc: "LessThanOrEqualTo (FieldPath)" + info,
             query: c.WhereLessThanOrEqualTo(new FieldPath("num"), 2),
             docIds: AsList("a", "b"));
 
         AssertQueryResults(
-            desc: "LessThan",
+            desc: "LessThan" + info,
             query: c.WhereLessThan("num", 2),
             docIds: AsList("a"));
         AssertQueryResults(
-            desc: "LessThan (FieldPath)",
+            desc: "LessThan (FieldPath)" + info,
             query: c.WhereLessThan(new FieldPath("num"), 2),
             docIds: AsList("a"));
 
         AssertQueryResults(
-            desc: "GreaterThanOrEqualTo",
+            desc: "GreaterThanOrEqualTo" + info,
             query: c.WhereGreaterThanOrEqualTo("num", 2),
             docIds: AsList("b", "c"));
         AssertQueryResults(
-            desc: "GreaterThanOrEqualTo (FieldPath)",
+            desc: "GreaterThanOrEqualTo (FieldPath)" + info,
             query: c.WhereGreaterThanOrEqualTo(new FieldPath("num"), 2),
             docIds: AsList("b", "c"));
 
         AssertQueryResults(
-            desc: "GreaterThan",
+            desc: "GreaterThan" + info,
             query: c.WhereGreaterThan("num", 2),
             docIds: AsList("c"));
         AssertQueryResults(
-            desc: "GreaterThan (FieldPath)",
+            desc: "GreaterThan (FieldPath)" + info,
             query: c.WhereGreaterThan(new FieldPath("num"), 2),
             docIds: AsList("c"));
 
         AssertQueryResults(
-            desc: "two EqualTos",
+            desc: "two EqualTos" + info,
             query: c.WhereEqualTo("state", "done").WhereEqualTo("active", false),
             docIds: AsList("b"));
 
         AssertQueryResults(
-            desc: "OrderBy, Limit",
+            desc: "OrderBy, Limit" + info,
             query: c.OrderBy("num").Limit(2),
             docIds: AsList("a", "b"));
         AssertQueryResults(
-            desc: "OrderBy, Limit (FieldPath)",
+            desc: "OrderBy, Limit (FieldPath)" + info,
             query: c.OrderBy(new FieldPath("num")).Limit(2),
             docIds: AsList("a", "b"));
 
         AssertQueryResults(
-            desc: "OrderByDescending, Limit",
+            desc: "OrderByDescending, Limit" + info,
             query: c.OrderByDescending("num").Limit(2),
             docIds: AsList("c", "b"));
         AssertQueryResults(
-            desc: "OrderByDescending, Limit (FieldPath)",
+            desc: "OrderByDescending, Limit (FieldPath)" + info,
             query: c.OrderByDescending(new FieldPath("num")).Limit(2),
             docIds: AsList("c", "b"));
 
         AssertQueryResults(
-            desc: "StartAfter",
+            desc: "StartAfter" + info,
             query: c.OrderBy("num").StartAfter(2),
             docIds: AsList("c"));
         AssertQueryResults(
-            desc: "EndBefore",
+            desc: "EndBefore" + info,
             query: c.OrderBy("num").EndBefore(2),
             docIds: AsList("a"));
         AssertQueryResults(
-            desc: "StartAt, EndAt",
+            desc: "StartAt, EndAt" + info,
             query: c.OrderBy("num").StartAt(2).EndAt(2),
             docIds: AsList("b"));
 
         // Collection Group Query
         AssertQueryResults(
-          desc: "CollectionGroup",
+          desc: "CollectionGroup" + info,
           query: db.CollectionGroup(c.Id),
           docIds: AsList("a", "b", "c", "d-nested")
         );
