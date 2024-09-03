@@ -316,18 +316,22 @@ void SendPendingEvents() {
     // messageReceivedDelegate.
     [MonoPInvokeCallback(typeof(MessageReceivedDelegate))]
     private static int MessageReceivedDelegateMethod(System.IntPtr message) {
+      int tookOwnership = 0;
       return ExceptionAggregator.Wrap(() => {
           // Use a local copy so another thread cannot unset this before we use it.
           var handler = FirebaseMessagingInternal.MessageReceivedInternal;
           if (handler != null) {
+            // Take ownership, and track it so that the caller of this knows, even
+            // if an exception is thrown, since the C# object will still delete it.
             FirebaseMessageInternal messageInternal = new FirebaseMessageInternal(message, true);
+            tookOwnership = 1;
             handler(null, new Firebase.Messaging.MessageReceivedEventArgs(
                 FirebaseMessage.FromInternal(messageInternal)));
             messageInternal.Dispose();
             return 1;
           }
           return 0;
-        }, 0);
+        }, tookOwnership);
     }
 
     // Called from ListenerImpl::TokenReceived() via the
