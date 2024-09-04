@@ -71,7 +71,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 12.2.1
 - Changes
     - Messaging: Fixed a crash when opening a push notification.
       ([#1091](https://github.com/firebase/firebase-unity-sdk/issues/1091)).
