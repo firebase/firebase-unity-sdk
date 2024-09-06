@@ -69,7 +69,7 @@ public:
   // OnMessage() callback in this class.  SWIGSTDCALL is used here as C#
   // delegates *must* be called using the stdcall calling convention rather
   // than whatever the compiler defines.
-  typedef int (SWIGSTDCALL *MessageReceivedCallback)(void* message);
+  typedef bool (SWIGSTDCALL *MessageReceivedCallback)(void* message);
   // Function which is used to reference a C# delegate which is called from
   // OnTokenReceived() callback in this class.  SWIGSTDCALL is used here as C#
   // delegates *must* be called using the stdcall calling convention rather
@@ -250,7 +250,7 @@ void SendPendingEvents() {
   // Listener.TokenReceivedDelegateMethod respectively.
   internal class Listener : System.IDisposable {
     // Delegate called from ListenerImpl::MessageReceivedCallback().
-    internal delegate int MessageReceivedDelegate(System.IntPtr message);
+    internal delegate bool MessageReceivedDelegate(System.IntPtr message);
     // Delegate called from ListenerImpl::TokenReceivedCallback().
     internal delegate void TokenReceivedDelegate(string token);
 
@@ -315,19 +315,23 @@ void SendPendingEvents() {
     // Called from ListenerImpl::MessageReceived() via the
     // messageReceivedDelegate.
     [MonoPInvokeCallback(typeof(MessageReceivedDelegate))]
-    private static int MessageReceivedDelegateMethod(System.IntPtr message) {
+    private static bool MessageReceivedDelegateMethod(System.IntPtr message) {
+      bool tookOwnership = false;
       return ExceptionAggregator.Wrap(() => {
           // Use a local copy so another thread cannot unset this before we use it.
           var handler = FirebaseMessagingInternal.MessageReceivedInternal;
           if (handler != null) {
+            // Take ownership, and track it so that the caller of this knows, even
+            // if an exception is thrown, since the C# object will still delete it.
             FirebaseMessageInternal messageInternal = new FirebaseMessageInternal(message, true);
+            tookOwnership = true;
             handler(null, new Firebase.Messaging.MessageReceivedEventArgs(
                 FirebaseMessage.FromInternal(messageInternal)));
             messageInternal.Dispose();
-            return 1;
+            return true;
           }
-          return 0;
-        }, 0);
+          return false;
+        }, tookOwnership);
     }
 
     // Called from ListenerImpl::TokenReceived() via the

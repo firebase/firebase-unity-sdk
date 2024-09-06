@@ -22,6 +22,8 @@ namespace Firebase.Messaging {
 /// implementation.
 public sealed class AndroidNotificationParams {
   internal static AndroidNotificationParams FromInternal(AndroidNotificationParamsInternal other) {
+    if (other == null) return null;
+
     AndroidNotificationParams android = new AndroidNotificationParams();
     android.ChannelId = other.channel_id;
     return android;
@@ -45,6 +47,8 @@ public sealed class AndroidNotificationParams {
 /// library.
 public sealed class FirebaseNotification {
   internal static FirebaseNotification FromInternal(FirebaseNotificationInternal other) {
+    if (other == null) return null;
+
     FirebaseNotification notification = new FirebaseNotification();
     notification.Android = AndroidNotificationParams.FromInternal(other.android);
     notification.Badge = other.badge;

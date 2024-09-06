@@ -71,6 +71,11 @@ Support
 
 Release Notes
 -------------
+### 12.2.1
+- Changes
+    - Messaging: Fixed a crash when opening a push notification.
+      ([#1091](https://github.com/firebase/firebase-unity-sdk/issues/1091)).
+
 ### 12.2.0
 - Changes
     - General: Update to Firebase C++ SDK version 12.2.0.
