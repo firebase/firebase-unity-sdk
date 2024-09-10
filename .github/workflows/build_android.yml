@@ -94,7 +94,7 @@ jobs:
           cd ..
           echo "NDK_ROOT=/tmp/android-ndk-r21e" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=/tmp/android-ndk-r21e" >> $GITHUB_ENV
-          brew install swig@4.2
+          brew install swig
       
       - name: Force Java 8 (macOS)
         shell: bash
