@@ -21,8 +21,53 @@ set(firebase_analytics_swig
   src/swig/analytics.i
 )
 
+# Generate CSharp files for the various Analytics constants
+set(analytics_cpp_generated_headers_dir
+    "${CMAKE_BINARY_DIR}/generated/analytics/src/include/firebase/analytics")
+set(analytics_csharp_generated_dir
+    "${CMAKE_BINARY_DIR}/analytics/generated")
+file(MAKE_DIRECTORY ${analytics_csharp_generated_dir})
+
+# Generate the header file by invoking the generate_constants python script.
+function(generate_analytics_unity_file CPP_FILE CSHARP_FILE)
+  add_custom_command(
+    OUTPUT ${CSHARP_FILE}
+    COMMAND ${FIREBASE_PYTHON_EXECUTABLE} "${CMAKE_CURRENT_LIST_DIR}/generate_constants.py"
+      "--cpp_header=${CPP_FILE}"
+      "--csharp_file=${CSHARP_FILE}"
+    DEPENDS ${CPP_FILE}
+    COMMENT "Generating ${CSHARP_FILE}"
+  )
+endfunction()
+
+# Call the above function for all of the files to generate.
+generate_analytics_unity_file(
+  "${analytics_cpp_generated_headers_dir}/event_names.h"
+  "${analytics_csharp_generated_dir}/EventNames.cs"
+)
+generate_analytics_unity_file(
+  "${analytics_cpp_generated_headers_dir}/parameter_names.h"
+  "${analytics_csharp_generated_dir}/ParameterNames.cs"
+)
+generate_analytics_unity_file(
+  "${analytics_cpp_generated_headers_dir}/user_property_names.h"
+  "${analytics_csharp_generated_dir}/UserPropertyNames.cs"
+)
+add_custom_target(FIREBASE_UNITY_ANALYTICS_GENERATED_FILES
+  DEPENDS 
+    ${analytics_csharp_generated_dir}/EventNames.cs
+    ${analytics_csharp_generated_dir}/ParameterNames.cs
+    ${analytics_csharp_generated_dir}/UserPropertyNames.cs
+)
+
 # Firebase Analytics CSharp files
 set(firebase_analytics_src
+  src/Consent.cs
+  src/FirebaseAnalytics.cs
+  src/Parameter.cs
+  ${analytics_csharp_generated_dir}/EventNames.cs
+  ${analytics_csharp_generated_dir}/ParameterNames.cs
+  ${analytics_csharp_generated_dir}/UserPropertyNames.cs
 )
 
 firebase_swig_add_library(firebase_analytics_swig
@@ -59,6 +104,7 @@ mono_add_library(firebase_analytics_cs
     ${FIREBASE_PLATFORM_REF}
   DEPENDS
     firebase_analytics_swig
+    FIREBASE_UNITY_ANALYTICS_GENERATED_FILES
 )
 
 if(FIREBASE_IOS_BUILD)

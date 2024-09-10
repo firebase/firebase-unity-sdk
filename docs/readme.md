@@ -71,6 +71,13 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Analytics: Renamed ParameterGroupId to ParameterGroupID, to be
+      consistent with other similarly named variables.
+    - Analytics: Deprecated the Dispose functions, as they are no longer
+      necessary for cleaning up memory.
+
 ### 12.2.1
 - Changes
     - Messaging: Fixed a crash when opening a push notification.
