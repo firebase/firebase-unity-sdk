@@ -326,7 +326,7 @@ jobs:
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Windows || true
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v3
         with:
           path: test_results
           name: build_and_test_results
@@ -501,7 +501,7 @@ jobs:
         if: runner.os == 'macOS'
         run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
       - name: Download Testapp artifacts
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v3
         with:
           path: testapps
           name: ${{ steps.matrix_info.outputs.artifact_path }}
@@ -610,7 +610,7 @@ jobs:
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v3
         with:
           path: test_results
           name: build_and_test_results
@@ -649,7 +649,7 @@ jobs:
       - name: Install python deps
         run: pip install -r scripts/gha/requirements.txt
       - name: Download log artifacts
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v3
         with:
           path: test_results
           name: build_and_test_results
