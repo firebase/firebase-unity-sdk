@@ -35,7 +35,8 @@ function(generate_analytics_unity_file CPP_FILE CSHARP_FILE)
     COMMAND ${FIREBASE_PYTHON_EXECUTABLE} "${CMAKE_CURRENT_LIST_DIR}/generate_constants.py"
       "--cpp_header=${CPP_FILE}"
       "--csharp_file=${CSHARP_FILE}"
-    DEPENDS ${CPP_FILE}
+    DEPENDS FIREBASE_ANALYTICS_GENERATED_HEADERS
+      ${CPP_FILE}
     COMMENT "Generating ${CSHARP_FILE}"
   )
 endfunction()
