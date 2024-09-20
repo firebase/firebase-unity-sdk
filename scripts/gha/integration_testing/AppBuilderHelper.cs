@@ -224,7 +224,9 @@ public sealed class AppBuilderHelper {
 #if UNITY_2020_1_OR_NEWER
       PlayerSettings.Android.minifyDebug = true;
       PlayerSettings.Android.minifyRelease = true;
+#if !UNITY_2021_1_OR_NEWER
       PlayerSettings.Android.minifyWithR8 = false;
+#else
 #elif UNITY_2017_1_OR_NEWER
       EditorUserBuildSettings.androidReleaseMinification = AndroidMinification.Proguard;
       EditorUserBuildSettings.androidDebugMinification = AndroidMinification.Proguard;
