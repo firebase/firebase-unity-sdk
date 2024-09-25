@@ -133,7 +133,11 @@ class Test(object):
     open_process.kill()
     if platform.system() == 'Linux':
       # Linux seems to have a problem printing out too much information, so truncate it
-      logging.info("Test result: %s (Log might be truncated)", self.logs[:64000])
+      # It can also fail to save the logs correctly for some reason, so check for that
+      if self.logs is None:
+        logging.warning("Unable to print the logs")
+      else:
+        logging.info("Test result: %s (Log might be truncated)", self.logs[:64000])
     else:
       logging.info("Test result: %s", self.logs)
     logging.info("Finished running %s", self.testapp_path)
