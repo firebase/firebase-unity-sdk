@@ -116,9 +116,11 @@ namespace Firebase.Sample {
 
       if (currentTestIndex >= tests.Count) {
         if (Finished) {
+          UnityEngine.Debug.Log("=====  Test was finished, waiting for some time to pass: " + Time.time + "  " + endTime);
           // No tests left to run.
           // Wait 5 seconds before notifying test lab manager so video can capture end of test.
           if (Time.time > endTime + 5f) {
+            UnityEngine.Debug.Log("=====  Enough time passed, marking stuff as complete");
             testLabManager.NotifyHarnessTestIsComplete();
           }
         } else {

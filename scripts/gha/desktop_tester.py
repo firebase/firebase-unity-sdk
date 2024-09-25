@@ -123,14 +123,15 @@ class Test(object):
     open_process = subprocess.Popen(args=args)
     test_running = True
     time_until_timeout = 300  # Timeout of 300 seconds, or 5 minutes.
+    logging.info("=====  log_path: %s", log_path)
     while test_running and time_until_timeout > 0:
       time.sleep(5)
       time_until_timeout -= 5
-      logging.info("=====  log_path: %s", log_path)
       if os.path.exists(log_path):
         with open(log_path) as f:
           self.logs = f.read()
         test_running = "All tests finished" not in self.logs
+    logging.info("=====  Did I timeout? %d", time_until_timeout)
     open_process.kill()
     if platform.system() == 'Linux':
       # Linux seems to have a problem printing out too much information, so truncate it
