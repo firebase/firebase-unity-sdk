@@ -96,9 +96,9 @@ jobs:
           echo "ANDROID_NDK_HOME=/tmp/android-ndk-r21e" >> $GITHUB_ENV
           brew install swig
       
-      - name: Force Java 8 (macOS)
+      - name: Force Java 11
         shell: bash
-        run: echo "JAVA_HOME=${JAVA_HOME_8_X64}" >> $GITHUB_ENV
+        run: echo "JAVA_HOME=${JAVA_HOME_11_X64}" >> $GITHUB_ENV
 
       - name: Install python deps
         shell: bash

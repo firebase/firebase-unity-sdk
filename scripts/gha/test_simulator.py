@@ -284,7 +284,7 @@ def main(argv):
     build_tool_version = FLAGS.build_tools_version
 
     if not _check_java_version():
-      logging.error("Please set JAVA_HOME to java 8")
+      logging.error("Please set JAVA_HOME to java 11")
       return 31
 
     _setup_android(platform_version, build_tool_version, sdk_id)  
@@ -536,7 +536,7 @@ def _check_java_version():
   result = subprocess.Popen(command, universal_newlines=True, shell=True, stdout=subprocess.PIPE)
   java_version = result.stdout.read().strip()
   logging.info("Java version: %s", java_version)
-  return "1.8" in java_version
+  return "1.11" in java_version
 
 
 def _setup_android(platform_version, build_tool_version, sdk_id):
