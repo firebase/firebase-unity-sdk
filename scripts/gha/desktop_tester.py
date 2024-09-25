@@ -126,6 +126,7 @@ class Test(object):
     while test_running and time_until_timeout > 0:
       time.sleep(5)
       time_until_timeout -= 5
+      logging.info("=====  log_path: %s", log_path)
       if os.path.exists(log_path):
         with open(log_path) as f:
           self.logs = f.read()

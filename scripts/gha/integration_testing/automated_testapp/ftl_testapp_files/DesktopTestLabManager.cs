@@ -37,6 +37,7 @@ namespace Firebase.TestLab {
     }
 
     protected override void OnFinishTest() {
+      UnityEngine.Debug.Log("=====  TestLabManager OnFinishTest called");
       logWriter.Close();
       Application.Quit();
     }
@@ -60,6 +61,7 @@ namespace Firebase.TestLab {
       }
       // Hard-coded scenario number. May be replaced with a number supplied via command line
       // flag if multiple scenarios become required for desktop.
+      UnityEngine.Debug.Log("======  Making a TestLabManager with logPath: " + logPath);
       return new DesktopTestLabManager(1, File.AppendText(logPath));
     }
 
