@@ -65,7 +65,7 @@ def main(argv):
   for file_dir, _, file_names in os.walk(testapp_dir):
     for file_name in file_names:
       # match Testapp names, e.g. "Firebase Analytics Unity Testapp"
-      if testapp_name in file_name.lower():
+      if testapp_name in file_name.lower() and file_name.endswith("_s.debug"):
         testapps.append(os.path.join(file_dir, file_name))
 
   if not testapps:
@@ -123,7 +123,6 @@ class Test(object):
     open_process = subprocess.Popen(args=args)
     test_running = True
     time_until_timeout = 300  # Timeout of 300 seconds, or 5 minutes.
-    logging.info("=====  log_path: %s", log_path)
     while test_running and time_until_timeout > 0:
       time.sleep(5)
       time_until_timeout -= 5
@@ -131,7 +130,6 @@ class Test(object):
         with open(log_path) as f:
           self.logs = f.read()
         test_running = "All tests finished" not in self.logs
-    logging.info("=====  Did I timeout? %d", time_until_timeout)
     open_process.kill()
     if platform.system() == 'Linux':
       # Linux seems to have a problem printing out too much information, so truncate it

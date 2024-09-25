@@ -102,8 +102,6 @@ namespace Firebase.Sample {
       return string.Format("[{0}]({1}): {2}\n{3}\n", DateTime.Now, type, condition, stackTrace);
     }
 
-    float lastLogTime = 0;
-
     // Runs through the tests, checking if the current one is done.
     // If so, logs the relevant information, and proceeds to the next test.
     public void Update() {
@@ -118,14 +116,9 @@ namespace Firebase.Sample {
 
       if (currentTestIndex >= tests.Count) {
         if (Finished) {
-          if (Time.time > lastLogTime + 5f) {
-            UnityEngine.Debug.Log("=====  Test was finished, waiting for some time to pass: " + Time.time + "  " + endTime);
-            lastLogTime = Time.time;
-          }
           // No tests left to run.
           // Wait 5 seconds before notifying test lab manager so video can capture end of test.
           if (Time.time > endTime + 5f) {
-            UnityEngine.Debug.Log("=====  Enough time passed, marking stuff as complete");
             testLabManager.NotifyHarnessTestIsComplete();
           }
         } else {
@@ -143,7 +136,6 @@ namespace Firebase.Sample {
           }
           Finished = true;
           endTime = Time.time;
-          UnityEngine.Debug.Log("=====  Test was finished, starting to wait: " + Time.time + "  " + endTime);
         }
         return;
       }
