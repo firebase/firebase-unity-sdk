@@ -72,32 +72,21 @@ public sealed class XcodeCapabilities
     tempProject.ReadFromString(File.ReadAllText(projectPath));
     string targetId = GetMainTargetGUID(tempProject);
 
-    var capabilityManager = new ProjectCapabilityManager(projectPath, "dev.entitlements", null, targetId);
-
     if (path.Contains("FirebaseMessaging")) {
-      MakeChangesForMessaging(capabilityManager);
-    }
-    if (path.Contains("FirebaseAuth")) {
-      MakeChangesForAuth(capabilityManager);
+      var capabilityManager = new ProjectCapabilityManager(projectPath, "dev.entitlements", null, targetId);
+      capabilityManager.AddPushNotifications(true);
+      capabilityManager.AddBackgroundModes(BackgroundModesOptions.RemoteNotifications);
+      capabilityManager.WriteToFile();
+    } else if (path.Contains("FirebaseAuth")) {
+      var capabilityManager = new ProjectCapabilityManager(projectPath, "dev.entitlements", null, targetId);
+      capabilityManager.AddPushNotifications(true);
+      capabilityManager.WriteToFile();
     }
     // Bitcode is being deprecated by xcode, but Unity defaults to it on, so turn it off.
     tempProject.SetBuildProperty(targetId, "ENABLE_BITCODE", "NO");
     string unityFrameworkTargetId = GetUnityFrameworkTargetGuid(tempProject);
     tempProject.SetBuildProperty(unityFrameworkTargetId, "ENABLE_BITCODE", "NO");
     File.WriteAllText(projectPath, tempProject.WriteToString());
-  }
-
-  static void MakeChangesForMessaging(ProjectCapabilityManager capabilityManager) {
-    Debug.Log("Messaging testapp detected.");
-    capabilityManager.AddPushNotifications(true);
-    capabilityManager.AddBackgroundModes(BackgroundModesOptions.RemoteNotifications);
-    Debug.Log("Finished making messaging-specific changes.");
-  }
-
-  static void MakeChangesForAuth(ProjectCapabilityManager capabilityManager) {
-    Debug.Log("Auth testapp detected.");
-    capabilityManager.AddPushNotifications(true);
-    Debug.Log("Finished making auth-specific changes.");
   }
 
   static string GetMainTargetGUID(object pbxProjectObj) {

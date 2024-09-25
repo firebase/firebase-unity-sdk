@@ -483,14 +483,6 @@ def build_testapp(dir_helper, api_config, ios_config, target):
         build_flags.append("-AppBuilderHelper.forceXcodeProject")
       # This script will automatically configure the generated xcode project
       dir_helper.copy_editor_script("XcodeCapabilities.cs")
-      # Some testapps have xcode entitlements
-      if api_config.entitlements:
-        logging.info("!!!!!  Copying entitlement files  %s  ->  %s",
-            os.path.join(dir_helper.root_dir, api_config.entitlements),
-            os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
-        shutil.copy(
-            os.path.join(dir_helper.root_dir, api_config.entitlements),
-            os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
       _run(arg_builder.get_args_to_open_project(build_flags))
       logging.info("Finished building target %s xcode project", target)
       run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config, device_type = device_type,
