@@ -485,6 +485,9 @@ def build_testapp(dir_helper, api_config, ios_config, target):
       dir_helper.copy_editor_script("XcodeCapabilities.cs")
       # Some testapps have xcode entitlements
       if api_config.entitlements:
+        logging.info("!!!!!  Copying entitlement files  %s  ->  %s",
+            os.path.join(dir_helper.root_dir, api_config.entitlements),
+            os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
         shutil.copy(
             os.path.join(dir_helper.root_dir, api_config.entitlements),
             os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
