@@ -72,15 +72,13 @@ public sealed class XcodeCapabilities
     tempProject.ReadFromString(File.ReadAllText(projectPath));
     string targetId = GetMainTargetGUID(tempProject);
 
-    // This will look for an entitlements file in the unity project, and add it to the
-    // PBX Project if found.
-    AddEntitlements(tempProject, path, targetId);
+    var capabilityManager = new ProjectCapabilityManager(projectPath, "dev.entitlements", null, targetId);
 
     if (path.Contains("FirebaseMessaging")) {
-      MakeChangesForMessaging(tempProject, path, targetId);
+      MakeChangesForMessaging(capabilityManager);
     }
     if (path.Contains("FirebaseAuth")) {
-      MakeChangesForAuth(tempProject, path, targetId);
+      MakeChangesForAuth(capabilityManager);
     }
     // Bitcode is being deprecated by xcode, but Unity defaults to it on, so turn it off.
     tempProject.SetBuildProperty(targetId, "ENABLE_BITCODE", "NO");
@@ -89,65 +87,17 @@ public sealed class XcodeCapabilities
     File.WriteAllText(projectPath, tempProject.WriteToString());
   }
 
-  static void AddEntitlements(object projectObj, string path, string targetId){
-    var project = (PBXProject)projectObj;
-    string[] entitlements = AssetDatabase.FindAssets("dev")
-      .Select(AssetDatabase.GUIDToAssetPath)
-      .Where(p => p.Contains("dev.entitlements"))
-      .ToArray();
-    // Only some APIs require entitlements so length 0 is okay
-    if (entitlements.Length == 0) {
-      Debug.Log("No entitlement file found.");
-      return;
-    }
-    if (entitlements.Length > 1) {
-      throw new System.InvalidOperationException("Multiple entitlements found.");
-    }
-    Debug.Log("Entitlement file found.");
-    string entitlementPath = entitlements[0];
-
-    string entitlementFileName = Path.GetFileName(entitlementPath);
-    string relativeDestination = Google.IOSResolver.PROJECT_NAME + "/" + entitlementFileName;
-    FileUtil.CopyFileOrDirectory(entitlementPath, path + "/" + relativeDestination);
-    project.AddFile(relativeDestination, entitlementFileName);
-    // Not enough to add the entitlement: need to force the project to recognize it.
-    project.AddBuildProperty(targetId, "CODE_SIGN_ENTITLEMENTS", relativeDestination);
-    Debug.Log("Added entitlement to xcode project.");
-  }
-
-  static void MakeChangesForMessaging(object projectObj, string path, string targetId) {
-    var project = (PBXProject)projectObj;
+  static void MakeChangesForMessaging(ProjectCapabilityManager capabilityManager) {
     Debug.Log("Messaging testapp detected.");
-    AddFramework(project, targetId, "UserNotifications.framework");
-    EnableRemoteNotification(project, path, targetId);
+    capabilityManager.AddPushNotifications(true);
+    capabilityManager.AddBackgroundModes(BackgroundModesOptions.RemoteNotifications);
     Debug.Log("Finished making messaging-specific changes.");
   }
 
-  static void MakeChangesForAuth(object projectObj, string path, string targetId) {
-    var project = (PBXProject)projectObj;
+  static void MakeChangesForAuth(ProjectCapabilityManager capabilityManager) {
     Debug.Log("Auth testapp detected.");
-    AddFramework(project, targetId, "UserNotifications.framework");
+    capabilityManager.AddPushNotifications(true);
     Debug.Log("Finished making auth-specific changes.");
-  }
-
-  static void EnableRemoteNotification(object projectObj, string path, string targetId) {
-    var project = (PBXProject)projectObj;
-    Debug.Log("Adding remote-notification to UIBackgroundModes");
-    var plist = new PlistDocument();
-    string plistPath = path + "/Info.plist";
-    plist.ReadFromString(File.ReadAllText(plistPath));
-    PlistElementDict rootDict = plist.root;
-    PlistElementArray backgroundModes = rootDict.CreateArray("UIBackgroundModes");
-    backgroundModes.AddString("remote-notification");
-    File.WriteAllText(plistPath, plist.WriteToString());
-    Debug.Log("Finished adding remote-notification.");
-  }
-
-  static void AddFramework(object projectObj, string targetId, string framework) {
-    var project = (PBXProject)projectObj;
-    Debug.LogFormat("Adding framework to xcode project: {0}.", framework);
-    project.AddFrameworkToProject(targetId, framework, false);
-    Debug.Log("Finished adding framework.");
   }
 
   static string GetMainTargetGUID(object pbxProjectObj) {
