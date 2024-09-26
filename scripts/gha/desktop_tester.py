@@ -65,7 +65,8 @@ def main(argv):
   for file_dir, _, file_names in os.walk(testapp_dir):
     for file_name in file_names:
       # match Testapp names, e.g. "Firebase Analytics Unity Testapp"
-      if testapp_name in file_name.lower() and file_name.endswith("_s.debug"):
+      # Ignore files ending with _s.debug, since Linux generates debug files
+      if testapp_name in file_name.lower() and not file_name.endswith("_s.debug"):
         testapps.append(os.path.join(file_dir, file_name))
 
   if not testapps:
