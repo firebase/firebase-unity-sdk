@@ -1,7 +1,7 @@
 # `unity-setup` GitHub Action
 
 ## Inputs
--  `version`: **[Required]** Unity Major Version Number. Currently supported values: [2019, 2020].
+-  `version`: **[Required]** Unity Major Version Number. Currently supported values: [2019, 2020, 2021, 2022].
 
 -  `platforms`: Platforms that you'd like to support, if not provided, build apps on certain platforms may encounter errors. Values: [Android,iOS,tvOS,Windows,macOS,Linux].
 

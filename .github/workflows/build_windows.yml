@@ -6,7 +6,7 @@ on:
     inputs:
       unity_version:
         description: 'Unity version'
-        default: '2019'
+        default: '2021'
         required: true
         type: string
       firebase_cpp_sdk_version:
