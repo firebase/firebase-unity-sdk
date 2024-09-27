@@ -71,6 +71,19 @@ Support
 
 Release Notes
 -------------
+### 12.3.0
+- Changes
+    - General: Update to Firebase C++ SDK version 12.3.0.
+    - General (Android): Update to Firebase Android BoM version 33.3.0.
+    - General (iOS): Update to Firebase Cocoapods version 11.2.0.
+    - General: Update to EDM4U version 1.2.183.
+    - Messaging (Android): Fixed issue with TokenReceived not being called
+      when the application has a cached token from a previous run.
+      https://github.com/firebase/quickstart-unity/issues/1088.
+    - Remote Config: Fixed ConfigInfo fields to default to 0 when
+      not throttled or having previous fetch data.
+      ([#1058](https://github.com/firebase/firebase-unity-sdk/issues/1058)).
+
 ### 12.2.1
 - Changes
     - Messaging: Fixed a crash when opening a push notification.
