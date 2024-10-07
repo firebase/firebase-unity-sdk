@@ -75,6 +75,7 @@ Release Notes
 - Changes
     - General: Update to Firebase C++ SDK version 12.3.0.
     - General (Android): Update to Firebase Android BoM version 33.3.0.
+    - General (Android): Updated the minSdkVersion to 24.
     - General (iOS): Update to Firebase Cocoapods version 11.2.0.
     - General: Update to EDM4U version 1.2.183.
     - Messaging (Android): Fixed issue with TokenReceived not being called
