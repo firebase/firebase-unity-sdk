@@ -483,11 +483,6 @@ def build_testapp(dir_helper, api_config, ios_config, target):
         build_flags.append("-AppBuilderHelper.forceXcodeProject")
       # This script will automatically configure the generated xcode project
       dir_helper.copy_editor_script("XcodeCapabilities.cs")
-      # Some testapps have xcode entitlements
-      if api_config.entitlements:
-        shutil.copy(
-            os.path.join(dir_helper.root_dir, api_config.entitlements),
-            os.path.join(dir_helper.unity_project_editor_dir, "dev.entitlements"))
       _run(arg_builder.get_args_to_open_project(build_flags))
       logging.info("Finished building target %s xcode project", target)
       run_xcodebuild(dir_helper=dir_helper, ios_config=ios_config, device_type = device_type,
@@ -503,6 +498,14 @@ def patch_android_env(unity_version):
   major_version = int(unity_version.split(".")[0])
   # Set ndk env
   UNITY_SETTINGS = {
+    "2022": {
+      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r21-windows-x86_64.zip",
+      _MACOS: "https://dl.google.com/android/repository/android-ndk-r21-darwin-x86_64.zip",
+    },
+    "2021": {
+      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r21-windows-x86_64.zip",
+      _MACOS: "https://dl.google.com/android/repository/android-ndk-r21-darwin-x86_64.zip",
+    },
     "2020": {
       _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip",
       _MACOS: "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip",

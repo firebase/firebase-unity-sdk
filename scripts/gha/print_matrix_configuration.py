@@ -62,7 +62,7 @@ LINUX_RUNNER = "ubuntu-latest"
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "unity_versions": ["2020"],
+      "unity_versions": ["2021"],
       "build_os": [""],
       "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, TVOS, PLAYMODE],
       "mobile_devices": ["android_target", "ios_target", "simulator_target", "tvos_simulator"],
@@ -74,7 +74,7 @@ PARAMETERS = {
 
       EXPANDED_KEY: {
         "build_os": [MACOS_RUNNER,WINDOWS_RUNNER],
-        "unity_versions": ["2020"],
+        "unity_versions": ["2021"],
         "mobile_test_on": ["real", "virtual"],
       }
     },
