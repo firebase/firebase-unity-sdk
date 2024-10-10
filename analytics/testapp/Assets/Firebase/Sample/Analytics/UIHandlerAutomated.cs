@@ -94,6 +94,13 @@ namespace Firebase.Sample.Analytics {
       });
     }
 
+    Task TestAnalyticsViewCartDoesNotThrow() {
+      return WrapWithTask(() => {
+        base.AnalyticsViewCart();
+        return true;
+      });
+    }
+
     Task TestAnalyticsSetConsentDoesNotThrow() {
       return WrapWithTask(() => {
         base.AnalyticsSetConsent();
