@@ -292,6 +292,10 @@ public static partial class FirebaseAnalytics {
   public static void SetUserProperty(string name, string property) {
     FirebaseAnalyticsInternal.SetUserProperty(name, property);
   }
+
+  /// @deprecated Use ParameterGroupID instead
+  [System.Obsolete("Use ParameterGroupID instead.")]
+  public static string ParameterGroupId { get { return ParameterGroupID; } }
 }
 
 }

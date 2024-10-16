@@ -74,7 +74,8 @@ Release Notes
 ### Upcoming
 - Changes
     - Analytics: Renamed ParameterGroupId to ParameterGroupID, to be
-      consistent with other similarly named variables.
+      consistent with other similarly named variables. ParameterGroupId
+      is considered deprecated, and will be removed in the future.
     - Analytics: Deprecated the Dispose functions, as they are no longer
       necessary for cleaning up memory.
 
