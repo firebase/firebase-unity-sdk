@@ -30,6 +30,7 @@ namespace Firebase.Sample.Analytics {
         TestAnalyticsScoreDoesNotThrow,
         TestAnalyticsGroupJoinDoesNotThrow,
         TestAnalyticsLevelUpDoesNotThrow,
+        TestAnalyticsViewCartDoesNotThrow,
         // This test regularly fails on iOS simulator, and there isn't a great way
         // to determine if this is on a device or simulator, so just disable on
         // GHA iOS and tvOS for now.
@@ -90,6 +91,13 @@ namespace Firebase.Sample.Analytics {
     Task TestAnalyticsLevelUpDoesNotThrow() {
       return WrapWithTask(() => {
         base.AnalyticsLevelUp();
+        return true;
+      });
+    }
+
+    Task TestAnalyticsViewCartDoesNotThrow() {
+      return WrapWithTask(() => {
+        base.AnalyticsViewCart();
         return true;
       });
     }
