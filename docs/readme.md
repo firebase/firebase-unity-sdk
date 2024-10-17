@@ -73,6 +73,9 @@ Release Notes
 -------------
 ### Upcoming
 - Changes
+    - Analytics: Add support for Parameters of Lists of Dictionaries, needed
+      by some events such as ViewCart.
+      ([#1056](https://github.com/firebase/firebase-unity-sdk/issues/1056)).
     - Analytics: Renamed ParameterGroupId to ParameterGroupID, to be
       consistent with other similarly named variables. ParameterGroupId
       is considered deprecated, and will be removed in the future.

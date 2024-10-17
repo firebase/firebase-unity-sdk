@@ -82,8 +82,6 @@ public class Parameter : System.IDisposable {
     Value = parameterValue;
   }
 
-  // TODO: Implement accepting maps and vectors in C++ Analytics before enabling these.
-  /*
   public Parameter(string parameterName, IDictionary<string, object> parameterValue) {
     Name = parameterName;
     Value = parameterValue;
@@ -93,7 +91,6 @@ public class Parameter : System.IDisposable {
     Name = parameterName;
     Value = parameterValue;
   }
-  */
 
   /// @deprecated No longer needed, will be removed in the future.
   [System.Obsolete("No longer needed, will be removed in the future.")]
