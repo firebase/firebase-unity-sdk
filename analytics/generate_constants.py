@@ -48,7 +48,7 @@ def main(unused_argv):
   with open(FLAGS.cpp_header) as input_file:
     with open(FLAGS.csharp_file, 'w') as output_file:
       # Write the initial lines at the top
-      output_file.write('// Copyright %s Google Inc. All Rights Reserved.\n\n' %
+      output_file.write('// Copyright %s Google LLC\n\n' %
                         str(datetime.date.today().year))
       output_file.write('namespace Firebase.Analytics {\n\n')
       output_file.write('public static partial class FirebaseAnalytics {\n\n')
