@@ -104,7 +104,7 @@ namespace Firebase.Sample.Analytics {
     public void AnalyticsGroupJoin() {
       // Log an event with a string parameter.
       DebugLog("Logging a group join event.");
-      FirebaseAnalytics.LogEvent(FirebaseAnalytics.EventJoinGroup, FirebaseAnalytics.ParameterGroupId,
+      FirebaseAnalytics.LogEvent(FirebaseAnalytics.EventJoinGroup, FirebaseAnalytics.ParameterGroupID,
         "spoon_welders");
     }
 

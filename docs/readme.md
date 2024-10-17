@@ -71,6 +71,14 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Analytics: Renamed ParameterGroupId to ParameterGroupID, to be
+      consistent with other similarly named variables. ParameterGroupId
+      is considered deprecated, and will be removed in the future.
+    - Analytics: Deprecated the Dispose functions, as they are no longer
+      necessary for cleaning up memory.
+
 ### 12.3.0
 - Changes
     - General: Update to Firebase C++ SDK version 12.3.0.
