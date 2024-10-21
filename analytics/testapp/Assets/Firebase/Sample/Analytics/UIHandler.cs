@@ -118,6 +118,26 @@ namespace Firebase.Sample.Analytics {
         new Parameter("hit_accuracy", 3.14f));
     }
 
+    public void AnalyticsViewCart() {
+      // Log an event that includes a parameter with a list
+      DebugLog("Logging a view cart event.");
+      FirebaseAnalytics.LogEvent(
+        FirebaseAnalytics.EventViewCart,
+        new Parameter(FirebaseAnalytics.ParameterCurrency, "USD"),
+        new Parameter(FirebaseAnalytics.ParameterValue, 30.03),
+        new Parameter(FirebaseAnalytics.ParameterItems, new [] {
+          new Dictionary<string, object> {
+            { FirebaseAnalytics.ParameterItemID, "SKU_12345" },
+            { FirebaseAnalytics.ParameterItemName, "Horse Armor DLC" },
+          },
+          new Dictionary<string, object> {
+            { FirebaseAnalytics.ParameterItemID, "SKU_67890" },
+            { FirebaseAnalytics.ParameterItemName, "Gold Horse Armor DLC" },
+          }
+        })
+      );
+    }
+
     // Reset analytics data for this app instance.
     public void ResetAnalyticsData() {
       DebugLog("Reset analytics data.");
@@ -221,6 +241,9 @@ namespace Firebase.Sample.Analytics {
         }
         if (GUILayout.Button("Log Level Up")) {
           AnalyticsLevelUp();
+        }
+        if (GUILayout.Button("Log View Cart")) {
+          AnalyticsViewCart();
         }
         if (GUILayout.Button("Reset Analytics Data")) {
           ResetAnalyticsData();
