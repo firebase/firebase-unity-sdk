@@ -71,7 +71,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 12.4.0
 - Changes
     - General: Update to Firebase C++ SDK version 12.4.0.
     - General (iOS): Update to Firebase Cocoapods version 11.4.2.
