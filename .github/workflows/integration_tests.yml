@@ -224,11 +224,11 @@ jobs:
               --output ~/.android/debug.keystore "scripts/gha-encrypted/debug_keystore.gpg"
       - name: Fetch prebuilt packaged SDK from previous run
         if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: 'firebase_unity_sdk.zip'
-          workflow: 'build_starter.yml'
-          run_id: ${{ github.event.inputs.packaged_sdk_run_id }}
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.inputs.packaged_sdk_run_id }}
 
       - name: Build integration tests
         timeout-minutes: 240
@@ -267,14 +267,14 @@ jobs:
             echo "__SUMMARY_MISSING__" > build-results-${{ steps.matrix_info.outputs.info }}.log.json
           fi
       - name: Upload build results artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: build_and_test_results
+          name: build_and_test_results-${{ matrix.platform }}-${{ matrix.ios_sdk }}
           path: build-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Mobile integration tests artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
         with:
           name: testapps-${{ matrix.platform }}-${{ steps.matrix_info.outputs.artifact_suffix }}
@@ -285,14 +285,14 @@ jobs:
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }} || true
       - name: Upload Desktop build logs artifact  # Mobile build logs are uploaded with integration tests artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ !contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
         with:
           name: testapps-build-logs-${{ steps.matrix_info.outputs.info }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/build-logs
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Linux integration tests artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ contains(matrix.platform, 'Linux') && !cancelled() }}
         with:
           name: testapps-Linux-${{ steps.matrix_info.outputs.artifact_suffix }}
@@ -303,7 +303,7 @@ jobs:
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Linux || true
       - name: Upload macOS integration tests artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ contains(matrix.platform, 'macOS') && !cancelled() }}
         with:
           name: testapps-macOS-${{ steps.matrix_info.outputs.artifact_suffix }}
@@ -314,7 +314,7 @@ jobs:
         shell: bash
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/macOS || true
       - name: Upload Windows integration tests artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ contains(matrix.platform, 'Windows') && !cancelled() }}
         with:
           name: testapps-Windows-${{ steps.matrix_info.outputs.artifact_suffix }}
@@ -326,10 +326,10 @@ jobs:
         run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Windows || true
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: test_results
-          name: build_and_test_results
+          name: build_and_test_results-${{ matrix.platform }}-${{ matrix.ios_sdk }}
       - name: Update PR label and comment
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
         shell: bash
@@ -388,11 +388,11 @@ jobs:
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Fetch prebuilt packaged SDK from previous run
         if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: 'firebase_unity_sdk.zip'
-          workflow: 'build_starter.yml'
-          run_id: ${{ github.event.inputs.packaged_sdk_run_id }} 
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.inputs.packaged_sdk_run_id }} 
       - name: Set up Node (18)
         uses: actions/setup-node@v3
         with:
@@ -445,10 +445,10 @@ jobs:
             echo "__SUMMARY_MISSING__" > test-results-${{ steps.matrix_info.outputs.info }}.log.json
           fi
       - name: Upload test results artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: build_and_test_results
+          name: build_and_test_results-Playmode
           path: test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Update PR label and comment
@@ -501,7 +501,7 @@ jobs:
         if: runner.os == 'macOS'
         run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
       - name: Download Testapp artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: testapps
           name: ${{ steps.matrix_info.outputs.artifact_path }}
@@ -603,17 +603,17 @@ jobs:
           fi
       - name: Upload test results artifact
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: build_and_test_results
+          name: build_and_test_results-${{ matrix.platform }}-${{ matrix.test_device }}
           path: testapps/test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          path: test_results
-          name: build_and_test_results
+          path: build_and_test_results
+          name: build_and_test_results-${{ matrix.platform }}-${{ matrix.test_device }}
       - name: Update PR label and comment
         shell: bash
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
@@ -649,10 +649,11 @@ jobs:
       - name: Install python deps
         run: pip install -r scripts/gha/requirements.txt
       - name: Download log artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: test_results
-          name: build_and_test_results
+          pattern: build_and_test_results-*
+          merge-multiple: true
       # Use a different token to remove the "in-progress" label,
       # to allow the removal to trigger the "Check Labels" workflow.
       - name: Generate token for GitHub API
