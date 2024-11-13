@@ -136,7 +136,7 @@ jobs:
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
       - name: Fetch All in build_starter
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: built_artifact
       
@@ -224,7 +224,7 @@ jobs:
           echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
 
       - name: Upload Build unitypackage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: firebase_unity_sdk.zip
           path: firebase_unity_sdk.zip
@@ -253,13 +253,13 @@ jobs:
 
       - name: Upload Build tgz
         if: ${{ steps.check-input.outputs.package_for_checks }} == '1'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: firebase_unity_sdk_tgz
           path: output_tgz
 
       - name: upload hash
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: firebase_unity_sdk_hash.txt
           path: firebase_unity_sdk_hash.txt
