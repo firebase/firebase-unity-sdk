@@ -71,7 +71,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 12.4.1
 - Changes
     - General: Remove unresolved SWIG string symbols.
       ([#1139](https://github.com/firebase/firebase-unity-sdk/issues/1139)).
