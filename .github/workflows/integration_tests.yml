@@ -270,7 +270,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: build_and_test_results-${{ steps.matrix_info.outputs.info }}
+          name: build_and_test_results-build-${{ steps.matrix_info.outputs.info }}
           path: build-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Mobile integration tests artifact
@@ -605,7 +605,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: build_and_test_results-${{ steps.matrix_info.outputs.info }}
+          name: build_and_test_results-test-${{ steps.matrix_info.outputs.info }}
           path: testapps/test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Download log artifacts
