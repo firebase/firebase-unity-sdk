@@ -154,6 +154,10 @@ macro(firebase_swig_add_library name)
     # https://github.com/swig/swig/issues/672#issuecomment-400577864
     final=
     USE_EXPORT_FIX
+    # SWIG 4.3 added a C# class, SWIGStringWithLengthHelper, but is missing
+    # the corresponding C++ symbols, which can cause issues. We don't
+    # rely on this class anyway, so just disable it.
+    SWIG_CSHARP_NO_STRING_WITH_LENGTH_HELPER
   )
 
   set_property(TARGET ${name} PROPERTY SWIG_GENERATED_COMPILE_DEFINITIONS
