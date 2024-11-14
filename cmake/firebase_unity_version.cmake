@@ -14,7 +14,7 @@
 
 # This file defines the version numbers used by the Firebase Unity SDK.
 
-set(FIREBASE_UNITY_SDK_VERSION "12.4.0"
+set(FIREBASE_UNITY_SDK_VERSION "12.4.1"
     CACHE STRING "The version of the Unity SDK, used in the names of files.")
 
 set(FIREBASE_IOS_POD_VERSION "11.4.2"
