@@ -270,7 +270,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: build_and_test_results-${{ matrix.platform }}-${{ matrix.ios_sdk }}
+          name: build_and_test_results-build-${{ steps.matrix_info.outputs.info }}
           path: build-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Mobile integration tests artifact
@@ -448,7 +448,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: build_and_test_results-Playmode
+          name: build_and_test_results-${{ matrix.os }}-Playmode
           path: test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Update PR label and comment
@@ -605,7 +605,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: build_and_test_results-${{ matrix.platform }}-${{ matrix.test_device }}
+          name: build_and_test_results-test-${{ steps.matrix_info.outputs.info }}
           path: testapps/test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Download log artifacts
