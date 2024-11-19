@@ -117,13 +117,13 @@ jobs:
           fi
 
       - name: Upload Build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux_unity
           path: linux_unity/*Linux.zip
 
       - name: Upload Documentation Sources
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: documentation_sources
           path: linux_unity/documentation_sources.zip
