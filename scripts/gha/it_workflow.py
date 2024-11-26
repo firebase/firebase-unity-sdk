@@ -213,11 +213,6 @@ def test_report(token, actor, commit, run_id):
     test_result = title + _get_description(actor, commit, run_id) + log_summary
 
   comment = prefix + _COMMENT_HIDDEN_DIVIDER + test_result
-
-  if title == _COMMENT_TITLE_SUCCEED:
-    firebase_github.close_issue(token, issue_number)
-  else:
-    firebase_github.open_issue(token, issue_number)
     
   firebase_github.update_issue_comment(token, issue_number, comment)
 
