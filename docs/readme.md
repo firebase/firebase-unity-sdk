@@ -71,6 +71,12 @@ Support
 
 Release Notes
 -------------
+### 12.5.0
+- Changes
+    - General: Update to Firebase C++ SDK version 12.5.0.
+    - General (iOS): Update to Firebase Cocoapods version 11.6.0.
+    - General (Android): Update to Firebase Android BoM version 33.7.0.
+
 ### 12.4.1
 - Changes
     - General: Remove unresolved SWIG string symbols.
