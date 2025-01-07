@@ -57,7 +57,7 @@ PLAYMODE = "Playmode"
 # GitHub Runner
 WINDOWS_RUNNER = "windows-latest"
 MACOS_RUNNER = "macos-13"
-LINUX_RUNNER = "ubuntu-latest"
+LINUX_RUNNER = "ubuntu-20.04"
 
 PARAMETERS = {
   "integration_tests": {

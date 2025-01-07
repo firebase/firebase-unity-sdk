@@ -38,7 +38,7 @@ on:
 jobs:
   build_desktop:
     name: build-linux-unity${{inputs.unity_version}}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       
@@ -78,10 +78,6 @@ jobs:
       - name: Install OpenSSL (Linux)
         run: |
           sudo apt install openssl
-
-      - name: Install mono
-        run: |
-          sudo apt install mono-devel
 
       - id: unity_setup
         uses: ./gha/unity
