@@ -79,6 +79,10 @@ jobs:
         run: |
           sudo apt install openssl
 
+      - name: Install mono
+        run: |
+          sudo apt install mono-devel
+
       - id: unity_setup
         uses: ./gha/unity
         timeout-minutes: 30
