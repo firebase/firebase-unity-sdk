@@ -63,7 +63,8 @@ CAPITALIZATIONS = {
   "installations": "Installations",
   "messaging": "Messaging",
   "remote_config": "RemoteConfig",
-  "storage": "Storage"
+  "storage": "Storage",
+  "vertex_ai": "VertexAI"
 }
 
 

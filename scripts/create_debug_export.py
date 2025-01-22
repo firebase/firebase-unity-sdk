@@ -41,6 +41,7 @@ API_PACKAGE_MAP = {
     "messaging": "FirebaseMessaging.unitypackage",
     "remote_config": "FirebaseRemoteConfig.unitypackage",
     "storage": "FirebaseStorage.unitypackage",
+    "vertex_ai": "FirebaseVertexAI.unitypackage",
 }
 
 default_package_names = [

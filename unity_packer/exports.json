@@ -2040,6 +2040,68 @@
           "unity": "2020.1"
         }
       }
+    },
+    {
+      "name": "FirebaseVertexAI.unitypackage",
+      "imports": [
+        {
+          "importer": "PluginImporter",
+          "platforms": [
+            "Editor",
+            "Standalone",
+            "Android",
+            "iOS",
+            "tvOS"
+          ],
+          "cpu": "AnyCPU",
+          "paths": [
+            "Firebase/Plugins/Firebase.VertexAI.dll",
+            "Firebase/Plugins/Firebase.VertexAI.pdb"
+          ]
+        },
+        {
+          "importer": "DefaultImporter",
+          "sections": [
+            "samples",
+            "documentation"
+          ],
+          "paths": [
+            "Firebase/Editor/VertexAIReadme.md"
+          ]
+        }
+      ],
+      "includes": [
+        "FirebaseApp.unitypackage",
+        "SampleCommon.unitypackage"
+      ],
+      "manifest_path": "Firebase/Editor",
+      "readme": "Firebase/Editor/VertexAIReadme.md",
+      "changelog": "Firebase/Editor/readme.md",
+      "license": "Firebase/Editor/LICENSE",
+      "documentation": "Firebase/Editor/VertexAIReadme.md",
+      "common_manifest": {
+        "name": "com.google.firebase.vertex-ai",
+        "display_name": "Vertex AI in Firebase",
+        "description": [
+          "Build AI-powered mobile and web apps and features with ",
+          "the Gemini API using Vertex AI in Firebase."
+        ],
+        "keywords": [
+          "Google",
+          "Firebase",
+          "Vertex AI"
+        ],
+        "author": {
+          "name": "Google LLC",
+          "url": "https://firebase.google.com/docs/vertex-ai"
+        }
+      },
+      "export_upm": 1,
+      "upm_package_config": {
+        "manifest": {
+          "unity": "2020.1"
+        }
+      }
     }
   ]
 }
