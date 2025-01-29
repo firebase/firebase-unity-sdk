@@ -15,27 +15,27 @@
 # CMake file for the Vertex AI in Firebase library
 
 # Vertex AI in Firebase CSharp files
-set(firebase_vertex_ai_src
+set(firebase_vertexai_src
   src/VertexAI.cs
 )
 
-unity_pack_documentation_sources(vertex_ai
+unity_pack_documentation_sources(vertexai
   DOCUMENTATION_SOURCES
-    ${firebase_vertex_ai_src}
+    ${firebase_vertexai_src}
 )
 
-mono_add_library(firebase_vertex_ai
+mono_add_library(firebase_vertexai
   MODULE
     Firebase.VertexAI
   SOURCES
-    ${firebase_vertex_ai_src}
+    ${firebase_vertexai_src}
   REFERENCES
     ${FIREBASE_PLATFORM_REF}
 )
 
-unity_pack_cs(firebase_vertex_ai)
+unity_pack_cs(firebase_vertexai)
 
-set_property(TARGET firebase_vertex_ai
+set_property(TARGET firebase_vertexai
   PROPERTY FOLDER
   "Firebase ${FIREBASE_PLATFORM_NAME}"
 )

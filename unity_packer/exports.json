@@ -2080,7 +2080,7 @@
       "license": "Firebase/Editor/LICENSE",
       "documentation": "Firebase/Editor/VertexAIReadme.md",
       "common_manifest": {
-        "name": "com.google.firebase.vertex-ai",
+        "name": "com.google.firebase.vertexai",
         "display_name": "Vertex AI in Firebase",
         "description": [
           "Build AI-powered mobile and web apps and features with ",
