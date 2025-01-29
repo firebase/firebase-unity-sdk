@@ -69,6 +69,9 @@ option(FIREBASE_INCLUDE_REMOTE_CONFIG
 option(FIREBASE_INCLUDE_STORAGE
        "Include the Cloud Storage for Firebase library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
+option(FIREBASE_INCLUDE_VERTEXAI
+       "Include the Vertex AI in Firebase library."
+       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 
 option(FIREBASE_INCLUDE_EDITOR_TOOL
        "Include Unity editor tools for Firebase library." ON)
@@ -341,6 +344,10 @@ if (FIREBASE_INCLUDE_STORAGE)
   list(APPEND TARGET_LINK_LIB_NAMES "firebase_storage" "firebase_storage_swig")
   list(APPEND DOCUMENTATION_ONLY_LIB_NAMES "firebase_storage_swig")
   list(APPEND PROJECT_LIST_HEADER "  X(Storage)")
+endif()
+if (FIREBASE_INCLUDE_VERTEXAI)
+  add_subdirectory(vertexai)
+  # Doesn't use swig, so don't need to update the other lists
 endif()
 
 if(FIREBASE_UNI_LIBRARY)

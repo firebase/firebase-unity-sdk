@@ -47,6 +47,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Firebase.TaskExtension")]
 [assembly: InternalsVisibleTo("Firebase.TestLab")]
 [assembly: InternalsVisibleTo("Firebase.TestLab.GameLoop")]
+[assembly: InternalsVisibleTo("Firebase.VertexAI")]
 
 
 // The assembly version has the format "{Major}.{Minor}.{Build}.{Revision}".
