@@ -9,7 +9,8 @@ With this, you can add AI personalization to your app, build an AI chat experien
 
 ### Links
 
-* [Homepage](https://firebase.google.com/games/)
+* [Firebase Games Homepage](https://firebase.google.com/games/)
+* [Vertex AI Homepage](https://firebase.google.com/docs/vertex-ai)
 * [Contact](https://firebase.google.com/support/contact/)
 * [Firebase Unity GitHub](https://github.com/firebase/firebase-unity-sdk)
 
