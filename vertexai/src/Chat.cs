@@ -39,6 +39,9 @@ public class Chat {
     throw new NotImplementedException();
   }
 
+// The build logic isn't able to resolve IAsyncEnumerable for some reason, even
+// though it is usable in Unity 2021.3.  Will need to investigate further.
+/*
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       params ModelContent[] content) {
     throw new NotImplementedException();
@@ -51,6 +54,7 @@ public class Chat {
       IEnumerable<ModelContent> content) {
     throw new NotImplementedException();
   }
+*/
 
   public Task<CountTokensResponse> CountTokensAsync(
       params ModelContent[] content) {
