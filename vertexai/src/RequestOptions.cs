@@ -18,30 +18,9 @@ using System;
 
 namespace Firebase.VertexAI {
 
-public class VertexAI {
-
-  public static VertexAI DefaultInstance {
-    get {
-      throw new NotImplementedException();
-    }
-  }
-
-  public static VertexAI GetInstance(string location = "us-central1") {
+public readonly struct RequestOptions {
+  public RequestOptions(TimeSpan? timeout = null) {
     throw new NotImplementedException();
-  }
-  public static VertexAI GetInstance(FirebaseApp app, string location = "us-central1") {
-    throw new NotImplementedException();
-  }
-
-  public GenerativeModel GetGenerativeModel(
-    string modelName,
-    GenerationConfig? generationConfig = null,
-    SafetySetting[] safetySettings = null,
-    Tool[] tools = null,
-    ToolConfig? toolConfig = null,
-    ModelContent? systemInstruction = null,
-    RequestOptions? requestOptions = null) {
-      throw new NotImplementedException();
   }
 }
 

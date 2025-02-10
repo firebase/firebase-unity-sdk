@@ -16,7 +16,20 @@
 
 # Vertex AI in Firebase CSharp files
 set(firebase_vertexai_src
+  src/Candidate.cs
+  src/Chat.cs
+  src/Citation.cs
+  src/CountTokensResponse.cs
+  src/FunctionCalling.cs
+  src/GenerateContentResponse.cs
+  src/GenerationConfig.cs
+  src/GenerativeModel.cs
+  src/ModelContent.cs
+  src/RequestOptions.cs
+  src/Safety.cs
+  src/Schema.cs
   src/VertexAI.cs
+  src/VertexAIException.cs
 )
 
 unity_pack_documentation_sources(vertexai
