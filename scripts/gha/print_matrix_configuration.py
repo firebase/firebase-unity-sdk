@@ -95,9 +95,10 @@ TEST_DEVICES = {
                   ]},
   "android_target": {"platform": ANDROID, "type": "real",
                      "device": [
-                       "model=blueline,version=28", # Pixel 3
-                       "model=gts3lltevzw,version=28",  # Galaxy Tab S3
-                       "model=SH-01L,version=28",  # AQUOS sense2 SH-01L
+                       #"model=blueline,version=28", # Pixel 3
+                       #"model=gts3lltevzw,version=28",  # Galaxy Tab S3
+                       #"model=SH-01L,version=28",  # AQUOS sense2 SH-01L
+                       "model=shiba_beta,version=35", # Pixel 8
                      ]},
   "android_latest": {"platform": ANDROID, "type": "real",
                      "device": [
