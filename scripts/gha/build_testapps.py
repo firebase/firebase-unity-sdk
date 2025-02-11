@@ -499,20 +499,12 @@ def patch_android_env(unity_version):
   # Set ndk env
   UNITY_SETTINGS = {
     "2022": {
-      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r21-windows-x86_64.zip",
-      _MACOS: "https://dl.google.com/android/repository/android-ndk-r21-darwin-x86_64.zip",
+      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r23c-windows.zip",
+      _MACOS: "https://dl.google.com/android/repository/android-ndk-r23c-darwin.zip",
     },
     "2021": {
-      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r21-windows-x86_64.zip",
-      _MACOS: "https://dl.google.com/android/repository/android-ndk-r21-darwin-x86_64.zip",
-    },
-    "2020": {
-      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip",
-      _MACOS: "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip",
-    },
-    "2019": {
-      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r19-windows-x86_64.zip",
-      _MACOS: "https://dl.google.com/android/repository/android-ndk-r19-darwin-x86_64.zip",
+      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r23c-windows.zip",
+      _MACOS: "https://dl.google.com/android/repository/android-ndk-r23c-darwin.zip",
     },
   }
   url = UNITY_SETTINGS[str(major_version)][get_desktop_platform()]
