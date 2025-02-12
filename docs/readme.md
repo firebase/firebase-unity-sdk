@@ -71,6 +71,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - General (Android): Support 16 KB page sizes, needed by Android 15.
+      For more info, see https://developer.android.com/guide/practices/page-sizes
+
 ### 12.5.0
 - Changes
     - General: Update to Firebase C++ SDK version 12.5.0.
