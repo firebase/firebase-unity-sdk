@@ -95,6 +95,12 @@ set(firebase_firestore_src
   src/ValueSerializer.cs
 )
 
+# Ensure min/max macros don't get declared on Windows
+# (so we can use std::min/max).
+if(MSVC)
+  add_definitions(-DNOMINMAX)
+endif()
+
 add_subdirectory(src/swig)
 
 firebase_swig_add_library(firebase_firestore_swig
