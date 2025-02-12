@@ -110,7 +110,7 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
         "-Wl,-z,max-page-size=16384"
     )
     add_custom_command(TARGET ${shared_target} POST_BUILD
-      COMMAND "${ANDROID_STRIP}" -g -S -d --strip-debug --verbose
+      COMMAND "${ANDROID_STRIP}" -g -S -d --strip-debug
       "lib${OUTPUT_NAME}.so"
       COMMENT "Strip debug symbols done on final binary. lib${OUTPUT_NAME}.so")
   endif()
