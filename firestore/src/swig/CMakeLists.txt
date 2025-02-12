@@ -30,6 +30,12 @@ add_library(firebase_firestore_swig_cpp STATIC
 
 set_property(TARGET firebase_firestore_swig_cpp PROPERTY FOLDER "Firebase Cpp")
 
+# Ensure min/max macros don't get declared on Windows
+# (so we can use std::min/max).
+if(MSVC)
+  add_definitions(-DNOMINMAX)
+endif()
+
 target_link_libraries(firebase_firestore_swig_cpp
   PUBLIC
     firebase_app
