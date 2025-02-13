@@ -142,8 +142,6 @@ public class GenerativeModel {
       IEnumerable<ModelContent> content) {
     string bodyJson = ModelContentsToJson(content);
 
-    UnityEngine.Debug.Log($"Going to try to send: {bodyJson}");
-
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":generateContent");
 
     // Set the request headers
@@ -153,8 +151,6 @@ public class GenerativeModel {
     // Set the content
     request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
-   UnityEngine.Debug.Log("Request? " + request);
-
     HttpResponseMessage response = await _httpClient.SendAsync(request);
     // TODO: Convert any timeout exception into a VertexAI equivalent
     // TODO: Convert any HttpRequestExceptions, see:
@@ -163,8 +159,6 @@ public class GenerativeModel {
     response.EnsureSuccessStatusCode();
 
     string result = await response.Content.ReadAsStringAsync();
-
-    UnityEngine.Debug.Log("Got a valid response at least: \n" + result);
 
     return GenerateContentResponse.FromJson(result);
   }
