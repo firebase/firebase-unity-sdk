@@ -15,20 +15,87 @@
  */
 
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using Google.MiniJSON;
 
 namespace Firebase.VertexAI {
 
+/// <summary>
+/// The model's response to a generate content request.
+/// </summary>
 public readonly struct GenerateContentResponse {
-  public IEnumerable<Candidate> Candidates { get; }
+  private readonly ReadOnlyCollection<Candidate> _candidates;
+
+  /// <summary>
+  /// A list of candidate response content, ordered from best to worst.
+  /// </summary>
+  public IEnumerable<Candidate> Candidates =>
+      _candidates ?? new ReadOnlyCollection<Candidate>(new List<Candidate>());
+
+  /// <summary>
+  /// A value containing the safety ratings for the response, or,
+  /// if the request was blocked, a reason for blocking the request.
+  /// </summary>
   public PromptFeedback? PromptFeedback { get; }
+
+  /// <summary>
+  /// Token usage metadata for processing the generate content request.
+  /// </summary>
   public UsageMetadata? UsageMetadata { get; }
 
-  // Helper properties
-  // The response's content as text, if it exists
-  public string Text { get; }
+  /// <summary>
+  /// The response's content as text, if it exists
+  /// </summary>
+  public string Text {
+    get {
+      // Concatenate all of the text parts from the first candidate.
+      return string.Join(" ",
+          Candidates.FirstOrDefault().Content.Parts
+          .OfType<ModelContent.TextPart>().Select(tp => tp.Text));
+    }
+  }
 
-  // Returns function calls found in any Parts of the first candidate of the response, if any.
-  public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls { get; }
+  /// <summary>
+  /// Returns function calls found in any Parts of the first candidate of the response, if any.
+  /// </summary>
+  public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls {
+    get {
+      return Candidates.FirstOrDefault().Content.Parts.OfType<ModelContent.FunctionCallPart>();
+    }
+  }
+
+  // Hidden constructor, users don't need to make this, though they still technically can.
+  internal GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
+      UsageMetadata? usageMetadata) {
+    _candidates = new ReadOnlyCollection<Candidate>(candidates ?? new List<Candidate>());
+    PromptFeedback = promptFeedback;
+    UsageMetadata = usageMetadata;
+  }
+
+  internal static GenerateContentResponse FromJson(string jsonString) {
+    return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>);
+  }
+
+  internal static GenerateContentResponse FromJson(Dictionary<string, object> jsonDict) {
+    // Parse the Candidates
+    List<Candidate> candidates = new();
+    if (jsonDict.TryGetValue("candidates", out object candidatesObject)) {
+      if (candidatesObject is not List<object> listOfCandidateObjects) {
+        throw new VertexAISerializationException("Invalid JSON format: 'candidates' is not a list.");
+      }
+
+      candidates = listOfCandidateObjects
+          .Select(o => o as Dictionary<string, object>)
+          .Where(dict => dict != null)
+          .Select(Candidate.FromJson)
+          .ToList();
+    }
+
+    // TODO: Parse PromptFeedback and UsageMetadata
+
+    return new GenerateContentResponse(candidates, null, null);
+  }
 }
 
 public enum BlockReason {
