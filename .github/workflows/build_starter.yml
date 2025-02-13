@@ -6,7 +6,7 @@ on:
     - cron: "0 7 * * *"  # 7am UTC = 11pm PST / 12am PDT
 
   pull_request:
-    types: [ labeled, closed ]
+    types: [ labeled ]
   
   workflow_dispatch:
     inputs:
@@ -116,8 +116,6 @@ jobs:
                 echo "runIntegrationTests=${{ github.event.pull_request.number }}:label-quick-packaging" >> $GITHUB_OUTPUT
               elif [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == "tests-requested: full" ]]; then
                 echo "runIntegrationTests=${{ github.event.pull_request.number }}:label-full-packaging" >> $GITHUB_OUTPUT
-              elif [[ "${{ github.event.action }}" == "closed" && "${{ github.event.pull_request.merged == true}}" == "true"  ]]; then
-                echo "runIntegrationTests=${{ github.event.pull_request.number }}:pr-close-packaging" >> $GITHUB_OUTPUT
               else
                 echo "invalid_trigger=1" >> $GITHUB_OUTPUT
               fi
