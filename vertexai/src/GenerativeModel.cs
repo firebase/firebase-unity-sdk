@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// For now, using this to hide some functions causing problems with the build.
+#define HIDE_IASYNCENUMERABLE
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -100,8 +103,7 @@ public class GenerativeModel {
     return GenerateContentAsyncInternal(content);
   }
 
-#define HIDE_IASYNCENUMERABLE
-#if !defined(HIDE_IASYNCENUMERABLE)
+#if !HIDE_IASYNCENUMERABLE
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       params ModelContent[] content) {
     return GenerateContentStreamAsync((IEnumerable<ModelContent>)content);
@@ -163,7 +165,7 @@ public class GenerativeModel {
     return GenerateContentResponse.FromJson(result);
   }
 
-#if !defined(HIDE_IASYNCENUMERABLE)
+#if !HIDE_IASYNCENUMERABLE
   private async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
       IEnumerable<ModelContent> content) {
     // TODO: Implementation
@@ -188,12 +190,11 @@ public class GenerativeModel {
   }
 
   private string ModelContentsToJson(IEnumerable<ModelContent> contents) {
-    Dictionary<string, object> jsonDict = new()
-    {
+    Dictionary<string, object> jsonDict = new() {
       // Convert the Contents into a list of Json dictionaries
       ["contents"] = contents.Select(c => c.ToJson()).ToList()
-      // TODO: All the other settings
     };
+    // TODO: All the other settings
 
     return Json.Serialize(jsonDict);
   }
