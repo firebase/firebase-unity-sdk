@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-// For now, using this to hide some functions causing problems with the build.
-#define HIDE_IASYNCENUMERABLE
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,19 +29,19 @@ namespace Firebase.VertexAI {
 /// content based on various input types.
 /// </summary>
 public class GenerativeModel {
-  private FirebaseApp _firebaseApp;
+  private readonly FirebaseApp _firebaseApp;
 
   // Various setting fields provided by the user
-  private string _location;
-  private string _modelName;
-  private GenerationConfig? _generationConfig;
-  private SafetySetting[] _safetySettings;
-  private Tool[] _tools;
-  private ToolConfig? _toolConfig;
-  private ModelContent? _systemInstruction;
-  private RequestOptions? _requestOptions;
+  private readonly string _location;
+  private readonly string _modelName;
+  private readonly GenerationConfig? _generationConfig;
+  private readonly SafetySetting[] _safetySettings;
+  private readonly Tool[] _tools;
+  private readonly ToolConfig? _toolConfig;
+  private readonly ModelContent? _systemInstruction;
+  private readonly RequestOptions? _requestOptions;
 
-  HttpClient _httpClient;
+  private readonly HttpClient _httpClient;
 
   internal GenerativeModel(FirebaseApp firebaseApp,
                            string location,
@@ -103,7 +100,6 @@ public class GenerativeModel {
     return GenerateContentAsyncInternal(content);
   }
 
-#if !HIDE_IASYNCENUMERABLE
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       params ModelContent[] content) {
     return GenerateContentStreamAsync((IEnumerable<ModelContent>)content);
@@ -116,7 +112,6 @@ public class GenerativeModel {
       IEnumerable<ModelContent> content) {
     return GenerateContentStreamAsyncInternal(content);
   }
-#endif
 
   public Task<CountTokensResponse> CountTokensAsync(
       params ModelContent[] content) {
@@ -171,7 +166,6 @@ public class GenerativeModel {
     return GenerateContentResponse.FromJson(result);
   }
 
-#if !HIDE_IASYNCENUMERABLE
   private async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
       IEnumerable<ModelContent> content) {
     // TODO: Implementation
@@ -179,7 +173,6 @@ public class GenerativeModel {
     yield return new GenerateContentResponse();
     throw new NotImplementedException();
   }
-#endif
 
   private async Task<CountTokensResponse> CountTokensAsyncInternal(
       IEnumerable<ModelContent> content) {

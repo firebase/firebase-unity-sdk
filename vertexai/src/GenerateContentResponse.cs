@@ -67,7 +67,7 @@ public readonly struct GenerateContentResponse {
   }
 
   // Hidden constructor, users don't need to make this, though they still technically can.
-  internal GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
+  private GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
       UsageMetadata? usageMetadata) {
     _candidates = new ReadOnlyCollection<Candidate>(candidates ?? new List<Candidate>());
     PromptFeedback = promptFeedback;

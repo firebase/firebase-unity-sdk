@@ -98,7 +98,7 @@ public readonly struct Candidate {
   public CitationMetadata? CitationMetadata { get; }
 
   // Hidden constructor, users don't need to make this, though they still technically can.
-  internal Candidate(ModelContent content, List<SafetyRating> safetyRatings,
+  private Candidate(ModelContent content, List<SafetyRating> safetyRatings,
       FinishReason? finishReason, CitationMetadata? citationMetadata) {
     Content = content;
     _safetyRatings = new ReadOnlyCollection<SafetyRating>(safetyRatings ?? new List<SafetyRating>());
