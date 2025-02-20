@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Firebase.VertexAI.Internal;
 
 namespace Firebase.VertexAI {
 
@@ -232,40 +233,23 @@ public readonly struct ModelContent {
   }
 
   internal static ModelContent FromJson(Dictionary<string, object> jsonDict) {
-    // Parse the Role, which is required
-    string role;
-    if (jsonDict.TryGetValue("role", out object roleObj) && (roleObj is string roleStr)) {
-      role = roleStr;
-    } else {
-      throw new VertexAISerializationException("'content' missing valid 'role' field.");
-    }
+    // Both role and parts are required keys
+    return new ModelContent(
+      jsonDict.ParseValue<string>("role", JsonParseOptions.ThrowEverything),
+      jsonDict.ParseObjectList("parts", PartFromJson, JsonParseOptions.ThrowEverything));
+  }
 
-    // Parse the Parts, which are required
-    List<Part> partList = new();
-    if (jsonDict.TryGetValue("parts", out object partsObj) && (partsObj is List<object> partsObjList)) {
-      partList = partsObjList
-          .Select(o => o as Dictionary<string, object>)
-          .Where(d => d != null)
-          .Select(PartFromJson)
-          .ToList();
-    } else {
-      throw new VertexAISerializationException("'content' missing valid 'parts' field.");
-    }
-
-    return new ModelContent(role, partList);
+  private static FunctionCallPart FunctionCallPartFromJson(Dictionary<string, object> jsonDict) {
+    return new FunctionCallPart(
+      jsonDict.ParseValue<string>("name", JsonParseOptions.ThrowEverything),
+      jsonDict.ParseValue<Dictionary<string, object>>("args", JsonParseOptions.ThrowEverything));
   }
 
   private static Part PartFromJson(Dictionary<string, object> jsonDict) {
-    if (jsonDict.ContainsKey("text") && jsonDict["text"] is string text) {
+    if (jsonDict.TryParseValue("text", out string text)) {
       return new TextPart(text);
-    } else if (jsonDict.ContainsKey("functionCall") && jsonDict["functionCall"] is Dictionary<string, object> functionCallDict) {
-      if (!functionCallDict.TryGetValue("name", out var name) || name is not string) {
-        throw new VertexAISerializationException("Invalid JSON format: 'name' is not a string.");
-      }
-      if (!functionCallDict.TryGetValue("name", out var args) || args is not Dictionary<string, object>) {
-        throw new VertexAISerializationException("Invalid JSON format: 'args' is not a dictionary.");
-      }
-      return new FunctionCallPart(name as string, args as Dictionary<string, object>);
+    } else if (jsonDict.TryParseObject("functionCall", FunctionCallPartFromJson, out var fcPart)) {
+      return fcPart;
     } else {
       throw new VertexAISerializationException("Unable to parse given 'part' into a known Part.");
     }

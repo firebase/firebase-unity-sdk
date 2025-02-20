@@ -144,6 +144,8 @@ public class GenerativeModel {
       IEnumerable<ModelContent> content) {
     string bodyJson = ModelContentsToJson(content);
 
+    UnityEngine.Debug.Log($"Going to try to send: {bodyJson}");
+
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":generateContent");
 
     // Set the request headers
@@ -153,6 +155,8 @@ public class GenerativeModel {
     // Set the content
     request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
+   UnityEngine.Debug.Log("Request? " + request);
+
     HttpResponseMessage response = await _httpClient.SendAsync(request);
     // TODO: Convert any timeout exception into a VertexAI equivalent
     // TODO: Convert any HttpRequestExceptions, see:
@@ -161,6 +165,8 @@ public class GenerativeModel {
     response.EnsureSuccessStatusCode();
 
     string result = await response.Content.ReadAsStringAsync();
+
+    UnityEngine.Debug.Log("Got a valid response at least: \n" + result);
 
     return GenerateContentResponse.FromJson(result);
   }
@@ -183,7 +189,7 @@ public class GenerativeModel {
   }
 
   private string GetURL() {
-    return "https://firebaseml.googleapis.com/v2beta" +
+    return "https://firebasevertexai.googleapis.com/v1beta" +
         "/projects/" + _firebaseApp.Options.ProjectId +
         "/locations/" + _location +
         "/publishers/google/models/" + _modelName;
@@ -194,7 +200,16 @@ public class GenerativeModel {
       // Convert the Contents into a list of Json dictionaries
       ["contents"] = contents.Select(c => c.ToJson()).ToList()
     };
-    // TODO: All the other settings
+    if (_generationConfig.HasValue) {
+      jsonDict["generationConfig"] = _generationConfig?.ToJson();
+    }
+    if (_safetySettings != null && _safetySettings.Length > 0) {
+      jsonDict["safetySettings"] = _safetySettings.Select(s => s.ToJson()).ToList();
+    }
+    // TODO: Tool and ToolConfig (Part of FunctionCalling)
+    if (_systemInstruction.HasValue) {
+      jsonDict["systemInstruction"] = _systemInstruction?.ToJson();
+    }
 
     return Json.Serialize(jsonDict);
   }
