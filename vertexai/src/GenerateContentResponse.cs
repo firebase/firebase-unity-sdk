@@ -150,12 +150,10 @@ public readonly struct PromptFeedback {
   }
 
   internal static PromptFeedback FromJson(Dictionary<string, object> jsonDict) {
-    List<SafetyRating> safetyRatings = new();
-
     return new PromptFeedback(
       jsonDict.ParseNullableEnum("blockReason", ParseBlockReason),
       jsonDict.ParseValue<string>("blockReasonMessage"),
-      safetyRatings);
+      jsonDict.ParseObjectList("safetyRatings", SafetyRating.FromJson));
   }
 }
 
