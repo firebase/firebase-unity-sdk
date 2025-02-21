@@ -21,9 +21,15 @@ using Firebase.VertexAI.Internal;
 
 namespace Firebase.VertexAI {
 
+/// <summary>
+/// A collection of source attributions for a piece of content.
+/// </summary>
 public readonly struct CitationMetadata {
   private readonly ReadOnlyCollection<Citation> _citations;
 
+  /// <summary>
+  /// A list of individual cited sources and the parts of the content to which they apply.
+  /// </summary>
   public IEnumerable<Citation> Citations =>
       _citations ?? new ReadOnlyCollection<Citation>(new List<Citation>());
 
@@ -38,12 +44,33 @@ public readonly struct CitationMetadata {
   }
 }
 
+/// <summary>
+/// A struct describing a source attribution.
+/// </summary>
 public readonly struct Citation {
+  /// <summary>
+  /// The inclusive beginning of a sequence in a model response that derives from a cited source.
+  /// </summary>
   public int StartIndex { get; }
+  /// <summary>
+  /// The exclusive end of a sequence in a model response that derives from a cited source.
+  /// </summary>
   public int EndIndex { get; }
+  /// <summary>
+  /// A link to the cited source, if available.
+  /// </summary>
   public System.Uri Uri { get; }
+  /// <summary>
+  /// The title of the cited source, if available.
+  /// </summary>
   public string Title { get; }
+  /// <summary>
+  /// The license the cited source work is distributed under, if specified.
+  /// </summary>
   public string License { get; }
+  /// <summary>
+  /// The publication date of the cited source, if available.
+  /// </summary>
   public System.DateTime? PublicationDate { get; }
 
   // Hidden constructor, users don't need to make this
