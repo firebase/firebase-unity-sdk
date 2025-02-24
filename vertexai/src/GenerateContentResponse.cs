@@ -45,7 +45,7 @@ public readonly struct GenerateContentResponse {
   public UsageMetadata? UsageMetadata { get; }
 
   /// <summary>
-  /// The response's content as text, if it exists
+  /// The response's content as text, if it exists.
   /// </summary>
   public string Text {
     get {
@@ -57,7 +57,7 @@ public readonly struct GenerateContentResponse {
   }
 
   /// <summary>
-  /// Returns function calls found in any Parts of the first candidate of the response, if any.
+  /// Returns function calls found in any `Part`s of the first candidate of the response, if any.
   /// </summary>
   public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls {
     get {

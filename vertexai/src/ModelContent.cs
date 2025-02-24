@@ -23,36 +23,36 @@ namespace Firebase.VertexAI {
 
 /// <summary>
 /// A type describing data in media formats interpretable by an AI model. Each generative AI
-/// request or response contains a list of ``ModelContent``s, and each ``ModelContent`` value
-/// may comprise multiple heterogeneous ``ModelContent.Part``s.
+/// request or response contains a list of `ModelContent`s, and each `ModelContent` value
+/// may comprise multiple heterogeneous `ModelContent.Part`s.
 /// </summary>
 public readonly struct ModelContent {
   private readonly string _role;
   private readonly ReadOnlyCollection<Part> _parts;
 
   /// <summary>
-  /// The role of the entity creating the ``ModelContent``. For user-generated client requests,
+  /// The role of the entity creating the `ModelContent`. For user-generated client requests,
   /// for example, the role is `user`.
   /// </summary>
   public string Role => string.IsNullOrWhiteSpace(_role) ? "user" : _role;
 
   /// <summary>
-  /// The data parts comprising this ``ModelContent`` value.
+  /// The data parts comprising this `ModelContent` value.
   /// </summary>
   public IEnumerable<Part> Parts => _parts ?? new ReadOnlyCollection<Part>(new List<Part>());
 
   /// <summary>
-  /// Creates a ModelContent with the given `Part`s, using the default `user` role.
+  /// Creates a `ModelContent` with the given `Part`s, using the default `user` role.
   /// </summary>
   public ModelContent(params Part[] parts) : this("user", parts) { }
 
   /// <summary>
-  /// Creates a ModelContent with the given `Part`s, using the default `user` role.
+  /// Creates a `ModelContent` with the given `Part`s, using the default `user` role.
   /// </summary>
   public ModelContent(IEnumerable<Part> parts) : this("user", parts) { }
 
   /// <summary>
-  /// Creates a ModelContent with the given role and `Part`s.
+  /// Creates a `ModelContent` with the given role and `Part`s.
   /// </summary>
   public ModelContent(string role, params Part[] parts) {
     _role = role;
@@ -60,7 +60,7 @@ public readonly struct ModelContent {
   }
 
   /// <summary>
-  /// Creates a ModelContent with the given role and `Part`s.
+  /// Creates a `ModelContent` with the given role and `Part`s.
   /// </summary>
   public ModelContent(string role, IEnumerable<Part> parts) {
     _role = role;
@@ -70,32 +70,32 @@ public readonly struct ModelContent {
 #region Helper Factories
 
   /// <summary>
-  /// Creates a new ModelContent with the default `user` role, and a
-  /// TextPart containing the given text.
+  /// Creates a new `ModelContent` with the default `user` role, and a
+  /// `TextPart` containing the given text.
   /// </summary>
   public static ModelContent Text(string text) {
     return new ModelContent(new TextPart(text));
   }
 
   /// <summary>
-  /// Creates a new ModelContent with the default `user` role, and an
-  /// InlineDataPart containing the given mimeType and data.
+  /// Creates a new `ModelContent` with the default `user` role, and an
+  /// `InlineDataPart` containing the given mimeType and data.
   /// </summary>
   public static ModelContent InlineData(string mimeType, byte[] data) {
     return new ModelContent(new InlineDataPart(mimeType, data));
   }
 
   /// <summary>
-  /// Creates a new ModelContent with the default `user` role, and a
-  /// FileDataPart containing the given mimeType and data.
+  /// Creates a new `ModelContent` with the default `user` role, and a
+  /// `FileDataPart` containing the given mimeType and data.
   /// </summary>
   public static ModelContent FileData(string mimeType, System.Uri uri) {
     return new ModelContent(new FileDataPart(mimeType, uri));
   }
 
   /// <summary>
-  /// Creates a new ModelContent with the default `user` role, and a
-  /// FunctionResponsePart containing the given name and args.
+  /// Creates a new `ModelContent` with the default `user` role, and a
+  /// `FunctionResponsePart` containing the given name and args.
   /// </summary>
   public static ModelContent FunctionResponse(
       string name, IDictionary<string, object> response) {
@@ -111,12 +111,12 @@ public readonly struct ModelContent {
 
   /// <summary>
   /// A discrete piece of data in a media format interpretable by an AI model. Within a
-  /// single value of ``Part``, different data types may not mix.
+  /// single value of `Part`, different data types may not mix.
   /// </summary>
   public interface Part {
 #if !DOXYGEN
     /// <summary>
-    /// Intended for internal use only
+    /// Intended for internal use only.
     /// </summary>
     Dictionary<string, object> ToJson();
 #endif
@@ -151,7 +151,7 @@ public readonly struct ModelContent {
   }
 
   /// <summary>
-  /// File data stored in Cloud Storage for Firebase, referenced by URI.
+  /// File data stored in Cloud Storage for Firebase, referenced by a URI.
   /// </summary>
   public readonly struct FileDataPart : Part {
     public string MimeType { get; }
@@ -201,7 +201,7 @@ public readonly struct ModelContent {
   ///
   /// Contains a string representing the `FunctionDeclaration.name` and a structured JSON object
   /// containing any output from the function is used as context to the model. This should contain the
-  /// result of a ``FunctionCallPart`` made based on model prediction.
+  /// result of a `FunctionCallPart` made based on model prediction.
   /// </summary>
   public readonly struct FunctionResponsePart : Part {
     public string Name { get; }
@@ -262,7 +262,7 @@ public readonly struct ModelContent {
       if (!functionCallDict.TryGetValue("name", out var name) || name is not string) {
         throw new VertexAISerializationException("Invalid JSON format: 'name' is not a string.");
       }
-      if (!functionCallDict.TryGetValue("name", out var args) || args is not Dictionary<string, object>) {
+      if (!functionCallDict.TryGetValue("args", out var args) || args is not Dictionary<string, object>) {
         throw new VertexAISerializationException("Invalid JSON format: 'args' is not a dictionary.");
       }
       return new FunctionCallPart(name as string, args as Dictionary<string, object>);

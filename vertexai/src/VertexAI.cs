@@ -35,7 +35,7 @@ public class VertexAI {
   }
 
   /// <summary>
-  /// Returns a VertexAI initialized with the default `FirebaseApp` and location.
+  /// Returns a `VertexAI` instance initialized with the default `FirebaseApp` and location.
   /// </summary>
   public static VertexAI DefaultInstance => GetInstance();
 
@@ -51,7 +51,7 @@ public class VertexAI {
   }
 
   /// <summary>
-  /// Creates an instance of `VertexAI` configured with the given FirebaseApp and location.
+  /// Creates an instance of `VertexAI` configured with the given `FirebaseApp` and location.
   /// </summary>
   /// <param name="app">The custom `FirebaseApp` used for initialization.</param>
   /// <param name="location">The region identifier, defaulting to `us-central1`; see [Vertex AI

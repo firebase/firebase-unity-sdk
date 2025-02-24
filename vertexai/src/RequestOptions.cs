@@ -22,7 +22,7 @@ namespace Firebase.VertexAI {
 /// Configuration parameters for sending requests to the backend.
 /// </summary>
 public readonly struct RequestOptions {
-  // Since the user could create RequestOptions with the default constructor,
+  // Since the user could create `RequestOptions` with the default constructor,
   // which isn't hidable in our C# version, we default to null, and use that
   // to determine if it should be 180.
   private readonly TimeSpan? _timeout;
@@ -33,7 +33,7 @@ public readonly struct RequestOptions {
   internal TimeSpan Timeout => _timeout ?? DefaultTimeout;
 
   /// <summary>
-  /// Initialize a request options object.
+  /// Initialize a `RequestOptions` object.
   /// </summary>
   /// <param name="timeout">The request's timeout interval. Defaults to 180 seconds if given null.</param>
   public RequestOptions(TimeSpan? timeout = null) {

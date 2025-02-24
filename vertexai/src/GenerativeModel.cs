@@ -34,7 +34,7 @@ namespace Firebase.VertexAI {
 public class GenerativeModel {
   private FirebaseApp _firebaseApp;
 
-  // Various setting fields provided by the user
+  // Various setting fields provided by the user.
   private string _location;
   private string _modelName;
   private GenerationConfig? _generationConfig;
@@ -73,7 +73,7 @@ public class GenerativeModel {
 
 #region Public API
   /// <summary>
-  /// Generates new content from input ModelContent given to the model as a prompt.
+  /// Generates new content from input `ModelContent` given to the model as a prompt.
   /// </summary>
   /// <param name="content">The input(s) given to the model as a prompt.</param>
   /// <returns>The generated content response from the model.</returns>
@@ -93,7 +93,7 @@ public class GenerativeModel {
     return GenerateContentAsync(new ModelContent[] { ModelContent.Text(text) });
   }
   /// <summary>
-  /// Generates new content from input ModelContent given to the model as a prompt.
+  /// Generates new content from input `ModelContent` given to the model as a prompt.
   /// </summary>
   /// <param name="content">The input(s) given to the model as a prompt.</param>
   /// <returns>The generated content response from the model.</returns>
