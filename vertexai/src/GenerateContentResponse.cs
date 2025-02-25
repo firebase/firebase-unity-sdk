@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Google.MiniJSON;
+using Firebase.VertexAI.Internal;
 
 namespace Firebase.VertexAI {
 
@@ -64,39 +65,6 @@ public readonly struct GenerateContentResponse {
       return Candidates.FirstOrDefault().Content.Parts.OfType<ModelContent.FunctionCallPart>();
     }
   }
-
-  // Hidden constructor, users don't need to make this, though they still technically can.
-  internal GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
-      UsageMetadata? usageMetadata) {
-    _candidates = new ReadOnlyCollection<Candidate>(candidates ?? new List<Candidate>());
-    PromptFeedback = promptFeedback;
-    UsageMetadata = usageMetadata;
-  }
-
-  internal static GenerateContentResponse FromJson(string jsonString) {
-    return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>);
-  }
-
-  internal static GenerateContentResponse FromJson(Dictionary<string, object> jsonDict) {
-    // Parse the Candidates
-    List<Candidate> candidates = new();
-    if (jsonDict.TryGetValue("candidates", out object candidatesObject)) {
-      if (candidatesObject is not List<object> listOfCandidateObjects) {
-        throw new VertexAISerializationException("Invalid JSON format: 'candidates' is not a list.");
-      }
-
-      candidates = listOfCandidateObjects
-          .Select(o => o as Dictionary<string, object>)
-          .Where(dict => dict != null)
-          .Select(Candidate.FromJson)
-          .ToList();
-    }
-
-    // TODO: Parse PromptFeedback and UsageMetadata
-
-    return new GenerateContentResponse(candidates, null, null);
-  }
-}
 
   // Hidden constructor, users don't need to make this, though they still technically can.
   private GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
@@ -146,6 +114,9 @@ public enum BlockReason {
   ProhibitedContent,
 }
 
+/// <summary>
+/// A metadata struct containing any feedback the model had on the prompt it was provided.
+/// </summary>
 public readonly struct PromptFeedback {
   private readonly ReadOnlyCollection<SafetyRating> _safetyRatings;
 

@@ -110,7 +110,7 @@ public class GenerativeModel {
   }
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       string text) {
-    return GenerateContentStreamAsync(new ModelContent[] { ModelContent.Text(text) });D
+    return GenerateContentStreamAsync(new ModelContent[] { ModelContent.Text(text) });
   }
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       IEnumerable<ModelContent> content) {
