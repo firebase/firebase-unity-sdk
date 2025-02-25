@@ -215,18 +215,9 @@
       "name": "FirebaseVertexAI.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android",
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
+          "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Plugins/Firebase.VertexAI.dll",
-            "Firebase/Plugins/Firebase.VertexAI.pdb"
+            "Firebase/VertexAI/*"
           ]
         },
         {

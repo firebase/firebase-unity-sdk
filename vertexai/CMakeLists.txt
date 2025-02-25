@@ -14,41 +14,19 @@
 
 # CMake file for the Vertex AI in Firebase library
 
-# Vertex AI in Firebase CSharp files
-set(firebase_vertexai_src
-  src/Candidate.cs
-  src/Chat.cs
-  src/Citation.cs
-  src/CountTokensResponse.cs
-  src/FunctionCalling.cs
-  src/GenerateContentResponse.cs
-  src/GenerationConfig.cs
-  src/GenerativeModel.cs
-  src/ModelContent.cs
-  src/RequestOptions.cs
-  src/Safety.cs
-  src/Schema.cs
-  src/VertexAI.cs
-  src/VertexAIException.cs
+# Vertex AI in Firebase is different from the other Firebase libraries,
+# as instead of prebuilding, we provide it as a source library.
+
+# Package every file under src, including subfolders, since we want them all.
+unity_pack_folder(
+  "${FIREBASE_UNITY_DIR}/vertexai/src/"
+  PACK_PATH "Firebase/VertexAI"
 )
 
+# For documentation, get only the C# files at the top level,
+# which make up the public API.
+file(GLOB firebase_vertexai_doc_src "src/*.cs")
 unity_pack_documentation_sources(vertexai
   DOCUMENTATION_SOURCES
     ${firebase_vertexai_src}
-)
-
-mono_add_library(firebase_vertexai
-  MODULE
-    Firebase.VertexAI
-  SOURCES
-    ${firebase_vertexai_src}
-  REFERENCES
-    ${FIREBASE_PLATFORM_REF}
-)
-
-unity_pack_cs(firebase_vertexai)
-
-set_property(TARGET firebase_vertexai
-  PROPERTY FOLDER
-  "Firebase ${FIREBASE_PLATFORM_NAME}"
 )
