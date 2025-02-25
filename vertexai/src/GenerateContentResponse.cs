@@ -66,7 +66,7 @@ public readonly struct GenerateContentResponse {
     }
   }
 
-  // Hidden constructor, users don't need to make this, though they still technically can.
+  // Hidden constructor, users don't need to make this.
   private GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
       UsageMetadata? usageMetadata) {
     _candidates = new ReadOnlyCollection<Candidate>(candidates ?? new List<Candidate>());
@@ -134,7 +134,7 @@ public readonly struct PromptFeedback {
   public IEnumerable<SafetyRating> SafetyRatings =>
       _safetyRatings ?? new ReadOnlyCollection<SafetyRating>(new List<SafetyRating>());
 
-  // Hidden constructor, users don't need to make this
+  // Hidden constructor, users don't need to make this.
   private PromptFeedback(BlockReason? blockReason, string blockReasonMessage,
                          List<SafetyRating> safetyRatings) {
     BlockReason = blockReason;
@@ -179,7 +179,7 @@ public readonly struct UsageMetadata {
 
   // TODO: New fields about ModalityTokenCount
 
-  // Hidden constructor, users don't need to make this
+  // Hidden constructor, users don't need to make this.
   private UsageMetadata(int promptTC, int candidatesTC, int totalTC) {
     PromptTokenCount = promptTC;
     CandidatesTokenCount = candidatesTC;

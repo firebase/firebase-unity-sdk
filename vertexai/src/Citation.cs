@@ -33,7 +33,7 @@ public readonly struct CitationMetadata {
   public IEnumerable<Citation> Citations =>
       _citations ?? new ReadOnlyCollection<Citation>(new List<Citation>());
 
-  // Hidden constructor, users don't need to make this
+  // Hidden constructor, users don't need to make this.
   private CitationMetadata(List<Citation> citations) {
     _citations = new ReadOnlyCollection<Citation>(citations ?? new List<Citation>());
   }
@@ -73,7 +73,7 @@ public readonly struct Citation {
   /// </summary>
   public System.DateTime? PublicationDate { get; }
 
-  // Hidden constructor, users don't need to make this
+  // Hidden constructor, users don't need to make this.
   private Citation(int startIndex, int endIndex, Uri uri, string title,
       string license, DateTime? publicationDate) {
     StartIndex = startIndex;
@@ -85,13 +85,13 @@ public readonly struct Citation {
   }
 
   internal static Citation FromJson(Dictionary<string, object> jsonDict) {
-    // If there is a Uri, need to convert it
+    // If there is a Uri, need to convert it.
     Uri uri = null;
     if (jsonDict.TryParseValue("uri", out string uriString)) {
       uri = new Uri(uriString);
     }
 
-    // If there is a publication date, we need to convert it
+    // If there is a publication date, we need to convert it.
     DateTime? pubDate = null;
     if (jsonDict.TryParseValue("publicationDate", out Dictionary<string, object> dateDict)) {
       // Make sure that if any key is missing, it has a default value that will work with DateTime.

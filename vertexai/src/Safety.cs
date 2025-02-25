@@ -102,7 +102,7 @@ public readonly struct SafetySetting {
   /// <param name="category">The category this safety setting should be applied to.</param>
   /// <param name="threshold">The threshold describing what content should be blocked.</param>
   /// <param name="method">The method of computing whether the threshold has been exceeded; if not specified,
-  ///     the default method is Severity for most models.</param>
+  ///     the default method is `Severity` for most models.</param>
   public SafetySetting(HarmCategory category, HarmBlockThreshold threshold,
       HarmBlockMethod? method = null) {
     _category = category;
@@ -255,7 +255,7 @@ public readonly struct SafetyRating {
   /// </summary>
   public float SeverityScore { get; }
 
-  // Hidden constructor, users don't need to make this
+  // Hidden constructor, users don't need to make this.
   private SafetyRating(HarmCategory category, HarmProbability probability,
       float probabilityScore, bool blocked, HarmSeverity severity, float severityScore) {
     Category = category;
