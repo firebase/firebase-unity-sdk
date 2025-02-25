@@ -17,7 +17,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Firebase.VertexAI.Internal;
 using Google.MiniJSON;
 
 namespace Firebase.VertexAI {
@@ -46,7 +45,7 @@ public readonly struct GenerateContentResponse {
   public UsageMetadata? UsageMetadata { get; }
 
   /// <summary>
-  /// The response's content as text, if it exists
+  /// The response's content as text, if it exists.
   /// </summary>
   public string Text {
     get {
@@ -58,13 +57,46 @@ public readonly struct GenerateContentResponse {
   }
 
   /// <summary>
-  /// Returns function calls found in any Parts of the first candidate of the response, if any.
+  /// Returns function calls found in any `Part`s of the first candidate of the response, if any.
   /// </summary>
   public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls {
     get {
       return Candidates.FirstOrDefault().Content.Parts.OfType<ModelContent.FunctionCallPart>();
     }
   }
+
+  // Hidden constructor, users don't need to make this, though they still technically can.
+  internal GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
+      UsageMetadata? usageMetadata) {
+    _candidates = new ReadOnlyCollection<Candidate>(candidates ?? new List<Candidate>());
+    PromptFeedback = promptFeedback;
+    UsageMetadata = usageMetadata;
+  }
+
+  internal static GenerateContentResponse FromJson(string jsonString) {
+    return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>);
+  }
+
+  internal static GenerateContentResponse FromJson(Dictionary<string, object> jsonDict) {
+    // Parse the Candidates
+    List<Candidate> candidates = new();
+    if (jsonDict.TryGetValue("candidates", out object candidatesObject)) {
+      if (candidatesObject is not List<object> listOfCandidateObjects) {
+        throw new VertexAISerializationException("Invalid JSON format: 'candidates' is not a list.");
+      }
+
+      candidates = listOfCandidateObjects
+          .Select(o => o as Dictionary<string, object>)
+          .Where(dict => dict != null)
+          .Select(Candidate.FromJson)
+          .ToList();
+    }
+
+    // TODO: Parse PromptFeedback and UsageMetadata
+
+    return new GenerateContentResponse(candidates, null, null);
+  }
+}
 
   // Hidden constructor, users don't need to make this, though they still technically can.
   private GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,

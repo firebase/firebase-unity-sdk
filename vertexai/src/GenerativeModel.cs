@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// For now, using this to hide some functions causing problems with the build.
+#define HIDE_IASYNCENUMERABLE
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,7 +34,7 @@ namespace Firebase.VertexAI {
 public class GenerativeModel {
   private readonly FirebaseApp _firebaseApp;
 
-  // Various setting fields provided by the user
+  // Various setting fields provided by the user.
   private readonly string _location;
   private readonly string _modelName;
   private readonly GenerationConfig? _generationConfig;
@@ -70,7 +73,7 @@ public class GenerativeModel {
 
 #region Public API
   /// <summary>
-  /// Generates new content from input ModelContent given to the model as a prompt.
+  /// Generates new content from input `ModelContent` given to the model as a prompt.
   /// </summary>
   /// <param name="content">The input(s) given to the model as a prompt.</param>
   /// <returns>The generated content response from the model.</returns>
@@ -90,7 +93,7 @@ public class GenerativeModel {
     return GenerateContentAsync(new ModelContent[] { ModelContent.Text(text) });
   }
   /// <summary>
-  /// Generates new content from input ModelContent given to the model as a prompt.
+  /// Generates new content from input `ModelContent` given to the model as a prompt.
   /// </summary>
   /// <param name="content">The input(s) given to the model as a prompt.</param>
   /// <returns>The generated content response from the model.</returns>
@@ -100,18 +103,24 @@ public class GenerativeModel {
     return GenerateContentAsyncInternal(content);
   }
 
+#if !HIDE_IASYNCENUMERABLE
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       params ModelContent[] content) {
     return GenerateContentStreamAsync((IEnumerable<ModelContent>)content);
   }
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       string text) {
-    return GenerateContentStreamAsync(new ModelContent[] { ModelContent.Text(text) });
+    return GenerateContentStreamAsync(new ModelContent[] { ModelContent.Text(text) });D
   }
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       IEnumerable<ModelContent> content) {
     return GenerateContentStreamAsyncInternal(content);
   }
+  public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
+      IEnumerable<ModelContent> content) {
+    return GenerateContentStreamAsyncInternal(content);
+  }
+#endif
 
   public Task<CountTokensResponse> CountTokensAsync(
       params ModelContent[] content) {
@@ -139,8 +148,6 @@ public class GenerativeModel {
       IEnumerable<ModelContent> content) {
     string bodyJson = ModelContentsToJson(content);
 
-    UnityEngine.Debug.Log($"Going to try to send: {bodyJson}");
-
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":generateContent");
 
     // Set the request headers
@@ -149,8 +156,6 @@ public class GenerativeModel {
 
     // Set the content
     request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
-
-   UnityEngine.Debug.Log("Request? " + request);
 
     HttpResponseMessage response = await _httpClient.SendAsync(request);
     // TODO: Convert any timeout exception into a VertexAI equivalent
@@ -161,11 +166,10 @@ public class GenerativeModel {
 
     string result = await response.Content.ReadAsStringAsync();
 
-    UnityEngine.Debug.Log("Got a valid response at least: \n" + result);
-
     return GenerateContentResponse.FromJson(result);
   }
 
+#if !HIDE_IASYNCENUMERABLE
   private async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
       IEnumerable<ModelContent> content) {
     // TODO: Implementation
@@ -173,6 +177,7 @@ public class GenerativeModel {
     yield return new GenerateContentResponse();
     throw new NotImplementedException();
   }
+#endif
 
   private async Task<CountTokensResponse> CountTokensAsyncInternal(
       IEnumerable<ModelContent> content) {
