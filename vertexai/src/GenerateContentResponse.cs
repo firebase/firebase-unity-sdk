@@ -125,7 +125,7 @@ public readonly struct PromptFeedback {
   /// </summary>
   public BlockReason? BlockReason { get; }
   /// <summary>
-  /// A human-readable description of the ``BlockReason``.
+  /// A human-readable description of the `BlockReason`.
   /// </summary>
   public string BlockReasonMessage { get; }
   /// <summary>
