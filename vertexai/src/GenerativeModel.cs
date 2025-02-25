@@ -32,19 +32,19 @@ namespace Firebase.VertexAI {
 /// content based on various input types.
 /// </summary>
 public class GenerativeModel {
-  private FirebaseApp _firebaseApp;
+  private readonly FirebaseApp _firebaseApp;
 
   // Various setting fields provided by the user.
-  private string _location;
-  private string _modelName;
-  private GenerationConfig? _generationConfig;
-  private SafetySetting[] _safetySettings;
-  private Tool[] _tools;
-  private ToolConfig? _toolConfig;
-  private ModelContent? _systemInstruction;
-  private RequestOptions? _requestOptions;
+  private readonly string _location;
+  private readonly string _modelName;
+  private readonly GenerationConfig? _generationConfig;
+  private readonly SafetySetting[] _safetySettings;
+  private readonly Tool[] _tools;
+  private readonly ToolConfig? _toolConfig;
+  private readonly ModelContent? _systemInstruction;
+  private readonly RequestOptions? _requestOptions;
 
-  HttpClient _httpClient;
+  private readonly HttpClient _httpClient;
 
   internal GenerativeModel(FirebaseApp firebaseApp,
                            string location,
@@ -111,6 +111,10 @@ public class GenerativeModel {
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       string text) {
     return GenerateContentStreamAsync(new ModelContent[] { ModelContent.Text(text) });
+  }
+  public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
+      IEnumerable<ModelContent> content) {
+    return GenerateContentStreamAsyncInternal(content);
   }
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       IEnumerable<ModelContent> content) {
@@ -183,7 +187,7 @@ public class GenerativeModel {
   }
 
   private string GetURL() {
-    return "https://firebaseml.googleapis.com/v2beta" +
+    return "https://firebasevertexai.googleapis.com/v1beta" +
         "/projects/" + _firebaseApp.Options.ProjectId +
         "/locations/" + _location +
         "/publishers/google/models/" + _modelName;
@@ -194,7 +198,16 @@ public class GenerativeModel {
       // Convert the Contents into a list of Json dictionaries
       ["contents"] = contents.Select(c => c.ToJson()).ToList()
     };
-    // TODO: All the other settings
+    if (_generationConfig.HasValue) {
+      jsonDict["generationConfig"] = _generationConfig?.ToJson();
+    }
+    if (_safetySettings != null && _safetySettings.Length > 0) {
+      jsonDict["safetySettings"] = _safetySettings.Select(s => s.ToJson()).ToList();
+    }
+    // TODO: Tool and ToolConfig (Part of FunctionCalling)
+    if (_systemInstruction.HasValue) {
+      jsonDict["systemInstruction"] = _systemInstruction?.ToJson();
+    }
 
     return Json.Serialize(jsonDict);
   }

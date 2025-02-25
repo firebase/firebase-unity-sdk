@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Google.MiniJSON;
+using Firebase.VertexAI.Internal;
 
 namespace Firebase.VertexAI {
 
@@ -65,8 +66,8 @@ public readonly struct GenerateContentResponse {
     }
   }
 
-  // Hidden constructor, users don't need to make this, though they still technically can.
-  internal GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
+  // Hidden constructor, users don't need to make this.
+  private GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
       UsageMetadata? usageMetadata) {
     _candidates = new ReadOnlyCollection<Candidate>(candidates ?? new List<Candidate>());
     PromptFeedback = promptFeedback;
@@ -78,48 +79,119 @@ public readonly struct GenerateContentResponse {
   }
 
   internal static GenerateContentResponse FromJson(Dictionary<string, object> jsonDict) {
-    // Parse the Candidates
-    List<Candidate> candidates = new();
-    if (jsonDict.TryGetValue("candidates", out object candidatesObject)) {
-      if (candidatesObject is not List<object> listOfCandidateObjects) {
-        throw new VertexAISerializationException("Invalid JSON format: 'candidates' is not a list.");
-      }
-
-      candidates = listOfCandidateObjects
-          .Select(o => o as Dictionary<string, object>)
-          .Where(dict => dict != null)
-          .Select(Candidate.FromJson)
-          .ToList();
-    }
-
-    // TODO: Parse PromptFeedback and UsageMetadata
-
-    return new GenerateContentResponse(candidates, null, null);
+    return new GenerateContentResponse(
+      jsonDict.ParseObjectList("candidates", Candidate.FromJson),
+      jsonDict.ParseNullableObject("promptFeedback",
+          Firebase.VertexAI.PromptFeedback.FromJson),
+      jsonDict.ParseNullableObject("usageMetadata",
+          Firebase.VertexAI.UsageMetadata.FromJson));
   }
 }
 
+/// <summary>
+/// A type describing possible reasons to block a prompt.
+/// </summary>
 public enum BlockReason {
-  Unknown,
+  /// <summary>
+  /// A new and not yet supported value.
+  /// </summary>
+  Unknown = 0,
+  /// <summary>
+  /// The prompt was blocked because it was deemed unsafe.
+  /// </summary>
   Safety,
+  /// <summary>
+  /// All other block reasons.
+  /// </summary>
   Other,
+  /// <summary>
+  /// The prompt was blocked because it contained terms from the terminology blocklist.
+  /// </summary>
   Blocklist,
+  /// <summary>
+  /// The prompt was blocked due to prohibited content.
+  /// </summary>
   ProhibitedContent,
 }
 
+/// <summary>
+/// A metadata struct containing any feedback the model had on the prompt it was provided.
+/// </summary>
 public readonly struct PromptFeedback {
-  public BlockReason? BlockReason { get; }
-  public string BlockReasonMessage { get; }
-  public IEnumerable<SafetyRating> SafetyRatings { get; }
+  private readonly ReadOnlyCollection<SafetyRating> _safetyRatings;
 
-  // Hidden constructor, users don't need to make this
+  /// <summary>
+  /// The reason a prompt was blocked, if it was blocked.
+  /// </summary>
+  public BlockReason? BlockReason { get; }
+  /// <summary>
+  /// A human-readable description of the `BlockReason`.
+  /// </summary>
+  public string BlockReasonMessage { get; }
+  /// <summary>
+  /// The safety ratings of the prompt.
+  /// </summary>
+  public IEnumerable<SafetyRating> SafetyRatings =>
+      _safetyRatings ?? new ReadOnlyCollection<SafetyRating>(new List<SafetyRating>());
+
+  // Hidden constructor, users don't need to make this.
+  private PromptFeedback(BlockReason? blockReason, string blockReasonMessage,
+                         List<SafetyRating> safetyRatings) {
+    BlockReason = blockReason;
+    BlockReasonMessage = blockReasonMessage;
+    _safetyRatings = new ReadOnlyCollection<SafetyRating>(safetyRatings ?? new List<SafetyRating>());
+  }
+
+  private static BlockReason ParseBlockReason(string str) {
+    return str switch {
+      "SAFETY" => Firebase.VertexAI.BlockReason.Safety,
+      "OTHER" => Firebase.VertexAI.BlockReason.Other,
+      "BLOCKLIST" => Firebase.VertexAI.BlockReason.Blocklist,
+      "PROHIBITED_CONTENT" => Firebase.VertexAI.BlockReason.ProhibitedContent,
+      _ => Firebase.VertexAI.BlockReason.Unknown,
+    };
+  }
+
+  internal static PromptFeedback FromJson(Dictionary<string, object> jsonDict) {
+    return new PromptFeedback(
+      jsonDict.ParseNullableEnum("blockReason", ParseBlockReason),
+      jsonDict.ParseValue<string>("blockReasonMessage"),
+      jsonDict.ParseObjectList("safetyRatings", SafetyRating.FromJson));
+  }
 }
 
+/// <summary>
+/// Token usage metadata for processing the generate content request.
+/// </summary>
 public readonly struct UsageMetadata {
+  /// <summary>
+  /// The number of tokens in the request prompt.
+  /// </summary>
   public int PromptTokenCount { get; }
+  /// <summary>
+  /// The total number of tokens across the generated response candidates.
+  /// </summary>
   public int CandidatesTokenCount { get; }
+  /// <summary>
+  /// The total number of tokens in both the request and response.
+  /// </summary>
   public int TotalTokenCount { get; }
 
-  // Hidden constructor, users don't need to make this
+  // TODO: New fields about ModalityTokenCount
+
+  // Hidden constructor, users don't need to make this.
+  private UsageMetadata(int promptTC, int candidatesTC, int totalTC) {
+    PromptTokenCount = promptTC;
+    CandidatesTokenCount = candidatesTC;
+    TotalTokenCount = totalTC;
+  }
+
+  internal static UsageMetadata FromJson(Dictionary<string, object> jsonDict) {
+    return new UsageMetadata(
+      jsonDict.ParseValue<int>("promptTokenCount"),
+      jsonDict.ParseValue<int>("candidatesTokenCount"),
+      jsonDict.ParseValue<int>("totalTokenCount"));
+  }
 }
 
 }
