@@ -225,6 +225,9 @@ public readonly struct ModelContent {
 
 #endregion
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal Dictionary<string, object> ToJson() {
     return new Dictionary<string, object>() {
       ["role"] = Role,
