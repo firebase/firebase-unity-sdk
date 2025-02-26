@@ -140,6 +140,9 @@ public readonly struct SafetySetting {
     };
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal Dictionary<string, object> ToJson() {
     Dictionary<string, object> jsonDict = new () {
       ["category"] = ConvertCategory(_category),
@@ -297,6 +300,9 @@ public readonly struct SafetyRating {
     };
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal static SafetyRating FromJson(Dictionary<string, object> jsonDict) {
     return new SafetyRating(
       jsonDict.ParseEnum("category", ParseCategory),

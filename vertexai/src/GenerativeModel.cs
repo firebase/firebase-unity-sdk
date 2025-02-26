@@ -46,6 +46,9 @@ public class GenerativeModel {
 
   private readonly HttpClient _httpClient;
 
+  /// <summary>
+  /// Intended for internal use only. Use `VertexAI.GetInstance` instead.
+  /// </summary>
   internal GenerativeModel(FirebaseApp firebaseApp,
                            string location,
                            string modelName,

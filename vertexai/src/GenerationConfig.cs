@@ -159,6 +159,9 @@ public readonly struct GenerationConfig {
     _responseSchema = responseSchema;
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal Dictionary<string, object> ToJson() {
     Dictionary<string, object> jsonDict = new();
     if (_temperature.HasValue) jsonDict["temperature"] = _temperature.Value;

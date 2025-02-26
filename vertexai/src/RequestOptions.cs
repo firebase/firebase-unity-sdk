@@ -27,9 +27,14 @@ public readonly struct RequestOptions {
   // to determine if it should be 180.
   private readonly TimeSpan? _timeout;
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal static TimeSpan DefaultTimeout => TimeSpan.FromSeconds(180);
 
-  // Intentionally not public, as users don't need it.
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal TimeSpan Timeout => _timeout ?? DefaultTimeout;
 
   /// <summary>

@@ -121,6 +121,9 @@ public readonly struct Candidate {
     };
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal static Candidate FromJson(Dictionary<string, object> jsonDict) {
     return new Candidate(
       jsonDict.ParseObject("content", ModelContent.FromJson, defaultValue: new ModelContent("model")),

@@ -38,6 +38,9 @@ public readonly struct CitationMetadata {
     _citations = new ReadOnlyCollection<Citation>(citations ?? new List<Citation>());
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal static CitationMetadata FromJson(Dictionary<string, object> jsonDict) {
     return new CitationMetadata(
       jsonDict.ParseObjectList("citations", Citation.FromJson));
@@ -84,6 +87,9 @@ public readonly struct Citation {
     PublicationDate = publicationDate;
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal static Citation FromJson(Dictionary<string, object> jsonDict) {
     // If there is a Uri, need to convert it.
     Uri uri = null;

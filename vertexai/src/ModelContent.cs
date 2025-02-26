@@ -232,6 +232,9 @@ public readonly struct ModelContent {
     };
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// </summary>
   internal static ModelContent FromJson(Dictionary<string, object> jsonDict) {
     // Both role and parts are required keys
     return new ModelContent(
