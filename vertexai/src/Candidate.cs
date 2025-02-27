@@ -123,6 +123,7 @@ public readonly struct Candidate {
 
   /// <summary>
   /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
   internal static Candidate FromJson(Dictionary<string, object> jsonDict) {
     return new Candidate(

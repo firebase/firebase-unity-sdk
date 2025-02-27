@@ -40,6 +40,7 @@ public readonly struct CitationMetadata {
 
   /// <summary>
   /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
   internal static CitationMetadata FromJson(Dictionary<string, object> jsonDict) {
     return new CitationMetadata(
@@ -89,6 +90,7 @@ public readonly struct Citation {
 
   /// <summary>
   /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
   internal static Citation FromJson(Dictionary<string, object> jsonDict) {
     // If there is a Uri, need to convert it.

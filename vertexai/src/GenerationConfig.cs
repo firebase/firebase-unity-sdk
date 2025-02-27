@@ -161,6 +161,7 @@ public readonly struct GenerationConfig {
 
   /// <summary>
   /// Intended for internal use only.
+  /// This method is used for serializing the object to JSON for the API request.
   /// </summary>
   internal Dictionary<string, object> ToJson() {
     Dictionary<string, object> jsonDict = new();

@@ -142,6 +142,7 @@ public readonly struct SafetySetting {
 
   /// <summary>
   /// Intended for internal use only.
+  /// This method is used for serializing the object to JSON for the API request.
   /// </summary>
   internal Dictionary<string, object> ToJson() {
     Dictionary<string, object> jsonDict = new () {
@@ -302,6 +303,7 @@ public readonly struct SafetyRating {
 
   /// <summary>
   /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
   internal static SafetyRating FromJson(Dictionary<string, object> jsonDict) {
     return new SafetyRating(
