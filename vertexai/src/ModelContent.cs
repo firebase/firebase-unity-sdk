@@ -118,6 +118,7 @@ public readonly struct ModelContent {
 #if !DOXYGEN
     /// <summary>
     /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
     /// </summary>
     Dictionary<string, object> ToJson();
 #endif
@@ -127,8 +128,15 @@ public readonly struct ModelContent {
   /// A text part containing a string value.
   /// </summary>
   public readonly struct TextPart : Part {
+    /// <summary>
+    /// Text value.
+    /// </summary>
     public string Text { get; }
 
+    /// <summary>
+    /// Creates a `TextPart` with the given text.
+    /// </summary>
+    /// <param name="text">The text value to use.</param>
     public TextPart(string text) { Text = text; }
 
     Dictionary<string, object> Part.ToJson() {
@@ -141,13 +149,39 @@ public readonly struct ModelContent {
   /// Note: Not all media types may be supported by the AI model.
   /// </summary>
   public readonly struct InlineDataPart : Part {
-    public string Mimetype { get; }
+    /// <summary>
+    /// The IANA standard MIME type of the data.
+    /// </summary>
+    public string MimeType { get; }
+    /// <summary>
+    /// The data provided in the inline data part.
+    /// </summary>
     public ReadOnlyMemory<byte> Data { get; }
 
-    public InlineDataPart(string mimetype, byte[] data) { Mimetype = mimetype; Data = data; }
+    /// <summary>
+    /// Creates an `InlineDataPart` from data and a MIME type.
+    ///
+    /// > Important: Supported input types depend on the model on the model being used; see [input
+    ///  files and requirements](https://firebase.google.com/docs/vertex-ai/input-file-requirements)
+    ///  for more details.
+    /// </summary>
+    /// <param name="mimeType">The IANA standard MIME type of the data, for example, `"image/jpeg"` or
+    ///     `"video/mp4"`; see [input files and
+    ///     requirements](https://firebase.google.com/docs/vertex-ai/input-file-requirements) for
+    ///     supported values.</param>
+    /// <param name="data">The data representation of an image, video, audio or document; see [input files and
+    ///     requirements](https://firebase.google.com/docs/vertex-ai/input-file-requirements) for
+    ///     supported media types.</param>
+    public InlineDataPart(string mimeType, byte[] data) { MimeType = mimeType; Data = data; }
 
     Dictionary<string, object> Part.ToJson() {
-      throw new NotImplementedException();
+      return new Dictionary<string, object>() {
+        { "inlineData", new Dictionary<string, object>() {
+            { "mimeType", MimeType },
+            { "data", Convert.ToBase64String(Data.ToArray()) }
+          }
+        }
+      };
     }
   }
 
@@ -155,7 +189,13 @@ public readonly struct ModelContent {
   /// File data stored in Cloud Storage for Firebase, referenced by a URI.
   /// </summary>
   public readonly struct FileDataPart : Part {
+    /// <summary>
+    /// The IANA standard MIME type of the data.
+    /// </summary>
     public string MimeType { get; }
+    /// <summary>
+    /// The URI of the file.
+    /// </summary>
     public System.Uri Uri { get; }
 
     /// <summary>
@@ -170,7 +210,13 @@ public readonly struct ModelContent {
     public FileDataPart(string mimeType, System.Uri uri) { MimeType = mimeType; Uri = uri; }
 
     Dictionary<string, object> Part.ToJson() {
-      throw new NotImplementedException();
+      return new Dictionary<string, object>() {
+        { "inlineData", new Dictionary<string, object>() {
+            { "mimeType", MimeType },
+            { "fileUri", Uri.AbsoluteUri }
+          }
+        }
+      };
     }
   }
 
@@ -186,14 +232,23 @@ public readonly struct ModelContent {
     /// The function parameters and values, matching the registered schema.
     /// </summary>
     public IReadOnlyDictionary<string, object> Args { get; }
-
-    public FunctionCallPart(string name, IDictionary<string, object> args) {
+    
+    /// <summary>
+    /// Intended for internal use only.
+    /// </summary>
+    internal FunctionCallPart(string name, IDictionary<string, object> args) {
       Name = name;
       Args = new Dictionary<string, object>(args);
     }
 
     Dictionary<string, object> Part.ToJson() {
-      throw new NotImplementedException();
+      return new Dictionary<string, object>() {
+        { "functionCall", new Dictionary<string, object>() {
+            { "name", Name },
+            { "args", Args }
+          }
+        }
+      };
     }
   }
 
@@ -205,7 +260,13 @@ public readonly struct ModelContent {
   /// result of a `FunctionCallPart` made based on model prediction.
   /// </summary>
   public readonly struct FunctionResponsePart : Part {
+    /// <summary>
+    /// The name of the function that was called.
+    /// </summary>
     public string Name { get; }
+    /// <summary>
+    /// The function's response or return value.
+    /// </summary>
     public IReadOnlyDictionary<string, object> Response { get; }
 
     /// <summary>
@@ -219,12 +280,22 @@ public readonly struct ModelContent {
     }
 
     Dictionary<string, object> Part.ToJson() {
-      throw new NotImplementedException();
+      return new Dictionary<string, object>() {
+        { "functionResponse", new Dictionary<string, object>() {
+            { "name", Name },
+            { "response", Response }
+          }
+        }
+      };
     }
   }
 
 #endregion
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for serializing the object to JSON for the API request.
+  /// </summary>
   internal Dictionary<string, object> ToJson() {
     return new Dictionary<string, object>() {
       ["role"] = Role,
@@ -232,6 +303,10 @@ public readonly struct ModelContent {
     };
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
+  /// </summary>
   internal static ModelContent FromJson(Dictionary<string, object> jsonDict) {
     // Both role and parts are required keys
     return new ModelContent(

@@ -159,6 +159,10 @@ public readonly struct GenerationConfig {
     _responseSchema = responseSchema;
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for serializing the object to JSON for the API request.
+  /// </summary>
   internal Dictionary<string, object> ToJson() {
     Dictionary<string, object> jsonDict = new();
     if (_temperature.HasValue) jsonDict["temperature"] = _temperature.Value;

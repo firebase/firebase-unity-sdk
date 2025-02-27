@@ -74,10 +74,18 @@ public readonly struct GenerateContentResponse {
     UsageMetadata = usageMetadata;
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
+  /// </summary>
   internal static GenerateContentResponse FromJson(string jsonString) {
     return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>);
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
+  /// </summary>
   internal static GenerateContentResponse FromJson(Dictionary<string, object> jsonDict) {
     return new GenerateContentResponse(
       jsonDict.ParseObjectList("candidates", Candidate.FromJson),
@@ -152,6 +160,10 @@ public readonly struct PromptFeedback {
     };
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
+  /// </summary>
   internal static PromptFeedback FromJson(Dictionary<string, object> jsonDict) {
     return new PromptFeedback(
       jsonDict.ParseNullableEnum("blockReason", ParseBlockReason),
@@ -186,6 +198,10 @@ public readonly struct UsageMetadata {
     TotalTokenCount = totalTC;
   }
 
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
+  /// </summary>
   internal static UsageMetadata FromJson(Dictionary<string, object> jsonDict) {
     return new UsageMetadata(
       jsonDict.ParseValue<int>("promptTokenCount"),

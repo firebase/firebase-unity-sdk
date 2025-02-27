@@ -214,6 +214,23 @@
         "com.google.firebase.auth-*.tgz",
         "com.google.firebase.storage-*.tgz"
       ]
+    },
+    {
+      "name": "vertexai",
+      "full_name": "FirebaseVertexAI",
+      "captial_name": "VertexAI",
+      "bundle_id": "com.google.firebase.unity.vertexai.testapp",
+      "testapp_path": "vertexai/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
+      "plugins": [
+        "FirebaseVertexAI.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.vertexai-*.tgz"
+      ]
     }
   ],
   "skipped_testapp_files": [
