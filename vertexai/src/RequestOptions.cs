@@ -29,11 +29,13 @@ public readonly struct RequestOptions {
 
   /// <summary>
   /// Intended for internal use only.
+  /// This provides access to the default timeout value.
   /// </summary>
   internal static TimeSpan DefaultTimeout => TimeSpan.FromSeconds(180);
 
   /// <summary>
   /// Intended for internal use only.
+  /// This provides access to the timeout value used for API requests.
   /// </summary>
   internal TimeSpan Timeout => _timeout ?? DefaultTimeout;
 
