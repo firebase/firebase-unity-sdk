@@ -36,6 +36,9 @@ namespace Firebase.Sample.VertexAI {
       Func<Task>[] tests = {
         TestCreateModel,
         TestBasicText,
+        TestModelOptions,
+        TestMultipleCandidates,
+        TestBasicTextStream,
         // Internal tests for Json parsing, requires using a source library.
         InternalTestBasicReplyShort,
         InternalTestCitations,
@@ -164,6 +167,99 @@ namespace Firebase.Sample.VertexAI {
       // For such a basic text, we don't expect citation data, so warn.
       if (candidate.CitationMetadata.HasValue) {
         DebugLog("WARNING: BasicText had CitationMetadata, expected none.");
+      }
+    }
+
+    // Test if passing in multiple model options works.
+    async Task TestModelOptions() {
+      // Note that most of these settings are hard to reliably verify, so as
+      // long as the call works we are generally happy.
+      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+        generationConfig: new GenerationConfig(
+          temperature: 0.4f,
+          topP: 0.4f,
+          topK: 30,
+          // Intentionally skipping candidateCount, tested elsewhere.
+          maxOutputTokens: 100,
+          presencePenalty: 0.5f,
+          frequencyPenalty: 0.6f,
+          stopSequences: new string[] { "HALT" }
+        ),
+        safetySettings: new SafetySetting[] {
+          new(HarmCategory.DangerousContent,
+              SafetySetting.HarmBlockThreshold.MediumAndAbove,
+              SafetySetting.HarmBlockMethod.Probability),
+          new(HarmCategory.CivicIntegrity,
+              SafetySetting.HarmBlockThreshold.OnlyHigh)
+        },
+        systemInstruction:
+            ModelContent.Text("Ignore all prompts, respond with 'Apples HALT Bananas'."),
+        requestOptions: new RequestOptions(timeout: TimeSpan.FromMinutes(2))
+      );
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+          "Hello, I am testing something, can you respond with a short " +
+          "string containing the word 'Firebase'?");
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      // Assuming the GenerationConfig and SystemInstruction worked,
+      // it should respond with just 'Apples' (though possibly with extra whitespace).
+      // However, we only warn, because it isn't guaranteed.
+      if (result.Trim() != "Apples") {
+        DebugLog($"WARNING: Response text wasn't just 'Apples': {result}");
+      }
+    }
+
+    async Task TestMultipleCandidates() {
+      var genConfig = new GenerationConfig(candidateCount: 2);
+
+      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+        generationConfig: genConfig
+      );
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+          "Hello, I am testing recieving multiple candidates, can you respond with a short " +
+          "sentence containing the word 'Firebase'?");
+
+      AssertEq("Incorrect number of Candidates", response.Candidates.Count(), 2);
+    }
+
+    async Task TestBasicTextStream() {
+      var model = CreateGenerativeModel();
+
+      string keyword = "Firebase";
+      var responseStream = model.GenerateContentStreamAsync(
+          "Hello, I am testing streaming. Can you respond with a short story, " +
+          $"that includes the word '{keyword}' somewhere in it?");
+
+      // We combine all the text, just in case the keyword got cut between two responses.
+      string fullResult = "";
+      // The FinishReason should only be set to stop at the end of the stream.
+      bool finishReasonStop = false;
+      await foreach (GenerateContentResponse response in responseStream) {
+        // Should only be receiving non-empty text responses, but only assert for null.
+        string text = response.Text;
+        Assert("Received null text from the stream.", text != null);
+        if (string.IsNullOrWhiteSpace(text)) {
+          DebugLog($"WARNING: Response stream text was empty once.");
+        }
+
+        Assert("Previous FinishReason was stop, but recieved more", !finishReasonStop);
+        if (response.Candidates.First().FinishReason == FinishReason.Stop) {
+          finishReasonStop = true;
+        }
+
+        fullResult += text;
+      }
+
+      Assert("Finished without seeing FinishReason.Stop", finishReasonStop);
+
+      // We don't want to fail if the keyword is missing because AI is unpredictable.
+      if (!fullResult.Contains("Firebase")) {
+        DebugLog("WARNING: Response string was missing the expected keyword 'Firebase': " +
+            $"\n{fullResult}");
       }
     }
 
