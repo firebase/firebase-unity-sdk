@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-// For now, using this to hide some functions causing problems with the build.
-#define HIDE_IASYNCENUMERABLE
-
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -45,6 +43,8 @@ public class GenerativeModel {
   private readonly RequestOptions? _requestOptions;
 
   private readonly HttpClient _httpClient;
+  // String prefix to look for when handling streaming a response.
+  private const string StreamPrefix = "data: ";
 
   /// <summary>
   /// Intended for internal use only.
@@ -107,24 +107,36 @@ public class GenerativeModel {
     return GenerateContentAsyncInternal(content);
   }
 
-#if !HIDE_IASYNCENUMERABLE
+  /// <summary>
+  /// Generates new content as a stream from input `ModelContent` given to the model as a prompt.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       params ModelContent[] content) {
     return GenerateContentStreamAsync((IEnumerable<ModelContent>)content);
   }
+  /// <summary>
+  /// Generates new content as a stream from input text given to the model as a prompt.
+  /// </summary>
+  /// <param name="content">The text given to the model as a prompt.</param>
+  /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       string text) {
     return GenerateContentStreamAsync(new ModelContent[] { ModelContent.Text(text) });
   }
+  /// <summary>
+  /// Generates new content as a stream from input `ModelContent` given to the model as a prompt.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       IEnumerable<ModelContent> content) {
     return GenerateContentStreamAsyncInternal(content);
   }
-  public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
-      IEnumerable<ModelContent> content) {
-    return GenerateContentStreamAsyncInternal(content);
-  }
-#endif
 
   public Task<CountTokensResponse> CountTokensAsync(
       params ModelContent[] content) {
@@ -150,15 +162,13 @@ public class GenerativeModel {
 
   private async Task<GenerateContentResponse> GenerateContentAsyncInternal(
       IEnumerable<ModelContent> content) {
-    string bodyJson = ModelContentsToJson(content);
-
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":generateContent");
 
     // Set the request headers
-    request.Headers.Add("x-goog-api-key", _firebaseApp.Options.ApiKey);
-    request.Headers.Add("x-goog-api-client", "genai-csharp/0.1.0");
+    SetRequestHeaders(request);
 
     // Set the content
+    string bodyJson = ModelContentsToJson(content);
     request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
     HttpResponseMessage response = await _httpClient.SendAsync(request);
@@ -169,19 +179,40 @@ public class GenerativeModel {
     response.EnsureSuccessStatusCode();
 
     string result = await response.Content.ReadAsStringAsync();
-
     return GenerateContentResponse.FromJson(result);
   }
 
-#if !HIDE_IASYNCENUMERABLE
   private async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
       IEnumerable<ModelContent> content) {
-    // TODO: Implementation
-    await Task.CompletedTask;
-    yield return new GenerateContentResponse();
-    throw new NotImplementedException();
+    HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":streamGenerateContent?alt=sse");
+
+    // Set the request headers
+    SetRequestHeaders(request);
+
+    // Set the content
+    string bodyJson = ModelContentsToJson(content);
+    request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+    HttpResponseMessage response =
+        await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+    // TODO: Convert any timeout exception into a VertexAI equivalent
+    // TODO: Convert any HttpRequestExceptions, see:
+    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.sendasync?view=net-9.0
+    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage.ensuresuccessstatuscode?view=net-9.0
+    response.EnsureSuccessStatusCode();
+
+    // We are expecting a Stream as the response, so handle that.
+    using var stream = await response.Content.ReadAsStreamAsync();
+    using var reader = new StreamReader(stream);
+
+    string line;
+    while ((line = await reader.ReadLineAsync()) != null) {
+      // Only pass along strings that begin with the expected prefix.
+      if (line.StartsWith(StreamPrefix)) {
+        yield return GenerateContentResponse.FromJson(line[StreamPrefix.Length..]);
+      }
+    }
   }
-#endif
 
   private async Task<CountTokensResponse> CountTokensAsyncInternal(
       IEnumerable<ModelContent> content) {
@@ -195,6 +226,12 @@ public class GenerativeModel {
         "/projects/" + _firebaseApp.Options.ProjectId +
         "/locations/" + _location +
         "/publishers/google/models/" + _modelName;
+  }
+
+  private void SetRequestHeaders(HttpRequestMessage request) {
+    request.Headers.Add("x-goog-api-key", _firebaseApp.Options.ApiKey);
+    // TODO: Get the Version from the Firebase.VersionInfo.SdkVersion (requires exposing it via App)
+    request.Headers.Add("x-goog-api-client", "genai-csharp/0.1.0");
   }
 
   private string ModelContentsToJson(IEnumerable<ModelContent> contents) {
