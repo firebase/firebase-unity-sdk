@@ -142,11 +142,6 @@ public class GenerativeModel {
   }
 #endregion
 
-  private void SetRequestHeaders(HttpRequestMessage request) {
-    request.Headers.Add("x-goog-api-key", _firebaseApp.Options.ApiKey);
-    request.Headers.Add("x-goog-api-client", "genai-csharp/0.1.0");
-  }
-
   private async Task<GenerateContentResponse> GenerateContentAsyncInternal(
       IEnumerable<ModelContent> content) {
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":generateContent");
@@ -213,6 +208,12 @@ public class GenerativeModel {
         "/projects/" + _firebaseApp.Options.ProjectId +
         "/locations/" + _location +
         "/publishers/google/models/" + _modelName;
+  }
+
+  private void SetRequestHeaders(HttpRequestMessage request) {
+    request.Headers.Add("x-goog-api-key", _firebaseApp.Options.ApiKey);
+    // TODO: Get the Version from the Firebase.VersionInfo.SdkVersion (requires exposing it via App)
+    request.Headers.Add("x-goog-api-client", "genai-csharp/0.1.0");
   }
 
   private string ModelContentsToJson(IEnumerable<ModelContent> contents) {
