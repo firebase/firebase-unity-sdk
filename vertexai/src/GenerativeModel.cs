@@ -107,14 +107,32 @@ public class GenerativeModel {
     return GenerateContentAsyncInternal(content);
   }
 
+  /// <summary>
+  /// Generates new content as a stream from input `ModelContent` given to the model as a prompt.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       params ModelContent[] content) {
     return GenerateContentStreamAsync((IEnumerable<ModelContent>)content);
   }
+  /// <summary>
+  /// Generates new content as a stream from input text given to the model as a prompt.
+  /// </summary>
+  /// <param name="content">The text given to the model as a prompt.</param>
+  /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       string text) {
     return GenerateContentStreamAsync(new ModelContent[] { ModelContent.Text(text) });
   }
+  /// <summary>
+  /// Generates new content as a stream from input `ModelContent` given to the model as a prompt.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       IEnumerable<ModelContent> content) {
     return GenerateContentStreamAsyncInternal(content);
