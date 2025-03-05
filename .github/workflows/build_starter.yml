@@ -55,6 +55,8 @@ on:
         default: '1'
         required: true
 
+permissions: write-all
+
 env:
   pythonVersion: '3.8'
 

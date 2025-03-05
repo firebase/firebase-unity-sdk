@@ -5,6 +5,8 @@ on:
   schedule:
     - cron: "0 13 * * *"  # 1pm UTC = 5am PST / 6am PDT, 6 hours after testapps run
 
+permissions: write-all
+
 env:
   GITHUB_TOKEN: ${{ github.token }}
   numDays: 7

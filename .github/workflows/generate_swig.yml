@@ -26,6 +26,8 @@ on:
         required: false
         type: string
 
+permissions: write-all
+
 jobs:
   generate_swig:
     name: generate-swig-unity${{inputs.unity_version}}-CPP${{ inputs.firebase_cpp_sdk_version }}

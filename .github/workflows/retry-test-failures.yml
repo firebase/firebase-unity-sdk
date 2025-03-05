@@ -6,6 +6,9 @@ on:
         description: 'Run ID to check and retry'
         default: ''
         required: true
+
+permissions: write-all
+
 jobs:
   check_results_and_retry_if_needed:
     name: check-results-and-retry-if-needed

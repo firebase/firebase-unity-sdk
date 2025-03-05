@@ -31,6 +31,8 @@ on:
       test_pull_request:
         description: 'Optional: Pull request # to build and test? (With optional commit hash, separated by a colon. Specify the FULL hash.)'
 
+permissions: write-all
+
 env:
   triggerLabelPrefix: "tests-requested: "
   triggerLabelFull: "tests-requested: full"
