@@ -44,6 +44,8 @@ on:
         default: 9.1.0
         required: true
 
+permissions: write-all
+
 jobs:
   update_versions:
     name: update-version

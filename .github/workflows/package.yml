@@ -37,6 +37,7 @@ on:
         required: true
         type: string
 
+permissions: write-all
 
 env:
   # Use SHA256 for hashing files.
