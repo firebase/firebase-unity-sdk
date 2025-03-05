@@ -35,6 +35,8 @@ on:
         required: false
         type: string
 
+permissions: write-all
+
 jobs:
   build_ios:
     name: build-ios-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
