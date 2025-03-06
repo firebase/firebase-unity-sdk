@@ -39,12 +39,16 @@ namespace Firebase.Sample.VertexAI {
         TestModelOptions,
         TestMultipleCandidates,
         TestBasicTextStream,
+        TestFunctionCallingAny,
+        TestFunctionCallingNone,
+        TestEnumSchemaResponse,
         // Internal tests for Json parsing, requires using a source library.
         InternalTestBasicReplyShort,
         InternalTestCitations,
         InternalTestBlockedSafetyWithMessage,
         InternalTestFinishReasonSafetyNoContent,
         InternalTestUnknownEnumSafetyRatings,
+        InternalTestFunctionCallWithArguments,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -83,6 +87,15 @@ namespace Firebase.Sample.VertexAI {
       if (!(Math.Abs(value1 - value2) < 0.0001f)) {
         throw new Exception(
           $"Assertion failed ({testRunner.CurrentTestDescription}): {value1} !~= {value2} ({message})");
+      }
+    }
+
+    private void AssertType<T>(string message, object obj, out T output) {
+      if (obj is T parsed) {
+        output = parsed;
+      } else {
+        throw new Exception(
+          $"Assertion failed ({testRunner.CurrentTestDescription}): {obj.GetType()} is wrong type ({message})");
       }
     }
 
@@ -212,6 +225,7 @@ namespace Firebase.Sample.VertexAI {
       }
     }
 
+    // Test if requesting multiple candidates works.
     async Task TestMultipleCandidates() {
       var genConfig = new GenerationConfig(candidateCount: 2);
 
@@ -226,6 +240,7 @@ namespace Firebase.Sample.VertexAI {
       AssertEq("Incorrect number of Candidates", response.Candidates.Count(), 2);
     }
 
+    // Test if generating a stream of text works.
     async Task TestBasicTextStream() {
       var model = CreateGenerativeModel();
 
@@ -263,6 +278,91 @@ namespace Firebase.Sample.VertexAI {
       }
     }
 
+    private readonly string basicFunctionName = "MyBasicTestFunction";
+    private readonly string basicParameterEnumName = "basicTestEnumParameter";
+    private readonly string basicParameterEnumValue = "MyBasicTestEnum";
+    private readonly string basicParameterIntName = "basicTestIntParameter";
+    private readonly string basicParameterObjectName = "basicTestObjectParameter";
+    private readonly string basicParameterObjectBoolean = "BasicTestObjectBoolean";
+    private readonly string basicParameterObjectFloat = "BasicTestObjectFloat";
+
+    // Create a GenerativeModel using the parameters above to test Function Calling.
+    private GenerativeModel CreateGenerativeModelWithBasicFunctionCall(
+      ToolConfig? toolConfig = null) {
+      var tool = new Tool(new FunctionDeclaration(
+        basicFunctionName, "A function used to test Function Calling.",
+        new Dictionary<string, Schema>() {
+          { basicParameterEnumName, Schema.Enum(new string[] { basicParameterEnumValue }) },
+          { basicParameterIntName, Schema.Int("An integer value") },
+          { basicParameterObjectName, Schema.Object(new Dictionary<string, Schema>() {
+              { basicParameterObjectBoolean, Schema.Boolean("Is the float you are including negative?") },
+              { basicParameterObjectFloat, Schema.Float(nullable: true) }
+            }) }
+        }));
+
+      return VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+        tools: new Tool[] { tool },
+        toolConfig: toolConfig
+      );
+    }
+
+    // Test if FunctionCalling works, using Any to force it.
+    async Task TestFunctionCallingAny() {
+      // Setting this to Any should force my function call.
+      var model = CreateGenerativeModelWithBasicFunctionCall(new ToolConfig(FunctionCallingConfig.Any()));
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+          "Hello, I am testing something, can you respond with a short " +
+          "string containing the word 'Firebase'?");
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var functionCalls = response.FunctionCalls;
+      AssertEq("Wrong number of Function Calls", functionCalls.Count(), 1);
+      var functionCall = functionCalls.First();
+      AssertEq("Wrong FunctionCall name", functionCall.Name, basicFunctionName);
+      AssertEq("Wrong number of Args", functionCall.Args.Count, 3);
+      Assert($"Missing parameter {basicParameterEnumName}", functionCall.Args.ContainsKey(basicParameterEnumName));
+      Assert($"Missing parameter {basicParameterIntName}", functionCall.Args.ContainsKey(basicParameterIntName));
+      Assert($"Missing parameter {basicParameterObjectName}", functionCall.Args.ContainsKey(basicParameterObjectName));
+      AssertEq("Wrong parameter enum value", functionCall.Args[basicParameterEnumName], basicParameterEnumValue);
+      // Ints are returned as longs
+      AssertType("ParameterInt", functionCall.Args[basicParameterIntName], out long _);
+      AssertType("ParameterObject", functionCall.Args[basicParameterObjectName], out Dictionary<string, object> parameterObject);
+      Assert($"Missing object field {basicParameterObjectBoolean}", parameterObject.ContainsKey(basicParameterObjectBoolean));
+      AssertType("ObjectBool", parameterObject[basicParameterObjectBoolean], out bool _);
+      Assert($"Missing object field {basicParameterObjectFloat}", parameterObject.ContainsKey(basicParameterObjectFloat));
+      // Floats are returned as doubles (but also this one could be null, so manually check the type).
+      var objectFloat = parameterObject[basicParameterObjectFloat];
+      Assert($"Object float is the wrong type {objectFloat?.GetType()}", objectFloat == null || objectFloat is double);
+    }
+
+    // Test if setting None will prevent Function Calling.
+    async Task TestFunctionCallingNone() {
+      // Setting this to None should block my function call.
+      var model = CreateGenerativeModelWithBasicFunctionCall(new ToolConfig(FunctionCallingConfig.None()));
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+          "Hello, I am testing something, can you call my function?");
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var functionCalls = response.FunctionCalls;
+      AssertEq("Wrong number of Function Calls", functionCalls.Count(), 0);
+    }
+
+    // Test if setting a response schema with an enum works.
+    async Task TestEnumSchemaResponse() {
+      string enumValue = "MyTestEnum";
+      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+        generationConfig: new GenerationConfig(
+          responseMimeType: "text/x.enum",
+          responseSchema: Schema.Enum(new string[] { enumValue })));
+      
+      var response = await model.GenerateContentAsync(
+        "Hello, I am testing setting the response schema to an enum.");
+
+      AssertEq("Should only be returning the single enum given", response.Text, enumValue);
+    }
+
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
     readonly string testDataUrl =
         "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/refs/heads/main/mock-responses/";
@@ -295,7 +395,7 @@ namespace Firebase.Sample.VertexAI {
       int partsCount = parts.Count();
       AssertEq("Parts count", partsCount, 1);
       var part = parts.First();
-      Assert($"Part is the wrong type {part.GetType()}", part is ModelContent.TextPart);
+      AssertType("TextPart", part, out ModelContent.TextPart _);
       string text = ((ModelContent.TextPart)part).Text;
       AssertEq($"Text part", text, expectedText);
 
@@ -327,14 +427,15 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Helper function to validate UsageMetadata.
-    private void ValidateUsageMetadata(UsageMetadata usageMetadata, int promptTokenCount,
+    private void ValidateUsageMetadata(UsageMetadata? usageMetadata, int promptTokenCount,
         int candidatesTokenCount, int totalTokenCount) {
+      Assert("UsageMetadata", usageMetadata.HasValue);
       AssertEq("Wrong PromptTokenCount",
-          usageMetadata.PromptTokenCount, promptTokenCount);
+          usageMetadata?.PromptTokenCount, promptTokenCount);
       AssertEq("Wrong CandidatesTokenCount",
-          usageMetadata.CandidatesTokenCount, candidatesTokenCount);
+          usageMetadata?.CandidatesTokenCount, candidatesTokenCount);
       AssertEq("Wrong TotalTokenCount",
-          usageMetadata.TotalTokenCount, totalTokenCount);
+          usageMetadata?.TotalTokenCount, totalTokenCount);
     }
 
     // Helper function to validate Citations.
@@ -377,8 +478,7 @@ namespace Firebase.Sample.VertexAI {
 
       AssertEq("CitationMetadata", candidate.CitationMetadata, null);
 
-      Assert("UsageMetadata", response.UsageMetadata.HasValue);
-      ValidateUsageMetadata(response.UsageMetadata.Value, 6, 7, 13);
+      ValidateUsageMetadata(response.UsageMetadata, 6, 7, 13);
     }
 
     // Test that parsing a response including Citations works.
@@ -476,8 +576,7 @@ namespace Firebase.Sample.VertexAI {
         severity: SafetyRating.HarmSeverity.Negligible,
         severityScore: 0.12109375f);
 
-      Assert("UsageMetadata", response.UsageMetadata.HasValue);
-      ValidateUsageMetadata(response.UsageMetadata.Value, 8, 0, 8);
+      ValidateUsageMetadata(response.UsageMetadata, 8, 0, 8);
     }
 
     // Test that parsing a response with unknown safety enums works.
@@ -512,6 +611,25 @@ namespace Firebase.Sample.VertexAI {
           probability: SafetyRating.HarmProbability.Unknown);
       ValidateSafetyRating(safetyRatings[2], HarmCategory.Unknown,
           probability: SafetyRating.HarmProbability.High);
+    }
+
+    // Test that parsing a response with a FunctionCall part works.
+    async Task InternalTestFunctionCallWithArguments() {
+      Dictionary<string, object> json = await GetJsonTestData("unary-success-function-call-with-arguments.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json);
+
+      AssertEq("Candidate count", response.Candidates.Count(), 1);
+      var candidate = response.Candidates.First();
+
+      AssertEq("Role", candidate.Content.Role, "model");
+      AssertEq("Candidate.Parts count", candidate.Content.Parts.Count(), 1);
+      AssertType("FunctionCallPart", candidate.Content.Parts.First(),
+          out ModelContent.FunctionCallPart fcPart);
+      AssertEq("FunctionCall name", fcPart.Name, "sum");
+      AssertEq("FunctionCall args wrong length", fcPart.Args.Count, 2);
+      // The Args are passed along as longs.
+      AssertEq("FunctionCall args[y] wrong value", fcPart.Args["y"], 5L);
+      AssertEq("FunctionCall args[x] wrong value", fcPart.Args["x"], 4L);
     }
   }
 }

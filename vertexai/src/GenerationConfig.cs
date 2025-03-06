@@ -128,7 +128,7 @@ public readonly struct GenerationConfig {
   /// `responseSchema`.</param>
   /// 
   /// <param name="responseSchema">Output schema of the generated candidate text. If set, a compatible
-  /// `responseMIMEType` must also be set.
+  /// `responseMimeType` must also be set.
   ///
   /// Compatible MIME types:
   /// - `application/json`: Schema for JSON response.
@@ -174,8 +174,7 @@ public readonly struct GenerationConfig {
     if (_frequencyPenalty.HasValue) jsonDict["frequencyPenalty"] = _frequencyPenalty.Value;
     if (_stopSequences != null && _stopSequences.Length > 0) jsonDict["stopSequences"] = _stopSequences;
     if (!string.IsNullOrWhiteSpace(_responseMimeType)) jsonDict["responseMimeType"] = _responseMimeType;
-    // TODO: Add the ResponseSchema
-    // if (_responseSchema != null) jsonDict["responseSchema"] = _responseSchema.ToJson();
+    if (_responseSchema != null) jsonDict["responseSchema"] = _responseSchema.ToJson();
 
     return jsonDict;
   }

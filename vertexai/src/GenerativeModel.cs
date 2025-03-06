@@ -171,6 +171,10 @@ public class GenerativeModel {
     string bodyJson = ModelContentsToJson(content);
     request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
+#if FIREBASE_LOG_REST_CALLS
+    UnityEngine.Debug.Log("Request:\n" + bodyJson);
+#endif
+
     HttpResponseMessage response = await _httpClient.SendAsync(request);
     // TODO: Convert any timeout exception into a VertexAI equivalent
     // TODO: Convert any HttpRequestExceptions, see:
@@ -179,6 +183,11 @@ public class GenerativeModel {
     response.EnsureSuccessStatusCode();
 
     string result = await response.Content.ReadAsStringAsync();
+
+#if FIREBASE_LOG_REST_CALLS
+    UnityEngine.Debug.Log("Response:\n" + result);
+#endif
+
     return GenerateContentResponse.FromJson(result);
   }
 
@@ -192,6 +201,10 @@ public class GenerativeModel {
     // Set the content
     string bodyJson = ModelContentsToJson(content);
     request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+#if FIREBASE_LOG_REST_CALLS
+    UnityEngine.Debug.Log("Request:\n" + bodyJson);
+#endif
 
     HttpResponseMessage response =
         await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
@@ -209,6 +222,10 @@ public class GenerativeModel {
     while ((line = await reader.ReadLineAsync()) != null) {
       // Only pass along strings that begin with the expected prefix.
       if (line.StartsWith(StreamPrefix)) {
+#if FIREBASE_LOG_REST_CALLS
+        UnityEngine.Debug.Log("Streaming Response:\n" + line);
+#endif
+
         yield return GenerateContentResponse.FromJson(line[StreamPrefix.Length..]);
       }
     }
@@ -245,7 +262,12 @@ public class GenerativeModel {
     if (_safetySettings != null && _safetySettings.Length > 0) {
       jsonDict["safetySettings"] = _safetySettings.Select(s => s.ToJson()).ToList();
     }
-    // TODO: Tool and ToolConfig (Part of FunctionCalling)
+    if (_tools != null && _tools.Length > 0) {
+      jsonDict["tools"] = _tools.Select(t => t.ToJson()).ToList();
+    }
+    if (_toolConfig.HasValue) {
+      jsonDict["toolConfig"] = _toolConfig?.ToJson();
+    }
     if (_systemInstruction.HasValue) {
       jsonDict["systemInstruction"] = _systemInstruction?.ToJson();
     }
