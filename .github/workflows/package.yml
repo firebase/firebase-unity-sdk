@@ -47,7 +47,7 @@ env:
 jobs:
   package_sdks:
     name: package-${{github.event.inputs.release_label}}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
     steps:
@@ -269,7 +269,7 @@ jobs:
     # Trigger the integration_tests workflow.
     needs: [package_sdks]
     if: (inputs.runIntegrationTests != '0') && !cancelled() && !failure()
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3

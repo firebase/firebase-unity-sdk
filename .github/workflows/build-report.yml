@@ -15,7 +15,7 @@ env:
 
 jobs:
   generate-report:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Setup python
       uses: actions/setup-python@v4
