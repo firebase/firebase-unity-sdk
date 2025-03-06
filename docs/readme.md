@@ -71,6 +71,12 @@ Support
 
 Release Notes
 -------------
+### 12.7.0
+- Changes
+    - General (iOS): Update to Firebase Cocoapods version 11.9.0.
+    - General (Android): Update to Firebase Android BoM version 33.10.0.
+    - Crashlytics: Fix a problem with on-demand fatals blocking audio playback.
+
 ### 12.6.0
 - Changes
     - General: Update to Firebase C++ SDK version 12.6.0.
