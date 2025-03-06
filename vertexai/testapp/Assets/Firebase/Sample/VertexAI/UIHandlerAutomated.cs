@@ -331,9 +331,9 @@ namespace Firebase.Sample.VertexAI {
       Assert($"Missing object field {basicParameterObjectBoolean}", parameterObject.ContainsKey(basicParameterObjectBoolean));
       AssertType("ObjectBool", parameterObject[basicParameterObjectBoolean], out bool _);
       Assert($"Missing object field {basicParameterObjectFloat}", parameterObject.ContainsKey(basicParameterObjectFloat));
-      // Floats are returned as doubles (but also this one could be null, so manually check the type).
+      // The float should be a double, but could be a null, or a long (if the response didn't include a decimal).
       var objectFloat = parameterObject[basicParameterObjectFloat];
-      Assert($"Object float is the wrong type {objectFloat?.GetType()}", objectFloat == null || objectFloat is double);
+      Assert($"Object float is the wrong type {objectFloat?.GetType()}", objectFloat == null || objectFloat is double || objectFloat is long);
     }
 
     // Test if setting None will prevent Function Calling.
