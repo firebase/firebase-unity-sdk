@@ -45,9 +45,14 @@ internal static class VertexAIExtensions {
       if (obj is T tObj) {
         value = tObj;
         return true;
-      } else if (typeof(T) == typeof(int) && obj is long asLong) {
+      } else if (obj is long asLong &&
+          (typeof(T) == typeof(int) ||
+           typeof(T) == typeof(float) ||
+           typeof(T) == typeof(double))) {
         // MiniJson puts all ints as longs, so special case it
-        value = (T)(object)(int)asLong;
+        // Also, if the number didn't have a decimal point, we still want to
+        // allow it to be a float or double.
+        value = (T)Convert.ChangeType(asLong, typeof(T));
         return true;
       } else if (typeof(T) == typeof(float) && obj is double asDouble) {
         // Similarly, floats are stored as doubles.
