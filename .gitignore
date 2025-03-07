@@ -29,7 +29,9 @@ output_unpack*/
 vcpkg
 
 # Visual Studio Code
-.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 
 # Downloaded NDK
 ndk/
@@ -37,3 +39,6 @@ ndk_zip
 
 # Downloaded EDM4U
 unity_jar_resolver/
+
+# Cmake
+CMakeUserPresets.json
