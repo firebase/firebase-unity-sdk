@@ -42,7 +42,7 @@ env:
 
 jobs:
   check_and_prepare:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       trigger: ${{ steps.set_outputs.outputs.trigger }}
       github_ref: ${{ steps.set_outputs.outputs.github_ref }}
@@ -638,7 +638,7 @@ jobs:
   summarize_results:
     name: "summarize-results"
     needs: [check_and_prepare, build_testapp, playmode_test, integration_test]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: ${{ !cancelled() }}
     steps:
       - uses: actions/checkout@v3
@@ -694,7 +694,7 @@ jobs:
   attempt_retry:
     name: "attempt-retry"
     needs: [check_and_prepare, summarize_results]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: ${{ failure() && needs.check_and_prepare.outputs.trigger == 'scheduled_trigger' }}
     steps:
       - uses: actions/checkout@v3

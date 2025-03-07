@@ -52,7 +52,7 @@ jobs:
     outputs:
       new_branch: ${{ steps.decide-output.outputs.new_branch }}
       cpp_release_version: ${{ steps.decide_input.outputs.cpp_release_version }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
     steps:
