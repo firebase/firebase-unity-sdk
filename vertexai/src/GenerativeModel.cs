@@ -151,12 +151,19 @@ public class GenerativeModel {
     return CountTokensAsyncInternal(content);
   }
 
+  /// <summary>
+  /// Creates a new chat conversation using this model with the provided history.
+  /// </summary>
+  /// <param name="history">Initial content history to start with.</param>
   public Chat StartChat(params ModelContent[] history) {
     return StartChat((IEnumerable<ModelContent>)history);
   }
+  /// <summary>
+  /// Creates a new chat conversation using this model with the provided history.
+  /// </summary>
+  /// <param name="history">Initial content history to start with.</param>
   public Chat StartChat(IEnumerable<ModelContent> history) {
-    // TODO: Implementation
-    throw new NotImplementedException();
+    return Chat.InternalCreateChat(this, history);
   }
 #endregion
 
