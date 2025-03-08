@@ -61,6 +61,7 @@ public class Chat {
   /// </summary>
   /// <param name="content">The input(s) given to the model as a prompt.</param>
   /// <returns>The model's response if no error occurred.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> SendMessageAsync(
       params ModelContent[] content) {
     return SendMessageAsync((IEnumerable<ModelContent>)content);
@@ -71,6 +72,7 @@ public class Chat {
   /// </summary>
   /// <param name="text">The text given to the model as a prompt.</param>
   /// <returns>The model's response if no error occurred.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> SendMessageAsync(
       string text) {
     return SendMessageAsync(new ModelContent[] { ModelContent.Text(text) });
@@ -81,6 +83,7 @@ public class Chat {
   /// </summary>
   /// <param name="content">The input(s) given to the model as a prompt.</param>
   /// <returns>The model's response if no error occurred.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> SendMessageAsync(
       IEnumerable<ModelContent> content) {
     return SendMessageAsyncInternal(content);
@@ -92,6 +95,7 @@ public class Chat {
   /// </summary>
   /// <param name="content">The input(s) given to the model as a prompt.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
       params ModelContent[] content) {
     return SendMessageStreamAsync((IEnumerable<ModelContent>)content);
@@ -102,6 +106,7 @@ public class Chat {
   /// </summary>
   /// <param name="text">The text given to the model as a prompt.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
       string text) {
     return SendMessageStreamAsync(new ModelContent[] { ModelContent.Text(text) });
@@ -112,6 +117,7 @@ public class Chat {
   /// </summary>
   /// <param name="content">The input(s) given to the model as a prompt.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
       IEnumerable<ModelContent> content) {
     return SendMessageStreamAsyncInternal(content);
@@ -141,6 +147,8 @@ public class Chat {
     List<ModelContent> fullRequest = new(chatHistory);
     fullRequest.AddRange(fixedRequests);
 
+    // Note: GenerateContentAsync can throw exceptions if there was a problem, but
+    // we allow it to just be passed back to the user.
     GenerateContentResponse response = await generativeModel.GenerateContentAsync(fullRequest);
 
     // Only after getting a valid response, add both to the history for later.
@@ -165,6 +173,8 @@ public class Chat {
 
     List<ModelContent> responseContents = new();
     bool saveHistory = true;
+    // Note: GenerateContentStreamAsync can throw exceptions if there was a problem, but
+    // we allow it to just be passed back to the user.
     await foreach (GenerateContentResponse response in
         generativeModel.GenerateContentStreamAsync(fullRequest)) {
       // If the response had a problem, we still want to pass it along to the user for context,
