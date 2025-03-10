@@ -42,6 +42,10 @@ namespace Firebase.Sample.VertexAI {
         TestFunctionCallingAny,
         TestFunctionCallingNone,
         TestEnumSchemaResponse,
+        TestChatBasicTextNoHistory,
+        TestChatBasicTextPriorHistory,
+        TestChatFunctionCalling,
+        TestChatBasicTextStream,
         // Internal tests for Json parsing, requires using a source library.
         InternalTestBasicReplyShort,
         InternalTestCitations,
@@ -261,7 +265,7 @@ namespace Firebase.Sample.VertexAI {
           DebugLog($"WARNING: Response stream text was empty once.");
         }
 
-        Assert("Previous FinishReason was stop, but recieved more", !finishReasonStop);
+        Assert("Previous FinishReason was stop, but received more", !finishReasonStop);
         if (response.Candidates.First().FinishReason == FinishReason.Stop) {
           finishReasonStop = true;
         }
@@ -361,6 +365,155 @@ namespace Firebase.Sample.VertexAI {
         "Hello, I am testing setting the response schema to an enum.");
 
       AssertEq("Should only be returning the single enum given", response.Text, enumValue);
+    }
+
+    // Test if when using Chat the model will get the previous messages.
+    async Task TestChatBasicTextNoHistory() {
+      var model = CreateGenerativeModel();
+      var chat = model.StartChat();
+
+      string keyword = "Firebase";
+      GenerateContentResponse response1 = await chat.SendMessageAsync(
+          $"Hello, I am testing chat history, can you include the word '{keyword}' " +
+          "in all future responses?");
+
+      Assert("First response was empty.", !string.IsNullOrWhiteSpace(response1.Text));
+      if (!response1.Text.Contains(keyword)) {
+        DebugLog($"WARNING: First response string was missing the expected keyword '{keyword}': " +
+            $"\n{response1.Text}");
+      }
+
+      GenerateContentResponse response2 = await chat.SendMessageAsync(
+          "Thanks. Can you response with another short sentence? Be sure to " +
+          "include the special word I told you before in it.");
+
+      Assert("Second response was empty.", !string.IsNullOrWhiteSpace(response2.Text));
+      if (!response2.Text.Contains(keyword)) {
+        DebugLog($"WARNING: Second response string was missing the expected keyword '{keyword}': " +
+            $"\n{response2.Text}");
+      }
+
+      AssertEq("Chat history length is wrong", chat.History.Count(), 4);
+    }
+
+    // Test if when using Chat the model gets the initial starting history.
+    async Task TestChatBasicTextPriorHistory() {
+      var model = CreateGenerativeModel();
+      string keyword = "Firebase";
+      var chat = model.StartChat(
+          ModelContent.Text($"Hello, please include '{keyword}' in all your reponses."),
+          new ModelContent("model",
+              new ModelContent.TextPart($"Golly gee whiz, I love {keyword}.")));
+
+      GenerateContentResponse response = await chat.SendMessageAsync(
+          "Hello, I am testing chat history, can you write a short sentence " +
+          "with that special word?");
+
+      Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
+      if (!response.Text.Contains(keyword)) {
+        DebugLog($"WARNING: Response string was missing the expected keyword '{keyword}': " +
+            $"\n{response.Text}");
+      }
+
+      AssertEq("Chat history length is wrong", chat.History.Count(), 4);
+    }
+
+    // Test if when using Chat, the model handles Function Calling, and getting a response.
+    async Task TestChatFunctionCalling() {
+      var tool = new Tool(new FunctionDeclaration(
+        "GetKeyword", "Call to retrieve a special keyword.",
+        new Dictionary<string, Schema>() {
+          { "input", Schema.String("Input string") },
+        }));
+      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+        tools: new Tool[] { tool }
+      );
+      var chat = model.StartChat();
+
+      string keyword = "Firebase";
+      string expectedInput = "Banana";
+      GenerateContentResponse response1 = await chat.SendMessageAsync(
+          "Hello, I am testing function calling with Chat. Can you return a short " +
+          $"sentence with the special keyword? Pass in '{expectedInput}' as the input.");
+
+      // Validate the Function Call happened.
+      Assert("First response missing candidates.", response1.Candidates.Any());
+      var functionCalls = response1.FunctionCalls;
+      AssertEq("Wrong number of Function Calls", functionCalls.Count(), 1);
+      var functionCall = functionCalls.First();
+      AssertEq("Wrong FunctionCall name", functionCall.Name, "GetKeyword");
+      AssertEq("Wrong number of Args", functionCall.Args.Count, 1);
+      Assert($"Missing parameter", functionCall.Args.ContainsKey("input"));
+      AssertType("Input parameter", functionCall.Args["input"], out string inputParameter);
+      if (inputParameter != expectedInput) {
+        DebugLog($"WARNING: Input parameter: {inputParameter} != {expectedInput}");
+      }
+
+      // Respond with the requested FunctionCall with the keyword.
+      var response2 = await chat.SendMessageAsync(ModelContent.FunctionResponse("GetKeyword",
+          new Dictionary<string, object>() {
+            { "result" , keyword }
+      }));
+
+      // Second response should hopefully have the keyword as part of it.
+      Assert("Second response was empty.", !string.IsNullOrWhiteSpace(response2.Text));
+      if (!response2.Text.Contains(keyword)) {
+        DebugLog($"WARNING: Response string was missing the expected keyword '{keyword}': " +
+            $"\n{response2.Text}");
+      }
+
+      AssertEq("Chat history length is wrong", chat.History.Count(), 4);
+    }
+
+    // Test if Chat works with streaming a text result.
+    async Task TestChatBasicTextStream() {
+      var model = CreateGenerativeModel();
+
+      string keyword = "Firebase";
+      var chat = model.StartChat(
+          ModelContent.Text($"Hello, please include '{keyword}' in all your reponses."),
+          new ModelContent("model",
+              new ModelContent.TextPart($"Golly gee whiz, I love {keyword}.")));
+
+      var responseStream = chat.SendMessageStreamAsync(
+          "Hello, I am testing streaming. Can you respond with a short sentence, " +
+          "and be sure to include the word I gave you before.");
+
+      // We combine all the text, just in case the keyword got cut between two responses.
+      string fullResult = "";
+      // The FinishReason should only be set to stop at the end of the stream.
+      bool finishReasonStop = false;
+      int responseCount = 0;
+      await foreach (GenerateContentResponse response in responseStream) {
+        // Should only be receiving non-empty text responses, but only assert for null.
+        string text = response.Text;
+        Assert("Received null text from the stream.", text != null);
+        if (string.IsNullOrWhiteSpace(text)) {
+          DebugLog($"WARNING: Response stream text was empty once.");
+        }
+
+        Assert("Previous FinishReason was stop, but received more", !finishReasonStop);
+        if (response.Candidates.First().FinishReason == FinishReason.Stop) {
+          finishReasonStop = true;
+        }
+
+        fullResult += text;
+        responseCount++;
+      }
+
+      Assert("Finished without seeing FinishReason.Stop", finishReasonStop);
+
+      // We don't want to fail if the keyword is missing because AI is unpredictable.
+      if (!fullResult.Contains(keyword)) {
+        DebugLog($"WARNING: Streaming response was missing the expected keyword '{keyword}': " +
+            $"\n{fullResult}");
+      }
+
+      // The chat history should be:
+      //    The 2 original messages that were given as history.
+      //    The 1 from the request.
+      //    However many streaming responses were given back (stored in responseCount).
+      AssertEq("Chat history length is wrong", chat.History.Count(), 3 + responseCount);
     }
 
     // The url prefix to use when fetching test data to use from the separate GitHub repo.

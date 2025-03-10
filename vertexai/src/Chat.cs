@@ -16,61 +16,185 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Firebase.VertexAI {
 
+/// <summary>
+/// An object that represents a back-and-forth chat with a model, capturing the history and saving
+/// the context in memory between each message sent.
+/// </summary>
 public class Chat {
+  private readonly GenerativeModel generativeModel;
+  private readonly List<ModelContent> chatHistory;
 
-  public IEnumerable<ModelContent> History { get; }
-
-  // Note: The generation functions are the same as the ones in GenerativeModel
-
-  public Task<GenerateContentResponse> GenerateContentAsync(
-      params ModelContent[] content) {
-    throw new NotImplementedException();
-  }
-  public Task<GenerateContentResponse> GenerateContentAsync(
-      string text) {
-    throw new NotImplementedException();
-  }
-  public Task<GenerateContentResponse> GenerateContentAsync(
-      IEnumerable<ModelContent> content) {
-    throw new NotImplementedException();
-  }
-
-// The build logic isn't able to resolve IAsyncEnumerable for some reason, even
-// though it is usable in Unity 2021.3.  Will need to investigate further.
-/*
-  public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
-      params ModelContent[] content) {
-    throw new NotImplementedException();
-  }
-  public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
-      string text) {
-    throw new NotImplementedException();
-  }
-  public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
-      IEnumerable<ModelContent> content) {
-    throw new NotImplementedException();
-  }
-*/
-
-  public Task<CountTokensResponse> CountTokensAsync(
-      params ModelContent[] content) {
-    throw new NotImplementedException();
-  }
-  public Task<CountTokensResponse> CountTokensAsync(
-      string text) {
-    throw new NotImplementedException();
-  }
-  public Task<CountTokensResponse> CountTokensAsync(
-      IEnumerable<ModelContent> content) {
-    throw new NotImplementedException();
-  }
+  /// <summary>
+  /// The previous content from the chat that has been successfully sent and received from the
+  /// model. This will be provided to the model for each message sent as context for the discussion.
+  /// </summary>
+  public IEnumerable<ModelContent> History => new ReadOnlyCollection<ModelContent>(chatHistory);
 
   // Note: No public constructor, get one through GenerativeModel.StartChat
+  private Chat(GenerativeModel model, IEnumerable<ModelContent> initialHistory) {
+    generativeModel = model;
 
+    if (initialHistory != null) {
+      chatHistory = new List<ModelContent>(initialHistory);
+    } else {
+      chatHistory = new List<ModelContent>();
+    }
+  }
+
+  /// <summary>
+  /// Intended for internal use only.
+  /// Use `GenerativeModel.StartChat` instead to ensure proper initialization and configuration of the `Chat`.
+  /// </summary>
+  internal static Chat InternalCreateChat(GenerativeModel model, IEnumerable<ModelContent> initialHistory) {
+    return new Chat(model, initialHistory);
+  }
+
+  /// <summary>
+  /// Sends a message using the existing history of this chat as context. If successful, the message
+  /// and response will be added to the history. If unsuccessful, history will remain unchanged.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>The model's response if no error occurred.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
+  public Task<GenerateContentResponse> SendMessageAsync(
+      params ModelContent[] content) {
+    return SendMessageAsync((IEnumerable<ModelContent>)content);
+  }
+  /// <summary>
+  /// Sends a message using the existing history of this chat as context. If successful, the message
+  /// and response will be added to the history. If unsuccessful, history will remain unchanged.
+  /// </summary>
+  /// <param name="text">The text given to the model as a prompt.</param>
+  /// <returns>The model's response if no error occurred.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
+  public Task<GenerateContentResponse> SendMessageAsync(
+      string text) {
+    return SendMessageAsync(new ModelContent[] { ModelContent.Text(text) });
+  }
+  /// <summary>
+  /// Sends a message using the existing history of this chat as context. If successful, the message
+  /// and response will be added to the history. If unsuccessful, history will remain unchanged.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>The model's response if no error occurred.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
+  public Task<GenerateContentResponse> SendMessageAsync(
+      IEnumerable<ModelContent> content) {
+    return SendMessageAsyncInternal(content);
+  }
+
+  /// <summary>
+  /// Sends a message using the existing history of this chat as context. If successful, the message
+  /// and response will be added to the history. If unsuccessful, history will remain unchanged.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
+  public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
+      params ModelContent[] content) {
+    return SendMessageStreamAsync((IEnumerable<ModelContent>)content);
+  }
+  /// <summary>
+  /// Sends a message using the existing history of this chat as context. If successful, the message
+  /// and response will be added to the history. If unsuccessful, history will remain unchanged.
+  /// </summary>
+  /// <param name="text">The text given to the model as a prompt.</param>
+  /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
+  public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
+      string text) {
+    return SendMessageStreamAsync(new ModelContent[] { ModelContent.Text(text) });
+  }
+  /// <summary>
+  /// Sends a message using the existing history of this chat as context. If successful, the message
+  /// and response will be added to the history. If unsuccessful, history will remain unchanged.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>A stream of generated content responses from the model.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
+  public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
+      IEnumerable<ModelContent> content) {
+    return SendMessageStreamAsyncInternal(content);
+  }
+
+  private ModelContent GuaranteeRole(ModelContent content, string role) {
+    if (content.Role == role) {
+      return content;
+    } else {
+      return new ModelContent(role, content.Parts);
+    }
+  }
+
+  private ModelContent GuaranteeUser(ModelContent content) {
+    return GuaranteeRole(content, "user");
+  }
+
+  private ModelContent GuaranteeModel(ModelContent content) {
+    return GuaranteeRole(content, "model");
+  }
+
+  private async Task<GenerateContentResponse> SendMessageAsyncInternal(
+      IEnumerable<ModelContent> requestContent) {
+    // Make sure that the requests are set to to role "user".
+    List<ModelContent> fixedRequests = requestContent.Select(GuaranteeUser).ToList();
+    // Set up the context to send in the request
+    List<ModelContent> fullRequest = new(chatHistory);
+    fullRequest.AddRange(fixedRequests);
+
+    // Note: GenerateContentAsync can throw exceptions if there was a problem, but
+    // we allow it to just be passed back to the user.
+    GenerateContentResponse response = await generativeModel.GenerateContentAsync(fullRequest);
+
+    // Only after getting a valid response, add both to the history for later.
+    // But either way pass the response along to the user.
+    if (response.Candidates.Any()) {
+      ModelContent responseContent = response.Candidates.First().Content;
+
+      chatHistory.AddRange(fixedRequests);
+      chatHistory.Add(GuaranteeModel(responseContent));
+    }
+
+    return response;
+  }
+
+  private async IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsyncInternal(
+      IEnumerable<ModelContent> requestContent) {
+    // Make sure that the requests are set to to role "user".
+    List<ModelContent> fixedRequests = requestContent.Select(GuaranteeUser).ToList();
+    // Set up the context to send in the request
+    List<ModelContent> fullRequest = new(chatHistory);
+    fullRequest.AddRange(fixedRequests);
+
+    List<ModelContent> responseContents = new();
+    bool saveHistory = true;
+    // Note: GenerateContentStreamAsync can throw exceptions if there was a problem, but
+    // we allow it to just be passed back to the user.
+    await foreach (GenerateContentResponse response in
+        generativeModel.GenerateContentStreamAsync(fullRequest)) {
+      // If the response had a problem, we still want to pass it along to the user for context,
+      // but we don't want to save the history anymore.
+      if (response.Candidates.Any()) {
+        ModelContent responseContent = response.Candidates.First().Content;
+        responseContents.Add(GuaranteeModel(responseContent));
+      } else {
+        saveHistory = false;
+      }
+
+      yield return response;
+    }
+
+    // After getting all the responses, and they were all valid, add everything to the history
+    if (saveHistory) {
+      chatHistory.AddRange(fixedRequests);
+      chatHistory.AddRange(responseContents);
+    }
+  }
 }
 
 }
