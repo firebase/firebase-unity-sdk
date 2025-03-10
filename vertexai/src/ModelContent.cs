@@ -55,17 +55,14 @@ public readonly struct ModelContent {
   /// <summary>
   /// Creates a `ModelContent` with the given role and `Part`s.
   /// </summary>
-  public ModelContent(string role, params Part[] parts) {
-    _role = role;
-    _parts = new ReadOnlyCollection<Part>(parts.ToList());
-  }
+  public ModelContent(string role, params Part[] parts) : this(role, (IEnumerable<Part>)parts) { }
 
   /// <summary>
   /// Creates a `ModelContent` with the given role and `Part`s.
   /// </summary>
   public ModelContent(string role, IEnumerable<Part> parts) {
     _role = role;
-    _parts = new ReadOnlyCollection<Part>(parts.ToList());
+    _parts = new ReadOnlyCollection<Part>(parts == null ? new List<Part>() : parts.ToList());
   }
 
 #region Helper Factories

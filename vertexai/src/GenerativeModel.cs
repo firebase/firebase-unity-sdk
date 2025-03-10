@@ -22,6 +22,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Google.MiniJSON;
+using Firebase.VertexAI.Internal;
 
 namespace Firebase.VertexAI {
 
@@ -66,7 +67,8 @@ public class GenerativeModel {
     _safetySettings = safetySettings;
     _tools = tools;
     _toolConfig = toolConfig;
-    _systemInstruction = systemInstruction;
+    // Make sure that the system instructions have the role "system".
+    _systemInstruction = systemInstruction?.ConvertToSystem();
     _requestOptions = requestOptions;
 
     // Create a HttpClient using the timeout requested, or the default one.
