@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Firebase.VertexAI.Internal;
 
 namespace Firebase.VertexAI {
 
@@ -123,26 +124,10 @@ public class Chat {
     return SendMessageStreamAsyncInternal(content);
   }
 
-  private ModelContent GuaranteeRole(ModelContent content, string role) {
-    if (content.Role == role) {
-      return content;
-    } else {
-      return new ModelContent(role, content.Parts);
-    }
-  }
-
-  private ModelContent GuaranteeUser(ModelContent content) {
-    return GuaranteeRole(content, "user");
-  }
-
-  private ModelContent GuaranteeModel(ModelContent content) {
-    return GuaranteeRole(content, "model");
-  }
-
   private async Task<GenerateContentResponse> SendMessageAsyncInternal(
       IEnumerable<ModelContent> requestContent) {
     // Make sure that the requests are set to to role "user".
-    List<ModelContent> fixedRequests = requestContent.Select(GuaranteeUser).ToList();
+    List<ModelContent> fixedRequests = requestContent.Select(VertexAIExtensions.ConvertToUser).ToList();
     // Set up the context to send in the request
     List<ModelContent> fullRequest = new(chatHistory);
     fullRequest.AddRange(fixedRequests);
@@ -157,7 +142,7 @@ public class Chat {
       ModelContent responseContent = response.Candidates.First().Content;
 
       chatHistory.AddRange(fixedRequests);
-      chatHistory.Add(GuaranteeModel(responseContent));
+      chatHistory.Add(responseContent.ConvertToModel());
     }
 
     return response;
@@ -166,7 +151,7 @@ public class Chat {
   private async IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsyncInternal(
       IEnumerable<ModelContent> requestContent) {
     // Make sure that the requests are set to to role "user".
-    List<ModelContent> fixedRequests = requestContent.Select(GuaranteeUser).ToList();
+    List<ModelContent> fixedRequests = requestContent.Select(VertexAIExtensions.ConvertToUser).ToList();
     // Set up the context to send in the request
     List<ModelContent> fullRequest = new(chatHistory);
     fullRequest.AddRange(fixedRequests);
@@ -181,7 +166,7 @@ public class Chat {
       // but we don't want to save the history anymore.
       if (response.Candidates.Any()) {
         ModelContent responseContent = response.Candidates.First().Content;
-        responseContents.Add(GuaranteeModel(responseContent));
+        responseContents.Add(responseContent.ConvertToModel());
       } else {
         saveHistory = false;
       }

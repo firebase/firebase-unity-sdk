@@ -193,6 +193,26 @@ internal static class VertexAIExtensions {
         .Select(converter)
         .ToList();
   }
+
+  public static ModelContent ConvertRole(this ModelContent content, string role) {
+    if (content.Role == role) {
+      return content;
+    } else {
+      return new ModelContent(role, content.Parts);
+    }
+  }
+
+  public static ModelContent ConvertToUser(this ModelContent content) {
+    return content.ConvertRole("user");
+  }
+
+  public static ModelContent ConvertToModel(this ModelContent content) {
+    return content.ConvertRole("model");
+  }
+
+  public static ModelContent ConvertToSystem(this ModelContent content) {
+    return content.ConvertRole("system");
+  }
 }
   
 }
