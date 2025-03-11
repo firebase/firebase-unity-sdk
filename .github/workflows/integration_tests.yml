@@ -542,6 +542,7 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
           testapp_dir: testapps
           test_type: "game-loop"
+          timeout: 1200
           test_devices: ${{ matrix.device_detail }}
           test_device_selection: random
           max_attempts: 3
