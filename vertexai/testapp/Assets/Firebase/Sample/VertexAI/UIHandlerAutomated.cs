@@ -46,6 +46,7 @@ namespace Firebase.Sample.VertexAI {
         TestChatBasicTextPriorHistory,
         TestChatFunctionCalling,
         TestChatBasicTextStream,
+        TestCountTokens,
         // Internal tests for Json parsing, requires using a source library.
         InternalTestBasicReplyShort,
         InternalTestCitations,
@@ -53,6 +54,8 @@ namespace Firebase.Sample.VertexAI {
         InternalTestFinishReasonSafetyNoContent,
         InternalTestUnknownEnumSafetyRatings,
         InternalTestFunctionCallWithArguments,
+        InternalTestCountTokenResponse,
+        InternalTestBasicResponseLongUsageMetadata,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -516,6 +519,26 @@ namespace Firebase.Sample.VertexAI {
       AssertEq("Chat history length is wrong", chat.History.Count(), 3 + responseCount);
     }
 
+    // Test if calling CountTokensAsync works as expected.
+    async Task TestCountTokens() {
+      // Include some additional settings, since they are used in the call.
+      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+        generationConfig: new GenerationConfig(temperature: 0.8f),
+        systemInstruction: ModelContent.Text("This is a test SystemInstruction")
+      );
+
+      CountTokensResponse response = await model.CountTokensAsync("Hello, I am testing CountTokens!");
+
+      Assert($"CountTokens TotalTokens {response.TotalTokens}", response.TotalTokens > 0);
+      Assert($"CountTokens TotalBillableCharacters {response.TotalBillableCharacters}",
+             response.TotalBillableCharacters > 0);
+
+      AssertEq("CountTokens PromptTokenDetails", response.PromptTokensDetails.Count(), 1);
+      var details = response.PromptTokensDetails.First();
+      AssertEq("CountToken Detail Modality", details.Modality, ContentModality.Text);
+      Assert($"CountToken Detail TokenCount {details.TokenCount}", details.TokenCount > 0);
+    }
+
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
     readonly string testDataUrl =
         "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/refs/heads/main/mock-responses/";
@@ -783,6 +806,45 @@ namespace Firebase.Sample.VertexAI {
       // The Args are passed along as longs.
       AssertEq("FunctionCall args[y] wrong value", fcPart.Args["y"], 5L);
       AssertEq("FunctionCall args[x] wrong value", fcPart.Args["x"], 4L);
+    }
+
+    // Test that parsing a count token response works.
+    async Task InternalTestCountTokenResponse() {
+      Dictionary<string, object> json = await GetJsonTestData("unary-success-detailed-token-response.json");
+      CountTokensResponse response = CountTokensResponse.FromJson(json);
+
+      AssertEq("TotalTokens", response.TotalTokens, 1837);
+      AssertEq("TotalBillableCharacters", response.TotalBillableCharacters, 117);
+      List<ModalityTokenCount> details = response.PromptTokensDetails.ToList();
+      AssertEq("PromptTokensDetails.Count", details.Count, 2);
+      AssertEq("PromptTokensDetails[0].Modality", details[0].Modality, ContentModality.Image);
+      AssertEq("PromptTokensDetails[0].TokenCount", details[0].TokenCount, 1806);
+      AssertEq("PromptTokensDetails[1].Modality", details[1].Modality, ContentModality.Text);
+      AssertEq("PromptTokensDetails[1].TokenCount", details[1].TokenCount, 31);
+    }
+
+    // Test that the UsageMetadata is getting parsed correctly.
+    async Task InternalTestBasicResponseLongUsageMetadata() {
+      Dictionary<string, object> json = await GetJsonTestData("unary-success-basic-response-long-usage-metadata.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json);
+
+      AssertEq("Response Text", response.Text, "Here is a description of the image:\\n\\n");
+
+      AssertEq("PromptTokenCount", response.UsageMetadata?.PromptTokenCount, 1837);
+      AssertEq("CandidatesTokenCount", response.UsageMetadata?.CandidatesTokenCount, 76);
+      AssertEq("TotalTokenCount", response.UsageMetadata?.TotalTokenCount, 1913);
+
+      var promptDetails = response.UsageMetadata?.PromptTokensDetails.ToList();
+      AssertEq("PromptTokensDetails.Count", promptDetails.Count, 2);
+      AssertEq("PromptTokensDetails[0].Modality", promptDetails[0].Modality, ContentModality.Image);
+      AssertEq("PromptTokensDetails[0].TokenCount", promptDetails[0].TokenCount, 1806);
+      AssertEq("PromptTokensDetails[1].Modality", promptDetails[1].Modality, ContentModality.Text);
+      AssertEq("PromptTokensDetails[1].TokenCount", promptDetails[1].TokenCount, 76);
+
+      var candidatesDetails = response.UsageMetadata?.CandidatesTokensDetails.ToList();
+      AssertEq("CandidatesTokensDetails.Count", candidatesDetails.Count, 1);
+      AssertEq("CandidatesTokensDetails[0].Modality", candidatesDetails[0].Modality, ContentModality.Text);
+      AssertEq("CandidatesTokensDetails[0].TokenCount", candidatesDetails[0].TokenCount, 76);
     }
   }
 }

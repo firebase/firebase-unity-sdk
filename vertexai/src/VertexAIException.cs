@@ -19,7 +19,7 @@ using System.Linq;
 
 namespace Firebase.VertexAI {
 
-public abstract class VertexAIException : Exception {
+public class VertexAIException : Exception {
   internal VertexAIException(string message) : base(message) { }
 
   internal VertexAIException(string message, Exception exception) : base(message, exception) { }
@@ -62,6 +62,8 @@ public class VertexAIResponseStoppedException : VertexAIException {
 
 public class VertexAIRequestTimeoutException : VertexAIException {
   internal VertexAIRequestTimeoutException(string message) : base(message) { }
+
+  internal VertexAIRequestTimeoutException(string message, Exception e) : base(message, e) { }
 }
 
 public class VertexAIInvalidLocationException : VertexAIException {
