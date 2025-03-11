@@ -202,12 +202,16 @@ public class GenerativeModel {
     UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-    HttpResponseMessage response = await _httpClient.SendAsync(request);
-    // TODO: Convert any timeout exception into a VertexAI equivalent
-    // TODO: Convert any HttpRequestExceptions, see:
-    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.sendasync?view=net-9.0
-    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage.ensuresuccessstatuscode?view=net-9.0
-    response.EnsureSuccessStatusCode();
+    HttpResponseMessage response;
+    try {
+      response = await _httpClient.SendAsync(request);
+      response.EnsureSuccessStatusCode();
+    } catch (TaskCanceledException e) when (e.InnerException is TimeoutException) {
+      throw new VertexAIRequestTimeoutException("Request timed out.", e);
+    } catch (HttpRequestException e) {
+      // TODO: Convert to a more precise exception when possible.
+      throw new VertexAIException("HTTP request failed.", e);
+    }
 
     string result = await response.Content.ReadAsStringAsync();
 
@@ -233,13 +237,16 @@ public class GenerativeModel {
     UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-    HttpResponseMessage response =
-        await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-    // TODO: Convert any timeout exception into a VertexAI equivalent
-    // TODO: Convert any HttpRequestExceptions, see:
-    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.sendasync?view=net-9.0
-    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage.ensuresuccessstatuscode?view=net-9.0
-    response.EnsureSuccessStatusCode();
+    HttpResponseMessage response;
+    try {
+      response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+      response.EnsureSuccessStatusCode();
+    } catch (TaskCanceledException e) when (e.InnerException is TimeoutException) {
+      throw new VertexAIRequestTimeoutException("Request timed out.", e);
+    } catch (HttpRequestException e) {
+      // TODO: Convert to a more precise exception when possible.
+      throw new VertexAIException("HTTP request failed.", e);
+    }
 
     // We are expecting a Stream as the response, so handle that.
     using var stream = await response.Content.ReadAsStreamAsync();
@@ -273,12 +280,16 @@ public class GenerativeModel {
     UnityEngine.Debug.Log("CountTokensRequest:\n" + bodyJson);
 #endif
 
-    HttpResponseMessage response = await _httpClient.SendAsync(request);
-    // TODO: Convert any timeout exception into a VertexAI equivalent
-    // TODO: Convert any HttpRequestExceptions, see:
-    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.sendasync?view=net-9.0
-    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage.ensuresuccessstatuscode?view=net-9.0
-    response.EnsureSuccessStatusCode();
+    HttpResponseMessage response;
+    try {
+      response = await _httpClient.SendAsync(request);
+      response.EnsureSuccessStatusCode();
+    } catch (TaskCanceledException e) when (e.InnerException is TimeoutException) {
+      throw new VertexAIRequestTimeoutException("Request timed out.", e);
+    } catch (HttpRequestException e) {
+      // TODO: Convert to a more precise exception when possible.
+      throw new VertexAIException("HTTP request failed.", e);
+    }
 
     string result = await response.Content.ReadAsStringAsync();
 
