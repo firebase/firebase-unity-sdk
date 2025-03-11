@@ -32,7 +32,7 @@ namespace Firebase.Sample.VertexAI {
     private Firebase.Sample.AutomatedTestRunner testRunner;
 
     // Texture used for tests involving images.
-    public Texture2D redBlueTexture;
+    public Texture2D RedBlueTexture;
 
     protected override void Start() {
       // Set the list of tests to run, note this is done at Start since they are
@@ -199,11 +199,14 @@ namespace Firebase.Sample.VertexAI {
     async Task TestBasicImage() {
       var model = CreateGenerativeModel();
 
-      Assert("Missing RedBlueTexture", redBlueTexture != null);
+      Assert("Missing RedBlueTexture", RedBlueTexture != null);
+
+      byte[] imageData = ImageConversion.EncodeToPNG(RedBlueTexture);
+      Assert("Image encoding failed", imageData != null && imageData.Length > 0);
 
       GenerateContentResponse response = await model.GenerateContentAsync(
         ModelContent.Text("I am testing Image input. What two colors do you see in the included image?"),
-        ModelContent.InlineData("image/png", ImageConversion.EncodeToPNG(redBlueTexture))
+        ModelContent.InlineData("image/png", imageData)
       );
 
       Assert("Response missing candidates.", response.Candidates.Any());

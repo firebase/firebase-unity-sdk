@@ -118,7 +118,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fb_GUISkin: {fileID: 11400000, guid: 14ab14e9b97f743dca62b51e1e369f07, type: 2}
-  redBlueTexture: {fileID: 2800000, guid: 28d479060e9914b989fcf443e4051c19, type: 3}
+  RedBlueTexture: {fileID: 2800000, guid: 28d479060e9914b989fcf443e4051c19, type: 3}
 --- !u!4 &393832516
 Transform:
   m_ObjectHideFlags: 0
