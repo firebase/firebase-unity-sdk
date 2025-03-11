@@ -22,6 +22,7 @@ namespace Firebase.Sample.VertexAI {
   using System.Net.Http;
   using System.Threading.Tasks;
   using Google.MiniJSON;
+  using UnityEngine;
 
   // An automated version of the UIHandler that runs tests on Vertex AI in Firebase.
   public class UIHandlerAutomated : UIHandler {
@@ -30,12 +31,16 @@ namespace Firebase.Sample.VertexAI {
 
     private Firebase.Sample.AutomatedTestRunner testRunner;
 
+    // Texture used for tests involving images.
+    public Texture2D RedBlueTexture;
+
     protected override void Start() {
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       Func<Task>[] tests = {
         TestCreateModel,
         TestBasicText,
+        TestBasicImage,
         TestModelOptions,
         TestMultipleCandidates,
         TestBasicTextStream,
@@ -187,6 +192,33 @@ namespace Firebase.Sample.VertexAI {
       // For such a basic text, we don't expect citation data, so warn.
       if (candidate.CitationMetadata.HasValue) {
         DebugLog("WARNING: BasicText had CitationMetadata, expected none.");
+      }
+    }
+
+    // Test if passing an Image and Text works.
+    async Task TestBasicImage() {
+      var model = CreateGenerativeModel();
+
+      Assert("Missing RedBlueTexture", RedBlueTexture != null);
+
+      byte[] imageData = ImageConversion.EncodeToPNG(RedBlueTexture);
+      Assert("Image encoding failed", imageData != null && imageData.Length > 0);
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+        ModelContent.Text("I am testing Image input. What two colors do you see in the included image?"),
+        ModelContent.InlineData("image/png", imageData)
+      );
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+
+      string result = response.Text;
+
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+      // We don't want to fail if the colors are missing/wrong because AI is unpredictable.
+      if (!response.Text.Contains("red", StringComparison.OrdinalIgnoreCase) ||
+          !response.Text.Contains("blue", StringComparison.OrdinalIgnoreCase)) {
+        DebugLog("WARNING: Response string was missing the correct colors: " +
+            $"\n{result}");
       }
     }
 
