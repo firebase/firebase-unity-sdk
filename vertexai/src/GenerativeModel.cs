@@ -91,7 +91,7 @@ public class GenerativeModel {
   /// <summary>
   /// Generates new content from input text given to the model as a prompt.
   /// </summary>
-  /// <param name="content">The text given to the model as a prompt.</param>
+  /// <param name="text">The text given to the model as a prompt.</param>
   /// <returns>The generated content response from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> GenerateContentAsync(
@@ -122,7 +122,7 @@ public class GenerativeModel {
   /// <summary>
   /// Generates new content as a stream from input text given to the model as a prompt.
   /// </summary>
-  /// <param name="content">The text given to the model as a prompt.</param>
+  /// <param name="text">The text given to the model as a prompt.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
@@ -140,14 +140,32 @@ public class GenerativeModel {
     return GenerateContentStreamAsyncInternal(content);
   }
 
+  /// <summary>
+  /// Counts the number of tokens in a prompt using the model's tokenizer.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during the request.</exception>
   public Task<CountTokensResponse> CountTokensAsync(
       params ModelContent[] content) {
     return CountTokensAsync((IEnumerable<ModelContent>)content);
   }
+  /// <summary>
+  /// Counts the number of tokens in a prompt using the model's tokenizer.
+  /// </summary>
+  /// <param name="text">The text input given to the model as a prompt.</param>
+  /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during the request.</exception>
   public Task<CountTokensResponse> CountTokensAsync(
       string text) {
     return CountTokensAsync(new ModelContent[] { ModelContent.Text(text) });
   }
+  /// <summary>
+  /// Counts the number of tokens in a prompt using the model's tokenizer.
+  /// </summary>
+  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
+  /// <exception cref="VertexAIException">Thrown when an error occurs during the request.</exception>
   public Task<CountTokensResponse> CountTokensAsync(
       IEnumerable<ModelContent> content) {
     return CountTokensAsyncInternal(content);
@@ -242,9 +260,33 @@ public class GenerativeModel {
 
   private async Task<CountTokensResponse> CountTokensAsyncInternal(
       IEnumerable<ModelContent> content) {
-    // TODO: Implementation
-    await Task.CompletedTask;
-    throw new NotImplementedException();
+    HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":countTokens");
+
+    // Set the request headers
+    SetRequestHeaders(request);
+
+    // Set the content
+    string bodyJson = MakeCountTokensRequest(content);
+    request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+#if FIREBASE_LOG_REST_CALLS
+    UnityEngine.Debug.Log("CountTokensRequest:\n" + bodyJson);
+#endif
+
+    HttpResponseMessage response = await _httpClient.SendAsync(request);
+    // TODO: Convert any timeout exception into a VertexAI equivalent
+    // TODO: Convert any HttpRequestExceptions, see:
+    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.sendasync?view=net-9.0
+    // https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpresponsemessage.ensuresuccessstatuscode?view=net-9.0
+    response.EnsureSuccessStatusCode();
+
+    string result = await response.Content.ReadAsStringAsync();
+
+#if FIREBASE_LOG_REST_CALLS
+    UnityEngine.Debug.Log("CountTokensResponse:\n" + result);
+#endif
+
+    return CountTokensResponse.FromJson(result);
   }
 
   private string GetURL() {
@@ -276,6 +318,25 @@ public class GenerativeModel {
     }
     if (_toolConfig.HasValue) {
       jsonDict["toolConfig"] = _toolConfig?.ToJson();
+    }
+    if (_systemInstruction.HasValue) {
+      jsonDict["systemInstruction"] = _systemInstruction?.ToJson();
+    }
+
+    return Json.Serialize(jsonDict);
+  }
+
+  // CountTokensRequest is a subset of the full info needed for GenerateContent
+  private string MakeCountTokensRequest(IEnumerable<ModelContent> contents) {
+    Dictionary<string, object> jsonDict = new() {
+      // Convert the Contents into a list of Json dictionaries
+      ["contents"] = contents.Select(c => c.ToJson()).ToList()
+    };
+    if (_generationConfig.HasValue) {
+      jsonDict["generationConfig"] = _generationConfig?.ToJson();
+    }
+    if (_tools != null && _tools.Length > 0) {
+      jsonDict["tools"] = _tools.Select(t => t.ToJson()).ToList();
     }
     if (_systemInstruction.HasValue) {
       jsonDict["systemInstruction"] = _systemInstruction?.ToJson();

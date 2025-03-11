@@ -189,13 +189,25 @@ public readonly struct UsageMetadata {
   /// </summary>
   public int TotalTokenCount { get; }
 
-  // TODO: New fields about ModalityTokenCount
+  private readonly ReadOnlyCollection<ModalityTokenCount> _promptTokensDetails;
+  public IEnumerable<ModalityTokenCount> PromptTokensDetails =>
+      _promptTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+
+  private readonly ReadOnlyCollection<ModalityTokenCount> _candidatesTokensDetails;
+  public IEnumerable<ModalityTokenCount> CandidatesTokensDetails =>
+      _candidatesTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
 
   // Hidden constructor, users don't need to make this.
-  private UsageMetadata(int promptTC, int candidatesTC, int totalTC) {
+  private UsageMetadata(int promptTC, int candidatesTC, int totalTC,
+                        List<ModalityTokenCount> promptDetails, List<ModalityTokenCount> candidateDetails) {
     PromptTokenCount = promptTC;
     CandidatesTokenCount = candidatesTC;
     TotalTokenCount = totalTC;
+    _promptTokensDetails =
+        new ReadOnlyCollection<ModalityTokenCount>(promptDetails ?? new List<ModalityTokenCount>());
+    _candidatesTokensDetails =
+        new ReadOnlyCollection<ModalityTokenCount>(candidateDetails ?? new List<ModalityTokenCount>());
+
   }
 
   /// <summary>
@@ -206,7 +218,9 @@ public readonly struct UsageMetadata {
     return new UsageMetadata(
       jsonDict.ParseValue<int>("promptTokenCount"),
       jsonDict.ParseValue<int>("candidatesTokenCount"),
-      jsonDict.ParseValue<int>("totalTokenCount"));
+      jsonDict.ParseValue<int>("totalTokenCount"),
+      jsonDict.ParseObjectList("promptTokensDetails", ModalityTokenCount.FromJson),
+      jsonDict.ParseObjectList("candidatesTokensDetails", ModalityTokenCount.FromJson));
   }
 }
 
