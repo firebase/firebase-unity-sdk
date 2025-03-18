@@ -573,7 +573,7 @@ namespace Firebase.Sample.VertexAI {
 
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
     readonly string testDataUrl =
-        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/refs/heads/main/mock-responses/";
+        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/bdf8af9e8f34157a31faeb712822f12e6feab31a/mock-responses/";
     readonly HttpClient httpClient = new();
 
     // Gets the Json test data from the given filename, potentially downloading from a GitHub repo.
@@ -590,6 +590,10 @@ namespace Firebase.Sample.VertexAI {
       string jsonString = await response.Content.ReadAsStringAsync();
 
       return Json.Deserialize(jsonString) as Dictionary<string, object>;
+    }
+
+    private Task<Dictionary<string, object>> GetVertexJsonTestData(string filename) {
+      return GetJsonTestData($"vertexai/{filename}");
     }
 
     // Helper function to validate that the response has a TextPart as expected.
@@ -665,7 +669,7 @@ namespace Firebase.Sample.VertexAI {
     // Test that parsing a basic short reply works as expected.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-success-basic-reply-short.json
     async Task InternalTestBasicReplyShort() {
-      Dictionary<string, object> json = await GetJsonTestData("unary-success-basic-reply-short.json");
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-basic-reply-short.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json);
 
       ValidateTextPart(response, "Mountain View, California");
@@ -692,7 +696,7 @@ namespace Firebase.Sample.VertexAI {
     // Test that parsing a response including Citations works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-success-citations.json
     async Task InternalTestCitations() {
-      Dictionary<string, object> json = await GetJsonTestData("unary-success-citations.json");
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-citations.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json);
       
       ValidateTextPart(response, "Some information cited from an external source");
@@ -723,7 +727,7 @@ namespace Firebase.Sample.VertexAI {
     // Test that parsing a response that was blocked for Safety reasons works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-failure-prompt-blocked-safety-with-message.json
     async Task InternalTestBlockedSafetyWithMessage() {
-      Dictionary<string, object> json = await GetJsonTestData("unary-failure-prompt-blocked-safety-with-message.json");
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-prompt-blocked-safety-with-message.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json);
 
       Assert("Candidates", !response.Candidates.Any());
@@ -753,7 +757,7 @@ namespace Firebase.Sample.VertexAI {
     // Test that parsing a response that was blocked, and has no Content, works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-failure-finish-reason-safety-no-content.json
     async Task InternalTestFinishReasonSafetyNoContent() {
-      Dictionary<string, object> json = await GetJsonTestData("unary-failure-finish-reason-safety-no-content.json");
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-finish-reason-safety-no-content.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
@@ -790,7 +794,7 @@ namespace Firebase.Sample.VertexAI {
     // Test that parsing a response with unknown safety enums works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-success-unknown-enum-safety-ratings.json
     async Task InternalTestUnknownEnumSafetyRatings() {
-      Dictionary<string, object> json = await GetJsonTestData("unary-success-unknown-enum-safety-ratings.json");
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-unknown-enum-safety-ratings.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
@@ -823,7 +827,7 @@ namespace Firebase.Sample.VertexAI {
 
     // Test that parsing a response with a FunctionCall part works.
     async Task InternalTestFunctionCallWithArguments() {
-      Dictionary<string, object> json = await GetJsonTestData("unary-success-function-call-with-arguments.json");
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-function-call-with-arguments.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
@@ -842,7 +846,7 @@ namespace Firebase.Sample.VertexAI {
 
     // Test that parsing a count token response works.
     async Task InternalTestCountTokenResponse() {
-      Dictionary<string, object> json = await GetJsonTestData("unary-success-detailed-token-response.json");
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-detailed-token-response.json");
       CountTokensResponse response = CountTokensResponse.FromJson(json);
 
       AssertEq("TotalTokens", response.TotalTokens, 1837);
@@ -857,7 +861,7 @@ namespace Firebase.Sample.VertexAI {
 
     // Test that the UsageMetadata is getting parsed correctly.
     async Task InternalTestBasicResponseLongUsageMetadata() {
-      Dictionary<string, object> json = await GetJsonTestData("unary-success-basic-response-long-usage-metadata.json");
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-basic-response-long-usage-metadata.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json);
 
       AssertEq("Response Text", response.Text, "Here is a description of the image:\\n\\n");
