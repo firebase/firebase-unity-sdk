@@ -71,6 +71,12 @@ Support
 
 Release Notes
 -------------
+### 12.8.0
+-   Changes
+    - General: Update to Firebase C++ SDK version 12.7.0.
+    - General (iOS): Update to Firebase Cocoapods version 11.10.0.
+    - General (Android): Update to Firebase Android BoM version 33.11.0.
+
 ### 12.7.0
 - Changes
     - General (iOS): Update to Firebase Cocoapods version 11.9.0.
