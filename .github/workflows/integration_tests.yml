@@ -178,6 +178,9 @@ jobs:
     env:
       xcodeVersion: "15.1"
     steps:
+      - uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.31.0"
       - id: matrix_info
         shell: bash
         run: |

@@ -48,6 +48,9 @@ jobs:
       xcodeVersion: "15.1"
   
     steps:
+      - uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.31.0"
       - name: Checkout Unity Repo
         uses: actions/checkout@v3
         with:
