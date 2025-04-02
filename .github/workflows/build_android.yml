@@ -47,6 +47,9 @@ jobs:
       CCACHE_DIR: ${{ github.workspace }}/ccache_dir
   
     steps:
+      - uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.31.0"
       - name: Checkout Unity Repo
         uses: actions/checkout@v3
         with:
