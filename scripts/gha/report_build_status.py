@@ -501,7 +501,7 @@ def main(argv):
                 logs_zip = zipfile.ZipFile(logs_compressed_data)
                 m = get_message_from_github_log(
                   logs_zip,
-                  r'summarize-results/.*Summarize results into GitHub',
+                  r'(?:[0-9]*_)?summarize-results(?:/.*Summarize results into GitHub.*)?',
                   r'\[error\]INTEGRATION TEST FAILURES\n—+\n(.*)$')
                 if m:
                   run['log_success'] = False
