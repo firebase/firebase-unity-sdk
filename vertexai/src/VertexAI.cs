@@ -82,7 +82,7 @@ public class VertexAI {
   /// - Note: Refer to [Gemini models](https://firebase.google.com/docs/vertex-ai/gemini-models) for
   /// guidance on choosing an appropriate model for your use case.
   /// </summary>
-  /// <param name="modelName">The name of the model to use, for example `"gemini-1.5-flash"`; see
+  /// <param name="modelName">The name of the model to use, for example `"gemini-2.0-flash"`; see
   ///     [available model names
   ///     ](https://firebase.google.com/docs/vertex-ai/gemini-models#available-model-names) for a
   ///     list of supported model names.</param>
@@ -105,6 +105,32 @@ public class VertexAI {
     return new GenerativeModel(_firebaseApp, _location, modelName,
         generationConfig, safetySettings, tools,
         toolConfig, systemInstruction, requestOptions);
+  }
+
+  /// <summary>
+  /// Initializes a `LiveGenerativeModel` for real-time interaction.
+  /// 
+  /// - Note: Refer to [Gemini models](https://firebase.google.com/docs/vertex-ai/gemini-models) for
+  /// guidance on choosing an appropriate model for your use case.
+  /// </summary>
+  /// <param name="modelName">The name of the model to use, for example `"gemini-2.0-flash-live-preview-04-09"`; see
+  ///     [available model names
+  ///     ](https://firebase.google.com/docs/vertex-ai/gemini-models#available-model-names) for a
+  ///     list of supported model names.</param>
+  /// <param name="liveGenerationConfig">The content generation parameters your model should use.</param>
+  /// <param name="tools">A list of `Tool` objects that the model may use to generate the next response.</param>
+  /// <param name="systemInstruction">Instructions that direct the model to behave a certain way.</param>
+  /// <param name="requestOptions">Configuration parameters for sending requests to the backend.</param>
+  /// <returns>The initialized `LiveGenerativeModel` instance.</returns>
+  public LiveGenerativeModel GetLiveModel(
+      string modelName,
+      LiveGenerationConfig? liveGenerationConfig = null,
+      Tool[] tools = null,
+      ModelContent? systemInstruction = null,
+      RequestOptions? requestOptions = null) {
+    return new LiveGenerativeModel(_firebaseApp, _location, modelName,
+        liveGenerationConfig, tools,
+        systemInstruction, requestOptions);
   }
 }
 
