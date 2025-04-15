@@ -162,7 +162,10 @@ public readonly struct LiveContentResponse {
       return new LiveContentResponse(
           jsonDict.ParseObjectList("functionCalls", ModelContentJsonParsers.FunctionCallPartFromJson));
     } else {
-      // TODO: Do we want to log this, or just ignore it?
+      // TODO: Determine if we want to log this, or just ignore it?
+#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log($"Failed to parse LiveContentResponse from JSON, with keys: {string.Join(',', jsonDict.Keys)}");
+#endif
       return null;
     }
   }

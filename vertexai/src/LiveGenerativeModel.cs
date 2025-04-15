@@ -92,8 +92,7 @@ public class LiveGenerativeModel {
     await clientWebSocket.ConnectAsync(new Uri(endpoint), connectionCts.Token);
 
     if (clientWebSocket.State != WebSocketState.Open) {
-      // TODO: Determine if this is the correct exception to throw.
-      throw new VertexAIInvalidStateException("ClientWebSocket failed to connect, can't create LiveSession.");
+      throw new WebSocketException("ClientWebSocket failed to connect, can't create LiveSession.");
     }
     
     try {
