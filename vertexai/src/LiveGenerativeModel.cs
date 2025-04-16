@@ -68,6 +68,13 @@ public class LiveGenerativeModel {
     _requestOptions = requestOptions;
   }
 
+  private string GetURL() {
+    return "wss://firebasevertexai.googleapis.com/ws" + 
+           "/google.firebase.vertexai.v1beta.LlmBidiService/BidiGenerateContent" +
+           $"/locations/{_location}" +
+           $"?key={_firebaseApp.Options.ApiKey}";
+  }
+
   /// <summary>
   /// Establishes a connection to a live generation service.
   ///
@@ -79,9 +86,10 @@ public class LiveGenerativeModel {
   public async Task<LiveSession> ConnectAsync(CancellationToken cancellationToken = default) {
     ClientWebSocket clientWebSocket = new();
 
-    string endpoint = $"wss://firebasevertexai.googleapis.com/ws/google.firebase.vertexai.v1beta.LlmBidiService/BidiGenerateContent/locations/{_location}?key={_firebaseApp.Options.ApiKey}";
+    string endpoint = GetURL();
 
     // Set initial headers
+    // TODO: Get the Version from the Firebase.VersionInfo.SdkVersion (requires exposing it via App)
     clientWebSocket.Options.SetRequestHeader("x-goog-api-client", "genai-csharp/0.1.0");
 
     // Add a timeout to the initial connection, using the RequestOptions.

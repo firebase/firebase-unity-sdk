@@ -62,8 +62,8 @@ public readonly struct SpeechConfig {
 /// A struct defining model parameters to be used when generating live session content.
 /// </summary>
 public readonly struct LiveGenerationConfig {
-  readonly SpeechConfig? _speechConfig;
-  readonly List<ResponseModality> _responseModalities;
+  private readonly SpeechConfig? _speechConfig;
+  private readonly List<ResponseModality> _responseModalities;
   private readonly float? _temperature;
   private readonly float? _topP;
   private readonly float? _topK;
