@@ -311,21 +311,36 @@ public readonly struct ModelContent {
       jsonDict.ParseObjectList("parts", PartFromJson, JsonParseOptions.ThrowEverything));
   }
 
-  private static FunctionCallPart FunctionCallPartFromJson(Dictionary<string, object> jsonDict) {
-    return new FunctionCallPart(
-      jsonDict.ParseValue<string>("name", JsonParseOptions.ThrowEverything),
-      jsonDict.ParseValue<Dictionary<string, object>>("args", JsonParseOptions.ThrowEverything));
+  private static InlineDataPart InlineDataPartFromJson(Dictionary<string, object> jsonDict) {
+    return new InlineDataPart(
+      jsonDict.ParseValue<string>("mimeType", JsonParseOptions.ThrowEverything),
+      Convert.FromBase64String(jsonDict.ParseValue<string>("data", JsonParseOptions.ThrowEverything)));
   }
 
   private static Part PartFromJson(Dictionary<string, object> jsonDict) {
     if (jsonDict.TryParseValue("text", out string text)) {
       return new TextPart(text);
-    } else if (jsonDict.TryParseObject("functionCall", FunctionCallPartFromJson, out var fcPart)) {
+    } else if (jsonDict.TryParseObject("functionCall", ModelContentJsonParsers.FunctionCallPartFromJson, out var fcPart)) {
       return fcPart;
+    } else if (jsonDict.TryParseObject("inlineData", InlineDataPartFromJson, out var inlineDataPart)) {
+      return inlineDataPart;
     } else {
       throw new VertexAISerializationException("Unable to parse given 'part' into a known Part.");
     }
   }
+}
+
+namespace Internal {
+
+// Class for parsing Parts that need to be called from other files as well.
+internal static class ModelContentJsonParsers {
+  internal static ModelContent.FunctionCallPart FunctionCallPartFromJson(Dictionary<string, object> jsonDict) {
+    return new ModelContent.FunctionCallPart(
+      jsonDict.ParseValue<string>("name", JsonParseOptions.ThrowEverything),
+      jsonDict.ParseValue<Dictionary<string, object>>("args", JsonParseOptions.ThrowEverything));
+  }
+}
+
 }
 
 }

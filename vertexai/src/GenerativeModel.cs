@@ -49,7 +49,7 @@ public class GenerativeModel {
 
   /// <summary>
   /// Intended for internal use only.
-  /// Use `VertexAI.GetInstance` instead to ensure proper initialization and configuration of the `GenerativeModel`.
+  /// Use `VertexAI.GetGenerativeModel` instead to ensure proper initialization and configuration of the `GenerativeModel`.
   /// </summary>
   internal GenerativeModel(FirebaseApp firebaseApp,
                            string location,
