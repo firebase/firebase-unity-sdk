@@ -20,69 +20,34 @@ using Google.MiniJSON;
 using Firebase.VertexAI.Internal;
 using System.Linq;
 using System;
+using System.Text;
 
 namespace Firebase.VertexAI {
 
 /// <summary>
 /// Represents the response from the model for live content updates.
 /// </summary>
-public readonly struct LiveContentResponse {
-  /// <summary>
-  /// Represents the status of the `LiveContentResponse`.
-  /// </summary>
-  public enum LiveResponseStatus {
-    /// <summary>
-    /// Indicates response has no special status associated with it.
-    /// </summary>
-    Normal,
-    /// <summary>
-    /// Indicates the model is done generating content.
-    /// </summary>
-    TurnComplete,
-    /// <summary>
-    /// Indicates a client message has interrupted the current generation.
-    /// </summary>
-    Interrupted
-  }
+public readonly struct LiveSessionResponse {
 
   /// <summary>
-  /// The main content data of the response. This can be `null` if there is no content.
+  /// The detailed message from the live session.
   /// </summary>
-  public ModelContent? Content { get; }
-
-  /// <summary>
-  /// The status of the response.
-  /// </summary>
-  public LiveResponseStatus Status { get; }
-
-  private readonly ReadOnlyCollection<ModelContent.FunctionCallPart> _functionCalls;
-
-  /// <summary>
-  /// A list of [FunctionCallPart] included in the response, if any.
-  ///
-  /// This will be empty if no function calls are present.
-  /// </summary>
-  public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls =>
-      _functionCalls ?? new ReadOnlyCollection<ModelContent.FunctionCallPart>(
-          new List<ModelContent.FunctionCallPart>());
-
-  // TODO: Add this
-  //public IEnumerable<string> FunctionIdsToCancel { get; }
+  public readonly ILiveSessionMessage Message { get; }
 
   /// <summary>
   /// The response's content as text, if it exists.
   /// </summary>
   public string Text {
     get {
-      string str = "";
-      if (Content != null) {
-        foreach (var part in Content?.Parts) {
+      StringBuilder stringBuilder = new();
+      if (Message is LiveSessionContent content) {
+        foreach (var part in content.Content?.Parts) {
           if (part is ModelContent.TextPart textPart) {
-            str += textPart.Text;
+            stringBuilder.Append(textPart.Text);
           }
         }
       }
-      return str;
+      return stringBuilder.ToString();
     }
   }
 
@@ -91,10 +56,13 @@ public readonly struct LiveContentResponse {
   /// </summary>
   public IEnumerable<byte[]> Audio {
     get {
-      return Content?.Parts
-          .OfType<ModelContent.InlineDataPart>()
-          .Where(part => part.MimeType == "audio/pcm")
-          .Select(part => part.Data.ToArray());
+      if (Message is LiveSessionContent content) {
+        return content.Content?.Parts
+            .OfType<ModelContent.InlineDataPart>()
+            .Where(part => part.MimeType == "audio/pcm")
+            .Select(part => part.Data.ToArray());
+      }
+      return null;
     }
   }
 
@@ -107,6 +75,8 @@ public readonly struct LiveContentResponse {
     }
   }
 
+  // Helper function to convert a byte array representing a 16-bit encoded
+  // Audio snippit into a float array, which Unity's built in libraries supports.
   private float[] ConvertBytesToFloat(byte[] byteArray) {
     // Assumes 16 bit encoding, which would be two bytes per sample.
     int sampleCount = byteArray.Length / 2;
@@ -120,16 +90,104 @@ public readonly struct LiveContentResponse {
     return floatArray;
   }
 
-  private LiveContentResponse(ModelContent? content, LiveResponseStatus status) {
-    Content = content;
-    Status = status;
-    _functionCalls = new ReadOnlyCollection<ModelContent.FunctionCallPart>(
-        new List<ModelContent.FunctionCallPart>());
+  private LiveSessionResponse(ILiveSessionMessage liveSessionMessage) {
+    Message = liveSessionMessage;
   }
 
-  private LiveContentResponse(List<ModelContent.FunctionCallPart> functionCalls) {
-    Content = null;
-    Status = LiveResponseStatus.Normal;
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
+  /// </summary>
+  internal static LiveSessionResponse? FromJson(string jsonString) {
+    return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>);
+  }
+
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
+  /// </summary>
+  internal static LiveSessionResponse? FromJson(Dictionary<string, object> jsonDict) {
+    if (jsonDict.ContainsKey("setupComplete")) {
+      // We don't want to pass this along to the user, so return null instead.
+      return null;
+    } else if (jsonDict.TryParseValue("serverContent", out Dictionary<string, object> serverContent)) {
+      // TODO: Other fields
+      return new LiveSessionResponse(LiveSessionContent.FromJson(serverContent));
+    } else if (jsonDict.TryParseValue("toolCall", out Dictionary<string, object> toolCall)) {
+      return new LiveSessionResponse(LiveSessionToolCall.FromJson(toolCall));
+    } else if (jsonDict.TryParseValue("toolCallCancellation", out Dictionary<string, object> toolCallCancellation)) {
+      return new LiveSessionResponse(LiveSessionToolCallCancellation.FromJson(toolCallCancellation));
+    } else {
+      // TODO: Determine if we want to log this, or just ignore it?
+#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log($"Failed to parse LiveSessionResponse from JSON, with keys: {string.Join(',', jsonDict.Keys)}");
+#endif
+      return null;
+    }
+  }
+}
+
+/// <summary>
+/// Represents a message received from a live session.
+/// </summary>
+public interface ILiveSessionMessage { }
+
+/// <summary>
+/// Content generated by the model in a live session.
+/// </summary>
+public readonly struct LiveSessionContent : ILiveSessionMessage {
+  /// <summary>
+  /// The main content data of the response. This can be `null` if there was no content.
+  /// </summary>
+  public readonly ModelContent? Content { get; }
+
+  /// <summary>
+  /// Whether the turn is complete. If true, indicates that the model is done
+  /// generating.
+  /// </summary>
+  public readonly bool TurnComplete { get; }
+
+  /// <summary>
+  /// Whether generation was interrupted. If true, indicates that a
+  /// client message has interrupted current model.
+  /// </summary>
+  public readonly bool Interrupted { get; }
+
+  private LiveSessionContent(ModelContent? content, bool turnComplete, bool interrupted) {
+    Content = content;
+    TurnComplete = turnComplete;
+    Interrupted = interrupted;
+  }
+
+  /// <summary>
+  /// Intended for internal use only.
+  /// This method is used for deserializing JSON responses and should not be called directly.
+  /// </summary>
+  internal static LiveSessionContent FromJson(Dictionary<string, object> jsonDict) {
+    return new LiveSessionContent(
+      jsonDict.ParseNullableObject("modelTurn", ModelContent.FromJson),
+      jsonDict.ParseValue<bool>("turnComplete"),
+      jsonDict.ParseValue<bool>("interrupted")
+    );
+  }
+}
+
+/// <summary>
+/// A request to use a tool from the live session.
+/// </summary>
+public readonly struct LiveSessionToolCall : ILiveSessionMessage {
+  private readonly ReadOnlyCollection<ModelContent.FunctionCallPart> _functionCalls;
+
+  /// <summary>
+  /// A list of `ModelContent.FunctionCallPart` included in the response, if any.
+  ///
+  /// This will be empty if no function calls are present.
+  /// </summary>
+  public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls =>
+      _functionCalls ?? new ReadOnlyCollection<ModelContent.FunctionCallPart>(
+          new List<ModelContent.FunctionCallPart>());
+
+  private LiveSessionToolCall(List<ModelContent.FunctionCallPart> functionCalls) {
     _functionCalls = new ReadOnlyCollection<ModelContent.FunctionCallPart>(
         functionCalls ?? new List<ModelContent.FunctionCallPart>());
   }
@@ -138,36 +196,36 @@ public readonly struct LiveContentResponse {
   /// Intended for internal use only.
   /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
-  internal static LiveContentResponse? FromJson(string jsonString) {
-    return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>);
+  internal static LiveSessionToolCall FromJson(Dictionary<string, object> jsonDict) {
+    return new LiveSessionToolCall(
+        jsonDict.ParseObjectList("functionCalls", ModelContentJsonParsers.FunctionCallPartFromJson));
+  }
+}
+
+/// <summary>
+/// A request to cancel using a tool from the live session.
+/// </summary>
+public readonly struct LiveSessionToolCallCancellation : ILiveSessionMessage {
+  private readonly ReadOnlyCollection<string> _functionIds;
+
+  /// <summary>
+  /// The list of Function IDs to cancel.
+  /// </summary>
+  public IEnumerable<string> FunctionIds =>
+      _functionIds ?? new ReadOnlyCollection<string>(new List<string>());
+
+  private LiveSessionToolCallCancellation(List<string> functionIds) {
+    _functionIds = new ReadOnlyCollection<string>(
+        functionIds ?? new List<string>());
   }
 
   /// <summary>
   /// Intended for internal use only.
   /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
-  internal static LiveContentResponse? FromJson(Dictionary<string, object> jsonDict) {
-    if (jsonDict.ContainsKey("setupComplete")) {
-      // We don't want to pass this along to the user, so return null instead.
-      return null;
-    } else if (jsonDict.TryParseValue("serverContent", out Dictionary<string, object> serverContent)) {
-      bool turnComplete = serverContent.ParseValue<bool>("turnComplete");
-      bool interrupted = serverContent.ParseValue<bool>("interrupted");
-      LiveResponseStatus status = interrupted ? LiveResponseStatus.Interrupted :
-          turnComplete ? LiveResponseStatus.TurnComplete : LiveResponseStatus.Normal;
-      return new LiveContentResponse(
-        serverContent.ParseNullableObject("modelTurn", ModelContent.FromJson),
-        status);
-    } else if (jsonDict.TryParseValue("toolCall", out Dictionary<string, object> toolCall)) {
-      return new LiveContentResponse(
-          jsonDict.ParseObjectList("functionCalls", ModelContentJsonParsers.FunctionCallPartFromJson));
-    } else {
-      // TODO: Determine if we want to log this, or just ignore it?
-#if FIREBASE_LOG_REST_CALLS
-      UnityEngine.Debug.Log($"Failed to parse LiveContentResponse from JSON, with keys: {string.Join(',', jsonDict.Keys)}");
-#endif
-      return null;
-    }
+  internal static LiveSessionToolCallCancellation FromJson(Dictionary<string, object> jsonDict) {
+    return new LiveSessionToolCallCancellation(
+        jsonDict.ParseStringList("ids"));
   }
 }
 

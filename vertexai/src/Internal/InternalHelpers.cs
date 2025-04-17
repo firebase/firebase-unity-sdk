@@ -163,6 +163,26 @@ internal static class VertexAIExtensions {
     }
   }
 
+  // Tries to convert the found List of objects to a List of strings.
+  public static bool TryParseStringList(this JsonDict jsonDict, string key,
+      out List<string> values,
+      JsonParseOptions options = JsonParseOptions.ThrowInvalidCast) {
+    if (jsonDict.TryParseValue(key, out List<object> list, options)) {
+      values = list.OfType<string>().ToList();
+      return true;
+    } else {
+      values = null;
+      return false;
+    }
+  }
+
+  // Casts the found List to a string List, otherwise returns default (or throws)
+  public static List<string> ParseStringList(this JsonDict jsonDict, string key,
+      JsonParseOptions options = JsonParseOptions.ThrowInvalidCast) {
+    TryParseStringList(jsonDict, key, out List<string> values, options);
+    return values;
+  }
+
   // Tries to convert the found List of Dictionaries, using the given function.
   public static bool TryParseObjectList<T>(this JsonDict jsonDict, string key,
       Func<JsonDict, T> parseFunc, out List<T> values,
