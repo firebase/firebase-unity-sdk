@@ -144,12 +144,15 @@ public readonly struct SafetySetting {
   /// Intended for internal use only.
   /// This method is used for serializing the object to JSON for the API request.
   /// </summary>
-  internal Dictionary<string, object> ToJson() {
+  internal Dictionary<string, object> ToJson(FirebaseAI.Backend.InternalProvider backend) {
     Dictionary<string, object> jsonDict = new () {
       ["category"] = ConvertCategory(_category),
       ["threshold"] = ConvertThreshold(_threshold),
     };
-    if (_method.HasValue) jsonDict["method"] = ConvertMethod(_method.Value);
+    // GoogleAI doesn't support HarmBlockMethod.
+    if (backend != FirebaseAI.Backend.InternalProvider.GoogleAI) {
+      if (_method.HasValue) jsonDict["method"] = ConvertMethod(_method.Value);
+    }
     return jsonDict;
   }
 }

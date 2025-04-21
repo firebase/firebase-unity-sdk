@@ -20,60 +20,108 @@ using System.Collections.Concurrent;
 namespace Firebase.VertexAI {
 
 /// <summary>
-/// The entry point for all Vertex AI in Firebase functionality.
+/// The entry point for all Firebase AI SDK functionality.
 /// </summary>
-public class VertexAI {
+public class FirebaseAI {
 
-  private static readonly ConcurrentDictionary<string, VertexAI> _instances = new();
+  /// <summary>
+  /// Defines which backend AI service is being used, provided to `FirebaseAI.GetInstance`.
+  /// </summary>
+  public readonly struct Backend {
+    /// <summary>
+    /// Intended for internal use only.
+    /// Defines the possible types of backend providers.
+    /// </summary>
+    internal enum InternalProvider {
+      GoogleAI,
+      VertexAI
+    }
 
-  private FirebaseApp _firebaseApp;
-  private string _location;
+    /// <summary>
+    /// Intended for internal use only.
+    /// The backend provider being used.
+    /// </summary>
+    internal InternalProvider Provider { get; }
+    /// <summary>
+    /// Intended for internal use only.
+    /// The region identifier used by the Vertex AI backend.
+    /// </summary>
+    internal string Location { get; }
 
-  private VertexAI(FirebaseApp firebaseApp, string location) {
+    private Backend(InternalProvider provider, string location = null) {
+      Provider = provider;
+      Location = location;
+    }
+
+    /// <summary>
+    /// The Google AI backend service configuration.
+    /// </summary>
+    public static Backend GoogleAI() {
+      return new Backend(InternalProvider.GoogleAI);
+    }
+
+    /// <summary>
+    /// The Vertex AI backend service configuration.
+    /// </summary>
+    /// <param name="location">The region identifier, defaulting to `us-central1`; see [Vertex AI
+    ///     regions](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations#available-regions)
+    ///     for a list of supported regions.</param>
+    public static Backend VertexAI(string location = "us-central1") {
+      if (string.IsNullOrWhiteSpace(location) || location.Contains("/")) {
+        throw new VertexAIInvalidLocationException(location);
+      }
+
+      return new Backend(InternalProvider.VertexAI, location);
+    }
+
+    public override readonly string ToString() {
+      return $"FirebaseAIBackend|{Provider}|{Location}";
+    }
+  }
+
+  private static readonly ConcurrentDictionary<string, FirebaseAI> _instances = new();
+
+  private readonly FirebaseApp _firebaseApp;
+  private readonly Backend _backend;
+
+  private FirebaseAI(FirebaseApp firebaseApp, Backend backend) {
     _firebaseApp = firebaseApp;
-    _location = location;
+    _backend = backend;
   }
 
   /// <summary>
-  /// Returns a `VertexAI` instance initialized with the default `FirebaseApp` and location.
+  /// Returns a `FirebaseAI` instance with the default `FirebaseApp` and GoogleAI Backend.
   /// </summary>
-  public static VertexAI DefaultInstance => GetInstance();
+  public static FirebaseAI DefaultInstance => GetInstance();
 
   /// <summary>
-  /// Creates an instance of `VertexAI` configured with the default `FirebaseApp`, and the given location.
+  /// Returns a `FirebaseAI` instance with the default `FirebaseApp` and the given Backend.
   /// </summary>
-  /// <param name="location">The region identifier, defaulting to `us-central1`; see [Vertex AI
-  ///     regions](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations#available-regions)
-  ///     for a list of supported regions.</param>
-  /// <returns>A configured instance of `VertexAI`.</returns>
-  public static VertexAI GetInstance(string location = "us-central1") {
-    return GetInstance(FirebaseApp.DefaultInstance, location);
+  /// <param name="backend">The backend AI service to use.</param>
+  /// <returns>A configured instance of `FirebaseAI`.</returns>
+  public static FirebaseAI GetInstance(Backend? backend = null) {
+    return GetInstance(FirebaseApp.DefaultInstance, backend);
   }
-
   /// <summary>
-  /// Creates an instance of `VertexAI` configured with the given `FirebaseApp` and location.
+  /// Returns a `FirebaseAI` instance with the given `FirebaseApp` and Backend.
   /// </summary>
   /// <param name="app">The custom `FirebaseApp` used for initialization.</param>
-  /// <param name="location">The region identifier, defaulting to `us-central1`; see [Vertex AI
-  ///     regions](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations#available-regions)
-  ///     for a list of supported regions.</param>
-  /// <returns>A configured instance of `VertexAI`.</returns>
-  public static VertexAI GetInstance(FirebaseApp app, string location = "us-central1") {
+  /// <param name="backend">The backend AI service to use.</param>
+  /// <returns>A configured instance of `FirebaseAI`.</returns>
+  public static FirebaseAI GetInstance(FirebaseApp app, Backend? backend = null) {
     if (app == null) {
       throw new ArgumentNullException(nameof(app));
     }
 
-    if (string.IsNullOrWhiteSpace(location) || location.Contains("/")) {
-      throw new VertexAIInvalidLocationException(location);
-    }
+    Backend resolvedBackend = backend ?? Backend.GoogleAI();
 
-    // VertexAI instances are keyed by a combination of the app name and location.
-    string key = $"{app.Name}::{location}";
+    // FirebaseAI instances are keyed by a combination of the app name and backend.
+    string key = $"{app.Name}::{resolvedBackend}";
     if (_instances.ContainsKey(key)) {
       return _instances[key];
     }
 
-    return _instances.GetOrAdd(key, _ => new VertexAI(app, location));
+    return _instances.GetOrAdd(key, _ => new FirebaseAI(app, resolvedBackend));
   }
 
   /// <summary>
@@ -102,7 +150,7 @@ public class VertexAI {
       ToolConfig? toolConfig = null,
       ModelContent? systemInstruction = null,
       RequestOptions? requestOptions = null) {
-    return new GenerativeModel(_firebaseApp, _location, modelName,
+    return new GenerativeModel(_firebaseApp, _backend, modelName,
         generationConfig, safetySettings, tools,
         toolConfig, systemInstruction, requestOptions);
   }
@@ -128,7 +176,7 @@ public class VertexAI {
       Tool[] tools = null,
       ModelContent? systemInstruction = null,
       RequestOptions? requestOptions = null) {
-    return new LiveGenerativeModel(_firebaseApp, _location, modelName,
+    return new LiveGenerativeModel(_firebaseApp, _backend, modelName,
         liveGenerationConfig, tools,
         systemInstruction, requestOptions);
   }

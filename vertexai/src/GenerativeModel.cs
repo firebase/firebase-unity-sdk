@@ -34,7 +34,7 @@ public class GenerativeModel {
   private readonly FirebaseApp _firebaseApp;
 
   // Various setting fields provided by the user.
-  private readonly string _location;
+  private readonly FirebaseAI.Backend _backend;
   private readonly string _modelName;
   private readonly GenerationConfig? _generationConfig;
   private readonly SafetySetting[] _safetySettings;
@@ -52,7 +52,7 @@ public class GenerativeModel {
   /// Use `VertexAI.GetGenerativeModel` instead to ensure proper initialization and configuration of the `GenerativeModel`.
   /// </summary>
   internal GenerativeModel(FirebaseApp firebaseApp,
-                           string location,
+                           FirebaseAI.Backend backend,
                            string modelName,
                            GenerationConfig? generationConfig = null,
                            SafetySetting[] safetySettings = null,
@@ -61,7 +61,7 @@ public class GenerativeModel {
                            ModelContent? systemInstruction = null,
                            RequestOptions? requestOptions = null) {
     _firebaseApp = firebaseApp;
-    _location = location;
+    _backend = backend;
     _modelName = modelName;
     _generationConfig = generationConfig;
     _safetySettings = safetySettings;
@@ -195,7 +195,7 @@ public class GenerativeModel {
     SetRequestHeaders(request);
 
     // Set the content
-    string bodyJson = ModelContentsToJson(content);
+    string bodyJson = MakeGenerateContentRequest(content);
     request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
 #if FIREBASE_LOG_REST_CALLS
@@ -219,7 +219,7 @@ public class GenerativeModel {
     UnityEngine.Debug.Log("Response:\n" + result);
 #endif
 
-    return GenerateContentResponse.FromJson(result);
+    return GenerateContentResponse.FromJson(result, _backend.Provider);
   }
 
   private async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
@@ -230,7 +230,7 @@ public class GenerativeModel {
     SetRequestHeaders(request);
 
     // Set the content
-    string bodyJson = ModelContentsToJson(content);
+    string bodyJson = MakeGenerateContentRequest(content);
     request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
 #if FIREBASE_LOG_REST_CALLS
@@ -260,7 +260,7 @@ public class GenerativeModel {
         UnityEngine.Debug.Log("Streaming Response:\n" + line);
 #endif
 
-        yield return GenerateContentResponse.FromJson(line[StreamPrefix.Length..]);
+        yield return GenerateContentResponse.FromJson(line[StreamPrefix.Length..], _backend.Provider);
       }
     }
   }
@@ -301,10 +301,18 @@ public class GenerativeModel {
   }
 
   private string GetURL() {
-    return "https://firebasevertexai.googleapis.com/v1beta" +
-        "/projects/" + _firebaseApp.Options.ProjectId +
-        "/locations/" + _location +
-        "/publishers/google/models/" + _modelName;
+    if (_backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI) {
+      return "https://firebasevertexai.googleapis.com/v1beta" +
+          "/projects/" + _firebaseApp.Options.ProjectId +
+          "/locations/" + _backend.Location +
+          "/publishers/google/models/" + _modelName;
+    } else if (_backend.Provider == FirebaseAI.Backend.InternalProvider.GoogleAI) {
+      return "https://firebasevertexai.googleapis.com/v1beta" +
+          "/projects/" + _firebaseApp.Options.ProjectId +
+          "/models/" + _modelName;
+    } else {
+      throw new NotSupportedException();
+    }
   }
 
   private void SetRequestHeaders(HttpRequestMessage request) {
@@ -313,7 +321,13 @@ public class GenerativeModel {
     request.Headers.Add("x-goog-api-client", "genai-csharp/0.1.0");
   }
 
-  private string ModelContentsToJson(IEnumerable<ModelContent> contents) {
+  private string MakeGenerateContentRequest(IEnumerable<ModelContent> contents) {
+    Dictionary<string, object> jsonDict = MakeGenerateContentRequestAsDictionary(contents);
+    return Json.Serialize(jsonDict);
+  }
+
+  private Dictionary<string, object> MakeGenerateContentRequestAsDictionary(
+      IEnumerable<ModelContent> contents) {
     Dictionary<string, object> jsonDict = new() {
       // Convert the Contents into a list of Json dictionaries
       ["contents"] = contents.Select(c => c.ToJson()).ToList()
@@ -322,7 +336,7 @@ public class GenerativeModel {
       jsonDict["generationConfig"] = _generationConfig?.ToJson();
     }
     if (_safetySettings != null && _safetySettings.Length > 0) {
-      jsonDict["safetySettings"] = _safetySettings.Select(s => s.ToJson()).ToList();
+      jsonDict["safetySettings"] = _safetySettings.Select(s => s.ToJson(_backend.Provider)).ToList();
     }
     if (_tools != null && _tools.Length > 0) {
       jsonDict["tools"] = _tools.Select(t => t.ToJson()).ToList();
@@ -334,23 +348,38 @@ public class GenerativeModel {
       jsonDict["systemInstruction"] = _systemInstruction?.ToJson();
     }
 
-    return Json.Serialize(jsonDict);
+    return jsonDict;
   }
 
   // CountTokensRequest is a subset of the full info needed for GenerateContent
   private string MakeCountTokensRequest(IEnumerable<ModelContent> contents) {
-    Dictionary<string, object> jsonDict = new() {
-      // Convert the Contents into a list of Json dictionaries
-      ["contents"] = contents.Select(c => c.ToJson()).ToList()
-    };
-    if (_generationConfig.HasValue) {
-      jsonDict["generationConfig"] = _generationConfig?.ToJson();
-    }
-    if (_tools != null && _tools.Length > 0) {
-      jsonDict["tools"] = _tools.Select(t => t.ToJson()).ToList();
-    }
-    if (_systemInstruction.HasValue) {
-      jsonDict["systemInstruction"] = _systemInstruction?.ToJson();
+    Dictionary<string, object> jsonDict;
+    switch (_backend.Provider) {
+      case FirebaseAI.Backend.InternalProvider.GoogleAI:
+        jsonDict = new() {
+          ["generateContentRequest"] = MakeGenerateContentRequestAsDictionary(contents)
+        };
+        // GoogleAI wants the model name included as well.
+        ((Dictionary<string, object>)jsonDict["generateContentRequest"])["model"] =
+            $"models/{_modelName}";
+        break;
+      case FirebaseAI.Backend.InternalProvider.VertexAI:
+        jsonDict = new() {
+          // Convert the Contents into a list of Json dictionaries
+          ["contents"] = contents.Select(c => c.ToJson()).ToList()
+        };
+        if (_generationConfig.HasValue) {
+          jsonDict["generationConfig"] = _generationConfig?.ToJson();
+        }
+        if (_tools != null && _tools.Length > 0) {
+          jsonDict["tools"] = _tools.Select(t => t.ToJson()).ToList();
+        }
+        if (_systemInstruction.HasValue) {
+          jsonDict["systemInstruction"] = _systemInstruction?.ToJson();
+        }
+        break;
+      default:
+        throw new NotSupportedException();
     }
 
     return Json.Serialize(jsonDict);

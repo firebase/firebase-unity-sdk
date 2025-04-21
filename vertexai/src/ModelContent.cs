@@ -320,9 +320,11 @@ public readonly struct ModelContent {
   private static Part PartFromJson(Dictionary<string, object> jsonDict) {
     if (jsonDict.TryParseValue("text", out string text)) {
       return new TextPart(text);
-    } else if (jsonDict.TryParseObject("functionCall", ModelContentJsonParsers.FunctionCallPartFromJson, out var fcPart)) {
+    } else if (jsonDict.TryParseObject("functionCall", ModelContentJsonParsers.FunctionCallPartFromJson,
+                                       out var fcPart)) {
       return fcPart;
-    } else if (jsonDict.TryParseObject("inlineData", InlineDataPartFromJson, out var inlineDataPart)) {
+    } else if (jsonDict.TryParseObject("inlineData", InlineDataPartFromJson,
+                                       out var inlineDataPart)) {
       return inlineDataPart;
     } else {
       throw new VertexAISerializationException("Unable to parse given 'part' into a known Part.");

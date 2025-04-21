@@ -125,13 +125,14 @@ public readonly struct Candidate {
   /// Intended for internal use only.
   /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
-  internal static Candidate FromJson(Dictionary<string, object> jsonDict) {
+  internal static Candidate FromJson(Dictionary<string, object> jsonDict,
+      FirebaseAI.Backend.InternalProvider backend) {
     return new Candidate(
       jsonDict.ParseObject("content", ModelContent.FromJson, defaultValue: new ModelContent("model")),
       jsonDict.ParseObjectList("safetyRatings", SafetyRating.FromJson),
       jsonDict.ParseNullableEnum("finishReason", ParseFinishReason),
       jsonDict.ParseNullableObject("citationMetadata",
-          Firebase.VertexAI.CitationMetadata.FromJson));
+          (d) => Firebase.VertexAI.CitationMetadata.FromJson(d, backend)));
   }
 }
 
