@@ -175,7 +175,7 @@ public class LiveSession : IDisposable {
   /// <param name="closeOnTurnComplete">Should the stream stop when the server returns TurnComplete.</param>
   /// <param name="cancellationToken">A token to cancel the operation.</param>
   /// <returns>A stream of `LiveContentResponse`s from the backend.</returns>
-  public async IAsyncEnumerable<LiveContentResponse> ReceiveAsync(
+  public async IAsyncEnumerable<LiveSessionResponse> ReceiveAsync(
       bool closeOnTurnComplete = true,
       [EnumeratorCancellation] CancellationToken cancellationToken = default) {
     if (_clientWebSocket.State != WebSocketState.Open) {
@@ -199,14 +199,16 @@ public class LiveSession : IDisposable {
         messageBuilder.Append(Encoding.UTF8.GetString(receiveBuffer, 0, result.Count));
 
         if (result.EndOfMessage) {
-          LiveContentResponse? response = LiveContentResponse.FromJson(messageBuilder.ToString());
+          LiveSessionResponse? response = LiveSessionResponse.FromJson(messageBuilder.ToString());
           // Reset for the next message.
           messageBuilder.Clear();
 
           if (response != null) {
             yield return response.Value;
 
-            if (closeOnTurnComplete && response?.Status == LiveContentResponse.LiveResponseStatus.TurnComplete) {
+            if (closeOnTurnComplete &&
+                response?.Message is LiveSessionContent serverContent &&
+                serverContent.TurnComplete) {
               break;
             }
           }
