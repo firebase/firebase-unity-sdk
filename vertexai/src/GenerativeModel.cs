@@ -311,7 +311,7 @@ public class GenerativeModel {
           "/projects/" + _firebaseApp.Options.ProjectId +
           "/models/" + _modelName;
     } else {
-      throw new NotSupportedException();
+      throw new NotSupportedException($"Missing support for backend: {_backend.Provider}");
     }
   }
 
@@ -379,7 +379,7 @@ public class GenerativeModel {
         }
         break;
       default:
-        throw new NotSupportedException();
+        throw new NotSupportedException($"Missing support for backend: {_backend.Provider}");
     }
 
     return Json.Serialize(jsonDict);
