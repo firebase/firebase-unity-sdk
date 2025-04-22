@@ -42,9 +42,16 @@ public readonly struct CitationMetadata {
   /// Intended for internal use only.
   /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
-  internal static CitationMetadata FromJson(Dictionary<string, object> jsonDict) {
+  internal static CitationMetadata FromJson(Dictionary<string, object> jsonDict,
+      FirebaseAI.Backend.InternalProvider backend) {
+    string citationKey = backend switch {
+      FirebaseAI.Backend.InternalProvider.GoogleAI => "citationSources",
+      FirebaseAI.Backend.InternalProvider.VertexAI => "citations",
+      _ => throw new ArgumentOutOfRangeException(nameof(backend), backend,
+                         "Unsupported or unhandled backend provider encountered.")
+    };
     return new CitationMetadata(
-      jsonDict.ParseObjectList("citations", Citation.FromJson));
+      jsonDict.ParseObjectList(citationKey, Citation.FromJson));
   }
 }
 

@@ -78,17 +78,19 @@ public readonly struct GenerateContentResponse {
   /// Intended for internal use only.
   /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
-  internal static GenerateContentResponse FromJson(string jsonString) {
-    return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>);
+  internal static GenerateContentResponse FromJson(string jsonString,
+      FirebaseAI.Backend.InternalProvider backend) {
+    return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>, backend);
   }
 
   /// <summary>
   /// Intended for internal use only.
   /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
-  internal static GenerateContentResponse FromJson(Dictionary<string, object> jsonDict) {
+  internal static GenerateContentResponse FromJson(Dictionary<string, object> jsonDict,
+      FirebaseAI.Backend.InternalProvider backend) {
     return new GenerateContentResponse(
-      jsonDict.ParseObjectList("candidates", Candidate.FromJson),
+      jsonDict.ParseObjectList("candidates", (d) => Candidate.FromJson(d, backend)),
       jsonDict.ParseNullableObject("promptFeedback",
           Firebase.VertexAI.PromptFeedback.FromJson),
       jsonDict.ParseNullableObject("usageMetadata",

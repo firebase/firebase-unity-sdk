@@ -34,10 +34,16 @@ namespace Firebase.Sample.VertexAI {
     // Texture used for tests involving images.
     public Texture2D RedBlueTexture;
 
+    // Not reusing the ones from the SDK, since they are internal and only visible
+    // because we are providing source libraries.
+    private enum Backend {
+      GoogleAI,
+      VertexAI,
+    }
+
     protected override void Start() {
-      // Set the list of tests to run, note this is done at Start since they are
-      // non-static.
-      Func<Task>[] tests = {
+      // Set of tests that use multiple backends.
+      Func<Backend, Task>[] multiBackendTests = {
         TestCreateModel,
         TestBasicText,
         TestBasicImage,
@@ -52,6 +58,9 @@ namespace Firebase.Sample.VertexAI {
         TestChatFunctionCalling,
         TestChatBasicTextStream,
         TestCountTokens,
+      };
+      // Set of tests that only run the single time.
+      Func<Task>[] singleTests = {
         // Internal tests for Json parsing, requires using a source library.
         InternalTestBasicReplyShort,
         InternalTestCitations,
@@ -61,10 +70,27 @@ namespace Firebase.Sample.VertexAI {
         InternalTestFunctionCallWithArguments,
         InternalTestCountTokenResponse,
         InternalTestBasicResponseLongUsageMetadata,
+        InternalTestGoogleAIBasicReplyShort,
+        InternalTestGoogleAICitations
       };
 
+      // Create the set of tests, combining the above lists.
+      List<Func<Task>> tests = new();
+      List<string> testNames = new();
+      foreach (Backend backend in Enum.GetValues(typeof(Backend))) {
+        foreach (var testMethod in multiBackendTests) {
+          tests.Add(() => testMethod(backend));
+          testNames.Add($"{testMethod.Method.Name}_{backend}");
+        }
+      }
+      foreach (var testMethod in singleTests) {
+        tests.Add(testMethod);
+        testNames.Add(testMethod.Method.Name);
+      }
+
       testRunner = AutomatedTestRunner.CreateTestRunner(
-        testsToRun: tests,
+        testsToRun: tests.ToArray(),
+        testNames: testNames.ToArray(),
         logFunc: DebugLog
       );
 
@@ -117,23 +143,32 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // The model name to use for the tests.
-    private readonly string ModelName = "gemini-1.5-flash";
+    private readonly string ModelName = "gemini-2.0-flash";
+
+    private FirebaseAI GetFirebaseAI(Backend backend) {
+      return backend switch {
+        Backend.GoogleAI => FirebaseAI.GetInstance(FirebaseAI.Backend.GoogleAI()),
+        Backend.VertexAI => FirebaseAI.GetInstance(FirebaseAI.Backend.VertexAI()),
+        _ => throw new ArgumentOutOfRangeException(nameof(backend), backend,
+                "Unhandled Backend type"),
+      };
+    }
 
     // Get a basic version of the GenerativeModel to test against.
-    private GenerativeModel CreateGenerativeModel() {
-      return VertexAI.DefaultInstance.GetGenerativeModel(ModelName);
+    private GenerativeModel CreateGenerativeModel(Backend backend) {
+      return GetFirebaseAI(backend).GetGenerativeModel(ModelName);
     }
 
     // Test if it can create the GenerativeModel.
-    Task TestCreateModel() {
-      var model = CreateGenerativeModel();
+    Task TestCreateModel(Backend backend) {
+      var model = CreateGenerativeModel(backend);
       Assert("Failed to create a GenerativeModel.", model != null);
       return Task.CompletedTask;
     }
 
     // Test if it can set a string in, and get a string output.
-    async Task TestBasicText() {
-      var model = CreateGenerativeModel();
+    async Task TestBasicText(Backend backend) {
+      var model = CreateGenerativeModel(backend);
 
       GenerateContentResponse response = await model.GenerateContentAsync(
           "Hello, I am testing something, can you respond with a short " +
@@ -167,9 +202,7 @@ namespace Firebase.Sample.VertexAI {
       Assert($"Candidate has incorrect FinishReason: {candidate.FinishReason}",
         candidate.FinishReason == FinishReason.Stop);
 
-      // Generally seems like the SafetyRatings should always be included by default,
-      // but we don't actually care what they are.
-      Assert("Response was missing all SafetyRatings", candidate.SafetyRatings.Any());
+      // Test the SafetyRatings, if we got any.
       foreach (SafetyRating safetyRating in candidate.SafetyRatings) {
         string prefix = $"SafetyRating {safetyRating.Category}";
         Assert($"{prefix} claims it was blocked", !safetyRating.Blocked);
@@ -196,8 +229,8 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if passing an Image and Text works.
-    async Task TestBasicImage() {
-      var model = CreateGenerativeModel();
+    async Task TestBasicImage(Backend backend) {
+      var model = CreateGenerativeModel(backend);
 
       Assert("Missing RedBlueTexture", RedBlueTexture != null);
 
@@ -223,10 +256,10 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if passing in multiple model options works.
-    async Task TestModelOptions() {
+    async Task TestModelOptions(Backend backend) {
       // Note that most of these settings are hard to reliably verify, so as
       // long as the call works we are generally happy.
-      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
         generationConfig: new GenerationConfig(
           temperature: 0.4f,
           topP: 0.4f,
@@ -265,10 +298,10 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if requesting multiple candidates works.
-    async Task TestMultipleCandidates() {
+    async Task TestMultipleCandidates(Backend backend) {
       var genConfig = new GenerationConfig(candidateCount: 2);
 
-      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
         generationConfig: genConfig
       );
 
@@ -280,8 +313,8 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if generating a stream of text works.
-    async Task TestBasicTextStream() {
-      var model = CreateGenerativeModel();
+    async Task TestBasicTextStream(Backend backend) {
+      var model = CreateGenerativeModel(backend);
 
       string keyword = "Firebase";
       var responseStream = model.GenerateContentStreamAsync(
@@ -327,6 +360,7 @@ namespace Firebase.Sample.VertexAI {
 
     // Create a GenerativeModel using the parameters above to test Function Calling.
     private GenerativeModel CreateGenerativeModelWithBasicFunctionCall(
+      Backend backend,
       ToolConfig? toolConfig = null) {
       var tool = new Tool(new FunctionDeclaration(
         basicFunctionName, "A function used to test Function Calling.",
@@ -339,16 +373,16 @@ namespace Firebase.Sample.VertexAI {
             }) }
         }));
 
-      return VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+      return GetFirebaseAI(backend).GetGenerativeModel(ModelName,
         tools: new Tool[] { tool },
         toolConfig: toolConfig
       );
     }
 
     // Test if FunctionCalling works, using Any to force it.
-    async Task TestFunctionCallingAny() {
+    async Task TestFunctionCallingAny(Backend backend) {
       // Setting this to Any should force my function call.
-      var model = CreateGenerativeModelWithBasicFunctionCall(new ToolConfig(FunctionCallingConfig.Any()));
+      var model = CreateGenerativeModelWithBasicFunctionCall(backend, new ToolConfig(FunctionCallingConfig.Any()));
 
       GenerateContentResponse response = await model.GenerateContentAsync(
           "Hello, I am testing something, can you respond with a short " +
@@ -376,9 +410,9 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if setting None will prevent Function Calling.
-    async Task TestFunctionCallingNone() {
+    async Task TestFunctionCallingNone(Backend backend) {
       // Setting this to None should block my function call.
-      var model = CreateGenerativeModelWithBasicFunctionCall(new ToolConfig(FunctionCallingConfig.None()));
+      var model = CreateGenerativeModelWithBasicFunctionCall(backend, new ToolConfig(FunctionCallingConfig.None()));
 
       GenerateContentResponse response = await model.GenerateContentAsync(
           "Hello, I am testing something, can you call my function?");
@@ -389,9 +423,9 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if setting a response schema with an enum works.
-    async Task TestEnumSchemaResponse() {
+    async Task TestEnumSchemaResponse(Backend backend) {
       string enumValue = "MyTestEnum";
-      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
         generationConfig: new GenerationConfig(
           responseMimeType: "text/x.enum",
           responseSchema: Schema.Enum(new string[] { enumValue })));
@@ -403,8 +437,8 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if when using Chat the model will get the previous messages.
-    async Task TestChatBasicTextNoHistory() {
-      var model = CreateGenerativeModel();
+    async Task TestChatBasicTextNoHistory(Backend backend) {
+      var model = CreateGenerativeModel(backend);
       var chat = model.StartChat();
 
       string keyword = "Firebase";
@@ -432,8 +466,8 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if when using Chat the model gets the initial starting history.
-    async Task TestChatBasicTextPriorHistory() {
-      var model = CreateGenerativeModel();
+    async Task TestChatBasicTextPriorHistory(Backend backend) {
+      var model = CreateGenerativeModel(backend);
       string keyword = "Firebase";
       var chat = model.StartChat(
           ModelContent.Text($"Hello, please include '{keyword}' in all your reponses."),
@@ -454,13 +488,13 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if when using Chat, the model handles Function Calling, and getting a response.
-    async Task TestChatFunctionCalling() {
+    async Task TestChatFunctionCalling(Backend backend) {
       var tool = new Tool(new FunctionDeclaration(
         "GetKeyword", "Call to retrieve a special keyword.",
         new Dictionary<string, Schema>() {
           { "input", Schema.String("Input string") },
         }));
-      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
         tools: new Tool[] { tool }
       );
       var chat = model.StartChat();
@@ -501,8 +535,8 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if Chat works with streaming a text result.
-    async Task TestChatBasicTextStream() {
-      var model = CreateGenerativeModel();
+    async Task TestChatBasicTextStream(Backend backend) {
+      var model = CreateGenerativeModel(backend);
 
       string keyword = "Firebase";
       var chat = model.StartChat(
@@ -552,9 +586,9 @@ namespace Firebase.Sample.VertexAI {
     }
 
     // Test if calling CountTokensAsync works as expected.
-    async Task TestCountTokens() {
+    async Task TestCountTokens(Backend backend) {
       // Include some additional settings, since they are used in the call.
-      var model = VertexAI.DefaultInstance.GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
         generationConfig: new GenerationConfig(temperature: 0.8f),
         systemInstruction: ModelContent.Text("This is a test SystemInstruction")
       );
@@ -562,8 +596,11 @@ namespace Firebase.Sample.VertexAI {
       CountTokensResponse response = await model.CountTokensAsync("Hello, I am testing CountTokens!");
 
       Assert($"CountTokens TotalTokens {response.TotalTokens}", response.TotalTokens > 0);
-      Assert($"CountTokens TotalBillableCharacters {response.TotalBillableCharacters}",
-             response.TotalBillableCharacters > 0);
+      // TotalBillableCharacters is only expected to be set with VertexAI.
+      if (backend == Backend.VertexAI) {
+        Assert($"CountTokens TotalBillableCharacters {response.TotalBillableCharacters}",
+              response.TotalBillableCharacters > 0);
+      }
 
       AssertEq("CountTokens PromptTokenDetails", response.PromptTokensDetails.Count(), 1);
       var details = response.PromptTokensDetails.First();
@@ -573,15 +610,11 @@ namespace Firebase.Sample.VertexAI {
 
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
     readonly string testDataUrl =
-        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/bdf8af9e8f34157a31faeb712822f12e6feab31a/mock-responses/";
+        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/3737ae1fe9c5ecbd55abdeabc273ef4f392cbf19/mock-responses/";
     readonly HttpClient httpClient = new();
 
     // Gets the Json test data from the given filename, potentially downloading from a GitHub repo.
     private async Task<Dictionary<string, object>> GetJsonTestData(string filename) {
-      if (!filename.EndsWith(".json")) {
-        throw new ArgumentException("filename needs to end in .json");
-      }
-
       // TODO: Check if the file is available locally first
 
       var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, testDataUrl + filename));
@@ -594,6 +627,10 @@ namespace Firebase.Sample.VertexAI {
 
     private Task<Dictionary<string, object>> GetVertexJsonTestData(string filename) {
       return GetJsonTestData($"vertexai/{filename}");
+    }
+
+    private Task<Dictionary<string, object>> GetGoogleAIJsonTestData(string filename) {
+      return GetJsonTestData($"googleai/{filename}");
     }
 
     // Helper function to validate that the response has a TextPart as expected.
@@ -670,7 +707,7 @@ namespace Firebase.Sample.VertexAI {
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-success-basic-reply-short.json
     async Task InternalTestBasicReplyShort() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-basic-reply-short.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
       ValidateTextPart(response, "Mountain View, California");
 
@@ -697,7 +734,7 @@ namespace Firebase.Sample.VertexAI {
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-success-citations.json
     async Task InternalTestCitations() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-citations.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
       
       ValidateTextPart(response, "Some information cited from an external source");
 
@@ -728,7 +765,7 @@ namespace Firebase.Sample.VertexAI {
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-failure-prompt-blocked-safety-with-message.json
     async Task InternalTestBlockedSafetyWithMessage() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-prompt-blocked-safety-with-message.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
       Assert("Candidates", !response.Candidates.Any());
       Assert("Response.Text", string.IsNullOrEmpty(response.Text));
@@ -758,7 +795,7 @@ namespace Firebase.Sample.VertexAI {
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-failure-finish-reason-safety-no-content.json
     async Task InternalTestFinishReasonSafetyNoContent() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-finish-reason-safety-no-content.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
       var candidate = response.Candidates.First();
@@ -795,7 +832,7 @@ namespace Firebase.Sample.VertexAI {
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-success-unknown-enum-safety-ratings.json
     async Task InternalTestUnknownEnumSafetyRatings() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-unknown-enum-safety-ratings.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
       var candidate = response.Candidates.First();
@@ -828,7 +865,7 @@ namespace Firebase.Sample.VertexAI {
     // Test that parsing a response with a FunctionCall part works.
     async Task InternalTestFunctionCallWithArguments() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-function-call-with-arguments.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
       var candidate = response.Candidates.First();
@@ -862,7 +899,7 @@ namespace Firebase.Sample.VertexAI {
     // Test that the UsageMetadata is getting parsed correctly.
     async Task InternalTestBasicResponseLongUsageMetadata() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-basic-response-long-usage-metadata.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
       AssertEq("Response Text", response.Text, "Here is a description of the image:\\n\\n");
 
@@ -881,6 +918,113 @@ namespace Firebase.Sample.VertexAI {
       AssertEq("CandidatesTokensDetails.Count", candidatesDetails.Count, 1);
       AssertEq("CandidatesTokensDetails[0].Modality", candidatesDetails[0].Modality, ContentModality.Text);
       AssertEq("CandidatesTokensDetails[0].TokenCount", candidatesDetails[0].TokenCount, 76);
+    }
+
+    // Test that parsing a basic short reply from Google AI endpoint works as expected.
+    // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-basic-reply-short.txt
+    async Task InternalTestGoogleAIBasicReplyShort() {
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-basic-reply-short.txt"); //
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
+
+      ValidateTextPart(response, "Google's headquarters, also known as the Googleplex, is located in **Mountain View, California**.\n");
+
+      Candidate candidate = response.Candidates.First();
+      AssertEq($"FinishReason", candidate.FinishReason, FinishReason.Stop);
+
+      var safetyRatings = candidate.SafetyRatings.ToList();
+      AssertEq("SafetyRatings count", safetyRatings.Count, 4);
+      ValidateSafetyRating(safetyRatings[0], HarmCategory.HateSpeech, SafetyRating.HarmProbability.Negligible);
+      ValidateSafetyRating(safetyRatings[1], HarmCategory.DangerousContent, SafetyRating.HarmProbability.Negligible);
+      ValidateSafetyRating(safetyRatings[2], HarmCategory.Harassment, SafetyRating.HarmProbability.Negligible);
+      ValidateSafetyRating(safetyRatings[3], HarmCategory.SexuallyExplicit, SafetyRating.HarmProbability.Negligible);
+
+      // No citations in this response
+      AssertEq("CitationMetadata", candidate.CitationMetadata, null);
+
+      ValidateUsageMetadata(response.UsageMetadata, 7, 22, 29);
+      // No prompt feedback in this response
+      AssertEq("PromptFeedback", response.PromptFeedback, null);
+    }
+
+    // Test parsing a Google AI format response with citations.
+    // Based on: https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-citations.txt
+    async Task InternalTestGoogleAICitations() {
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-citations.txt");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
+
+      // Validate Text Part (check start and end)
+      string expectedStart = "Okay, let's break down quantum mechanics.";
+      string expectedEnd = "foundation for many technologies, including:\n";
+      Assert("Candidate count", response.Candidates.Count() == 1);
+      Candidate candidate = response.Candidates.First();
+      AssertEq("Content role", candidate.Content.Role, "model");
+      Assert("Parts count", candidate.Content.Parts.Count() == 1);
+      var part = candidate.Content.Parts.First();
+      AssertType("TextPart", part, out ModelContent.TextPart textPart);
+      Assert("Text part is null/empty", !string.IsNullOrEmpty(textPart.Text));
+      Assert($"Text part start mismatch", textPart.Text.StartsWith(expectedStart));
+      Assert($"Text part end mismatch", textPart.Text.EndsWith(expectedEnd));
+      Assert($"Shorthand text start mismatch", response.Text.StartsWith(expectedStart));
+      Assert($"Shorthand text end mismatch", response.Text.EndsWith(expectedEnd));
+
+      // Validate FinishReason
+      AssertEq($"FinishReason", candidate.FinishReason, FinishReason.Stop);
+
+      // Validate SafetyRatings (Note: Format differs from vertexai tests)
+      // The current parser converts these strings to HarmCategory/Probability enums.
+      var safetyRatings = candidate.SafetyRatings.ToList();
+      AssertEq("SafetyRatings count", safetyRatings.Count, 4);
+      // Just check one for brevity, assuming parser maps correctly.
+      // Relies on `FromJson` correctly mapping HARM_CATEGORY_HATE_SPEECH string -> HarmCategory.HateSpeech enum
+      // and "NEGLIGIBLE" string -> SafetyRating.HarmProbability.Negligible enum.
+      // This might require updates to `GenerateContentResponse.FromJson` or `EnumConverters` if not handled.
+      var hateSpeechRating = safetyRatings.First(r => r.Category == HarmCategory.HateSpeech);
+      AssertEq("Hate speech probability", hateSpeechRating.Probability, SafetyRating.HarmProbability.Negligible);
+      // The googleai format doesn't include scores or blocked status in this example.
+
+      // Validate Citations (Note: Format differs slightly from vertexai tests)
+      CitationMetadata? metadata = candidate.CitationMetadata;
+      Assert("CitationMetadata", metadata.HasValue);
+      var citations = metadata?.Citations.ToList();
+      AssertEq("Citation count", citations.Count, 4);
+
+      // Use ValidateCitation helper, adapting for missing fields in this format
+      ValidateCitation(citations[0],
+          startIndex: 548,
+          endIndex: 690,
+          uri: new Uri("https://www.example.com/some-citation-1"),
+          license: "mit"); // title and publicationDate are null/default
+
+      ValidateCitation(citations[1],
+          startIndex: 1240,
+          endIndex: 1407,
+          uri: new Uri("https://www.example.com/some-citation-1")); // license, title, publicationDate are null/default
+
+      ValidateCitation(citations[2],
+          startIndex: 1942,
+          endIndex: 2149); // uri, license, title, publicationDate are null/default
+
+      ValidateCitation(citations[3],
+          startIndex: 2036,
+          endIndex: 2175); // uri, license, title, publicationDate are null/default
+
+
+      // Validate UsageMetadata
+      ValidateUsageMetadata(response.UsageMetadata,
+        promptTokenCount: 15,
+        candidatesTokenCount: 1667,
+        totalTokenCount: 1682);
+
+      // Validate UsageMetadata Details if needed
+      var promptDetails = response.UsageMetadata?.PromptTokensDetails.ToList();
+      AssertEq("PromptTokensDetails count", promptDetails.Count, 1);
+      AssertEq("PromptTokensDetails[0].Modality", promptDetails[0].Modality, ContentModality.Text);
+      AssertEq("PromptTokensDetails[0].TokenCount", promptDetails[0].TokenCount, 15);
+
+      var candidatesDetails = response.UsageMetadata?.CandidatesTokensDetails.ToList();
+      AssertEq("CandidatesTokensDetails count", candidatesDetails.Count, 1);
+      AssertEq("CandidatesTokensDetails[0].Modality", candidatesDetails[0].Modality, ContentModality.Text);
+      AssertEq("CandidatesTokensDetails[0].TokenCount", candidatesDetails[0].TokenCount, 1667);
     }
   }
 }

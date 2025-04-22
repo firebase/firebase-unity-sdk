@@ -41,7 +41,7 @@ public class LiveGenerativeModel {
   private readonly FirebaseApp _firebaseApp;
 
   // Various setting fields provided by the user.
-  private readonly string _location;
+  private readonly FirebaseAI.Backend _backend;
   private readonly string _modelName;
   private readonly LiveGenerationConfig? _liveConfig;
   private readonly Tool[] _tools;
@@ -53,14 +53,14 @@ public class LiveGenerativeModel {
   /// Use `VertexAI.GetLiveModel` instead to ensure proper initialization and configuration of the `LiveGenerativeModel`.
   /// </summary>
   internal LiveGenerativeModel(FirebaseApp firebaseApp,
-                               string location,
+                               FirebaseAI.Backend backend,
                                string modelName,
                                LiveGenerationConfig? liveConfig = null,
                                Tool[] tools = null,
                                ModelContent? systemInstruction = null,
                                RequestOptions? requestOptions = null) {
     _firebaseApp = firebaseApp;
-    _location = location;
+    _backend = backend;
     _modelName = modelName;
     _liveConfig = liveConfig;
     _tools = tools;
@@ -71,7 +71,7 @@ public class LiveGenerativeModel {
   private string GetURL() {
     return "wss://firebasevertexai.googleapis.com/ws" + 
            "/google.firebase.vertexai.v1beta.LlmBidiService/BidiGenerateContent" +
-           $"/locations/{_location}" +
+           $"/locations/{_backend.Location}" +
            $"?key={_firebaseApp.Options.ApiKey}";
   }
 
@@ -106,7 +106,7 @@ public class LiveGenerativeModel {
     try {
       // Send the initial setup message
       Dictionary<string, object> setupDict = new() {
-        { "model", $"projects/{_firebaseApp.Options.ProjectId}/locations/{_location}/publishers/google/models/{_modelName}" }
+        { "model", $"projects/{_firebaseApp.Options.ProjectId}/locations/{_backend.Location}/publishers/google/models/{_modelName}" }
       };
       if (_liveConfig != null) {
         setupDict["generationConfig"] = _liveConfig?.ToJson();

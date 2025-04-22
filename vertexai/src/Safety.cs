@@ -102,7 +102,7 @@ public readonly struct SafetySetting {
   /// <param name="category">The category this safety setting should be applied to.</param>
   /// <param name="threshold">The threshold describing what content should be blocked.</param>
   /// <param name="method">The method of computing whether the threshold has been exceeded; if not specified,
-  ///     the default method is `Severity` for most models.</param>
+  ///     the default method is `Severity` for most models. This parameter is unused in the GoogleAI backend.</param>
   public SafetySetting(HarmCategory category, HarmBlockThreshold threshold,
       HarmBlockMethod? method = null) {
     _category = category;
@@ -144,12 +144,15 @@ public readonly struct SafetySetting {
   /// Intended for internal use only.
   /// This method is used for serializing the object to JSON for the API request.
   /// </summary>
-  internal Dictionary<string, object> ToJson() {
+  internal Dictionary<string, object> ToJson(FirebaseAI.Backend.InternalProvider backend) {
     Dictionary<string, object> jsonDict = new () {
       ["category"] = ConvertCategory(_category),
       ["threshold"] = ConvertThreshold(_threshold),
     };
-    if (_method.HasValue) jsonDict["method"] = ConvertMethod(_method.Value);
+    // GoogleAI doesn't support HarmBlockMethod.
+    if (backend != FirebaseAI.Backend.InternalProvider.GoogleAI) {
+      if (_method.HasValue) jsonDict["method"] = ConvertMethod(_method.Value);
+    }
     return jsonDict;
   }
 }
