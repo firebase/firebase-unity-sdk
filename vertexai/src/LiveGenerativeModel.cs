@@ -21,6 +21,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Firebase.VertexAI.Internal;
 using Google.MiniJSON;
 
 namespace Firebase.VertexAI {
@@ -91,6 +92,8 @@ public class LiveGenerativeModel {
     // Set initial headers
     // TODO: Get the Version from the Firebase.VersionInfo.SdkVersion (requires exposing it via App)
     clientWebSocket.Options.SetRequestHeader("x-goog-api-client", "genai-csharp/0.1.0");
+    // Add additional Firebase tokens to the header.
+    await FirebaseInterops.AddFirebaseTokensAsync(clientWebSocket, _firebaseApp);
 
     // Add a timeout to the initial connection, using the RequestOptions.
     using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
