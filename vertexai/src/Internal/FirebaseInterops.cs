@@ -103,11 +103,11 @@ internal static class FirebaseInterops {
     }
   }
 
-  // Gets the AppCheck Token, assuming there is one. Otherwise, returns empty string.
+  // Gets the AppCheck Token, assuming there is one. Otherwise, returns null.
   internal static async Task<string> GetAppCheckTokenAsync(FirebaseApp firebaseApp) {
     // If AppCheck reflection failed for any reason, nothing to do.
     if (!_appCheckReflectionInitialized) {
-      return "";
+      return null;
     }
 
     try {
@@ -115,14 +115,14 @@ internal static class FirebaseInterops {
       object appCheckInstance = _appCheckGetInstanceMethod.Invoke(null, new object[] { firebaseApp });
       if (appCheckInstance == null) {
         LogError("Failed to get FirebaseAppCheck instance via reflection.");
-        return "";
+        return null;
       }
 
       // Invoke GetAppCheckTokenAsync(false) - returns a Task<AppCheckToken>
       object taskObject = _appCheckGetTokenMethod.Invoke(appCheckInstance, new object[] { false });
       if (taskObject is not Task appCheckTokenTask) {
         LogError($"Invoking GetToken did not return a Task.");
-        return "";
+        return null;
       }
 
       // Await the task to get the AppCheckToken result
@@ -131,14 +131,14 @@ internal static class FirebaseInterops {
       // Check for exceptions in the task
       if (appCheckTokenTask.IsFaulted) {
         LogError($"Error getting App Check token: {appCheckTokenTask.Exception}");
-        return "";
+        return null;
       }
 
       // Get the Result property from the Task<AppCheckToken>
       object tokenResult = _appCheckTokenResultProperty.GetValue(appCheckTokenTask); // This is the AppCheckToken struct
       if (tokenResult == null) {
         LogError("App Check token result was null.");
-        return "";
+        return null;
       }
 
       // Get the Token property from the AppCheckToken struct
@@ -147,7 +147,7 @@ internal static class FirebaseInterops {
       // Log any exceptions during the reflection/invocation process
       LogError($"An error occurred while trying to fetch App Check token: {e}");
     }
-    return "";
+    return null;
   }
 
   // Adds the other Firebase tokens to the HttpRequest, as available.
