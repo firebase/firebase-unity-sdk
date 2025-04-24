@@ -192,7 +192,7 @@ public class GenerativeModel {
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":generateContent");
 
     // Set the request headers
-    SetRequestHeaders(request);
+    await SetRequestHeaders(request);
 
     // Set the content
     string bodyJson = MakeGenerateContentRequest(content);
@@ -227,7 +227,7 @@ public class GenerativeModel {
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":streamGenerateContent?alt=sse");
 
     // Set the request headers
-    SetRequestHeaders(request);
+    await SetRequestHeaders(request);
 
     // Set the content
     string bodyJson = MakeGenerateContentRequest(content);
@@ -270,7 +270,7 @@ public class GenerativeModel {
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":countTokens");
 
     // Set the request headers
-    SetRequestHeaders(request);
+    await SetRequestHeaders(request);
 
     // Set the content
     string bodyJson = MakeCountTokensRequest(content);
@@ -315,10 +315,12 @@ public class GenerativeModel {
     }
   }
 
-  private void SetRequestHeaders(HttpRequestMessage request) {
+  private async Task SetRequestHeaders(HttpRequestMessage request) {
     request.Headers.Add("x-goog-api-key", _firebaseApp.Options.ApiKey);
     // TODO: Get the Version from the Firebase.VersionInfo.SdkVersion (requires exposing it via App)
     request.Headers.Add("x-goog-api-client", "genai-csharp/0.1.0");
+    // Add additional Firebase tokens to the header.
+    await FirebaseInterops.AddFirebaseTokensAsync(request, _firebaseApp);
   }
 
   private string MakeGenerateContentRequest(IEnumerable<ModelContent> contents) {
