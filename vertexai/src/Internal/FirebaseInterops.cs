@@ -217,7 +217,8 @@ internal static class FirebaseInterops {
 
       // Check if Result property is actually a string
       if (_userTokenTaskResultProperty.PropertyType != typeof(string)) {
-          LogError("Auth token Task's Result property is not a string.");
+          LogError("Auth token Task's Result property is not a string, " +
+              $"but is {_userTokenTaskResultProperty.PropertyType}");
           return;
       }
 
