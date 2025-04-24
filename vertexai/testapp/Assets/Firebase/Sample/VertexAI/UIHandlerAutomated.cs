@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Uncomment to include logic to sign in to Auth as part of the tests
+//#define INCLUDE_FIREBASE_AUTH
+
 namespace Firebase.Sample.VertexAI {
   using Firebase;
   using Firebase.Extensions;
@@ -23,6 +26,9 @@ namespace Firebase.Sample.VertexAI {
   using System.Threading.Tasks;
   using Google.MiniJSON;
   using UnityEngine;
+#if INCLUDE_FIREBASE_AUTH
+  using Firebase.Auth;
+#endif
 
   // An automated version of the UIHandler that runs tests on Vertex AI in Firebase.
   public class UIHandlerAutomated : UIHandler {
@@ -58,9 +64,12 @@ namespace Firebase.Sample.VertexAI {
         TestChatFunctionCalling,
         TestChatBasicTextStream,
         TestCountTokens,
+        TestYoutubeLink,
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
+        TestReadFile,
+        TestReadSecureFile,
         // Internal tests for Json parsing, requires using a source library.
         InternalTestBasicReplyShort,
         InternalTestCitations,
@@ -71,7 +80,7 @@ namespace Firebase.Sample.VertexAI {
         InternalTestCountTokenResponse,
         InternalTestBasicResponseLongUsageMetadata,
         InternalTestGoogleAIBasicReplyShort,
-        InternalTestGoogleAICitations
+        InternalTestGoogleAICitations,
       };
 
       // Create the set of tests, combining the above lists.
@@ -606,6 +615,75 @@ namespace Firebase.Sample.VertexAI {
       var details = response.PromptTokensDetails.First();
       AssertEq("CountToken Detail Modality", details.Modality, ContentModality.Text);
       Assert($"CountToken Detail TokenCount {details.TokenCount}", details.TokenCount > 0);
+    }
+
+    // Test being able to provide a Youtube link to the model.
+    async Task TestYoutubeLink(Backend backend) {
+      var model = CreateGenerativeModel(backend);
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+        ModelContent.Text("I am testing Youtube input. Can you give a short description of the video that I've linked you to?"),
+        ModelContent.FileData("video/mp4", new Uri($"https://www.youtube.com/watch?v=cEr8XCnoSVY"))
+      );
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+
+      Assert($"Response should have included Firebase: {response.Text}",
+          response.Text.Contains("Firebase", StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Test providing a file from a GCS bucket (Firebase Storage) to the model.
+    async Task TestReadFile() {
+      // GCS is currently only supported with VertexAI.
+      var model = CreateGenerativeModel(Backend.VertexAI);
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+        ModelContent.Text("I am testing File input. Can you describe the content in the attached file?"),
+        ModelContent.FileData("text/plain", new Uri($"gs://{FirebaseApp.DefaultInstance.Options.StorageBucket}/HelloWorld.txt"))
+      );
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+
+      Assert($"Response should have included 'Hello World': {response.Text}",
+          response.Text.Contains("Hello World", StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Test providing a file requiring authentication from a GCS bucket (Firebase Storage) to the model.
+    // Should pass if Auth is included or not. To turn Auth on, define INCLUDE_FIREBASE_AUTH at the top of the file.
+    async Task TestReadSecureFile() {
+      // GCS is currently only supported with VertexAI.
+      var model = CreateGenerativeModel(Backend.VertexAI);
+
+#if INCLUDE_FIREBASE_AUTH
+      var authResult = await FirebaseAuth.DefaultInstance.SignInAnonymouslyAsync();
+#endif
+
+      try {
+        GenerateContentResponse response = await model.GenerateContentAsync(
+          ModelContent.Text("I am testing File input. Can you describe the image in the attached file?"),
+          ModelContent.FileData("image/png", new Uri($"gs://{FirebaseApp.DefaultInstance.Options.StorageBucket}/FCMImages/mushroom.png"))
+        );
+
+        // Without Auth, the previous call should throw an exception.
+        // With Auth, we should be able to describe the image in the file.
+        Assert("Response missing candidates.", response.Candidates.Any());
+
+        Assert($"Response should have included mushroom: {response.Text}",
+            response.Text.Contains("mushroom", StringComparison.OrdinalIgnoreCase));
+      }
+#if !INCLUDE_FIREBASE_AUTH
+      catch (VertexAIException ex) {
+        AssertEq("Expected InnerException", ex.InnerException.GetType(), typeof(HttpRequestException));
+        // TODO: Improve how Http errors are passed back to users.
+        Assert("Missing Http Status Code 403", (ex.InnerException as HttpRequestException).Message.Contains("403"));
+      }
+#endif
+      finally {
+#if INCLUDE_FIREBASE_AUTH
+        // Clean up the created user.
+        await authResult.User.DeleteAsync();
+#endif
+      }
     }
 
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
