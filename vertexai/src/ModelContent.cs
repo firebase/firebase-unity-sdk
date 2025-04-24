@@ -208,7 +208,7 @@ public readonly struct ModelContent {
 
     Dictionary<string, object> Part.ToJson() {
       return new Dictionary<string, object>() {
-        { "inlineData", new Dictionary<string, object>() {
+        { "fileData", new Dictionary<string, object>() {
             { "mimeType", MimeType },
             { "fileUri", Uri.AbsoluteUri }
           }
