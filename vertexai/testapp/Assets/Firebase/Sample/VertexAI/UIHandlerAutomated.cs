@@ -247,10 +247,10 @@ namespace Firebase.Sample.VertexAI {
       byte[] imageData = ImageConversion.EncodeToPNG(RedBlueTexture);
       Assert("Image encoding failed", imageData != null && imageData.Length > 0);
 
-      GenerateContentResponse response = await model.GenerateContentAsync(
+      GenerateContentResponse response = await model.GenerateContentAsync(new ModelContent[] {
         ModelContent.Text("I am testing Image input. What two colors do you see in the included image?"),
         ModelContent.InlineData("image/png", imageData)
-      );
+      });
 
       Assert("Response missing candidates.", response.Candidates.Any());
 
@@ -622,10 +622,10 @@ namespace Firebase.Sample.VertexAI {
     async Task TestYoutubeLink(Backend backend) {
       var model = CreateGenerativeModel(backend);
 
-      GenerateContentResponse response = await model.GenerateContentAsync(
+      GenerateContentResponse response = await model.GenerateContentAsync(new ModelContent[] {
         ModelContent.Text("I am testing Youtube input. Can you give a short description of the video that I've linked you to?"),
         ModelContent.FileData("video/mp4", new Uri($"https://www.youtube.com/watch?v=cEr8XCnoSVY"))
-      );
+      });
 
       Assert("Response missing candidates.", response.Candidates.Any());
 
@@ -667,10 +667,10 @@ namespace Firebase.Sample.VertexAI {
       // GCS is currently only supported with VertexAI.
       var model = CreateGenerativeModel(Backend.VertexAI);
 
-      GenerateContentResponse response = await model.GenerateContentAsync(
+      GenerateContentResponse response = await model.GenerateContentAsync(new ModelContent[] {
         ModelContent.Text("I am testing File input. Can you describe the content in the attached file?"),
         ModelContent.FileData("text/plain", new Uri($"gs://{FirebaseApp.DefaultInstance.Options.StorageBucket}/HelloWorld.txt"))
-      );
+      });
 
       Assert("Response missing candidates.", response.Candidates.Any());
 
@@ -689,10 +689,10 @@ namespace Firebase.Sample.VertexAI {
 #endif
 
       try {
-        GenerateContentResponse response = await model.GenerateContentAsync(
+        GenerateContentResponse response = await model.GenerateContentAsync(new ModelContent[] {
           ModelContent.Text("I am testing File input. Can you describe the image in the attached file?"),
           ModelContent.FileData("image/png", new Uri($"gs://{FirebaseApp.DefaultInstance.Options.StorageBucket}/FCMImages/mushroom.png"))
-        );
+        });
 
         // Without Auth, the previous call should throw an exception.
         // With Auth, we should be able to describe the image in the file.
