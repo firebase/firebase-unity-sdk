@@ -65,6 +65,7 @@ namespace Firebase.Sample.VertexAI {
         TestChatBasicTextStream,
         TestCountTokens,
         TestYoutubeLink,
+        TestGenerateImage,
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
@@ -630,6 +631,35 @@ namespace Firebase.Sample.VertexAI {
 
       Assert($"Response should have included Firebase: {response.Text}",
           response.Text.Contains("Firebase", StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Test being able to generate an image with GenerateContent.
+    async Task TestGenerateImage(Backend backend) {
+      var model = GetFirebaseAI(backend).GetGenerativeModel("gemini-2.0-flash-exp",
+        generationConfig: new GenerationConfig(
+          responseModalities: new [] { ResponseModality.Text, ResponseModality.Image })
+      );
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+        ModelContent.Text("Can you give me a picture of a cartoon dog, and a couple of sentences about him?")
+      );
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+
+      // We don't care much about the response, just that there is an image, and text.
+      bool foundText = false;
+      bool foundImage = false;
+      var candidate = response.Candidates.First();
+      foreach (var part in candidate.Content.Parts) {
+        if (part is ModelContent.TextPart) {
+          foundText = true;
+        } else if (part is ModelContent.InlineDataPart dataPart) {
+          if (dataPart.MimeType.Contains("image")) {
+            foundImage = true;
+          }
+        }
+      }
+      Assert($"Missing expected modalities. Text: {foundText}, Image: {foundImage}", foundText && foundImage);
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.

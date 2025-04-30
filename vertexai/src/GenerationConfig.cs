@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Firebase.VertexAI.Internal;
 
 namespace Firebase.VertexAI {
 
@@ -34,6 +36,7 @@ public readonly struct GenerationConfig {
   private readonly string[] _stopSequences;
   private readonly string _responseMimeType;
   private readonly Schema _responseSchema;
+  private readonly List<ResponseModality> _responseModalities;
 
   /// <summary>
   /// Creates a new `GenerationConfig` value.
@@ -146,7 +149,8 @@ public readonly struct GenerationConfig {
       float? frequencyPenalty = null,
       string[] stopSequences = null,
       string responseMimeType = null,
-      Schema responseSchema = null) {
+      Schema responseSchema = null,
+      IEnumerable<ResponseModality> responseModalities = null) {
     _temperature = temperature;
     _topP = topP;
     _topK = topK;
@@ -157,6 +161,8 @@ public readonly struct GenerationConfig {
     _stopSequences = stopSequences;
     _responseMimeType = responseMimeType;
     _responseSchema = responseSchema;
+    _responseModalities = responseModalities != null ?
+        new List<ResponseModality>(responseModalities) : null;
   }
 
   /// <summary>
@@ -175,6 +181,10 @@ public readonly struct GenerationConfig {
     if (_stopSequences != null && _stopSequences.Length > 0) jsonDict["stopSequences"] = _stopSequences;
     if (!string.IsNullOrWhiteSpace(_responseMimeType)) jsonDict["responseMimeType"] = _responseMimeType;
     if (_responseSchema != null) jsonDict["responseSchema"] = _responseSchema.ToJson();
+    if (_responseModalities != null && _responseModalities.Count > 0) {
+      jsonDict["responseModalities"] =
+          _responseModalities.Select(EnumConverters.ResponseModalityToString).ToList();
+    }
 
     return jsonDict;
   }
