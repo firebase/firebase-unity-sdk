@@ -77,7 +77,7 @@ internal static class FirebaseInterops {
         return;
       }
     } catch (Exception e) {
-      LogError($"Failed to initialize FirebaseApp reflection: {e.Message}");
+      LogError($"Failed to initialize FirebaseApp reflection: {e}");
     }
   }
 
@@ -90,7 +90,7 @@ internal static class FirebaseInterops {
     try {
       return (bool)_dataCollectionProperty.GetValue(firebaseApp);
     } catch (Exception e) {
-      LogError($"Error accessing 'IsDataCollectionDefaultEnabled': {e.Message}");
+      LogError($"Error accessing 'IsDataCollectionDefaultEnabled': {e}");
       return false;
     }
   }
@@ -117,7 +117,7 @@ internal static class FirebaseInterops {
 
       return sdkVersionProperty.GetValue(null) as string ?? _unknownSdkVersion;
     } catch (Exception e) {
-      LogError($"Error accessing SdkVersion via reflection: {e.Message}");
+      LogError($"Error accessing SdkVersion via reflection: {e}");
       return _unknownSdkVersion;
     }
   });
