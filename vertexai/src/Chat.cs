@@ -85,7 +85,7 @@ public class Chat {
   /// Sends a message using the existing history of this chat as context. If successful, the message
   /// and response will be added to the history. If unsuccessful, history will remain unchanged.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The model's response if no error occurred.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
@@ -122,7 +122,7 @@ public class Chat {
   /// Sends a message using the existing history of this chat as context. If successful, the message
   /// and response will be added to the history. If unsuccessful, history will remain unchanged.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>

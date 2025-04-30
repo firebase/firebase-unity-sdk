@@ -105,7 +105,7 @@ public class GenerativeModel {
   /// <summary>
   /// Generates new content from input `ModelContent` given to the model as a prompt.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The generated content response from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
@@ -139,7 +139,7 @@ public class GenerativeModel {
   /// <summary>
   /// Generates new content as a stream from input `ModelContent` given to the model as a prompt.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
@@ -172,7 +172,7 @@ public class GenerativeModel {
   /// <summary>
   /// Counts the number of tokens in a prompt using the model's tokenizer.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during the request.</exception>
