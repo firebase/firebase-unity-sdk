@@ -90,8 +90,12 @@ public class LiveGenerativeModel {
     string endpoint = GetURL();
 
     // Set initial headers
-    // TODO: Get the Version from the Firebase.VersionInfo.SdkVersion (requires exposing it via App)
-    clientWebSocket.Options.SetRequestHeader("x-goog-api-client", "genai-csharp/0.1.0");
+    string version = FirebaseInterops.GetVersionInfoSdkVersion();
+    clientWebSocket.Options.SetRequestHeader("x-goog-api-client", $"genai-csharp/{version}");
+    if (FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp)) {
+      clientWebSocket.Options.SetRequestHeader("X-Firebase-AppId", _firebaseApp.Options.AppId);
+      clientWebSocket.Options.SetRequestHeader("X-Firebase-AppVersion", version);
+    }
     // Add additional Firebase tokens to the header.
     await FirebaseInterops.AddFirebaseTokensAsync(clientWebSocket, _firebaseApp);
 
