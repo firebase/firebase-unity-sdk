@@ -171,12 +171,11 @@ public class LiveSession : IDisposable {
 
   /// <summary>
   /// Receives a stream of responses from the server. Having multiple of these ongoing will result in unexpected behavior.
+  /// Closes upon receiving a TurnComplete from the server.
   /// </summary>
-  /// <param name="closeOnTurnComplete">Should the stream stop when the server returns TurnComplete.</param>
   /// <param name="cancellationToken">A token to cancel the operation.</param>
   /// <returns>A stream of `LiveContentResponse`s from the backend.</returns>
   public async IAsyncEnumerable<LiveSessionResponse> ReceiveAsync(
-      bool closeOnTurnComplete = true,
       [EnumeratorCancellation] CancellationToken cancellationToken = default) {
     if (_clientWebSocket.State != WebSocketState.Open) {
       throw new InvalidOperationException("WebSocket is not open. Cannot start receiving.");
@@ -206,8 +205,8 @@ public class LiveSession : IDisposable {
           if (response != null) {
             yield return response.Value;
 
-            if (closeOnTurnComplete &&
-                response?.Message is LiveSessionContent serverContent &&
+            // On receiving TurnComplete we close the ongoing connection.
+            if (response?.Message is LiveSessionContent serverContent &&
                 serverContent.TurnComplete) {
               break;
             }
