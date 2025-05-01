@@ -24,6 +24,8 @@ namespace Firebase.VertexAI.Internal {
 
 // Contains internal helper methods for interacting with other Firebase libraries.
 internal static class FirebaseInterops {
+  // The cached fields for FirebaseApp reflection.
+  private static PropertyInfo _dataCollectionProperty = null;
 
   // The various App Check types needed to retrieve the token, cached via reflection on startup.
   private static Type _appCheckType;
@@ -48,6 +50,7 @@ internal static class FirebaseInterops {
   private const string authHeader = "Authorization";
 
   static FirebaseInterops() {
+    InitializeAppReflection();
     InitializeAppCheckReflection();
     InitializeAuthReflection();
   }
@@ -56,6 +59,72 @@ internal static class FirebaseInterops {
 #if FIREBASE_VERTEXAI_DEBUG_LOGGING
     UnityEngine.Debug.LogError(message);
 #endif
+  }
+
+  // Cache the methods needed for FirebaseApp reflection.
+  private static void InitializeAppReflection() {
+    try {
+      _dataCollectionProperty = typeof(FirebaseApp).GetProperty(
+          "IsDataCollectionDefaultEnabled",
+          BindingFlags.Instance | BindingFlags.NonPublic);
+      if (_dataCollectionProperty == null) {
+        LogError("Could not find FirebaseApp.IsDataCollectionDefaultEnabled property via reflection.");
+        return;
+      }
+      if (_dataCollectionProperty.PropertyType != typeof(bool)) {
+        LogError("FirebaseApp.IsDataCollectionDefaultEnabled is not a bool, " +
+                 $"but is {_dataCollectionProperty.PropertyType}");
+        return;
+      }
+    } catch (Exception e) {
+      LogError($"Failed to initialize FirebaseApp reflection: {e}");
+    }
+  }
+
+  // Gets the property FirebaseApp.IsDataCollectionDefaultEnabled.
+  public static bool GetIsDataCollectionDefaultEnabled(FirebaseApp firebaseApp) {
+    if (firebaseApp == null || _dataCollectionProperty == null) {
+      return false;
+    }
+
+    try {
+      return (bool)_dataCollectionProperty.GetValue(firebaseApp);
+    } catch (Exception e) {
+      LogError($"Error accessing 'IsDataCollectionDefaultEnabled': {e}");
+      return false;
+    }
+  }
+
+  // SDK version to use if unable to find it.
+  private const string _unknownSdkVersion = "unknown";
+  private static readonly Lazy<string> _sdkVersionFetcher = new(() => {
+    try {
+      // Get the type Firebase.VersionInfo from the assembly that defines FirebaseApp.
+      Type versionInfoType = typeof(FirebaseApp).Assembly.GetType("Firebase.VersionInfo");
+      if (versionInfoType == null) {
+        LogError("Firebase.VersionInfo type not found via reflection");
+        return _unknownSdkVersion;
+      }
+
+      // Firebase.VersionInfo.SdkVersion
+      PropertyInfo sdkVersionProperty = versionInfoType.GetProperty(
+              "SdkVersion",
+              BindingFlags.Static | BindingFlags.NonPublic);
+      if (sdkVersionProperty == null) {
+        LogError("Firebase.VersionInfo.SdkVersion property not found via reflection.");
+        return _unknownSdkVersion;
+      }
+
+      return sdkVersionProperty.GetValue(null) as string ?? _unknownSdkVersion;
+    } catch (Exception e) {
+      LogError($"Error accessing SdkVersion via reflection: {e}");
+      return _unknownSdkVersion;
+    }
+  });
+
+  // Gets the internal property Firebase.VersionInfo.SdkVersion
+  internal static string GetVersionInfoSdkVersion() {
+    return _sdkVersionFetcher.Value;
   }
 
   // Cache the various types and methods needed for AppCheck token retrieval.
@@ -301,7 +370,6 @@ internal static class FirebaseInterops {
       socket.Options.SetRequestHeader(authHeader, $"Firebase {authToken}");
     }
   }
-
 }
 
 }

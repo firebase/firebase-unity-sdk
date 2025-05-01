@@ -330,8 +330,12 @@ public class GenerativeModel {
 
   private async Task SetRequestHeaders(HttpRequestMessage request) {
     request.Headers.Add("x-goog-api-key", _firebaseApp.Options.ApiKey);
-    // TODO: Get the Version from the Firebase.VersionInfo.SdkVersion (requires exposing it via App)
-    request.Headers.Add("x-goog-api-client", "genai-csharp/0.1.0");
+    string version = FirebaseInterops.GetVersionInfoSdkVersion();
+    request.Headers.Add("x-goog-api-client", $"genai-csharp/{version}");
+    if (FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp)) {
+      request.Headers.Add("X-Firebase-AppId", _firebaseApp.Options.AppId);
+      request.Headers.Add("X-Firebase-AppVersion", UnityEngine.Application.version);
+    }
     // Add additional Firebase tokens to the header.
     await FirebaseInterops.AddFirebaseTokensAsync(request, _firebaseApp);
   }
