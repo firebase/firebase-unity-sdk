@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Firebase.VertexAI.Internal;
 
@@ -60,72 +61,78 @@ public class Chat {
   /// Sends a message using the existing history of this chat as context. If successful, the message
   /// and response will be added to the history. If unsuccessful, history will remain unchanged.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The model's response if no error occurred.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> SendMessageAsync(
-      params ModelContent[] content) {
-    return SendMessageAsync((IEnumerable<ModelContent>)content);
+      ModelContent content, CancellationToken cancellationToken = default) {
+    return SendMessageAsync(new[] { content }, cancellationToken);
   }
   /// <summary>
   /// Sends a message using the existing history of this chat as context. If successful, the message
   /// and response will be added to the history. If unsuccessful, history will remain unchanged.
   /// </summary>
   /// <param name="text">The text given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The model's response if no error occurred.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> SendMessageAsync(
-      string text) {
-    return SendMessageAsync(new ModelContent[] { ModelContent.Text(text) });
+      string text, CancellationToken cancellationToken = default) {
+    return SendMessageAsync(new ModelContent[] { ModelContent.Text(text) }, cancellationToken);
   }
   /// <summary>
   /// Sends a message using the existing history of this chat as context. If successful, the message
   /// and response will be added to the history. If unsuccessful, history will remain unchanged.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The model's response if no error occurred.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> SendMessageAsync(
-      IEnumerable<ModelContent> content) {
-    return SendMessageAsyncInternal(content);
+      IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
+    return SendMessageAsyncInternal(content, cancellationToken);
   }
 
   /// <summary>
   /// Sends a message using the existing history of this chat as context. If successful, the message
   /// and response will be added to the history. If unsuccessful, history will remain unchanged.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
-      params ModelContent[] content) {
-    return SendMessageStreamAsync((IEnumerable<ModelContent>)content);
+      ModelContent content, CancellationToken cancellationToken = default) {
+    return SendMessageStreamAsync(new[] { content }, cancellationToken);
   }
   /// <summary>
   /// Sends a message using the existing history of this chat as context. If successful, the message
   /// and response will be added to the history. If unsuccessful, history will remain unchanged.
   /// </summary>
   /// <param name="text">The text given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
-      string text) {
-    return SendMessageStreamAsync(new ModelContent[] { ModelContent.Text(text) });
+      string text, CancellationToken cancellationToken = default) {
+    return SendMessageStreamAsync(new ModelContent[] { ModelContent.Text(text) }, cancellationToken);
   }
   /// <summary>
   /// Sends a message using the existing history of this chat as context. If successful, the message
   /// and response will be added to the history. If unsuccessful, history will remain unchanged.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
-      IEnumerable<ModelContent> content) {
-    return SendMessageStreamAsyncInternal(content);
+      IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
+    return SendMessageStreamAsyncInternal(content, cancellationToken);
   }
 
   private async Task<GenerateContentResponse> SendMessageAsyncInternal(
-      IEnumerable<ModelContent> requestContent) {
+      IEnumerable<ModelContent> requestContent, CancellationToken cancellationToken = default) {
     // Make sure that the requests are set to to role "user".
     List<ModelContent> fixedRequests = requestContent.Select(VertexAIExtensions.ConvertToUser).ToList();
     // Set up the context to send in the request
@@ -134,7 +141,7 @@ public class Chat {
 
     // Note: GenerateContentAsync can throw exceptions if there was a problem, but
     // we allow it to just be passed back to the user.
-    GenerateContentResponse response = await generativeModel.GenerateContentAsync(fullRequest);
+    GenerateContentResponse response = await generativeModel.GenerateContentAsync(fullRequest, cancellationToken);
 
     // Only after getting a valid response, add both to the history for later.
     // But either way pass the response along to the user.
@@ -149,7 +156,8 @@ public class Chat {
   }
 
   private async IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsyncInternal(
-      IEnumerable<ModelContent> requestContent) {
+      IEnumerable<ModelContent> requestContent,
+      [EnumeratorCancellation] CancellationToken cancellationToken = default) {
     // Make sure that the requests are set to to role "user".
     List<ModelContent> fixedRequests = requestContent.Select(VertexAIExtensions.ConvertToUser).ToList();
     // Set up the context to send in the request
@@ -161,7 +169,7 @@ public class Chat {
     // Note: GenerateContentStreamAsync can throw exceptions if there was a problem, but
     // we allow it to just be passed back to the user.
     await foreach (GenerateContentResponse response in
-        generativeModel.GenerateContentStreamAsync(fullRequest)) {
+        generativeModel.GenerateContentStreamAsync(fullRequest, cancellationToken)) {
       // If the response had a problem, we still want to pass it along to the user for context,
       // but we don't want to save the history anymore.
       if (response.Candidates.Any()) {

@@ -19,7 +19,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Google.MiniJSON;
 using Firebase.VertexAI.Internal;
@@ -81,94 +83,102 @@ public class GenerativeModel {
   /// <summary>
   /// Generates new content from input `ModelContent` given to the model as a prompt.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The generated content response from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> GenerateContentAsync(
-      params ModelContent[] content) {
-    return GenerateContentAsync((IEnumerable<ModelContent>)content);
+      ModelContent content, CancellationToken cancellationToken = default) {
+    return GenerateContentAsync(new[] { content }, cancellationToken);
   }
   /// <summary>
   /// Generates new content from input text given to the model as a prompt.
   /// </summary>
   /// <param name="text">The text given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The generated content response from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> GenerateContentAsync(
-      string text) {
-    return GenerateContentAsync(new ModelContent[] { ModelContent.Text(text) });
+      string text, CancellationToken cancellationToken = default) {
+    return GenerateContentAsync(new[] { ModelContent.Text(text) }, cancellationToken);
   }
   /// <summary>
   /// Generates new content from input `ModelContent` given to the model as a prompt.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The generated content response from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> GenerateContentAsync(
-      IEnumerable<ModelContent> content) {
-    return GenerateContentAsyncInternal(content);
+      IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
+    return GenerateContentAsyncInternal(content, cancellationToken);
   }
 
   /// <summary>
   /// Generates new content as a stream from input `ModelContent` given to the model as a prompt.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
-      params ModelContent[] content) {
-    return GenerateContentStreamAsync((IEnumerable<ModelContent>)content);
+      ModelContent content, CancellationToken cancellationToken = default) {
+    return GenerateContentStreamAsync(new[] { content }, cancellationToken);
   }
   /// <summary>
   /// Generates new content as a stream from input text given to the model as a prompt.
   /// </summary>
   /// <param name="text">The text given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
-      string text) {
-    return GenerateContentStreamAsync(new ModelContent[] { ModelContent.Text(text) });
+      string text, CancellationToken cancellationToken = default) {
+    return GenerateContentStreamAsync(new[] { ModelContent.Text(text) }, cancellationToken);
   }
   /// <summary>
   /// Generates new content as a stream from input `ModelContent` given to the model as a prompt.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
-      IEnumerable<ModelContent> content) {
-    return GenerateContentStreamAsyncInternal(content);
+      IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
+    return GenerateContentStreamAsyncInternal(content, cancellationToken);
   }
 
   /// <summary>
   /// Counts the number of tokens in a prompt using the model's tokenizer.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
   /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during the request.</exception>
   public Task<CountTokensResponse> CountTokensAsync(
-      params ModelContent[] content) {
-    return CountTokensAsync((IEnumerable<ModelContent>)content);
+      ModelContent content, CancellationToken cancellationToken = default) {
+    return CountTokensAsync(new[] { content }, cancellationToken);
   }
   /// <summary>
   /// Counts the number of tokens in a prompt using the model's tokenizer.
   /// </summary>
   /// <param name="text">The text input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during the request.</exception>
   public Task<CountTokensResponse> CountTokensAsync(
-      string text) {
-    return CountTokensAsync(new ModelContent[] { ModelContent.Text(text) });
+      string text, CancellationToken cancellationToken = default) {
+    return CountTokensAsync(new[] { ModelContent.Text(text) }, cancellationToken);
   }
   /// <summary>
   /// Counts the number of tokens in a prompt using the model's tokenizer.
   /// </summary>
-  /// <param name="content">The input(s) given to the model as a prompt.</param>
+  /// <param name="content">The input given to the model as a prompt.</param>
+  /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
   /// <exception cref="VertexAIException">Thrown when an error occurs during the request.</exception>
   public Task<CountTokensResponse> CountTokensAsync(
-      IEnumerable<ModelContent> content) {
-    return CountTokensAsyncInternal(content);
+      IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
+    return CountTokensAsyncInternal(content, cancellationToken);
   }
 
   /// <summary>
@@ -188,7 +198,8 @@ public class GenerativeModel {
 #endregion
 
   private async Task<GenerateContentResponse> GenerateContentAsyncInternal(
-      IEnumerable<ModelContent> content) {
+      IEnumerable<ModelContent> content,
+      CancellationToken cancellationToken) {
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":generateContent");
 
     // Set the request headers
@@ -204,7 +215,7 @@ public class GenerativeModel {
 
     HttpResponseMessage response;
     try {
-      response = await _httpClient.SendAsync(request);
+      response = await _httpClient.SendAsync(request, cancellationToken);
       response.EnsureSuccessStatusCode();
     } catch (TaskCanceledException e) when (e.InnerException is TimeoutException) {
       throw new VertexAIRequestTimeoutException("Request timed out.", e);
@@ -223,7 +234,8 @@ public class GenerativeModel {
   }
 
   private async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
-      IEnumerable<ModelContent> content) {
+      IEnumerable<ModelContent> content,
+      [EnumeratorCancellation] CancellationToken cancellationToken) {
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":streamGenerateContent?alt=sse");
 
     // Set the request headers
@@ -239,7 +251,7 @@ public class GenerativeModel {
 
     HttpResponseMessage response;
     try {
-      response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+      response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
       response.EnsureSuccessStatusCode();
     } catch (TaskCanceledException e) when (e.InnerException is TimeoutException) {
       throw new VertexAIRequestTimeoutException("Request timed out.", e);
@@ -266,7 +278,8 @@ public class GenerativeModel {
   }
 
   private async Task<CountTokensResponse> CountTokensAsyncInternal(
-      IEnumerable<ModelContent> content) {
+      IEnumerable<ModelContent> content,
+      CancellationToken cancellationToken) {
     HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":countTokens");
 
     // Set the request headers
@@ -282,7 +295,7 @@ public class GenerativeModel {
 
     HttpResponseMessage response;
     try {
-      response = await _httpClient.SendAsync(request);
+      response = await _httpClient.SendAsync(request, cancellationToken);
       response.EnsureSuccessStatusCode();
     } catch (TaskCanceledException e) when (e.InnerException is TimeoutException) {
       throw new VertexAIRequestTimeoutException("Request timed out.", e);
