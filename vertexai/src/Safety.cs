@@ -76,6 +76,10 @@ public readonly struct SafetySetting {
     /// All content is allowed regardless of harm.
     /// </summary>
     None,
+    /// <summary>
+    /// All content is allowed regardless of harm, and metadata will not be included in the response.
+    /// </summary>
+    Off,
   }
 
   /// <summary>
@@ -128,6 +132,7 @@ public readonly struct SafetySetting {
       HarmBlockThreshold.MediumAndAbove => "BLOCK_MEDIUM_AND_ABOVE",
       HarmBlockThreshold.OnlyHigh => "BLOCK_ONLY_HIGH",
       HarmBlockThreshold.None => "BLOCK_NONE",
+      HarmBlockThreshold.Off => "OFF",
       _ => threshold.ToString(), // Fallback
     };
   }
