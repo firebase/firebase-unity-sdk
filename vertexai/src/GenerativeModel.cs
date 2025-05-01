@@ -321,7 +321,7 @@ public class GenerativeModel {
     request.Headers.Add("x-goog-api-client", $"genai-csharp/{version}");
     if (FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp)) {
       request.Headers.Add("X-Firebase-AppId", _firebaseApp.Options.AppId);
-      request.Headers.Add("X-Firebase-AppVersion", version);
+      request.Headers.Add("X-Firebase-AppVersion", UnityEngine.Application.version);
     }
     // Add additional Firebase tokens to the header.
     await FirebaseInterops.AddFirebaseTokensAsync(request, _firebaseApp);
