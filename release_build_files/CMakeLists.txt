@@ -86,6 +86,6 @@ unity_pack_file(
 )
 
 unity_pack_file(
-  "${FIREBASE_UNITY_DIR}/docs/vertexai/VertexAIReadme.md"
+  "${FIREBASE_UNITY_DIR}/docs/firebaseai/FirebaseAIReadme.md"
   PACK_PATH "Firebase/Editor"
 )

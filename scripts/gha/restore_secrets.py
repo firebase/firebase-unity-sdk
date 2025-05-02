@@ -64,7 +64,7 @@ CAPITALIZATIONS = {
   "messaging": "Messaging",
   "remote_config": "RemoteConfig",
   "storage": "Storage",
-  "vertexai": "VertexAI"
+  "firebaseai": "FirebaseAI"
 }
 
 
