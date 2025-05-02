@@ -59,6 +59,7 @@ namespace Firebase.Sample.VertexAI {
         TestFunctionCallingAny,
         TestFunctionCallingNone,
         TestEnumSchemaResponse,
+        TestAnyOfSchemaResponse,
         TestChatBasicTextNoHistory,
         TestChatBasicTextPriorHistory,
         TestChatFunctionCalling,
@@ -376,10 +377,10 @@ namespace Firebase.Sample.VertexAI {
         basicFunctionName, "A function used to test Function Calling.",
         new Dictionary<string, Schema>() {
           { basicParameterEnumName, Schema.Enum(new string[] { basicParameterEnumValue }) },
-          { basicParameterIntName, Schema.Int("An integer value") },
+          { basicParameterIntName, Schema.Int("An integer value", minimum: 4) },
           { basicParameterObjectName, Schema.Object(new Dictionary<string, Schema>() {
               { basicParameterObjectBoolean, Schema.Boolean("Is the float you are including negative?") },
-              { basicParameterObjectFloat, Schema.Float(nullable: true) }
+              { basicParameterObjectFloat, Schema.Float(nullable: true, maximum: 128f) }
             }) }
         }));
 
@@ -444,6 +445,23 @@ namespace Firebase.Sample.VertexAI {
         "Hello, I am testing setting the response schema to an enum.");
 
       AssertEq("Should only be returning the single enum given", response.Text, enumValue);
+    }
+
+    // Test if setting a response schema with an enum works.
+    async Task TestAnyOfSchemaResponse(Backend backend) {
+      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
+        generationConfig: new GenerationConfig(
+          responseMimeType: "application/json",
+          responseSchema: Schema.Array(
+              Schema.AnyOf(new[] { Schema.Int(), Schema.String() }),
+              minItems: 2,
+              maxItems: 6)));
+      
+      var response = await model.GenerateContentAsync(
+        "Hello, I am testing setting the response schema with an array, cause you give me some random values.");
+
+      // There isn't much guarantee on what this will respond with. We just want non-empty.
+      Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
     }
 
     // Test if when using Chat the model will get the previous messages.

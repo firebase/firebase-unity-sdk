@@ -49,6 +49,7 @@ public class Schema {
       SchemaType.Boolean => "BOOLEAN",
       SchemaType.Array => "ARRAY",
       SchemaType.Object => "OBJECT",
+      null => null,
       _ => throw new ArgumentOutOfRangeException(nameof(Type), Type, "Invalid SchemaType value")
     };
 
@@ -73,11 +74,19 @@ public class Schema {
   /// <summary>
   /// The data type.
   /// </summary>
-  public SchemaType Type { get; }
+  public SchemaType? Type { get; }
   /// <summary>
-  /// A brief description of the parameter.
+  /// A human-readable explanation of the purpose of the schema or property. While not strictly
+  /// enforced on the value itself, good descriptions significantly help the model understand the
+  /// context and generate more relevant and accurate output.
   /// </summary>
   public string Description { get; }
+  /// <summary>
+  /// A human-readable name/summary for the schema or a specific property. This helps document the
+  /// schema's purpose but doesn't typically constrain the generated value. It can subtly guide the
+  /// model by clarifying the intent of a field.
+  /// </summary>
+  public string Title { get; }
   /// <summary>
   /// Indicates if the value may be null.
   /// </summary>
@@ -96,40 +105,90 @@ public class Schema {
   /// Schema of the elements of type "Array".
   /// </summary>
   public Schema Items { get; }
+  /// <summary>
+  /// An integer specifying the minimum number of items the generated "Array" must contain.
+  /// </summary>
+  public int? MinItems { get; }
+  /// <summary>
+  /// An integer specifying the maximum number of items the generated "Array" must contain.
+  /// </summary>
+  public int? MaxItems { get; }
+
+  /// <summary>
+  /// The minimum value of a numeric type.
+  /// </summary>
+  public double? Minimum { get; }
+  /// <summary>
+  /// The maximum value of a numeric type.
+  /// </summary>
+  public double? Maximum { get; }
 
   /// <summary>
   /// Properties of type "Object".
   /// </summary>
   public IReadOnlyDictionary<string, Schema> Properties { get; }
+
   private readonly ReadOnlyCollection<string> _requiredProperties;
   /// <summary>
   /// Required properties of type "Object".
   /// </summary>
   public IEnumerable<string> RequiredProperties => _requiredProperties;
 
+  private readonly ReadOnlyCollection<string> _propertyOrdering;
+  /// <summary>
+  /// A specific hint provided to the Gemini model, suggesting the order in which the keys should
+  /// appear in the generated JSON string. Important: Standard JSON objects are inherently unordered
+  /// collections of key-value pairs. While the model will try to respect PropertyOrdering in its
+  /// textual JSON output, subsequent parsing into native C# objects (like Dictionaries) might
+  /// not preserve this order. This parameter primarily affects the raw JSON string
+  /// serialization.
+  /// </summary>
+  public IEnumerable<string> PropertyOrdering => _propertyOrdering;
+
+  private readonly ReadOnlyCollection<Schema> _anyOf;
+  /// <summary>
+  /// An array of `Schema` objects. The generated data must be valid against *any* (one or more)
+  /// of the schemas listed in this array. This allows specifying multiple possible structures or
+  /// types for a single field.
+  ///
+  /// For example, a value could be either a `String` or an `Int`:
+  /// ```
+  /// Schema.AnyOf(new [] { Schema.String(), Schema.Int() })
+  /// ```
+  /// </summary>
+  public IEnumerable<Schema> AnyOfSchemas => _anyOf;
+
   private Schema(
-      SchemaType type,
+      SchemaType? type,
       string description = null,
+      string title = null,
       bool? nullable = null,
       string format = null,
       IEnumerable<string> enumValues = null,
       Schema items = null,
+      int? minItems = null,
+      int? maxItems = null,
+      double? minimum = null,
+      double? maximum = null,
       IDictionary<string, Schema> properties = null,
-      IEnumerable<string> requiredProperties = null) {
+      IEnumerable<string> requiredProperties = null,
+      IEnumerable<string> propertyOrdering = null,
+      IEnumerable<Schema> anyOf = null) {
     Type = type;
     Description = description;
+    Title = title;
     Nullable = nullable;
     Format = format;
-    _enumValues = new ReadOnlyCollection<string>(
-        enumValues?.ToList() ?? new List<string>());
+    _enumValues = enumValues?.ToList().AsReadOnly();
     Items = items;
-    if (properties == null) {
-      Properties = new Dictionary<string, Schema>();
-    } else {
-      Properties = new Dictionary<string, Schema>(properties);
-    }
-    _requiredProperties = new ReadOnlyCollection<string>(
-        requiredProperties?.ToList() ?? new List<string>());
+    MinItems = minItems;
+    MaxItems = maxItems;
+    Minimum = minimum;
+    Maximum = maximum;
+    Properties = (properties == null) ? null : new Dictionary<string, Schema>(properties);
+    _requiredProperties = requiredProperties?.ToList().AsReadOnly();
+    _propertyOrdering = propertyOrdering?.ToList().AsReadOnly();
+    _anyOf = anyOf?.ToList().AsReadOnly();
   }
 
   /// <summary>
@@ -155,13 +214,21 @@ public class Schema {
   /// </summary>
   /// <param name="description">An optional description of what the integer should contain or represent.</param>
   /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
+  /// <param name="minimum">If specified, instructs the model that the value should be greater than or
+  ///   equal to the specified minimum.</param>
+  /// <param name="maximum">If specified, instructs the model that the value should be less than or
+  ///   equal to the specified maximum.</param>
   public static Schema Int(
       string description = null,
-      bool nullable = false) {
+      bool nullable = false,
+      int? minimum = null,
+      int? maximum = null) {
     return new Schema(SchemaType.Integer,
         description: description,
         nullable: nullable,
-        format: "int32"
+        format: "int32",
+        minimum: minimum,
+        maximum: maximum
       );
   }
 
@@ -170,12 +237,20 @@ public class Schema {
   /// </summary>
   /// <param name="description">An optional description of what the number should contain or represent.</param>
   /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
+  /// <param name="minimum">If specified, instructs the model that the value should be greater than or
+  ///   equal to the specified minimum.</param>
+  /// <param name="maximum">If specified, instructs the model that the value should be less than or
+  ///   equal to the specified maximum.</param>
   public static Schema Long(
       string description = null,
-      bool nullable = false) {
+      bool nullable = false,
+      long? minimum = null,
+      long? maximum = null) {
     return new Schema(SchemaType.Integer,
         description: description,
-        nullable: nullable
+        nullable: nullable,
+        minimum: minimum,
+        maximum: maximum
       );
   }
 
@@ -184,12 +259,20 @@ public class Schema {
   /// </summary>
   /// <param name="description">An optional description of what the number should contain or represent.</param>
   /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
+  /// <param name="minimum">If specified, instructs the model that the value should be greater than or
+  ///   equal to the specified minimum.</param>
+  /// <param name="maximum">If specified, instructs the model that the value should be less than or
+  ///   equal to the specified maximum.</param>
   public static Schema Double(
       string description = null,
-      bool nullable = false) {
+      bool nullable = false,
+      double? minimum = null,
+      double? maximum = null) {
     return new Schema(SchemaType.Number,
         description: description,
-        nullable: nullable
+        nullable: nullable,
+        minimum: minimum,
+        maximum: maximum
       );
   }
 
@@ -202,13 +285,21 @@ public class Schema {
   /// </summary>
   /// <param name="description">An optional description of what the number should contain or represent.</param>
   /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
+  /// <param name="minimum">If specified, instructs the model that the value should be greater than or
+  ///   equal to the specified minimum.</param>
+  /// <param name="maximum">If specified, instructs the model that the value should be less than or
+  ///   equal to the specified maximum.</param>
   public static Schema Float(
       string description = null,
-      bool nullable = false) {
+      bool nullable = false,
+      float? minimum = null,
+      float? maximum = null) {
     return new Schema(SchemaType.Number,
         description: description,
         nullable: nullable,
-        format: "float"
+        format: "float",
+        minimum: minimum,
+        maximum: maximum
       );
   }
 
@@ -247,12 +338,17 @@ public class Schema {
   /// <param name="optionalProperties">The list of optional properties. They must correspond to the keys
   ///   provided in the `properties` map. By default it's empty, signaling the model that all
   ///   properties are to be included.</param>
+  /// <param name="propertyOrdering">An optional hint to the model suggesting the order for keys in the
+  ///   generated JSON string.</param>
   /// <param name="description">An optional description of what the object represents.</param>
+  /// <param name="title">An optional human-readable name/summary for the object schema.</param>
   /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
   public static Schema Object(
       IDictionary<string, Schema> properties,
       IEnumerable<string> optionalProperties = null,
+      IEnumerable<string> propertyOrdering = null,
       string description = null,
+      string title = null,
       bool nullable = false) {
     if (properties == null) {
       throw new ArgumentNullException(nameof(properties));
@@ -281,9 +377,11 @@ public class Schema {
 
     return new Schema(SchemaType.Object,
         description: description,
+        title: title,
         nullable: nullable,
         properties: properties,
-        requiredProperties: required
+        requiredProperties: required,
+        propertyOrdering: propertyOrdering
       );
   }
 
@@ -293,19 +391,27 @@ public class Schema {
   /// <param name="items">The `Schema` of the elements stored in the array.</param>
   /// <param name="description">An optional description of what the array represents.</param>
   /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
+  /// <param name="minItems">Instructs the model to produce at least the specified minimum number of elements
+  ///   in the array.</param>
+  /// <param name="maxItems">Instructs the model to produce at most the specified minimum number of elements
+  ///   in the array.</param>
   public static Schema Array(
       Schema items,
       string description = null,
-      bool nullable = false) {
+      bool nullable = false,
+      int? minItems = null,
+      int? maxItems = null) {
     return new Schema(SchemaType.Array,
         description: description,
         nullable: nullable,
-        items: items
+        items: items,
+        minItems: minItems,
+        maxItems: maxItems
       );
   }
 
   /// <summary>
-  /// Returns a [Schema] for an enumeration.
+  /// Returns a `Schema` for an enumeration.
   ///
   /// For example, the cardinal directions can be represented as:
   /// ```
@@ -328,6 +434,28 @@ public class Schema {
   }
 
   /// <summary>
+  /// Returns a `Schema` representing a value that must conform to *any* (one or more) of the
+  /// provided sub-schemas.
+  ///
+  /// This schema instructs the model to produce data that is valid against at least one of the
+  /// schemas listed in the `schemas` array. This is useful when a field can accept multiple
+  /// distinct types or structures.
+  /// </summary>
+  /// <param name="schemas">An array of `Schema` objects. The generated data must be valid against at least
+  ///   one of these schemas. The array must not be empty.</param>
+  public static Schema AnyOf(
+      IEnumerable<Schema> schemas) {
+    if (schemas == null || !schemas.Any()) {
+      throw new ArgumentException("The `AnyOf` schemas array cannot be empty.");
+    }
+
+    // The backend doesn't define a SchemaType for AnyOf, instead using the existence of 'anyOf'.
+    return new Schema(null,
+        anyOf: schemas
+      );
+  }
+
+  /// <summary>
   /// Intended for internal use only.
   /// This method is used for serializing the object to JSON for the API request.
   /// </summary>
@@ -338,6 +466,9 @@ public class Schema {
     if (!string.IsNullOrWhiteSpace(Description)) {
       json["description"] = Description;
     }
+    if (!string.IsNullOrWhiteSpace(Title)) {
+      json["title"] = Title;
+    }
     if (Nullable.HasValue) {
       json["nullable"] = Nullable.Value;
     }
@@ -346,6 +477,18 @@ public class Schema {
     }
     if (Items != null) {
       json["items"] = Items.ToJson();
+    }
+    if (MinItems != null) {
+      json["minItems"] = MinItems.Value;
+    }
+    if (MaxItems != null) {
+      json["maxItems"] = MaxItems.Value;
+    }
+    if (Minimum != null) {
+      json["minimum"] = Minimum.Value;
+    }
+    if (Maximum != null) {
+      json["maximum"] = Maximum.Value;
     }
     if (Properties != null && Properties.Any()) {
       Dictionary<string, object> propertiesJson = new();
@@ -357,6 +500,12 @@ public class Schema {
     }
     if (RequiredProperties != null && RequiredProperties.Any()) {
       json["required"] = RequiredProperties.ToList();
+    }
+    if (PropertyOrdering != null && PropertyOrdering.Any()) {
+      json["propertyOrdering"] = PropertyOrdering.ToList();
+    }
+    if (AnyOfSchemas != null && AnyOfSchemas.Any()) {
+      json["anyOf"] = AnyOfSchemas.Select(s => s.ToJson()).ToList();
     }
 
     return json;
