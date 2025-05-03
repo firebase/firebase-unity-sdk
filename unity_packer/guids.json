@@ -1389,6 +1389,7 @@
         "Firebase/m2repository/com/google/firebase/firebase-storage-unity/12.4.1/firebase-storage-unity-12.4.1.srcaar": "385a2672c4a445e088d8d40eac29016b"
     },
     "12.5.0": {
+        "Firebase/Editor/FirebaseAI_version-12.5.0_manifest.txt": "aff68d4dbbcf4a65892205825ae01dfa",
         "Firebase/Editor/FirebaseAnalytics_version-12.5.0_manifest.txt": "55b6f53c2ade4b0ebcada450cac551cf",
         "Firebase/Editor/FirebaseAppCheck_version-12.5.0_manifest.txt": "cd03d9ba3dd2465e80a3ad277f9e8ed3",
         "Firebase/Editor/FirebaseAuth_version-12.5.0_manifest.txt": "57de507988e34891bd932e13217b6c26",
@@ -1401,7 +1402,6 @@
         "Firebase/Editor/FirebaseMessaging_version-12.5.0_manifest.txt": "fdf5d2bb0f9d4f0ba42e38b1f5c6b102",
         "Firebase/Editor/FirebaseRemoteConfig_version-12.5.0_manifest.txt": "2d1a5b051f1a452e9eb8afaa9799e48f",
         "Firebase/Editor/FirebaseStorage_version-12.5.0_manifest.txt": "94536946ac944e639dd690b9828a5314",
-        "Firebase/Editor/FirebaseAI_version-12.5.0_manifest.txt": "aff68d4dbbcf4a65892205825ae01dfa",
         "Firebase/Plugins/Firebase.FirebaseAI.dll": "7c23ae13d705434895cb14976926117b",
         "Firebase/Plugins/Firebase.FirebaseAI.pdb": "01edb10da18a4975af2cc8f7a6de5e5d",
         "Firebase/Plugins/x86_64/FirebaseCppApp-12_5_0.bundle": "60898de491fb4a168588dfa7b0c24942",
@@ -1435,6 +1435,7 @@
         "Firebase/m2repository/com/google/firebase/firebase-storage-unity/12.5.0/firebase-storage-unity-12.5.0.srcaar": "28f0c91bfac84256801162c98ab5ed13"
     },
     "12.6.0": {
+        "Firebase/Editor/FirebaseAI_version-12.6.0_manifest.txt": "6630aa2768c0440fa3342b651f86a5b9",
         "Firebase/Editor/FirebaseAnalytics_version-12.6.0_manifest.txt": "a9558199de05437e928a59482870887d",
         "Firebase/Editor/FirebaseAppCheck_version-12.6.0_manifest.txt": "92fdcfc1b5794e309077fff307cc8526",
         "Firebase/Editor/FirebaseAuth_version-12.6.0_manifest.txt": "21c2ac7b18b44f539ac01af3102f80a5",
@@ -1447,7 +1448,6 @@
         "Firebase/Editor/FirebaseMessaging_version-12.6.0_manifest.txt": "d5aaf7c0403641909284833b31b7ada1",
         "Firebase/Editor/FirebaseRemoteConfig_version-12.6.0_manifest.txt": "d7076b87cc7b4b9c843819e06a4ef261",
         "Firebase/Editor/FirebaseStorage_version-12.6.0_manifest.txt": "37a9eeed2d41464eba14e6dffbfa2481",
-        "Firebase/Editor/FirebaseAI_version-12.6.0_manifest.txt": "6630aa2768c0440fa3342b651f86a5b9",
         "Firebase/Plugins/x86_64/FirebaseCppApp-12_6_0.bundle": "5e7beea9b436402a98eb39f3588f546a",
         "Firebase/Plugins/x86_64/FirebaseCppApp-12_6_0.dll": "8797c3e68bd04185911320f56bd85f41",
         "Firebase/Plugins/x86_64/FirebaseCppApp-12_6_0.so": "8cf5d226b6f24739a7f84ef8351c274e",
@@ -1522,6 +1522,7 @@
         "Firebase/m2repository/com/google/firebase/firebase-storage-unity/12.7.0/firebase-storage-unity-12.7.0.srcaar": "6e8ba462efc34c4ba45b699fb21edc68"
     },
     "12.8.0": {
+        "Firebase/Editor/FirebaseAI_version-12.8.0_manifest.txt": "5316bc71db7647c0be120d684e7023b9",
         "Firebase/Editor/FirebaseAnalytics_version-12.8.0_manifest.txt": "a4e8e6cc224a43209c603e3759695835",
         "Firebase/Editor/FirebaseAppCheck_version-12.8.0_manifest.txt": "1581f56d605b4387a35bbde19de0ac87",
         "Firebase/Editor/FirebaseAuth_version-12.8.0_manifest.txt": "d9ddf1d55a4449e5b420ff57624c9eac",
