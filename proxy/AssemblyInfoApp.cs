@@ -55,7 +55,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Firebase.Storage.Testing")]
 [assembly: InternalsVisibleTo("Firebase.TestLab")]
 [assembly: InternalsVisibleTo("Firebase.TestLab.GameLoop")]
-[assembly: InternalsVisibleTo("Firebase.VertexAI")]
+[assembly: InternalsVisibleTo("Firebase.FirebaseAI")]
 
 // The assembly version has the format "{Major}.{Minor}.{Build}.{Revision}".
 // The form "{Major}.{Minor}.*" will automatically update the build and

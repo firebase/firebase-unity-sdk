@@ -43,7 +43,7 @@ from absl import logging
 SUPPORT_TARGETS = [
     "analytics", "app_check", "auth", "crashlytics", "database", "dynamic_links",
     "firestore", "functions", "installations", "messaging", "remote_config",
-    "storage", "vertexai"
+    "storage", "firebaseai"
 ]
 
 FLAGS = flags.FLAGS

@@ -216,20 +216,20 @@
       ]
     },
     {
-      "name": "vertexai",
-      "full_name": "FirebaseVertexAI",
-      "captial_name": "VertexAI",
-      "bundle_id": "com.google.firebase.unity.vertexai.testapp",
-      "testapp_path": "vertexai/testapp",
+      "name": "firebaseai",
+      "full_name": "FirebaseAI",
+      "captial_name": "FirebaseAI",
+      "bundle_id": "com.google.firebase.unity.firebaseai.testapp",
+      "testapp_path": "firebaseai/testapp",
       "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
-        "FirebaseVertexAI.unitypackage"
+        "FirebaseAI.unitypackage"
       ],
       "provision": "Firebase_Dev_Wildcard.mobileprovision",
       "upm_packages": [
         "com.google.external-dependency-manager-*.tgz",
         "com.google.firebase.app-*.tgz",
-        "com.google.firebase.vertexai-*.tgz"
+        "com.google.firebase.firebaseai-*.tgz"
       ]
     }
   ],

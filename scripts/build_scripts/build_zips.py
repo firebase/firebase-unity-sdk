@@ -34,12 +34,12 @@ SUPPORT_PLATFORMS = ("linux", "macos", "windows", "ios", "tvos", "android")
 SUPPORT_TARGETS = [
     "analytics", "app_check", "auth", "crashlytics", "database", "dynamic_links",
     "firestore", "functions", "installations", "messaging", "remote_config",
-    "storage", "vertexai"
+    "storage", "firebaseai"
 ]
 TVOS_SUPPORT_TARGETS = [
     "analytics", "app_check", "auth", "crashlytics", "database", "firestore",
     "functions", "installations", "messaging", "remote_config", "storage",
-    "vertexai"
+    "firebaseai"
 ]
 SUPPORT_DEVICE = ["device", "simulator"]
 
