@@ -219,7 +219,7 @@
       "name": "firebaseai",
       "full_name": "FirebaseAI",
       "captial_name": "FirebaseAI",
-      "bundle_id": "com.google.firebase.unity.vertexai.testapp",
+      "bundle_id": "com.google.firebase.unity.firebaseai.testapp",
       "testapp_path": "firebaseai/testapp",
       "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
