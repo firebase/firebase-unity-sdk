@@ -40,7 +40,7 @@ public readonly struct LiveSessionResponse {
   public string Text {
     get {
       StringBuilder stringBuilder = new();
-      if (Message is LiveSessionContent content) {
+      if (Message is LiveSessionContent content && content.Content != null) {
         foreach (var part in content.Content?.Parts) {
           if (part is ModelContent.TextPart textPart) {
             stringBuilder.Append(textPart.Text);
