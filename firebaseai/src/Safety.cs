@@ -16,9 +16,9 @@
 
 using System;
 using System.Collections.Generic;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// Categories describing the potential harm a piece of content may pose.

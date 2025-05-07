@@ -17,7 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// The entry point for all Firebase AI SDK functionality.

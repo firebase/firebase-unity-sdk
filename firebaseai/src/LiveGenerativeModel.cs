@@ -21,10 +21,10 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 using Google.MiniJSON;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// A live, generative AI model for real-time interaction.

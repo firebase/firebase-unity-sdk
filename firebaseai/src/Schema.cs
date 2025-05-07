@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// A `Schema` object allows the definition of input and output data types.

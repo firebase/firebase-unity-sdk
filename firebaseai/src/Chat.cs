@@ -20,9 +20,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// An object that represents a back-and-forth chat with a model, capturing the history and saving

@@ -17,7 +17,7 @@
 using System;
 using System.Linq;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 public class FirebaseAIException : Exception {
   internal FirebaseAIException(string message) : base(message) { }

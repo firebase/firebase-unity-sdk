@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace Firebase.FirebaseAI.Internal {
+namespace Firebase.AI.Internal {
 
 // Contains extension methods for converting shared enums to strings.
 internal static class EnumConverters {

@@ -24,7 +24,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google.MiniJSON;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// Manages asynchronous communication with Gemini model over a WebSocket

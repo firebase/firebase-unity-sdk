@@ -16,9 +16,9 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// A struct used to configure speech generation settings.

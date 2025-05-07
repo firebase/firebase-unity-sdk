@@ -24,9 +24,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.MiniJSON;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// A type that represents a remote multimodal model (like Gemini), with the ability to generate

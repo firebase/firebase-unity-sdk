@@ -17,9 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// A collection of source attributions for a piece of content.

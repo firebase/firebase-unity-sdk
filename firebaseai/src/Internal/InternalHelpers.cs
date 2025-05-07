@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Firebase.FirebaseAI.Internal {
+namespace Firebase.AI.Internal {
 
 // Include this to just shorthand it in this file
 using JsonDict = Dictionary<string, object>;
