@@ -28,5 +28,5 @@ unity_pack_folder(
 file(GLOB firebase_firebaseai_doc_src "src/*.cs")
 unity_pack_documentation_sources(firebaseai
   DOCUMENTATION_SOURCES
-    ${firebase_firebaseai_src}
+    ${firebase_firebaseai_doc_src}
 )
