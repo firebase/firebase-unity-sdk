@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// The response type the model should return with.

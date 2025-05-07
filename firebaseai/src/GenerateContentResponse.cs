@@ -18,9 +18,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Google.MiniJSON;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// The model's response to a generate content request.
@@ -92,9 +92,9 @@ public readonly struct GenerateContentResponse {
     return new GenerateContentResponse(
       jsonDict.ParseObjectList("candidates", (d) => Candidate.FromJson(d, backend)),
       jsonDict.ParseNullableObject("promptFeedback",
-          Firebase.FirebaseAI.PromptFeedback.FromJson),
+          Firebase.AI.PromptFeedback.FromJson),
       jsonDict.ParseNullableObject("usageMetadata",
-          Firebase.FirebaseAI.UsageMetadata.FromJson));
+          Firebase.AI.UsageMetadata.FromJson));
   }
 }
 
@@ -154,11 +154,11 @@ public readonly struct PromptFeedback {
 
   private static BlockReason ParseBlockReason(string str) {
     return str switch {
-      "SAFETY" => Firebase.FirebaseAI.BlockReason.Safety,
-      "OTHER" => Firebase.FirebaseAI.BlockReason.Other,
-      "BLOCKLIST" => Firebase.FirebaseAI.BlockReason.Blocklist,
-      "PROHIBITED_CONTENT" => Firebase.FirebaseAI.BlockReason.ProhibitedContent,
-      _ => Firebase.FirebaseAI.BlockReason.Unknown,
+      "SAFETY" => Firebase.AI.BlockReason.Safety,
+      "OTHER" => Firebase.AI.BlockReason.Other,
+      "BLOCKLIST" => Firebase.AI.BlockReason.Blocklist,
+      "PROHIBITED_CONTENT" => Firebase.AI.BlockReason.ProhibitedContent,
+      _ => Firebase.AI.BlockReason.Unknown,
     };
   }
 

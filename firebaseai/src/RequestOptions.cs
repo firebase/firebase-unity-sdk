@@ -16,7 +16,7 @@
 
 using System;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// Configuration parameters for sending requests to the backend.

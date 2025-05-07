@@ -15,9 +15,9 @@
  */
 
 using System.Collections.Generic;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// Content part modality.

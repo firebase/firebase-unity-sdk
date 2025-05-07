@@ -18,9 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// Represents the reason why the model stopped generating content.
@@ -108,16 +108,16 @@ public readonly struct Candidate {
 
   private static FinishReason ParseFinishReason(string str) {
     return str switch {
-      "STOP" => Firebase.FirebaseAI.FinishReason.Stop,
-      "MAX_TOKENS" => Firebase.FirebaseAI.FinishReason.MaxTokens,
-      "SAFETY" => Firebase.FirebaseAI.FinishReason.Safety,
-      "RECITATION" => Firebase.FirebaseAI.FinishReason.Recitation,
-      "OTHER" => Firebase.FirebaseAI.FinishReason.Other,
-      "BLOCKLIST" => Firebase.FirebaseAI.FinishReason.Blocklist,
-      "PROHIBITED_CONTENT" => Firebase.FirebaseAI.FinishReason.ProhibitedContent,
-      "SPII" => Firebase.FirebaseAI.FinishReason.SPII,
-      "MALFORMED_FUNCTION_CALL" => Firebase.FirebaseAI.FinishReason.MalformedFunctionCall,
-      _ => Firebase.FirebaseAI.FinishReason.Unknown,
+      "STOP" => Firebase.AI.FinishReason.Stop,
+      "MAX_TOKENS" => Firebase.AI.FinishReason.MaxTokens,
+      "SAFETY" => Firebase.AI.FinishReason.Safety,
+      "RECITATION" => Firebase.AI.FinishReason.Recitation,
+      "OTHER" => Firebase.AI.FinishReason.Other,
+      "BLOCKLIST" => Firebase.AI.FinishReason.Blocklist,
+      "PROHIBITED_CONTENT" => Firebase.AI.FinishReason.ProhibitedContent,
+      "SPII" => Firebase.AI.FinishReason.SPII,
+      "MALFORMED_FUNCTION_CALL" => Firebase.AI.FinishReason.MalformedFunctionCall,
+      _ => Firebase.AI.FinishReason.Unknown,
     };
   }
 
@@ -132,7 +132,7 @@ public readonly struct Candidate {
       jsonDict.ParseObjectList("safetyRatings", SafetyRating.FromJson),
       jsonDict.ParseNullableEnum("finishReason", ParseFinishReason),
       jsonDict.ParseNullableObject("citationMetadata",
-          (d) => Firebase.FirebaseAI.CitationMetadata.FromJson(d, backend)));
+          (d) => Firebase.AI.CitationMetadata.FromJson(d, backend)));
   }
 }
 

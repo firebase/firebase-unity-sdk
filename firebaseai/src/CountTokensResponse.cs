@@ -17,9 +17,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Google.MiniJSON;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// The model's response to a count tokens request.

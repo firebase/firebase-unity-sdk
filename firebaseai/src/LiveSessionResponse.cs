@@ -17,12 +17,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Google.MiniJSON;
-using Firebase.FirebaseAI.Internal;
+using Firebase.AI.Internal;
 using System.Linq;
 using System;
 using System.Text;
 
-namespace Firebase.FirebaseAI {
+namespace Firebase.AI {
 
 /// <summary>
 /// Represents the response from the model for live content updates.
