@@ -58,13 +58,13 @@ CAPITALIZATIONS = {
   "crashlytics": "Crashlytics",
   "database": "Database",
   "dynamic_links": "DynamicLinks",
+  "firebaseai": "FirebaseAI",
   "firestore": "Firestore",
   "functions": "Functions",
   "installations": "Installations",
   "messaging": "Messaging",
   "remote_config": "RemoteConfig",
-  "storage": "Storage",
-  "firebaseai": "FirebaseAI"
+  "storage": "Storage"
 }
 
 

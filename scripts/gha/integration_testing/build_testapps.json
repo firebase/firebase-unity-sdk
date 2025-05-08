@@ -106,6 +106,23 @@
       ]
     },
     {
+      "name": "firebaseai",
+      "full_name": "FirebaseAI",
+      "captial_name": "FirebaseAI",
+      "bundle_id": "com.google.firebase.unity.firebaseai.testapp",
+      "testapp_path": "firebaseai/testapp",
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
+      "plugins": [
+        "FirebaseAI.unitypackage"
+      ],
+      "provision": "Firebase_Dev_Wildcard.mobileprovision",
+      "upm_packages": [
+        "com.google.external-dependency-manager-*.tgz",
+        "com.google.firebase.app-*.tgz",
+        "com.google.firebase.firebaseai-*.tgz"
+      ]
+    },
+    {
       "name": "firestore",
       "full_name": "FirebaseFirestore",
       "captial_name": "Firestore",
@@ -213,23 +230,6 @@
         "com.google.firebase.app-*.tgz",
         "com.google.firebase.auth-*.tgz",
         "com.google.firebase.storage-*.tgz"
-      ]
-    },
-    {
-      "name": "firebaseai",
-      "full_name": "FirebaseAI",
-      "captial_name": "FirebaseAI",
-      "bundle_id": "com.google.firebase.unity.firebaseai.testapp",
-      "testapp_path": "firebaseai/testapp",
-      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
-      "plugins": [
-        "FirebaseAI.unitypackage"
-      ],
-      "provision": "Firebase_Dev_Wildcard.mobileprovision",
-      "upm_packages": [
-        "com.google.external-dependency-manager-*.tgz",
-        "com.google.firebase.app-*.tgz",
-        "com.google.firebase.firebaseai-*.tgz"
       ]
     }
   ],
