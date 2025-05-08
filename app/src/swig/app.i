@@ -902,6 +902,7 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
             if (foundType != null) {
               // Found the class, add the FirebaseAI heartbeat to the user agent.
               userAgentMap["fire-vertex"] = Firebase.VersionInfo.SdkVersion;
+              break;
             }
           }
         } catch {
