@@ -35,13 +35,13 @@ API_PACKAGE_MAP = {
     "crashlytics": "FirebaseCrashlytics.unitypackage",
     "database": "FirebaseDatabase.unitypackage",
     "dynamic_links": "FirebaseDynamicLinks.unitypackage",
+    "firebaseai": "FirebaseAI.unitypackage",
     "firestore": "FirebaseFirestore.unitypackage",
     "functions": "FirebaseFunctions.unitypackage",
     "installations": "FirebaseInstallations.unitypackage",
     "messaging": "FirebaseMessaging.unitypackage",
     "remote_config": "FirebaseRemoteConfig.unitypackage",
     "storage": "FirebaseStorage.unitypackage",
-    "firebaseai": "FirebaseAI.unitypackage",
 }
 
 default_package_names = [
