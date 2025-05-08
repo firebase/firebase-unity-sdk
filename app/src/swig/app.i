@@ -892,6 +892,22 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
         userAgentMap[libraryPrefix + "-buildsrc"] =
             Firebase.VersionInfo.BuildSource;
 
+        try {
+          // FirebaseAI doesn't depend on the other platforms, so the heartbeat
+          // logic needs to check for it here, using reflection.
+          const string firebaseAIClassName = "Firebase.AI.FirebaseAI";
+          // Iterate over the loaded assemblies, since we don't have a known DLL name.
+          foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies()) {
+            Type foundType = assembly.GetType(firebaseAIClassName, throwOnError: false, ignoreCase: false);
+            if (foundType != null) {
+              // Found the class, add the FirebaseAI heartbeat to the user agent.
+              userAgentMap["fire-vertex"] = Firebase.VersionInfo.SdkVersion;
+            }
+          }
+        } catch {
+          // Don't actually want to do anything if it fails
+        }
+
         RegisterLibrariesInternal(userAgentMap);
       }
 
