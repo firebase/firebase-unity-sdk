@@ -898,7 +898,7 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
           const string firebaseAIClassName = "Firebase.AI.FirebaseAI";
           // Iterate over the loaded assemblies, since we don't have a known DLL name.
           foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies()) {
-            Type foundType = assembly.GetType(firebaseAIClassName, throwOnError: false, ignoreCase: false);
+            System.Type foundType = assembly.GetType(firebaseAIClassName, throwOnError: false, ignoreCase: false);
             if (foundType != null) {
               // Found the class, add the FirebaseAI heartbeat to the user agent.
               userAgentMap["fire-vertex"] = Firebase.VersionInfo.SdkVersion;
