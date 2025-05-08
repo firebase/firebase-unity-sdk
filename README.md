@@ -86,7 +86,7 @@ Expected output artifact is
 python scripts/build_scripts/build_zips.py --platform=<target platform> --targets=<lib1> --targets=<lib2>
 ```
 
-> **Note:** Supported library names: analytics, app_check, auth, crashlytics, database, dynamic_links, firestore, functions, installations, messaging, remote_config, storage
+> **Note:** Supported library names: analytics, app_check, auth, crashlytics, database, dynamic_links, firebaseai, firestore, functions, installations, messaging, remote_config, storage
 
 ## Packaging
 
