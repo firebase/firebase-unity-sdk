@@ -93,7 +93,11 @@ public class FirebaseAI {
   /// <summary>
   /// Returns a `FirebaseAI` instance with the default `FirebaseApp` and GoogleAI Backend.
   /// </summary>
-  public static FirebaseAI DefaultInstance => GetInstance();
+  public static FirebaseAI DefaultInstance {
+    get {
+      return GetInstance();
+    }
+  }
 
   /// <summary>
   /// Returns a `FirebaseAI` instance with the default `FirebaseApp` and the given Backend.

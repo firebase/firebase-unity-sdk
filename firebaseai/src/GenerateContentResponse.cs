@@ -31,8 +31,11 @@ public readonly struct GenerateContentResponse {
   /// <summary>
   /// A list of candidate response content, ordered from best to worst.
   /// </summary>
-  public IEnumerable<Candidate> Candidates =>
-      _candidates ?? new ReadOnlyCollection<Candidate>(new List<Candidate>());
+  public IEnumerable<Candidate> Candidates {
+    get {
+      return _candidates ?? new ReadOnlyCollection<Candidate>(new List<Candidate>());
+    }
+  }
 
   /// <summary>
   /// A value containing the safety ratings for the response, or,
@@ -141,8 +144,11 @@ public readonly struct PromptFeedback {
   /// <summary>
   /// The safety ratings of the prompt.
   /// </summary>
-  public IEnumerable<SafetyRating> SafetyRatings =>
-      _safetyRatings ?? new ReadOnlyCollection<SafetyRating>(new List<SafetyRating>());
+  public IEnumerable<SafetyRating> SafetyRatings {
+    get {
+      return _safetyRatings ?? new ReadOnlyCollection<SafetyRating>(new List<SafetyRating>());
+    }
+  }
 
   // Hidden constructor, users don't need to make this.
   private PromptFeedback(BlockReason? blockReason, string blockReasonMessage,
@@ -192,12 +198,18 @@ public readonly struct UsageMetadata {
   public int TotalTokenCount { get; }
 
   private readonly ReadOnlyCollection<ModalityTokenCount> _promptTokensDetails;
-  public IEnumerable<ModalityTokenCount> PromptTokensDetails =>
-      _promptTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+  public IEnumerable<ModalityTokenCount> PromptTokensDetails {
+    get {
+      return _promptTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+    }
+  }
 
   private readonly ReadOnlyCollection<ModalityTokenCount> _candidatesTokensDetails;
-  public IEnumerable<ModalityTokenCount> CandidatesTokensDetails =>
-      _candidatesTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+  public IEnumerable<ModalityTokenCount> CandidatesTokensDetails {
+    get {
+      return _candidatesTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+    }
+  }
 
   // Hidden constructor, users don't need to make this.
   private UsageMetadata(int promptTC, int candidatesTC, int totalTC,

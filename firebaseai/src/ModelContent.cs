@@ -35,12 +35,20 @@ public readonly struct ModelContent {
   /// The role of the entity creating the `ModelContent`. For user-generated client requests,
   /// for example, the role is `user`.
   /// </summary>
-  public string Role => string.IsNullOrWhiteSpace(_role) ? "user" : _role;
+  public string Role {
+    get {
+      return string.IsNullOrWhiteSpace(_role) ? "user" : _role;
+    }
+  }
 
   /// <summary>
   /// The data parts comprising this `ModelContent` value.
   /// </summary>
-  public IEnumerable<Part> Parts => _parts ?? new ReadOnlyCollection<Part>(new List<Part>());
+  public IEnumerable<Part> Parts {
+    get {
+      return _parts ?? new ReadOnlyCollection<Part>(new List<Part>());
+    }
+  }
 
   /// <summary>
   /// Creates a `ModelContent` with the given `Part`s, using the default `user` role.

@@ -26,6 +26,7 @@ unity_pack_folder(
 # For documentation, get only the C# files at the top level,
 # which make up the public API.
 file(GLOB firebase_firebaseai_doc_src "src/*.cs")
+list(FILTER firebase_firebaseai_doc_src EXCLUDE REGEX "src/Internal/.*")
 unity_pack_documentation_sources(firebaseai
   DOCUMENTATION_SOURCES
     ${firebase_firebaseai_doc_src}
