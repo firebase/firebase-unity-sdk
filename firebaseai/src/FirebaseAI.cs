@@ -68,7 +68,8 @@ public class FirebaseAI {
     ///     for a list of supported regions.</param>
     public static Backend VertexAI(string location = "us-central1") {
       if (string.IsNullOrWhiteSpace(location) || location.Contains("/")) {
-        throw new FirebaseAIInvalidLocationException(location);
+        throw new ArgumentException(
+            $"The location argument must be non-empty, and not contain special characters like '/'");
       }
 
       return new Backend(InternalProvider.VertexAI, location);

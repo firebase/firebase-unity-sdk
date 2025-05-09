@@ -86,7 +86,7 @@ public class GenerativeModel {
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The generated content response from the model.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> GenerateContentAsync(
       ModelContent content, CancellationToken cancellationToken = default) {
     return GenerateContentAsync(new[] { content }, cancellationToken);
@@ -97,7 +97,7 @@ public class GenerativeModel {
   /// <param name="text">The text given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The generated content response from the model.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> GenerateContentAsync(
       string text, CancellationToken cancellationToken = default) {
     return GenerateContentAsync(new[] { ModelContent.Text(text) }, cancellationToken);
@@ -108,7 +108,7 @@ public class GenerativeModel {
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The generated content response from the model.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> GenerateContentAsync(
       IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
     return GenerateContentAsyncInternal(content, cancellationToken);
@@ -120,7 +120,7 @@ public class GenerativeModel {
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       ModelContent content, CancellationToken cancellationToken = default) {
     return GenerateContentStreamAsync(new[] { content }, cancellationToken);
@@ -131,7 +131,7 @@ public class GenerativeModel {
   /// <param name="text">The text given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       string text, CancellationToken cancellationToken = default) {
     return GenerateContentStreamAsync(new[] { ModelContent.Text(text) }, cancellationToken);
@@ -142,7 +142,7 @@ public class GenerativeModel {
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
       IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
     return GenerateContentStreamAsyncInternal(content, cancellationToken);
@@ -153,7 +153,7 @@ public class GenerativeModel {
   /// </summary>
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during the request.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during the request.</exception>
   public Task<CountTokensResponse> CountTokensAsync(
       ModelContent content, CancellationToken cancellationToken = default) {
     return CountTokensAsync(new[] { content }, cancellationToken);
@@ -164,7 +164,7 @@ public class GenerativeModel {
   /// <param name="text">The text input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during the request.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during the request.</exception>
   public Task<CountTokensResponse> CountTokensAsync(
       string text, CancellationToken cancellationToken = default) {
     return CountTokensAsync(new[] { ModelContent.Text(text) }, cancellationToken);
@@ -175,7 +175,7 @@ public class GenerativeModel {
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The `CountTokensResponse` of running the model's tokenizer on the input.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during the request.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during the request.</exception>
   public Task<CountTokensResponse> CountTokensAsync(
       IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
     return CountTokensAsyncInternal(content, cancellationToken);
@@ -213,16 +213,8 @@ public class GenerativeModel {
     UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-    HttpResponseMessage response;
-    try {
-      response = await _httpClient.SendAsync(request, cancellationToken);
-      response.EnsureSuccessStatusCode();
-    } catch (TaskCanceledException e) when (e.InnerException is TimeoutException) {
-      throw new FirebaseAIRequestTimeoutException("Request timed out.", e);
-    } catch (HttpRequestException e) {
-      // TODO: Convert to a more precise exception when possible.
-      throw new FirebaseAIException("HTTP request failed.", e);
-    }
+    var response = await _httpClient.SendAsync(request, cancellationToken);
+    await ValidateHttpResponse(response);
 
     string result = await response.Content.ReadAsStringAsync();
 
@@ -231,6 +223,33 @@ public class GenerativeModel {
 #endif
 
     return GenerateContentResponse.FromJson(result, _backend.Provider);
+  }
+
+  // Helper function to throw an exception if the Http Response indicates failure.
+  // Useful as EnsureSuccessStatusCode can leave out relevant information.
+  private async Task ValidateHttpResponse(HttpResponseMessage response) {
+    if (response.IsSuccessStatusCode) {
+      return;
+    }
+
+    // Status code indicates failure, try to read the content for more details
+    string errorContent = "No error content available.";
+    if (response.Content != null) {
+      try {
+        errorContent = await response.Content.ReadAsStringAsync();
+      } catch (Exception readEx) {
+        // Handle being unable to read the content
+        errorContent = $"Failed to read error content: {readEx.Message}";
+      }
+    }
+
+    // Construct the exception with as much information as possible.
+    var ex = new HttpRequestException(
+      $"HTTP request failed with status code: {(int)response.StatusCode} ({response.ReasonPhrase}).\n" +
+      $"Error Content: {errorContent}"
+    );
+
+    throw ex;
   }
 
   private async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
@@ -249,16 +268,8 @@ public class GenerativeModel {
     UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-    HttpResponseMessage response;
-    try {
-      response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-      response.EnsureSuccessStatusCode();
-    } catch (TaskCanceledException e) when (e.InnerException is TimeoutException) {
-      throw new FirebaseAIRequestTimeoutException("Request timed out.", e);
-    } catch (HttpRequestException e) {
-      // TODO: Convert to a more precise exception when possible.
-      throw new FirebaseAIException("HTTP request failed.", e);
-    }
+    var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+    await ValidateHttpResponse(response);
 
     // We are expecting a Stream as the response, so handle that.
     using var stream = await response.Content.ReadAsStreamAsync();
@@ -293,16 +304,8 @@ public class GenerativeModel {
     UnityEngine.Debug.Log("CountTokensRequest:\n" + bodyJson);
 #endif
 
-    HttpResponseMessage response;
-    try {
-      response = await _httpClient.SendAsync(request, cancellationToken);
-      response.EnsureSuccessStatusCode();
-    } catch (TaskCanceledException e) when (e.InnerException is TimeoutException) {
-      throw new FirebaseAIRequestTimeoutException("Request timed out.", e);
-    } catch (HttpRequestException e) {
-      // TODO: Convert to a more precise exception when possible.
-      throw new FirebaseAIException("HTTP request failed.", e);
-    }
+    var response = await _httpClient.SendAsync(request, cancellationToken);
+    await ValidateHttpResponse(response);
 
     string result = await response.Content.ReadAsStringAsync();
 
