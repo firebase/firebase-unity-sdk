@@ -59,11 +59,12 @@ internal static class FirebaseAIExtensions {
         value = (T)(object)(float)asDouble;
         return true;
       } else if (options.HasFlag(JsonParseOptions.ThrowInvalidCast)) {
-        throw new FirebaseAISerializationException(
-            $"Invalid JSON format: '{key}' is not of type '{typeof(T).Name}'.");
+        throw new InvalidCastException(
+            $"Invalid JSON format: '{key}' is not of type '{typeof(T).Name}', " +
+            $"Actual type: {obj.GetType().FullName}.");
       }
     } else if (options.HasFlag(JsonParseOptions.ThrowMissingKey)) {
-      throw new FirebaseAISerializationException(
+      throw new KeyNotFoundException(
           $"Invalid JSON format: Unable to locate expected key {key}");
     }
     value = default;

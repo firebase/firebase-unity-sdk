@@ -17,15 +17,18 @@
 
 namespace Firebase.Sample.FirebaseAI {
   using Firebase;
-  using Firebase.Extensions;
   using Firebase.AI;
+  using Firebase.Extensions;
   using System;
+  using System.Collections;
   using System.Collections.Generic;
   using System.Linq;
   using System.Net.Http;
   using System.Threading.Tasks;
   using Google.MiniJSON;
   using UnityEngine;
+  using UnityEngine.Video;
+  using System.IO;
 #if INCLUDE_FIREBASE_AUTH
   using Firebase.Auth;
 #endif
@@ -720,10 +723,8 @@ namespace Firebase.Sample.FirebaseAI {
             response.Text.Contains("mushroom", StringComparison.OrdinalIgnoreCase));
       }
 #if !INCLUDE_FIREBASE_AUTH
-      catch (FirebaseAIException ex) {
-        AssertEq("Expected InnerException", ex.InnerException.GetType(), typeof(HttpRequestException));
-        // TODO: Improve how Http errors are passed back to users.
-        Assert("Missing Http Status Code 403", (ex.InnerException as HttpRequestException).Message.Contains("403"));
+      catch (HttpRequestException ex) {
+        Assert("Missing Http Status Code 403", ex.Message.Contains("403"));
       }
 #endif
       finally {

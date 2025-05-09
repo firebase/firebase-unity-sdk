@@ -327,7 +327,7 @@ public readonly struct ModelContent {
                                        out var inlineDataPart)) {
       return inlineDataPart;
     } else {
-      throw new FirebaseAISerializationException("Unable to parse given 'part' into a known Part.");
+      throw new NotSupportedException("Unable to parse given 'part' into a known Part.");
     }
   }
 }

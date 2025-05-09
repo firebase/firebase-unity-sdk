@@ -45,7 +45,8 @@ public class LiveSession : IDisposable {
   /// </summary>
   internal LiveSession(ClientWebSocket clientWebSocket) {
     if (clientWebSocket.State != WebSocketState.Open) {
-      throw new FirebaseAIInvalidStateException("ClientWebSocket failed to connect, can't create LiveSession.");
+      throw new InvalidOperationException(
+        $"ClientWebSocket failed to connect, can't create LiveSession. Current state: {clientWebSocket.State}");
     }
 
     _clientWebSocket = clientWebSocket;

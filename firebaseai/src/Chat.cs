@@ -64,7 +64,7 @@ public class Chat {
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The model's response if no error occurred.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> SendMessageAsync(
       ModelContent content, CancellationToken cancellationToken = default) {
     return SendMessageAsync(new[] { content }, cancellationToken);
@@ -76,7 +76,7 @@ public class Chat {
   /// <param name="text">The text given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The model's response if no error occurred.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> SendMessageAsync(
       string text, CancellationToken cancellationToken = default) {
     return SendMessageAsync(new ModelContent[] { ModelContent.Text(text) }, cancellationToken);
@@ -88,7 +88,7 @@ public class Chat {
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>The model's response if no error occurred.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public Task<GenerateContentResponse> SendMessageAsync(
       IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
     return SendMessageAsyncInternal(content, cancellationToken);
@@ -101,7 +101,7 @@ public class Chat {
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
       ModelContent content, CancellationToken cancellationToken = default) {
     return SendMessageStreamAsync(new[] { content }, cancellationToken);
@@ -113,7 +113,7 @@ public class Chat {
   /// <param name="text">The text given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
       string text, CancellationToken cancellationToken = default) {
     return SendMessageStreamAsync(new ModelContent[] { ModelContent.Text(text) }, cancellationToken);
@@ -125,7 +125,7 @@ public class Chat {
   /// <param name="content">The input given to the model as a prompt.</param>
   /// <param name="cancellationToken">An optional token to cancel the operation.</param>
   /// <returns>A stream of generated content responses from the model.</returns>
-  /// <exception cref="FirebaseAIException">Thrown when an error occurs during content generation.</exception>
+  /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
   public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
       IEnumerable<ModelContent> content, CancellationToken cancellationToken = default) {
     return SendMessageStreamAsyncInternal(content, cancellationToken);
