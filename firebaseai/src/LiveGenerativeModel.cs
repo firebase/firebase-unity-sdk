@@ -91,7 +91,7 @@ public class LiveGenerativeModel {
 
     // Set initial headers
     string version = FirebaseInterops.GetVersionInfoSdkVersion();
-    clientWebSocket.Options.SetRequestHeader("x-goog-api-client", $"genai-csharp/{version}");
+    clientWebSocket.Options.SetRequestHeader("x-goog-api-client", $"gl-csharp/{version}");
     if (FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp)) {
       clientWebSocket.Options.SetRequestHeader("X-Firebase-AppId", _firebaseApp.Options.AppId);
       clientWebSocket.Options.SetRequestHeader("X-Firebase-AppVersion", UnityEngine.Application.version);
