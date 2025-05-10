@@ -83,8 +83,11 @@ public readonly struct Candidate {
   /// <summary>
   /// The safety rating of the response content.
   /// </summary>
-  public IEnumerable<SafetyRating> SafetyRatings =>
-      _safetyRatings ?? new ReadOnlyCollection<SafetyRating>(new List<SafetyRating>());
+  public IEnumerable<SafetyRating> SafetyRatings {
+    get {
+      return _safetyRatings ?? new ReadOnlyCollection<SafetyRating>(new List<SafetyRating>());
+    }
+  }
 
   /// <summary>
   /// The reason the model stopped generating content, if it exists;
