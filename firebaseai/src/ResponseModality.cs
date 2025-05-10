@@ -20,8 +20,32 @@ namespace Firebase.AI {
 /// The response type the model should return with.
 /// </summary>
 public enum ResponseModality {
+  /// <summary>
+  /// Specifies that the model should generate textual content.
+  ///
+  /// Use this modality when you need the model to produce written language, such as answers to
+  /// questions, summaries, creative writing, code snippets, or structured data formats like JSON.
+  /// </summary>
   Text,
+  /// <summary>
+  /// **Public Experimental**: Specifies that the model should generate image data.
+  ///
+  /// Use this modality when you want the model to create visual content based on the provided input
+  /// or prompts. The response might contain one or more generated images. See the [image
+  /// generation](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal-response-generation#image-generation)
+  /// documentation for more details.
+  ///
+  /// > Warning: Image generation using Gemini 2.0 Flash is a **Public Experimental** feature, which
+  /// > means that it is not subject to any SLA or deprecation policy and could change in
+  /// > backwards-incompatible ways.
+  /// </summary>
   Image,
+  /// <summary>
+  /// **Public Experimental**: Specifies that the model should generate audio data.
+  /// 
+  /// Use this modality with a `LiveGenerationConfig` to create audio content based on the
+  /// provided input or prompts with a `LiveGenerativeModel`.
+  /// </summary>
   Audio,
 }
 
