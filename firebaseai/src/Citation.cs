@@ -30,8 +30,11 @@ public readonly struct CitationMetadata {
   /// <summary>
   /// A list of individual cited sources and the parts of the content to which they apply.
   /// </summary>
-  public IEnumerable<Citation> Citations =>
-      _citations ?? new ReadOnlyCollection<Citation>(new List<Citation>());
+  public IEnumerable<Citation> Citations {
+    get {
+      return _citations ?? new ReadOnlyCollection<Citation>(new List<Citation>());
+    }
+  }
 
   // Hidden constructor, users don't need to make this.
   private CitationMetadata(List<Citation> citations) {

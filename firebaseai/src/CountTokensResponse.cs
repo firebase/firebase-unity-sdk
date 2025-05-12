@@ -41,8 +41,11 @@ public readonly struct CountTokensResponse {
   /// <summary>
   /// The breakdown, by modality, of how many tokens are consumed by the prompt.
   /// </summary>
-  public IEnumerable<ModalityTokenCount> PromptTokensDetails =>
-      _promptTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+  public IEnumerable<ModalityTokenCount> PromptTokensDetails {
+    get {
+      return _promptTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+    }
+  }
 
   // Hidden constructor, users don't need to make this
   private CountTokensResponse(int totalTokens,

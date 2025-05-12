@@ -183,9 +183,12 @@ public readonly struct LiveSessionToolCall : ILiveSessionMessage {
   ///
   /// This will be empty if no function calls are present.
   /// </summary>
-  public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls =>
-      _functionCalls ?? new ReadOnlyCollection<ModelContent.FunctionCallPart>(
+  public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls {
+    get {
+      return _functionCalls ?? new ReadOnlyCollection<ModelContent.FunctionCallPart>(
           new List<ModelContent.FunctionCallPart>());
+    }
+  }
 
   private LiveSessionToolCall(List<ModelContent.FunctionCallPart> functionCalls) {
     _functionCalls = new ReadOnlyCollection<ModelContent.FunctionCallPart>(
@@ -211,8 +214,11 @@ public readonly struct LiveSessionToolCallCancellation : ILiveSessionMessage {
   /// <summary>
   /// The list of Function IDs to cancel.
   /// </summary>
-  public IEnumerable<string> FunctionIds =>
-      _functionIds ?? new ReadOnlyCollection<string>(new List<string>());
+  public IEnumerable<string> FunctionIds {
+    get {
+      return _functionIds ?? new ReadOnlyCollection<string>(new List<string>());
+    }
+  }
 
   private LiveSessionToolCallCancellation(List<string> functionIds) {
     _functionIds = new ReadOnlyCollection<string>(

@@ -100,7 +100,7 @@ public class Schema {
   /// <summary>
   /// Possible values of the element of type "String" with "enum" format.
   /// </summary>
-  public IEnumerable<string> EnumValues => _enumValues;
+  public IEnumerable<string> EnumValues { get { return _enumValues; } }
   /// <summary>
   /// Schema of the elements of type "Array".
   /// </summary>
@@ -132,7 +132,7 @@ public class Schema {
   /// <summary>
   /// Required properties of type "Object".
   /// </summary>
-  public IEnumerable<string> RequiredProperties => _requiredProperties;
+  public IEnumerable<string> RequiredProperties { get { return _requiredProperties; } }
 
   private readonly ReadOnlyCollection<string> _propertyOrdering;
   /// <summary>
@@ -143,7 +143,7 @@ public class Schema {
   /// not preserve this order. This parameter primarily affects the raw JSON string
   /// serialization.
   /// </summary>
-  public IEnumerable<string> PropertyOrdering => _propertyOrdering;
+  public IEnumerable<string> PropertyOrdering { get { return _propertyOrdering; } }
 
   private readonly ReadOnlyCollection<Schema> _anyOf;
   /// <summary>
@@ -156,7 +156,7 @@ public class Schema {
   /// Schema.AnyOf(new [] { Schema.String(), Schema.Int() })
   /// ```
   /// </summary>
-  public IEnumerable<Schema> AnyOfSchemas => _anyOf;
+  public IEnumerable<Schema> AnyOfSchemas { get { return _anyOf; } }
 
   private Schema(
       SchemaType? type,
