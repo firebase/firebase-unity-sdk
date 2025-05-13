@@ -22,7 +22,7 @@ ExternalProject_Add(
   google_unity_jar_resolver
 
   GIT_REPOSITORY https://github.com/googlesamples/unity-jar-resolver.git
-  GIT_TAG        v${GOOGLE_UNITY_JAR_RESOLVER_VERSION}
+  GIT_TAG        18e90f8b62eb907b8d9a577a286515ee5c797e20
   GIT_SHALLOW    1
 
   PREFIX ${PROJECT_BINARY_DIR}
