@@ -14,15 +14,6 @@
 
 # CMake file for the firebase app unity editor plugin
 
-if(FIREBASE_UNITY_EAP)
-  set(firebase_app_editor_eap_src
-    src/eap/ConfigApi.cs
-    src/eap/ConfigWindow.cs
-  )
-else()
-  set(firebase_app_editor_eap_src "")
-endif()
-
 set(firebase_app_editor_src
     src/AnalyticsFixPropertyRemover.cs
     src/AndroidAPILevelChecker.cs
@@ -48,7 +39,6 @@ set(firebase_app_editor_src
     src/DocRef.resx
     src/Link.Designer.cs
     src/Link.resx
-    ${firebase_app_editor_eap_src}
 )
 
 set(firebase_app_editor_reference
