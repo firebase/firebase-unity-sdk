@@ -126,7 +126,7 @@ SETTINGS = {
     WINDOWS: {
       "version": "2022.3.47f1",
       "changeset": "88c277b85d21",
-      "modules": {ANDROID: ["android", "ios"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     MACOS: {
       "version": "2022.3.47f1",
@@ -143,7 +143,7 @@ SETTINGS = {
     WINDOWS: {
       "version": "2021.3.43f1",
       "changeset": "6f9470916942",
-      "modules": {ANDROID: ["android", "ios"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     MACOS: {
       "version": "2021.3.43f1",
@@ -160,7 +160,7 @@ SETTINGS = {
     WINDOWS: {
       "version": "2020.3.34f1",
       "changeset": "9a4c9c70452b",
-      "modules": {ANDROID: ["android", "ios"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     MACOS: {
       "version": "2020.3.34f1",
@@ -177,7 +177,7 @@ SETTINGS = {
     WINDOWS: {
       "version": "2019.4.39f1",
       "changeset": "78d14dfa024b",
-      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: ["ios"]},
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     MACOS: {
       "version": "2019.4.39f1",
