@@ -14,20 +14,9 @@
 
 # CMake file for the firebase messaging unity editor plugin
 
-if(FIREBASE_UNITY_EAP)
-  set(firebase_messaging_editor_eap_src
-    src/eap/MessagingConfig.cs
-    src/eap/Strings.Designer.cs
-    src/eap/Strings.resx
-  )
-else()
-  set(firebase_messaging_editor_eap_src "")
-endif()
-
 set(firebase_messaging_editor_src
     ../../messaging/activity/AndroidManifest.xml
     src/AndroidManifestPatcher.cs
-    ${firebase_messaging_editor_eap_src}
 )
 
 mono_add_library(firebase_messaging_editor_cs

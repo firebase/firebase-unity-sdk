@@ -13,8 +13,5 @@
 # limitations under the License.
 
 add_subdirectory(app)
-add_subdirectory(analytics)
-add_subdirectory(auth)
 add_subdirectory(crashlytics)
-add_subdirectory(dynamic_links)
 add_subdirectory(messaging)
