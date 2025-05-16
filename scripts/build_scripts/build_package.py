@@ -125,6 +125,7 @@ def find_pack_script():
     resolver_root_folder = os.path.join(built_folder, built_folder_postion)
   elif not os.path.exists(resolver_root_folder):
     git_clone_script = ["git", "clone",
+                        "--branch", "am-testing",
                         "--depth", "1",
                         "https://github.com/googlesamples/unity-jar-resolver.git"]
     subprocess.call(git_clone_script)
