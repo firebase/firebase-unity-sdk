@@ -71,6 +71,14 @@ Support
 
 Release Notes
 -------------
+### 12.9.0
+-   Changes
+    - General: Update to EDM4U version 1.2.186.
+    - General: Fixed issue of Firebase Editor on Windows requiring iOS.
+    - Firebase AI: Initial release of Firebase AI Logic, with support
+      for Android, iOS, and desktop platforms.
+      For more info, see https://firebase.google.com/docs/vertex-ai
+
 ### 12.8.0
 -   Changes
     - General: Update to Firebase C++ SDK version 12.7.0.
