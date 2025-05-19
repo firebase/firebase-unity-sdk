@@ -17,7 +17,7 @@
 set(FIREBASE_APP_ANDROID_DEPS
     "com.google.firebase:firebase-common:21.0.0"
     "com.google.firebase:firebase-analytics:22.4.0"
-    "com.google.android.gms:play-services-base:18.6.0"
+    "com.google.android.gms:play-services-base:18.7.0"
 )
 
 set(FIREBASE_ANALYTICS_ANDROID_DEPS
@@ -37,14 +37,14 @@ set(FIREBASE_AUTH_ANDROID_DEPS
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:19.4.2"
+    "com.google.firebase:firebase-crashlytics-ndk:19.4.3"
     "com.google.firebase:firebase-analytics:22.4.0"
 )
 
 set(FIREBASE_DATABASE_ANDROID_DEPS
     "com.google.firebase:firebase-database:21.0.0"
     "com.google.firebase:firebase-analytics:22.4.0"
-    "com.google.android.gms:play-services-base:18.6.0"
+    "com.google.android.gms:play-services-base:18.7.0"
 )
 
 set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
@@ -53,12 +53,12 @@ set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:25.1.3"
+    "com.google.firebase:firebase-firestore:25.1.4"
     "com.google.firebase:firebase-analytics:22.4.0"
 )
 
 set(FIREBASE_FUNCTIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-functions:21.2.0"
+    "com.google.firebase:firebase-functions:21.2.1"
     "com.google.firebase:firebase-analytics:22.4.0"
 )
 
@@ -76,7 +76,7 @@ set(FIREBASE_MESSAGING_ANDROID_DEPS
 )
 
 set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
-    "com.google.firebase:firebase-config:22.1.0"
+    "com.google.firebase:firebase-config:22.1.1"
     "com.google.firebase:firebase-analytics:22.4.0"
 )
 
