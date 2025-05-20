@@ -157,7 +157,7 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // The model name to use for the tests.
-    private readonly string ModelName = "gemini-2.0-flash";
+    private readonly string TestModelName = "gemini-2.0-flash";
 
     private FirebaseAI GetFirebaseAI(Backend backend) {
       return backend switch {
@@ -170,7 +170,7 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Get a basic version of the GenerativeModel to test against.
     private GenerativeModel CreateGenerativeModel(Backend backend) {
-      return GetFirebaseAI(backend).GetGenerativeModel(ModelName);
+      return GetFirebaseAI(backend).GetGenerativeModel(TestModelName);
     }
 
     // Test if it can create the GenerativeModel.
@@ -273,7 +273,7 @@ namespace Firebase.Sample.FirebaseAI {
     async Task TestModelOptions(Backend backend) {
       // Note that most of these settings are hard to reliably verify, so as
       // long as the call works we are generally happy.
-      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(
           temperature: 0.4f,
           topP: 0.4f,
@@ -315,7 +315,7 @@ namespace Firebase.Sample.FirebaseAI {
     async Task TestMultipleCandidates(Backend backend) {
       var genConfig = new GenerationConfig(candidateCount: 2);
 
-      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: genConfig
       );
 
@@ -387,7 +387,7 @@ namespace Firebase.Sample.FirebaseAI {
             }) }
         }));
 
-      return GetFirebaseAI(backend).GetGenerativeModel(ModelName,
+      return GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         tools: new Tool[] { tool },
         toolConfig: toolConfig
       );
@@ -439,7 +439,7 @@ namespace Firebase.Sample.FirebaseAI {
     // Test if setting a response schema with an enum works.
     async Task TestEnumSchemaResponse(Backend backend) {
       string enumValue = "MyTestEnum";
-      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(
           responseMimeType: "text/x.enum",
           responseSchema: Schema.Enum(new string[] { enumValue })));
@@ -452,7 +452,7 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Test if setting a response schema with an enum works.
     async Task TestAnyOfSchemaResponse(Backend backend) {
-      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(
           responseMimeType: "application/json",
           responseSchema: Schema.Array(
@@ -525,7 +525,7 @@ namespace Firebase.Sample.FirebaseAI {
         new Dictionary<string, Schema>() {
           { "input", Schema.String("Input string") },
         }));
-      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         tools: new Tool[] { tool }
       );
       var chat = model.StartChat();
@@ -619,7 +619,7 @@ namespace Firebase.Sample.FirebaseAI {
     // Test if calling CountTokensAsync works as expected.
     async Task TestCountTokens(Backend backend) {
       // Include some additional settings, since they are used in the call.
-      var model = GetFirebaseAI(backend).GetGenerativeModel(ModelName,
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(temperature: 0.8f),
         systemInstruction: ModelContent.Text("This is a test SystemInstruction")
       );
