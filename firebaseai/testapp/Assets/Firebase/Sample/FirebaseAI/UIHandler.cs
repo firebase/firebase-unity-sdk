@@ -68,7 +68,8 @@ namespace Firebase.Sample.FirebaseAI {
       return FirebaseAI.GetInstance(backend).GetGenerativeModel(ModelName);
     }
 
-    async void SendSingleMessage(string message) {
+    // Send a single message to the Generative Model, without any history.
+    async Task SendSingleMessage(string message) {
       DebugLog("Sending message to model: " + message);
       var response = await GetModel().GenerateContentAsync(message);
       DebugLog("Response: " + response.Text);
@@ -83,7 +84,9 @@ namespace Firebase.Sample.FirebaseAI {
       chatSession = null;
     }
 
-    async void SendChatMessage(string message) {
+    // Send a message to the ongoing Chat with the Generative Model, which
+    // will preserve the history.
+    async Task SendChatMessage(string message) {
       if (chatSession == null) {
         DebugLog("Missing Chat Session");
         return;
@@ -136,7 +139,7 @@ namespace Firebase.Sample.FirebaseAI {
           textfieldString = GUILayout.TextField(textfieldString);
 
           if (GUILayout.Button("Send Single Message")) {
-            SendSingleMessage(textfieldString);
+            _ = SendSingleMessage(textfieldString);
           }
 
           if (GUILayout.Button("Start Chat Session")) {
@@ -146,7 +149,7 @@ namespace Firebase.Sample.FirebaseAI {
           textfieldString = GUILayout.TextField(textfieldString);
 
           if (GUILayout.Button("Send Chat Message")) {
-            SendChatMessage(textfieldString);
+            _ = SendChatMessage(textfieldString);
           }
 
           if (GUILayout.Button("Close Chat Session")) {
