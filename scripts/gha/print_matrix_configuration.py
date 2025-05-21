@@ -56,7 +56,7 @@ PLAYMODE = "Playmode"
 
 # GitHub Runner
 WINDOWS_RUNNER = "windows-latest"
-MACOS_RUNNER = "macos-13"
+MACOS_RUNNER = "macos-14"
 LINUX_RUNNER = "ubuntu-22.04"
 
 PARAMETERS = {

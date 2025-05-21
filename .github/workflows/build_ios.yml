@@ -40,12 +40,12 @@ permissions: write-all
 jobs:
   build_ios:
     name: build-ios-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: macos-13
+    runs-on: macos-14
     strategy:
       fail-fast: false
 
     env:
-      xcodeVersion: "15.1"
+      xcodeVersion: "16.2"
   
     steps:
       - uses: lukka/get-cmake@latest
