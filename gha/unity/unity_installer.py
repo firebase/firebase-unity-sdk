@@ -311,7 +311,10 @@ def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
 
 def install_unity(unity_full_version, changeset):
   unity_hub_executable = SETTINGS["unity_hub_executable"][get_os()]
-  run(f'{unity_hub_executable} install --version {unity_full_version} --changeset {changeset}', max_attempts=MAX_ATTEMPTS)
+  architecture_flag = ''
+  if platform.system() == 'Darwin' and 'arm' in platform.machine().lower():
+    architecture_flag = '--architecture arm64'
+  run(f'{unity_hub_executable} install --version {unity_full_version} --changeset {changeset} {architecture_flag}', max_attempts=MAX_ATTEMPTS)
   run(f'{unity_hub_executable} editors --installed')
 
 
