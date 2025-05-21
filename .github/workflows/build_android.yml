@@ -102,8 +102,13 @@ jobs:
           brew install swig
       
       - name: Force Java 11
+        if: runner.os != 'macOS'
         shell: bash
         run: echo "JAVA_HOME=${JAVA_HOME_11_X64}" >> $GITHUB_ENV
+      - name: Force Java 11 (mac)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: echo "JAVA_HOME=${JAVA_HOME_11_arm64}" >> $GITHUB_ENV
 
       - name: Install python deps
         shell: bash
