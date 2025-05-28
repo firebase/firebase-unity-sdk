@@ -176,7 +176,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.build_matrix) }}
     env:
-      xcodeVersion: "15.1"
+      xcodeVersion: "16.2"
     steps:
       - uses: lukka/get-cmake@latest
         with:
@@ -484,7 +484,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.test_matrix) }}
     env:
-      xcodeVersion: "15.1"
+      xcodeVersion: "16.2"
     steps:
       - id: matrix_info
         shell: bash
