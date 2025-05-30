@@ -33,6 +33,8 @@ Firebase Unity SDK can be found at <https://github.com/firebase/quickstart-unity
     - [Install Unity](#install-unity)
   - [Building](#building)
     - [Building for certain library](#building-for-certain-library)
+    - [Building with --preset name](#building-with---preset-name)
+    - [Building with custom generator](#building-with-custom-generator)
   - [Packaging](#packaging)
     - [Packaging unitypackage](#packaging-unitypackage)
     - [Packaging tgz](#packaging-tgz)
@@ -87,6 +89,34 @@ python scripts/build_scripts/build_zips.py --platform=<target platform> --target
 ```
 
 > **Note:** Supported library names: analytics, app_check, auth, crashlytics, database, dynamic_links, firebaseai, firestore, functions, installations, messaging, remote_config, storage
+
+### Building with --preset name
+
+Cmake allows use a configuration file (`CMakePresets.json` or `CMakeUserPresets.json`) with custom local environment settings, such as **cache** and/or **environment variable**s. To do that, follow the steps below:
+
+1. Create a `.json` file with your presets. You can find full examples below: 
+
+   - [Example CMakePresets.json file](https://learn.microsoft.com/en-us/cpp/build/cmake-presets-vs?view=msvc-170&source=recommendations#example-cmakepresetsjson-file)
+   - [cmake-presets: Format](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#id4)
+2. Build with any of commands described above. The generated cmake command should be:
+
+    ```bash
+    cmake_setup_args is: cmake <repository root path> --preset firebase-unity-sdk-<something> ...
+    ```
+
+    Optionally, it's possible pass a custom preset name with: `--preset` arg:
+
+    ```bash
+    python ./scripts/build_scripts/build_zips.py --preset=my-custom-preset --platform=windows
+    ```
+
+### Building with custom generator
+
+For custom cmake generator (e.g define as **Visual Studio 2022** or newest), it's possible override the default generator with `--generator` flag:
+
+```bash
+python scripts/build_scripts/build_zips.py --generator='Visual Studio 17 2022' --platform=windows
+```
 
 ## Packaging
 
