@@ -108,7 +108,7 @@ jobs:
       - name: Remove zlib
         shell: bash
         run: |
-	  find "C:/" -name 'libz*'
+          find "C:/" -name 'libz*'
           rm -f C:/msys64/mingw64/lib/libz*
 
       # Strawberry Perl has zlib within, so we also remove it
