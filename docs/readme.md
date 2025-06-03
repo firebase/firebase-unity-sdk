@@ -71,6 +71,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - General (Android): Fix a crash with 16 KB page sizes.
+      ([#1259](https://github.com/firebase/firebase-unity-sdk/issues/1259)).
+
 ### 12.9.0
 -   Changes
     - General: Update to EDM4U version 1.2.186.
