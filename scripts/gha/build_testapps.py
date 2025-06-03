@@ -150,7 +150,7 @@ _SUPPORTED_PLATFORMS = (
 _SUPPORTED_XCODE_CONFIGURATIONS = (
     "ReleaseForRunning", "Release", "Debug", "ReleaseForProfiling")
 
-_DEFAULT_TIMEOUT_SECONDS = 1200
+_DEFAULT_TIMEOUT_SECONDS = 1500
 
 FLAGS = flags.FLAGS
 
