@@ -141,18 +141,18 @@ SETTINGS = {
   },
   "2021": {
     WINDOWS: {
-      "version": "2021.3.52f1",
-      "changeset": "1413ca6de719",
+      "version": "2021.3.45f1",
+      "changeset": "0da89fac8e79",
       "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     MACOS: {
-      "version": "2021.3.52f1",
-      "changeset": "1413ca6de719",
+      "version": "2021.3.45f1",
+      "changeset": "0da89fac8e79",
       "modules": {ANDROID: ["android"], IOS: ["ios", "appletv"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     LINUX: {
-      "version": "2021.3.52f1",
-      "changeset": "1413ca6de719",
+      "version": "2021.3.45f1",
+      "changeset": "0da89fac8e79",
       "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: [], WINDOWS: ["windows-mono"], MACOS: ["mac-mono"], LINUX: [], PLAYMODE: []}
     }
   },
