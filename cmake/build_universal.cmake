@@ -88,6 +88,7 @@ function(build_uni TARGET_LINK_LIB_NAMES PROJECT_LIST_HEADER_VARIABLE)
         "-static-libstdc++"
         # Set the max page size to 16KB, needed by Android 15
         "-Wl,-z,max-page-size=16384"
+        "-Wl,-z,common-page-size=16384"
     )
     add_custom_command(TARGET firebase_app_uni POST_BUILD
       COMMAND "${ANDROID_TOOLCHAIN_PREFIX}strip" -g -S -d --strip-debug --verbose

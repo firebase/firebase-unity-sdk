@@ -108,6 +108,7 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
         "-static-libstdc++"
         # Set the max page size to 16KB, needed by Android 15
         "-Wl,-z,max-page-size=16384"
+        "-Wl,-z,common-page-size=16384"
     )
     add_custom_command(TARGET ${shared_target} POST_BUILD
       COMMAND "${ANDROID_TOOLCHAIN_PREFIX}strip" -g -S -d --strip-debug --verbose
