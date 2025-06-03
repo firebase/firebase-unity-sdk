@@ -162,6 +162,32 @@ namespace Firebase.Sample.Analytics {
       });
     }
 
+    public void TestSetDefaultParameters() {
+      DebugLog("Starting TestSetDefaultParameters...");
+
+      DebugLog("Setting single default string parameter: {'default_param_string', 'default_value_1'}");
+      FirebaseAnalytics.SetDefaultParameters(new Dictionary<string, object>
+      {
+          { "default_param_string", "default_value_1" }
+      });
+
+      DebugLog("Setting multiple default parameters: {'default_param_int', 123, 'default_param_double', 45.67, 'default_param_bool', true}");
+      FirebaseAnalytics.SetDefaultParameters(new Dictionary<string, object>
+      {
+          { "default_param_int", 123 },
+          { "default_param_double", 45.67 },
+          { "default_param_bool", true }
+      });
+
+      DebugLog("Clearing default parameters with null.");
+      FirebaseAnalytics.SetDefaultParameters(null);
+
+      DebugLog("Clearing default parameters with empty dictionary.");
+      FirebaseAnalytics.SetDefaultParameters(new Dictionary<string, object>());
+
+      DebugLog("TestSetDefaultParameters completed.");
+    }
+
     // Get the current app instance ID.
     public Task<string> DisplayAnalyticsInstanceId() {
       return FirebaseAnalytics.GetAnalyticsInstanceIdAsync().ContinueWithOnMainThread(task => {
@@ -256,6 +282,9 @@ namespace Firebase.Sample.Analytics {
 	}
         if (GUILayout.Button("Test SetConsent")) {
           AnalyticsSetConsent();
+        }
+        if (GUILayout.Button("Test SetDefaultParameters")) {
+          TestSetDefaultParameters();
         }
         GUILayout.EndVertical();
         GUILayout.EndScrollView();

@@ -87,6 +87,24 @@ void SetConsentWithInts(const std::map<int, int>& settings) {
   SetConsent(converted);
 }
 
+// Helper function to set default event parameters from vectors of strings and variants.
+void SetDefaultEventParametersHelper(
+    const std::vector<std::string>& parameter_names,
+    const std::vector<firebase::Variant>& parameter_values) {
+  if (parameter_names.size() != parameter_values.size()) {
+    firebase::LogError(
+        "SetDefaultEventParametersHelper given different list sizes (%d, %d)",
+        parameter_names.size(), parameter_values.size());
+    return;
+  }
+
+  std::map<std::string, firebase::Variant> default_parameters;
+  for (size_t i = 0; i < parameter_names.size(); ++i) {
+    default_parameters[parameter_names[i]] = parameter_values[i];
+  }
+  SetDefaultEventParameters(default_parameters);
+}
+
 }  // namespace analytics
 }  // namespace firebase
 
@@ -100,6 +118,10 @@ void SetConsentWithInts(const std::map<int, int>& settings) {
 %ignore firebase::analytics::LogEvent(const char*, const Parameter*, size_t);
 // Ignore SetConsent, in order to convert the types with our own function.
 %ignore firebase::analytics::SetConsent;
+// Ignore SetDefaultEventParameters and ClearDefaultEventParameters, as we handle them
+// with a custom version or re-expose ClearDefaultEventParameters.
+%ignore firebase::analytics::SetDefaultEventParameters;
+%ignore firebase::analytics::ClearDefaultEventParameters;
 // Ignore the Parameter class, as we don't want to expose that to C# at all.
 %ignore firebase::analytics::Parameter;
 
@@ -121,5 +143,9 @@ namespace analytics {
 void LogEvent(const char* name, std::vector<std::string> parameter_names,
               std::vector<firebase::Variant> parameter_values);
 void SetConsentWithInts(const std::map<int, int>& settings);
+void SetDefaultEventParametersHelper(
+    const std::vector<std::string>& parameter_names,
+    const std::vector<firebase::Variant>& parameter_values);
+void ClearDefaultEventParameters();
 }  // namespace analytics
 }  // namespace firebase

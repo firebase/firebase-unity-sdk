@@ -248,6 +248,30 @@ public static partial class FirebaseAnalytics {
     FirebaseAnalyticsInternal.SetConsentWithInts(consentSettingsMap);
   }
 
+  /// @brief Sets default event parameters.
+  ///
+  /// These parameters are logged with all events, in addition to the parameters passed to the
+  /// LogEvent() call. They are useful for logging common parameters with all events.
+  /// Default event parameters are overridden by event-specific parameters if the names are the
+  /// same. Default parameters are removed if the dictionary is null or empty.
+  ///
+  /// @param[in] parameters The dictionary of parameters to set.
+  ///   If null, clears all default parameters.
+  public static void SetDefaultParameters(
+      System.Collections.Generic.IDictionary<string, object> parameters) {
+    if (parameters == null || parameters.Count == 0) {
+      FirebaseAnalyticsInternal.ClearDefaultEventParameters();
+    } else {
+      StringList parameterNames = new StringList();
+      VariantList parameterValues = new VariantList();
+      foreach (var kvp in parameters) {
+        parameterNames.Add(kvp.Key);
+        parameterValues.Add(Firebase.Variant.FromObject(kvp.Value));
+      }
+      FirebaseAnalyticsInternal.SetDefaultEventParametersHelper(parameterNames, parameterValues);
+    }
+  }
+
   /// @brief Sets the duration of inactivity that terminates the current session.
   ///
   /// @note The default value is 30 minutes.
