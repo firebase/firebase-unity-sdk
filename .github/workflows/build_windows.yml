@@ -108,13 +108,13 @@ jobs:
       - name: Remove zlib
         shell: bash
         run: |
-          rm C:/msys64/mingw64/lib/libz*
+          rm -f C:/msys64/mingw64/lib/libz*
 
       # Strawberry Perl has zlib within, so we also remove it
       - name: Remove Strawberry
         shell: bash
         run: |
-          rm -r C:/Strawberry
+          rm -rf C:/Strawberry
       
       - name: Build SDK (Windows)
         timeout-minutes: 90
