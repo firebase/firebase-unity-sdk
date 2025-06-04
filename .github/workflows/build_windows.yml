@@ -65,6 +65,10 @@ jobs:
       - name: Support longpaths
         run: git config --system core.longpaths true
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '4.5.x'
+
       - name: Setup python
         uses: actions/setup-python@v4
         with:
