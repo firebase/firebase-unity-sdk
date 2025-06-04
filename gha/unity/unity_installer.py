@@ -124,18 +124,18 @@ SETTINGS = {
   # The modules are valid only if Unity Hub & Unity are installed.
   "2022": {
     WINDOWS: {
-      "version": "2022.3.47f1",
-      "changeset": "88c277b85d21",
+      "version": "2022.3.62f1",
+      "changeset": "4af31df58517",
       "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     MACOS: {
-      "version": "2022.3.47f1",
-      "changeset": "88c277b85d21",
+      "version": "2022.3.62f1",
+      "changeset": "4af31df58517",
       "modules": {ANDROID: ["android"], IOS: ["ios", "appletv"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
     },
     LINUX: {
-      "version": "2022.3.47f1",
-      "changeset": "88c277b85d21",
+      "version": "2022.3.62f1",
+      "changeset": "4af31df58517",
       "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: [], WINDOWS: ["windows-mono"], MACOS: ["mac-mono"], LINUX: [], PLAYMODE: []}
     }
   },
