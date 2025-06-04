@@ -430,14 +430,13 @@ public sealed class AppBuilderHelper {
   /// </summary>
   /// <returns>Array of with string corresponding to the found scene.</returns>
   private static string[] GetScenes() {
-    return new string[] { };
     // Note: order is important. The first scene will determine the first scene
     // to be loaded on app startup, which needs to be the menu.
     string menuScene = "Menu.unity";
     string mainScene = "MainScene.unity";
     string autoScene = "MainSceneAutomated.unity";
     //string[] expectedScenes = new [] { menuScene, mainScene, autoScene };
-    string[] expectedScenes = new [] { autoScene, mainScene };
+    string[] expectedScenes = new [] { mainScene };
     var scenes = Directory.GetFiles("Assets", "*.unity", SearchOption.AllDirectories)
                           .Where(path => expectedScenes.Contains(Path.GetFileName(path)))
                           .OrderBy(path => Array.IndexOf(expectedScenes, Path.GetFileName(path)))
