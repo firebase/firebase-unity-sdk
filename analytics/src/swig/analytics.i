@@ -121,7 +121,6 @@ void SetDefaultEventParametersHelper(
 // Ignore SetDefaultEventParameters and ClearDefaultEventParameters, as we handle them
 // with a custom version or re-expose ClearDefaultEventParameters.
 %ignore firebase::analytics::SetDefaultEventParameters;
-%ignore firebase::analytics::ClearDefaultEventParameters;
 // Ignore the Parameter class, as we don't want to expose that to C# at all.
 %ignore firebase::analytics::Parameter;
 
