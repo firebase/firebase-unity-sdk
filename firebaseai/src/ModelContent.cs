@@ -316,7 +316,8 @@ public readonly struct ModelContent {
     // Both role and parts are required keys
     return new ModelContent(
       jsonDict.ParseValue<string>("role", JsonParseOptions.ThrowEverything),
-      jsonDict.ParseObjectList("parts", PartFromJson, JsonParseOptions.ThrowEverything));
+      // Unknown parts are converted to null, which we then want to filter out here
+      jsonDict.ParseObjectList("parts", PartFromJson, JsonParseOptions.ThrowEverything).Where(p => p is not null));
   }
 
   private static InlineDataPart InlineDataPartFromJson(Dictionary<string, object> jsonDict) {
@@ -335,7 +336,10 @@ public readonly struct ModelContent {
                                        out var inlineDataPart)) {
       return inlineDataPart;
     } else {
-      throw new NotSupportedException("Unable to parse given 'part' into a known Part.");
+#if FIREBASEAI_DEBUG_LOGGING
+      UnityEngine.Debug.LogWarning($"Received unknown part, with keys: {string.Join(',', jsonDict.Keys)}");
+#endif
+      return null;
     }
   }
 }
