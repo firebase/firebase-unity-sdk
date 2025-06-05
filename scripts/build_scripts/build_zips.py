@@ -430,7 +430,7 @@ def get_windows_args():
       cmake args for windows platform.
   """
   result_args = []
-  result_args.append('-G Visual Studio 16 2019')
+  result_args.append('-G Visual Studio 17 2022')
   result_args.append('-A x64') # TODO flexibily for x32
   result_args.append("-DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=%s" % sys.executable)
   # Use a newer version of the Windows SDK, as the default one has build issues with grpc

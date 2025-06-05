@@ -40,7 +40,7 @@ permissions: write-all
 jobs:
   build_desktop:
     name: build-windows-unity${{inputs.unity_version}}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: windows-2019
+    runs-on: windows-latest
     strategy:
       fail-fast: false
  
@@ -108,13 +108,15 @@ jobs:
       - name: Remove zlib
         shell: bash
         run: |
-          rm C:/msys64/mingw64/lib/libz*
+          rm -f C:/mingw32/i686-w64-mingw32/lib/libz*
+          rm -f C:/mingw64/x86_64-w64-mingw32/lib/libz*
+          rm -f C:/msys64/mingw64/lib/libz*
 
       # Strawberry Perl has zlib within, so we also remove it
       - name: Remove Strawberry
         shell: bash
         run: |
-          rm -r C:/Strawberry
+          rm -rf C:/Strawberry
       
       - name: Build SDK (Windows)
         timeout-minutes: 90
