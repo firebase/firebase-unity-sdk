@@ -257,18 +257,47 @@ public static partial class FirebaseAnalytics {
   ///
   /// @param[in] parameters The dictionary of parameters to set.
   ///   If null, clears all default parameters.
-  public static void SetDefaultParameters(
+  public static void SetDefaultEventParameters(
       System.Collections.Generic.IDictionary<string, object> parameters) {
     if (parameters == null || parameters.Count == 0) {
+      // This handles both an explicitly null dictionary and an empty one.
       FirebaseAnalyticsInternal.ClearDefaultEventParameters();
+      UnityEngine.Debug.Log("Firebase Analytics: Cleared default event parameters.");
     } else {
       StringList parameterNames = new StringList();
       VariantList parameterValues = new VariantList();
+      int originalCount = parameters.Count; // Store original count for later check
+
       foreach (var kvp in parameters) {
-        parameterNames.Add(kvp.Key);
-        parameterValues.Add(Firebase.Variant.FromObject(kvp.Value));
+        try {
+          parameterNames.Add(kvp.Key);
+          parameterValues.Add(Firebase.Variant.FromObject(kvp.Value));
+        } catch (System.Exception e) {
+          UnityEngine.Debug.LogWarning(string.Format(
+              "Firebase Analytics: Failed to convert default parameter '{0}'. Skipping. Error: {1}",
+              kvp.Key, e.ToString()));
+          // If adding to parameterNames succeeded but Variant.FromObject failed,
+          // we need to remove the key that was added optimistically.
+          if (parameterNames.Count > parameterValues.Count) {
+              parameterNames.RemoveAt(parameterNames.Count - 1);
+          }
+        }
       }
-      FirebaseAnalyticsInternal.SetDefaultEventParametersHelper(parameterNames, parameterValues);
+
+      if (parameterNames.Count == 0 && originalCount > 0) {
+        // Input dictionary was not empty, but all parameters failed conversion.
+        UnityEngine.Debug.LogError(
+            "Firebase Analytics: All supplied default parameters were invalid. " +
+            "Existing default parameters will be preserved.");
+        // Do nothing further, preserving existing defaults.
+      } else if (parameterNames.Count > 0) {
+        // We have some valid parameters to set.
+        FirebaseAnalyticsInternal.SetDefaultEventParametersHelper(parameterNames, parameterValues);
+        UnityEngine.Debug.Log(string.Format(
+            "Firebase Analytics: Set {0} default event parameters.", parameterNames.Count));
+      }
+      // If parameterNames.Count is 0 and originalCount was also 0,
+      // it was handled by the initial ClearDefaultEventParameters call.
     }
   }
 

@@ -40,7 +40,7 @@ namespace Firebase.Sample.Analytics {
         TestAnalyticsSetConsentDoesNotThrow,
         TestInstanceIdChangeAfterReset,
         TestResetAnalyticsData,
-        TestSetDefaultParametersAutomated, // Added new test here
+        TestSetDefaultEventParametersAutomated, // Renamed test here
         // Temporarily disabled until this test is deflaked. b/143603151
         //TestCheckAndFixDependenciesInvalidOperation,
         TestCheckAndFixDependenciesDoubleCall,
@@ -110,17 +110,17 @@ namespace Firebase.Sample.Analytics {
       });
     }
 
-    Task TestSetDefaultParametersAutomated() {
-      DebugLog("Automated Test: Starting TestSetDefaultParametersAutomated...");
+    Task TestSetDefaultEventParametersAutomated() {
+      DebugLog("Automated Test: Starting TestSetDefaultEventParametersAutomated...");
 
       DebugLog("Automated Test: Setting single default string parameter: {'auto_default_param_string', 'auto_value_1'}");
-      FirebaseAnalytics.SetDefaultParameters(new Dictionary<string, object>
+      FirebaseAnalytics.SetDefaultEventParameters(new Dictionary<string, object>
       {
           { "auto_default_param_string", "auto_value_1" }
       });
 
       DebugLog("Automated Test: Setting multiple default parameters: {'auto_default_param_int', 789, 'auto_default_param_double', 12.34, 'auto_default_param_bool', false}");
-      FirebaseAnalytics.SetDefaultParameters(new Dictionary<string, object>
+      FirebaseAnalytics.SetDefaultEventParameters(new Dictionary<string, object>
       {
           { "auto_default_param_int", 789 },
           { "auto_default_param_double", 12.34 },
@@ -128,12 +128,12 @@ namespace Firebase.Sample.Analytics {
       });
 
       DebugLog("Automated Test: Clearing default parameters with null.");
-      FirebaseAnalytics.SetDefaultParameters(null);
+      FirebaseAnalytics.SetDefaultEventParameters(null);
 
       DebugLog("Automated Test: Clearing default parameters with empty dictionary.");
-      FirebaseAnalytics.SetDefaultParameters(new Dictionary<string, object>());
+      FirebaseAnalytics.SetDefaultEventParameters(new Dictionary<string, object>());
 
-      DebugLog("Automated Test: TestSetDefaultParametersAutomated completed.");
+      DebugLog("Automated Test: TestSetDefaultEventParametersAutomated completed.");
       return Task.FromResult(true); // Indicate successful completion
     }
 
