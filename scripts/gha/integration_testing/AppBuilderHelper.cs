@@ -435,7 +435,7 @@ public sealed class AppBuilderHelper {
     string menuScene = "Menu.unity";
     string mainScene = "MainScene.unity";
     string autoScene = "MainSceneAutomated.unity";
-    string[] expectedScenes = new [] { menuScene, mainScene, autoScene };
+    string[] expectedScenes = new [] { mainScene, menuScene, autoScene };
     var scenes = Directory.GetFiles("Assets", "*.unity", SearchOption.AllDirectories)
                           .Where(path => expectedScenes.Contains(Path.GetFileName(path)))
                           .OrderBy(path => Array.IndexOf(expectedScenes, Path.GetFileName(path)))
