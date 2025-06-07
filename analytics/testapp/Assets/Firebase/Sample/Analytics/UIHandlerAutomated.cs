@@ -127,6 +127,12 @@ namespace Firebase.Sample.Analytics {
           { "auto_default_param_bool", false }
       });
 
+      DebugLog("Automated Test: Setting a default parameter with a null value: {'param_with_null_value', null}");
+      FirebaseAnalytics.SetDefaultEventParameters(new Dictionary<string, object>
+      {
+          { "param_with_null_value", null }
+      });
+
       DebugLog("Automated Test: Clearing default parameters with null.");
       FirebaseAnalytics.SetDefaultEventParameters(null);
 

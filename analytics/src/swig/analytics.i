@@ -118,8 +118,7 @@ void SetDefaultEventParametersHelper(
 %ignore firebase::analytics::LogEvent(const char*, const Parameter*, size_t);
 // Ignore SetConsent, in order to convert the types with our own function.
 %ignore firebase::analytics::SetConsent;
-// Ignore SetDefaultEventParameters and ClearDefaultEventParameters, as we handle them
-// with a custom version or re-expose ClearDefaultEventParameters.
+// Ignore SetDefaultEventParameters, as we handle it with a custom helper.
 %ignore firebase::analytics::SetDefaultEventParameters;
 // Ignore the Parameter class, as we don't want to expose that to C# at all.
 %ignore firebase::analytics::Parameter;
