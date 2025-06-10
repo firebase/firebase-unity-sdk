@@ -71,10 +71,16 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 12.10.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 12.8.0.
+    - General (iOS): Update to Firebase Cocoapods version 11.14.0.
+    - General (iOS, tvOS, Desktop): iOS, tvOS, and macOS SDKs are now built using Xcode 16.2.
     - General (Android): Fix a crash with 16 KB page sizes.
       ([#1259](https://github.com/firebase/firebase-unity-sdk/issues/1259)).
+    - Messaging (Android): Fix issue with `SubscribeAsync` task not completing when
+      a cached token is available.
+      ([#1245](https://github.com/firebase/firebase-unity-sdk/issues/1245)).
 
 ### 12.9.0
 -   Changes
