@@ -10,6 +10,7 @@
          UnityPlayerActivity to work around a known issue when receiving
          notification data payloads in the background. -->
     <activity android:name="com.google.firebase.MessagingUnityPlayerActivity"
+              android:theme="@style/UnityThemeSelector"
               android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
