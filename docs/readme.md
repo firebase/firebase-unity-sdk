@@ -81,6 +81,8 @@ Release Notes
     - Messaging (Android): Fix issue with `SubscribeAsync` task not completing when
       a cached token is available.
       ([#1245](https://github.com/firebase/firebase-unity-sdk/issues/1245)).
+    - Messaging (Android): Fix issue with missing theme causing a crash on Unity 6.
+      ([#1229](https://github.com/firebase/firebase-unity-sdk/issues/1229))
 
 ### 12.9.0
 -   Changes
