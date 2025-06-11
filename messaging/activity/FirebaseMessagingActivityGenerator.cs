@@ -236,6 +236,10 @@ namespace Firebase.Messaging.Editor {
       // Create a NamespaceManager with the 'android' namespace.
       var nsManager = new XmlNamespaceManager(manifest.NameTable);
       var androidNamespace = manifest.DocumentElement.GetNamespaceOfPrefix("android");
+      if (string.IsNullOrEmpty(androidNamespace)) {
+        // If unable to find the android namespace, just exit out early, since we depend on it
+        return;
+      }
       nsManager.AddNamespace("android", androidNamespace);
 
       // Find the activity node
