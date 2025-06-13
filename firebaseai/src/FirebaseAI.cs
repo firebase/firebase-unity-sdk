@@ -191,6 +191,38 @@ public class FirebaseAI {
         liveGenerationConfig, tools,
         systemInstruction, requestOptions);
   }
+
+  /// <summary>
+  /// Initializes an Imagen model for image generation with the given parameters.
+  ///
+  /// - Note: Refer to Imagen documentation for appropriate model names and capabilities.
+  /// </summary>
+  /// <param name="modelName">The name of the Imagen model to use.</param>
+  /// <param name="generationConfig">The image generation parameters your model should use.</param>
+  /// <param name="safetySettings">Safety settings for content filtering.</param>
+  /// <param name="requestOptions">Configuration parameters for sending requests to the backend.</param>
+  /// <returns>The initialized `ImagenModel` instance.</returns>
+  public ImagenModel GetImagenModel(
+    string modelName,
+    ImagenGenerationConfig? generationConfig = null,
+    ImagenSafetySettings? safetySettings = null,
+    RequestOptions? requestOptions = null
+  ) {
+    // Potentially add validation for modelName or other parameters if needed.
+    // Ensure backend compatibility if Imagen is only available on certain backends.
+    // For example, if Imagen is VertexAI only:
+    // if (_backend.Provider != Backend.InternalProvider.VertexAI) {
+    //   throw new NotSupportedException("ImagenModel is currently only supported with the VertexAI backend.");
+    // }
+    return new ImagenModel(
+      _firebaseApp,
+      _backend,
+      modelName,
+      generationConfig,
+      safetySettings,
+      requestOptions
+    );
+  }
 }
 
 }
