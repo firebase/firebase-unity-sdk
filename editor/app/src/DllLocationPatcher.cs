@@ -96,18 +96,22 @@ internal class DllLocationPatcher : AssetPostprocessor {
             BuildTarget buildTarget, string pathToBuiltProject) {
         if (buildTarget == BuildTarget.StandaloneWindows ||
             buildTarget == BuildTarget.StandaloneWindows64) {
-            Type firebaseAnalyticsType = Type.GetType("Firebase.Analytics.FirebaseAnalytics, Firebase.Analytics");
+            Type firebaseAnalyticsType = Type.GetType(FirebaseAnalyticsEditorConstants.AnalyticsTypeFullName);
             if (firebaseAnalyticsType != null) {
-                string sourceDllPath = "./analytics_win.dll";
+                string sourceDllPath = FirebaseAnalyticsEditorConstants.DllSourcePath;
                 if (System.IO.File.Exists(sourceDllPath)) {
-                    string destinationDirectory = Path.Combine(
-                        Path.GetDirectoryName(pathToBuiltProject),
-                        Path.GetFileNameWithoutExtension(pathToBuiltProject) + "_Data",
-                        "Plugins");
-                    System.IO.Directory.CreateDirectory(destinationDirectory);
-                    string destinationDllPath = Path.Combine(destinationDirectory, "analytics_win.dll");
-                    System.IO.File.Copy(sourceDllPath, destinationDllPath, true);
-                    Debug.Log("Firebase Analytics: Copied analytics_win.dll to build plugins directory.");
+                    try {
+                        string destinationDirectory = Path.Combine(
+                            Path.GetDirectoryName(pathToBuiltProject),
+                            Path.GetFileNameWithoutExtension(pathToBuiltProject) + "_Data",
+                            "Plugins");
+                        System.IO.Directory.CreateDirectory(destinationDirectory);
+                        string destinationDllPath = Path.Combine(destinationDirectory, FirebaseAnalyticsEditorConstants.DllName);
+                        System.IO.File.Copy(sourceDllPath, destinationDllPath, true);
+                        Debug.Log("Firebase Analytics: Copied " + FirebaseAnalyticsEditorConstants.DllName + " to build plugins directory.");
+                    } catch (System.Exception e) {
+                        Debug.LogError("Firebase Analytics: Error copying " + FirebaseAnalyticsEditorConstants.DllName + " for build: " + e.Message);
+                    }
                 }
             }
         }

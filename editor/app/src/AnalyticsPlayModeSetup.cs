@@ -7,9 +7,7 @@ namespace Firebase.Editor {
 
 [InitializeOnLoad]
 internal static class AnalyticsPlayModeSetup {
-    private const string SourceDllPath = "./analytics_win.dll";
     private const string DestinationDir = "Assets/Plugins/";
-    private const string DestinationDllName = "analytics_win.dll";
 
     static AnalyticsPlayModeSetup() {
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -18,21 +16,21 @@ internal static class AnalyticsPlayModeSetup {
     private static void OnPlayModeStateChanged(PlayModeStateChange state) {
         if (state == PlayModeStateChange.EnteredPlayMode) {
             if (Application.platform == RuntimePlatform.WindowsEditor) {
-                Type firebaseAnalyticsType = Type.GetType("Firebase.Analytics.FirebaseAnalytics, Firebase.Analytics");
+                Type firebaseAnalyticsType = Type.GetType(FirebaseAnalyticsEditorConstants.AnalyticsTypeFullName);
                 if (firebaseAnalyticsType != null) {
-                    if (File.Exists(SourceDllPath)) {
+                    if (File.Exists(FirebaseAnalyticsEditorConstants.DllSourcePath)) {
                         try {
                             Directory.CreateDirectory(DestinationDir);
-                            string destinationDllPath = Path.Combine(DestinationDir, DestinationDllName);
-                            File.Copy(SourceDllPath, destinationDllPath, true);
-                            Debug.Log("Firebase Analytics: Copied " + DestinationDllName + " to " + DestinationDir + " for Play Mode.");
+                            string destinationDllPath = Path.Combine(DestinationDir, FirebaseAnalyticsEditorConstants.DllName);
+                            File.Copy(FirebaseAnalyticsEditorConstants.DllSourcePath, destinationDllPath, true);
+                            Debug.Log("Firebase Analytics: Copied " + FirebaseAnalyticsEditorConstants.DllName + " to " + DestinationDir + " for Play Mode.");
                             AssetDatabase.Refresh();
                         } catch (Exception e) {
-                            Debug.LogError("Firebase Analytics: Error copying " + DestinationDllName + " for Play Mode: " + e.Message);
+                            Debug.LogError("Firebase Analytics: Error copying " + FirebaseAnalyticsEditorConstants.DllName + " for Play Mode: " + e.Message);
                         }
                     } else {
                         // Optional: Log if source DLL is not found, as it might be expected if Analytics is not used.
-                        // Debug.LogWarning("Firebase Analytics: Source DLL " + SourceDllPath + " not found. Skipping Play Mode setup.");
+                        // Debug.LogWarning("Firebase Analytics: Source DLL " + FirebaseAnalyticsEditorConstants.DllSourcePath + " not found. Skipping Play Mode setup.");
                     }
                 }
             }
