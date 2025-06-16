@@ -7,7 +7,7 @@ namespace Firebase.Editor {
 
 [InitializeOnLoad]
 internal static class AnalyticsPlayModeSetup {
-    private const string DestinationDir = "Assets/Plugins/";
+    private const string DestinationDir = "./";
 
     static AnalyticsPlayModeSetup() {
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -20,11 +20,10 @@ internal static class AnalyticsPlayModeSetup {
                 if (firebaseAnalyticsType != null) {
                     if (File.Exists(FirebaseAnalyticsEditorConstants.DllSourcePath)) {
                         try {
-                            Directory.CreateDirectory(DestinationDir);
+                            Directory.CreateDirectory(DestinationDir); // Should be benign for "./"
                             string destinationDllPath = Path.Combine(DestinationDir, FirebaseAnalyticsEditorConstants.DllName);
                             File.Copy(FirebaseAnalyticsEditorConstants.DllSourcePath, destinationDllPath, true);
-                            Debug.Log("Firebase Analytics: Copied " + FirebaseAnalyticsEditorConstants.DllName + " to " + DestinationDir + " for Play Mode.");
-                            AssetDatabase.Refresh();
+                            Debug.Log("Firebase Analytics: Copied " + FirebaseAnalyticsEditorConstants.DllName + " to project root for Play Mode.");
                         } catch (Exception e) {
                             Debug.LogError("Firebase Analytics: Error copying " + FirebaseAnalyticsEditorConstants.DllName + " for Play Mode: " + e.Message);
                         }
