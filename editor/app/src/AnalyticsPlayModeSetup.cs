@@ -16,29 +16,29 @@ internal static class AnalyticsPlayModeSetup {
     private static void OnPlayModeStateChanged(PlayModeStateChange state) {
         if (state == PlayModeStateChange.EnteredPlayMode) {
             if (Application.platform == RuntimePlatform.WindowsEditor) {
-                Type firebaseAnalyticsType = Type.GetType(FirebaseAnalyticsEditorConstants.AnalyticsTypeFullName);
+                Type firebaseAnalyticsType = Type.GetType("Firebase.Analytics.FirebaseAnalytics, Firebase.Analytics");
                 if (firebaseAnalyticsType != null) {
-                    if (File.Exists(FirebaseAnalyticsEditorConstants.DllSourcePath)) {
-                        string fullSourcePath = Path.GetFullPath(FirebaseAnalyticsEditorConstants.DllSourcePath);
+                    if (File.Exists("./analytics_win.dll")) {
+                        string fullSourcePath = Path.GetFullPath("./analytics_win.dll");
                         // string destinationDirectory = "./"; // This is DestinationDir
-                        string fullDestinationPath = Path.GetFullPath(Path.Combine(DestinationDir, FirebaseAnalyticsEditorConstants.DllName));
+                        string fullDestinationPath = Path.GetFullPath(Path.Combine(DestinationDir, "analytics_win.dll"));
 
                         if (fullSourcePath.Equals(fullDestinationPath, StringComparison.OrdinalIgnoreCase)) {
-                            Debug.Log("Firebase Analytics: " + FirebaseAnalyticsEditorConstants.DllName + " is already in the project root. No copy needed for Play Mode.");
+                            Debug.Log("Firebase Analytics: analytics_win.dll is already in the project root. No copy needed for Play Mode.");
                             return;
                         }
 
                         try {
                             Directory.CreateDirectory(DestinationDir); // Should be benign for "./"
-                            string destinationDllPath = Path.Combine(DestinationDir, FirebaseAnalyticsEditorConstants.DllName);
-                            File.Copy(FirebaseAnalyticsEditorConstants.DllSourcePath, destinationDllPath, true);
-                            Debug.Log("Firebase Analytics: Copied " + FirebaseAnalyticsEditorConstants.DllName + " to project root for Play Mode.");
+                            string destinationDllPath = Path.Combine(DestinationDir, "analytics_win.dll");
+                            File.Copy("./analytics_win.dll", destinationDllPath, true);
+                            Debug.Log("Firebase Analytics: Copied analytics_win.dll to project root for Play Mode.");
                         } catch (Exception e) {
-                            Debug.LogError("Firebase Analytics: Error copying " + FirebaseAnalyticsEditorConstants.DllName + " for Play Mode: " + e.Message);
+                            Debug.LogError("Firebase Analytics: Error copying analytics_win.dll for Play Mode: " + e.Message);
                         }
                     } else {
                         // Optional: Log if source DLL is not found, as it might be expected if Analytics is not used.
-                        // Debug.LogWarning("Firebase Analytics: Source DLL " + FirebaseAnalyticsEditorConstants.DllSourcePath + " not found. Skipping Play Mode setup.");
+                        // Debug.LogWarning("Firebase Analytics: Source DLL ./analytics_win.dll not found. Skipping Play Mode setup.");
                     }
                 }
             }

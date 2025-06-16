@@ -96,9 +96,9 @@ internal class DllLocationPatcher : AssetPostprocessor {
             BuildTarget buildTarget, string pathToBuiltProject) {
         if (buildTarget == BuildTarget.StandaloneWindows ||
             buildTarget == BuildTarget.StandaloneWindows64) {
-            Type firebaseAnalyticsType = Type.GetType(FirebaseAnalyticsEditorConstants.AnalyticsTypeFullName);
+            Type firebaseAnalyticsType = Type.GetType("Firebase.Analytics.FirebaseAnalytics, Firebase.Analytics");
             if (firebaseAnalyticsType != null) {
-                string sourceDllPath = FirebaseAnalyticsEditorConstants.DllSourcePath;
+                string sourceDllPath = "./analytics_win.dll";
                 if (System.IO.File.Exists(sourceDllPath)) {
                     try {
                         string destinationDirectory = Path.Combine(
@@ -106,11 +106,11 @@ internal class DllLocationPatcher : AssetPostprocessor {
                             Path.GetFileNameWithoutExtension(pathToBuiltProject) + "_Data",
                             "Plugins");
                         System.IO.Directory.CreateDirectory(destinationDirectory);
-                        string destinationDllPath = Path.Combine(destinationDirectory, FirebaseAnalyticsEditorConstants.DllName);
+                        string destinationDllPath = Path.Combine(destinationDirectory, "analytics_win.dll");
                         System.IO.File.Copy(sourceDllPath, destinationDllPath, true);
-                        Debug.Log("Firebase Analytics: Copied " + FirebaseAnalyticsEditorConstants.DllName + " to build plugins directory.");
+                        Debug.Log("Firebase Analytics: Copied analytics_win.dll to build plugins directory.");
                     } catch (System.Exception e) {
-                        Debug.LogError("Firebase Analytics: Error copying " + FirebaseAnalyticsEditorConstants.DllName + " for build: " + e.Message);
+                        Debug.LogError("Firebase Analytics: Error copying analytics_win.dll for build: " + e.Message);
                     }
                 }
             }
