@@ -19,6 +19,15 @@ internal static class AnalyticsPlayModeSetup {
                 Type firebaseAnalyticsType = Type.GetType(FirebaseAnalyticsEditorConstants.AnalyticsTypeFullName);
                 if (firebaseAnalyticsType != null) {
                     if (File.Exists(FirebaseAnalyticsEditorConstants.DllSourcePath)) {
+                        string fullSourcePath = Path.GetFullPath(FirebaseAnalyticsEditorConstants.DllSourcePath);
+                        // string destinationDirectory = "./"; // This is DestinationDir
+                        string fullDestinationPath = Path.GetFullPath(Path.Combine(DestinationDir, FirebaseAnalyticsEditorConstants.DllName));
+
+                        if (fullSourcePath.Equals(fullDestinationPath, StringComparison.OrdinalIgnoreCase)) {
+                            Debug.Log("Firebase Analytics: " + FirebaseAnalyticsEditorConstants.DllName + " is already in the project root. No copy needed for Play Mode.");
+                            return;
+                        }
+
                         try {
                             Directory.CreateDirectory(DestinationDir); // Should be benign for "./"
                             string destinationDllPath = Path.Combine(DestinationDir, FirebaseAnalyticsEditorConstants.DllName);
