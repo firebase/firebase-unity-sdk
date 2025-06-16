@@ -91,6 +91,28 @@ internal class DllLocationPatcher : AssetPostprocessor {
         }
     }
 
+    [PostProcessBuildAttribute(BUILD_ORDER_PATCH_PROJECT)]
+    internal static void OnPostProcessBuildWindowsAnalytics(
+            BuildTarget buildTarget, string pathToBuiltProject) {
+        if (buildTarget == BuildTarget.StandaloneWindows ||
+            buildTarget == BuildTarget.StandaloneWindows64) {
+            Type firebaseAnalyticsType = Type.GetType("Firebase.Analytics.FirebaseAnalytics, Firebase.Analytics");
+            if (firebaseAnalyticsType != null) {
+                string sourceDllPath = "./analytics_win.dll";
+                if (System.IO.File.Exists(sourceDllPath)) {
+                    string destinationDirectory = Path.Combine(
+                        Path.GetDirectoryName(pathToBuiltProject),
+                        Path.GetFileNameWithoutExtension(pathToBuiltProject) + "_Data",
+                        "Plugins");
+                    System.IO.Directory.CreateDirectory(destinationDirectory);
+                    string destinationDllPath = Path.Combine(destinationDirectory, "analytics_win.dll");
+                    System.IO.File.Copy(sourceDllPath, destinationDllPath, true);
+                    Debug.Log("Firebase Analytics: Copied analytics_win.dll to build plugins directory.");
+                }
+            }
+        }
+    }
+
     internal static void CopyLibrary(
             string srcFolder, string dstFolder, string prefix, string extension) {
         Debug.Log("Post process to patch App." + extension + "'s location");
