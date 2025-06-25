@@ -55,6 +55,45 @@ need to conditionally compile code when also targeting the desktop.
 The AdMob Unity plugin is distributed separately and is available from the
 [AdMob Get Started](https://firebase.google.com/docs/admob/unity/start) guide.
 
+## Platform Notes
+
+### iOS Method Swizzling
+
+On iOS, some application events (such as opening URLs and receiving
+notifications) require your application delegate to implement specific methods.
+For example, receiving a notification may require your application delegate to
+implement `application:didReceiveRemoteNotification:`. Because each iOS
+application has its own app delegate, Firebase uses _method swizzling_, which
+allows the replacement of one method with another, to attach its own handlers in
+addition to any you may have implemented.
+
+The Firebase Cloud Messaging library needs to attach
+handlers to the application delegate using method swizzling. If you are using
+these libraries, at load time, Firebase will typically identify your `AppDelegate`
+class and swizzle the required methods onto it.
+
+#### Specifying Your AppDelegate Class Directly (iOS)
+
+For a more direct approach, or if you encounter issues with the default
+method swizzling, you can explicitly tell Firebase which class is your
+application's `AppDelegate`. To do this, add the `FirebaseAppDelegateClassName`
+key to your app's `Info.plist` file:
+
+*   **Key:** `FirebaseAppDelegateClassName`
+*   **Type:** `String`
+*   **Value:** Your AppDelegate's class name (e.g., `MyCustomAppDelegate`)
+
+**Example `Info.plist` entry:**
+```xml
+<key>FirebaseAppDelegateClassName</key>
+<string>MyCustomAppDelegate</string>
+```
+
+If this key is provided with a valid class name, Firebase will use that class
+directly for its AppDelegate-related interactions. If the key is not present,
+is invalid, or the class is not found, Firebase will use its standard method
+swizzling approach.
+
 Setup
 -----
 
@@ -71,6 +110,17 @@ Support
 
 Release Notes
 -------------
+### 12.10.1
+-   Changes
+    - General (iOS): Change AppDelegate swizzling logic to not use `objc_copyClassList`,
+      which was causing a slow startup, and crashes on iOS 15.
+      ([#1268](https://github.com/firebase/firebase-unity-sdk/issues/1268)).
+    - General (iOS): Added an option to explicitly specify your app's `AppDelegate` class
+      name via the `FirebaseAppDelegateClassName` key in `Info.plist`. This
+      provides a more direct way for Firebase to interact with your specified
+      AppDelegate. See "Platform Notes > iOS Method Swizzling >
+      Specifying Your AppDelegate Class Directly (iOS)" for details.
+
 ### 12.10.0
 -   Changes
     - General: Update to Firebase C++ SDK version 12.8.0.
