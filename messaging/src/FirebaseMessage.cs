@@ -104,14 +104,6 @@ public sealed class FirebaseMessage {
   /// For example it can be a registration token, a topic name, a IID or project
   /// ID.
   public string To { get; private set; }
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose() { }
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose(bool disposing) { }
 }
 
 }  // namespace Firebase.Messaging

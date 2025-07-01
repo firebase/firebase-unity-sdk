@@ -26,14 +26,6 @@ public sealed class MessagingOptions {
   public bool SuppressNotificationPermissionPrompt {
     get; set;
   }
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose() { }
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose(bool disposing) { }
 }
 
 }  // namespace Firebase.Messaging

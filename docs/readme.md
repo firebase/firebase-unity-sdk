@@ -110,6 +110,13 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Analytics: Removed deprecated `FirebaseAnalytics.ParameterGroupId`,
+      and `Dispose` calls.
+    - Auth: Removed deprecated `FirebaseUser.UpdateEmailAsync`.
+    - Messaging: Removed deprecated `Dispose` calls.
+
 ### 12.10.1
 -   Changes
     - General (iOS): Change AppDelegate swizzling logic to not use `objc_copyClassList`,

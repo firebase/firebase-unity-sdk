@@ -91,15 +91,6 @@ public class Parameter : System.IDisposable {
     Name = parameterName;
     Value = parameterValue;
   }
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose() {}
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose(bool disposing) {}
-
 }
 
 }
