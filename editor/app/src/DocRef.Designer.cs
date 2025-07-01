@@ -292,33 +292,6 @@ namespace Firebase.Editor {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Send users to the right place in your app whether or not it is already installed..
-        /// </summary>
-        internal static string DynamicLinksDescription {
-            get {
-                return ResourceManager.GetString("DynamicLinksDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Set up Firebase Dynamic Links.
-        /// </summary>
-        internal static string DynamicLinksGuideSummary {
-            get {
-                return ResourceManager.GetString("DynamicLinksGuideSummary", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Dynamic Links.
-        /// </summary>
-        internal static string DynamicLinksName {
-            get {
-                return ResourceManager.GetString("DynamicLinksName", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Failed to load the UnityEditor.iOS.Extensions.Xcode dll.
         ///Is iOS support installed?.
         /// </summary>
@@ -474,33 +447,6 @@ namespace Firebase.Editor {
         internal static string GoogleServicesToolMissing {
             get {
                 return ResourceManager.GetString("GoogleServicesToolMissing", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Let your existing users easily share your app, or their favorite in-app content, via email or SMS..
-        /// </summary>
-        internal static string InvitesDescription {
-            get {
-                return ResourceManager.GetString("InvitesDescription", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Send Firebase invites from your app.
-        /// </summary>
-        internal static string InvitesGuideSummary {
-            get {
-                return ResourceManager.GetString("InvitesGuideSummary", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Invites and Dynamic Links.
-        /// </summary>
-        internal static string InvitesName {
-            get {
-                return ResourceManager.GetString("InvitesName", resourceCulture);
             }
         }
 

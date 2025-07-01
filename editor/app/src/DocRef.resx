@@ -195,15 +195,6 @@
   <data name="DatabaseGuideSummary" xml:space="preserve">
     <value>Set up Firebase Realtime Database</value>
   </data>
-  <data name="DynamicLinksName" xml:space="preserve">
-    <value>Dynamic Links</value>
-  </data>
-  <data name="DynamicLinksDescription" xml:space="preserve">
-    <value>Send users to the right place in your app whether or not it is already installed.</value>
-  </data>
-  <data name="DynamicLinksGuideSummary" xml:space="preserve">
-    <value>Set up Firebase Dynamic Links</value>
-  </data>
   <data name="FunctionsName" xml:space="preserve">
     <value>Cloud Functions for Firebase</value>
   </data>
@@ -212,15 +203,6 @@
   </data>
   <data name="FunctionsGuideSummary" xml:space="preserve">
     <value>Set up Cloud Functions for Firebase</value>
-  </data>
-  <data name="InvitesName" xml:space="preserve">
-    <value>Invites and Dynamic Links</value>
-  </data>
-  <data name="InvitesDescription" xml:space="preserve">
-    <value>Let your existing users easily share your app, or their favorite in-app content, via email or SMS.</value>
-  </data>
-  <data name="InvitesGuideSummary" xml:space="preserve">
-    <value>Send Firebase invites from your app</value>
   </data>
   <data name="RemoteConfigName" xml:space="preserve">
     <value>Remote Config</value>

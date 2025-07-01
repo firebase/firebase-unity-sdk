@@ -30,7 +30,7 @@ This script will perform the following:
 - Google Service files (plist and json) will be restored into the
   integration_test directories.
 - The server key will be patched into the Messaging project.
-- The uri will be patched into the Database, Messaging, Dynamic Links, Storage project.
+- The uri will be patched into the Database, Messaging, Storage project.
 - The reverse id will be patched into all Info.plist files, using the value from
   the decrypted Google Service plist files as the source of truth.
 
@@ -57,7 +57,6 @@ CAPITALIZATIONS = {
   "auth": "Auth",
   "crashlytics": "Crashlytics",
   "database": "Database",
-  "dynamic_links": "DynamicLinks",
   "firebaseai": "FirebaseAI",
   "firestore": "Firestore",
   "functions": "Functions",
@@ -116,14 +115,6 @@ def main(argv):
   uri = _decrypt(uri_path, passphrase)
   file_path = os.path.join(repo_dir, "database", "testapp", "Assets", "Firebase", "Sample", CAPITALIZATIONS["database"], "UIHandlerAutomated.cs")
   _patch_file(file_path, "REPLACE_WITH_YOUR_DATABASE_URL", uri)
-
-  print("Attempting to patch Dynamic Links uri prefix.")
-  uri_path = os.path.join(secrets_dir, "dynamic_links", "uri.txt.gpg")
-  uri_prefix = _decrypt(uri_path, passphrase)
-  file_path = os.path.join(repo_dir, "dynamic_links", "testapp", "Assets", "Firebase", "Sample", CAPITALIZATIONS["dynamic_links"], "UIHandlerAutomated.cs")
-  _patch_file(file_path, "REPLACE_WITH_YOUR_URI_PREFIX", uri_prefix)
-  file_path = os.path.join(repo_dir, "dynamic_links", "testapp", "Assets", "Firebase", "Sample", CAPITALIZATIONS["dynamic_links"], "UIHandler.cs")
-  _patch_file(file_path, "REPLACE_WITH_YOUR_URI_PREFIX", uri_prefix)
 
   print("Attempting to patch Storage Bucket.")
   bucket_path = os.path.join(secrets_dir, "storage", "bucket.txt.gpg")

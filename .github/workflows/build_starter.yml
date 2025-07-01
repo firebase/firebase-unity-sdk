@@ -28,7 +28,7 @@ on:
         required: true
       apis:
         description: 'CSV of apis to build and test'
-        default: 'analytics,app_check,auth,crashlytics,database,dynamic_links,firebaseai,firestore,functions,installations,messaging,remote_config,storage'
+        default: 'analytics,app_check,auth,crashlytics,database,firebaseai,firestore,functions,installations,messaging,remote_config,storage'
         required: true
       # Additional CMake flags to use
       additional_cmake_flags:
@@ -104,7 +104,7 @@ jobs:
             echo "platform='Android,iOS,tvOS,Windows,macOS,Linux,Playmode'" >> $GITHUB_OUTPUT
             echo "release_label=nightly-$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_OUTPUT
             echo "release_version=NoVersion" >> $GITHUB_OUTPUT
-            echo "apis='analytics,app_check,auth,crashlytics,database,dynamic_links,firebaseai,firestore,functions,installations,messaging,remote_config,storage'" >> $GITHUB_OUTPUT
+            echo "apis='analytics,app_check,auth,crashlytics,database,firebaseai,firestore,functions,installations,messaging,remote_config,storage'" >> $GITHUB_OUTPUT
             echo "unity_version=2021" >> $GITHUB_OUTPUT
             echo "should_trigger_package=true" >> $GITHUB_OUTPUT
             echo "firebase_cpp_sdk_version=" >> $GITHUB_OUTPUT

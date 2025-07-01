@@ -34,7 +34,6 @@ API_PACKAGE_MAP = {
     "auth": "FirebaseAuth.unitypackage",
     "crashlytics": "FirebaseCrashlytics.unitypackage",
     "database": "FirebaseDatabase.unitypackage",
-    "dynamic_links": "FirebaseDynamicLinks.unitypackage",
     "firebaseai": "FirebaseAI.unitypackage",
     "firestore": "FirebaseFirestore.unitypackage",
     "functions": "FirebaseFunctions.unitypackage",

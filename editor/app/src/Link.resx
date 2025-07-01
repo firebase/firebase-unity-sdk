@@ -159,23 +159,11 @@
   <data name="DatabaseReference" xml:space="preserve">
     <value>https://firebase.google.com/docs/reference/unity/class/firebase/database/firebase-database</value>
   </data>
-  <data name="DynamicLinksGuide" xml:space="preserve">
-    <value>https://firebase.google.com/docs/dynamic-links/</value>
-  </data>
-  <data name="DynamicLinksReference" xml:space="preserve">
-    <value>https://firebase.google.com/docs/reference/unity/class/firebase/dynamic-links/dynamic-links</value>
-  </data>
   <data name="FunctionsGuide" xml:space="preserve">
     <value>https://firebase.google.com/docs/functions/</value>
   </data>
   <data name="FunctionsReference" xml:space="preserve">
     <value>https://firebase.google.com/docs/reference/unity/class/firebase/functions/firebase-functions</value>
-  </data>
-  <data name="InvitesGuide" xml:space="preserve">
-    <value>https://firebase.google.com/docs/invites/</value>
-  </data>
-  <data name="InvitesReference" xml:space="preserve">
-    <value>https://firebase.google.com/docs/reference/unity/class/firebase/invites/firebase-invites</value>
   </data>
   <data name="RemoteConfigGuide" xml:space="preserve">
     <value>https://firebase.google.com/docs/remote-config/</value>

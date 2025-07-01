@@ -93,17 +93,6 @@ namespace Firebase.Editor {
       };
     }
 
-    public static ApiInfo DynamicLinks() {
-      return new ApiInfo("dynamic_links")
-      {
-        Name = DocRef.DynamicLinksName,
-        Description = DocRef.DynamicLinksDescription,
-        ApiReference = Link.DynamicLinksReference,
-        GuideButton = DocRef.DynamicLinksGuideSummary,
-        GuideLink = Link.DynamicLinksGuide
-      };
-    }
-
     public static ApiInfo Functions() {
       return new ApiInfo("functions")
       {

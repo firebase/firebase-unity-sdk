@@ -79,7 +79,7 @@ PARAMETERS = {
       }
     },
     "config": {
-      "apis": "analytics,auth,crashlytics,database,dynamic_links,firestore,functions,installations,messaging,remote_config,storage",
+      "apis": "analytics,auth,crashlytics,database,firestore,functions,installations,messaging,remote_config,storage",
     }
   },
 }

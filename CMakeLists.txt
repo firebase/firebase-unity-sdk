@@ -48,9 +48,6 @@ option(FIREBASE_INCLUDE_CRASHLYTICS
 option(FIREBASE_INCLUDE_DATABASE
        "Include the Firebase Realtime Database library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
-option(FIREBASE_INCLUDE_DYNAMIC_LINKS
-       "Include the Firebase Dynamic Links library."
-       ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
 option(FIREBASE_INCLUDE_INSTALLATIONS
        "Include the Firebase Installations library."
        ${FIREBASE_INCLUDE_LIBRARY_DEFAULT})
@@ -268,11 +265,6 @@ if (DESKTOP AND APPLE AND FIREBASE_INCLUDE_EDITOR_TOOL AND NOT FIREBASE_GENERATE
   add_subdirectory(editor)
 endif()
 
-if (PLATFORM STREQUAL TVOS OR PLATFORM STREQUAL SIMULATOR_TVOS)
-  # Dynamic Links is not supported on tvOS.
-  set(FIREBASE_INCLUDE_DYNAMIC_LINKS OFF)
-endif()
-
 if (FIREBASE_INCLUDE_ANALYTICS)
   add_subdirectory(analytics)
   list(APPEND TARGET_LINK_LIB_NAMES "firebase_analytics" "firebase_analytics_swig")
@@ -302,12 +294,6 @@ if (FIREBASE_INCLUDE_DATABASE)
   list(APPEND TARGET_LINK_LIB_NAMES "firebase_database" "firebase_database_swig")
   list(APPEND DOCUMENTATION_ONLY_LIB_NAMES "firebase_database_swig")
   list(APPEND PROJECT_LIST_HEADER "  X(Database)")
-endif()
-if (FIREBASE_INCLUDE_DYNAMIC_LINKS)
-  add_subdirectory(dynamic_links)
-  list(APPEND TARGET_LINK_LIB_NAMES "firebase_dynamic_links" "firebase_dynamic_links_swig")
-  list(APPEND DOCUMENTATION_ONLY_LIB_NAMES "firebase_dynamic_links_swig")
-  list(APPEND PROJECT_LIST_HEADER "  X(DynamicLinks)")
 endif()
 if (FIREBASE_INCLUDE_INSTALLATIONS)
   add_subdirectory(installations)

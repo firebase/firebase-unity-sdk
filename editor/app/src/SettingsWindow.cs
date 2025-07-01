@@ -215,7 +215,6 @@ namespace Firebase.Editor {
         ApiInfo.CloudMessaging(),
         ApiInfo.Crashlytics(),
         ApiInfo.Database(),
-        ApiInfo.DynamicLinks(),
         ApiInfo.Functions(),
         ApiInfo.RemoteConfig(),
         ApiInfo.Storage()) {

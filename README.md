@@ -4,15 +4,14 @@ The repository contains the Firebase Unity SDK source, with support for Android,
 iOS, and desktop platforms. Note that desktop is ***only supported for development
 purposes***. It includes the following Firebase libraries:
 
+- [Firebase AI Logic](https://firebase.google.com/docs/ai-logic/)
 - [Google Analytics for Firebase](https://firebase.google.com/docs/analytics/)
 - [Firebase App Check](https://firebase.google.com/docs/app-check/)
 - [Firebase Authentication](https://firebase.google.com/docs/auth/)
 - [Firebase Crashlytics](https://firebase.google.com/docs/crashlytics)
 - [Firebase Realtime Database](https://firebase.google.com/docs/database/)
-- [Firebase Dynamic Links](https://firebase.google.com/docs/dynamic-links/)
 - [Cloud Firestore](https://firebase.google.com/docs/firestore/)
 - [Cloud Functions for Firebase](https://firebase.google.com/docs/functions/)
-- [Firebase Invites](https://firebase.google.com/docs/invites/)
 - [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging/)
 - [Firebase Remote Config](https://firebase.google.com/docs/remote-config/)
 - [Cloud Storage for Firebase](https://firebase.google.com/docs/storage/)
@@ -86,7 +85,7 @@ Expected output artifact is
 python scripts/build_scripts/build_zips.py --platform=<target platform> --targets=<lib1> --targets=<lib2>
 ```
 
-> **Note:** Supported library names: analytics, app_check, auth, crashlytics, database, dynamic_links, firebaseai, firestore, functions, installations, messaging, remote_config, storage
+> **Note:** Supported library names: analytics, app_check, auth, crashlytics, database, firebaseai, firestore, functions, installations, messaging, remote_config, storage
 
 ## Packaging
 

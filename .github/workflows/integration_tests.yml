@@ -18,7 +18,7 @@ on:
         required: true
       apis:
         description: 'CSV of apis to build and test'
-        default: 'analytics,app_check,auth,crashlytics,database,dynamic_links,firebaseai,firestore,functions,installations,messaging,remote_config,storage'
+        default: 'analytics,app_check,auth,crashlytics,database,firebaseai,firestore,functions,installations,messaging,remote_config,storage'
         required: true
       mobile_test_on:
         description: 'Run mobile tests on real and/or virtual devices? (value: real, virtual. separated by commas)'
