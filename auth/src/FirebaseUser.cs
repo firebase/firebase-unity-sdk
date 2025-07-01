@@ -146,18 +146,6 @@ public sealed class FirebaseUser : UserInfoInterface {
     return GetValidFirebaseUserInternal().TokenAsync(forceRefresh);
   }
 
-  /// @deprecated This method is deprecated. Please use
-  /// @ref SendEmailVerificationBeforeUpdatingEmailAsync(string) instead.
-  /// 
-  /// Sets the email address for the user.
-  ///
-  /// May fail if there is already an email/password-based account for the same
-  /// email address.
-  [System.Obsolete("Please use `Task SendEmailVerificationBeforeUpdatingEmailAsync(string)` instead", false)]
-  public Task UpdateEmailAsync(string email) {
-    return GetValidFirebaseUserInternal().UpdateEmailAsync(email);
-  }
-
   /// Attempts to change the password for the current user.
   ///
   /// For an account linked to an Identity Provider (IDP) with no password,
