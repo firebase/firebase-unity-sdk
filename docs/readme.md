@@ -4,15 +4,13 @@ Firebase Unity SDK
 The Firebase Unity SDK provides Unity packages for the following Firebase
 features on *iOS*, *tvOS* and *Android*.
 
-Note: Firebase Dynamic Links is not supported on tvOS.
-
 | Feature                             | Unity Package                     |
 |:-----------------------------------:|:---------------------------------:|
+| Firebase AI Logic                   | FirebaseAI.unitypackage           |
 | Firebase Analytics                  | FirebaseAnalytics.unitypackage    |
 | Firebase App Check                  | FirebaseAppCheck.unitypackage     |
 | Firebase Authentication             | FirebaseAuth.unitypackage         |
 | Firebase Crashlytics                | FirebaseCrashlytics.unitypackage  |
-| Firebase Dynamic Links (deprecated) | FirebaseDynamicLinks.unitypackage |
 | Cloud Firestore                     | FirebaseFirestore.unitypackage    |
 | Firebase Functions                  | FirebaseFunctions.unitypackage    |
 | Firebase Installations              | FirebaseInstallations.unitypackage|
@@ -31,6 +29,7 @@ desktop builds on Windows, OS X, and Linux:
 
 | Feature                            | Unity Package                     |
 |:----------------------------------:|:---------------------------------:|
+| Firebase AI Logic                  | FirebaseAI.unitypackage           |
 | Firebase Authentication            | FirebaseAuth.unitypackage         |
 | Firebase App Check                 | FirebaseAppCheck.unitypackage     |
 | Firebase Realtime Database*        | FirebaseDatabase.unitypackage     |
@@ -115,6 +114,9 @@ Release Notes
     - Analytics: Removed deprecated `FirebaseAnalytics.ParameterGroupId`
       and `Parameter.Dispose` methods.
     - Auth: Removed deprecated `FirebaseUser.UpdateEmailAsync`.
+    - Dynamic Links: Removed the Dynamic Links SDK. See the [support
+      documentation](https://firebase.google.com/support/dynamic-links-faq)
+      for more information.
     - Messaging: Removed deprecated `FirebaseMessage.Dispose`,
       `FirebaseNotification.Dispose`, and `MessagingOptions.Dispose` methods.
 

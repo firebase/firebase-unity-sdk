@@ -78,7 +78,7 @@ body:
         - Authentication
         - Crashlytics
         - Database
-        - DynamicLinks
+        - Firebase AI Logic
         - Firestore
         - Functions
         - In-App Messaging
@@ -104,7 +104,7 @@ body:
         - Authentication
         - Crashlytics
         - Database
-        - DynamicLinks
+        - Firebase AI Logic
         - Firestore
         - Functions
         - In-App Messaging

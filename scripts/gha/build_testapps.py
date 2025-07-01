@@ -163,7 +163,7 @@ flags.DEFINE_list(
 flags.DEFINE_list(
     "testapps", "all",
     "Which testapps (Firebase APIs) to build. Should either match the"
-    " short names (e.g. analytics,dynamic_links) in the config file"
+    " short names (e.g. analytics,database) in the config file"
     " or should be 'all' to build testapps for every API listed in the config.",
     short_name="t")
 

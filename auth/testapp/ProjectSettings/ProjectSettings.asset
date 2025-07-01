@@ -887,14 +887,14 @@ PlayerSettings:
   apiCompatibilityLevelPerPlatform: {}
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: InvitesUnityTestApp
+  metroPackageName: AuthUnityTestApp
   metroPackageVersion: 
   metroCertificatePath: 
   metroCertificatePassword: 
   metroCertificateSubject: 
   metroCertificateIssuer: 
   metroCertificateNotAfter: 0000000000000000
-  metroApplicationDescription: InvitesUnityTestApp
+  metroApplicationDescription: AuthUnityTestApp
   wsaImages: {}
   metroTileShortName: 
   metroTileShowName: 0

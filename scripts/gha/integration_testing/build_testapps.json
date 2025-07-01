@@ -88,24 +88,6 @@
       ]
     },
     {
-      "name": "dynamic_links",
-      "full_name": "FirebaseDynamicLinks",
-      "captial_name": "DynamicLinks",
-      "bundle_id": "com.google.FirebaseUnityDynamicLinksTestApp.dev",
-      "testapp_path": "dynamic_links/testapp",
-      "platforms": ["Android", "Playmode", "iOS", "Windows", "macOS", "Linux"],
-      "plugins": [
-        "FirebaseDynamicLinks.unitypackage"
-      ],
-      "provision": "Firebase_Unity_Dynamic_Links_Test_App_Dev.mobileprovision",
-      "entitlements": "scripts/gha/integration_testing/entitlements/dynamic_links.entitlements",
-      "upm_packages": [
-        "com.google.external-dependency-manager-*.tgz",
-        "com.google.firebase.app-*.tgz",
-        "com.google.firebase.dynamic-links-*.tgz"
-      ]
-    },
-    {
       "name": "firebaseai",
       "full_name": "FirebaseAI",
       "captial_name": "FirebaseAI",
