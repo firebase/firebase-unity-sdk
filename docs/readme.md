@@ -110,6 +110,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Add support for image generation via Imagen. For more info, see
+      https://firebase.google.com/docs/ai-logic/generate-images-imagen
+
 ### 12.10.1
 -   Changes
     - General (iOS): Change AppDelegate swizzling logic to not use `objc_copyClassList`,
