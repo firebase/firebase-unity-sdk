@@ -31,14 +31,6 @@ public sealed class AndroidNotificationParams {
 
   /// The channel id that was provided when the message was sent.
   public string ChannelId { get; private set; }
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose() { }
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose(bool disposing) { }
 }
 
 /// Used for messages that display a notification.
@@ -151,14 +143,6 @@ public sealed class FirebaseNotification {
   /// On Android, use the key in the app's string resources when populating this
   /// value.
   public string TitleLocalizationKey { get; private set; }
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose() { }
-
-  /// @deprecated No longer needed, will be removed in the future.
-  [System.Obsolete("No longer needed, will be removed in the future.")]
-  public void Dispose(bool disposing) { }
 }
 
 }  // namespace Firebase.Messaging
