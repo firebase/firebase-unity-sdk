@@ -115,6 +115,8 @@ Release Notes
     - Analytics: Removed deprecated `FirebaseAnalytics.ParameterGroupId`
       and `Parameter.Dispose` methods.
     - Auth: Removed deprecated `FirebaseUser.UpdateEmailAsync`.
+    - Firebase AI: Add support for image generation via Imagen. For more info, see
+      https://firebase.google.com/docs/ai-logic/generate-images-imagen
     - Messaging: Removed deprecated `FirebaseMessage.Dispose`,
       `FirebaseNotification.Dispose`, and `MessagingOptions.Dispose` methods.
 

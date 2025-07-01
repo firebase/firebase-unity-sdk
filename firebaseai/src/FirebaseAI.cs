@@ -191,6 +191,28 @@ public class FirebaseAI {
         liveGenerationConfig, tools,
         systemInstruction, requestOptions);
   }
+  
+  /// <summary>
+  /// Initializes an `ImagenModel` with the given parameters.
+  ///
+  /// - Important: Only Imagen 3 models (named `imagen-3.0-*`) are supported.
+  /// </summary>
+  /// <param name="modelName">The name of the Imagen 3 model to use, for example `"imagen-3.0-generate-002"`;
+  ///     see [model versions](https://firebase.google.com/docs/vertex-ai/models) for a list of
+  ///     supported Imagen 3 models.</param>
+  /// <param name="generationConfig">Configuration options for generating images with Imagen.</param>
+  /// <param name="safetySettings">Settings describing what types of potentially harmful content your model
+  ///     should allow.</param>
+  /// <param name="requestOptions">Configuration parameters for sending requests to the backend.</param>
+  /// <returns>The initialized `ImagenModel` instance.</returns>
+  public ImagenModel GetImagenModel(
+      string modelName,
+      ImagenGenerationConfig? generationConfig = null,
+      ImagenSafetySettings? safetySettings = null,
+      RequestOptions? requestOptions = null) {
+    return new ImagenModel(_firebaseApp, _backend, modelName,
+        generationConfig, safetySettings, requestOptions);    
+  }
 }
 
 }

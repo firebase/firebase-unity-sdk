@@ -200,10 +200,11 @@ public class GenerativeModel {
   private async Task<GenerateContentResponse> GenerateContentAsyncInternal(
       IEnumerable<ModelContent> content,
       CancellationToken cancellationToken) {
-    HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":generateContent");
+    HttpRequestMessage request = new(HttpMethod.Post,
+        HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":generateContent");
 
     // Set the request headers
-    await SetRequestHeaders(request);
+    await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
     // Set the content
     string bodyJson = MakeGenerateContentRequest(content);
@@ -214,7 +215,7 @@ public class GenerativeModel {
 #endif
 
     var response = await _httpClient.SendAsync(request, cancellationToken);
-    await ValidateHttpResponse(response);
+    await HttpHelpers.ValidateHttpResponse(response);
 
     string result = await response.Content.ReadAsStringAsync();
 
@@ -225,40 +226,14 @@ public class GenerativeModel {
     return GenerateContentResponse.FromJson(result, _backend.Provider);
   }
 
-  // Helper function to throw an exception if the Http Response indicates failure.
-  // Useful as EnsureSuccessStatusCode can leave out relevant information.
-  private async Task ValidateHttpResponse(HttpResponseMessage response) {
-    if (response.IsSuccessStatusCode) {
-      return;
-    }
-
-    // Status code indicates failure, try to read the content for more details
-    string errorContent = "No error content available.";
-    if (response.Content != null) {
-      try {
-        errorContent = await response.Content.ReadAsStringAsync();
-      } catch (Exception readEx) {
-        // Handle being unable to read the content
-        errorContent = $"Failed to read error content: {readEx.Message}";
-      }
-    }
-
-    // Construct the exception with as much information as possible.
-    var ex = new HttpRequestException(
-      $"HTTP request failed with status code: {(int)response.StatusCode} ({response.ReasonPhrase}).\n" +
-      $"Error Content: {errorContent}"
-    );
-
-    throw ex;
-  }
-
   private async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
       IEnumerable<ModelContent> content,
       [EnumeratorCancellation] CancellationToken cancellationToken) {
-    HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":streamGenerateContent?alt=sse");
+    HttpRequestMessage request = new(HttpMethod.Post,
+        HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":streamGenerateContent?alt=sse");
 
     // Set the request headers
-    await SetRequestHeaders(request);
+    await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
     // Set the content
     string bodyJson = MakeGenerateContentRequest(content);
@@ -269,7 +244,7 @@ public class GenerativeModel {
 #endif
 
     var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-    await ValidateHttpResponse(response);
+    await HttpHelpers.ValidateHttpResponse(response);
 
     // We are expecting a Stream as the response, so handle that.
     using var stream = await response.Content.ReadAsStreamAsync();
@@ -291,10 +266,11 @@ public class GenerativeModel {
   private async Task<CountTokensResponse> CountTokensAsyncInternal(
       IEnumerable<ModelContent> content,
       CancellationToken cancellationToken) {
-    HttpRequestMessage request = new(HttpMethod.Post, GetURL() + ":countTokens");
+    HttpRequestMessage request = new(HttpMethod.Post,
+        HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":countTokens");
 
     // Set the request headers
-    await SetRequestHeaders(request);
+    await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
     // Set the content
     string bodyJson = MakeCountTokensRequest(content);
@@ -305,7 +281,7 @@ public class GenerativeModel {
 #endif
 
     var response = await _httpClient.SendAsync(request, cancellationToken);
-    await ValidateHttpResponse(response);
+    await HttpHelpers.ValidateHttpResponse(response);
 
     string result = await response.Content.ReadAsStringAsync();
 
@@ -314,33 +290,6 @@ public class GenerativeModel {
 #endif
 
     return CountTokensResponse.FromJson(result);
-  }
-
-  private string GetURL() {
-    if (_backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI) {
-      return "https://firebasevertexai.googleapis.com/v1beta" +
-          "/projects/" + _firebaseApp.Options.ProjectId +
-          "/locations/" + _backend.Location +
-          "/publishers/google/models/" + _modelName;
-    } else if (_backend.Provider == FirebaseAI.Backend.InternalProvider.GoogleAI) {
-      return "https://firebasevertexai.googleapis.com/v1beta" +
-          "/projects/" + _firebaseApp.Options.ProjectId +
-          "/models/" + _modelName;
-    } else {
-      throw new NotSupportedException($"Missing support for backend: {_backend.Provider}");
-    }
-  }
-
-  private async Task SetRequestHeaders(HttpRequestMessage request) {
-    request.Headers.Add("x-goog-api-key", _firebaseApp.Options.ApiKey);
-    string version = FirebaseInterops.GetVersionInfoSdkVersion();
-    request.Headers.Add("x-goog-api-client", $"gl-csharp/8.0 fire/{version}");
-    if (FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp)) {
-      request.Headers.Add("X-Firebase-AppId", _firebaseApp.Options.AppId);
-      request.Headers.Add("X-Firebase-AppVersion", UnityEngine.Application.version);
-    }
-    // Add additional Firebase tokens to the header.
-    await FirebaseInterops.AddFirebaseTokensAsync(request, _firebaseApp);
   }
 
   private string MakeGenerateContentRequest(IEnumerable<ModelContent> contents) {
