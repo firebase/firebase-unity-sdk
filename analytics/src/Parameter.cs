@@ -61,7 +61,7 @@ namespace Firebase.Analytics {
 ///                            AchievementParameters);
 /// @endcode
 ///
-public class Parameter : System.IDisposable {
+public class Parameter {
 
   internal string Name { get; set; }
 
