@@ -729,7 +729,7 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("Image Count", response.Images.Count, 2);
 
       for (int i = 0; i < 2; i++) {
-        AssertEq($"Image {i} MimeType", response.Images[i].MimeType, "image/png");
+        AssertEq($"Image {i} MimeType", response.Images[i].MimeType, "image/jpeg");
 
         var texture = response.Images[i].AsTexture2D();
         Assert($"Image {i} as Texture2D", texture != null);
