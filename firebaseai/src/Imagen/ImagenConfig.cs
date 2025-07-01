@@ -193,7 +193,7 @@ namespace Firebase.AI {
         jsonDict["aspectRatio"] = ConvertAspectRatio(AspectRatio.Value);
       }
       if (ImageFormat != null) {
-        jsonDict["outputOption"] = ImageFormat?.ToJson();
+        jsonDict["outputOptions"] = ImageFormat?.ToJson();
       }
       if (AddWatermark != null) {
         jsonDict["addWatermark"] = AddWatermark;

@@ -119,7 +119,7 @@ namespace Firebase.AI {
     /// This method is used for deserializing JSON responses and should not be called directly.
     /// </summary>
     internal static ImagenGenerationResponse<T> FromJson(Dictionary<string, object> jsonDict) {
-      if (!jsonDict.ContainsKey("predictions")) {
+      if (!jsonDict.ContainsKey("predictions") || jsonDict["predictions"] is not List<object>) {
         return new ImagenGenerationResponse<T>(null,
             "Model response missing predictions");
       }
