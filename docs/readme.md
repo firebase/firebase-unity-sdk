@@ -112,10 +112,9 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
-    - Analytics: Removed deprecated `FirebaseAnalytics.ParameterGroupId`,
-      and `Dispose` calls.
+    - Analytics: Removed deprecated `FirebaseAnalytics.ParameterGroupId` and `Parameter.Dispose` methods.
     - Auth: Removed deprecated `FirebaseUser.UpdateEmailAsync`.
-    - Messaging: Removed deprecated `Dispose` calls.
+    - Messaging: Removed deprecated `FirebaseMessage.Dispose`, `FirebaseNotification.Dispose`, and `MessagingOptions.Dispose` methods.
 
 ### 12.10.1
 -   Changes
