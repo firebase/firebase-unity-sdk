@@ -1,0 +1,43 @@
+{
+  "candidates": [
+    {
+      "finishReason": "SAFETY",
+      "safetyRatings": [
+        {
+          "category": "HARM_CATEGORY_HATE_SPEECH",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.3984375,
+          "severity": "HARM_SEVERITY_LOW",
+          "severityScore": 0.21582031
+        },
+        {
+          "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.14941406,
+          "severity": "HARM_SEVERITY_NEGLIGIBLE",
+          "severityScore": 0.02331543
+        },
+        {
+          "category": "HARM_CATEGORY_HARASSMENT",
+          "probability": "LOW",
+          "blocked": true,
+          "probabilityScore": 0.61328125,
+          "severity": "HARM_SEVERITY_LOW",
+          "severityScore": 0.31835938
+        },
+        {
+          "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.13476563,
+          "severity": "HARM_SEVERITY_NEGLIGIBLE",
+          "severityScore": 0.12109375
+        }
+      ]
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 8,
+    "totalTokenCount": 8
+  },
+  "modelVersion": "gemini-1.5-flash"
+}
