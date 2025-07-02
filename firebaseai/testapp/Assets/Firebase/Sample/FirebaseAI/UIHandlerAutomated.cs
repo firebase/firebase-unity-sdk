@@ -766,13 +766,10 @@ namespace Firebase.Sample.FirebaseAI {
       }
 
       if (string.IsNullOrEmpty(jsonString)) {
-        DebugLog("Failed to load from local file, downloading...");
         var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, testDataUrl + filename));
         response.EnsureSuccessStatusCode();
 
         jsonString = await response.Content.ReadAsStringAsync();
-      } else {
-        DebugLog("Using local file");
       }
 
       return Json.Deserialize(jsonString) as Dictionary<string, object>;
