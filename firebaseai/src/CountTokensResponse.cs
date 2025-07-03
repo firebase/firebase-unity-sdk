@@ -36,6 +36,9 @@ public readonly struct CountTokensResponse {
   /// > Important: This does not include billable image, video or other non-text input. See
   /// [Firebase AI pricing](https://firebase.google.com/docs/vertex-ai/pricing) for details.
   /// </summary>
+  /// <remarks>
+  /// Use TotalTokens instead; Gemini 2.0 series models and newer are always billed by token count.
+  /// </remarks>
   /// @deprecated Use TotalTokens instead; Gemini 2.0 series models and newer are always
   /// billed by token count.
   [Obsolete("Use TotalTokens instead; Gemini 2.0 series models and newer are always billed by token count.")]
