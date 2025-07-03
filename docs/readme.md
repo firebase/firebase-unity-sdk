@@ -115,6 +115,8 @@ Release Notes
     - Analytics: Removed deprecated `FirebaseAnalytics.ParameterGroupId`
       and `Parameter.Dispose` methods.
     - Auth: Removed deprecated `FirebaseUser.UpdateEmailAsync`.
+    - Firebase AI: Deprecated `CountTokensResponse.TotalBillableCharacters`, use
+      `CountTokensResponse.TotalTokens` instead.
     - Messaging: Removed deprecated `FirebaseMessage.Dispose`,
       `FirebaseNotification.Dispose`, and `MessagingOptions.Dispose` methods.
 

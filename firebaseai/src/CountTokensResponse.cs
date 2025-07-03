@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Google.MiniJSON;
@@ -35,6 +36,9 @@ public readonly struct CountTokensResponse {
   /// > Important: This does not include billable image, video or other non-text input. See
   /// [Firebase AI pricing](https://firebase.google.com/docs/vertex-ai/pricing) for details.
   /// </summary>
+  /// @deprecated Use TotalTokens instead; Gemini 2.0 series models and newer are always
+  /// billed by token count.
+  [Obsolete("Use TotalTokens instead; Gemini 2.0 series models and newer are always billed by token count.")]
   public int? TotalBillableCharacters { get; }
 
   private readonly ReadOnlyCollection<ModalityTokenCount> _promptTokensDetails;
@@ -52,7 +56,9 @@ public readonly struct CountTokensResponse {
                               int? totalBillableCharacters = null,
                               List<ModalityTokenCount> promptTokensDetails = null) {
     TotalTokens = totalTokens;
+#pragma warning disable CS0618
     TotalBillableCharacters = totalBillableCharacters;
+#pragma warning restore CS0618
     _promptTokensDetails =
         new ReadOnlyCollection<ModalityTokenCount>(promptTokensDetails ?? new List<ModalityTokenCount>());
   }
