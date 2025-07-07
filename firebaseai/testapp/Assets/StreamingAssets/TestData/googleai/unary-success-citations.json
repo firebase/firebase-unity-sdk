@@ -1,0 +1,75 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "Okay, let's break down quantum mechanics. It's a challenging but fascinating area of physics!"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "safetyRatings": [
+        {
+          "category": "HARM_CATEGORY_HATE_SPEECH",
+          "probability": "NEGLIGIBLE"
+        },
+        {
+          "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+          "probability": "NEGLIGIBLE"
+        },
+        {
+          "category": "HARM_CATEGORY_HARASSMENT",
+          "probability": "NEGLIGIBLE"
+        },
+        {
+          "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          "probability": "NEGLIGIBLE"
+        }
+      ],
+      "citationMetadata": {
+        "citationSources": [
+          {
+            "startIndex": 548,
+            "endIndex": 690,
+            "uri": "https://www.example.com/some-citation-1",
+            "license": "mit"
+          },
+          {
+            "startIndex": 1240,
+            "endIndex": 1407,
+            "uri": "https://www.example.com/some-citation-1"
+          },
+          {
+            "startIndex": 1942,
+            "endIndex": 2149
+          },
+          {
+            "startIndex": 2036,
+            "endIndex": 2175
+          }
+        ]
+      },
+      "avgLogprobs": -0.30887421148582783
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 15,
+    "candidatesTokenCount": 1667,
+    "totalTokenCount": 1682,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 15
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 1667
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash"
+}

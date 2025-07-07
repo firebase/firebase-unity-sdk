@@ -1,0 +1,7 @@
+{
+  "predictions": [
+    {
+      "raiFilteredReason": "Unable to show generated images. All images were filtered out because they violated Vertex AI's usage guidelines. You will not be charged for blocked images. Try rephrasing the prompt. If you think this was an error, send feedback. Support codes: 39322892, 29310472"
+    }
+  ]
+}

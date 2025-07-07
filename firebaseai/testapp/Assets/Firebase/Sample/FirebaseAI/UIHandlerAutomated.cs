@@ -27,7 +27,7 @@ namespace Firebase.Sample.FirebaseAI {
   using System.Threading.Tasks;
   using Google.MiniJSON;
   using UnityEngine;
-  using UnityEngine.Video;
+  using UnityEngine.Networking;
   using System.IO;
 #if INCLUDE_FIREBASE_AUTH
   using Firebase.Auth;
@@ -632,11 +632,6 @@ namespace Firebase.Sample.FirebaseAI {
       CountTokensResponse response = await model.CountTokensAsync("Hello, I am testing CountTokens!");
 
       Assert($"CountTokens TotalTokens {response.TotalTokens}", response.TotalTokens > 0);
-      // TotalBillableCharacters is only expected to be set with VertexAI.
-      if (backend == Backend.VertexAI) {
-        Assert($"CountTokens TotalBillableCharacters {response.TotalBillableCharacters}",
-              response.TotalBillableCharacters > 0);
-      }
 
       AssertEq("CountTokens PromptTokenDetails", response.PromptTokensDetails.Count(), 1);
       var details = response.PromptTokensDetails.First();
@@ -794,17 +789,40 @@ namespace Firebase.Sample.FirebaseAI {
 
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
     readonly string testDataUrl =
-        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/3737ae1fe9c5ecbd55abdeabc273ef4f392cbf19/mock-responses/";
+        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/47becf9101d11ea3c568bf60b12f1c8ed9fb684e/mock-responses/";
     readonly HttpClient httpClient = new();
+
+    private Task<string> LoadStreamingAsset(string fullPath) {
+      TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
+      UnityWebRequest request = UnityWebRequest.Get(fullPath);
+      request.SendWebRequest().completed += (_) => {
+        if (request.result == UnityWebRequest.Result.Success) {
+          tcs.SetResult(request.downloadHandler.text);
+        } else {
+          tcs.SetResult(null);
+        }
+      };
+      return tcs.Task;
+    }
 
     // Gets the Json test data from the given filename, potentially downloading from a GitHub repo.
     private async Task<Dictionary<string, object>> GetJsonTestData(string filename) {
-      // TODO: Check if the file is available locally first
+      string jsonString = null;
+      // First, try to load the file from StreamingAssets
+      string localPath = Path.Combine(Application.streamingAssetsPath, "TestData", filename);
+      if (localPath.StartsWith("jar") || localPath.StartsWith("http")) {
+        // Special case to access StreamingAsset content on Android
+        jsonString = await LoadStreamingAsset(localPath);
+      } else if (File.Exists(localPath)) {
+        jsonString = File.ReadAllText(localPath);
+      }
 
-      var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, testDataUrl + filename));
-      response.EnsureSuccessStatusCode();
+      if (string.IsNullOrEmpty(jsonString)) {
+        var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, testDataUrl + filename));
+        response.EnsureSuccessStatusCode();
 
-      string jsonString = await response.Content.ReadAsStringAsync();
+        jsonString = await response.Content.ReadAsStringAsync();
+      }
 
       return Json.Deserialize(jsonString) as Dictionary<string, object>;
     }
@@ -1071,7 +1089,9 @@ namespace Firebase.Sample.FirebaseAI {
       CountTokensResponse response = CountTokensResponse.FromJson(json);
 
       AssertEq("TotalTokens", response.TotalTokens, 1837);
+#pragma warning disable CS0618
       AssertEq("TotalBillableCharacters", response.TotalBillableCharacters, 117);
+#pragma warning restore CS0618
       List<ModalityTokenCount> details = response.PromptTokensDetails.ToList();
       AssertEq("PromptTokensDetails.Count", details.Count, 2);
       AssertEq("PromptTokensDetails[0].Modality", details[0].Modality, ContentModality.Image);
@@ -1107,7 +1127,7 @@ namespace Firebase.Sample.FirebaseAI {
     // Test that parsing a basic short reply from Google AI endpoint works as expected.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-basic-reply-short.txt
     async Task InternalTestGoogleAIBasicReplyShort() {
-      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-basic-reply-short.txt"); //
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-basic-reply-short.json"); //
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
 
       ValidateTextPart(response, "Google's headquarters, also known as the Googleplex, is located in **Mountain View, California**.\n");
@@ -1133,12 +1153,12 @@ namespace Firebase.Sample.FirebaseAI {
     // Test parsing a Google AI format response with citations.
     // Based on: https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-citations.txt
     async Task InternalTestGoogleAICitations() {
-      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-citations.txt");
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-citations.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
 
       // Validate Text Part (check start and end)
       string expectedStart = "Okay, let's break down quantum mechanics.";
-      string expectedEnd = "foundation for many technologies, including:\n";
+      string expectedEnd = "area of physics!";
       Assert("Candidate count", response.Candidates.Count() == 1);
       Candidate candidate = response.Candidates.First();
       AssertEq("Content role", candidate.Content.Role, "model");
