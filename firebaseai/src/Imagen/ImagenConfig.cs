@@ -196,7 +196,7 @@ namespace Firebase.AI {
         jsonDict["outputOptions"] = ImageFormat?.ToJson();
       }
       if (AddWatermark != null) {
-        jsonDict["addWatermark"] = AddWatermark;
+        jsonDict["addWatermark"] = AddWatermark.Value;
       }
 
       return jsonDict;

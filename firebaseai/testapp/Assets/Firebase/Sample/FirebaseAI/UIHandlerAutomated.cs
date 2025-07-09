@@ -71,7 +71,8 @@ namespace Firebase.Sample.FirebaseAI {
         TestYoutubeLink,
         TestGenerateImage,
         TestImagenGenerateImage,
-        TestImagenGenerateImageOptions
+        TestImagenGenerateImageOptions,
+        TestThinkingBudget,
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
@@ -683,6 +684,7 @@ namespace Firebase.Sample.FirebaseAI {
       Assert($"Missing expected modalities. Text: {foundText}, Image: {foundImage}", foundText && foundImage);
     }
 
+    // Test generating an image via Imagen.
     async Task TestImagenGenerateImage(Backend backend) {
       var model = GetFirebaseAI(backend).GetImagenModel("imagen-3.0-generate-002");
 
@@ -702,6 +704,7 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq($"Image Height = Width", texture.height, texture.width);
     }
 
+    // Test generating an image via Imagen with various options.
     async Task TestImagenGenerateImageOptions(Backend backend) {
       var model = GetFirebaseAI(backend).GetImagenModel(
           modelName: "imagen-3.0-generate-002",
@@ -733,6 +736,30 @@ namespace Firebase.Sample.FirebaseAI {
         Assert($"Image {i} Height < Width {texture.height} < {texture.width}",
             texture.height < texture.width);
       }
+    }
+
+    // Test defining a thinking budget, and getting back thought tokens.
+    async Task TestThinkingBudget(Backend backend) {
+      // Thinking Budget requires at least the 2.5 model.
+      var model = GetFirebaseAI(backend).GetGenerativeModel(
+        modelName: "gemini-2.5-flash",
+        generationConfig: new GenerationConfig(
+          thinkingConfig: new ThinkingConfig(
+            thinkingBudget: 1024
+          )
+        )
+      );
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+          "Hello, I am testing something, can you respond with a short " +
+          "string containing the word 'Firebase'?");
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      Assert("UsageMetadata was missing", response.UsageMetadata != null);
+      Assert("UsageMetadata.ThoughtsTokenCount was missing",
+        response.UsageMetadata?.ThoughtsTokenCount > 0);
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
@@ -879,12 +906,14 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Helper function to validate UsageMetadata.
     private void ValidateUsageMetadata(UsageMetadata? usageMetadata, int promptTokenCount,
-        int candidatesTokenCount, int totalTokenCount) {
+        int candidatesTokenCount, int thoughtsTokenCount, int totalTokenCount) {
       Assert("UsageMetadata", usageMetadata.HasValue);
       AssertEq("Wrong PromptTokenCount",
           usageMetadata?.PromptTokenCount, promptTokenCount);
       AssertEq("Wrong CandidatesTokenCount",
           usageMetadata?.CandidatesTokenCount, candidatesTokenCount);
+      AssertEq("Wrong ThoughtsTokenCount",
+          usageMetadata?.ThoughtsTokenCount, thoughtsTokenCount);
       AssertEq("Wrong TotalTokenCount",
           usageMetadata?.TotalTokenCount, totalTokenCount);
     }
@@ -929,7 +958,7 @@ namespace Firebase.Sample.FirebaseAI {
 
       AssertEq("CitationMetadata", candidate.CitationMetadata, null);
 
-      ValidateUsageMetadata(response.UsageMetadata, 6, 7, 13);
+      ValidateUsageMetadata(response.UsageMetadata, 6, 7, 0, 13);
     }
 
     // Test that parsing a response including Citations works.
@@ -1027,7 +1056,7 @@ namespace Firebase.Sample.FirebaseAI {
         severity: SafetyRating.HarmSeverity.Negligible,
         severityScore: 0.12109375f);
 
-      ValidateUsageMetadata(response.UsageMetadata, 8, 0, 8);
+      ValidateUsageMetadata(response.UsageMetadata, 8, 0, 0, 8);
     }
 
     // Test that parsing a response with unknown safety enums works.
@@ -1145,7 +1174,7 @@ namespace Firebase.Sample.FirebaseAI {
       // No citations in this response
       AssertEq("CitationMetadata", candidate.CitationMetadata, null);
 
-      ValidateUsageMetadata(response.UsageMetadata, 7, 22, 29);
+      ValidateUsageMetadata(response.UsageMetadata, 7, 22, 0, 29);
       // No prompt feedback in this response
       AssertEq("PromptFeedback", response.PromptFeedback, null);
     }
@@ -1217,6 +1246,7 @@ namespace Firebase.Sample.FirebaseAI {
       ValidateUsageMetadata(response.UsageMetadata,
         promptTokenCount: 15,
         candidatesTokenCount: 1667,
+        thoughtsTokenCount: 0,
         totalTokenCount: 1682);
 
       // Validate UsageMetadata Details if needed
