@@ -465,7 +465,7 @@ namespace Firebase.Sample.FirebaseAI {
               Schema.AnyOf(new[] { Schema.Int(), Schema.String() }),
               minItems: 2,
               maxItems: 6)));
-
+      
       var response = await model.GenerateContentAsync(
         "Hello, I am testing setting the response schema with an array, cause you give me some random values.");
 
@@ -1082,14 +1082,14 @@ namespace Firebase.Sample.FirebaseAI {
 
       var grounding = candidate.GroundingMetadata.Value;
 
-      Assert("WebSearchQueries should not be null", grounding.WebSearchQueries != null);
+      Assert("WebSearchQueries should not be empty", grounding.WebSearchQueries.Any());
       Assert("SearchEntryPoint should not be null", grounding.SearchEntryPoint.HasValue);
-      Assert("GroundingChunks should not be null", grounding.GroundingChunks != null);
+      Assert("GroundingChunks should not be empty", grounding.GroundingChunks.Any());
       var chunk = grounding.GroundingChunks.First();
       Assert("GroundingChunk.Web should not be null", chunk.Web.HasValue);
-      Assert("GroundingSupports should not be null", grounding.GroundingSupports != null);
+      Assert("GroundingSupports should not be empty", grounding.GroundingSupports.Any());
       var support = grounding.GroundingSupports.First();
-      Assert("GroundingChunkIndices should not be null", support.GroundingChunkIndices != null);
+      Assert("GroundingChunkIndices should not be empty", support.GroundingChunkIndices.Any());
     }
 
     // Test that parsing a Google AI response with GroundingMetadata works.
@@ -1155,7 +1155,7 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test parsing an empty GroundingMetadata object.
-    async Task InternalTestGroundingMetadata_Empty() {
+    Task InternalTestGroundingMetadata_Empty() {
       var json = new Dictionary<string, object>();
       var grounding = GroundingMetadata.FromJson(json);
 
@@ -1163,10 +1163,12 @@ namespace Firebase.Sample.FirebaseAI {
       Assert("GroundingChunks should be empty", !grounding.GroundingChunks.Any());
       Assert("GroundingSupports should be empty", !grounding.GroundingSupports.Any());
       Assert("SearchEntryPoint should be null", !grounding.SearchEntryPoint.HasValue);
+
+      return Task.CompletedTask;
     }
     
     // Test parsing an empty Segment object.
-    async Task InternalTestSegment_Empty() {
+    Task InternalTestSegment_Empty() {
       var json = new Dictionary<string, object>();
       var segment = Segment.FromJson(json);
 
@@ -1174,6 +1176,8 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("StartIndex should default to 0", segment.StartIndex, 0);
       AssertEq("EndIndex should default to 0", segment.EndIndex, 0);
       Assert("Text should be empty", string.IsNullOrEmpty(segment.Text));
+
+      return Task.CompletedTask;
     }
 
     // Test that parsing a count token response works.

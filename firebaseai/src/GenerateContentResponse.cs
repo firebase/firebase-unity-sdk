@@ -310,7 +310,7 @@ public readonly struct WebGroundingChunk {
   /// <summary>
   /// The URI of the retrieved web page.
   /// </summary>
-  public string Uri { get; }
+  public System.Uri Uri { get; }
   /// <summary>
   /// The title of the retrieved web page.
   /// </summary>
@@ -322,15 +322,20 @@ public readonly struct WebGroundingChunk {
   /// </summary>
   public string Domain { get; }
 
-  private WebGroundingChunk(string uri, string title, string domain) {
+  private WebGroundingChunk(System.Uri uri, string title, string domain) {
     Uri = uri;
     Title = title;
     Domain = domain;
   }
 
   internal static WebGroundingChunk FromJson(Dictionary<string, object> jsonDict) {
+    Uri uri = null;
+    if (jsonDict.TryParseValue("uri", out string uriString)) {
+      uri = new Uri(uriString);
+    }
+
     return new WebGroundingChunk(
-      jsonDict.ParseValue<string>("uri"),
+      uri,
       jsonDict.ParseValue<string>("title"),
       jsonDict.ParseValue<string>("domain")
     );
