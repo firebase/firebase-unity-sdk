@@ -219,9 +219,9 @@ namespace Firebase.AI {
 #endif
 
     /// <summary>
-    /// Initializates configuration options for Thinking features.
+    /// Initializes configuration options for Thinking features.
     /// </summary>
-    /// <param name="thinkingBudget">Number of tokens present in thoughts output.</param>
+    /// <param name="thinkingBudget">The token budget for the model's thinking process.</param>
     public ThinkingConfig(int? thinkingBudget = null) {
       ThinkingBudget = thinkingBudget;
     }
