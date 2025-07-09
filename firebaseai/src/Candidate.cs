@@ -100,13 +100,20 @@ public readonly struct Candidate {
   /// </summary>
   public CitationMetadata? CitationMetadata { get; }
 
+  /// <summary>
+  /// Grounding metadata for the response, if any.
+  /// </summary>
+  public GroundingMetadata? GroundingMetadata { get; }
+
   // Hidden constructor, users don't need to make this.
   private Candidate(ModelContent content, List<SafetyRating> safetyRatings,
-      FinishReason? finishReason, CitationMetadata? citationMetadata) {
+      FinishReason? finishReason, CitationMetadata? citationMetadata,
+      GroundingMetadata? groundingMetadata) {
     Content = content;
     _safetyRatings = new ReadOnlyCollection<SafetyRating>(safetyRatings ?? new List<SafetyRating>());
     FinishReason = finishReason;
     CitationMetadata = citationMetadata;
+    GroundingMetadata = groundingMetadata;
   }
 
   private static FinishReason ParseFinishReason(string str) {
@@ -135,7 +142,9 @@ public readonly struct Candidate {
       jsonDict.ParseObjectList("safetyRatings", SafetyRating.FromJson),
       jsonDict.ParseNullableEnum("finishReason", ParseFinishReason),
       jsonDict.ParseNullableObject("citationMetadata",
-          (d) => Firebase.AI.CitationMetadata.FromJson(d, backend)));
+          (d) => Firebase.AI.CitationMetadata.FromJson(d, backend)),
+      jsonDict.ParseNullableObject("groundingMetadata",
+          Firebase.AI.GroundingMetadata.FromJson));
   }
 }
 

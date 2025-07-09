@@ -71,6 +71,18 @@ public readonly struct FunctionDeclaration {
 }
 
 /// <summary>
+/// A tool that allows the generative model to connect to Google Search to access and incorporate
+/// up-to-date information from the web into its responses.
+///
+/// > Important: When using this feature, you are required to comply with the
+/// "Grounding with Google Search" usage requirements for your chosen API provider:
+/// [Gemini Developer API](https://ai.google.dev/gemini-api/terms#grounding-with-google-search)
+/// or Vertex AI Gemini API (see [Service Terms](https://cloud.google.com/terms/service-terms)
+/// section within the Service Specific Terms).
+/// </summary>
+public readonly struct GoogleSearch {}
+
+/// <summary>
 /// A helper tool that the model may use when generating responses.
 ///
 /// A `Tool` is a piece of code that enables the system to interact with external systems to
@@ -79,7 +91,8 @@ public readonly struct FunctionDeclaration {
 public readonly struct Tool {
   // No public properties, on purpose since it is meant for user input only
 
-  private List<FunctionDeclaration> Functions { get; }
+  private List<FunctionDeclaration> FunctionDeclarations { get; }
+  private GoogleSearch? GoogleSearch { get; }
 
   /// <summary>
   /// Creates a tool that allows the model to perform function calling.
@@ -87,7 +100,8 @@ public readonly struct Tool {
   /// <param name="functionDeclarations">A list of `FunctionDeclarations` available to the model
   ///   that can be used for function calling.</param>
   public Tool(params FunctionDeclaration[] functionDeclarations) {
-    Functions = new List<FunctionDeclaration>(functionDeclarations);
+    FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
+    GoogleSearch = null;
   }
   /// <summary>
   /// Creates a tool that allows the model to perform function calling.
@@ -95,7 +109,18 @@ public readonly struct Tool {
   /// <param name="functionDeclarations">A list of `FunctionDeclarations` available to the model
   ///   that can be used for function calling.</param>
   public Tool(IEnumerable<FunctionDeclaration> functionDeclarations) {
-    Functions = new List<FunctionDeclaration>(functionDeclarations);
+    FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
+    GoogleSearch = null;
+  }
+
+  /// <summary>
+  /// Creates a tool that allows the model to use Grounding with Google Search.
+  /// </summary>
+  /// <param name="googleSearch">An empty `GoogleSearch` object. The presence of this object
+  ///     in the list of tools enables the model to use Google Search.</param>
+  public Tool(GoogleSearch googleSearch) {
+    FunctionDeclarations = null;
+    GoogleSearch = googleSearch;
   }
 
   /// <summary>
@@ -103,9 +128,14 @@ public readonly struct Tool {
   /// This method is used for serializing the object to JSON for the API request.
   /// </summary>
   internal Dictionary<string, object> ToJson() {
-    return new() {
-      { "functionDeclarations", Functions.Select(f => f.ToJson()).ToList() }
-    };
+    var json = new Dictionary<string, object>();
+    if (FunctionDeclarations != null && FunctionDeclarations.Any()) {
+      json["functionDeclarations"] = FunctionDeclarations.Select(f => f.ToJson()).ToList();
+    }
+    if (GoogleSearch.HasValue) {
+      json["googleSearch"] = new Dictionary<string, object>();
+    }
+    return json;
   }
 }
 
