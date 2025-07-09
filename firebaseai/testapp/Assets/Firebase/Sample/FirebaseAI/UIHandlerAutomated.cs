@@ -63,6 +63,7 @@ namespace Firebase.Sample.FirebaseAI {
         TestFunctionCallingNone,
         TestEnumSchemaResponse,
         TestAnyOfSchemaResponse,
+        TestSearchGrounding,
         TestChatBasicTextNoHistory,
         TestChatBasicTextPriorHistory,
         TestChatFunctionCalling,
@@ -84,6 +85,11 @@ namespace Firebase.Sample.FirebaseAI {
         InternalTestFinishReasonSafetyNoContent,
         InternalTestUnknownEnumSafetyRatings,
         InternalTestFunctionCallWithArguments,
+        InternalTestVertexAIGrounding,
+        InternalTestGoogleAIGrounding,
+        InternalTestGoogleAIGroundingEmptyChunks,
+        InternalTestGroundingMetadata_Empty,
+        InternalTestSegment_Empty,
         InternalTestCountTokenResponse,
         InternalTestBasicResponseLongUsageMetadata,
         InternalTestGoogleAIBasicReplyShort,
@@ -448,7 +454,7 @@ namespace Firebase.Sample.FirebaseAI {
         generationConfig: new GenerationConfig(
           responseMimeType: "text/x.enum",
           responseSchema: Schema.Enum(new string[] { enumValue })));
-
+      
       var response = await model.GenerateContentAsync(
         "Hello, I am testing setting the response schema to an enum.");
 
@@ -464,12 +470,49 @@ namespace Firebase.Sample.FirebaseAI {
               Schema.AnyOf(new[] { Schema.Int(), Schema.String() }),
               minItems: 2,
               maxItems: 6)));
-
+      
       var response = await model.GenerateContentAsync(
         "Hello, I am testing setting the response schema with an array, cause you give me some random values.");
 
       // There isn't much guarantee on what this will respond with. We just want non-empty.
       Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
+    }
+
+    // Test grounding with Google Search.
+    async Task TestSearchGrounding(Backend backend) {
+      // Use a model that supports grounding.
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
+        tools: new Tool[] { new Tool(new GoogleSearch()) }
+      );
+
+      // A prompt that requires recent information.
+      GenerateContentResponse response = await model.GenerateContentAsync("What's the current weather in Toronto?");
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      var candidate = response.Candidates.First();
+      Assert("GroundingMetadata should not be null when GoogleSearch tool is used.",
+          candidate.GroundingMetadata.HasValue);
+
+      var groundingMetadata = candidate.GroundingMetadata.Value;
+
+      Assert("WebSearchQueries should not be empty.",
+          groundingMetadata.WebSearchQueries.Any());
+
+      Assert("GroundingChunks should not be empty.",
+          groundingMetadata.GroundingChunks.Any());
+
+      Assert("GroundingSupports should not be empty.",
+          groundingMetadata.GroundingSupports.Any());
+
+      Assert("SearchEntryPoint should not be null.",
+          groundingMetadata.SearchEntryPoint.HasValue);
+
+      Assert("SearchEntryPoint.RenderedContent should not be empty.",
+          !string.IsNullOrWhiteSpace(groundingMetadata.SearchEntryPoint?.RenderedContent));
     }
 
     // Test if when using Chat the model will get the previous messages.
@@ -789,7 +832,7 @@ namespace Firebase.Sample.FirebaseAI {
 
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
     readonly string testDataUrl =
-        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/47becf9101d11ea3c568bf60b12f1c8ed9fb684e/mock-responses/";
+        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/548c2d5ae4555ca6f57d8621903e2b591bec7b05/mock-responses/";
     readonly HttpClient httpClient = new();
 
     private Task<string> LoadStreamingAsset(string fullPath) {
@@ -1083,6 +1126,117 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("FunctionCall args[x] wrong value", fcPart.Args["x"], 4L);
     }
 
+    // Test that parsing a Vertex AI response with GroundingMetadata works.
+    // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/vertexai/unary-success-google-search-grounding.json
+    async Task InternalTestVertexAIGrounding() {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-google-search-grounding.json");
+
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var candidate = response.Candidates.First();
+      Assert("Candidate should have GroundingMetadata", candidate.GroundingMetadata.HasValue);
+
+      var grounding = candidate.GroundingMetadata.Value;
+
+      Assert("WebSearchQueries should not be empty", grounding.WebSearchQueries.Any());
+      Assert("SearchEntryPoint should not be null", grounding.SearchEntryPoint.HasValue);
+      Assert("GroundingChunks should not be empty", grounding.GroundingChunks.Any());
+      var chunk = grounding.GroundingChunks.First();
+      Assert("GroundingChunk.Web should not be null", chunk.Web.HasValue);
+      Assert("GroundingSupports should not be empty", grounding.GroundingSupports.Any());
+      var support = grounding.GroundingSupports.First();
+      Assert("GroundingChunkIndices should not be empty", support.GroundingChunkIndices.Any());
+    }
+
+    // Test that parsing a Google AI response with GroundingMetadata works.
+    // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-google-search-grounding.json
+    async Task InternalTestGoogleAIGrounding() {
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-google-search-grounding.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var candidate = response.Candidates.First();
+      Assert("Candidate should have GroundingMetadata", candidate.GroundingMetadata.HasValue);
+
+      var grounding = candidate.GroundingMetadata.Value;
+
+      AssertEq("WebSearchQueries count", grounding.WebSearchQueries.Count(), 1);
+      AssertEq("WebSearchQueries content", grounding.WebSearchQueries.First(),
+          "current weather in London");
+
+      Assert("SearchEntryPoint should not be null", grounding.SearchEntryPoint.HasValue);
+      Assert("SearchEntryPoint content should not be empty", !string.IsNullOrEmpty(grounding.SearchEntryPoint.Value.RenderedContent));
+
+      AssertEq("GroundingChunks count", grounding.GroundingChunks.Count(), 2);
+      var firstChunk = grounding.GroundingChunks.First();
+      Assert("GroundingChunk.Web should not be null", firstChunk.Web.HasValue);
+      var webChunk = firstChunk.Web.Value;
+      AssertEq("WebGroundingChunk.Title", webChunk.Title, "accuweather.com");
+      Assert("WebGroundingChunk.Uri should not be null", webChunk.Uri != null);
+      Assert("WebGroundingChunk.Domain should be null or empty", string.IsNullOrEmpty(webChunk.Domain));
+
+      AssertEq("GroundingSupports count", grounding.GroundingSupports.Count(), 3);
+      var firstSupport = grounding.GroundingSupports.First();
+      var segment = firstSupport.Segment;
+      AssertEq("Segment.Text", segment.Text, "The current weather in London, United Kingdom is cloudy.");
+      AssertEq("Segment.StartIndex", segment.StartIndex, 0);
+      AssertEq("Segment.PartIndex", segment.PartIndex, 0);
+      AssertEq("Segment.EndIndex", segment.EndIndex, 56);
+      AssertEq("GroundingChunkIndices count", firstSupport.GroundingChunkIndices.Count(), 1);
+      AssertEq("GroundingChunkIndices content", firstSupport.GroundingChunkIndices.First(), 0);
+    }
+
+    // Test that parsing a Google AI response with empty GroundingChunks works.
+    // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-google-search-grounding-empty-grounding-chunks.json
+    async Task InternalTestGoogleAIGroundingEmptyChunks() {
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-google-search-grounding-empty-grounding-chunks.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var candidate = response.Candidates.First();
+      Assert("Candidate should have GroundingMetadata", candidate.GroundingMetadata.HasValue);
+
+      var grounding = candidate.GroundingMetadata.Value;
+      AssertEq("WebSearchQueries count", grounding.WebSearchQueries.Count(), 1);
+      AssertEq("GroundingChunks count", grounding.GroundingChunks.Count(), 2);
+      Assert("First GroundingChunk.Web should be null", !grounding.GroundingChunks.ElementAt(0).Web.HasValue);
+      Assert("Second GroundingChunk.Web should be null", !grounding.GroundingChunks.ElementAt(1).Web.HasValue);
+
+      AssertEq("GroundingSupports count", grounding.GroundingSupports.Count(), 1);
+      var support = grounding.GroundingSupports.First();
+      AssertEq(
+          "Segment.Text",
+          support.Segment.Text,
+          "There is a 0% chance of rain and the humidity is around 41%.");
+    }
+
+    // Test parsing an empty GroundingMetadata object.
+    Task InternalTestGroundingMetadata_Empty() {
+      var json = new Dictionary<string, object>();
+      var grounding = GroundingMetadata.FromJson(json);
+
+      Assert("WebSearchQueries should be empty", !grounding.WebSearchQueries.Any());
+      Assert("GroundingChunks should be empty", !grounding.GroundingChunks.Any());
+      Assert("GroundingSupports should be empty", !grounding.GroundingSupports.Any());
+      Assert("SearchEntryPoint should be null", !grounding.SearchEntryPoint.HasValue);
+
+      return Task.CompletedTask;
+    }
+    
+    // Test parsing an empty Segment object.
+    Task InternalTestSegment_Empty() {
+      var json = new Dictionary<string, object>();
+      var segment = Segment.FromJson(json);
+
+      AssertEq("PartIndex should default to 0", segment.PartIndex, 0);
+      AssertEq("StartIndex should default to 0", segment.StartIndex, 0);
+      AssertEq("EndIndex should default to 0", segment.EndIndex, 0);
+      Assert("Text should be empty", string.IsNullOrEmpty(segment.Text));
+
+      return Task.CompletedTask;
+    }
+
     // Test that parsing a count token response works.
     async Task InternalTestCountTokenResponse() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-detailed-token-response.json");
@@ -1158,7 +1312,7 @@ namespace Firebase.Sample.FirebaseAI {
 
       // Validate Text Part (check start and end)
       string expectedStart = "Okay, let's break down quantum mechanics.";
-      string expectedEnd = "area of physics!";
+      string expectedEnd = "It's a challenging but fascinating area of physics!";
       Assert("Candidate count", response.Candidates.Count() == 1);
       Candidate candidate = response.Candidates.First();
       AssertEq("Content role", candidate.Content.Role, "model");

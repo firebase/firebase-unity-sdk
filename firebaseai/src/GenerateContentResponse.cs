@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -179,6 +180,256 @@ public readonly struct PromptFeedback {
       jsonDict.ParseObjectList("safetyRatings", SafetyRating.FromJson));
   }
 }
+
+/// <summary>
+/// Metadata returned to the client when grounding is enabled.
+///
+/// > Important: If using Grounding with Google Search, you are required to comply with the
+/// "Grounding with Google Search" usage requirements for your chosen API provider:
+/// [Gemini Developer API](https://ai.google.dev/gemini-api/terms#grounding-with-google-search)
+/// or Vertex AI Gemini API (see [Service Terms](https://cloud.google.com/terms/service-terms)
+/// section within the Service Specific Terms).
+/// </summary>
+public readonly struct GroundingMetadata {
+  private readonly ReadOnlyCollection<string> _webSearchQueries;
+  private readonly ReadOnlyCollection<GroundingChunk> _groundingChunks;
+  private readonly ReadOnlyCollection<GroundingSupport> _groundingSupports;
+
+  /// <summary>
+  /// A list of web search queries that the model performed to gather the grounding information.
+  /// These can be used to allow users to explore the search results themselves.
+  /// </summary>
+  public IEnumerable<string> WebSearchQueries {
+    get {
+      return _webSearchQueries ?? new ReadOnlyCollection<string>(new List<string>());
+    }
+  }
+
+  /// <summary>
+  /// A list of `GroundingChunk` structs. Each chunk represents a piece of retrieved content
+  /// (e.g., from a web page) that the model used to ground its response.
+  /// </summary>
+  public IEnumerable<GroundingChunk> GroundingChunks {
+    get {
+      return _groundingChunks ?? new ReadOnlyCollection<GroundingChunk>(new List<GroundingChunk>());
+    }
+  }
+
+  /// <summary>
+  /// A list of `GroundingSupport` structs. Each object details how specific segments of the
+  /// model's response are supported by the `groundingChunks`.
+  /// </summary>
+  public IEnumerable<GroundingSupport> GroundingSupports {
+    get {
+      return _groundingSupports ?? new ReadOnlyCollection<GroundingSupport>(new List<GroundingSupport>());
+    }
+  }
+
+  /// <summary>
+  /// Google Search entry point for web searches.
+  /// This contains an HTML/CSS snippet that **must** be embedded in an app to display a Google
+  /// Search entry point for follow-up web searches related to the model's "Grounded Response".
+  /// </summary>
+  public SearchEntryPoint? SearchEntryPoint { get; }
+
+  private GroundingMetadata(List<string> webSearchQueries, List<GroundingChunk> groundingChunks,
+                            List<GroundingSupport> groundingSupports, SearchEntryPoint? searchEntryPoint) {
+    _webSearchQueries = new ReadOnlyCollection<string>(webSearchQueries ?? new List<string>());
+    _groundingChunks = new ReadOnlyCollection<GroundingChunk>(groundingChunks ?? new List<GroundingChunk>());
+    _groundingSupports = new ReadOnlyCollection<GroundingSupport>(groundingSupports ?? new List<GroundingSupport>());
+    SearchEntryPoint = searchEntryPoint;
+  }
+
+  internal static GroundingMetadata FromJson(Dictionary<string, object> jsonDict) {
+    List<GroundingSupport> supports = null;
+    if (jsonDict.TryParseValue("groundingSupports", out List<object> supportListRaw))
+    {
+      supports = supportListRaw
+          .OfType<Dictionary<string, object>>()
+          .Where(d => d.ContainsKey("segment")) // Filter out if segment is missing
+          .Select(GroundingSupport.FromJson)
+          .ToList();
+    }
+
+    return new GroundingMetadata(
+      jsonDict.ParseStringList("webSearchQueries"),
+      jsonDict.ParseObjectList("groundingChunks", GroundingChunk.FromJson),
+      supports,
+      jsonDict.ParseNullableObject("searchEntryPoint", Firebase.AI.SearchEntryPoint.FromJson)
+    );
+  }
+}
+
+/// <summary>
+/// A struct representing the Google Search entry point.
+/// </summary>
+public readonly struct SearchEntryPoint {
+  /// <summary>
+  /// An HTML/CSS snippet that can be embedded in your app.
+  ///
+  /// To ensure proper rendering, it's recommended to display this content within a web view component.
+  /// </summary>
+  public string RenderedContent { get; }
+
+  private SearchEntryPoint(string renderedContent) {
+    RenderedContent = renderedContent;
+  }
+
+  internal static SearchEntryPoint FromJson(Dictionary<string, object> jsonDict) {
+    return new SearchEntryPoint(
+      jsonDict.ParseValue<string>("renderedContent", JsonParseOptions.ThrowEverything)
+    );
+  }
+}
+
+/// <summary>
+/// Represents a chunk of retrieved data that supports a claim in the model's response. This is
+/// part of the grounding information provided when grounding is enabled.
+/// </summary>
+public readonly struct GroundingChunk {
+  /// <summary>
+  /// Contains details if the grounding chunk is from a web source.
+  /// </summary>
+  public WebGroundingChunk? Web { get; }
+
+  private GroundingChunk(WebGroundingChunk? web) {
+    Web = web;
+  }
+
+  internal static GroundingChunk FromJson(Dictionary<string, object> jsonDict) {
+    return new GroundingChunk(
+      jsonDict.ParseNullableObject("web", WebGroundingChunk.FromJson)
+    );
+  }
+}
+
+/// <summary>
+/// A grounding chunk sourced from the web.
+/// </summary>
+public readonly struct WebGroundingChunk {
+  /// <summary>
+  /// The URI of the retrieved web page.
+  /// </summary>
+  public System.Uri Uri { get; }
+  /// <summary>
+  /// The title of the retrieved web page.
+  /// </summary>
+  public string Title { get; }
+  /// <summary>
+  /// The domain of the original URI from which the content was retrieved.
+  ///
+  /// This field is only populated when using the Vertex AI Gemini API.
+  /// </summary>
+  public string Domain { get; }
+
+  private WebGroundingChunk(System.Uri uri, string title, string domain) {
+    Uri = uri;
+    Title = title;
+    Domain = domain;
+  }
+
+  internal static WebGroundingChunk FromJson(Dictionary<string, object> jsonDict) {
+    Uri uri = null;
+    if (jsonDict.TryParseValue("uri", out string uriString)) {
+      uri = new Uri(uriString);
+    }
+
+    return new WebGroundingChunk(
+      uri,
+      jsonDict.ParseValue<string>("title"),
+      jsonDict.ParseValue<string>("domain")
+    );
+  }
+}
+
+/// <summary>
+/// Provides information about how a specific segment of the model's response is supported by the
+/// retrieved grounding chunks.
+/// </summary>
+public readonly struct GroundingSupport {
+  private readonly ReadOnlyCollection<int> _groundingChunkIndices;
+
+  /// <summary>
+  /// Specifies the segment of the model's response content that this grounding support pertains
+  /// to.
+  /// </summary>
+  public Segment Segment { get; }
+
+  /// <summary>
+  /// A list of indices that refer to specific `GroundingChunk` structs within the
+  /// `GroundingMetadata.GroundingChunks` array. These referenced chunks are the sources that
+  /// support the claim made in the associated `segment` of the response. For example, an array
+  /// `[1, 3, 4]`
+  /// means that `groundingChunks[1]`, `groundingChunks[3]`, `groundingChunks[4]` are the
+  /// retrieved content supporting this part of the response.
+  /// </summary>
+  public IEnumerable<int> GroundingChunkIndices {
+    get {
+      return _groundingChunkIndices ?? new ReadOnlyCollection<int>(new List<int>());
+    }
+  }
+
+  private GroundingSupport(Segment segment, List<int> groundingChunkIndices) {
+    Segment = segment;
+    _groundingChunkIndices = new ReadOnlyCollection<int>(groundingChunkIndices ?? new List<int>());
+  }
+
+  internal static GroundingSupport FromJson(Dictionary<string, object> jsonDict) {
+    List<int> indices = new List<int>();
+    if (jsonDict.TryParseValue("groundingChunkIndices", out List<object> indicesRaw)) {
+      indices = indicesRaw.OfType<long>().Select(l => (int)l).ToList();
+    }
+
+    return new GroundingSupport(
+      jsonDict.ParseObject("segment", Segment.FromJson, JsonParseOptions.ThrowEverything),
+      indices
+    );
+  }
+}
+
+/// <summary>
+/// Represents a specific segment within a `ModelContent` struct, often used to pinpoint the
+/// exact location of text or data that grounding information refers to.
+/// </summary>
+public readonly struct Segment {
+  /// <summary>
+  /// The zero-based index of the `Part` object within the `parts` array of its parent
+  /// `ModelContent` object. This identifies which part of the content the segment belongs to.
+  /// </summary>
+  public int PartIndex { get; }
+  /// <summary>
+  /// The zero-based start index of the segment within the specified `Part`, measured in UTF-8
+  /// bytes. This offset is inclusive, starting from 0 at the beginning of the part's content.
+  /// </summary>
+  public int StartIndex { get; }
+  /// <summary>
+  /// The zero-based end index of the segment within the specified `Part`, measured in UTF-8
+  /// bytes. This offset is exclusive, meaning the character at this index is not included in the
+  /// segment.
+  /// </summary>
+  public int EndIndex { get; }
+  /// <summary>
+  /// The text corresponding to the segment from the response.
+  /// </summary>
+  public string Text { get; }
+
+  private Segment(int partIndex, int startIndex, int endIndex, string text) {
+    PartIndex = partIndex;
+    StartIndex = startIndex;
+    EndIndex = endIndex;
+    Text = text;
+  }
+
+  internal static Segment FromJson(Dictionary<string, object> jsonDict) {
+    return new Segment(
+      jsonDict.ParseValue<int>("partIndex"),
+      jsonDict.ParseValue<int>("startIndex"),
+      jsonDict.ParseValue<int>("endIndex"),
+      jsonDict.ParseValue<string>("text")
+    );
+  }
+}
+
 
 /// <summary>
 /// Token usage metadata for processing the generate content request.
