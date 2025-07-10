@@ -444,6 +444,17 @@ public readonly struct UsageMetadata {
   /// </summary>
   public int CandidatesTokenCount { get; }
   /// <summary>
+  /// The number of tokens used by the model's internal "thinking" process.
+  ///
+  /// For models that support thinking (like Gemini 2.5 Pro and Flash), this represents the actual
+  /// number of tokens consumed for reasoning before the model generated a response. For models
+  /// that do not support thinking, this value will be `0`.
+  ///
+  /// When thinking is used, this count will be less than or equal to the `thinkingBudget` set in
+  /// the `ThinkingConfig`.
+  /// </summary>
+  public int ThoughtsTokenCount { get; }
+  /// <summary>
   /// The total number of tokens in both the request and response.
   /// </summary>
   public int TotalTokenCount { get; }
@@ -463,10 +474,11 @@ public readonly struct UsageMetadata {
   }
 
   // Hidden constructor, users don't need to make this.
-  private UsageMetadata(int promptTC, int candidatesTC, int totalTC,
+  private UsageMetadata(int promptTC, int candidatesTC, int thoughtsTC, int totalTC,
                         List<ModalityTokenCount> promptDetails, List<ModalityTokenCount> candidateDetails) {
     PromptTokenCount = promptTC;
     CandidatesTokenCount = candidatesTC;
+    ThoughtsTokenCount = thoughtsTC;
     TotalTokenCount = totalTC;
     _promptTokensDetails =
         new ReadOnlyCollection<ModalityTokenCount>(promptDetails ?? new List<ModalityTokenCount>());
@@ -483,6 +495,7 @@ public readonly struct UsageMetadata {
     return new UsageMetadata(
       jsonDict.ParseValue<int>("promptTokenCount"),
       jsonDict.ParseValue<int>("candidatesTokenCount"),
+      jsonDict.ParseValue<int>("thoughtsTokenCount"),
       jsonDict.ParseValue<int>("totalTokenCount"),
       jsonDict.ParseObjectList("promptTokensDetails", ModalityTokenCount.FromJson),
       jsonDict.ParseObjectList("candidatesTokensDetails", ModalityTokenCount.FromJson));

@@ -117,6 +117,8 @@ Release Notes
     - Auth: Removed deprecated `FirebaseUser.UpdateEmailAsync`.
     - Firebase AI: Add support for image generation via Imagen. For more info, see
       https://firebase.google.com/docs/ai-logic/generate-images-imagen
+    - Firebase AI: Add support for Grounding with Google Search.
+    - Firebase AI: Add support for defining a Thinking budget.
     - Firebase AI: Deprecated `CountTokensResponse.TotalBillableCharacters`, use
       `CountTokensResponse.TotalTokens` instead.
     - Messaging: Removed deprecated `FirebaseMessage.Dispose`,
