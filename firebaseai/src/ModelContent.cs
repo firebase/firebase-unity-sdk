@@ -313,9 +313,9 @@ public readonly struct ModelContent {
   /// This method is used for deserializing JSON responses and should not be called directly.
   /// </summary>
   internal static ModelContent FromJson(Dictionary<string, object> jsonDict) {
-    // Both role and parts are required keys
     return new ModelContent(
-      jsonDict.ParseValue<string>("role", JsonParseOptions.ThrowEverything),
+      // If the role is missing, default to model since this is likely coming from the backend.
+      jsonDict.ParseValue("role", defaultValue: "model"),
       // Unknown parts are converted to null, which we then want to filter out here
       jsonDict.ParseObjectList("parts", PartFromJson, JsonParseOptions.ThrowEverything).Where(p => p is not null));
   }
