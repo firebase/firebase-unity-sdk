@@ -120,6 +120,9 @@ namespace Firebase.Sample.FirebaseAI {
         logFunc: DebugLog
       );
 
+      // Some of the AI tests tend to take a bit longer, so increase the timeout.
+      testRunner.TestTimeoutSeconds = 120f;
+
       base.Start();
     }
 
