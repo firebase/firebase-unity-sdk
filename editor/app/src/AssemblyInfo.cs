@@ -56,7 +56,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Firebase.Analytics.Editor")]
 [assembly: InternalsVisibleTo("Firebase.Auth.Editor")]
 [assembly: InternalsVisibleTo("Firebase.Crashlytics.Editor")]
-[assembly: InternalsVisibleTo("Firebase.DynamicLinks.Editor")]
 [assembly: InternalsVisibleTo("Firebase.Messaging.Editor")]
 [assembly: InternalsVisibleTo("Firebase.TestLab.Editor")]
 

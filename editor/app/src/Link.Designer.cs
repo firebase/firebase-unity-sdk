@@ -169,24 +169,6 @@ namespace Firebase.Editor {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to https://firebase.google.com/docs/dynamic-links/.
-        /// </summary>
-        internal static string DynamicLinksGuide {
-            get {
-                return ResourceManager.GetString("DynamicLinksGuide", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to https://firebase.google.com/docs/reference/unity/class/firebase/dynamic-links/dynamic-links.
-        /// </summary>
-        internal static string DynamicLinksReference {
-            get {
-                return ResourceManager.GetString("DynamicLinksReference", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to https://firebase.google.com/docs/functions/.
         /// </summary>
         internal static string FunctionsGuide {
@@ -201,24 +183,6 @@ namespace Firebase.Editor {
         internal static string FunctionsReference {
             get {
                 return ResourceManager.GetString("FunctionsReference", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to https://firebase.google.com/docs/invites/.
-        /// </summary>
-        internal static string InvitesGuide {
-            get {
-                return ResourceManager.GetString("InvitesGuide", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to https://firebase.google.com/docs/reference/unity/class/firebase/invites/firebase-invites.
-        /// </summary>
-        internal static string InvitesReference {
-            get {
-                return ResourceManager.GetString("InvitesReference", resourceCulture);
             }
         }
 

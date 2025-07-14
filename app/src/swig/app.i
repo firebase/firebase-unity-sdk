@@ -689,20 +689,12 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
           "database"
         ),
         new EnableModuleParams(
-          "Firebase.DynamicLinks.DynamicLinks, Firebase.DynamicLinks",
-          "dynamic_links"
-        ),
-        new EnableModuleParams(
           "Firebase.Functions.FirebaseFunctions, Firebase.Functions",
           "functions"
         ),
         new EnableModuleParams(
           "Firebase.Installations.FirebaseInstallations, Firebase.Installations",
           "installations"
-        ),
-        new EnableModuleParams(
-          "Firebase.Invites.FirebaseInvites, Firebase.Invites",
-          "invites"
         ),
         new EnableModuleParams(
           "Firebase.Messaging.FirebaseMessaging, Firebase.Messaging",
