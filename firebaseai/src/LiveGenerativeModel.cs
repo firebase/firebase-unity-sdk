@@ -70,10 +70,30 @@ public class LiveGenerativeModel {
   }
 
   private string GetURL() {
-    return "wss://firebasevertexai.googleapis.com/ws" + 
-           "/google.firebase.vertexai.v1beta.LlmBidiService/BidiGenerateContent" +
-           $"/locations/{_backend.Location}" +
-           $"?key={_firebaseApp.Options.ApiKey}";
+    if (_backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI) {
+      return "wss://firebasevertexai.googleapis.com/ws" +
+             "/google.firebase.vertexai.v1beta.LlmBidiService/BidiGenerateContent" +
+             $"/locations/{_backend.Location}" +
+             $"?key={_firebaseApp.Options.ApiKey}";
+    } else if (_backend.Provider == FirebaseAI.Backend.InternalProvider.GoogleAI) {
+      return "wss://firebasevertexai.googleapis.com/ws" +
+             "/google.firebase.vertexai.v1beta.GenerativeService/BidiGenerateContent" +
+             $"?key={_firebaseApp.Options.ApiKey}";
+    } else {
+      throw new NotSupportedException($"Missing support for backend: {_backend.Provider}");
+    }
+  }
+  
+  private string GetModelName() {
+    if (_backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI) {
+      return $"projects/{_firebaseApp.Options.ProjectId}/locations/{_backend.Location}" +
+             $"/publishers/google/models/{_modelName}";
+    } else if (_backend.Provider == FirebaseAI.Backend.InternalProvider.GoogleAI) {
+      return $"projects/{_firebaseApp.Options.ProjectId}" +
+             $"/models/{_modelName}";
+    } else {
+      throw new NotSupportedException($"Missing support for backend: {_backend.Provider}");
+    }
   }
 
   /// <summary>
