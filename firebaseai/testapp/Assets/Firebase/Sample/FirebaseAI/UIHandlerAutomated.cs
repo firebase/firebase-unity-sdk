@@ -27,7 +27,7 @@ namespace Firebase.Sample.FirebaseAI {
   using System.Threading.Tasks;
   using Google.MiniJSON;
   using UnityEngine;
-  using UnityEngine.Video;
+  using UnityEngine.Networking;
   using System.IO;
 #if INCLUDE_FIREBASE_AUTH
   using Firebase.Auth;
@@ -63,6 +63,7 @@ namespace Firebase.Sample.FirebaseAI {
         TestFunctionCallingNone,
         TestEnumSchemaResponse,
         TestAnyOfSchemaResponse,
+        TestSearchGrounding,
         TestChatBasicTextNoHistory,
         TestChatBasicTextPriorHistory,
         TestChatFunctionCalling,
@@ -70,6 +71,9 @@ namespace Firebase.Sample.FirebaseAI {
         TestCountTokens,
         TestYoutubeLink,
         TestGenerateImage,
+        TestImagenGenerateImage,
+        TestImagenGenerateImageOptions,
+        TestThinkingBudget,
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
@@ -82,10 +86,18 @@ namespace Firebase.Sample.FirebaseAI {
         InternalTestFinishReasonSafetyNoContent,
         InternalTestUnknownEnumSafetyRatings,
         InternalTestFunctionCallWithArguments,
+        InternalTestVertexAIGrounding,
+        InternalTestGoogleAIGrounding,
+        InternalTestGoogleAIGroundingEmptyChunks,
+        InternalTestGroundingMetadata_Empty,
+        InternalTestSegment_Empty,
         InternalTestCountTokenResponse,
         InternalTestBasicResponseLongUsageMetadata,
         InternalTestGoogleAIBasicReplyShort,
         InternalTestGoogleAICitations,
+        InternalTestGenerateImagesBase64,
+        InternalTestGenerateImagesAllFiltered,
+        InternalTestGenerateImagesBase64SomeFiltered,
       };
 
       // Create the set of tests, combining the above lists.
@@ -107,6 +119,9 @@ namespace Firebase.Sample.FirebaseAI {
         testNames: testNames.ToArray(),
         logFunc: DebugLog
       );
+
+      // Some of the AI tests tend to take a bit longer, so increase the timeout.
+      testRunner.TestTimeoutSeconds = 120f;
 
       base.Start();
     }
@@ -467,6 +482,43 @@ namespace Firebase.Sample.FirebaseAI {
       Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
     }
 
+    // Test grounding with Google Search.
+    async Task TestSearchGrounding(Backend backend) {
+      // Use a model that supports grounding.
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
+        tools: new Tool[] { new Tool(new GoogleSearch()) }
+      );
+
+      // A prompt that requires recent information.
+      GenerateContentResponse response = await model.GenerateContentAsync("What's the current weather in Toronto?");
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      var candidate = response.Candidates.First();
+      Assert("GroundingMetadata should not be null when GoogleSearch tool is used.",
+          candidate.GroundingMetadata.HasValue);
+
+      var groundingMetadata = candidate.GroundingMetadata.Value;
+
+      Assert("WebSearchQueries should not be empty.",
+          groundingMetadata.WebSearchQueries.Any());
+
+      Assert("GroundingChunks should not be empty.",
+          groundingMetadata.GroundingChunks.Any());
+
+      Assert("GroundingSupports should not be empty.",
+          groundingMetadata.GroundingSupports.Any());
+
+      Assert("SearchEntryPoint should not be null.",
+          groundingMetadata.SearchEntryPoint.HasValue);
+
+      Assert("SearchEntryPoint.RenderedContent should not be empty.",
+          !string.IsNullOrWhiteSpace(groundingMetadata.SearchEntryPoint?.RenderedContent));
+    }
+
     // Test if when using Chat the model will get the previous messages.
     async Task TestChatBasicTextNoHistory(Backend backend) {
       var model = CreateGenerativeModel(backend);
@@ -627,11 +679,6 @@ namespace Firebase.Sample.FirebaseAI {
       CountTokensResponse response = await model.CountTokensAsync("Hello, I am testing CountTokens!");
 
       Assert($"CountTokens TotalTokens {response.TotalTokens}", response.TotalTokens > 0);
-      // TotalBillableCharacters is only expected to be set with VertexAI.
-      if (backend == Backend.VertexAI) {
-        Assert($"CountTokens TotalBillableCharacters {response.TotalBillableCharacters}",
-              response.TotalBillableCharacters > 0);
-      }
 
       AssertEq("CountTokens PromptTokenDetails", response.PromptTokensDetails.Count(), 1);
       var details = response.PromptTokensDetails.First();
@@ -658,7 +705,7 @@ namespace Firebase.Sample.FirebaseAI {
     async Task TestGenerateImage(Backend backend) {
       var model = GetFirebaseAI(backend).GetGenerativeModel("gemini-2.0-flash-exp",
         generationConfig: new GenerationConfig(
-          responseModalities: new [] { ResponseModality.Text, ResponseModality.Image })
+          responseModalities: new[] { ResponseModality.Text, ResponseModality.Image })
       );
 
       GenerateContentResponse response = await model.GenerateContentAsync(
@@ -681,6 +728,84 @@ namespace Firebase.Sample.FirebaseAI {
         }
       }
       Assert($"Missing expected modalities. Text: {foundText}, Image: {foundImage}", foundText && foundImage);
+    }
+
+    // Test generating an image via Imagen.
+    async Task TestImagenGenerateImage(Backend backend) {
+      var model = GetFirebaseAI(backend).GetImagenModel("imagen-3.0-generate-002");
+
+      var response = await model.GenerateImagesAsync(
+          "Generate an image of a cartoon dog.");
+
+      // We can't easily test if the image is correct, but can check other random data.
+      AssertEq("FilteredReason", response.FilteredReason, null);
+      AssertEq("Image Count", response.Images.Count, 1);
+
+      AssertEq($"Image MimeType", response.Images[0].MimeType, "image/png");
+
+      var texture = response.Images[0].AsTexture2D();
+      Assert($"Image as Texture2D", texture != null);
+      // By default the image should be Square 1x1, so check for that.
+      Assert($"Image Height > 0", texture.height > 0);
+      AssertEq($"Image Height = Width", texture.height, texture.width);
+    }
+
+    // Test generating an image via Imagen with various options.
+    async Task TestImagenGenerateImageOptions(Backend backend) {
+      var model = GetFirebaseAI(backend).GetImagenModel(
+          modelName: "imagen-3.0-generate-002",
+          generationConfig: new ImagenGenerationConfig(
+            // negativePrompt and addWatermark are not supported on this version of the model.
+            numberOfImages: 2,
+            aspectRatio: ImagenAspectRatio.Landscape4x3,
+            imageFormat: ImagenImageFormat.Jpeg(50)
+          ),
+          safetySettings: new ImagenSafetySettings(
+            safetyFilterLevel: ImagenSafetySettings.SafetyFilterLevel.BlockLowAndAbove,
+            personFilterLevel: ImagenSafetySettings.PersonFilterLevel.BlockAll),
+          requestOptions: new RequestOptions(timeout: TimeSpan.FromMinutes(1)));
+
+      var response = await model.GenerateImagesAsync(
+          "Generate an image of a cartoon dog.");
+
+      // We can't easily test if the image is correct, but can check other random data.
+      AssertEq("FilteredReason", response.FilteredReason, null);
+      AssertEq("Image Count", response.Images.Count, 2);
+
+      for (int i = 0; i < 2; i++) {
+        AssertEq($"Image {i} MimeType", response.Images[i].MimeType, "image/jpeg");
+
+        var texture = response.Images[i].AsTexture2D();
+        Assert($"Image {i} as Texture2D", texture != null);
+        // By default the image should be Landscape 4x3, so check for that.
+        Assert($"Image {i} Height > 0", texture.height > 0);
+        Assert($"Image {i} Height < Width {texture.height} < {texture.width}",
+            texture.height < texture.width);
+      }
+    }
+
+    // Test defining a thinking budget, and getting back thought tokens.
+    async Task TestThinkingBudget(Backend backend) {
+      // Thinking Budget requires at least the 2.5 model.
+      var model = GetFirebaseAI(backend).GetGenerativeModel(
+        modelName: "gemini-2.5-flash",
+        generationConfig: new GenerationConfig(
+          thinkingConfig: new ThinkingConfig(
+            thinkingBudget: 1024
+          )
+        )
+      );
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+          "Hello, I am testing something, can you respond with a short " +
+          "string containing the word 'Firebase'?");
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      Assert("UsageMetadata was missing", response.UsageMetadata != null);
+      Assert("UsageMetadata.ThoughtsTokenCount was missing",
+        response.UsageMetadata?.ThoughtsTokenCount > 0);
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
@@ -737,17 +862,40 @@ namespace Firebase.Sample.FirebaseAI {
 
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
     readonly string testDataUrl =
-        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/3737ae1fe9c5ecbd55abdeabc273ef4f392cbf19/mock-responses/";
+        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/548c2d5ae4555ca6f57d8621903e2b591bec7b05/mock-responses/";
     readonly HttpClient httpClient = new();
+
+    private Task<string> LoadStreamingAsset(string fullPath) {
+      TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
+      UnityWebRequest request = UnityWebRequest.Get(fullPath);
+      request.SendWebRequest().completed += (_) => {
+        if (request.result == UnityWebRequest.Result.Success) {
+          tcs.SetResult(request.downloadHandler.text);
+        } else {
+          tcs.SetResult(null);
+        }
+      };
+      return tcs.Task;
+    }
 
     // Gets the Json test data from the given filename, potentially downloading from a GitHub repo.
     private async Task<Dictionary<string, object>> GetJsonTestData(string filename) {
-      // TODO: Check if the file is available locally first
+      string jsonString = null;
+      // First, try to load the file from StreamingAssets
+      string localPath = Path.Combine(Application.streamingAssetsPath, "TestData", filename);
+      if (localPath.StartsWith("jar") || localPath.StartsWith("http")) {
+        // Special case to access StreamingAsset content on Android
+        jsonString = await LoadStreamingAsset(localPath);
+      } else if (File.Exists(localPath)) {
+        jsonString = File.ReadAllText(localPath);
+      }
 
-      var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, testDataUrl + filename));
-      response.EnsureSuccessStatusCode();
-      
-      string jsonString = await response.Content.ReadAsStringAsync();
+      if (string.IsNullOrEmpty(jsonString)) {
+        var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, testDataUrl + filename));
+        response.EnsureSuccessStatusCode();
+
+        jsonString = await response.Content.ReadAsStringAsync();
+      }
 
       return Json.Deserialize(jsonString) as Dictionary<string, object>;
     }
@@ -804,12 +952,14 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Helper function to validate UsageMetadata.
     private void ValidateUsageMetadata(UsageMetadata? usageMetadata, int promptTokenCount,
-        int candidatesTokenCount, int totalTokenCount) {
+        int candidatesTokenCount, int thoughtsTokenCount, int totalTokenCount) {
       Assert("UsageMetadata", usageMetadata.HasValue);
       AssertEq("Wrong PromptTokenCount",
           usageMetadata?.PromptTokenCount, promptTokenCount);
       AssertEq("Wrong CandidatesTokenCount",
           usageMetadata?.CandidatesTokenCount, candidatesTokenCount);
+      AssertEq("Wrong ThoughtsTokenCount",
+          usageMetadata?.ThoughtsTokenCount, thoughtsTokenCount);
       AssertEq("Wrong TotalTokenCount",
           usageMetadata?.TotalTokenCount, totalTokenCount);
     }
@@ -854,7 +1004,7 @@ namespace Firebase.Sample.FirebaseAI {
 
       AssertEq("CitationMetadata", candidate.CitationMetadata, null);
 
-      ValidateUsageMetadata(response.UsageMetadata, 6, 7, 13);
+      ValidateUsageMetadata(response.UsageMetadata, 6, 7, 0, 13);
     }
 
     // Test that parsing a response including Citations works.
@@ -862,7 +1012,7 @@ namespace Firebase.Sample.FirebaseAI {
     async Task InternalTestCitations() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-citations.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
-      
+
       ValidateTextPart(response, "Some information cited from an external source");
 
       CitationMetadata? metadata = response.Candidates.First().CitationMetadata;
@@ -952,7 +1102,7 @@ namespace Firebase.Sample.FirebaseAI {
         severity: SafetyRating.HarmSeverity.Negligible,
         severityScore: 0.12109375f);
 
-      ValidateUsageMetadata(response.UsageMetadata, 8, 0, 8);
+      ValidateUsageMetadata(response.UsageMetadata, 8, 0, 0, 8);
     }
 
     // Test that parsing a response with unknown safety enums works.
@@ -1008,13 +1158,126 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("FunctionCall args[x] wrong value", fcPart.Args["x"], 4L);
     }
 
+    // Test that parsing a Vertex AI response with GroundingMetadata works.
+    // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/vertexai/unary-success-google-search-grounding.json
+    async Task InternalTestVertexAIGrounding() {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-google-search-grounding.json");
+
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var candidate = response.Candidates.First();
+      Assert("Candidate should have GroundingMetadata", candidate.GroundingMetadata.HasValue);
+
+      var grounding = candidate.GroundingMetadata.Value;
+
+      Assert("WebSearchQueries should not be empty", grounding.WebSearchQueries.Any());
+      Assert("SearchEntryPoint should not be null", grounding.SearchEntryPoint.HasValue);
+      Assert("GroundingChunks should not be empty", grounding.GroundingChunks.Any());
+      var chunk = grounding.GroundingChunks.First();
+      Assert("GroundingChunk.Web should not be null", chunk.Web.HasValue);
+      Assert("GroundingSupports should not be empty", grounding.GroundingSupports.Any());
+      var support = grounding.GroundingSupports.First();
+      Assert("GroundingChunkIndices should not be empty", support.GroundingChunkIndices.Any());
+    }
+
+    // Test that parsing a Google AI response with GroundingMetadata works.
+    // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-google-search-grounding.json
+    async Task InternalTestGoogleAIGrounding() {
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-google-search-grounding.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var candidate = response.Candidates.First();
+      Assert("Candidate should have GroundingMetadata", candidate.GroundingMetadata.HasValue);
+
+      var grounding = candidate.GroundingMetadata.Value;
+
+      AssertEq("WebSearchQueries count", grounding.WebSearchQueries.Count(), 1);
+      AssertEq("WebSearchQueries content", grounding.WebSearchQueries.First(),
+          "current weather in London");
+
+      Assert("SearchEntryPoint should not be null", grounding.SearchEntryPoint.HasValue);
+      Assert("SearchEntryPoint content should not be empty", !string.IsNullOrEmpty(grounding.SearchEntryPoint.Value.RenderedContent));
+
+      AssertEq("GroundingChunks count", grounding.GroundingChunks.Count(), 2);
+      var firstChunk = grounding.GroundingChunks.First();
+      Assert("GroundingChunk.Web should not be null", firstChunk.Web.HasValue);
+      var webChunk = firstChunk.Web.Value;
+      AssertEq("WebGroundingChunk.Title", webChunk.Title, "accuweather.com");
+      Assert("WebGroundingChunk.Uri should not be null", webChunk.Uri != null);
+      Assert("WebGroundingChunk.Domain should be null or empty", string.IsNullOrEmpty(webChunk.Domain));
+
+      AssertEq("GroundingSupports count", grounding.GroundingSupports.Count(), 3);
+      var firstSupport = grounding.GroundingSupports.First();
+      var segment = firstSupport.Segment;
+      AssertEq("Segment.Text", segment.Text, "The current weather in London, United Kingdom is cloudy.");
+      AssertEq("Segment.StartIndex", segment.StartIndex, 0);
+      AssertEq("Segment.PartIndex", segment.PartIndex, 0);
+      AssertEq("Segment.EndIndex", segment.EndIndex, 56);
+      AssertEq("GroundingChunkIndices count", firstSupport.GroundingChunkIndices.Count(), 1);
+      AssertEq("GroundingChunkIndices content", firstSupport.GroundingChunkIndices.First(), 0);
+    }
+
+    // Test that parsing a Google AI response with empty GroundingChunks works.
+    // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-google-search-grounding-empty-grounding-chunks.json
+    async Task InternalTestGoogleAIGroundingEmptyChunks() {
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-google-search-grounding-empty-grounding-chunks.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var candidate = response.Candidates.First();
+      Assert("Candidate should have GroundingMetadata", candidate.GroundingMetadata.HasValue);
+
+      var grounding = candidate.GroundingMetadata.Value;
+      AssertEq("WebSearchQueries count", grounding.WebSearchQueries.Count(), 1);
+      AssertEq("GroundingChunks count", grounding.GroundingChunks.Count(), 2);
+      Assert("First GroundingChunk.Web should be null", !grounding.GroundingChunks.ElementAt(0).Web.HasValue);
+      Assert("Second GroundingChunk.Web should be null", !grounding.GroundingChunks.ElementAt(1).Web.HasValue);
+
+      AssertEq("GroundingSupports count", grounding.GroundingSupports.Count(), 1);
+      var support = grounding.GroundingSupports.First();
+      AssertEq(
+          "Segment.Text",
+          support.Segment.Text,
+          "There is a 0% chance of rain and the humidity is around 41%.");
+    }
+
+    // Test parsing an empty GroundingMetadata object.
+    Task InternalTestGroundingMetadata_Empty() {
+      var json = new Dictionary<string, object>();
+      var grounding = GroundingMetadata.FromJson(json);
+
+      Assert("WebSearchQueries should be empty", !grounding.WebSearchQueries.Any());
+      Assert("GroundingChunks should be empty", !grounding.GroundingChunks.Any());
+      Assert("GroundingSupports should be empty", !grounding.GroundingSupports.Any());
+      Assert("SearchEntryPoint should be null", !grounding.SearchEntryPoint.HasValue);
+
+      return Task.CompletedTask;
+    }
+    
+    // Test parsing an empty Segment object.
+    Task InternalTestSegment_Empty() {
+      var json = new Dictionary<string, object>();
+      var segment = Segment.FromJson(json);
+
+      AssertEq("PartIndex should default to 0", segment.PartIndex, 0);
+      AssertEq("StartIndex should default to 0", segment.StartIndex, 0);
+      AssertEq("EndIndex should default to 0", segment.EndIndex, 0);
+      Assert("Text should be empty", string.IsNullOrEmpty(segment.Text));
+
+      return Task.CompletedTask;
+    }
+
     // Test that parsing a count token response works.
     async Task InternalTestCountTokenResponse() {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-detailed-token-response.json");
       CountTokensResponse response = CountTokensResponse.FromJson(json);
 
       AssertEq("TotalTokens", response.TotalTokens, 1837);
+#pragma warning disable CS0618
       AssertEq("TotalBillableCharacters", response.TotalBillableCharacters, 117);
+#pragma warning restore CS0618
       List<ModalityTokenCount> details = response.PromptTokensDetails.ToList();
       AssertEq("PromptTokensDetails.Count", details.Count, 2);
       AssertEq("PromptTokensDetails[0].Modality", details[0].Modality, ContentModality.Image);
@@ -1050,7 +1313,7 @@ namespace Firebase.Sample.FirebaseAI {
     // Test that parsing a basic short reply from Google AI endpoint works as expected.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-basic-reply-short.txt
     async Task InternalTestGoogleAIBasicReplyShort() {
-      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-basic-reply-short.txt"); //
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-basic-reply-short.json"); //
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
 
       ValidateTextPart(response, "Google's headquarters, also known as the Googleplex, is located in **Mountain View, California**.\n");
@@ -1068,7 +1331,7 @@ namespace Firebase.Sample.FirebaseAI {
       // No citations in this response
       AssertEq("CitationMetadata", candidate.CitationMetadata, null);
 
-      ValidateUsageMetadata(response.UsageMetadata, 7, 22, 29);
+      ValidateUsageMetadata(response.UsageMetadata, 7, 22, 0, 29);
       // No prompt feedback in this response
       AssertEq("PromptFeedback", response.PromptFeedback, null);
     }
@@ -1076,12 +1339,12 @@ namespace Firebase.Sample.FirebaseAI {
     // Test parsing a Google AI format response with citations.
     // Based on: https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-citations.txt
     async Task InternalTestGoogleAICitations() {
-      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-citations.txt");
+      Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-citations.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
 
       // Validate Text Part (check start and end)
       string expectedStart = "Okay, let's break down quantum mechanics.";
-      string expectedEnd = "foundation for many technologies, including:\n";
+      string expectedEnd = "It's a challenging but fascinating area of physics!";
       Assert("Candidate count", response.Candidates.Count() == 1);
       Candidate candidate = response.Candidates.First();
       AssertEq("Content role", candidate.Content.Role, "model");
@@ -1140,6 +1403,7 @@ namespace Firebase.Sample.FirebaseAI {
       ValidateUsageMetadata(response.UsageMetadata,
         promptTokenCount: 15,
         candidatesTokenCount: 1667,
+        thoughtsTokenCount: 0,
         totalTokenCount: 1682);
 
       // Validate UsageMetadata Details if needed
@@ -1152,6 +1416,55 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("CandidatesTokensDetails count", candidatesDetails.Count, 1);
       AssertEq("CandidatesTokensDetails[0].Modality", candidatesDetails[0].Modality, ContentModality.Text);
       AssertEq("CandidatesTokensDetails[0].TokenCount", candidatesDetails[0].TokenCount, 1667);
+    }
+
+    async Task InternalTestGenerateImagesBase64() {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-generate-images-base64.json");
+      var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
+
+      AssertEq("FilteredReason", response.FilteredReason, null);
+      AssertEq("Image Count", response.Images.Count, 4);
+
+      for (int i = 0; i < response.Images.Count; i++) {
+        var image = response.Images[i];
+        AssertEq($"Image {i} MimeType", image.MimeType, "image/png");
+        Assert($"Image {i} Length: {image.Data.Length}", image.Data.Length > 0);
+
+        var texture = image.AsTexture2D();
+        Assert($"Failed to convert Image {i}", texture != null);
+      }
+    }
+
+    async Task InternalTestGenerateImagesAllFiltered() {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-all-filtered.json");
+      var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
+
+      AssertEq("FilteredReason", response.FilteredReason,
+        "Unable to show generated images. All images were filtered out because " +
+        "they violated Vertex AI's usage guidelines. You will not be charged for " +
+        "blocked images. Try rephrasing the prompt. If you think this was an error, " +
+        "send feedback. Support codes: 39322892, 29310472");
+      AssertEq("Image Count", response.Images.Count, 0);
+    }
+
+    async Task InternalTestGenerateImagesBase64SomeFiltered() {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-base64-some-filtered.json");
+      var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
+
+      AssertEq("FilteredReason", response.FilteredReason,
+        "Your current safety filter threshold filtered out 2 generated images. " +
+        "You will not be charged for blocked images. Try rephrasing the prompt. " +
+        "If you think this was an error, send feedback.");
+      AssertEq("Image Count", response.Images.Count, 2);
+
+      for (int i = 0; i < response.Images.Count; i++) {
+        var image = response.Images[i];
+        AssertEq($"Image {i} MimeType", image.MimeType, "image/png");
+        Assert($"Image {i} Length: {image.Data.Length}", image.Data.Length > 0);
+
+        var texture = image.AsTexture2D();
+        Assert($"Failed to convert Image {i}", texture != null);
+      }
     }
   }
 }

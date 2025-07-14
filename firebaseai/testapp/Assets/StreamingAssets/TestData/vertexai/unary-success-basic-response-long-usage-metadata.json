@@ -1,0 +1,27 @@
+{
+  "candidates": [{
+    "content": {
+      "role": "model",
+      "parts": [{
+        "text": "Here is a description of the image:\\n\\n"
+      }]
+    },
+    "finishReason": "STOP"
+  }],
+  "usageMetadata": {
+    "promptTokenCount": 1837,
+    "candidatesTokenCount": 76,
+    "totalTokenCount": 1913,
+    "promptTokensDetails": [{
+      "modality": "IMAGE",
+      "tokenCount": 1806
+    }, {
+      "modality": "TEXT",
+      "tokenCount": 76
+    }],
+    "candidatesTokensDetails": [{
+      "modality": "TEXT",
+      "tokenCount": 76
+    }]
+  }
+}
