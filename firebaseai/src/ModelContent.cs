@@ -182,7 +182,7 @@ public readonly struct ModelContent {
       return new Dictionary<string, object>() {
         { "inlineData", new Dictionary<string, object>() {
             { "mimeType", MimeType },
-            { "data", Convert.ToBase64String(Data.ToArray()) }
+            { "data", Convert.ToBase64String(Data) }
           }
         }
       };
