@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace Firebase.AI {
@@ -96,11 +95,10 @@ public class Schema {
   /// </summary>
   public string Format { get; }
 
-  private readonly ReadOnlyCollection<string> _enumValues;
   /// <summary>
   /// Possible values of the element of type "String" with "enum" format.
   /// </summary>
-  public IEnumerable<string> EnumValues { get { return _enumValues; } }
+  public IReadOnlyList<string> EnumValues { get; }
   /// <summary>
   /// Schema of the elements of type "Array".
   /// </summary>
@@ -128,13 +126,11 @@ public class Schema {
   /// </summary>
   public IReadOnlyDictionary<string, Schema> Properties { get; }
 
-  private readonly ReadOnlyCollection<string> _requiredProperties;
   /// <summary>
   /// Required properties of type "Object".
   /// </summary>
-  public IEnumerable<string> RequiredProperties { get { return _requiredProperties; } }
+  public IReadOnlyList<string> RequiredProperties { get; }
 
-  private readonly ReadOnlyCollection<string> _propertyOrdering;
   /// <summary>
   /// A specific hint provided to the Gemini model, suggesting the order in which the keys should
   /// appear in the generated JSON string. Important: Standard JSON objects are inherently unordered
@@ -143,9 +139,8 @@ public class Schema {
   /// not preserve this order. This parameter primarily affects the raw JSON string
   /// serialization.
   /// </summary>
-  public IEnumerable<string> PropertyOrdering { get { return _propertyOrdering; } }
+  public IReadOnlyList<string> PropertyOrdering { get; }
 
-  private readonly ReadOnlyCollection<Schema> _anyOf;
   /// <summary>
   /// An array of `Schema` objects. The generated data must be valid against *any* (one or more)
   /// of the schemas listed in this array. This allows specifying multiple possible structures or
@@ -156,7 +151,7 @@ public class Schema {
   /// Schema.AnyOf(new [] { Schema.String(), Schema.Int() })
   /// ```
   /// </summary>
-  public IEnumerable<Schema> AnyOfSchemas { get { return _anyOf; } }
+  public IReadOnlyList<Schema> AnyOfSchemas { get; }
 
   private Schema(
       SchemaType? type,
@@ -179,16 +174,16 @@ public class Schema {
     Title = title;
     Nullable = nullable;
     Format = format;
-    _enumValues = enumValues?.ToList().AsReadOnly();
+    EnumValues = enumValues?.ToList();
     Items = items;
     MinItems = minItems;
     MaxItems = maxItems;
     Minimum = minimum;
     Maximum = maximum;
     Properties = (properties == null) ? null : new Dictionary<string, Schema>(properties);
-    _requiredProperties = requiredProperties?.ToList().AsReadOnly();
-    _propertyOrdering = propertyOrdering?.ToList().AsReadOnly();
-    _anyOf = anyOf?.ToList().AsReadOnly();
+    RequiredProperties = requiredProperties?.ToList();
+    PropertyOrdering = propertyOrdering?.ToList();
+    AnyOfSchemas = anyOf?.ToList();
   }
 
   /// <summary>

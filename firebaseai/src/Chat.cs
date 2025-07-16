@@ -15,7 +15,6 @@
  */
 
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -36,11 +35,7 @@ public class Chat {
   /// The previous content from the chat that has been successfully sent and received from the
   /// model. This will be provided to the model for each message sent as context for the discussion.
   /// </summary>
-  public IEnumerable<ModelContent> History {
-    get {
-     return new ReadOnlyCollection<ModelContent>(chatHistory);
-    }
-  }
+  public IReadOnlyList<ModelContent> History => chatHistory;
 
   // Note: No public constructor, get one through GenerativeModel.StartChat
   private Chat(GenerativeModel model, IEnumerable<ModelContent> initialHistory) {

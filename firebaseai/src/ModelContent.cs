@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using Firebase.AI.Internal;
 
@@ -29,7 +28,7 @@ namespace Firebase.AI {
 /// </summary>
 public readonly struct ModelContent {
   private readonly string _role;
-  private readonly ReadOnlyCollection<Part> _parts;
+  private readonly IReadOnlyList<Part> _parts;
 
   /// <summary>
   /// The role of the entity creating the `ModelContent`. For user-generated client requests,
@@ -44,9 +43,9 @@ public readonly struct ModelContent {
   /// <summary>
   /// The data parts comprising this `ModelContent` value.
   /// </summary>
-  public IEnumerable<Part> Parts {
+  public IReadOnlyList<Part> Parts {
     get {
-      return _parts ?? new ReadOnlyCollection<Part>(new List<Part>());
+      return _parts ?? new List<Part>();
     }
   }
 
@@ -70,7 +69,7 @@ public readonly struct ModelContent {
   /// </summary>
   public ModelContent(string role, IEnumerable<Part> parts) {
     _role = role;
-    _parts = new ReadOnlyCollection<Part>(parts == null ? new List<Part>() : parts.ToList());
+    _parts = parts?.ToList();
   }
 
 #region Helper Factories
@@ -161,7 +160,7 @@ public readonly struct ModelContent {
     /// <summary>
     /// The data provided in the inline data part.
     /// </summary>
-    public ReadOnlyMemory<byte> Data { get; }
+    public byte[] Data { get; }
 
     /// <summary>
     /// Creates an `InlineDataPart` from data and a MIME type.
