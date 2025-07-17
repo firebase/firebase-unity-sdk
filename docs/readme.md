@@ -123,6 +123,8 @@ Release Notes
     - Firebase AI: Add support for defining a Thinking budget.
     - Firebase AI: Deprecated `CountTokensResponse.TotalBillableCharacters`, use
       `CountTokensResponse.TotalTokens` instead.
+    - Firebase AI: Changed public field types for ReadOnlyMemory<byte> to byte[],
+      and IEnumerable to IReadOnlyList.
     - Messaging: Removed deprecated `FirebaseMessage.Dispose`,
       `FirebaseNotification.Dispose`, and `MessagingOptions.Dispose` methods.
 

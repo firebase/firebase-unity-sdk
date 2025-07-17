@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Google.MiniJSON;
 using Firebase.AI.Internal;
 
@@ -44,13 +43,13 @@ public readonly struct CountTokensResponse {
   [Obsolete("Use TotalTokens instead; Gemini 2.0 series models and newer are always billed by token count.")]
   public int? TotalBillableCharacters { get; }
 
-  private readonly ReadOnlyCollection<ModalityTokenCount> _promptTokensDetails;
+  private readonly IReadOnlyList<ModalityTokenCount> _promptTokensDetails;
   /// <summary>
   /// The breakdown, by modality, of how many tokens are consumed by the prompt.
   /// </summary>
-  public IEnumerable<ModalityTokenCount> PromptTokensDetails {
+  public IReadOnlyList<ModalityTokenCount> PromptTokensDetails {
     get {
-      return _promptTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+      return _promptTokensDetails ?? new List<ModalityTokenCount>();
     }
   }
 
@@ -62,8 +61,7 @@ public readonly struct CountTokensResponse {
 #pragma warning disable CS0618
     TotalBillableCharacters = totalBillableCharacters;
 #pragma warning restore CS0618
-    _promptTokensDetails =
-        new ReadOnlyCollection<ModalityTokenCount>(promptTokensDetails ?? new List<ModalityTokenCount>());
+    _promptTokensDetails = promptTokensDetails;
   }
 
   /// <summary>

@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using Google.MiniJSON;
 using Firebase.AI.Internal;
@@ -27,14 +26,14 @@ namespace Firebase.AI {
 /// The model's response to a generate content request.
 /// </summary>
 public readonly struct GenerateContentResponse {
-  private readonly ReadOnlyCollection<Candidate> _candidates;
+  private readonly IReadOnlyList<Candidate> _candidates;
 
   /// <summary>
   /// A list of candidate response content, ordered from best to worst.
   /// </summary>
-  public IEnumerable<Candidate> Candidates {
+  public IReadOnlyList<Candidate> Candidates {
     get {
-      return _candidates ?? new ReadOnlyCollection<Candidate>(new List<Candidate>());
+      return _candidates ?? new List<Candidate>();
     }
   }
 
@@ -64,16 +63,16 @@ public readonly struct GenerateContentResponse {
   /// <summary>
   /// Returns function calls found in any `Part`s of the first candidate of the response, if any.
   /// </summary>
-  public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls {
+  public IReadOnlyList<ModelContent.FunctionCallPart> FunctionCalls {
     get {
-      return Candidates.FirstOrDefault().Content.Parts.OfType<ModelContent.FunctionCallPart>();
+      return Candidates.FirstOrDefault().Content.Parts.OfType<ModelContent.FunctionCallPart>().ToList();
     }
   }
 
   // Hidden constructor, users don't need to make this.
   private GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
       UsageMetadata? usageMetadata) {
-    _candidates = new ReadOnlyCollection<Candidate>(candidates ?? new List<Candidate>());
+    _candidates = candidates;
     PromptFeedback = promptFeedback;
     UsageMetadata = usageMetadata;
   }
@@ -132,7 +131,7 @@ public enum BlockReason {
 /// A metadata struct containing any feedback the model had on the prompt it was provided.
 /// </summary>
 public readonly struct PromptFeedback {
-  private readonly ReadOnlyCollection<SafetyRating> _safetyRatings;
+  private readonly IReadOnlyList<SafetyRating> _safetyRatings;
 
   /// <summary>
   /// The reason a prompt was blocked, if it was blocked.
@@ -145,9 +144,9 @@ public readonly struct PromptFeedback {
   /// <summary>
   /// The safety ratings of the prompt.
   /// </summary>
-  public IEnumerable<SafetyRating> SafetyRatings {
+  public IReadOnlyList<SafetyRating> SafetyRatings {
     get {
-      return _safetyRatings ?? new ReadOnlyCollection<SafetyRating>(new List<SafetyRating>());
+      return _safetyRatings ?? new List<SafetyRating>();
     }
   }
 
@@ -156,7 +155,7 @@ public readonly struct PromptFeedback {
                          List<SafetyRating> safetyRatings) {
     BlockReason = blockReason;
     BlockReasonMessage = blockReasonMessage;
-    _safetyRatings = new ReadOnlyCollection<SafetyRating>(safetyRatings ?? new List<SafetyRating>());
+    _safetyRatings = safetyRatings;
   }
 
   private static BlockReason ParseBlockReason(string str) {
@@ -191,17 +190,17 @@ public readonly struct PromptFeedback {
 /// section within the Service Specific Terms).
 /// </summary>
 public readonly struct GroundingMetadata {
-  private readonly ReadOnlyCollection<string> _webSearchQueries;
-  private readonly ReadOnlyCollection<GroundingChunk> _groundingChunks;
-  private readonly ReadOnlyCollection<GroundingSupport> _groundingSupports;
+  private readonly IReadOnlyList<string> _webSearchQueries;
+  private readonly IReadOnlyList<GroundingChunk> _groundingChunks;
+  private readonly IReadOnlyList<GroundingSupport> _groundingSupports;
 
   /// <summary>
   /// A list of web search queries that the model performed to gather the grounding information.
   /// These can be used to allow users to explore the search results themselves.
   /// </summary>
-  public IEnumerable<string> WebSearchQueries {
+  public IReadOnlyList<string> WebSearchQueries {
     get {
-      return _webSearchQueries ?? new ReadOnlyCollection<string>(new List<string>());
+      return _webSearchQueries ?? new List<string>();
     }
   }
 
@@ -209,9 +208,9 @@ public readonly struct GroundingMetadata {
   /// A list of `GroundingChunk` structs. Each chunk represents a piece of retrieved content
   /// (e.g., from a web page) that the model used to ground its response.
   /// </summary>
-  public IEnumerable<GroundingChunk> GroundingChunks {
+  public IReadOnlyList<GroundingChunk> GroundingChunks {
     get {
-      return _groundingChunks ?? new ReadOnlyCollection<GroundingChunk>(new List<GroundingChunk>());
+      return _groundingChunks ?? new List<GroundingChunk>();
     }
   }
 
@@ -219,9 +218,9 @@ public readonly struct GroundingMetadata {
   /// A list of `GroundingSupport` structs. Each object details how specific segments of the
   /// model's response are supported by the `groundingChunks`.
   /// </summary>
-  public IEnumerable<GroundingSupport> GroundingSupports {
+  public IReadOnlyList<GroundingSupport> GroundingSupports {
     get {
-      return _groundingSupports ?? new ReadOnlyCollection<GroundingSupport>(new List<GroundingSupport>());
+      return _groundingSupports ?? new List<GroundingSupport>();
     }
   }
 
@@ -234,9 +233,9 @@ public readonly struct GroundingMetadata {
 
   private GroundingMetadata(List<string> webSearchQueries, List<GroundingChunk> groundingChunks,
                             List<GroundingSupport> groundingSupports, SearchEntryPoint? searchEntryPoint) {
-    _webSearchQueries = new ReadOnlyCollection<string>(webSearchQueries ?? new List<string>());
-    _groundingChunks = new ReadOnlyCollection<GroundingChunk>(groundingChunks ?? new List<GroundingChunk>());
-    _groundingSupports = new ReadOnlyCollection<GroundingSupport>(groundingSupports ?? new List<GroundingSupport>());
+    _webSearchQueries = webSearchQueries;
+    _groundingChunks = groundingChunks;
+    _groundingSupports = groundingSupports;
     SearchEntryPoint = searchEntryPoint;
   }
 
@@ -347,7 +346,7 @@ public readonly struct WebGroundingChunk {
 /// retrieved grounding chunks.
 /// </summary>
 public readonly struct GroundingSupport {
-  private readonly ReadOnlyCollection<int> _groundingChunkIndices;
+  private readonly IReadOnlyList<int> _groundingChunkIndices;
 
   /// <summary>
   /// Specifies the segment of the model's response content that this grounding support pertains
@@ -363,15 +362,15 @@ public readonly struct GroundingSupport {
   /// means that `groundingChunks[1]`, `groundingChunks[3]`, `groundingChunks[4]` are the
   /// retrieved content supporting this part of the response.
   /// </summary>
-  public IEnumerable<int> GroundingChunkIndices {
+  public IReadOnlyList<int> GroundingChunkIndices {
     get {
-      return _groundingChunkIndices ?? new ReadOnlyCollection<int>(new List<int>());
+      return _groundingChunkIndices ?? new List<int>();
     }
   }
 
   private GroundingSupport(Segment segment, List<int> groundingChunkIndices) {
     Segment = segment;
-    _groundingChunkIndices = new ReadOnlyCollection<int>(groundingChunkIndices ?? new List<int>());
+    _groundingChunkIndices = groundingChunkIndices;
   }
 
   internal static GroundingSupport FromJson(Dictionary<string, object> jsonDict) {
@@ -459,17 +458,17 @@ public readonly struct UsageMetadata {
   /// </summary>
   public int TotalTokenCount { get; }
 
-  private readonly ReadOnlyCollection<ModalityTokenCount> _promptTokensDetails;
-  public IEnumerable<ModalityTokenCount> PromptTokensDetails {
+  private readonly IReadOnlyList<ModalityTokenCount> _promptTokensDetails;
+  public IReadOnlyList<ModalityTokenCount> PromptTokensDetails {
     get {
-      return _promptTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+      return _promptTokensDetails ?? new List<ModalityTokenCount>();
     }
   }
 
-  private readonly ReadOnlyCollection<ModalityTokenCount> _candidatesTokensDetails;
-  public IEnumerable<ModalityTokenCount> CandidatesTokensDetails {
+  private readonly IReadOnlyList<ModalityTokenCount> _candidatesTokensDetails;
+  public IReadOnlyList<ModalityTokenCount> CandidatesTokensDetails {
     get {
-      return _candidatesTokensDetails ?? new ReadOnlyCollection<ModalityTokenCount>(new List<ModalityTokenCount>());
+      return _candidatesTokensDetails ?? new List<ModalityTokenCount>();
     }
   }
 
@@ -480,11 +479,8 @@ public readonly struct UsageMetadata {
     CandidatesTokenCount = candidatesTC;
     ThoughtsTokenCount = thoughtsTC;
     TotalTokenCount = totalTC;
-    _promptTokensDetails =
-        new ReadOnlyCollection<ModalityTokenCount>(promptDetails ?? new List<ModalityTokenCount>());
-    _candidatesTokensDetails =
-        new ReadOnlyCollection<ModalityTokenCount>(candidateDetails ?? new List<ModalityTokenCount>());
-
+    _promptTokensDetails = promptDetails;
+    _candidatesTokensDetails = candidateDetails;
   }
 
   /// <summary>

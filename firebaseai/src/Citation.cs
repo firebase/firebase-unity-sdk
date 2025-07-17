@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Firebase.AI.Internal;
 
 namespace Firebase.AI {
@@ -25,20 +24,20 @@ namespace Firebase.AI {
 /// A collection of source attributions for a piece of content.
 /// </summary>
 public readonly struct CitationMetadata {
-  private readonly ReadOnlyCollection<Citation> _citations;
+  private readonly IReadOnlyList<Citation> _citations;
 
   /// <summary>
   /// A list of individual cited sources and the parts of the content to which they apply.
   /// </summary>
-  public IEnumerable<Citation> Citations {
+  public IReadOnlyList<Citation> Citations {
     get {
-      return _citations ?? new ReadOnlyCollection<Citation>(new List<Citation>());
+      return _citations ?? new List<Citation>();
     }
   }
 
   // Hidden constructor, users don't need to make this.
   private CitationMetadata(List<Citation> citations) {
-    _citations = new ReadOnlyCollection<Citation>(citations ?? new List<Citation>());
+    _citations = citations;
   }
 
   /// <summary>
