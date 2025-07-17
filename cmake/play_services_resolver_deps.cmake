@@ -20,7 +20,7 @@
 set(DEPENDENCIES_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/dependencies.template)
 
 # The default minimum target SDK to use.
-set(DEFAULT_MIN_TARGET_SDK "13.0")
+set(DEFAULT_MIN_TARGET_SDK "15.0")
 
 
 # A function that generates the <module>Dependencies.xml file, used by the
