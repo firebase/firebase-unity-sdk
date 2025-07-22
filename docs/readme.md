@@ -111,6 +111,7 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
+    - General (iOS, tvOS): Minimum iOS and tvOS deployment target is now 15.0.
     - Analytics: Removed deprecated `FirebaseAnalytics.ParameterGroupId`
       and `Parameter.Dispose` methods.
     - Auth: Removed deprecated `FirebaseUser.UpdateEmailAsync`.
