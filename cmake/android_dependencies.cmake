@@ -47,11 +47,6 @@ set(FIREBASE_DATABASE_ANDROID_DEPS
     "com.google.android.gms:play-services-base:18.6.0"
 )
 
-set(FIREBASE_DYNAMIC_LINKS_ANDROID_DEPS
-    "com.google.firebase:firebase-dynamic-links:22.1.0"
-    "com.google.firebase:firebase-analytics:22.4.0"
-)
-
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
     "com.google.firebase:firebase-firestore:25.1.3"
     "com.google.firebase:firebase-analytics:22.4.0"

@@ -396,14 +396,10 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
         //   being included.
         // * DLLs may not be loaded in the Unity Editor App domain so we can't
         //   detect the module using reflection.
-        var invitesDll = "Firebase.Invites.dll";
         var dllsThatRequireReversedClientId = new HashSet<string> {
             "Firebase.Auth.dll",
-            "Firebase.DynamicLinks.dll",
-            invitesDll
         };
         bool reversedClientIdRequired = false;
-        bool invitesPresent = false;
         // Search the asset database for the DLLs to handle projects where
         // users move files around.
         foreach (var assetGuid in AssetDatabase.FindAssets("t:Object")) {
@@ -411,10 +407,9 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
                 AssetDatabase.GUIDToAssetPath(assetGuid));
             if (dllsThatRequireReversedClientId.Contains(filename)) {
                 reversedClientIdRequired = true;
-                invitesPresent = filename == invitesDll;
             }
         }
-        if (!(invitesPresent || reversedClientIdRequired)) {
+        if (!reversedClientIdRequired) {
             return;
         }
         ReadConfig();
@@ -464,12 +459,6 @@ internal class XcodeProjectPatcher : AssetPostprocessor {
             bundleType.SetString("CFBundleTypeRole", "Editor");
             bundleType.SetString("CFBundleURLName", bundleId);
             bundleType.CreateArray("CFBundleURLSchemes").AddString(bundleId);
-        }
-        // Invites needs usage permission to access Contacts.
-        if (invitesPresent) {
-          if (!rootDict.values.ContainsKey("NSContactsUsageDescription")) {
-            rootDict.SetString("NSContactsUsageDescription", "Invite others to use the app.");
-          }
         }
         // Finished, Write to File
         File.WriteAllText(plistPath, plist.WriteToString());

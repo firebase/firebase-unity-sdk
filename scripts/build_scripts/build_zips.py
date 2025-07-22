@@ -32,7 +32,7 @@ from absl import app, flags, logging
 
 SUPPORT_PLATFORMS = ("linux", "macos", "windows", "ios", "tvos", "android")
 SUPPORT_TARGETS = [
-    "analytics", "app_check", "auth", "crashlytics", "database", "dynamic_links",
+    "analytics", "app_check", "auth", "crashlytics", "database",
     "firebaseai", "firestore", "functions", "installations", "messaging", "remote_config",
     "storage"
 ]
@@ -193,11 +193,6 @@ def get_targets_args(targets):
     support_targets = TVOS_SUPPORT_TARGETS
     if not targets:
       targets = TVOS_SUPPORT_TARGETS
-    else:
-      if 'dynamic_links' in targets:
-        logging.warning("Dynamic Links is not supported on tvOS. " +
-          "Removing it from the api build list.")
-        targets.remove('dynamic_links')
 
   if targets:
     # check if all the entries are valid

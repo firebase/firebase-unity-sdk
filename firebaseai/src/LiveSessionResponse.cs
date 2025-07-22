@@ -15,7 +15,6 @@
  */
 
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Google.MiniJSON;
 using Firebase.AI.Internal;
 using System.Linq;
@@ -54,13 +53,14 @@ public readonly struct LiveSessionResponse {
   /// <summary>
   /// The response's content that was audio, if it exists.
   /// </summary>
-  public IEnumerable<byte[]> Audio {
+  public IReadOnlyList<byte[]> Audio {
     get {
       if (Message is LiveSessionContent content) {
         return content.Content?.Parts
             .OfType<ModelContent.InlineDataPart>()
-            .Where(part => part.MimeType.StartsWith("audio/pcm"))
-            .Select(part => part.Data.ToArray());
+            .Where(part => part.MimeType == "audio/pcm")
+            .Select(part => part.Data.ToArray())
+            .ToList();
       }
       return null;
     }
@@ -69,9 +69,9 @@ public readonly struct LiveSessionResponse {
   /// <summary>
   /// The response's content that was audio, if it exists, converted into floats.
   /// </summary>
-  public IEnumerable<float[]> AudioAsFloat {
+  public IReadOnlyList<float[]> AudioAsFloat {
     get {
-      return Audio?.Select(ConvertBytesToFloat);
+      return Audio?.Select(ConvertBytesToFloat).ToArray();
     }
   }
 
@@ -176,23 +176,21 @@ public readonly struct LiveSessionContent : ILiveSessionMessage {
 /// A request to use a tool from the live session.
 /// </summary>
 public readonly struct LiveSessionToolCall : ILiveSessionMessage {
-  private readonly ReadOnlyCollection<ModelContent.FunctionCallPart> _functionCalls;
+  private readonly IReadOnlyList<ModelContent.FunctionCallPart> _functionCalls;
 
   /// <summary>
   /// A list of `ModelContent.FunctionCallPart` included in the response, if any.
   ///
   /// This will be empty if no function calls are present.
   /// </summary>
-  public IEnumerable<ModelContent.FunctionCallPart> FunctionCalls {
+  public IReadOnlyList<ModelContent.FunctionCallPart> FunctionCalls {
     get {
-      return _functionCalls ?? new ReadOnlyCollection<ModelContent.FunctionCallPart>(
-          new List<ModelContent.FunctionCallPart>());
+      return _functionCalls ?? new List<ModelContent.FunctionCallPart>();
     }
   }
 
   private LiveSessionToolCall(List<ModelContent.FunctionCallPart> functionCalls) {
-    _functionCalls = new ReadOnlyCollection<ModelContent.FunctionCallPart>(
-        functionCalls ?? new List<ModelContent.FunctionCallPart>());
+    _functionCalls = functionCalls;
   }
 
   /// <summary>
@@ -209,20 +207,19 @@ public readonly struct LiveSessionToolCall : ILiveSessionMessage {
 /// A request to cancel using a tool from the live session.
 /// </summary>
 public readonly struct LiveSessionToolCallCancellation : ILiveSessionMessage {
-  private readonly ReadOnlyCollection<string> _functionIds;
+  private readonly IReadOnlyList<string> _functionIds;
 
   /// <summary>
   /// The list of Function IDs to cancel.
   /// </summary>
-  public IEnumerable<string> FunctionIds {
+  public IReadOnlyList<string> FunctionIds {
     get {
-      return _functionIds ?? new ReadOnlyCollection<string>(new List<string>());
+      return _functionIds ?? new List<string>();
     }
   }
 
   private LiveSessionToolCallCancellation(List<string> functionIds) {
-    _functionIds = new ReadOnlyCollection<string>(
-        functionIds ?? new List<string>());
+    _functionIds = functionIds;
   }
 
   /// <summary>

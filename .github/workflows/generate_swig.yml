@@ -16,7 +16,7 @@ on:
         type: string
       apis:
         description: 'CSV of apis to build and test'
-        default: 'analytics,app_check,auth,crashlytics,database,dynamic_links,firebaseai,firestore,functions,installations,messaging,remote_config,storage'
+        default: 'analytics,app_check,auth,crashlytics,database,firebaseai,firestore,functions,installations,messaging,remote_config,storage'
         required: true
         type: string
       # Additional CMake flags to use
