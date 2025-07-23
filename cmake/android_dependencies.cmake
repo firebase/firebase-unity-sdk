@@ -15,67 +15,67 @@
 # This file defines the Android dependencies needed by all the modules.
 
 set(FIREBASE_APP_ANDROID_DEPS
-    "com.google.firebase:firebase-common:21.0.0"
-    "com.google.firebase:firebase-analytics:22.4.0"
-    "com.google.android.gms:play-services-base:18.6.0"
+    "com.google.firebase:firebase-common:22.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
+    "com.google.android.gms:play-services-base:18.7.2"
 )
 
 set(FIREBASE_ANALYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
 )
 
 set(FIREBASE_APP_CHECK_ANDROID_DEPS
-    "com.google.firebase:firebase-appcheck:18.0.0"
-    "com.google.firebase:firebase-appcheck-debug:18.0.0"
-    "com.google.firebase:firebase-appcheck-playintegrity:18.0.0"
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-appcheck:19.0.0"
+    "com.google.firebase:firebase-appcheck-debug:19.0.0"
+    "com.google.firebase:firebase-appcheck-playintegrity:19.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
 )
 
 set(FIREBASE_AUTH_ANDROID_DEPS
-    "com.google.firebase:firebase-auth:23.2.0"
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-auth:24.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:19.4.2"
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-crashlytics-ndk:20.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
 )
 
 set(FIREBASE_DATABASE_ANDROID_DEPS
-    "com.google.firebase:firebase-database:21.0.0"
-    "com.google.firebase:firebase-analytics:22.4.0"
-    "com.google.android.gms:play-services-base:18.6.0"
+    "com.google.firebase:firebase-database:22.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
+    "com.google.android.gms:play-services-base:18.7.2"
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:25.1.3"
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-firestore:26.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
 )
 
 set(FIREBASE_FUNCTIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-functions:21.2.0"
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-functions:22.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
 )
 
 set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-installations:18.0.0"
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-installations:19.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
 )
 
 # iid is needed by messaging to avoid a conflict with functions
 set(FIREBASE_MESSAGING_ANDROID_DEPS
-    "com.google.firebase:firebase-messaging:24.1.1"
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-messaging:25.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
     "com.google.firebase:firebase-iid:21.1.0"
     "com.google.flatbuffers:flatbuffers-java:1.12.0"
 )
 
 set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
-    "com.google.firebase:firebase-config:22.1.0"
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-config:23.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
 )
 
 set(FIREBASE_STORAGE_ANDROID_DEPS
-    "com.google.firebase:firebase-storage:21.0.1"
-    "com.google.firebase:firebase-analytics:22.4.0"
+    "com.google.firebase:firebase-storage:22.0.0"
+    "com.google.firebase:firebase-analytics:23.0.0"
 )
