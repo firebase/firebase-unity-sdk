@@ -253,8 +253,7 @@ def main(argv):
     raise app.UsageError('Please set unity_sdk_version.')
     
   update_unity_version(FLAGS.unity_sdk_version)
-  # Disabled until the workaround for higher gradle versions is in place
-  #update_android_deps()
+  update_android_deps()
   update_readme(FLAGS.unity_sdk_version)
   update_export_json_files()
 
