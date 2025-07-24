@@ -109,9 +109,13 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.0.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 13.0.0.
+    - General (Android): Update to Firebase Android BoM version 34.0.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.0.0.
     - General (iOS, tvOS): Minimum iOS and tvOS deployment target is now 15.0.
+    - General: Minimum supported editor version is now Unity 2021.
     - Analytics: Removed deprecated `FirebaseAnalytics.ParameterGroupId`
       and `Parameter.Dispose` methods.
     - Auth: Removed deprecated `FirebaseUser.UpdateEmailAsync`.
