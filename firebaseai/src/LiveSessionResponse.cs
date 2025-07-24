@@ -58,7 +58,7 @@ public readonly struct LiveSessionResponse {
       if (Message is LiveSessionContent content) {
         return content.Content?.Parts
             .OfType<ModelContent.InlineDataPart>()
-            .Where(part => part.MimeType == "audio/pcm")
+            .Where(part => part.MimeType.StartsWith("audio/pcm"))
             .Select(part => part.Data.ToArray())
             .ToList();
       }

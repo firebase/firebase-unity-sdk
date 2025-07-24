@@ -165,8 +165,6 @@ public class FirebaseAI {
   /// 
   /// - Note: Refer to [Gemini models](https://firebase.google.com/docs/vertex-ai/gemini-models) for
   /// guidance on choosing an appropriate model for your use case.
-  /// 
-  /// - Note: Currently only supports the VertexAI backend.
   /// </summary>
   /// <param name="modelName">The name of the model to use, for example `"gemini-2.0-flash-live-preview-04-09"`; see
   ///     [available model names
@@ -183,10 +181,6 @@ public class FirebaseAI {
       Tool[] tools = null,
       ModelContent? systemInstruction = null,
       RequestOptions? requestOptions = null) {
-    if (_backend.Provider != Backend.InternalProvider.VertexAI) {
-      throw new NotSupportedException("LiveGenerativeModel is currently only supported with the VertexAI backend.");
-    }
-
     return new LiveGenerativeModel(_firebaseApp, _backend, modelName,
         liveGenerationConfig, tools,
         systemInstruction, requestOptions);
