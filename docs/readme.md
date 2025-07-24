@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Add support for Developer API backend to LiveSessions.
+
 ### 13.0.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.0.0.
