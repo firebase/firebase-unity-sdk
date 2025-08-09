@@ -251,13 +251,16 @@ public readonly struct ModelContent {
     }
 
     Dictionary<string, object> Part.ToJson() {
+      var jsonDict = new Dictionary<string, object>() {
+        { "name", Name },
+        { "args", Args }
+      };
+      if (!string.IsNullOrEmpty(Id)) {
+        jsonDict["id"] = Id;
+      }
+
       return new Dictionary<string, object>() {
-        { "functionCall", new Dictionary<string, object>() {
-            { "name", Name },
-            { "args", Args },
-            { "id", Id }
-          }
-        }
+        { "functionCall", jsonDict }
       };
     }
   }
