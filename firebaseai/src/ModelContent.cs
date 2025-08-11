@@ -103,8 +103,8 @@ public readonly struct ModelContent {
   /// `FunctionResponsePart` containing the given name and args.
   /// </summary>
   public static ModelContent FunctionResponse(
-      string name, IDictionary<string, object> response) {
-    return new ModelContent(new FunctionResponsePart(name, response));
+      string name, IDictionary<string, object> response, string id = null) {
+    return new ModelContent(new FunctionResponsePart(name, response, id));
   }
 
   // TODO: Possibly more, like Multi, Model, FunctionResponses, System (only on Dart?)
@@ -236,22 +236,31 @@ public readonly struct ModelContent {
     /// The function parameters and values, matching the registered schema.
     /// </summary>
     public IReadOnlyDictionary<string, object> Args { get; }
+    /// <summary>
+    /// An identifier that should be passed along in the FunctionResponsePart.
+    /// </summary>
+    public string Id { get; }
     
     /// <summary>
     /// Intended for internal use only.
     /// </summary>
-    internal FunctionCallPart(string name, IDictionary<string, object> args) {
+    internal FunctionCallPart(string name, IDictionary<string, object> args, string id) {
       Name = name;
       Args = new Dictionary<string, object>(args);
+      Id = id;
     }
 
     Dictionary<string, object> Part.ToJson() {
+      var jsonDict = new Dictionary<string, object>() {
+        { "name", Name },
+        { "args", Args }
+      };
+      if (!string.IsNullOrEmpty(Id)) {
+        jsonDict["id"] = Id;
+      }
+
       return new Dictionary<string, object>() {
-        { "functionCall", new Dictionary<string, object>() {
-            { "name", Name },
-            { "args", Args }
-          }
-        }
+        { "functionCall", jsonDict }
       };
     }
   }
@@ -272,24 +281,33 @@ public readonly struct ModelContent {
     /// The function's response or return value.
     /// </summary>
     public IReadOnlyDictionary<string, object> Response { get; }
+    /// <summary>
+    /// The id from the FunctionCallPart this is in response to.
+    /// </summary>
+    public string Id { get; }
 
     /// <summary>
     /// Constructs a new `FunctionResponsePart`.
     /// </summary>
     /// <param name="name">The name of the function that was called.</param>
     /// <param name="response">The function's response.</param>
-    public FunctionResponsePart(string name, IDictionary<string, object> response) {
+    /// <param name="id">The id from the FunctionCallPart this is in response to.</param>
+    public FunctionResponsePart(string name, IDictionary<string, object> response, string id = null) {
       Name = name;
       Response = new Dictionary<string, object>(response);
+      Id = id;
     }
 
     Dictionary<string, object> Part.ToJson() {
+      var result = new Dictionary<string, object>() {
+        { "name", Name },
+        { "response", Response }
+      };
+      if (!string.IsNullOrEmpty(Id)) {
+        result["id"] = Id;
+      }
       return new Dictionary<string, object>() {
-        { "functionResponse", new Dictionary<string, object>() {
-            { "name", Name },
-            { "response", Response }
-          }
-        }
+        { "functionResponse", result }
       };
     }
   }
@@ -350,7 +368,8 @@ internal static class ModelContentJsonParsers {
   internal static ModelContent.FunctionCallPart FunctionCallPartFromJson(Dictionary<string, object> jsonDict) {
     return new ModelContent.FunctionCallPart(
       jsonDict.ParseValue<string>("name", JsonParseOptions.ThrowEverything),
-      jsonDict.ParseValue<Dictionary<string, object>>("args", JsonParseOptions.ThrowEverything));
+      jsonDict.ParseValue<Dictionary<string, object>>("args", JsonParseOptions.ThrowEverything),
+      jsonDict.ParseValue<string>("id"));
   }
 }
 

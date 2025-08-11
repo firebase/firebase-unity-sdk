@@ -103,6 +103,28 @@ public class LiveSession : IDisposable {
       ModelContent? content = null,
       bool turnComplete = false,
       CancellationToken cancellationToken = default) {
+    // If the content has FunctionResponseParts, we handle those separately.
+    if (content.HasValue) {
+      var functionParts = content?.Parts.OfType<ModelContent.FunctionResponsePart>().ToList();
+      if (functionParts.Count > 0) {
+        Dictionary<string, object> toolResponse = new() {
+          { "toolResponse", new Dictionary<string, object>() {
+            { "functionResponses", functionParts.Select(frPart => (frPart as ModelContent.Part).ToJson()["functionResponse"]).ToList() }
+          }}
+        };
+        var toolResponseBytes = Encoding.UTF8.GetBytes(Json.Serialize(toolResponse));
+
+        await InternalSendBytesAsync(new ArraySegment<byte>(toolResponseBytes), cancellationToken);
+        if (functionParts.Count < content?.Parts.Count) {
+          // There are other parts to send, so send them with the other method.
+          content = new ModelContent(role: content?.Role,
+              parts: content?.Parts.Where(p => p is not ModelContent.FunctionResponsePart));
+        } else {
+          return;
+        }
+      }
+    }
+
     // Prepare the message payload
     Dictionary<string, object> contentDict = new() {
       { "turnComplete", turnComplete }
