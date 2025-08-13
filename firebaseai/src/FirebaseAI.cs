@@ -135,7 +135,7 @@ public class FirebaseAI {
   /// - Note: Refer to [Gemini models](https://firebase.google.com/docs/vertex-ai/gemini-models) for
   /// guidance on choosing an appropriate model for your use case.
   /// </summary>
-  /// <param name="modelName">The name of the model to use, for example `"gemini-2.0-flash"`; see
+  /// <param name="modelName">The name of the model to use; see
   ///     [available model names
   ///     ](https://firebase.google.com/docs/vertex-ai/gemini-models#available-model-names) for a
   ///     list of supported model names.</param>
@@ -166,7 +166,7 @@ public class FirebaseAI {
   /// - Note: Refer to [Gemini models](https://firebase.google.com/docs/vertex-ai/gemini-models) for
   /// guidance on choosing an appropriate model for your use case.
   /// </summary>
-  /// <param name="modelName">The name of the model to use, for example `"gemini-2.0-flash-live-preview-04-09"`; see
+  /// <param name="modelName">The name of the model to use; see
   ///     [available model names
   ///     ](https://firebase.google.com/docs/vertex-ai/gemini-models#available-model-names) for a
   ///     list of supported model names.</param>

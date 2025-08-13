@@ -118,7 +118,9 @@ namespace Firebase.AI {
 
     private Dictionary<string, object> MakeGenerateImagenRequestAsDictionary(
         string prompt) {
-      Dictionary<string, object> parameters = new();
+      Dictionary<string, object> parameters = new() {
+        ["includeRaiReason"] = true,
+      };
       // Merge the settings into a single parameter dictionary
       if (_generationConfig != null) {
         _generationConfig?.ToJson().ToList()
@@ -135,11 +137,9 @@ namespace Firebase.AI {
       Dictionary<string, object> jsonDict = new() {
         ["instances"] = new Dictionary<string, object>() {
           ["prompt"] = prompt,
-        }
+        },
+        ["parameters"] = parameters,
       };
-      if (parameters.Count > 0) {
-        jsonDict["parameters"] = parameters;
-      }
 
       return jsonDict;
     }
