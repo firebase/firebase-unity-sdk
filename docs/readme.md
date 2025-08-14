@@ -109,7 +109,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.1.0
 -   Changes
     - Firebase AI: Add support for Developer API backend to LiveSessions.
 
