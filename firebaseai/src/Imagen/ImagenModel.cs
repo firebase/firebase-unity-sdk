@@ -119,7 +119,9 @@ namespace Firebase.AI {
     private Dictionary<string, object> MakeGenerateImagenRequestAsDictionary(
         string prompt) {
       Dictionary<string, object> parameters = new() {
+        // These values are hardcoded to true for AI Monitoring.
         ["includeRaiReason"] = true,
+        ["includeSafetyAttributes"] = true,
       };
       // Merge the settings into a single parameter dictionary
       if (_generationConfig != null) {
