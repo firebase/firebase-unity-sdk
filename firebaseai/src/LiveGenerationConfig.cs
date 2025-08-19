@@ -67,7 +67,6 @@ public readonly struct LiveGenerationConfig {
   private readonly float? _temperature;
   private readonly float? _topP;
   private readonly float? _topK;
-  private readonly int? _candidateCount;
   private readonly int? _maxOutputTokens;
   private readonly float? _presencePenalty;
   private readonly float? _frequencyPenalty;
@@ -119,11 +118,6 @@ public readonly struct LiveGenerationConfig {
   /// [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
   /// for more details.</param>
   /// 
-  /// <param name="candidateCount">The number of response variations to return; defaults to 1 if not set.
-  /// Support for multiple candidates depends on the model; see the
-  /// [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
-  /// for more details.</param>
-  /// 
   /// <param name="maxOutputTokens">Maximum number of tokens that can be generated in the response.
   /// See the configure model parameters [documentation](https://firebase.google.com/docs/vertex-ai/model-parameters?platform=ios#max-output-tokens)
   /// for more details.</param>
@@ -166,7 +160,6 @@ public readonly struct LiveGenerationConfig {
       float? temperature = null,
       float? topP = null,
       float? topK = null,
-      int? candidateCount = null,
       int? maxOutputTokens = null,
       float? presencePenalty = null,
       float? frequencyPenalty = null) {
@@ -176,7 +169,6 @@ public readonly struct LiveGenerationConfig {
     _temperature = temperature;
     _topP = topP;
     _topK = topK;
-    _candidateCount = candidateCount;
     _maxOutputTokens = maxOutputTokens;
     _presencePenalty = presencePenalty;
     _frequencyPenalty = frequencyPenalty;
@@ -196,7 +188,6 @@ public readonly struct LiveGenerationConfig {
     if (_temperature.HasValue) jsonDict["temperature"] = _temperature.Value;
     if (_topP.HasValue) jsonDict["topP"] = _topP.Value;
     if (_topK.HasValue) jsonDict["topK"] = _topK.Value;
-    if (_candidateCount.HasValue) jsonDict["candidateCount"] = _candidateCount.Value;
     if (_maxOutputTokens.HasValue) jsonDict["maxOutputTokens"] = _maxOutputTokens.Value;
     if (_presencePenalty.HasValue) jsonDict["presencePenalty"] = _presencePenalty.Value;
     if (_frequencyPenalty.HasValue) jsonDict["frequencyPenalty"] = _frequencyPenalty.Value;
