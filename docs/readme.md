@@ -109,6 +109,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Remove `LiveGenerationConfig.CandidateCount`, since the
+      connection fails silently when it is set.
+
 ### 13.1.0
 -   Changes
     - Firebase AI: Add support for Developer API backend to LiveSessions.
