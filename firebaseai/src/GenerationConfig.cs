@@ -216,14 +216,19 @@ namespace Firebase.AI {
   public readonly struct ThinkingConfig {
 #if !DOXYGEN
     public readonly int? ThinkingBudget { get; }
+    public readonly bool? IncludeThoughts { get; }
 #endif
 
     /// <summary>
     /// Initializes configuration options for Thinking features.
     /// </summary>
     /// <param name="thinkingBudget">The token budget for the model's thinking process.</param>
-    public ThinkingConfig(int? thinkingBudget = null) {
+    /// <param name="includeThoughts">
+    /// If true, summaries of the model's "thoughts" are included in responses.
+    /// </param>
+    public ThinkingConfig(int? thinkingBudget = null, bool? includeThoughts = null) {
       ThinkingBudget = thinkingBudget;
+      IncludeThoughts = includeThoughts;
     }
 
     /// <summary>
@@ -232,9 +237,8 @@ namespace Firebase.AI {
     /// </summary>
     internal Dictionary<string, object> ToJson() {
       Dictionary<string, object> jsonDict = new();
-      if (ThinkingBudget.HasValue) {
-        jsonDict["thinkingBudget"] = ThinkingBudget.Value;
-      }
+      jsonDict.AddIfHasValue("thinkingBudget", ThinkingBudget);
+      jsonDict.AddIfHasValue("includeThoughts", IncludeThoughts);
       return jsonDict;
     }
   }

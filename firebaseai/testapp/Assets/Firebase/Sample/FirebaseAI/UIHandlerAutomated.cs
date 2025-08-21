@@ -74,6 +74,7 @@ namespace Firebase.Sample.FirebaseAI {
         TestImagenGenerateImage,
         TestImagenGenerateImageOptions,
         TestThinkingBudget,
+        TestIncludeThoughts,
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
@@ -160,7 +161,8 @@ namespace Firebase.Sample.FirebaseAI {
     private void AssertType<T>(string message, object obj, out T output) {
       if (obj is T parsed) {
         output = parsed;
-      } else {
+      }
+      else {
         throw new Exception(
           $"Assertion failed ({testRunner.CurrentTestDescription}): {obj.GetType()} is wrong type ({message})");
       }
@@ -223,7 +225,8 @@ namespace Firebase.Sample.FirebaseAI {
         Assert("Invalid CandidatesTokenCount", response.UsageMetadata?.CandidatesTokenCount > 0);
         Assert("Invalid PromptTokenCount", response.UsageMetadata?.PromptTokenCount > 0);
         Assert("Invalid TotalTokenCount", response.UsageMetadata?.TotalTokenCount > 0);
-      } else {
+      }
+      else {
         DebugLog("WARNING: UsageMetadata was missing from BasicText");
       }
 
@@ -458,7 +461,7 @@ namespace Firebase.Sample.FirebaseAI {
         generationConfig: new GenerationConfig(
           responseMimeType: "text/x.enum",
           responseSchema: Schema.Enum(new string[] { enumValue })));
-      
+
       var response = await model.GenerateContentAsync(
         "Hello, I am testing setting the response schema to an enum.");
 
@@ -474,7 +477,7 @@ namespace Firebase.Sample.FirebaseAI {
               Schema.AnyOf(new[] { Schema.Int(), Schema.String() }),
               minItems: 2,
               maxItems: 6)));
-      
+
       var response = await model.GenerateContentAsync(
         "Hello, I am testing setting the response schema with an array, cause you give me some random values.");
 
@@ -721,7 +724,8 @@ namespace Firebase.Sample.FirebaseAI {
       foreach (var part in candidate.Content.Parts) {
         if (part is ModelContent.TextPart) {
           foundText = true;
-        } else if (part is ModelContent.InlineDataPart dataPart) {
+        }
+        else if (part is ModelContent.InlineDataPart dataPart) {
           if (dataPart.MimeType.Contains("image")) {
             foundImage = true;
           }
@@ -803,9 +807,40 @@ namespace Firebase.Sample.FirebaseAI {
       string result = response.Text;
       Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
 
+      // ThoughtSummary should be null since we didn't set includeThoughts.
+      Assert("ThoughtSummary wasn't null", string.IsNullOrWhiteSpace(response.ThoughtSummary));
+
       Assert("UsageMetadata was missing", response.UsageMetadata != null);
       Assert("UsageMetadata.ThoughtsTokenCount was missing",
         response.UsageMetadata?.ThoughtsTokenCount > 0);
+    }
+
+    // Test requesting thought summaries.
+    async Task TestIncludeThoughts(Backend backend) {
+      // Thinking Budget requires at least the 2.5 model.
+      var tool = new Tool(new FunctionDeclaration(
+        "GetKeyword", "Call to retrieve a special keyword.",
+        new Dictionary<string, Schema>() {
+          { "input", Schema.String("Input string") },
+        }));
+      var model = GetFirebaseAI(backend).GetGenerativeModel(
+        modelName: "gemini-2.5-flash",
+        generationConfig: new GenerationConfig(
+          thinkingConfig: new ThinkingConfig(
+            thinkingBudget: 1024,
+            includeThoughts: true
+          )
+        )
+      );
+
+      GenerateContentResponse response = await model.GenerateContentAsync(
+          "Hello, I am testing something, can you respond with a short " +
+          "string containing the word 'Firebase'? Don't call GetKeyword for this.");
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      Assert("ThoughtSummary was missing", !string.IsNullOrWhiteSpace(response.ThoughtSummary));
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
@@ -871,7 +906,8 @@ namespace Firebase.Sample.FirebaseAI {
       request.SendWebRequest().completed += (_) => {
         if (request.result == UnityWebRequest.Result.Success) {
           tcs.SetResult(request.downloadHandler.text);
-        } else {
+        }
+        else {
           tcs.SetResult(null);
         }
       };
@@ -886,7 +922,8 @@ namespace Firebase.Sample.FirebaseAI {
       if (localPath.StartsWith("jar") || localPath.StartsWith("http")) {
         // Special case to access StreamingAsset content on Android
         jsonString = await LoadStreamingAsset(localPath);
-      } else if (File.Exists(localPath)) {
+      }
+      else if (File.Exists(localPath)) {
         jsonString = File.ReadAllText(localPath);
       }
 
@@ -1255,7 +1292,7 @@ namespace Firebase.Sample.FirebaseAI {
 
       return Task.CompletedTask;
     }
-    
+
     // Test parsing an empty Segment object.
     Task InternalTestSegment_Empty() {
       var json = new Dictionary<string, object>();
@@ -1465,6 +1502,23 @@ namespace Firebase.Sample.FirebaseAI {
         var texture = image.AsTexture2D();
         Assert($"Failed to convert Image {i}", texture != null);
       }
+    }
+
+    async Task InternalTestThoughtSummary() {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-thinking-reply-thought-summary.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+      AssertEq("Response text", response.Text, "Mountain View");
+
+      AssertEq("Thought summary", response.ThoughtSummary,
+          "Right, someone needs the city where Google's headquarters are. " +
+          "I already know this. No need to overthink it, it's a straightforward request. " +
+          "Let me just pull up the city name from memory... " +
+          "Mountain View. That's it. Just the city, nothing else. Got it.\n");
+
+      ValidateTextPart(response, "Mountain View, California");
+
+      ValidateUsageMetadata(response.UsageMetadata, 13, 2, 39, 54);
     }
   }
 }

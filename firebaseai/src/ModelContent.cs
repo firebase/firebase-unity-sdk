@@ -119,6 +119,15 @@ public readonly struct ModelContent {
   /// single value of `Part`, different data types may not mix.
   /// </summary>
   public interface Part {
+    /// <summary>
+    /// Indicates whether this `Part` is a summary of the model's internal thinking process.
+    /// 
+    /// When `IncludeThoughts` is set to `true` in `ThinkingConfig`, the model may return one or
+    /// more "thought" parts that provide insight into how it reasoned through the prompt to arrive
+    /// at the final answer. These parts will have `IsThought` set to `true`.
+    /// </summary>
+    public bool IsThought { get; }
+
 #if !DOXYGEN
     /// <summary>
     /// Intended for internal use only.
@@ -136,15 +145,39 @@ public readonly struct ModelContent {
     /// Text value.
     /// </summary>
     public string Text { get; }
+    
+    private readonly bool? _isThought;
+    public bool IsThought { get { return _isThought ?? false; } }
+    
+    private readonly string _thoughtSignature;
 
     /// <summary>
     /// Creates a `TextPart` with the given text.
     /// </summary>
     /// <param name="text">The text value to use.</param>
-    public TextPart(string text) { Text = text; }
+    public TextPart(string text) {
+      Text = text;
+      _isThought = null;
+      _thoughtSignature = null;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// </summary>
+    internal TextPart(string text, bool? isThought, string thoughtSignature) {
+      Text = text;
+      _isThought = isThought;
+      _thoughtSignature = thoughtSignature;
+    }
 
     Dictionary<string, object> Part.ToJson() {
-      return new Dictionary<string, object>() { { "text", Text } };
+      var jsonDict = new Dictionary<string, object>() {
+        { "text", Text }
+      };
+
+      jsonDict.AddIfHasValue("thought", _isThought);
+      jsonDict.AddIfHasValue("thoughtSignature", _thoughtSignature);
+      return jsonDict;
     }
   }
 
@@ -161,6 +194,11 @@ public readonly struct ModelContent {
     /// The data provided in the inline data part.
     /// </summary>
     public byte[] Data { get; }
+    
+    private readonly bool? _isThought;
+    public bool IsThought { get { return _isThought ?? false; } }
+    
+    private readonly string _thoughtSignature;
 
     /// <summary>
     /// Creates an `InlineDataPart` from data and a MIME type.
@@ -176,16 +214,31 @@ public readonly struct ModelContent {
     /// <param name="data">The data representation of an image, video, audio or document; see [input files and
     ///     requirements](https://firebase.google.com/docs/vertex-ai/input-file-requirements) for
     ///     supported media types.</param>
-    public InlineDataPart(string mimeType, byte[] data) { MimeType = mimeType; Data = data; }
+    public InlineDataPart(string mimeType, byte[] data) {
+      MimeType = mimeType;
+      Data = data;
+      _isThought = null;
+      _thoughtSignature = null;
+    }
+
+    internal InlineDataPart(string mimeType, byte[] data, bool? isThought, string thoughtSignature) {
+      MimeType = mimeType;
+      Data = data;
+      _isThought = isThought;
+      _thoughtSignature = thoughtSignature;
+    }
 
     Dictionary<string, object> Part.ToJson() {
-      return new Dictionary<string, object>() {
+      var jsonDict = new Dictionary<string, object>() {
         { "inlineData", new Dictionary<string, object>() {
             { "mimeType", MimeType },
             { "data", Convert.ToBase64String(Data) }
           }
         }
       };
+      jsonDict.AddIfHasValue("thought", _isThought);
+      jsonDict.AddIfHasValue("thoughtSignature", _thoughtSignature);
+      return jsonDict;
     }
   }
 
@@ -201,6 +254,9 @@ public readonly struct ModelContent {
     /// The URI of the file.
     /// </summary>
     public System.Uri Uri { get; }
+    
+    // This Part can only come from the user, and thus will never be a thought.
+    public bool IsThought { get { return false; } }
 
     /// <summary>
     /// Constructs a new file data part.
@@ -241,27 +297,36 @@ public readonly struct ModelContent {
     /// </summary>
     public string Id { get; }
     
+    private readonly bool? _isThought;
+    public bool IsThought { get { return _isThought ?? false; } }
+    
+    private readonly string _thoughtSignature;
+    
     /// <summary>
     /// Intended for internal use only.
     /// </summary>
-    internal FunctionCallPart(string name, IDictionary<string, object> args, string id) {
+    internal FunctionCallPart(string name, IDictionary<string, object> args, string id,
+        bool? isThought, string thoughtSignature) {
       Name = name;
       Args = new Dictionary<string, object>(args);
       Id = id;
+      _isThought = isThought;
+      _thoughtSignature = thoughtSignature;
     }
 
     Dictionary<string, object> Part.ToJson() {
-      var jsonDict = new Dictionary<string, object>() {
+      var innerDict = new Dictionary<string, object>() {
         { "name", Name },
         { "args", Args }
       };
-      if (!string.IsNullOrEmpty(Id)) {
-        jsonDict["id"] = Id;
-      }
+      innerDict.AddIfHasValue("id", Id);
 
-      return new Dictionary<string, object>() {
-        { "functionCall", jsonDict }
+      var jsonDict = new Dictionary<string, object>() {
+        { "functionCall", innerDict }
       };
+      jsonDict.AddIfHasValue("thought", _isThought);
+      jsonDict.AddIfHasValue("thoughtSignature", _thoughtSignature);
+      return jsonDict;
     }
   }
 
@@ -285,6 +350,9 @@ public readonly struct ModelContent {
     /// The id from the FunctionCallPart this is in response to.
     /// </summary>
     public string Id { get; }
+    
+    // This Part can only come from the user, and thus will never be a thought.
+    public bool IsThought { get { return false; } }
 
     /// <summary>
     /// Constructs a new `FunctionResponsePart`.
@@ -337,20 +405,25 @@ public readonly struct ModelContent {
       jsonDict.ParseObjectList("parts", PartFromJson, JsonParseOptions.ThrowEverything).Where(p => p is not null));
   }
 
-  private static InlineDataPart InlineDataPartFromJson(Dictionary<string, object> jsonDict) {
+  private static InlineDataPart InlineDataPartFromJson(Dictionary<string, object> jsonDict,
+      bool? isThought, string thoughtSignature) {
     return new InlineDataPart(
       jsonDict.ParseValue<string>("mimeType", JsonParseOptions.ThrowEverything),
       Convert.FromBase64String(jsonDict.ParseValue<string>("data", JsonParseOptions.ThrowEverything)));
   }
 
   private static Part PartFromJson(Dictionary<string, object> jsonDict) {
+    bool? isThought = jsonDict.ParseNullableValue<bool>("thought");
+    string thoughtSignature = jsonDict.ParseValue<string>("thoughtSignature");
     if (jsonDict.TryParseValue("text", out string text)) {
-      return new TextPart(text);
-    } else if (jsonDict.TryParseObject("functionCall", ModelContentJsonParsers.FunctionCallPartFromJson,
-                                       out var fcPart)) {
+      return new TextPart(text, isThought, thoughtSignature);
+    } else if (jsonDict.TryParseObject("functionCall",
+        innerDict => ModelContentJsonParsers.FunctionCallPartFromJson(innerDict, isThought, thoughtSignature),
+        out var fcPart)) {
       return fcPart;
-    } else if (jsonDict.TryParseObject("inlineData", InlineDataPartFromJson,
-                                       out var inlineDataPart)) {
+    } else if (jsonDict.TryParseObject("inlineData",
+        innerDict => InlineDataPartFromJson(innerDict, isThought, thoughtSignature),
+        out var inlineDataPart)) {
       return inlineDataPart;
     } else {
 #if FIREBASEAI_DEBUG_LOGGING
@@ -365,11 +438,14 @@ namespace Internal {
 
 // Class for parsing Parts that need to be called from other files as well.
 internal static class ModelContentJsonParsers {
-  internal static ModelContent.FunctionCallPart FunctionCallPartFromJson(Dictionary<string, object> jsonDict) {
+  internal static ModelContent.FunctionCallPart FunctionCallPartFromJson(Dictionary<string, object> jsonDict,
+      bool? isThought, string thoughtSignature) {
     return new ModelContent.FunctionCallPart(
       jsonDict.ParseValue<string>("name", JsonParseOptions.ThrowEverything),
       jsonDict.ParseValue<Dictionary<string, object>>("args", JsonParseOptions.ThrowEverything),
-      jsonDict.ParseValue<string>("id"));
+      jsonDict.ParseValue<string>("id"),
+      isThought,
+      thoughtSignature);
   }
 }
 
