@@ -409,7 +409,9 @@ public readonly struct ModelContent {
       bool? isThought, string thoughtSignature) {
     return new InlineDataPart(
       jsonDict.ParseValue<string>("mimeType", JsonParseOptions.ThrowEverything),
-      Convert.FromBase64String(jsonDict.ParseValue<string>("data", JsonParseOptions.ThrowEverything)));
+      Convert.FromBase64String(jsonDict.ParseValue<string>("data", JsonParseOptions.ThrowEverything)),
+      isThought,
+      thoughtSignature);
   }
 
   private static Part PartFromJson(Dictionary<string, object> jsonDict) {

@@ -82,7 +82,7 @@ public readonly struct GenerateContentResponse {
   public IReadOnlyList<ModelContent.FunctionCallPart> FunctionCalls {
     get {
       return Candidates.FirstOrDefault().Content.Parts
-          .OfType<ModelContent.FunctionCallPart>().Where(tp => tp.IsThought).ToList();
+          .OfType<ModelContent.FunctionCallPart>().Where(tp => !tp.IsThought).ToList();
     }
   }
 
