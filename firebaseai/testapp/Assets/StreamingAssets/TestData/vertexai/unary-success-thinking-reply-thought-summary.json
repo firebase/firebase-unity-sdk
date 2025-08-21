@@ -1,0 +1,42 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "Right, someone needs the city where Google's headquarters are. I already know this. No need to overthink it, it's a straightforward request. Let me just pull up the city name from memory... Mountain View. That's it. Just the city, nothing else. Got it.\n",
+            "thought": true
+          },
+          {
+            "text": "Mountain View"
+          }
+        ]
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": -2.241081714630127
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 13,
+    "candidatesTokenCount": 2,
+    "totalTokenCount": 54,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 13
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 2
+      }
+    ],
+    "thoughtsTokenCount": 39
+  },
+  "modelVersion": "gemini-2.5-flash",
+  "createTime": "2025-07-28T15:44:18.615090Z",
+  "responseId": "0pqHaLLFJf3sqsMPiLnviQw"
+}

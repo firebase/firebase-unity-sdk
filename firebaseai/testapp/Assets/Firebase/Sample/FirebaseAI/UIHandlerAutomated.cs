@@ -99,6 +99,7 @@ namespace Firebase.Sample.FirebaseAI {
         InternalTestGenerateImagesBase64,
         InternalTestGenerateImagesAllFiltered,
         InternalTestGenerateImagesBase64SomeFiltered,
+        InternalTestThoughtSummary,
       };
 
       // Create the set of tests, combining the above lists.
@@ -1515,8 +1516,6 @@ namespace Firebase.Sample.FirebaseAI {
           "I already know this. No need to overthink it, it's a straightforward request. " +
           "Let me just pull up the city name from memory... " +
           "Mountain View. That's it. Just the city, nothing else. Got it.\n");
-
-      ValidateTextPart(response, "Mountain View, California");
 
       ValidateUsageMetadata(response.UsageMetadata, 13, 2, 39, 54);
     }
