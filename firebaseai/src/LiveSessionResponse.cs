@@ -199,7 +199,8 @@ public readonly struct LiveSessionToolCall : ILiveSessionMessage {
   /// </summary>
   internal static LiveSessionToolCall FromJson(Dictionary<string, object> jsonDict) {
     return new LiveSessionToolCall(
-        jsonDict.ParseObjectList("functionCalls", ModelContentJsonParsers.FunctionCallPartFromJson));
+        jsonDict.ParseObjectList("functionCalls",
+          innerDict => ModelContentJsonParsers.FunctionCallPartFromJson(innerDict, null, null)));
   }
 }
 

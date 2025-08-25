@@ -234,6 +234,20 @@ internal static class FirebaseAIExtensions {
   public static ModelContent ConvertToSystem(this ModelContent content) {
     return content.ConvertRole("system");
   }
+  
+  public static void AddIfHasValue<T>(this JsonDict jsonDict, string key,
+      T? value) where T : struct {
+    if (value.HasValue) {
+      jsonDict.Add(key, value.Value);
+    }
+  }
+  
+  public static void AddIfHasValue<T>(this JsonDict jsonDict, string key,
+      T value) where T : class {
+    if (value != null) {
+      jsonDict.Add(key, value);
+    }
+  }
 }
   
 }

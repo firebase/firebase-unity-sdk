@@ -53,10 +53,26 @@ public readonly struct GenerateContentResponse {
   /// </summary>
   public string Text {
     get {
-      // Concatenate all of the text parts from the first candidate.
+      // Concatenate all of the text parts that aren't thoughts from the first candidate.
       return string.Join(" ",
           Candidates.FirstOrDefault().Content.Parts
-          .OfType<ModelContent.TextPart>().Select(tp => tp.Text));
+          .OfType<ModelContent.TextPart>().Where(tp => !tp.IsThought).Select(tp => tp.Text));
+    }
+  }
+  
+  /// <summary>
+  /// A summary of the model's thinking process, if available.
+  /// 
+  /// Note that Thought Summaries are only available when `IncludeThoughts` is enabled
+  /// in the `ThinkingConfig`. For more information, see the
+  /// [Thinking](https://firebase.google.com/docs/ai-logic/thinking) documentation.
+  /// </summary>
+  public string ThoughtSummary {
+    get {
+      // Concatenate all of the text parts that are thoughts from the first candidate.
+      return string.Join(" ",
+          Candidates.FirstOrDefault().Content.Parts
+          .OfType<ModelContent.TextPart>().Where(tp => tp.IsThought).Select(tp => tp.Text));
     }
   }
 
@@ -65,7 +81,8 @@ public readonly struct GenerateContentResponse {
   /// </summary>
   public IReadOnlyList<ModelContent.FunctionCallPart> FunctionCalls {
     get {
-      return Candidates.FirstOrDefault().Content.Parts.OfType<ModelContent.FunctionCallPart>().ToList();
+      return Candidates.FirstOrDefault().Content.Parts
+          .OfType<ModelContent.FunctionCallPart>().Where(tp => !tp.IsThought).ToList();
     }
   }
 
