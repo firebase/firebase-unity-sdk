@@ -150,7 +150,7 @@ public class LiveSession : IDisposable {
       CancellationToken cancellationToken = default) {
     if (mediaChunks == null) return Task.CompletedTask;
 
-    return SendRealtimeInputAsync(new LiveClientRealtimeInput() { MediaChunks = mediaChunks }, cancellationToken);
+    return SendRealtimeInputAsync(cancellationToken: cancellationToken);
   }
 
   /// <summary>
@@ -158,7 +158,7 @@ public class LiveSession : IDisposable {
   /// </summary>
   /// <param name="audio">The audio data to send.</param>
   public Task SendAudioAsync(ModelContent.InlineDataPart audio, CancellationToken cancellationToken = default) {
-    return SendRealtimeInputAsync(new LiveClientRealtimeInput(audio), cancellationToken);
+    return SendRealtimeInputAsync(audio: audio, cancellationToken: cancellationToken);
   }
 
   /// <summary>
@@ -166,7 +166,7 @@ public class LiveSession : IDisposable {
   /// </summary>
   /// <param name="video">The video data to send.</param>
   public Task SendVideoAsync(ModelContent.InlineDataPart video, CancellationToken cancellationToken = default) {
-    return SendRealtimeInputAsync(new LiveClientRealtimeInput(video), cancellationToken);
+    return SendRealtimeInputAsync(video: video, cancellationToken: cancellationToken);
   }
 
   /// <summary>
@@ -174,10 +174,14 @@ public class LiveSession : IDisposable {
   /// </summary>
   /// <param name="text">The text data to send.</param>
   public Task SendTextAsync(string text, CancellationToken cancellationToken = default) {
-    return SendRealtimeInputAsync(new LiveClientRealtimeInput(text), cancellationToken);
+    return SendRealtimeInputAsync(text: text, cancellationToken: cancellationToken);
   }
 
-  private Task SendRealtimeInputAsync(LiveClientRealtimeInput input, CancellationToken cancellationToken = default) {
+  private Task SendRealtimeInputAsync(
+      ModelContent.InlineDataPart? audio = null,
+      ModelContent.InlineDataPart? video = null,
+      string text = null,
+      CancellationToken cancellationToken = default) {
     // Prepare the message payload.
     Dictionary<string, object> jsonDict = new() {
       {
@@ -187,20 +191,16 @@ public class LiveSession : IDisposable {
 
     var realtimeInputDict = (Dictionary<string, object>)jsonDict["realtimeInput"];
 
-    if (input.MediaChunks != null) {
-      realtimeInputDict["mediaChunks"] = input.MediaChunks.Select(mc => (mc as ModelContent.Part).ToJson()["inlineData"]).ToList();
+    if (audio.HasValue) {
+      realtimeInputDict["audio"] = (audio.Value as ModelContent.Part).ToJson()["inlineData"];
     }
 
-    if (input.Audio.HasValue) {
-      realtimeInputDict["audio"] = (input.Audio.Value as ModelContent.Part).ToJson()["inlineData"];
+    if (video.HasValue) {
+      realtimeInputDict["video"] = (video.Value as ModelContent.Part).ToJson()["inlineData"];
     }
 
-    if (input.Video.HasValue) {
-      realtimeInputDict["video"] = (input.Video.Value as ModelContent.Part).ToJson()["inlineData"];
-    }
-
-    if (!string.IsNullOrEmpty(input.Text)) {
-      realtimeInputDict["text"] = input.Text;
+    if (!string.IsNullOrEmpty(text)) {
+      realtimeInputDict["text"] = text;
     }
 
     var byteArray = Encoding.UTF8.GetBytes(Json.Serialize(jsonDict));
