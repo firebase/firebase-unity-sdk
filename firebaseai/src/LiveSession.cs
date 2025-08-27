@@ -141,29 +141,71 @@ public class LiveSession : IDisposable {
   }
 
   /// <summary>
-  /// Send realtime input to the server.
+  /// Sends realtime input (media chunks) to the server.
   /// </summary>
-  /// <param name="mediaChunks">A list of media chunks to send.</param>
-  /// <param name="cancellationToken">A token to cancel the send operation.</param>
-  public async Task SendMediaChunksAsync(
+  /// <param name="mediaChunks">The list of media chunks to send.</param>
+  [Obsolete("Use SendAudio, SendVideo, or SendText instead")]
+  public Task SendMediaChunksAsync(
       List<ModelContent.InlineDataPart> mediaChunks,
       CancellationToken cancellationToken = default) {
-    if (mediaChunks == null) return;
+    if (mediaChunks == null) return Task.CompletedTask;
 
+    return SendRealtimeInputAsync(new LiveClientRealtimeInput() { MediaChunks = mediaChunks }, cancellationToken);
+  }
+
+  /// <summary>
+  /// Sends audio data to the server.
+  /// </summary>
+  /// <param name="audio">The audio data to send.</param>
+  public Task SendAudioAsync(ModelContent.InlineDataPart audio, CancellationToken cancellationToken = default) {
+    return SendRealtimeInputAsync(new LiveClientRealtimeInput(audio), cancellationToken);
+  }
+
+  /// <summary>
+  /// Sends video data to the server.
+  /// </summary>
+  /// <param name="video">The video data to send.</param>
+  public Task SendVideoAsync(ModelContent.InlineDataPart video, CancellationToken cancellationToken = default) {
+    return SendRealtimeInputAsync(new LiveClientRealtimeInput(video), cancellationToken);
+  }
+
+  /// <summary>
+  /// Sends text data to the server.
+  /// </summary>
+  /// <param name="text">The text data to send.</param>
+  public Task SendTextAsync(string text, CancellationToken cancellationToken = default) {
+    return SendRealtimeInputAsync(new LiveClientRealtimeInput(text), cancellationToken);
+  }
+
+  private Task SendRealtimeInputAsync(LiveClientRealtimeInput input, CancellationToken cancellationToken = default) {
     // Prepare the message payload.
     Dictionary<string, object> jsonDict = new() {
       {
-        "realtimeInput", new Dictionary<string, object>() {
-          {
-            // InlineDataPart inherits from Part, so this conversion should be safe.
-            "mediaChunks", mediaChunks.Select(mc => (mc as ModelContent.Part).ToJson()["inlineData"]).ToList()
-          }
-        }
+        "realtimeInput", new Dictionary<string, object>()
       }
     };
+
+    var realtimeInputDict = (Dictionary<string, object>)jsonDict["realtimeInput"];
+
+    if (input.MediaChunks != null) {
+      realtimeInputDict["mediaChunks"] = input.MediaChunks.Select(mc => (mc as ModelContent.Part).ToJson()["inlineData"]).ToList();
+    }
+
+    if (input.Audio.HasValue) {
+      realtimeInputDict["audio"] = (input.Audio.Value as ModelContent.Part).ToJson()["inlineData"];
+    }
+
+    if (input.Video.HasValue) {
+      realtimeInputDict["video"] = (input.Video.Value as ModelContent.Part).ToJson()["inlineData"];
+    }
+
+    if (!string.IsNullOrEmpty(input.Text)) {
+      realtimeInputDict["text"] = input.Text;
+    }
+
     var byteArray = Encoding.UTF8.GetBytes(Json.Serialize(jsonDict));
 
-    await InternalSendBytesAsync(new ArraySegment<byte>(byteArray), cancellationToken);
+    return InternalSendBytesAsync(new ArraySegment<byte>(byteArray), cancellationToken);
   }
 
   private static byte[] ConvertTo16BitPCM(float[] samples) {
@@ -189,7 +231,7 @@ public class LiveSession : IDisposable {
   /// <param name="cancellationToken">A token to cancel the send operation.</param>
   public Task SendAudioAsync(float[] audioData, CancellationToken cancellationToken = default) {
     ModelContent.InlineDataPart inlineDataPart = new("audio/pcm", ConvertTo16BitPCM(audioData));
-    return SendMediaChunksAsync(new List<ModelContent.InlineDataPart>(new []{inlineDataPart}), cancellationToken);
+    return SendAudioAsync(inlineDataPart, cancellationToken);
   }
 
   /// <summary>
