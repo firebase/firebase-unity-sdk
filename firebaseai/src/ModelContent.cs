@@ -402,7 +402,7 @@ public readonly struct ModelContent {
       // If the role is missing, default to model since this is likely coming from the backend.
       jsonDict.ParseValue("role", defaultValue: "model"),
       // Unknown parts are converted to null, which we then want to filter out here
-      jsonDict.ParseObjectList("parts", PartFromJson, JsonParseOptions.ThrowEverything).Where(p => p is not null));
+      jsonDict.ParseObjectList("parts", PartFromJson)?.Where(p => p is not null));
   }
 
   private static InlineDataPart InlineDataPartFromJson(Dictionary<string, object> jsonDict,

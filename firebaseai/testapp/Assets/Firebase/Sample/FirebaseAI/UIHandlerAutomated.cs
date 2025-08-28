@@ -713,7 +713,7 @@ namespace Firebase.Sample.FirebaseAI {
       );
 
       GenerateContentResponse response = await model.GenerateContentAsync(
-        ModelContent.Text("Can you give me a picture of a cartoon dog, and a couple of sentences about him?")
+        ModelContent.Text("Generate a picture of a cartoon dog, and a couple of sentences about him?")
       );
 
       Assert("Response missing candidates.", response.Candidates.Any());
