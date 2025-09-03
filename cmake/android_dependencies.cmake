@@ -32,12 +32,12 @@ set(FIREBASE_APP_CHECK_ANDROID_DEPS
 )
 
 set(FIREBASE_AUTH_ANDROID_DEPS
-    "com.google.firebase:firebase-auth:24.0.0"
+    "com.google.firebase:firebase-auth:24.0.1"
     "com.google.firebase:firebase-analytics:23.0.0"
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:20.0.0"
+    "com.google.firebase:firebase-crashlytics-ndk:20.0.1"
     "com.google.firebase:firebase-analytics:23.0.0"
 )
 
