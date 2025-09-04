@@ -15,10 +15,13 @@
  */
 
 using System.Threading.Tasks;
+using Firebase.Platform;
 
 namespace Firebase.Analytics {
 
 public static partial class FirebaseAnalytics {
+
+  private static readonly Firebase.Platform.ModuleLogger logger = new Firebase.Platform.ModuleLogger("FirebaseAnalytics");
 
   /// Get the instance ID from the analytics service.
   ///
@@ -246,6 +249,61 @@ public static partial class FirebaseAnalytics {
       consentSettingsMap[(int)kv.Key] = (int)kv.Value;
     }
     FirebaseAnalyticsInternal.SetConsentWithInts(consentSettingsMap);
+  }
+
+  /// @brief Sets default event parameters.
+  ///
+  /// These parameters are logged with all events, in addition to the parameters passed to the
+  /// LogEvent() call. They are useful for logging common parameters with all events.
+  /// Default event parameters are overridden by event-specific parameters if the names are the
+  /// same. Default parameters are removed if the dictionary is null or empty.
+  ///
+  /// @param[in] parameters The dictionary of parameters to set.
+  ///   If null, clears all default parameters.
+  public static void SetDefaultEventParameters(
+      System.Collections.Generic.IDictionary<string, object> parameters) {
+    if (parameters == null) {
+      logger.LogMessage(LogLevel.Debug, "Input parameters dictionary is null. Clearing all default event parameters.");
+      FirebaseAnalyticsInternal.ClearDefaultEventParameters();
+    } else {
+      StringList parameterNames = new StringList();
+      VariantList parameterValues = new VariantList();
+
+      if (parameters.Count == 0) {
+        logger.LogMessage(LogLevel.Debug, "Input parameters dictionary is empty. Clearing all default event parameters via empty map.");
+        // Proceed with empty lists, C++ SDK will clear defaults when given an empty map.
+      } else {
+        logger.LogMessage(LogLevel.Debug, string.Format("Processing {0} default event parameter(s).", parameters.Count));
+        foreach (var kvp in parameters) {
+          try {
+            Firebase.Variant variantValue = Firebase.Variant.FromObject(kvp.Value);
+            // Assuming Variant.FromObject(null) correctly yields a Variant.Null()
+            // and doesn't throw for it, or that Variant.Null() is a valid state.
+            // If Variant.FromObject might return an "invalid" Variant object for certain inputs
+            // instead of throwing (e.g. for unsupported types that don't cause exceptions),
+            // an additional check like `if (!variantValue.IsValid())` might be needed here.
+            // For now, relying on try-catch for conversion failures.
+
+            parameterNames.Add(kvp.Key);
+            parameterValues.Add(variantValue);
+          } catch (System.Exception e) {
+            logger.LogMessage(LogLevel.Warning, string.Format(
+                "Failed to convert default parameter '{0}' (value type: {1}). Skipping. Error: {2}",
+                kvp.Key, kvp.Value?.GetType().FullName ?? "null", e.Message));
+          }
+        }
+      }
+
+      // If parameters.Count was > 0 but all failed conversion, parameterNames will be empty.
+      // Sending empty lists to C++ SetDefaultEventParameters (with map) results in clearing.
+      if (parameters.Count > 0 && parameterNames.Count == 0) {
+          logger.LogMessage(LogLevel.Warning, "All supplied default parameters failed conversion. This will result in clearing all default parameters.");
+      } else if (parameterNames.Count > 0) {
+          logger.LogMessage(LogLevel.Debug, string.Format("Setting {0} default event parameter(s) via helper.", parameterNames.Count));
+      }
+      // Always call SetDefaultEventParametersHelper. If lists are empty, it clears params.
+      FirebaseAnalyticsInternal.SetDefaultEventParametersHelper(parameterNames, parameterValues);
+    }
   }
 
   /// @brief Sets the duration of inactivity that terminates the current session.
