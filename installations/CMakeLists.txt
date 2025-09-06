@@ -86,6 +86,8 @@ unity_pack_cs(firebase_installations_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Installations
+    FIREBASE_SPM_DEPS
+      "FirebaseInstallations|FirebaseInstallations"
     IOS_DEPS
       "FirebaseInstallations,${FIREBASE_INSTALLATIONS_POD_VERSION}"
     ANDROID_DEPS

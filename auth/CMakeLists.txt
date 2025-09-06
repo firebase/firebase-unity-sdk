@@ -90,6 +90,8 @@ unity_pack_cs(firebase_auth_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Auth
+    FIREBASE_SPM_DEPS
+      "FirebaseAuth|Firebase/Auth"
     IOS_DEPS
       "Firebase/Auth"
     ANDROID_DEPS

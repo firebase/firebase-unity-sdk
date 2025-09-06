@@ -46,13 +46,32 @@ function(generate_dependencies_xml module)
 
   set(options SKIP_INSTALL)
   set(single ANDROID_SPEC)
-  set(multi IOS_DEPS ANDROID_DEPS)
+  set(multi IOS_DEPS ANDROID_DEPS FIREBASE_SPM_DEPS)
   # Parse the arguments into GEN_DEPS_IOS_DEPS, etc.
   cmake_parse_arguments(GEN_DEPS "${options}" "${single}" "${multi}" ${ARGN})
 
   set(MODULE_NAME ${module})
   set(IOS_PODS "")
   set(INDENT "    ")
+
+  set(FIREBASE_SPM_PACKAGES "")
+  if (GEN_DEPS_FIREBASE_SPM_DEPS)
+    foreach(SPM_DEP ${GEN_DEPS_FIREBASE_SPM_DEPS})
+      string(REPLACE "|" ";" DEP_LIST ${SPM_DEP})
+      list(GET DEP_LIST 0 PACKAGE_NAME)
+      string(CONCAT FIREBASE_SPM_PACKAGES ${FIREBASE_SPM_PACKAGES}
+          "\r\n${INDENT}<swiftPackage name=\"${PACKAGE_NAME}\"")
+
+      list(LENGTH DEP_LIST SPM_DEP_LENGTH)
+      if (${SPM_DEP_LENGTH} GREATER 1)
+        list(GET DEP_LIST 1 PACKAGE_POD_IGNORE)
+        string(CONCAT FIREBASE_SPM_PACKAGES ${FIREBASE_SPM_PACKAGES} " replacesPod=\"${PACKAGE_POD_IGNORE}\"") 
+      endif()
+
+      string(CONCAT FIREBASE_SPM_PACKAGES ${FIREBASE_SPM_PACKAGES} "/>")
+
+    endforeach(SPM_DEP)
+  endif()
 
   foreach(IOS_DEP ${GEN_DEPS_IOS_DEPS})
     string(REPLACE "," ";" DEP_LIST ${IOS_DEP})
@@ -105,11 +124,15 @@ endfunction()
 # that variables can be adjusted without affecting the build.
 function(test_generate_xml)
 
+  set(FIREBASE_SPM_VERSION "1.2.3")
   set(FIREBASE_IOS_POD_VERSION "1.2.3")
   set(FIREBASE_UNITY_SDK_VERSION "4.5.6")
   set(DEFAULT_MIN_TARGET_SDK "7.8")
 
   generate_dependencies_xml(Test
+    FIREBASE_SPM_DEPS
+      "TestPackage|TestPod,PinnedTestPod"
+      "OtherPackage"
     IOS_DEPS
       "TestPod"
       "PinnedTestPod,7.8.9,1.0"

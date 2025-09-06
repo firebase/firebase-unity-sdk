@@ -122,6 +122,8 @@ unity_pack_cs(firebase_app_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(App
+    FIREBASE_SPM_DEPS
+      "FirebaseCore|Firebase/Core"
     IOS_DEPS
       "Firebase/Core"
     ANDROID_DEPS

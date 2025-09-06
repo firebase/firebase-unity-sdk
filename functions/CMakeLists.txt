@@ -79,6 +79,8 @@ unity_pack_cs(firebase_functions_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Functions
+    FIREBASE_SPM_DEPS
+      "FirebaseFunctions|Firebase/Functions"
     IOS_DEPS
       "Firebase/Functions"
     ANDROID_DEPS
