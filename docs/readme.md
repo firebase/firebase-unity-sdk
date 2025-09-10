@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Add support for enabling the model to use Code Execution.
+
 ### 13.2.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.1.0.

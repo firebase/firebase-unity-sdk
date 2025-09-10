@@ -1,0 +1,59 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "To find the sum of the first 5 prime numbers, we first need to identify them.\nPrime numbers are natural numbers greater than 1 that have no positive divisors other than 1 and themselves.\n\nThe first few prime numbers are:\n1.  2\n2.  3\n3.  5\n4.  7\n5.  11\n\nNow, we will sum these numbers using a Python tool.\n\n"
+          },
+          {
+            "executableCode": {
+              "language": "PYTHON",
+              "code": "prime_numbers = [2, 3, 5, 7, 11]\nsum_of_primes = sum(prime_numbers)\nprint(f'The sum of the first 5 prime numbers is: {sum_of_primes}')\n"
+            }
+          },
+          {
+            "codeExecutionResult": {
+              "outcome": "OUTCOME_OK",
+              "output": "The sum of the first 5 prime numbers is: 28\n"
+            }
+          },
+          {
+            "text": "The sum of the first 5 prime numbers (2, 3, 5, 7, and 11) is 28."
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 20,
+    "candidatesTokenCount": 192,
+    "totalTokenCount": 775,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 20
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 192
+      }
+    ],
+    "toolUsePromptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 181
+      }
+    ],
+    "toolUsePromptTokenCount": 371,
+    "thoughtsTokenCount": 192
+  },
+  "modelVersion": "gemini-2.5-flash",
+  "createTime": "2025-09-03T14:12:08.303054Z",
+  "responseId": "uEy4aM6_Euqawu8P6LOzyQc"
+}

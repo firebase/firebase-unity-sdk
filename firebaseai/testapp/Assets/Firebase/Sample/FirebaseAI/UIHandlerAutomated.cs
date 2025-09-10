@@ -75,6 +75,7 @@ namespace Firebase.Sample.FirebaseAI {
         TestImagenGenerateImageOptions,
         TestThinkingBudget,
         TestIncludeThoughts,
+        TestCodeExecution,
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
@@ -100,6 +101,7 @@ namespace Firebase.Sample.FirebaseAI {
         InternalTestGenerateImagesAllFiltered,
         InternalTestGenerateImagesBase64SomeFiltered,
         InternalTestThoughtSummary,
+        InternalTestCodeExecution,
       };
 
       // Create the set of tests, combining the above lists.
@@ -819,11 +821,6 @@ namespace Firebase.Sample.FirebaseAI {
     // Test requesting thought summaries.
     async Task TestIncludeThoughts(Backend backend) {
       // Thinking Budget requires at least the 2.5 model.
-      var tool = new Tool(new FunctionDeclaration(
-        "GetKeyword", "Call to retrieve a special keyword.",
-        new Dictionary<string, Schema>() {
-          { "input", Schema.String("Input string") },
-        }));
       var model = GetFirebaseAI(backend).GetGenerativeModel(
         modelName: "gemini-2.5-flash",
         generationConfig: new GenerationConfig(
@@ -842,6 +839,26 @@ namespace Firebase.Sample.FirebaseAI {
       Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
 
       Assert("ThoughtSummary was missing", !string.IsNullOrWhiteSpace(response.ThoughtSummary));
+    }
+
+    async Task TestCodeExecution(Backend backend) {
+      var model = GetFirebaseAI(backend).GetGenerativeModel(
+        modelName: ModelName,
+        tools: new Tool[] { new Tool(new CodeExecution()) }
+      );
+
+      var prompt = "What is the sum of the first 50 prime numbers? Generate and run code for the calculation.";
+      var chat = model.StartChat();
+      var response = await chat.SendMessageAsync(prompt);
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      var executableCodeParts = response.Candidates.First().Content.Parts.OfType<ModelContent.ExecutableCodePart>();
+      Assert("Missing ExecutableCodeParts", executableCodeParts.Any());
+
+      var codeExecutionResultParts = response.Candidates.First().Content.Parts.OfType<ModelContent.CodeExecutionResultPart>();
+      Assert("Missing CodeExecutionResultParts", codeExecutionResultParts.Any());
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
@@ -1518,6 +1535,24 @@ namespace Firebase.Sample.FirebaseAI {
           "Mountain View. That's it. Just the city, nothing else. Got it.\n");
 
       ValidateUsageMetadata(response.UsageMetadata, 13, 2, 39, 54);
+    }
+
+    async Task InternalTestCodeExecution() {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-code-execution.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+      AssertEq("Candidate count", response.Candidates.Count(), 1);
+      var candidate = response.Candidates.First();
+
+      var executableCodeParts = candidate.Content.Parts.OfType<ModelContent.ExecutableCodePart>().ToList();
+      AssertEq("ExecutableCodePart count", executableCodeParts.Count(), 1);
+      AssertEq("ExecutableCodePart language", executableCodeParts[0].Language, ModelContent.ExecutableCodePart.CodeLanguage.Python);
+      AssertEq("ExecutableCodePart code", executableCodeParts[0].Code, "prime_numbers = [2, 3, 5, 7, 11]\nsum_of_primes = sum(prime_numbers)\nprint(f'The sum of the first 5 prime numbers is: {sum_of_primes}')\n");
+
+      var codeExecutionResultParts = candidate.Content.Parts.OfType<ModelContent.CodeExecutionResultPart>().ToList();
+      AssertEq("CodeExecutionResultPart count", codeExecutionResultParts.Count(), 1);
+      AssertEq("CodeExecutionResultPart outcome", codeExecutionResultParts[0].Outcome, ModelContent.CodeExecutionResultPart.ExecutionOutcome.Ok);
+      AssertEq("CodeExecutionResultPart output", codeExecutionResultParts[0].Output, "The sum of the first 5 prime numbers is: 28\n");
     }
   }
 }

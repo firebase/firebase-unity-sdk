@@ -379,6 +379,153 @@ public readonly struct ModelContent {
       };
     }
   }
+  
+  /// <summary>
+  /// A part containing code that was executed by the model.
+  /// </summary>
+  public readonly struct ExecutableCodePart : Part {
+    public enum CodeLanguage {
+      Unspecified = 0,
+      Python
+    }
+
+    /// <summary>
+    /// The language
+    /// </summary>
+    public CodeLanguage Language { get; }
+    /// <summary>
+    /// The code that was executed.
+    /// </summary>
+    public string Code { get; }
+
+    private readonly bool? _isThought;
+    public bool IsThought { get { return _isThought ?? false; } }
+
+    private readonly string _thoughtSignature;
+
+    private static CodeLanguage ParseLanguage(string str) {
+      return str switch {
+        "PYTHON" => CodeLanguage.Python,
+        _ => CodeLanguage.Unspecified,
+      };
+    }
+
+    private string LanguageAsString {
+      get {
+        return Language switch {
+          CodeLanguage.Python => "PYTHON",
+          _ => "LANGUAGE_UNSPECIFIED"
+        };
+      }
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// </summary>
+    internal ExecutableCodePart(string language, string code,
+        bool? isThought, string thoughtSignature) {
+      Language = ParseLanguage(language);
+      Code = code;
+      _isThought = isThought;
+      _thoughtSignature = thoughtSignature;
+    }
+
+    Dictionary<string, object> Part.ToJson() {
+      var jsonDict = new Dictionary<string, object>() {
+        { "executableCode", new Dictionary<string, object>() {
+            { "language", LanguageAsString },
+            { "code", Code }
+          }
+        }
+      };
+      jsonDict.AddIfHasValue("thought", _isThought);
+      jsonDict.AddIfHasValue("thoughtSignature", _thoughtSignature);
+      return jsonDict;
+    }
+  }
+  
+  /// <summary>
+  /// A part containing the result of executing code.
+  /// </summary>
+  public readonly struct CodeExecutionResultPart : Part {
+    /// <summary>
+    /// The outcome of a code execution.
+    /// </summary>
+    public enum ExecutionOutcome {
+      Unspecified = 0,
+      /// <summary>
+      /// The code executed without errors.
+      /// </summary>
+      Ok,
+      /// <summary>
+      /// The code failed to execute.
+      /// </summary>
+      Failed,
+      /// <summary>
+      /// The code took too long to execute.
+      /// </summary>
+      DeadlineExceeded
+    }
+    
+    /// <summary>
+    /// The outcome of the code execution.
+    /// </summary>
+    public ExecutionOutcome Outcome { get; }
+    /// <summary>
+    /// The output of the code execution.
+    /// </summary>
+    public string Output { get; }
+    
+    private readonly bool? _isThought;
+    public bool IsThought { get { return _isThought ?? false; } }
+
+    private readonly string _thoughtSignature;
+    
+    private static ExecutionOutcome ParseOutcome(string str) {
+      return str switch {
+        "OUTCOME_UNSPECIFIED" => ExecutionOutcome.Unspecified,
+        "OUTCOME_OK" => ExecutionOutcome.Ok,
+        "OUTCOME_FAILED" => ExecutionOutcome.Failed,
+        "OUTCOME_DEADLINE_EXCEEDED" => ExecutionOutcome.DeadlineExceeded,
+        _ => ExecutionOutcome.Unspecified,
+      };
+    }
+    
+    private string OutcomeAsString {
+      get {
+        return Outcome switch {
+          ExecutionOutcome.Ok => "OUTCOME_OK",
+          ExecutionOutcome.Failed => "OUTCOME_FAILED",
+          ExecutionOutcome.DeadlineExceeded => "OUTCOME_DEADLINE_EXCEEDED",
+          _ => "OUTCOME_UNSPECIFIED"
+        };
+      }
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// </summary>
+    internal CodeExecutionResultPart(string outcome, string output,
+        bool? isThought, string thoughtSignature) {
+        Outcome = ParseOutcome(outcome);
+        Output = output;
+        _isThought = isThought;
+        _thoughtSignature = thoughtSignature;
+      }
+    
+    Dictionary<string, object> Part.ToJson() {
+      var jsonDict = new Dictionary<string, object>() {
+        { "codeExecutionResult", new Dictionary<string, object>() {
+            { "outcome", OutcomeAsString },
+            { "output", Output }
+          }
+        }
+      };
+      jsonDict.AddIfHasValue("thought", _isThought);
+      jsonDict.AddIfHasValue("thoughtSignature", _thoughtSignature);
+      return jsonDict;
+    }
+  }
 
 #endregion
 
@@ -413,6 +560,24 @@ public readonly struct ModelContent {
       isThought,
       thoughtSignature);
   }
+  
+  private static ExecutableCodePart ExecutableCodePartFromJson(Dictionary<string, object> jsonDict,
+      bool? isThought, string thoughtSignature) {
+    return new ExecutableCodePart(
+      jsonDict.ParseValue<string>("language", JsonParseOptions.ThrowEverything),
+      jsonDict.ParseValue<string>("code", JsonParseOptions.ThrowEverything),
+      isThought,
+      thoughtSignature);
+  }
+  
+  private static CodeExecutionResultPart CodeExecutionResultPartFromJson(Dictionary<string, object> jsonDict,
+      bool? isThought, string thoughtSignature) {
+    return new CodeExecutionResultPart(
+      jsonDict.ParseValue<string>("outcome", JsonParseOptions.ThrowEverything),
+      jsonDict.ParseValue<string>("output", JsonParseOptions.ThrowEverything),
+      isThought,
+      thoughtSignature);
+  }
 
   private static Part PartFromJson(Dictionary<string, object> jsonDict) {
     bool? isThought = jsonDict.ParseNullableValue<bool>("thought");
@@ -427,6 +592,14 @@ public readonly struct ModelContent {
         innerDict => InlineDataPartFromJson(innerDict, isThought, thoughtSignature),
         out var inlineDataPart)) {
       return inlineDataPart;
+    } else if (jsonDict.TryParseObject("executableCode",
+        innerDict => ExecutableCodePartFromJson(innerDict, isThought, thoughtSignature),
+        out var executableCodePart)) {
+      return executableCodePart;
+    } else if (jsonDict.TryParseObject("codeExecutionResult",
+        innerDict => CodeExecutionResultPartFromJson(innerDict, isThought, thoughtSignature),
+        out var codeExecutionResultPart)) {
+      return codeExecutionResultPart;
     } else {
 #if FIREBASEAI_DEBUG_LOGGING
       UnityEngine.Debug.LogWarning($"Received unknown part, with keys: {string.Join(',', jsonDict.Keys)}");
