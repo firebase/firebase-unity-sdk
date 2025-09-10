@@ -431,13 +431,13 @@ public readonly struct ModelContent {
     }
 
     Dictionary<string, object> Part.ToJson() {
-      var result = new Dictionary<string, object>() {
-      { "language", LanguageAsString },
-      { "code", Code }
-    };
       var jsonDict = new Dictionary<string, object>() {
-      { "executableCode", result }
-    };
+        { "executableCode", new Dictionary<string, object>() {
+            { "language", LanguageAsString },
+            { "code", Code }
+          }
+        }
+      };
       jsonDict.AddIfHasValue("thought", _isThought);
       jsonDict.AddIfHasValue("thoughtSignature", _thoughtSignature);
       return jsonDict;
@@ -514,12 +514,12 @@ public readonly struct ModelContent {
       }
     
     Dictionary<string, object> Part.ToJson() {
-      var result = new Dictionary<string, object>() {
-        { "outcome", OutcomeAsString },
-        { "output", Output }
-      };
       var jsonDict = new Dictionary<string, object>() {
-        { "codeExecutionResult", result }
+        { "codeExecutionResult", new Dictionary<string, object>() {
+            { "outcome", OutcomeAsString },
+            { "output", Output }
+          }
+        }
       };
       jsonDict.AddIfHasValue("thought", _isThought);
       jsonDict.AddIfHasValue("thoughtSignature", _thoughtSignature);

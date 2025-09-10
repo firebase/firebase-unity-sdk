@@ -855,10 +855,10 @@ namespace Firebase.Sample.FirebaseAI {
       Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
 
       var executableCodeParts = response.Candidates.First().Content.Parts.OfType<ModelContent.ExecutableCodePart>();
-      Assert("Missing ExecutableCodeParts", executableCodeParts.Count() > 0);
+      Assert("Missing ExecutableCodeParts", executableCodeParts.Any());
 
       var codeExecutionResultParts = response.Candidates.First().Content.Parts.OfType<ModelContent.CodeExecutionResultPart>();
-      Assert("Missing CodeExecutionResultParts", codeExecutionResultParts.Count() > 0);
+      Assert("Missing CodeExecutionResultParts", codeExecutionResultParts.Any());
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
