@@ -83,6 +83,14 @@ public readonly struct FunctionDeclaration {
 public readonly struct GoogleSearch {}
 
 /// <summary>
+/// A tool that allows the model to execute code.
+///
+/// This tool can be used to solve complex problems, for example, by generating and executing Python
+/// code to solve a math problem.
+/// </summary>
+public readonly struct CodeExecution {}
+
+/// <summary>
 /// A helper tool that the model may use when generating responses.
 ///
 /// A `Tool` is a piece of code that enables the system to interact with external systems to
@@ -93,6 +101,7 @@ public readonly struct Tool {
 
   private List<FunctionDeclaration> FunctionDeclarations { get; }
   private GoogleSearch? GoogleSearch { get; }
+  private CodeExecution? CodeExecution { get; }
 
   /// <summary>
   /// Creates a tool that allows the model to perform function calling.
@@ -102,6 +111,7 @@ public readonly struct Tool {
   public Tool(params FunctionDeclaration[] functionDeclarations) {
     FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
     GoogleSearch = null;
+    CodeExecution = null;
   }
   /// <summary>
   /// Creates a tool that allows the model to perform function calling.
@@ -111,6 +121,7 @@ public readonly struct Tool {
   public Tool(IEnumerable<FunctionDeclaration> functionDeclarations) {
     FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
     GoogleSearch = null;
+    CodeExecution = null;
   }
 
   /// <summary>
@@ -121,6 +132,18 @@ public readonly struct Tool {
   public Tool(GoogleSearch googleSearch) {
     FunctionDeclarations = null;
     GoogleSearch = googleSearch;
+    CodeExecution = null;
+  }
+  
+  /// <summary>
+  /// Creates a tool that allows the model to use Code Execution.
+  /// </summary>
+  /// <param name="codeExecution">An empty `CodeExecution` object. The presence of this object
+  ///     in the list of tools enables the model to use Code Execution.</param>
+  public Tool(CodeExecution codeExecution) {
+    FunctionDeclarations = null;
+    GoogleSearch = null;
+    CodeExecution = codeExecution;
   }
 
   /// <summary>
@@ -134,6 +157,9 @@ public readonly struct Tool {
     }
     if (GoogleSearch.HasValue) {
       json["googleSearch"] = new Dictionary<string, object>();
+    }
+    if (CodeExecution.HasValue) {
+      json["codeExecution"] = new Dictionary<string, object>();
     }
     return json;
   }
