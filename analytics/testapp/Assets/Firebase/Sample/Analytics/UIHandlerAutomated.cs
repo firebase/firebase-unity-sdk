@@ -40,6 +40,7 @@ namespace Firebase.Sample.Analytics {
         TestAnalyticsSetConsentDoesNotThrow,
         TestInstanceIdChangeAfterReset,
         TestResetAnalyticsData,
+        TestSetDefaultEventParametersAutomated, // Renamed test here
         // Temporarily disabled until this test is deflaked. b/143603151
         //TestCheckAndFixDependenciesInvalidOperation,
         TestCheckAndFixDependenciesDoubleCall,
@@ -108,6 +109,40 @@ namespace Firebase.Sample.Analytics {
         return true;
       });
     }
+
+    Task TestSetDefaultEventParametersAutomated() {
+      DebugLog("Automated Test: Starting TestSetDefaultEventParametersAutomated...");
+
+      DebugLog("Automated Test: Setting single default string parameter: {'auto_default_param_string', 'auto_value_1'}");
+      FirebaseAnalytics.SetDefaultEventParameters(new Dictionary<string, object>
+      {
+          { "auto_default_param_string", "auto_value_1" }
+      });
+
+      DebugLog("Automated Test: Setting multiple default parameters: {'auto_default_param_int', 789, 'auto_default_param_double', 12.34, 'auto_default_param_bool', false}");
+      FirebaseAnalytics.SetDefaultEventParameters(new Dictionary<string, object>
+      {
+          { "auto_default_param_int", 789 },
+          { "auto_default_param_double", 12.34 },
+          { "auto_default_param_bool", false }
+      });
+
+      DebugLog("Automated Test: Setting a default parameter with a null value: {'param_with_null_value', null}");
+      FirebaseAnalytics.SetDefaultEventParameters(new Dictionary<string, object>
+      {
+          { "param_with_null_value", null }
+      });
+
+      DebugLog("Automated Test: Clearing default parameters with null.");
+      FirebaseAnalytics.SetDefaultEventParameters(null);
+
+      DebugLog("Automated Test: Clearing default parameters with empty dictionary.");
+      FirebaseAnalytics.SetDefaultEventParameters(new Dictionary<string, object>());
+
+      DebugLog("Automated Test: TestSetDefaultEventParametersAutomated completed.");
+      return Task.FromResult(true); // Indicate successful completion
+    }
+
     Task TestCheckAndFixDependenciesInvalidOperation() {
       // Only run the test on Android, as CheckAndFixDependenciesAsync is short
       // lived on other platforms, and thus could finish before the extra call.
