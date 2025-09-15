@@ -90,7 +90,7 @@ SETTINGS = {
   # Used for downloading Unity Hub
   "unity_hub_url": {
     WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe",
-    MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg",
+    MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup-arm64.dmg",
     LINUX: "",
   },
   # Unity Hub will be installed at this location
