@@ -86,11 +86,13 @@ BUILD_OS = (WINDOWS, MACOS, LINUX)
 SUPPORTED_PLATFORMS = (ANDROID, IOS, TVOS, WINDOWS, MACOS, LINUX, PLAYMODE)
 UNITY_VERSION_PLACEHOLDER = "unity_version_placeholder"
 
+UNITY_HUB_URL_ARM_MAC = "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup-arm64.dmg"
 SETTINGS = {
   # Used for downloading Unity Hub
   "unity_hub_url": {
     WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe",
-    MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup-arm64.dmg",
+    # Note that this is for x86 architecture. UNITY_HUB_URL_ARM_MAC above is used for arm64
+    MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg",
     LINUX: "",
   },
   # Unity Hub will be installed at this location
@@ -276,6 +278,9 @@ def install_unity_hub():
   runner_os = get_os()
   unity_hub_url = SETTINGS["unity_hub_url"][runner_os]
   if unity_hub_url:
+    # Use the overriden version if running on a Mac arm64 machine
+    if platform.system() == 'Darwin' and 'arm' in platform.machine().lower():
+      unity_hub_url = UNITY_HUB_URL_ARM_MAC
     unity_hub_installer = path.basename(unity_hub_url)
     download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=MAX_ATTEMPTS)
   if runner_os == MACOS:
