@@ -47,9 +47,30 @@ namespace Firebase.Crashlytics.Editor {
 
     // In Unity 2019.3 - PODS_ROOT is no longer an environment variable that is exposed.
     //                   Use ${PROJECT_DIR}/Pods.
-    private const string RunScriptBody = "chmod u+x \"${PROJECT_DIR}/Pods/FirebaseCrashlytics/run\"\n" +
-        "chmod u+x \"${PROJECT_DIR}/Pods/FirebaseCrashlytics/upload-symbols\"\n" +
-        "\"${PROJECT_DIR}/Pods/FirebaseCrashlytics/run\"";
+    private const string RunScriptBody = @"
+# Define the path to the Cocoapods FirebaseCrashlytics 'run' script
+COCOAPODS_RUN_PATH=""${PROJECT_DIR}/Pods/FirebaseCrashlytics/run""
+
+# Check if the file exists at the Cocoapods path
+if [ -f ""$COCOAPODS_RUN_PATH"" ]; then
+  # --- File exists (Cocoapods integration) ---
+  echo ""Running Firebase Crashlytics (Cocoapods)""
+  
+  # Make scripts executable
+  chmod u+x ""$COCOAPODS_RUN_PATH""
+  chmod u+x ""${PROJECT_DIR}/Pods/FirebaseCrashlytics/upload-symbols""
+  
+  # Run the script
+  ""$COCOAPODS_RUN_PATH"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
+  
+else
+  # --- File does not exist (Swift Package Manager integration) ---
+  echo ""Running Firebase Crashlytics (SPM)""
+  
+  # Run the SPM script
+  ""${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
+fi
+";
 
     private const string GooglePlistPath = "${PROJECT_DIR}/GoogleService-Info.plist";
 
