@@ -152,7 +152,9 @@ public readonly struct Transcription {
     /// The transcribed text.
     /// </summary>
     public readonly string Text { get; }
-    
+    /// <summary>
+    /// Whether this is the end of the transcription.
+    /// </summary>
     public readonly bool Finished { get; }
 
     private Transcription(string text, bool finished) {
