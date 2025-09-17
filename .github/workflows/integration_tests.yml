@@ -255,7 +255,6 @@ jobs:
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
             --notimestamp \
             --force_latest_runtime \
-            --force_xcode_project \
             --ci
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
@@ -434,7 +433,6 @@ jobs:
             --artifact_name "${{ steps.matrix_info.outputs.info }}" \
             --notimestamp \
             --force_latest_runtime \
-            --force_xcode_project \
             --ci
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
