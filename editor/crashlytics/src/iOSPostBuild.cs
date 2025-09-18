@@ -72,8 +72,6 @@ else
 fi
 ";
 
-    private const string GooglePlistPath = "${PROJECT_DIR}/GoogleService-Info.plist";
-
     private const string RunScriptName = "Crashlytics Run Script";
 
     private const string ShellPath = "/bin/sh -x";
@@ -242,8 +240,6 @@ fi
     /// </summary>
     /// <returns>Body of the iOS post build run script</returns>
     public static string GetRunScriptBody(IFirebaseConfigurationStorage configurationStorage) {
-      string completeRunScriptBody = RunScriptBody;
-      completeRunScriptBody = String.Format("{0} -gsp \"{1}\"", RunScriptBody, GooglePlistPath);
       return completeRunScriptBody;
     }
 
