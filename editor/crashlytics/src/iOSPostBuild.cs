@@ -240,7 +240,7 @@ fi
     /// </summary>
     /// <returns>Body of the iOS post build run script</returns>
     public static string GetRunScriptBody(IFirebaseConfigurationStorage configurationStorage) {
-      return completeRunScriptBody;
+      return RunScriptBody;
     }
 
     private static void AddCrashlyticsDevelopmentPlatformToPlist(string plistPath) {
