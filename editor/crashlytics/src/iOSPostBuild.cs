@@ -48,27 +48,40 @@ namespace Firebase.Crashlytics.Editor {
     // In Unity 2019.3 - PODS_ROOT is no longer an environment variable that is exposed.
     //                   Use ${PROJECT_DIR}/Pods.
     private const string RunScriptBody = @"
-# Define the path to the Cocoapods FirebaseCrashlytics 'run' script
+# Define Pods path
 COCOAPODS_RUN_PATH=""${PROJECT_DIR}/Pods/FirebaseCrashlytics/run""
 
-# Check if the file exists at the Cocoapods path
+# Define SPM path.
+# This navigates up from BUILD_DIR (e.g., .../Build/Products/Release-iphoneos)
+# to the .../Build/ directory, then looks inside a SourcePackages folder there.
+SPM_RUN_PATH=""${BUILD_DIR}/../../SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run""
+
 if [ -f ""$COCOAPODS_RUN_PATH"" ]; then
-  # --- File exists (Cocoapods integration) ---
+  # --- Pods path found ---
   echo ""Running Firebase Crashlytics (Cocoapods)""
-  
-  # Make scripts executable
   chmod u+x ""$COCOAPODS_RUN_PATH""
   chmod u+x ""${PROJECT_DIR}/Pods/FirebaseCrashlytics/upload-symbols""
-  
-  # Run the script
   ""$COCOAPODS_RUN_PATH"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
-  
+
+elif [ -f ""$SPM_RUN_PATH"" ]; then
+  # --- SPM path found ---
+  echo ""Running Firebase Crashlytics (SPM at ${BUILD_DIR}/../..)""
+  chmod u+x ""$SPM_RUN_PATH""
+  ""$SPM_RUN_PATH"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
+
 else
-  # --- File does not exist (Swift Package Manager integration) ---
-  echo ""Running Firebase Crashlytics (SPM)""
+  # --- Neither path was found ---
+  echo ""error: Could not find FirebaseCrashlytics 'run' script."" >&2
+  echo ""Checked for Cocoapods path: $COCOAPODS_RUN_PATH"" >&2
+  echo ""Checked for SPM path: $SPM_RUN_PATH"" >&2
   
-  # Run the SPM script
-  ""${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
+  echo ""--- Debug Xcode Variables ---"" >&2
+  echo ""BUILD_DIR: $BUILD_DIR"" >&2
+  echo ""PROJECT_DIR: $PROJECT_DIR"" >&2
+  echo ""SRCROOT: $SRCROOT"" >&2
+  echo ""-----------------------------"" >&2
+  
+  exit 1
 fi
 ";
 
