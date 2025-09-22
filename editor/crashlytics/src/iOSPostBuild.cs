@@ -52,9 +52,11 @@ namespace Firebase.Crashlytics.Editor {
 COCOAPODS_RUN_PATH=""${PROJECT_DIR}/Pods/FirebaseCrashlytics/run""
 
 # Define SPM path.
-# This navigates up from BUILD_DIR (e.g., .../Build/Products/Release-iphoneos)
-# to the .../Build/ directory, then looks inside a SourcePackages folder there.
-SPM_RUN_PATH=""${BUILD_DIR}/../../SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run""
+SPM_RUN_PATH=""${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run""
+
+# Fall back to checking where the script is running from.
+SCRIPT_DIR_PATH=$(dirname ""$0"")
+SCRIPT_RUN_PATH=""${SCRIPT_DIR_PATH%Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run""
 
 if [ -f ""$COCOAPODS_RUN_PATH"" ]; then
   # --- Pods path found ---
@@ -65,15 +67,22 @@ if [ -f ""$COCOAPODS_RUN_PATH"" ]; then
 
 elif [ -f ""$SPM_RUN_PATH"" ]; then
   # --- SPM path found ---
-  echo ""Running Firebase Crashlytics (SPM at ${BUILD_DIR}/../..)""
+  echo ""Running Firebase Crashlytics (SPM at ${BUILD_DIR%/Build/*})""
   chmod u+x ""$SPM_RUN_PATH""
   ""$SPM_RUN_PATH"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
+
+elif [ -f ""$SCRIPT_RUN_PATH"" ]; then
+  # --- SPM path found via Script location ---
+  echo ""Running Firebase Crashlytics (SPM via ${SCRIPT_DIR_PATH})""
+  chmod u+x ""$SCRIPT_RUN_PATH""
+  ""$SCRIPT_RUN_PATH"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
 
 else
   # --- Neither path was found ---
   echo ""error: Could not find FirebaseCrashlytics 'run' script."" >&2
   echo ""Checked for Cocoapods path: $COCOAPODS_RUN_PATH"" >&2
   echo ""Checked for SPM path: $SPM_RUN_PATH"" >&2
+  echo ""Checked for SPM fallback path: $SCRIPT_RUN_PATH"" >&2
   
   echo ""--- Debug Xcode Variables ---"" >&2
   echo ""BUILD_DIR: $BUILD_DIR"" >&2
