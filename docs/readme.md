@@ -112,6 +112,8 @@ Release Notes
 ### Upcoming
 -   Changes
     - Firebase AI: Add support for enabling the model to use Code Execution.
+    - Messaging: Fix crash when deleting a Message with a Notification.
+      ([#1334](https://github.com/firebase/firebase-unity-sdk/issues/1334)).
 
 ### 13.2.0
 -   Changes

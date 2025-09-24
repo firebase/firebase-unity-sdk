@@ -179,8 +179,20 @@ public:
     if (g_message_received_callback) {
       // Copy the message so that it can be owned and cleaned up by the C#
       // proxy object.
-      Message *copy = new Message();
-      *copy = *reinterpret_cast<Message*>(message);
+      Message* original = reinterpret_cast<Message*>(message);
+      Message* copy = new Message();
+      *copy = *original;
+      // If there is a notification, create a copy of that too
+      if (original->notification) {
+        copy->notification = new Notification();
+        *copy->notification = *original->notification;
+
+        // Then, if there is an AndroidNotificationParams, we need to copy that too
+        if (original->notification->android) {
+          copy->notification->android = new AndroidNotificationParams();
+          *copy->notification->android = *original->notification->android;
+        }
+      }
       // If the callback didn't take ownership of the message, delete it.
       if (!g_message_received_callback(copy)) {
         delete copy;
