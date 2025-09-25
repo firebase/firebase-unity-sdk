@@ -20,23 +20,63 @@ using Firebase.AI.Internal;
 
 namespace Firebase.AI {
 
-/// <summary>
-/// A struct used to configure speech generation settings.
-/// </summary>
-public readonly struct SpeechConfig {
-  internal readonly string voice;
+  /// <summary>
+  /// A struct used to configure speech generation settings.
+  /// </summary>
+  public readonly struct SpeechConfig
+  {
+    internal readonly string voice;
 
-  private SpeechConfig(string voice) {
-    this.voice = voice;
+    private SpeechConfig(string voice)
+    {
+      this.voice = voice;
+    }
+
+    /// <summary>
+    /// See https://cloud.google.com/text-to-speech/docs/chirp3-hd for the list of available voices.
+    /// </summary>
+    /// <param name="voice"></param>
+    /// <returns></returns>
+    public static SpeechConfig UsePrebuiltVoice(string voice)
+    {
+      return new SpeechConfig(voice);
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      Dictionary<string, object> dict = new();
+
+      if (!string.IsNullOrWhiteSpace(voice))
+      {
+        dict["voiceConfig"] = new Dictionary<string, object>() {
+        { "prebuiltVoiceConfig" , new Dictionary<string, object>() {
+          { "voiceName", voice }
+        } }
+      };
+      }
+
+      return dict;
+    }
+  }
+
+/// <summary>
+/// A struct used to configure speech transcription settings.
+/// </summary>
+public readonly struct AudioTranscriptionConfig {
+
+  private AudioTranscriptionConfig() {
   }
 
   /// <summary>
-  /// See https://cloud.google.com/text-to-speech/docs/chirp3-hd for the list of available voices.
+  /// Creates a new transcription configuration.
   /// </summary>
-  /// <param name="voice"></param>
-  /// <returns></returns>
-  public static SpeechConfig UsePrebuiltVoice(string voice) {
-    return new SpeechConfig(voice);
+  /// <returns>A new transcription configuration.</returns>
+  public static AudioTranscriptionConfig GetInstance() {
+    return new AudioTranscriptionConfig();
   }
 
   /// <summary>
@@ -45,15 +85,6 @@ public readonly struct SpeechConfig {
   /// </summary>
   internal Dictionary<string, object> ToJson() {
     Dictionary<string, object> dict = new();
-
-    if (!string.IsNullOrWhiteSpace(voice)) {
-      dict["voiceConfig"] = new Dictionary<string, object>() {
-        { "prebuiltVoiceConfig" , new Dictionary<string, object>() {
-          { "voiceName", voice }
-        } }
-      };
-    }
-
     return dict;
   }
 }
@@ -62,6 +93,8 @@ public readonly struct SpeechConfig {
 /// A struct defining model parameters to be used when generating live session content.
 /// </summary>
 public readonly struct LiveGenerationConfig {
+  private readonly AudioTranscriptionConfig? _inputAudioTranscription;
+  private readonly AudioTranscriptionConfig? _outputAudioTranscription;
   private readonly SpeechConfig? _speechConfig;
   private readonly List<ResponseModality> _responseModalities;
   private readonly float? _temperature;
@@ -81,6 +114,10 @@ public readonly struct LiveGenerationConfig {
   /// for more details.
   /// </summary>
   /// 
+  /// <param name="inputAudioTranscription">The transcription configuration to use if transcribing audio input.</param>
+  ///
+  /// <param name="outputAudioTranscription">The transcription configuration to use if transcribing audio output.</param>
+  ///
   /// <param name="speechConfig">The speech configuration to use if generating audio output.</param>
   /// 
   /// <param name="responseModalities">A list of response types to receive from the model.
@@ -155,6 +192,8 @@ public readonly struct LiveGenerationConfig {
   /// [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
   /// for more details.</param>
   public LiveGenerationConfig(
+      AudioTranscriptionConfig? inputAudioTranscription = null,
+      AudioTranscriptionConfig? outputAudioTranscription = null,
       SpeechConfig? speechConfig = null,
       IEnumerable<ResponseModality> responseModalities = null,
       float? temperature = null,
@@ -163,6 +202,8 @@ public readonly struct LiveGenerationConfig {
       int? maxOutputTokens = null,
       float? presencePenalty = null,
       float? frequencyPenalty = null) {
+    _inputAudioTranscription = inputAudioTranscription;
+    _outputAudioTranscription = outputAudioTranscription;
     _speechConfig = speechConfig;
     _responseModalities = responseModalities != null ?
         new List<ResponseModality>(responseModalities) : new List<ResponseModality>();
@@ -178,8 +219,11 @@ public readonly struct LiveGenerationConfig {
   /// Intended for internal use only.
   /// This method is used for serializing the object to JSON for the API request.
   /// </summary>
-  internal Dictionary<string, object> ToJson() {
+  internal Dictionary<string, object> ToJson()
+  {
     Dictionary<string, object> jsonDict = new();
+    if (_inputAudioTranscription.HasValue) jsonDict["inputAudioTranscription"] = _inputAudioTranscription?.ToJson();
+    if (_outputAudioTranscription.HasValue) jsonDict["outputAudioTranscription"] = _outputAudioTranscription?.ToJson();
     if (_speechConfig.HasValue) jsonDict["speechConfig"] = _speechConfig?.ToJson();
     if (_responseModalities != null && _responseModalities.Any()) {
       jsonDict["responseModalities"] =
