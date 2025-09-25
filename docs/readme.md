@@ -109,7 +109,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.3.0
 -   Changes
     - Firebase AI: Add support for enabling the model to use Code Execution.
     - Messaging: Fix crash when deleting a Message with a Notification.
