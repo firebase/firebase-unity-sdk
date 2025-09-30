@@ -124,7 +124,7 @@ namespace Firebase.AI {
     /// </summary>
     internal static UrlContextMetadata FromJson(Dictionary<string, object> jsonDict) {
       return new UrlContextMetadata(
-        jsonDict.ParseObjectList("urlMetadata", AI.UrlMetadata.FromJson)
+        jsonDict.ParseObjectList("urlMetadata", Firebase.AI.UrlMetadata.FromJson)
       );
     }
   }
