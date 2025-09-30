@@ -76,6 +76,7 @@ namespace Firebase.Sample.FirebaseAI {
         TestThinkingBudget,
         TestIncludeThoughts,
         TestCodeExecution,
+        TestUrlContext,
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
@@ -102,6 +103,7 @@ namespace Firebase.Sample.FirebaseAI {
         InternalTestGenerateImagesBase64SomeFiltered,
         InternalTestThoughtSummary,
         InternalTestCodeExecution,
+        InternalTestUrlContextMixedValidity,
       };
 
       // Create the set of tests, combining the above lists.
@@ -843,7 +845,7 @@ namespace Firebase.Sample.FirebaseAI {
 
     async Task TestCodeExecution(Backend backend) {
       var model = GetFirebaseAI(backend).GetGenerativeModel(
-        modelName: ModelName,
+        modelName: TestModelName,
         tools: new Tool[] { new Tool(new CodeExecution()) }
       );
 
@@ -859,6 +861,25 @@ namespace Firebase.Sample.FirebaseAI {
 
       var codeExecutionResultParts = response.Candidates.First().Content.Parts.OfType<ModelContent.CodeExecutionResultPart>();
       Assert("Missing CodeExecutionResultParts", codeExecutionResultParts.Any());
+    }
+
+    async Task TestUrlContext(Backend backend) {
+      var model = GetFirebaseAI(backend).GetGenerativeModel(
+        // Url Context requires 2.5 or newer
+        modelName: "gemini-2.5-flash",
+        tools: new Tool[] { new Tool(new UrlContext()) }
+      );
+
+      var prompt = "Can you summarize https://firebase.google.com/games";
+      var response = await model.GenerateContentAsync(prompt);
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      // We don't want to check on anything specific, but it should ideally have the metadata.
+      if (!response.Candidates.First().UrlContextMetadata.HasValue) {
+        DebugLog("WARNING: Response did not have expected Url Context Metadata.");
+      }
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
@@ -915,7 +936,7 @@ namespace Firebase.Sample.FirebaseAI {
 
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
     readonly string testDataUrl =
-        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/548c2d5ae4555ca6f57d8621903e2b591bec7b05/mock-responses/";
+        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/refs/heads/main/mock-responses/";
     readonly HttpClient httpClient = new();
 
     private Task<string> LoadStreamingAsset(string fullPath) {
@@ -1007,7 +1028,7 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Helper function to validate UsageMetadata.
     private void ValidateUsageMetadata(UsageMetadata? usageMetadata, int promptTokenCount,
-        int candidatesTokenCount, int thoughtsTokenCount, int totalTokenCount) {
+        int candidatesTokenCount, int thoughtsTokenCount, int toolUsePromptTokenCount, int totalTokenCount) {
       Assert("UsageMetadata", usageMetadata.HasValue);
       AssertEq("Wrong PromptTokenCount",
           usageMetadata?.PromptTokenCount, promptTokenCount);
@@ -1015,6 +1036,8 @@ namespace Firebase.Sample.FirebaseAI {
           usageMetadata?.CandidatesTokenCount, candidatesTokenCount);
       AssertEq("Wrong ThoughtsTokenCount",
           usageMetadata?.ThoughtsTokenCount, thoughtsTokenCount);
+      AssertEq("Wrong ToolUsePromptTokenCount",
+          usageMetadata?.ToolUsePromptTokenCount, toolUsePromptTokenCount);
       AssertEq("Wrong TotalTokenCount",
           usageMetadata?.TotalTokenCount, totalTokenCount);
     }
@@ -1059,7 +1082,7 @@ namespace Firebase.Sample.FirebaseAI {
 
       AssertEq("CitationMetadata", candidate.CitationMetadata, null);
 
-      ValidateUsageMetadata(response.UsageMetadata, 6, 7, 0, 13);
+      ValidateUsageMetadata(response.UsageMetadata, 6, 7, 0, 0, 13);
     }
 
     // Test that parsing a response including Citations works.
@@ -1157,7 +1180,7 @@ namespace Firebase.Sample.FirebaseAI {
         severity: SafetyRating.HarmSeverity.Negligible,
         severityScore: 0.12109375f);
 
-      ValidateUsageMetadata(response.UsageMetadata, 8, 0, 0, 8);
+      ValidateUsageMetadata(response.UsageMetadata, 8, 0, 0, 0, 8);
     }
 
     // Test that parsing a response with unknown safety enums works.
@@ -1386,7 +1409,7 @@ namespace Firebase.Sample.FirebaseAI {
       // No citations in this response
       AssertEq("CitationMetadata", candidate.CitationMetadata, null);
 
-      ValidateUsageMetadata(response.UsageMetadata, 7, 22, 0, 29);
+      ValidateUsageMetadata(response.UsageMetadata, 7, 22, 0, 0, 29);
       // No prompt feedback in this response
       AssertEq("PromptFeedback", response.PromptFeedback, null);
     }
@@ -1459,6 +1482,7 @@ namespace Firebase.Sample.FirebaseAI {
         promptTokenCount: 15,
         candidatesTokenCount: 1667,
         thoughtsTokenCount: 0,
+        toolUsePromptTokenCount: 0,
         totalTokenCount: 1682);
 
       // Validate UsageMetadata Details if needed
@@ -1534,7 +1558,7 @@ namespace Firebase.Sample.FirebaseAI {
           "Let me just pull up the city name from memory... " +
           "Mountain View. That's it. Just the city, nothing else. Got it.\n");
 
-      ValidateUsageMetadata(response.UsageMetadata, 13, 2, 39, 54);
+      ValidateUsageMetadata(response.UsageMetadata, 13, 2, 39, 0, 54);
     }
 
     async Task InternalTestCodeExecution() {
@@ -1553,6 +1577,31 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("CodeExecutionResultPart count", codeExecutionResultParts.Count(), 1);
       AssertEq("CodeExecutionResultPart outcome", codeExecutionResultParts[0].Outcome, ModelContent.CodeExecutionResultPart.ExecutionOutcome.Ok);
       AssertEq("CodeExecutionResultPart output", codeExecutionResultParts[0].Output, "The sum of the first 5 prime numbers is: 28\n");
+
+      ValidateUsageMetadata(response.UsageMetadata, 20, 192, 192, 371, 775);
+
+      var details = response.UsageMetadata?.ToolUsePromptTokensDetails;
+      AssertEq("ToolUsePromptTokensDetails.Count", details.Count, 1);
+      AssertEq("ToolUsePromptTokensDetails[0].Modality", details[0].Modality, ContentModality.Text);
+      AssertEq("ToolUsePromptTokensDetails[0].TokenCount", details[0].TokenCount, 181);
+    }
+
+    async Task InternalTestUrlContextMixedValidity() {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-url-context-mixed-validity.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+      Assert("Candidate should have UrlContextMetadata", response.Candidates.First().UrlContextMetadata.HasValue);
+      var urlContextMetadata = response.Candidates.First().UrlContextMetadata.Value;
+      AssertEq("UrlMetadata count", urlContextMetadata.UrlMetadata.Count(), 3);
+
+      var urlMetadata = urlContextMetadata.UrlMetadata.ToList();
+      AssertEq("UrlMetadata[0] status", urlMetadata[0].RetrievalStatus, UrlMetadata.UrlRetrievalStatus.Error);
+      AssertEq("UrlMetadata[1] url", urlMetadata[1].Url, new Uri("https://ai.google.dev"));
+      AssertEq("UrlMetadata[1] status", urlMetadata[1].RetrievalStatus, UrlMetadata.UrlRetrievalStatus.Success);
+      AssertEq("UrlMetadata[2] url", urlMetadata[2].Url, new Uri("https://a-completely-non-existent-url-for-testing.org"));
+      AssertEq("UrlMetadata[2] status", urlMetadata[2].RetrievalStatus, UrlMetadata.UrlRetrievalStatus.Error);
+
+      ValidateUsageMetadata(response.UsageMetadata, 116, 446, 179, 177, 918);
     }
   }
 }

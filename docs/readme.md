@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Add support for Gemini's URL context tool.
+
 ### 13.3.0
 -   Changes
     - Firebase AI: Add support for enabling the model to use Code Execution.

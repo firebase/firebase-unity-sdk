@@ -102,6 +102,7 @@ public readonly struct Tool {
   private List<FunctionDeclaration> FunctionDeclarations { get; }
   private GoogleSearch? GoogleSearch { get; }
   private CodeExecution? CodeExecution { get; }
+  private UrlContext? UrlContext { get; }
 
   /// <summary>
   /// Creates a tool that allows the model to perform function calling.
@@ -112,6 +113,7 @@ public readonly struct Tool {
     FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
     GoogleSearch = null;
     CodeExecution = null;
+    UrlContext = null;
   }
   /// <summary>
   /// Creates a tool that allows the model to perform function calling.
@@ -122,6 +124,7 @@ public readonly struct Tool {
     FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
     GoogleSearch = null;
     CodeExecution = null;
+    UrlContext = null;
   }
 
   /// <summary>
@@ -133,6 +136,7 @@ public readonly struct Tool {
     FunctionDeclarations = null;
     GoogleSearch = googleSearch;
     CodeExecution = null;
+    UrlContext = null;
   }
   
   /// <summary>
@@ -144,6 +148,20 @@ public readonly struct Tool {
     FunctionDeclarations = null;
     GoogleSearch = null;
     CodeExecution = codeExecution;
+    UrlContext = null;
+  }
+  
+  /// <summary>
+  /// Creates a tool that allows you to provide additional context to the models in the form of
+  /// public web URLs.
+  /// </summary>
+  /// <param name="urlContext">An empty `UrlContext` object. The presence of this object
+  ///     in the list of tools enables the model to use Url Contexts.</param>
+  public Tool(UrlContext urlContext) {
+    FunctionDeclarations = null;
+    GoogleSearch = null;
+    CodeExecution = null;
+    UrlContext = urlContext;
   }
 
   /// <summary>
@@ -160,6 +178,9 @@ public readonly struct Tool {
     }
     if (CodeExecution.HasValue) {
       json["codeExecution"] = new Dictionary<string, object>();
+    }
+    if (UrlContext.HasValue) {
+      json["urlContext"] = new Dictionary<string, object>();
     }
     return json;
   }
