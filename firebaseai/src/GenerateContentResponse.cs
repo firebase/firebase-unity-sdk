@@ -471,11 +471,18 @@ public readonly struct UsageMetadata {
   /// </summary>
   public int ThoughtsTokenCount { get; }
   /// <summary>
+  /// The number of tokens used by any enabled tools.
+  /// </summary>
+  public int ToolUsePromptTokenCount { get; }
+  /// <summary>
   /// The total number of tokens in both the request and response.
   /// </summary>
   public int TotalTokenCount { get; }
 
   private readonly IReadOnlyList<ModalityTokenCount> _promptTokensDetails;
+  /// <summary>
+  /// The breakdown, by modality, of how many tokens are consumed by the prompt.
+  /// </summary>
   public IReadOnlyList<ModalityTokenCount> PromptTokensDetails {
     get {
       return _promptTokensDetails ?? new List<ModalityTokenCount>();
@@ -483,21 +490,38 @@ public readonly struct UsageMetadata {
   }
 
   private readonly IReadOnlyList<ModalityTokenCount> _candidatesTokensDetails;
+  /// <summary>
+  /// The breakdown, by modality, of how many tokens are consumed by the candidates.
+  /// </summary>
   public IReadOnlyList<ModalityTokenCount> CandidatesTokensDetails {
     get {
       return _candidatesTokensDetails ?? new List<ModalityTokenCount>();
     }
   }
 
+  private readonly IReadOnlyList<ModalityTokenCount> _toolUsePromptTokensDetails;
+  /// <summary>
+  /// The breakdown, by modality, of how many tokens were consumed by the tools used to process
+  /// the request.
+  /// </summary>
+  public IReadOnlyList<ModalityTokenCount> ToolUsePromptTokensDetails {
+    get {
+      return _toolUsePromptTokensDetails ?? new List<ModalityTokenCount>();
+    }
+  }
+
   // Hidden constructor, users don't need to make this.
-  private UsageMetadata(int promptTC, int candidatesTC, int thoughtsTC, int totalTC,
-                        List<ModalityTokenCount> promptDetails, List<ModalityTokenCount> candidateDetails) {
+  private UsageMetadata(int promptTC, int candidatesTC, int thoughtsTC, int toolUseTC, int totalTC,
+                        List<ModalityTokenCount> promptDetails, List<ModalityTokenCount> candidateDetails,
+                        List<ModalityTokenCount> toolUseDetails) {
     PromptTokenCount = promptTC;
     CandidatesTokenCount = candidatesTC;
     ThoughtsTokenCount = thoughtsTC;
+    ToolUsePromptTokenCount = toolUseTC;
     TotalTokenCount = totalTC;
     _promptTokensDetails = promptDetails;
     _candidatesTokensDetails = candidateDetails;
+    _toolUsePromptTokensDetails = toolUseDetails;
   }
 
   /// <summary>
@@ -509,9 +533,11 @@ public readonly struct UsageMetadata {
       jsonDict.ParseValue<int>("promptTokenCount"),
       jsonDict.ParseValue<int>("candidatesTokenCount"),
       jsonDict.ParseValue<int>("thoughtsTokenCount"),
+      jsonDict.ParseValue<int>("toolUsePromptTokenCount"),
       jsonDict.ParseValue<int>("totalTokenCount"),
       jsonDict.ParseObjectList("promptTokensDetails", ModalityTokenCount.FromJson),
-      jsonDict.ParseObjectList("candidatesTokensDetails", ModalityTokenCount.FromJson));
+      jsonDict.ParseObjectList("candidatesTokensDetails", ModalityTokenCount.FromJson),
+      jsonDict.ParseObjectList("toolUsePromptTokensDetails", ModalityTokenCount.FromJson));
   }
 }
 

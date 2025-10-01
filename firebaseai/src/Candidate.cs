@@ -101,16 +101,22 @@ public readonly struct Candidate {
   /// Grounding metadata for the response, if any.
   /// </summary>
   public GroundingMetadata? GroundingMetadata { get; }
+  
+  /// <summary>
+  /// Metadata related to the `URLContext` tool.
+  /// </summary>
+  public UrlContextMetadata? UrlContextMetadata { get; }
 
   // Hidden constructor, users don't need to make this.
   private Candidate(ModelContent content, List<SafetyRating> safetyRatings,
       FinishReason? finishReason, CitationMetadata? citationMetadata,
-      GroundingMetadata? groundingMetadata) {
+      GroundingMetadata? groundingMetadata, UrlContextMetadata? urlContextMetadata) {
     Content = content;
     _safetyRatings = safetyRatings ?? new List<SafetyRating>();
     FinishReason = finishReason;
     CitationMetadata = citationMetadata;
     GroundingMetadata = groundingMetadata;
+    UrlContextMetadata = urlContextMetadata;
   }
 
   private static FinishReason ParseFinishReason(string str) {
@@ -141,7 +147,9 @@ public readonly struct Candidate {
       jsonDict.ParseNullableObject("citationMetadata",
           (d) => Firebase.AI.CitationMetadata.FromJson(d, backend)),
       jsonDict.ParseNullableObject("groundingMetadata",
-          Firebase.AI.GroundingMetadata.FromJson));
+          Firebase.AI.GroundingMetadata.FromJson),
+      jsonDict.ParseNullableObject("urlContextMetadata",
+          Firebase.AI.UrlContextMetadata.FromJson));
   }
 }
 
