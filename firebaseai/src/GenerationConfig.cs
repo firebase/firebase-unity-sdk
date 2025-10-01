@@ -19,13 +19,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Firebase.AI.Internal;
 
-namespace Firebase.AI {
-
+namespace Firebase.AI
+{
   /// <summary>
   /// A struct defining model parameters to be used when sending generative AI
   /// requests to the backend model.
   /// </summary>
-  public readonly struct GenerationConfig {
+  public readonly struct GenerationConfig
+  {
     private readonly float? _temperature;
     private readonly float? _topP;
     private readonly float? _topK;
@@ -168,7 +169,8 @@ namespace Firebase.AI {
         string responseMimeType = null,
         Schema responseSchema = null,
         IEnumerable<ResponseModality> responseModalities = null,
-        ThinkingConfig? thinkingConfig = null) {
+        ThinkingConfig? thinkingConfig = null)
+    {
       _temperature = temperature;
       _topP = topP;
       _topK = topK;
@@ -188,7 +190,8 @@ namespace Firebase.AI {
     /// Intended for internal use only.
     /// This method is used for serializing the object to JSON for the API request.
     /// </summary>
-    internal Dictionary<string, object> ToJson() {
+    internal Dictionary<string, object> ToJson()
+    {
       Dictionary<string, object> jsonDict = new();
       if (_temperature.HasValue) jsonDict["temperature"] = _temperature.Value;
       if (_topP.HasValue) jsonDict["topP"] = _topP.Value;
@@ -200,7 +203,8 @@ namespace Firebase.AI {
       if (_stopSequences != null && _stopSequences.Length > 0) jsonDict["stopSequences"] = _stopSequences;
       if (!string.IsNullOrWhiteSpace(_responseMimeType)) jsonDict["responseMimeType"] = _responseMimeType;
       if (_responseSchema != null) jsonDict["responseSchema"] = _responseSchema.ToJson();
-      if (_responseModalities != null && _responseModalities.Count > 0) {
+      if (_responseModalities != null && _responseModalities.Count > 0)
+      {
         jsonDict["responseModalities"] =
             _responseModalities.Select(EnumConverters.ResponseModalityToString).ToList();
       }
@@ -213,7 +217,8 @@ namespace Firebase.AI {
   /// <summary>
   /// Configuration options for Thinking features.
   /// </summary>
-  public readonly struct ThinkingConfig {
+  public readonly struct ThinkingConfig
+  {
 #if !DOXYGEN
     public readonly int? ThinkingBudget { get; }
     public readonly bool? IncludeThoughts { get; }
@@ -226,7 +231,8 @@ namespace Firebase.AI {
     /// <param name="includeThoughts">
     /// If true, summaries of the model's "thoughts" are included in responses.
     /// </param>
-    public ThinkingConfig(int? thinkingBudget = null, bool? includeThoughts = null) {
+    public ThinkingConfig(int? thinkingBudget = null, bool? includeThoughts = null)
+    {
       ThinkingBudget = thinkingBudget;
       IncludeThoughts = includeThoughts;
     }
@@ -235,7 +241,8 @@ namespace Firebase.AI {
     /// Intended for internal use only.
     /// This method is used for serializing the object to JSON for the API request.
     /// </summary>
-    internal Dictionary<string, object> ToJson() {
+    internal Dictionary<string, object> ToJson()
+    {
       Dictionary<string, object> jsonDict = new();
       jsonDict.AddIfHasValue("thinkingBudget", ThinkingBudget);
       jsonDict.AddIfHasValue("includeThoughts", IncludeThoughts);

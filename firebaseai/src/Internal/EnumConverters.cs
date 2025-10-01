@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-namespace Firebase.AI.Internal {
-
-// Contains extension methods for converting shared enums to strings.
-internal static class EnumConverters {
-
-  public static string ResponseModalityToString(this ResponseModality modality) {
-    return modality switch {
-      ResponseModality.Text => "TEXT",
-      ResponseModality.Image => "IMAGE",
-      ResponseModality.Audio => "AUDIO",
-      _ => throw new System.ArgumentOutOfRangeException(nameof(modality), "Unsupported Modality type")
-    };
+namespace Firebase.AI.Internal
+{
+  // Contains extension methods for converting shared enums to strings.
+  internal static class EnumConverters
+  {
+    public static string ResponseModalityToString(this ResponseModality modality)
+    {
+      return modality switch
+      {
+        ResponseModality.Text => "TEXT",
+        ResponseModality.Image => "IMAGE",
+        ResponseModality.Audio => "AUDIO",
+        _ => throw new System.ArgumentOutOfRangeException(nameof(modality), "Unsupported Modality type")
+      };
+    }
   }
-}
 
 }
