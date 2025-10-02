@@ -153,8 +153,10 @@ namespace Firebase.Sample.FirebaseAI
     private void Assert(string message, bool condition)
     {
       if (!condition)
+      {
         throw new Exception(
           $"Assertion failed ({testRunner.CurrentTestDescription}): {message}");
+      }
     }
 
     // Throw when value1 != value2.
