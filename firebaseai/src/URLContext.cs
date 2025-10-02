@@ -18,8 +18,8 @@ using System;
 using System.Collections.Generic;
 using Firebase.AI.Internal;
 
-namespace Firebase.AI {
-
+namespace Firebase.AI
+{
   /// <summary>
   /// A tool that allows you to provide additional context to the models in the form of
   /// public web URLs.
@@ -32,11 +32,13 @@ namespace Firebase.AI {
   /// <summary>
   /// Metadata for a single URL retrieved by the UrlContext tool.
   /// </summary>
-  public readonly struct UrlMetadata {
+  public readonly struct UrlMetadata
+  {
     /// <summary>
     /// Status of the URL retrieval.
     /// </summary>
-    public enum UrlRetrievalStatus {
+    public enum UrlRetrievalStatus
+    {
       /// <summary>
       /// Unspecified retrieval status
       /// </summary>
@@ -68,18 +70,23 @@ namespace Firebase.AI {
     /// </summary>
     public UrlRetrievalStatus RetrievalStatus { get; }
 
-    private UrlMetadata(string urlString, UrlRetrievalStatus? retrievalStatus) {
-      if (string.IsNullOrEmpty(urlString)) {
+    private UrlMetadata(string urlString, UrlRetrievalStatus? retrievalStatus)
+    {
+      if (string.IsNullOrEmpty(urlString))
+      {
         Url = null;
       }
-      else {
+      else
+      {
         Url = new Uri(urlString);
       }
       RetrievalStatus = retrievalStatus ?? UrlRetrievalStatus.Unspecified;
     }
 
-    private static UrlRetrievalStatus ParseUrlRetrievalStatus(string str) {
-      return str switch {
+    private static UrlRetrievalStatus ParseUrlRetrievalStatus(string str)
+    {
+      return str switch
+      {
         "URL_RETRIEVAL_STATUS_SUCCESS" => UrlRetrievalStatus.Success,
         "URL_RETRIEVAL_STATUS_ERROR" => UrlRetrievalStatus.Error,
         "URL_RETRIEVAL_STATUS_PAYWALL" => UrlRetrievalStatus.Paywall,
@@ -92,7 +99,8 @@ namespace Firebase.AI {
     /// Intended for internal use only.
     /// This method is used for deserializing JSON responses and should not be called directly.
     /// </summary>
-    internal static UrlMetadata FromJson(Dictionary<string, object> jsonDict) {
+    internal static UrlMetadata FromJson(Dictionary<string, object> jsonDict)
+    {
       return new UrlMetadata(
         jsonDict.ParseValue<string>("retrievedUrl"),
         jsonDict.ParseNullableEnum("urlRetrievalStatus", ParseUrlRetrievalStatus)
@@ -103,18 +111,22 @@ namespace Firebase.AI {
   /// <summary>
   /// Metadata related to the UrlContext tool.
   /// </summary>
-  public readonly struct UrlContextMetadata {
+  public readonly struct UrlContextMetadata
+  {
     private readonly IReadOnlyList<UrlMetadata> _urlMetadata;
     /// <summary>
     /// List of URL metadata used to provide context to the Gemini model.
     /// </summary>
-    public IReadOnlyList<UrlMetadata> UrlMetadata {
-      get {
+    public IReadOnlyList<UrlMetadata> UrlMetadata
+    {
+      get
+      {
         return _urlMetadata ?? new List<UrlMetadata>();
       }
     }
 
-    private UrlContextMetadata(List<UrlMetadata> urlMetadata) {
+    private UrlContextMetadata(List<UrlMetadata> urlMetadata)
+    {
       _urlMetadata = urlMetadata;
     }
 
@@ -122,7 +134,8 @@ namespace Firebase.AI {
     /// Intended for internal use only.
     /// This method is used for deserializing JSON responses and should not be called directly.
     /// </summary>
-    internal static UrlContextMetadata FromJson(Dictionary<string, object> jsonDict) {
+    internal static UrlContextMetadata FromJson(Dictionary<string, object> jsonDict)
+    {
       return new UrlContextMetadata(
         jsonDict.ParseObjectList("urlMetadata", Firebase.AI.UrlMetadata.FromJson)
       );

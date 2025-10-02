@@ -24,8 +24,8 @@ using System.Threading.Tasks;
 using Firebase.AI.Internal;
 using Google.MiniJSON;
 
-namespace Firebase.AI {
-  
+namespace Firebase.AI
+{
   /// <summary>
   /// Represents a remote Imagen model with the ability to generate images using text prompts.
   ///
@@ -38,7 +38,8 @@ namespace Firebase.AI {
   /// Preview, which means that the feature is not subject to any SLA or deprecation policy and
   /// could change in backwards-incompatible ways.
   /// </summary>
-  public class ImagenModel {
+  public class ImagenModel
+  {
     private readonly FirebaseApp _firebaseApp;
     private readonly FirebaseAI.Backend _backend;
     private readonly string _modelName;
@@ -53,7 +54,8 @@ namespace Firebase.AI {
                         string modelName,
                         ImagenGenerationConfig? generationConfig = null,
                         ImagenSafetySettings? safetySettings = null,
-                        RequestOptions? requestOptions = null) {
+                        RequestOptions? requestOptions = null)
+    {
       _firebaseApp = firebaseApp;
       _backend = backend;
       _modelName = modelName;
@@ -62,7 +64,8 @@ namespace Firebase.AI {
       _requestOptions = requestOptions;
 
       // Create a HttpClient using the timeout requested, or the default one.
-      _httpClient = new HttpClient() {
+      _httpClient = new HttpClient()
+      {
         Timeout = requestOptions?.Timeout ?? RequestOptions.DefaultTimeout
       };
     }
@@ -79,12 +82,14 @@ namespace Firebase.AI {
     /// <returns>The generated content response from the model.</returns>
     /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
     public Task<ImagenGenerationResponse<ImagenInlineImage>> GenerateImagesAsync(
-        string prompt, CancellationToken cancellationToken = default) {
+        string prompt, CancellationToken cancellationToken = default)
+    {
       return GenerateImagesAsyncInternal(prompt, cancellationToken);
     }
 
     private async Task<ImagenGenerationResponse<ImagenInlineImage>> GenerateImagesAsyncInternal(
-        string prompt, CancellationToken cancellationToken) {
+        string prompt, CancellationToken cancellationToken)
+    {
       HttpRequestMessage request = new(HttpMethod.Post,
           HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":predict");
 
@@ -111,33 +116,42 @@ namespace Firebase.AI {
       return ImagenGenerationResponse<ImagenInlineImage>.FromJson(result);
     }
 
-    private string MakeGenerateImagenRequest(string prompt) {
+    private string MakeGenerateImagenRequest(string prompt)
+    {
       Dictionary<string, object> jsonDict = MakeGenerateImagenRequestAsDictionary(prompt);
       return Json.Serialize(jsonDict);
     }
 
     private Dictionary<string, object> MakeGenerateImagenRequestAsDictionary(
-        string prompt) {
-      Dictionary<string, object> parameters = new() {
+        string prompt)
+    {
+      Dictionary<string, object> parameters = new()
+      {
         // These values are hardcoded to true for AI Monitoring.
         ["includeRaiReason"] = true,
         ["includeSafetyAttributes"] = true,
       };
       // Merge the settings into a single parameter dictionary
-      if (_generationConfig != null) {
+      if (_generationConfig != null)
+      {
         _generationConfig?.ToJson().ToList()
             .ForEach(x => parameters.Add(x.Key, x.Value));
-      } else {
+      }
+      else
+      {
         // We want the change the default behavior for sampleCount to return 1.
         parameters["sampleCount"] = 1;
       }
-      if (_safetySettings != null) {
+      if (_safetySettings != null)
+      {
         _safetySettings?.ToJson().ToList()
             .ForEach(x => parameters.Add(x.Key, x.Value));
       }
 
-      Dictionary<string, object> jsonDict = new() {
-        ["instances"] = new Dictionary<string, object>() {
+      Dictionary<string, object> jsonDict = new()
+      {
+        ["instances"] = new Dictionary<string, object>()
+        {
           ["prompt"] = prompt,
         },
         ["parameters"] = parameters,
