@@ -38,6 +38,7 @@ namespace Firebase.AI {
     private readonly Schema _responseSchema;
     private readonly List<ResponseModality> _responseModalities;
     private readonly ThinkingConfig? _thinkingConfig;
+    private readonly ImageConfig? _imageConfig;
 
     /// <summary>
     /// Creates a new `GenerationConfig` value.
@@ -168,7 +169,8 @@ namespace Firebase.AI {
         string responseMimeType = null,
         Schema responseSchema = null,
         IEnumerable<ResponseModality> responseModalities = null,
-        ThinkingConfig? thinkingConfig = null) {
+        ThinkingConfig? thinkingConfig = null,
+        ImageConfig? imageConfig = null) {
       _temperature = temperature;
       _topP = topP;
       _topK = topK;
@@ -182,6 +184,7 @@ namespace Firebase.AI {
       _responseModalities = responseModalities != null ?
           new List<ResponseModality>(responseModalities) : null;
       _thinkingConfig = thinkingConfig;
+      _imageConfig = imageConfig;
     }
 
     /// <summary>
@@ -205,6 +208,7 @@ namespace Firebase.AI {
             _responseModalities.Select(EnumConverters.ResponseModalityToString).ToList();
       }
       if (_thinkingConfig != null) jsonDict["thinkingConfig"] = _thinkingConfig?.ToJson();
+      if (_imageConfig != null) jsonDict["imageConfig"] = _imageConfig?.ToJson();
 
       return jsonDict;
     }
