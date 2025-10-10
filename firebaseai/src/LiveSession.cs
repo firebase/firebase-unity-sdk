@@ -125,10 +125,10 @@ namespace Firebase.AI
         if (functionParts.Count > 0)
         {
           Dictionary<string, object> toolResponse = new() {
-          { "toolResponse", new Dictionary<string, object>() {
-            { "functionResponses", functionParts.Select(frPart => (frPart as ModelContent.Part).ToJson()["functionResponse"]).ToList() }
-          }}
-        };
+            { "toolResponse", new Dictionary<string, object>() {
+              { "functionResponses", functionParts.Select(frPart => (frPart as ModelContent.Part).ToJson()["functionResponse"]).ToList() }
+            }}
+          };
           var toolResponseBytes = Encoding.UTF8.GetBytes(Json.Serialize(toolResponse));
 
           await InternalSendBytesAsync(new ArraySegment<byte>(toolResponseBytes), cancellationToken);
@@ -147,15 +147,15 @@ namespace Firebase.AI
 
       // Prepare the message payload
       Dictionary<string, object> contentDict = new() {
-      { "turnComplete", turnComplete }
-    };
+        { "turnComplete", turnComplete }
+      };
       if (content.HasValue)
       {
         contentDict["turns"] = new List<object>(new[] { content?.ToJson() });
       }
       Dictionary<string, object> jsonDict = new() {
-      { "clientContent", contentDict }
-    };
+        { "clientContent", contentDict }
+      };
       var byteArray = Encoding.UTF8.GetBytes(Json.Serialize(jsonDict));
 
       await InternalSendBytesAsync(new ArraySegment<byte>(byteArray), cancellationToken);
@@ -166,23 +166,85 @@ namespace Firebase.AI
     /// </summary>
     /// <param name="mediaChunks">A list of media chunks to send.</param>
     /// <param name="cancellationToken">A token to cancel the send operation.</param>
+    /// <remarks>
+    /// Use SendAudioRealtimeAsync, SendVideoRealtimeAsync, or SendTextRealtimeAsync instead.
+    /// </remarks>
+    /// @deprecated Use SendAudioRealtimeAsync, SendVideoRealtimeAsync, or SendTextRealtimeAsync instead.
+    [Obsolete("Use SendAudioRealtimeAsync, SendVideoRealtimeAsync, or SendTextRealtimeAsync instead.")]
     public async Task SendMediaChunksAsync(
         List<ModelContent.InlineDataPart> mediaChunks,
         CancellationToken cancellationToken = default)
     {
       if (mediaChunks == null) return;
 
+      await InternalSendRealtimeInputAsync("mediaChunks",
+          mediaChunks.Select(mc => (mc as ModelContent.Part).ToJson()["inlineData"]).ToList(),
+          cancellationToken);
+    }
+
+    /// <summary>
+    /// Sends text data to the server in realtime.
+    ///
+    /// Check https://ai.google.dev/api/live#bidigeneratecontentrealtimeinput for
+    /// details about the realtime input usage.
+    /// </summary>
+    /// <param name="text">The text data to send.</param>
+    /// <param name="cancellationToken">A token to cancel the send operation.</param>
+    public async Task SendTextRealtimeAsync(
+        string text,
+        CancellationToken cancellationToken = default)
+    {
+      if (string.IsNullOrEmpty(text)) return;
+
+      await InternalSendRealtimeInputAsync("text", text, cancellationToken);
+    }
+
+    /// <summary>
+    /// Sends audio data to the server in realtime.
+    ///
+    /// Check https://ai.google.dev/api/live#bidigeneratecontentrealtimeinput for
+    /// details about the realtime input usage.
+    /// </summary>
+    /// <param name="audio">The audio data to send.</param>
+    /// <param name="cancellationToken">A token to cancel the send operation.</param>
+    public async Task SendAudioRealtimeAsync(
+        ModelContent.InlineDataPart audio,
+        CancellationToken cancellationToken = default)
+    {
+      await InternalSendRealtimeInputAsync("audio",
+          (audio as ModelContent.Part).ToJson()["inlineData"], cancellationToken);
+    }
+
+    /// <summary>
+    /// Sends video data to the server in realtime.
+    ///
+    /// Check https://ai.google.dev/api/live#bidigeneratecontentrealtimeinput for
+    /// details about the realtime input usage.
+    /// </summary>
+    /// <param name="video">The video data to send.</param>
+    /// <param name="cancellationToken">A token to cancel the send operation.</param>
+    /// <returns></returns>
+    public async Task SendVideoRealtimeAsync(
+        ModelContent.InlineDataPart video,
+        CancellationToken cancellationToken = default)
+    {
+      await InternalSendRealtimeInputAsync("video",
+          (video as ModelContent.Part).ToJson()["inlineData"], cancellationToken);
+    }
+
+    private async Task InternalSendRealtimeInputAsync(
+        string key, object data, CancellationToken cancellationToken)
+    {
       // Prepare the message payload.
       Dictionary<string, object> jsonDict = new() {
-      {
-        "realtimeInput", new Dictionary<string, object>() {
-          {
-            // InlineDataPart inherits from Part, so this conversion should be safe.
-            "mediaChunks", mediaChunks.Select(mc => (mc as ModelContent.Part).ToJson()["inlineData"]).ToList()
+        {
+          "realtimeInput", new Dictionary<string, object>() {
+            {
+              key, data
+            }
           }
         }
-      }
-    };
+      };
       var byteArray = Encoding.UTF8.GetBytes(Json.Serialize(jsonDict));
 
       await InternalSendBytesAsync(new ArraySegment<byte>(byteArray), cancellationToken);
@@ -214,7 +276,7 @@ namespace Firebase.AI
     public Task SendAudioAsync(float[] audioData, CancellationToken cancellationToken = default)
     {
       ModelContent.InlineDataPart inlineDataPart = new("audio/pcm", ConvertTo16BitPCM(audioData));
-      return SendMediaChunksAsync(new List<ModelContent.InlineDataPart>(new[] { inlineDataPart }), cancellationToken);
+      return SendAudioRealtimeAsync(inlineDataPart, cancellationToken);
     }
 
     /// <summary>
