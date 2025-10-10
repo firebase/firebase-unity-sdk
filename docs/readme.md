@@ -112,6 +112,8 @@ Release Notes
 ### Upcoming
 -   Changes
     - Firebase AI: Add support for Gemini's URL context tool.
+    - Firebase AI: Add more specific methods for sending realtime data to
+      the LiveSession. Deprecate the previous SendMediaChunksAsync method.
 
 ### 13.3.0
 -   Changes
