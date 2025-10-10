@@ -223,7 +223,6 @@ namespace Firebase.AI
     /// </summary>
     /// <param name="video">The video data to send.</param>
     /// <param name="cancellationToken">A token to cancel the send operation.</param>
-    /// <returns></returns>
     public async Task SendVideoRealtimeAsync(
         ModelContent.InlineDataPart video,
         CancellationToken cancellationToken = default)
