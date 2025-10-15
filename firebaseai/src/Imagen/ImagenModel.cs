@@ -33,10 +33,6 @@ namespace Firebase.AI
   /// documentation](https://firebase.google.com/docs/vertex-ai/generate-images-imagen?platform=unity)
   /// for more details about the image generation capabilities offered by the Imagen model in the
   /// Firebase AI SDK SDK.
-  ///
-  /// > Warning: For Firebase AI SDK, image generation using Imagen 3 models is in Public
-  /// Preview, which means that the feature is not subject to any SLA or deprecation policy and
-  /// could change in backwards-incompatible ways.
   /// </summary>
   public class ImagenModel
   {

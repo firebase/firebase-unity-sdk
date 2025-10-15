@@ -109,8 +109,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.4.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 13.2.0.
+    - General (Android): Update to Firebase Android BoM version 34.4.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.4.0.
     - Firebase AI: Add support for Gemini's URL context tool.
     - Firebase AI: Add more specific methods for sending realtime data to
       the LiveSession. Deprecate the previous SendMediaChunksAsync method.
