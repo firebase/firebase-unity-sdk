@@ -157,4 +157,60 @@ namespace Firebase.AI
     }
   }
 
+  /// <summary>
+  /// TODO
+  /// </summary>
+  public class TemplateImagenModel
+  {
+    private readonly FirebaseApp _firebaseApp;
+    private readonly FirebaseAI.Backend _backend;
+
+    private readonly HttpClient _httpClient;
+
+    internal TemplateImagenModel(FirebaseApp firebaseApp,
+        FirebaseAI.Backend backend, RequestOptions? requestOptions = null)
+    {
+      _firebaseApp = firebaseApp;
+      _backend = backend;
+
+      // Create a HttpClient using the timeout requested, or the default one.
+      _httpClient = new HttpClient()
+      {
+        Timeout = requestOptions?.Timeout ?? RequestOptions.DefaultTimeout
+      };
+    }
+
+    public async Task<ImagenGenerationResponse<ImagenInlineImage>> GenerateImagesAsync(
+        string templateId, IDictionary<string, object> inputs, CancellationToken cancellationToken = default)
+    {
+      HttpRequestMessage request = new(HttpMethod.Post,
+          HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templatePredict");
+
+      // Set the request headers
+      await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+
+      // Set the content
+      Dictionary<string, object> jsonDict = new()
+      {
+        ["inputs"] = inputs
+      };
+      string bodyJson = Json.Serialize(jsonDict);
+      request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log("Request:\n" + bodyJson);
+#endif
+
+      var response = await _httpClient.SendAsync(request, cancellationToken);
+      await HttpHelpers.ValidateHttpResponse(response);
+
+      string result = await response.Content.ReadAsStringAsync();
+
+#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log("Response:\n" + result);
+#endif
+
+      return ImagenGenerationResponse<ImagenInlineImage>.FromJson(result);
+    }
+  }
 }
