@@ -155,7 +155,20 @@ namespace Firebase.AI
       };
         if (_liveConfig != null)
         {
-          setupDict["generationConfig"] = _liveConfig?.ToJson();
+          var generationConfig = _liveConfig?.ToJson();
+          // Input/Output Transcriptions are defined on the config, but need to be set here.
+          if (generationConfig.TryGetValue("inputAudioTranscription", out object input))
+          {
+            setupDict["inputAudioTranscription"] = input;
+            generationConfig.Remove("inputAudioTranscription");
+          }
+          if (generationConfig.TryGetValue("outputAudioTranscription", out object output))
+          {
+            setupDict["outputAudioTranscription"] = output;
+            generationConfig.Remove("outputAudioTranscription");
+          }
+
+          setupDict["generationConfig"] = generationConfig;
         }
         if (_systemInstruction.HasValue)
         {

@@ -179,11 +179,26 @@ namespace Firebase.AI
     /// </summary>
     public readonly bool Interrupted { get; }
 
-    private LiveSessionContent(ModelContent? content, bool turnComplete, bool interrupted)
+    /// <summary>
+    /// The input transcription. Note that the transcription is independent to
+    /// the Content, and doesn't imply any ordering between them.
+    /// </summary>
+    public readonly Transcription? InputTranscription { get; }
+
+    /// <summary>
+    /// The output transcription. Note that the transcription is independent to
+    /// the Content, and doesn't imply any ordering between them.
+    /// </summary>
+    public readonly Transcription? OutputTranscription { get; }
+
+    private LiveSessionContent(ModelContent? content, bool turnComplete, bool interrupted,
+        Transcription? input, Transcription? output)
     {
       Content = content;
       TurnComplete = turnComplete;
       Interrupted = interrupted;
+      InputTranscription = input;
+      OutputTranscription = output;
     }
 
     /// <summary>
@@ -195,7 +210,9 @@ namespace Firebase.AI
       return new LiveSessionContent(
         jsonDict.ParseNullableObject("modelTurn", ModelContent.FromJson),
         jsonDict.ParseValue<bool>("turnComplete"),
-        jsonDict.ParseValue<bool>("interrupted")
+        jsonDict.ParseValue<bool>("interrupted"),
+        jsonDict.ParseNullableObject("inputTranscription", Transcription.FromJson),
+        jsonDict.ParseNullableObject("outputTranscription", Transcription.FromJson)
       );
     }
   }
@@ -268,6 +285,31 @@ namespace Firebase.AI
     {
       return new LiveSessionToolCallCancellation(
           jsonDict.ParseStringList("ids"));
+    }
+  }
+
+  /// <summary>
+  /// A transcription of the audio sent in a live session.
+  /// </summary>
+  public readonly struct Transcription
+  {
+    /// <summary>
+    /// The transcribed text.
+    /// </summary>
+    public readonly string Text { get; }
+
+    private Transcription(string text)
+    {
+      Text = text;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for deserializing JSON responses and should not be called directly.
+    /// </summary>
+    internal static Transcription FromJson(Dictionary<string, object> jsonDict)
+    {
+      return new Transcription(jsonDict.ParseValue<string>("text"));
     }
   }
 
