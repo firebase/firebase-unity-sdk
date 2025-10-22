@@ -95,6 +95,9 @@ namespace Firebase.AI
     private readonly AudioTranscriptionConfig? _inputAudioTranscription;
     private readonly AudioTranscriptionConfig? _outputAudioTranscription;
 
+    internal readonly AudioTranscriptionConfig? InputAudioTranscription => _inputAudioTranscription;
+    internal readonly AudioTranscriptionConfig? OutputAudioTranscription => _outputAudioTranscription;
+
     /// <summary>
     /// Creates a new `LiveGenerationConfig` value.
     ///
@@ -222,9 +225,6 @@ namespace Firebase.AI
       if (_maxOutputTokens.HasValue) jsonDict["maxOutputTokens"] = _maxOutputTokens.Value;
       if (_presencePenalty.HasValue) jsonDict["presencePenalty"] = _presencePenalty.Value;
       if (_frequencyPenalty.HasValue) jsonDict["frequencyPenalty"] = _frequencyPenalty.Value;
-      // These don't actually want to be on this object, but to pass the info above, we add it here.
-      if (_inputAudioTranscription.HasValue) jsonDict["inputAudioTranscription"] = _inputAudioTranscription?.ToJson();
-      if (_outputAudioTranscription.HasValue) jsonDict["outputAudioTranscription"] = _outputAudioTranscription?.ToJson();
 
       return jsonDict;
     }
