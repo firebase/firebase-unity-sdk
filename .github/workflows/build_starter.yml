@@ -58,7 +58,7 @@ on:
 permissions: write-all
 
 env:
-  pythonVersion: '3.8'
+  pythonVersion: '3.9'
 
 jobs:
   check_and_prepare:
