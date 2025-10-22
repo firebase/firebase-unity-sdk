@@ -94,7 +94,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install python deps
         shell: bash
@@ -277,7 +277,7 @@ jobs:
     - name: Setup python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.9
     - name: Generate token for GitHub API
       # This step is necessary because the existing GITHUB_TOKEN cannot be used inside one workflow to trigger another.
       # 

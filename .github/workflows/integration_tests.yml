@@ -37,7 +37,7 @@ env:
   triggerLabelPrefix: "tests-requested: "
   triggerLabelFull: "tests-requested: full"
   triggerLabelQuick: "tests-requested: quick"
-  pythonVersion: '3.8'
+  pythonVersion: '3.9'
   artifactRetentionDays: 2
 
 jobs:
@@ -190,7 +190,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
@@ -371,7 +371,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
@@ -497,7 +497,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Install python deps
         timeout-minutes: 10
         shell: bash
