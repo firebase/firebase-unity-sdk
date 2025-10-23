@@ -53,12 +53,28 @@ namespace Firebase.AI
       if (!string.IsNullOrWhiteSpace(voice))
       {
         dict["voiceConfig"] = new Dictionary<string, object>() {
-        { "prebuiltVoiceConfig" , new Dictionary<string, object>() {
-          { "voiceName", voice }
-        } }
-      };
+          { "prebuiltVoiceConfig" , new Dictionary<string, object>() {
+            { "voiceName", voice }
+          } }
+        };
       }
 
+      return dict;
+    }
+  }
+
+  /// <summary>
+  /// A struct used to configure speech transcription settings.
+  /// </summary>
+  public readonly struct AudioTranscriptionConfig
+  {
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      Dictionary<string, object> dict = new();
       return dict;
     }
   }
@@ -76,6 +92,11 @@ namespace Firebase.AI
     private readonly int? _maxOutputTokens;
     private readonly float? _presencePenalty;
     private readonly float? _frequencyPenalty;
+    private readonly AudioTranscriptionConfig? _inputAudioTranscription;
+    private readonly AudioTranscriptionConfig? _outputAudioTranscription;
+
+    internal readonly AudioTranscriptionConfig? InputAudioTranscription => _inputAudioTranscription;
+    internal readonly AudioTranscriptionConfig? OutputAudioTranscription => _outputAudioTranscription;
 
     /// <summary>
     /// Creates a new `LiveGenerationConfig` value.
@@ -168,7 +189,9 @@ namespace Firebase.AI
         float? topK = null,
         int? maxOutputTokens = null,
         float? presencePenalty = null,
-        float? frequencyPenalty = null)
+        float? frequencyPenalty = null,
+        AudioTranscriptionConfig? inputAudioTranscription = null,
+        AudioTranscriptionConfig? outputAudioTranscription = null)
     {
       _speechConfig = speechConfig;
       _responseModalities = responseModalities != null ?
@@ -179,6 +202,8 @@ namespace Firebase.AI
       _maxOutputTokens = maxOutputTokens;
       _presencePenalty = presencePenalty;
       _frequencyPenalty = frequencyPenalty;
+      _inputAudioTranscription = inputAudioTranscription;
+      _outputAudioTranscription = outputAudioTranscription;
     }
 
     /// <summary>
