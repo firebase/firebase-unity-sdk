@@ -36,7 +36,8 @@ namespace Firebase.AI
         IAsyncEnumerable<GenerateContentResponse>>;
 
   /// <summary>
-  /// TODO
+  /// A type that represents a remote multimodal model (like Gemini), with the ability to generate
+  /// content based on defined server prompt templates.
   /// </summary>
   public class TemplateGenerativeModel
   {
@@ -65,12 +66,13 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// TODO
+    /// Generates new content by calling into a server prompt template.
     /// </summary>
-    /// <param name="templateId"></param>
-    /// <param name="inputs"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="templateId">The id of the server prompt template to use.</param>
+    /// <param name="inputs">Any input parameters expected by the server prompt template.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>The generated content response from the model.</returns>
+    /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
     public Task<GenerateContentResponse> GenerateContentAsync(
         string templateId, IDictionary<string, object> inputs,
         CancellationToken cancellationToken = default)
@@ -79,13 +81,13 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// TODO
+    /// Generates new content as a stream by calling into a server prompt template.
     /// </summary>
-    /// <param name="templateId"></param>
-    /// <param name="inputs"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
+    /// <param name="templateId">The id of the server prompt template to use.</param>
+    /// <param name="inputs">Any input parameters expected by the server prompt template.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>A stream of generated content responses from the model.</returns>
+    /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
     public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
             string templateId, IDictionary<string, object> inputs,
             CancellationToken cancellationToken = default)
@@ -94,11 +96,10 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// TODO
+    /// Creates a new templated chat conversation using this model with the provided history.
     /// </summary>
-    /// <param name="templateId"></param>
-    /// <param name="history"></param>
-    /// <returns></returns>
+    /// <param name="templateId">The id of the server prompt template to use.</param>
+    /// <param name="history">Initial content history to start with.</param>
     public TemplateChatSession StartChat(string templateId, IEnumerable<ModelContent> history = null)
     {
       return new TemplateChatSession(
@@ -194,7 +195,8 @@ namespace Firebase.AI
   }
 
   /// <summary>
-  /// TODO
+  /// An object that represents a back-and-forth chat with a model using a server prompt template,
+  /// capturing the history and saving the context in memory between each message sent.
   /// </summary>
   public class TemplateChatSession
   {
@@ -204,7 +206,8 @@ namespace Firebase.AI
     private readonly List<ModelContent> _chatHistory;
 
     /// <summary>
-    /// TODO
+    /// The previous content from the chat that has been successfully sent and received from the
+    /// model. This will be provided to the model for each message sent as context for the discussion.
     /// </summary>
     public IReadOnlyList<ModelContent> History => _chatHistory;
 

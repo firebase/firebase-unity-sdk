@@ -45,6 +45,10 @@ namespace Firebase.AI
 
     private readonly HttpClient _httpClient;
 
+    /// <summary>
+    /// Intended for internal use only.
+    /// Use `FirebaseAI.GetImagenModel` instead to ensure proper initialization and configuration of the `ImagenModel`.
+    /// </summary>
     internal ImagenModel(FirebaseApp firebaseApp,
                         FirebaseAI.Backend backend,
                         string modelName,
@@ -158,7 +162,7 @@ namespace Firebase.AI
   }
 
   /// <summary>
-  /// TODO
+  /// Represents a remote Imagen model with the ability to generate images using server template prompts.
   /// </summary>
   public class TemplateImagenModel
   {
@@ -167,6 +171,10 @@ namespace Firebase.AI
 
     private readonly HttpClient _httpClient;
 
+    /// <summary>
+    /// Intended for internal use only.
+    /// Use `FirebaseAI.GetTemplateImagenModel` instead to ensure proper initialization and configuration of the `TemplateImagenModel`.
+    /// </summary>
     internal TemplateImagenModel(FirebaseApp firebaseApp,
         FirebaseAI.Backend backend, RequestOptions? requestOptions = null)
     {
@@ -180,6 +188,14 @@ namespace Firebase.AI
       };
     }
 
+    /// <summary>
+    /// Generates images using the Template Imagen model and returns them as inline data.
+    /// </summary>
+    /// <param name="templateId">The id of the server prompt template to use.</param>
+    /// <param name="inputs">Any input parameters expected by the server prompt template.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>The generated content response from the model.</returns>
+    /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
     public async Task<ImagenGenerationResponse<ImagenInlineImage>> GenerateImagesAsync(
         string templateId, IDictionary<string, object> inputs, CancellationToken cancellationToken = default)
     {
