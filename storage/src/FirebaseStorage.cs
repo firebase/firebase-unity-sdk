@@ -259,6 +259,21 @@ namespace Firebase.Storage {
     }
 
     /// <summary>
+    ///   Configures the Storage SDK to use an emulated backend instead of
+    ///   the default remote backend. This method should be called before invoking
+    ///   any other methods on a new instance of Storage
+    /// </summary>
+    /// <param name="host">
+    ///   The host that the storage emulator is running on.
+    /// </param>
+    /// <param name="port">
+    ///   The port that the storage emulator is running on.
+    /// </param>
+    public void UseEmulator(string host, int port) {
+      storageInternal.UseEmulator(host, port);
+    }
+
+    /// <summary>
     ///   Creates a new
     ///   <see cref="StorageReference" />
     ///   initialized at the root Cloud Storage location.
