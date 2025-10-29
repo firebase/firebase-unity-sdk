@@ -95,18 +95,6 @@ namespace Firebase.AI
       return GenerateContentStreamAsyncInternal(templateId, inputs, null, cancellationToken);
     }
 
-    /// <summary>
-    /// Creates a new templated chat conversation using this model with the provided history.
-    /// </summary>
-    /// <param name="templateId">The id of the server prompt template to use.</param>
-    /// <param name="history">Initial content history to start with.</param>
-    public TemplateChatSession StartChat(string templateId, IEnumerable<ModelContent> history = null)
-    {
-      return new TemplateChatSession(
-          GenerateContentAsyncInternal, GenerateContentStreamAsyncInternal,
-          templateId, history);
-    }
-
     private string MakeGenerateContentRequest(IDictionary<string, object> inputs,
         IEnumerable<ModelContent> chatHistory)
     {
@@ -191,73 +179,6 @@ namespace Firebase.AI
           yield return GenerateContentResponse.FromJson(line[HttpHelpers.StreamPrefix.Length..], _backend.Provider);
         }
       }
-    }
-  }
-
-  /// <summary>
-  /// An object that represents a back-and-forth chat with a model using a server prompt template,
-  /// capturing the history and saving the context in memory between each message sent.
-  /// </summary>
-  public class TemplateChatSession
-  {
-    private readonly GenContentFunc _genContentFunc;
-    private readonly StreamContentFunc _streamContentFunc;
-    private readonly string _templateId;
-    private readonly List<ModelContent> _chatHistory;
-
-    /// <summary>
-    /// The previous content from the chat that has been successfully sent and received from the
-    /// model. This will be provided to the model for each message sent as context for the discussion.
-    /// </summary>
-    public IReadOnlyList<ModelContent> History => _chatHistory;
-
-    internal TemplateChatSession(GenContentFunc genContentFunc, StreamContentFunc streamContentFunc,
-        string templateId, IEnumerable<ModelContent> initialHistory)
-    {
-      _genContentFunc = genContentFunc;
-      _streamContentFunc = streamContentFunc;
-      _templateId = templateId;
-      if (initialHistory != null)
-      {
-        _chatHistory = new List<ModelContent>(initialHistory);
-      }
-      else
-      {
-        _chatHistory = new List<ModelContent>();
-      }
-    }
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    /// <param name="message"></param>
-    /// <param name="inputs"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public async Task<GenerateContentResponse> SendMessageAsync(ModelContent message,
-        IDictionary<string, object> inputs, CancellationToken cancellationToken = default)
-    {
-      // Set up the context to send in the request
-      List<ModelContent> fullHistory = new(_chatHistory)
-      {
-        // Make sure that the requests are set to to role "user".
-        FirebaseAIExtensions.ConvertToUser(message)
-      };
-
-      var response = await _genContentFunc(_templateId, inputs,
-          fullHistory, cancellationToken);
-
-      // Only after getting a valid response, add both to the history for later.
-      // But either way pass the response along to the user.
-      if (response.Candidates.Any())
-      {
-        ModelContent responseContent = response.Candidates.First().Content;
-
-        _chatHistory.Add(FirebaseAIExtensions.ConvertToUser(message));
-        _chatHistory.Add(responseContent.ConvertToModel());
-      }
-
-      return response;
     }
   }
 }
