@@ -15,7 +15,8 @@
 // Uncomment to include logic to sign in to Auth as part of the tests
 //#define INCLUDE_FIREBASE_AUTH
 
-namespace Firebase.Sample.FirebaseAI {
+namespace Firebase.Sample.FirebaseAI
+{
   using Firebase;
   using Firebase.AI;
   using Firebase.Extensions;
@@ -34,7 +35,8 @@ namespace Firebase.Sample.FirebaseAI {
 #endif
 
   // An automated version of the UIHandler that runs tests on Firebase AI.
-  public class UIHandlerAutomated : UIHandler {
+  public class UIHandlerAutomated : UIHandler
+  {
     // Delegate which validates a completed task.
     delegate Task TaskValidationDelegate(Task task);
 
@@ -45,12 +47,14 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Not reusing the ones from the SDK, since they are internal and only visible
     // because we are providing source libraries.
-    private enum Backend {
+    private enum Backend
+    {
       GoogleAI,
       VertexAI,
     }
 
-    protected override void Start() {
+    protected override void Start()
+    {
       // Set of tests that use multiple backends.
       Func<Backend, Task>[] multiBackendTests = {
         TestCreateModel,
@@ -75,6 +79,8 @@ namespace Firebase.Sample.FirebaseAI {
         TestImagenGenerateImageOptions,
         TestThinkingBudget,
         TestIncludeThoughts,
+        TestCodeExecution,
+        TestUrlContext,
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
@@ -100,18 +106,23 @@ namespace Firebase.Sample.FirebaseAI {
         InternalTestGenerateImagesAllFiltered,
         InternalTestGenerateImagesBase64SomeFiltered,
         InternalTestThoughtSummary,
+        InternalTestCodeExecution,
+        InternalTestUrlContextMixedValidity,
       };
 
       // Create the set of tests, combining the above lists.
       List<Func<Task>> tests = new();
       List<string> testNames = new();
-      foreach (Backend backend in Enum.GetValues(typeof(Backend))) {
-        foreach (var testMethod in multiBackendTests) {
+      foreach (Backend backend in Enum.GetValues(typeof(Backend)))
+      {
+        foreach (var testMethod in multiBackendTests)
+        {
           tests.Add(() => testMethod(backend));
           testNames.Add($"{testMethod.Method.Name}_{backend}");
         }
       }
-      foreach (var testMethod in singleTests) {
+      foreach (var testMethod in singleTests)
+      {
         tests.Add(testMethod);
         testNames.Add(testMethod.Method.Name);
       }
@@ -129,56 +140,71 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Passes along the update call to automated test runner.
-    protected override void Update() {
+    protected override void Update()
+    {
       base.Update();
-      if (testRunner != null) {
+      if (testRunner != null)
+      {
         testRunner.Update();
       }
     }
 
     // Throw when condition is false.
-    private void Assert(string message, bool condition) {
+    private void Assert(string message, bool condition)
+    {
       if (!condition)
+      {
         throw new Exception(
           $"Assertion failed ({testRunner.CurrentTestDescription}): {message}");
+      }
     }
 
     // Throw when value1 != value2.
-    private void AssertEq<T>(string message, T value1, T value2) {
-      if (!object.Equals(value1, value2)) {
+    private void AssertEq<T>(string message, T value1, T value2)
+    {
+      if (!object.Equals(value1, value2))
+      {
         throw new Exception(
           $"Assertion failed ({testRunner.CurrentTestDescription}): {value1} != {value2} ({message})");
       }
     }
 
     // Throw when the floats are not close enough in value to each other.
-    private void AssertFloatEq(string message, float value1, float value2) {
-      if (!(Math.Abs(value1 - value2) < 0.0001f)) {
+    private void AssertFloatEq(string message, float value1, float value2)
+    {
+      if (!(Math.Abs(value1 - value2) < 0.0001f))
+      {
         throw new Exception(
           $"Assertion failed ({testRunner.CurrentTestDescription}): {value1} !~= {value2} ({message})");
       }
     }
 
-    private void AssertType<T>(string message, object obj, out T output) {
-      if (obj is T parsed) {
+    private void AssertType<T>(string message, object obj, out T output)
+    {
+      if (obj is T parsed)
+      {
         output = parsed;
       }
-      else {
+      else
+      {
         throw new Exception(
           $"Assertion failed ({testRunner.CurrentTestDescription}): {obj.GetType()} is wrong type ({message})");
       }
     }
 
     // Returns true if the given value is between 0 and 1 (inclusive).
-    private bool ValidProbability(float value) {
+    private bool ValidProbability(float value)
+    {
       return value >= 0.0f && value <= 1.0f;
     }
 
     // The model name to use for the tests.
     private readonly string TestModelName = "gemini-2.0-flash";
 
-    private FirebaseAI GetFirebaseAI(Backend backend) {
-      return backend switch {
+    private FirebaseAI GetFirebaseAI(Backend backend)
+    {
+      return backend switch
+      {
         Backend.GoogleAI => FirebaseAI.GetInstance(FirebaseAI.Backend.GoogleAI()),
         Backend.VertexAI => FirebaseAI.GetInstance(FirebaseAI.Backend.VertexAI()),
         _ => throw new ArgumentOutOfRangeException(nameof(backend), backend,
@@ -187,19 +213,22 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Get a basic version of the GenerativeModel to test against.
-    private GenerativeModel CreateGenerativeModel(Backend backend) {
+    private GenerativeModel CreateGenerativeModel(Backend backend)
+    {
       return GetFirebaseAI(backend).GetGenerativeModel(TestModelName);
     }
 
     // Test if it can create the GenerativeModel.
-    Task TestCreateModel(Backend backend) {
+    Task TestCreateModel(Backend backend)
+    {
       var model = CreateGenerativeModel(backend);
       Assert("Failed to create a GenerativeModel.", model != null);
       return Task.CompletedTask;
     }
 
     // Test if it can set a string in, and get a string output.
-    async Task TestBasicText(Backend backend) {
+    async Task TestBasicText(Backend backend)
+    {
       var model = CreateGenerativeModel(backend);
 
       GenerateContentResponse response = await model.GenerateContentAsync(
@@ -212,7 +241,8 @@ namespace Firebase.Sample.FirebaseAI {
 
       Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
       // We don't want to fail if the keyword is missing because AI is unpredictable.
-      if (!response.Text.Contains("Firebase")) {
+      if (!response.Text.Contains("Firebase"))
+      {
         DebugLog("WARNING: Response string was missing the expected keyword 'Firebase': " +
             $"\n{result}");
       }
@@ -222,12 +252,14 @@ namespace Firebase.Sample.FirebaseAI {
 
       // Ignoring PromptFeedback, too unpredictable if it will be present for this test.
 
-      if (response.UsageMetadata.HasValue) {
+      if (response.UsageMetadata.HasValue)
+      {
         Assert("Invalid CandidatesTokenCount", response.UsageMetadata?.CandidatesTokenCount > 0);
         Assert("Invalid PromptTokenCount", response.UsageMetadata?.PromptTokenCount > 0);
         Assert("Invalid TotalTokenCount", response.UsageMetadata?.TotalTokenCount > 0);
       }
-      else {
+      else
+      {
         DebugLog("WARNING: UsageMetadata was missing from BasicText");
       }
 
@@ -236,7 +268,8 @@ namespace Firebase.Sample.FirebaseAI {
         candidate.FinishReason == FinishReason.Stop);
 
       // Test the SafetyRatings, if we got any.
-      foreach (SafetyRating safetyRating in candidate.SafetyRatings) {
+      foreach (SafetyRating safetyRating in candidate.SafetyRatings)
+      {
         string prefix = $"SafetyRating {safetyRating.Category}";
         Assert($"{prefix} claims it was blocked", !safetyRating.Blocked);
         Assert($"{prefix} has a Probability outside the expected range " +
@@ -247,22 +280,26 @@ namespace Firebase.Sample.FirebaseAI {
             ValidProbability(safetyRating.SeverityScore));
 
         // They should be Negligible, but AI can be unpredictable, so just warn
-        if (safetyRating.Probability != SafetyRating.HarmProbability.Negligible) {
+        if (safetyRating.Probability != SafetyRating.HarmProbability.Negligible)
+        {
           DebugLog($"WARNING: {prefix} has a high probability: {safetyRating.Probability}");
         }
-        if (safetyRating.Severity != SafetyRating.HarmSeverity.Negligible) {
+        if (safetyRating.Severity != SafetyRating.HarmSeverity.Negligible)
+        {
           DebugLog($"WARNING: {prefix} has a high severity: {safetyRating.Severity}");
         }
       }
 
       // For such a basic text, we don't expect citation data, so warn.
-      if (candidate.CitationMetadata.HasValue) {
+      if (candidate.CitationMetadata.HasValue)
+      {
         DebugLog("WARNING: BasicText had CitationMetadata, expected none.");
       }
     }
 
     // Test if passing an Image and Text works.
-    async Task TestBasicImage(Backend backend) {
+    async Task TestBasicImage(Backend backend)
+    {
       var model = CreateGenerativeModel(backend);
 
       Assert("Missing RedBlueTexture", RedBlueTexture != null);
@@ -282,14 +319,16 @@ namespace Firebase.Sample.FirebaseAI {
       Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
       // We don't want to fail if the colors are missing/wrong because AI is unpredictable.
       if (!response.Text.Contains("red", StringComparison.OrdinalIgnoreCase) ||
-          !response.Text.Contains("blue", StringComparison.OrdinalIgnoreCase)) {
+          !response.Text.Contains("blue", StringComparison.OrdinalIgnoreCase))
+      {
         DebugLog("WARNING: Response string was missing the correct colors: " +
             $"\n{result}");
       }
     }
 
     // Test if passing in multiple model options works.
-    async Task TestModelOptions(Backend backend) {
+    async Task TestModelOptions(Backend backend)
+    {
       // Note that most of these settings are hard to reliably verify, so as
       // long as the call works we are generally happy.
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
@@ -325,13 +364,15 @@ namespace Firebase.Sample.FirebaseAI {
       // Assuming the GenerationConfig and SystemInstruction worked,
       // it should respond with just 'Apples' (though possibly with extra whitespace).
       // However, we only warn, because it isn't guaranteed.
-      if (result.Trim() != "Apples") {
+      if (result.Trim() != "Apples")
+      {
         DebugLog($"WARNING: Response text wasn't just 'Apples': {result}");
       }
     }
 
     // Test if requesting multiple candidates works.
-    async Task TestMultipleCandidates(Backend backend) {
+    async Task TestMultipleCandidates(Backend backend)
+    {
       var genConfig = new GenerationConfig(candidateCount: 2);
 
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
@@ -346,7 +387,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if generating a stream of text works.
-    async Task TestBasicTextStream(Backend backend) {
+    async Task TestBasicTextStream(Backend backend)
+    {
       var model = CreateGenerativeModel(backend);
 
       string keyword = "Firebase";
@@ -358,16 +400,19 @@ namespace Firebase.Sample.FirebaseAI {
       string fullResult = "";
       // The FinishReason should only be set to stop at the end of the stream.
       bool finishReasonStop = false;
-      await foreach (GenerateContentResponse response in responseStream) {
+      await foreach (GenerateContentResponse response in responseStream)
+      {
         // Should only be receiving non-empty text responses, but only assert for null.
         string text = response.Text;
         Assert("Received null text from the stream.", text != null);
-        if (string.IsNullOrWhiteSpace(text)) {
+        if (string.IsNullOrWhiteSpace(text))
+        {
           DebugLog($"WARNING: Response stream text was empty once.");
         }
 
         Assert("Previous FinishReason was stop, but received more", !finishReasonStop);
-        if (response.Candidates.First().FinishReason == FinishReason.Stop) {
+        if (response.Candidates.First().FinishReason == FinishReason.Stop)
+        {
           finishReasonStop = true;
         }
 
@@ -377,7 +422,8 @@ namespace Firebase.Sample.FirebaseAI {
       Assert("Finished without seeing FinishReason.Stop", finishReasonStop);
 
       // We don't want to fail if the keyword is missing because AI is unpredictable.
-      if (!fullResult.Contains("Firebase")) {
+      if (!fullResult.Contains("Firebase"))
+      {
         DebugLog("WARNING: Response string was missing the expected keyword 'Firebase': " +
             $"\n{fullResult}");
       }
@@ -394,7 +440,8 @@ namespace Firebase.Sample.FirebaseAI {
     // Create a GenerativeModel using the parameters above to test Function Calling.
     private GenerativeModel CreateGenerativeModelWithBasicFunctionCall(
       Backend backend,
-      ToolConfig? toolConfig = null) {
+      ToolConfig? toolConfig = null)
+    {
       var tool = new Tool(new FunctionDeclaration(
         basicFunctionName, "A function used to test Function Calling.",
         new Dictionary<string, Schema>() {
@@ -413,7 +460,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if FunctionCalling works, using Any to force it.
-    async Task TestFunctionCallingAny(Backend backend) {
+    async Task TestFunctionCallingAny(Backend backend)
+    {
       // Setting this to Any should force my function call.
       var model = CreateGenerativeModelWithBasicFunctionCall(backend, new ToolConfig(FunctionCallingConfig.Any()));
 
@@ -443,7 +491,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if setting None will prevent Function Calling.
-    async Task TestFunctionCallingNone(Backend backend) {
+    async Task TestFunctionCallingNone(Backend backend)
+    {
       // Setting this to None should block my function call.
       var model = CreateGenerativeModelWithBasicFunctionCall(backend, new ToolConfig(FunctionCallingConfig.None()));
 
@@ -456,7 +505,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if setting a response schema with an enum works.
-    async Task TestEnumSchemaResponse(Backend backend) {
+    async Task TestEnumSchemaResponse(Backend backend)
+    {
       string enumValue = "MyTestEnum";
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(
@@ -470,7 +520,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if setting a response schema with an enum works.
-    async Task TestAnyOfSchemaResponse(Backend backend) {
+    async Task TestAnyOfSchemaResponse(Backend backend)
+    {
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(
           responseMimeType: "application/json",
@@ -487,7 +538,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test grounding with Google Search.
-    async Task TestSearchGrounding(Backend backend) {
+    async Task TestSearchGrounding(Backend backend)
+    {
       // Use a model that supports grounding.
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         tools: new Tool[] { new Tool(new GoogleSearch()) }
@@ -524,7 +576,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if when using Chat the model will get the previous messages.
-    async Task TestChatBasicTextNoHistory(Backend backend) {
+    async Task TestChatBasicTextNoHistory(Backend backend)
+    {
       var model = CreateGenerativeModel(backend);
       var chat = model.StartChat();
 
@@ -534,7 +587,8 @@ namespace Firebase.Sample.FirebaseAI {
           "in all future responses?");
 
       Assert("First response was empty.", !string.IsNullOrWhiteSpace(response1.Text));
-      if (!response1.Text.Contains(keyword)) {
+      if (!response1.Text.Contains(keyword))
+      {
         DebugLog($"WARNING: First response string was missing the expected keyword '{keyword}': " +
             $"\n{response1.Text}");
       }
@@ -544,7 +598,8 @@ namespace Firebase.Sample.FirebaseAI {
           "include the special word I told you before in it.");
 
       Assert("Second response was empty.", !string.IsNullOrWhiteSpace(response2.Text));
-      if (!response2.Text.Contains(keyword)) {
+      if (!response2.Text.Contains(keyword))
+      {
         DebugLog($"WARNING: Second response string was missing the expected keyword '{keyword}': " +
             $"\n{response2.Text}");
       }
@@ -553,7 +608,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if when using Chat the model gets the initial starting history.
-    async Task TestChatBasicTextPriorHistory(Backend backend) {
+    async Task TestChatBasicTextPriorHistory(Backend backend)
+    {
       var model = CreateGenerativeModel(backend);
       string keyword = "Firebase";
       var chat = model.StartChat(
@@ -566,7 +622,8 @@ namespace Firebase.Sample.FirebaseAI {
           "with that special word?");
 
       Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
-      if (!response.Text.Contains(keyword)) {
+      if (!response.Text.Contains(keyword))
+      {
         DebugLog($"WARNING: Response string was missing the expected keyword '{keyword}': " +
             $"\n{response.Text}");
       }
@@ -575,7 +632,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if when using Chat, the model handles Function Calling, and getting a response.
-    async Task TestChatFunctionCalling(Backend backend) {
+    async Task TestChatFunctionCalling(Backend backend)
+    {
       var tool = new Tool(new FunctionDeclaration(
         "GetKeyword", "Call to retrieve a special keyword.",
         new Dictionary<string, Schema>() {
@@ -601,7 +659,8 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("Wrong number of Args", functionCall.Args.Count, 1);
       Assert($"Missing parameter", functionCall.Args.ContainsKey("input"));
       AssertType("Input parameter", functionCall.Args["input"], out string inputParameter);
-      if (inputParameter != expectedInput) {
+      if (inputParameter != expectedInput)
+      {
         DebugLog($"WARNING: Input parameter: {inputParameter} != {expectedInput}");
       }
 
@@ -613,7 +672,8 @@ namespace Firebase.Sample.FirebaseAI {
 
       // Second response should hopefully have the keyword as part of it.
       Assert("Second response was empty.", !string.IsNullOrWhiteSpace(response2.Text));
-      if (!response2.Text.Contains(keyword)) {
+      if (!response2.Text.Contains(keyword))
+      {
         DebugLog($"WARNING: Response string was missing the expected keyword '{keyword}': " +
             $"\n{response2.Text}");
       }
@@ -622,7 +682,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if Chat works with streaming a text result.
-    async Task TestChatBasicTextStream(Backend backend) {
+    async Task TestChatBasicTextStream(Backend backend)
+    {
       var model = CreateGenerativeModel(backend);
 
       string keyword = "Firebase";
@@ -640,16 +701,19 @@ namespace Firebase.Sample.FirebaseAI {
       // The FinishReason should only be set to stop at the end of the stream.
       bool finishReasonStop = false;
       int responseCount = 0;
-      await foreach (GenerateContentResponse response in responseStream) {
+      await foreach (GenerateContentResponse response in responseStream)
+      {
         // Should only be receiving non-empty text responses, but only assert for null.
         string text = response.Text;
         Assert("Received null text from the stream.", text != null);
-        if (string.IsNullOrWhiteSpace(text)) {
+        if (string.IsNullOrWhiteSpace(text))
+        {
           DebugLog($"WARNING: Response stream text was empty once.");
         }
 
         Assert("Previous FinishReason was stop, but received more", !finishReasonStop);
-        if (response.Candidates.First().FinishReason == FinishReason.Stop) {
+        if (response.Candidates.First().FinishReason == FinishReason.Stop)
+        {
           finishReasonStop = true;
         }
 
@@ -660,7 +724,8 @@ namespace Firebase.Sample.FirebaseAI {
       Assert("Finished without seeing FinishReason.Stop", finishReasonStop);
 
       // We don't want to fail if the keyword is missing because AI is unpredictable.
-      if (!fullResult.Contains(keyword)) {
+      if (!fullResult.Contains(keyword))
+      {
         DebugLog($"WARNING: Streaming response was missing the expected keyword '{keyword}': " +
             $"\n{fullResult}");
       }
@@ -673,7 +738,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test if calling CountTokensAsync works as expected.
-    async Task TestCountTokens(Backend backend) {
+    async Task TestCountTokens(Backend backend)
+    {
       // Include some additional settings, since they are used in the call.
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(temperature: 0.8f),
@@ -691,7 +757,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test being able to provide a Youtube link to the model.
-    async Task TestYoutubeLink(Backend backend) {
+    async Task TestYoutubeLink(Backend backend)
+    {
       var model = CreateGenerativeModel(backend);
 
       GenerateContentResponse response = await model.GenerateContentAsync(new ModelContent[] {
@@ -706,7 +773,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test being able to generate an image with GenerateContent.
-    async Task TestGenerateImage(Backend backend) {
+    async Task TestGenerateImage(Backend backend)
+    {
       var model = GetFirebaseAI(backend).GetGenerativeModel("gemini-2.0-flash-exp",
         generationConfig: new GenerationConfig(
           responseModalities: new[] { ResponseModality.Text, ResponseModality.Image })
@@ -722,12 +790,16 @@ namespace Firebase.Sample.FirebaseAI {
       bool foundText = false;
       bool foundImage = false;
       var candidate = response.Candidates.First();
-      foreach (var part in candidate.Content.Parts) {
-        if (part is ModelContent.TextPart) {
+      foreach (var part in candidate.Content.Parts)
+      {
+        if (part is ModelContent.TextPart)
+        {
           foundText = true;
         }
-        else if (part is ModelContent.InlineDataPart dataPart) {
-          if (dataPart.MimeType.Contains("image")) {
+        else if (part is ModelContent.InlineDataPart dataPart)
+        {
+          if (dataPart.MimeType.Contains("image"))
+          {
             foundImage = true;
           }
         }
@@ -736,7 +808,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test generating an image via Imagen.
-    async Task TestImagenGenerateImage(Backend backend) {
+    async Task TestImagenGenerateImage(Backend backend)
+    {
       var model = GetFirebaseAI(backend).GetImagenModel("imagen-3.0-generate-002");
 
       var response = await model.GenerateImagesAsync(
@@ -756,7 +829,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test generating an image via Imagen with various options.
-    async Task TestImagenGenerateImageOptions(Backend backend) {
+    async Task TestImagenGenerateImageOptions(Backend backend)
+    {
       var model = GetFirebaseAI(backend).GetImagenModel(
           modelName: "imagen-3.0-generate-002",
           generationConfig: new ImagenGenerationConfig(
@@ -777,7 +851,8 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("FilteredReason", response.FilteredReason, null);
       AssertEq("Image Count", response.Images.Count, 2);
 
-      for (int i = 0; i < 2; i++) {
+      for (int i = 0; i < 2; i++)
+      {
         AssertEq($"Image {i} MimeType", response.Images[i].MimeType, "image/jpeg");
 
         var texture = response.Images[i].AsTexture2D();
@@ -790,7 +865,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test defining a thinking budget, and getting back thought tokens.
-    async Task TestThinkingBudget(Backend backend) {
+    async Task TestThinkingBudget(Backend backend)
+    {
       // Thinking Budget requires at least the 2.5 model.
       var model = GetFirebaseAI(backend).GetGenerativeModel(
         modelName: "gemini-2.5-flash",
@@ -817,13 +893,9 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test requesting thought summaries.
-    async Task TestIncludeThoughts(Backend backend) {
+    async Task TestIncludeThoughts(Backend backend)
+    {
       // Thinking Budget requires at least the 2.5 model.
-      var tool = new Tool(new FunctionDeclaration(
-        "GetKeyword", "Call to retrieve a special keyword.",
-        new Dictionary<string, Schema>() {
-          { "input", Schema.String("Input string") },
-        }));
       var model = GetFirebaseAI(backend).GetGenerativeModel(
         modelName: "gemini-2.5-flash",
         generationConfig: new GenerationConfig(
@@ -844,8 +916,58 @@ namespace Firebase.Sample.FirebaseAI {
       Assert("ThoughtSummary was missing", !string.IsNullOrWhiteSpace(response.ThoughtSummary));
     }
 
+    async Task TestCodeExecution(Backend backend)
+    {
+      var model = GetFirebaseAI(backend).GetGenerativeModel(
+        modelName: TestModelName,
+        tools: new Tool[] { new Tool(new CodeExecution()) }
+      );
+
+      var prompt = "What is the sum of the first 50 prime numbers? Generate and run code for the calculation.";
+      var chat = model.StartChat();
+      var response = await chat.SendMessageAsync(prompt);
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      var executableCodeParts = response.Candidates.First().Content.Parts.OfType<ModelContent.ExecutableCodePart>();
+      Assert("Missing ExecutableCodeParts", executableCodeParts.Any());
+
+      var codeExecutionResultParts = response.Candidates.First().Content.Parts.OfType<ModelContent.CodeExecutionResultPart>();
+      Assert("Missing CodeExecutionResultParts", codeExecutionResultParts.Any());
+    }
+
+    async Task TestUrlContext(Backend backend)
+    {
+      if (backend == Backend.GoogleAI)
+      {
+        // TODO: Remove when the backend is more reliable
+        // The Developer backend keeps raising issues with URL context, so disable for now
+        return;
+      }
+
+      var model = GetFirebaseAI(backend).GetGenerativeModel(
+        // Url Context requires 2.5 or newer
+        modelName: "gemini-2.5-flash",
+        tools: new Tool[] { new Tool(new UrlContext()) }
+      );
+
+      var prompt = "Can you summarize https://firebase.google.com/games";
+      var response = await model.GenerateContentAsync(prompt);
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      // We don't want to check on anything specific, but it should ideally have the metadata.
+      if (!response.Candidates.First().UrlContextMetadata.HasValue)
+      {
+        DebugLog("WARNING: Response did not have expected Url Context Metadata.");
+      }
+    }
+
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
-    async Task TestReadFile() {
+    async Task TestReadFile()
+    {
       // GCS is currently only supported with VertexAI.
       var model = CreateGenerativeModel(Backend.VertexAI);
 
@@ -862,7 +984,8 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Test providing a file requiring authentication from a GCS bucket (Firebase Storage) to the model.
     // Should pass if Auth is included or not. To turn Auth on, define INCLUDE_FIREBASE_AUTH at the top of the file.
-    async Task TestReadSecureFile() {
+    async Task TestReadSecureFile()
+    {
       // GCS is currently only supported with VertexAI.
       var model = CreateGenerativeModel(Backend.VertexAI);
 
@@ -870,7 +993,8 @@ namespace Firebase.Sample.FirebaseAI {
       var authResult = await FirebaseAuth.DefaultInstance.SignInAnonymouslyAsync();
 #endif
 
-      try {
+      try
+      {
         GenerateContentResponse response = await model.GenerateContentAsync(new ModelContent[] {
           ModelContent.Text("I am testing File input. Can you describe the image in the attached file?"),
           ModelContent.FileData("image/png", new Uri($"gs://{FirebaseApp.DefaultInstance.Options.StorageBucket}/FCMImages/mushroom.png"))
@@ -884,11 +1008,13 @@ namespace Firebase.Sample.FirebaseAI {
             response.Text.Contains("mushroom", StringComparison.OrdinalIgnoreCase));
       }
 #if !INCLUDE_FIREBASE_AUTH
-      catch (HttpRequestException ex) {
+      catch (HttpRequestException ex)
+      {
         Assert("Missing Http Status Code 403", ex.Message.Contains("403"));
       }
 #endif
-      finally {
+      finally
+      {
 #if INCLUDE_FIREBASE_AUTH
         // Clean up the created user.
         await authResult.User.DeleteAsync();
@@ -898,17 +1024,21 @@ namespace Firebase.Sample.FirebaseAI {
 
     // The url prefix to use when fetching test data to use from the separate GitHub repo.
     readonly string testDataUrl =
-        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/548c2d5ae4555ca6f57d8621903e2b591bec7b05/mock-responses/";
+        "https://raw.githubusercontent.com/FirebaseExtended/vertexai-sdk-test-data/refs/heads/main/mock-responses/";
     readonly HttpClient httpClient = new();
 
-    private Task<string> LoadStreamingAsset(string fullPath) {
+    private Task<string> LoadStreamingAsset(string fullPath)
+    {
       TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
       UnityWebRequest request = UnityWebRequest.Get(fullPath);
-      request.SendWebRequest().completed += (_) => {
-        if (request.result == UnityWebRequest.Result.Success) {
+      request.SendWebRequest().completed += (_) =>
+      {
+        if (request.result == UnityWebRequest.Result.Success)
+        {
           tcs.SetResult(request.downloadHandler.text);
         }
-        else {
+        else
+        {
           tcs.SetResult(null);
         }
       };
@@ -916,19 +1046,23 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Gets the Json test data from the given filename, potentially downloading from a GitHub repo.
-    private async Task<Dictionary<string, object>> GetJsonTestData(string filename) {
+    private async Task<Dictionary<string, object>> GetJsonTestData(string filename)
+    {
       string jsonString = null;
       // First, try to load the file from StreamingAssets
       string localPath = Path.Combine(Application.streamingAssetsPath, "TestData", filename);
-      if (localPath.StartsWith("jar") || localPath.StartsWith("http")) {
+      if (localPath.StartsWith("jar") || localPath.StartsWith("http"))
+      {
         // Special case to access StreamingAsset content on Android
         jsonString = await LoadStreamingAsset(localPath);
       }
-      else if (File.Exists(localPath)) {
+      else if (File.Exists(localPath))
+      {
         jsonString = File.ReadAllText(localPath);
       }
 
-      if (string.IsNullOrEmpty(jsonString)) {
+      if (string.IsNullOrEmpty(jsonString))
+      {
         var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, testDataUrl + filename));
         response.EnsureSuccessStatusCode();
 
@@ -938,16 +1072,19 @@ namespace Firebase.Sample.FirebaseAI {
       return Json.Deserialize(jsonString) as Dictionary<string, object>;
     }
 
-    private Task<Dictionary<string, object>> GetVertexJsonTestData(string filename) {
+    private Task<Dictionary<string, object>> GetVertexJsonTestData(string filename)
+    {
       return GetJsonTestData($"vertexai/{filename}");
     }
 
-    private Task<Dictionary<string, object>> GetGoogleAIJsonTestData(string filename) {
+    private Task<Dictionary<string, object>> GetGoogleAIJsonTestData(string filename)
+    {
       return GetJsonTestData($"googleai/{filename}");
     }
 
     // Helper function to validate that the response has a TextPart as expected.
-    private void ValidateTextPart(GenerateContentResponse response, string expectedText) {
+    private void ValidateTextPart(GenerateContentResponse response, string expectedText)
+    {
       int candidateCount = response.Candidates.Count();
       AssertEq("Candidate count", candidateCount, 1);
 
@@ -973,7 +1110,8 @@ namespace Firebase.Sample.FirebaseAI {
         float probabilityScore = default,
         SafetyRating.HarmSeverity severity = default,
         float severityScore = default,
-        bool blocked = default) {
+        bool blocked = default)
+    {
       AssertEq($"SafetyRatings: {harmCategory} had incorrect category",
           safetyRating.Category, harmCategory);
       AssertEq($"SafetyRatings: {harmCategory} had incorrect probability",
@@ -990,7 +1128,8 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Helper function to validate UsageMetadata.
     private void ValidateUsageMetadata(UsageMetadata? usageMetadata, int promptTokenCount,
-        int candidatesTokenCount, int thoughtsTokenCount, int totalTokenCount) {
+        int candidatesTokenCount, int thoughtsTokenCount, int toolUsePromptTokenCount, int totalTokenCount)
+    {
       Assert("UsageMetadata", usageMetadata.HasValue);
       AssertEq("Wrong PromptTokenCount",
           usageMetadata?.PromptTokenCount, promptTokenCount);
@@ -998,6 +1137,8 @@ namespace Firebase.Sample.FirebaseAI {
           usageMetadata?.CandidatesTokenCount, candidatesTokenCount);
       AssertEq("Wrong ThoughtsTokenCount",
           usageMetadata?.ThoughtsTokenCount, thoughtsTokenCount);
+      AssertEq("Wrong ToolUsePromptTokenCount",
+          usageMetadata?.ToolUsePromptTokenCount, toolUsePromptTokenCount);
       AssertEq("Wrong TotalTokenCount",
           usageMetadata?.TotalTokenCount, totalTokenCount);
     }
@@ -1009,7 +1150,8 @@ namespace Firebase.Sample.FirebaseAI {
         Uri uri = default,
         string title = default,
         string license = default,
-        DateTime? publicationDate = default) {
+        DateTime? publicationDate = default)
+    {
       AssertEq("Citation.StartIndex", citation.StartIndex, startIndex);
       AssertEq("Citation.EndIndex", citation.EndIndex, endIndex);
       AssertEq("Citation.Uri", citation.Uri, uri);
@@ -1020,7 +1162,8 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Test that parsing a basic short reply works as expected.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-success-basic-reply-short.json
-    async Task InternalTestBasicReplyShort() {
+    async Task InternalTestBasicReplyShort()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-basic-reply-short.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
@@ -1042,12 +1185,13 @@ namespace Firebase.Sample.FirebaseAI {
 
       AssertEq("CitationMetadata", candidate.CitationMetadata, null);
 
-      ValidateUsageMetadata(response.UsageMetadata, 6, 7, 0, 13);
+      ValidateUsageMetadata(response.UsageMetadata, 6, 7, 0, 0, 13);
     }
 
     // Test that parsing a response including Citations works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-success-citations.json
-    async Task InternalTestCitations() {
+    async Task InternalTestCitations()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-citations.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
@@ -1078,7 +1222,8 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Test that parsing a response that was blocked for Safety reasons works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-failure-prompt-blocked-safety-with-message.json
-    async Task InternalTestBlockedSafetyWithMessage() {
+    async Task InternalTestBlockedSafetyWithMessage()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-prompt-blocked-safety-with-message.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
@@ -1108,7 +1253,8 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Test that parsing a response that was blocked, and has no Content, works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-failure-finish-reason-safety-no-content.json
-    async Task InternalTestFinishReasonSafetyNoContent() {
+    async Task InternalTestFinishReasonSafetyNoContent()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-finish-reason-safety-no-content.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
@@ -1140,12 +1286,13 @@ namespace Firebase.Sample.FirebaseAI {
         severity: SafetyRating.HarmSeverity.Negligible,
         severityScore: 0.12109375f);
 
-      ValidateUsageMetadata(response.UsageMetadata, 8, 0, 0, 8);
+      ValidateUsageMetadata(response.UsageMetadata, 8, 0, 0, 0, 8);
     }
 
     // Test that parsing a response with unknown safety enums works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/unary-success-unknown-enum-safety-ratings.json
-    async Task InternalTestUnknownEnumSafetyRatings() {
+    async Task InternalTestUnknownEnumSafetyRatings()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-unknown-enum-safety-ratings.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
@@ -1178,7 +1325,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test that parsing a response with a FunctionCall part works.
-    async Task InternalTestFunctionCallWithArguments() {
+    async Task InternalTestFunctionCallWithArguments()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-function-call-with-arguments.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
@@ -1198,7 +1346,8 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Test that parsing a Vertex AI response with GroundingMetadata works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/vertexai/unary-success-google-search-grounding.json
-    async Task InternalTestVertexAIGrounding() {
+    async Task InternalTestVertexAIGrounding()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-google-search-grounding.json");
 
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
@@ -1221,7 +1370,8 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Test that parsing a Google AI response with GroundingMetadata works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-google-search-grounding.json
-    async Task InternalTestGoogleAIGrounding() {
+    async Task InternalTestGoogleAIGrounding()
+    {
       Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-google-search-grounding.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
 
@@ -1259,7 +1409,8 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Test that parsing a Google AI response with empty GroundingChunks works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-google-search-grounding-empty-grounding-chunks.json
-    async Task InternalTestGoogleAIGroundingEmptyChunks() {
+    async Task InternalTestGoogleAIGroundingEmptyChunks()
+    {
       Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-google-search-grounding-empty-grounding-chunks.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
 
@@ -1282,7 +1433,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test parsing an empty GroundingMetadata object.
-    Task InternalTestGroundingMetadata_Empty() {
+    Task InternalTestGroundingMetadata_Empty()
+    {
       var json = new Dictionary<string, object>();
       var grounding = GroundingMetadata.FromJson(json);
 
@@ -1295,7 +1447,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test parsing an empty Segment object.
-    Task InternalTestSegment_Empty() {
+    Task InternalTestSegment_Empty()
+    {
       var json = new Dictionary<string, object>();
       var segment = Segment.FromJson(json);
 
@@ -1308,7 +1461,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test that parsing a count token response works.
-    async Task InternalTestCountTokenResponse() {
+    async Task InternalTestCountTokenResponse()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-detailed-token-response.json");
       CountTokensResponse response = CountTokensResponse.FromJson(json);
 
@@ -1325,7 +1479,8 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     // Test that the UsageMetadata is getting parsed correctly.
-    async Task InternalTestBasicResponseLongUsageMetadata() {
+    async Task InternalTestBasicResponseLongUsageMetadata()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-basic-response-long-usage-metadata.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
@@ -1350,7 +1505,8 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Test that parsing a basic short reply from Google AI endpoint works as expected.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-basic-reply-short.txt
-    async Task InternalTestGoogleAIBasicReplyShort() {
+    async Task InternalTestGoogleAIBasicReplyShort()
+    {
       Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-basic-reply-short.json"); //
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
 
@@ -1369,14 +1525,15 @@ namespace Firebase.Sample.FirebaseAI {
       // No citations in this response
       AssertEq("CitationMetadata", candidate.CitationMetadata, null);
 
-      ValidateUsageMetadata(response.UsageMetadata, 7, 22, 0, 29);
+      ValidateUsageMetadata(response.UsageMetadata, 7, 22, 0, 0, 29);
       // No prompt feedback in this response
       AssertEq("PromptFeedback", response.PromptFeedback, null);
     }
 
     // Test parsing a Google AI format response with citations.
     // Based on: https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/googleai/unary-success-citations.txt
-    async Task InternalTestGoogleAICitations() {
+    async Task InternalTestGoogleAICitations()
+    {
       Dictionary<string, object> json = await GetGoogleAIJsonTestData("unary-success-citations.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.GoogleAI);
 
@@ -1442,6 +1599,7 @@ namespace Firebase.Sample.FirebaseAI {
         promptTokenCount: 15,
         candidatesTokenCount: 1667,
         thoughtsTokenCount: 0,
+        toolUsePromptTokenCount: 0,
         totalTokenCount: 1682);
 
       // Validate UsageMetadata Details if needed
@@ -1456,14 +1614,16 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("CandidatesTokensDetails[0].TokenCount", candidatesDetails[0].TokenCount, 1667);
     }
 
-    async Task InternalTestGenerateImagesBase64() {
+    async Task InternalTestGenerateImagesBase64()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-generate-images-base64.json");
       var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
 
       AssertEq("FilteredReason", response.FilteredReason, null);
       AssertEq("Image Count", response.Images.Count, 4);
 
-      for (int i = 0; i < response.Images.Count; i++) {
+      for (int i = 0; i < response.Images.Count; i++)
+      {
         var image = response.Images[i];
         AssertEq($"Image {i} MimeType", image.MimeType, "image/png");
         Assert($"Image {i} Length: {image.Data.Length}", image.Data.Length > 0);
@@ -1473,7 +1633,8 @@ namespace Firebase.Sample.FirebaseAI {
       }
     }
 
-    async Task InternalTestGenerateImagesAllFiltered() {
+    async Task InternalTestGenerateImagesAllFiltered()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-all-filtered.json");
       var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
 
@@ -1485,7 +1646,8 @@ namespace Firebase.Sample.FirebaseAI {
       AssertEq("Image Count", response.Images.Count, 0);
     }
 
-    async Task InternalTestGenerateImagesBase64SomeFiltered() {
+    async Task InternalTestGenerateImagesBase64SomeFiltered()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-base64-some-filtered.json");
       var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
 
@@ -1495,7 +1657,8 @@ namespace Firebase.Sample.FirebaseAI {
         "If you think this was an error, send feedback.");
       AssertEq("Image Count", response.Images.Count, 2);
 
-      for (int i = 0; i < response.Images.Count; i++) {
+      for (int i = 0; i < response.Images.Count; i++)
+      {
         var image = response.Images[i];
         AssertEq($"Image {i} MimeType", image.MimeType, "image/png");
         Assert($"Image {i} Length: {image.Data.Length}", image.Data.Length > 0);
@@ -1505,7 +1668,8 @@ namespace Firebase.Sample.FirebaseAI {
       }
     }
 
-    async Task InternalTestThoughtSummary() {
+    async Task InternalTestThoughtSummary()
+    {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-thinking-reply-thought-summary.json");
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
@@ -1517,7 +1681,52 @@ namespace Firebase.Sample.FirebaseAI {
           "Let me just pull up the city name from memory... " +
           "Mountain View. That's it. Just the city, nothing else. Got it.\n");
 
-      ValidateUsageMetadata(response.UsageMetadata, 13, 2, 39, 54);
+      ValidateUsageMetadata(response.UsageMetadata, 13, 2, 39, 0, 54);
+    }
+
+    async Task InternalTestCodeExecution()
+    {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-code-execution.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+      AssertEq("Candidate count", response.Candidates.Count(), 1);
+      var candidate = response.Candidates.First();
+
+      var executableCodeParts = candidate.Content.Parts.OfType<ModelContent.ExecutableCodePart>().ToList();
+      AssertEq("ExecutableCodePart count", executableCodeParts.Count(), 1);
+      AssertEq("ExecutableCodePart language", executableCodeParts[0].Language, ModelContent.ExecutableCodePart.CodeLanguage.Python);
+      AssertEq("ExecutableCodePart code", executableCodeParts[0].Code, "prime_numbers = [2, 3, 5, 7, 11]\nsum_of_primes = sum(prime_numbers)\nprint(f'The sum of the first 5 prime numbers is: {sum_of_primes}')\n");
+
+      var codeExecutionResultParts = candidate.Content.Parts.OfType<ModelContent.CodeExecutionResultPart>().ToList();
+      AssertEq("CodeExecutionResultPart count", codeExecutionResultParts.Count(), 1);
+      AssertEq("CodeExecutionResultPart outcome", codeExecutionResultParts[0].Outcome, ModelContent.CodeExecutionResultPart.ExecutionOutcome.Ok);
+      AssertEq("CodeExecutionResultPart output", codeExecutionResultParts[0].Output, "The sum of the first 5 prime numbers is: 28\n");
+
+      ValidateUsageMetadata(response.UsageMetadata, 20, 192, 192, 371, 775);
+
+      var details = response.UsageMetadata?.ToolUsePromptTokensDetails;
+      AssertEq("ToolUsePromptTokensDetails.Count", details.Count, 1);
+      AssertEq("ToolUsePromptTokensDetails[0].Modality", details[0].Modality, ContentModality.Text);
+      AssertEq("ToolUsePromptTokensDetails[0].TokenCount", details[0].TokenCount, 181);
+    }
+
+    async Task InternalTestUrlContextMixedValidity()
+    {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-url-context-mixed-validity.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+      Assert("Candidate should have UrlContextMetadata", response.Candidates.First().UrlContextMetadata.HasValue);
+      var urlContextMetadata = response.Candidates.First().UrlContextMetadata.Value;
+      AssertEq("UrlMetadata count", urlContextMetadata.UrlMetadata.Count(), 3);
+
+      var urlMetadata = urlContextMetadata.UrlMetadata.ToList();
+      AssertEq("UrlMetadata[0] status", urlMetadata[0].RetrievalStatus, UrlMetadata.UrlRetrievalStatus.Error);
+      AssertEq("UrlMetadata[1] url", urlMetadata[1].Url, new Uri("https://ai.google.dev"));
+      AssertEq("UrlMetadata[1] status", urlMetadata[1].RetrievalStatus, UrlMetadata.UrlRetrievalStatus.Success);
+      AssertEq("UrlMetadata[2] url", urlMetadata[2].Url, new Uri("https://a-completely-non-existent-url-for-testing.org"));
+      AssertEq("UrlMetadata[2] status", urlMetadata[2].RetrievalStatus, UrlMetadata.UrlRetrievalStatus.Error);
+
+      ValidateUsageMetadata(response.UsageMetadata, 116, 446, 179, 177, 918);
     }
   }
 }

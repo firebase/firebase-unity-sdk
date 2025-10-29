@@ -16,14 +16,15 @@
 
 using System.Collections.Generic;
 
-namespace Firebase.AI {
-
+namespace Firebase.AI
+{
   /// Settings for controlling the aggressiveness of filtering out sensitive content.
   ///
   /// See the [Responsible AI and usage
   /// guidelines](https://cloud.google.com/vertex-ai/generative-ai/docs/image/responsible-ai-imagen#config-safety-filters)
   /// for more details.
-  public readonly struct ImagenSafetySettings {
+  public readonly struct ImagenSafetySettings
+  {
 
     /// <summary>
     /// A filter level controlling how aggressively to filter sensitive content.
@@ -37,7 +38,8 @@ namespace Firebase.AI {
     /// guidelines](https://cloud.google.com/vertex-ai/generative-ai/docs/image/responsible-ai-imagen#safety-filters)
     /// for more details.
     /// </summary>
-    public enum SafetyFilterLevel {
+    public enum SafetyFilterLevel
+    {
       /// <summary>
       /// The most aggressive filtering level; most strict blocking.
       /// </summary>
@@ -68,7 +70,8 @@ namespace Firebase.AI {
     /// [`personGeneration`](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/imagen-api#parameter_list)
     /// documentation for more details.
     /// </summary>
-    public enum PersonFilterLevel {
+    public enum PersonFilterLevel
+    {
       /// <summary>
       /// Disallow generation of images containing people or faces; images of people are filtered out.
       /// </summary>
@@ -107,13 +110,16 @@ namespace Firebase.AI {
     ///     of images containing people or faces is allowed.</param>
     public ImagenSafetySettings(
         SafetyFilterLevel? safetyFilterLevel = null,
-        PersonFilterLevel? personFilterLevel = null) {
+        PersonFilterLevel? personFilterLevel = null)
+    {
       SafetyFilter = safetyFilterLevel;
       PersonFilter = personFilterLevel;
     }
 
-    private static string ConvertSafetyFilter(SafetyFilterLevel safetyFilter) {
-      return safetyFilter switch {
+    private static string ConvertSafetyFilter(SafetyFilterLevel safetyFilter)
+    {
+      return safetyFilter switch
+      {
         SafetyFilterLevel.BlockLowAndAbove => "block_low_and_above",
         SafetyFilterLevel.BlockMediumAndAbove => "block_medium_and_above",
         SafetyFilterLevel.BlockOnlyHigh => "block_only_high",
@@ -122,8 +128,10 @@ namespace Firebase.AI {
       };
     }
 
-    private static string ConvertPersonFilter(PersonFilterLevel safetyFilter) {
-      return safetyFilter switch {
+    private static string ConvertPersonFilter(PersonFilterLevel safetyFilter)
+    {
+      return safetyFilter switch
+      {
         PersonFilterLevel.BlockAll => "dont_allow",
         PersonFilterLevel.AllowAdult => "allow_adult",
         PersonFilterLevel.AllowAll => "allow_all",
@@ -135,13 +143,16 @@ namespace Firebase.AI {
     /// Intended for internal use only.
     /// This method is used for serializing the object to JSON for the API request.
     /// </summary>
-    internal Dictionary<string, object> ToJson() {
+    internal Dictionary<string, object> ToJson()
+    {
       Dictionary<string, object> jsonDict = new();
 
-      if (PersonFilter != null) {
+      if (PersonFilter != null)
+      {
         jsonDict["personGeneration"] = ConvertPersonFilter(PersonFilter.Value);
       }
-      if (SafetyFilter != null) {
+      if (SafetyFilter != null)
+      {
         jsonDict["safetySetting"] = ConvertSafetyFilter(SafetyFilter.Value);
       }
 
