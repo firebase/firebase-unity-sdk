@@ -109,7 +109,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.5.0
 -   Changes
     - Firebase AI: Add support for receiving Live API Transcripts.
 
