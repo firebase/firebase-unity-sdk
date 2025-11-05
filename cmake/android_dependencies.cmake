@@ -53,7 +53,7 @@ set(FIREBASE_FIRESTORE_ANDROID_DEPS
 )
 
 set(FIREBASE_FUNCTIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-functions:22.1.0"
+    "com.google.firebase:firebase-functions:22.0.1"
     "com.google.firebase:firebase-analytics:23.0.0"
 )
 
