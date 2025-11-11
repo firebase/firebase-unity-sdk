@@ -63,7 +63,7 @@ void LogEvent(const char* name, std::vector<std::string> parameter_names,
   if (parameter_names.size() != parameter_values.size()) {
     firebase::LogError("LogEvent for %s given different list sizes (%d, %d)",
                        name, parameter_names.size(), parameter_values.size());
-    return; 
+    return;
   }
 
   size_t number_of_parameters = parameter_names.size();
@@ -76,6 +76,25 @@ void LogEvent(const char* name, std::vector<std::string> parameter_names,
   LogEvent(name, parameters, number_of_parameters);
 
   delete[] parameters;
+}
+
+// Internal version of SetDefaultEventParameters that teakes in two vectors of
+// of know types and converts them into C++ parameters to pass them along to
+// the public SetDefaulteventparameters
+void SetDefaultEventParameters(std::vector<std::string> parameter_names,
+              std::vector<firebase::Variant> parameter_values) {
+  if (parameter_names.size() != parameter_values.size()) {
+    firebase::LogError(
+        "SetDefaultEventParameters given different list sizes (%d, %d)",
+        parameter_names.size(), parameter_values.size());
+    return;
+  }
+  std::vector<Parameter> parameters;
+
+    for(size_t i = 0; i < parameter_names.size(); ++i) {
+      parameters.push_back(Parameter(parameter_names[i].c_str(), parameter_values[i]));
+    }
+    SetDefaultEventParameters(parameters);
 }
 
 // Converts from a generic int, int map to the C++ Consent enums
@@ -95,9 +114,12 @@ void SetConsentWithInts(const std::map<int, int>& settings) {
 // Initialize / Terminate implicitly called when App is created / destroyed.
 %ignore firebase::analytics::Initialize;
 %ignore firebase::analytics::Terminate;
-// Ignore the SendEvent that takes a Parameter array, as we handle it
+// Ignore the LogEvent that takes a Parameter array, as we handle it
 // with a custom version instead.
 %ignore firebase::analytics::LogEvent(const char*, const Parameter*, size_t);
+// Ignore the SetDefaultEventParameters that takes a Parameter array, as we
+// handle it with a custom version instead.
+%ignore firebase::analytics::SetDefaultEventParameters(const Parameter*, size_t);
 // Ignore SetConsent, in order to convert the types with our own function.
 %ignore firebase::analytics::SetConsent;
 // Ignore the Parameter class, as we don't want to expose that to C# at all.
@@ -119,6 +141,8 @@ void SetConsentWithInts(const std::map<int, int>& settings) {
 namespace firebase {
 namespace analytics {
 void LogEvent(const char* name, std::vector<std::string> parameter_names,
+              std::vector<firebase::Variant> parameter_values);
+void SetDefaultEventParameters(std::vector<std::string> parameter_names,
               std::vector<firebase::Variant> parameter_values);
 void SetConsentWithInts(const std::map<int, int>& settings);
 }  // namespace analytics

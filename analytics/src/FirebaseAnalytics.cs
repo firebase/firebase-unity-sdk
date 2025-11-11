@@ -15,6 +15,7 @@
  */
 
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Firebase.Analytics {
 
@@ -206,16 +207,77 @@ public static partial class FirebaseAnalytics {
   ///
   /// @param[in] parameters A parameter array of `Parameter` instances.
   public static void LogEvent(string name, params Parameter[] parameters) {
-    // Convert the Parameter array into a StringList and VariantList to pass to C++
+    LogEvent(name, (IEnumerable<Parameter>)parameters);
+  }
+
+  /// @brief Log an event with associated parameters.
+  ///
+  /// An Event is an important occurrence in your app that you want to measure.
+  /// You can report up to 500 different types of events per app and you can
+  /// associate up to 25 unique parameters with each Event type.
+  ///
+  /// Some common events are in the reference guide via the
+  /// FirebaseAnalytics.Event* constants, but you may also choose to specify
+  /// custom event types that are associated with your specific app.
+  ///
+  /// @param[in] name Name of the event to log. Should contain 1 to 40
+  /// alphanumeric characters or underscores. The name must start with an
+  /// alphabetic character. Some event names are reserved.
+  /// See the FirebaseAnalytics.Event properties for the list of reserved event
+  /// names.
+  /// The "firebase_" prefix is reserved and should not be used. Note that event
+  /// names are case-sensitive and that logging two events whose names differ
+  /// only in case will result in two distinct events.
+  ///
+  /// @param[in] parameters An enumerable list of `Parameter` instances.
+  public static void LogEvent(string name, IEnumerable<Parameter> parameters) {
     StringList parameterNames = new StringList();
     VariantList parameterValues = new VariantList();
-
-    foreach (Parameter p in parameters) {
-      parameterNames.Add(p.Name);
-      parameterValues.Add(Firebase.Variant.FromObject(p.Value));
+    if (parameters != null) {
+      foreach (Parameter p in parameters) {
+        parameterNames.Add(p.Name);
+        parameterValues.Add(Firebase.Variant.FromObject(p.Value));
+      }
     }
-
     FirebaseAnalyticsInternal.LogEvent(name, parameterNames, parameterValues);
+  }
+
+  /// @brief Adds parameters that will be set on every event logged from the SDK.
+  ///
+  /// Adds parameters that will be set on every event logged from the SDK,
+  /// including automatic ones. The values passed in the parameters bundle will
+  /// be added to the map of default event parameters. These parameters persist
+  /// across app runs. They are of lower precedence than event parameters, so if
+  /// an event parameter and a parameter set using this API have the same name,
+  /// the value of the event parameter will be used. The same limitations on
+  /// event parameters apply to default event parameters.
+  ///
+  /// @param[in] parameters A parameter array of `Parameter` instances.
+  public static void SetDefaultEventParameters(params Parameter[] parameters){
+      SetDefaultEventParameters((IEnumerable<Parameter>)parameters);
+  }
+
+  /// @brief Adds parameters that will be set on every event logged from the SDK.
+  ///
+  /// Adds parameters that will be set on every event logged from the SDK,
+  /// including automatic ones. The values passed in the parameters bundle will
+  /// be added to the map of default event parameters. These parameters persist
+  /// across app runs. They are of lower precedence than event parameters, so if
+  /// an event parameter and a parameter set using this API have the same name,
+  /// the value of the event parameter will be used. The same limitations on
+  /// event parameters apply to default event parameters.
+  ///
+  /// @param[in] parameters An enumerable list of `Parameter` instances.
+  public static void SetDefaultEventParameters(IEnumerable<Parameter> parameters){
+      StringList parameterNames = new StringList();
+      VariantList parameterValues = new VariantList();
+      if (parameters != null) {
+        foreach (Parameter p in parameters) {
+          parameterNames.Add(p.Name);
+          parameterValues.Add(Firebase.Variant.FromObject(p.Value));
+        }
+      }
+      FirebaseAnalyticsInternal.SetDefaultEventParameters(parameterNames, parameterValues);
   }
 
   /// Clears all analytics data for this app from the device and resets the app
