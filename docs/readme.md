@@ -109,6 +109,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Analytics: Added `SetDefaultEventParameters()` which allows developers to specify a dictionary of parameters that will be set on every event logged.
+    - Analytics: `LogEvent()` now takes a vector of `Parameter` objects, instead of a pointer to an array and a count.
+
 ### 13.5.0
 -   Changes
     - Firebase AI: Add support for receiving Live API Transcripts.
