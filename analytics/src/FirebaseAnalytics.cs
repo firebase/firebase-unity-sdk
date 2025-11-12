@@ -254,7 +254,7 @@ public static partial class FirebaseAnalytics {
   ///
   /// @param[in] parameters A parameter array of `Parameter` instances.
   public static void SetDefaultEventParameters(params Parameter[] parameters){
-      SetDefaultEventParameters((IEnumerable<Parameter>)parameters);
+    SetDefaultEventParameters((IEnumerable<Parameter>)parameters);
   }
 
   /// @brief Adds parameters that will be set on every event logged from the SDK.
@@ -269,15 +269,15 @@ public static partial class FirebaseAnalytics {
   ///
   /// @param[in] parameters An enumerable list of `Parameter` instances.
   public static void SetDefaultEventParameters(IEnumerable<Parameter> parameters){
-      StringList parameterNames = new StringList();
-      VariantList parameterValues = new VariantList();
-      if (parameters != null) {
-        foreach (Parameter p in parameters) {
-          parameterNames.Add(p.Name);
-          parameterValues.Add(Firebase.Variant.FromObject(p.Value));
-        }
+    StringList parameterNames = new StringList();
+    VariantList parameterValues = new VariantList();
+    if (parameters != null) {
+      foreach (Parameter p in parameters) {
+        parameterNames.Add(p.Name);
+        parameterValues.Add(Firebase.Variant.FromObject(p.Value));
       }
-      FirebaseAnalyticsInternal.SetDefaultEventParameters(parameterNames, parameterValues);
+    }
+    FirebaseAnalyticsInternal.SetDefaultEventParameters(parameterNames, parameterValues);
   }
 
   /// Clears all analytics data for this app from the device and resets the app

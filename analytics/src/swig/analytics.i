@@ -78,9 +78,9 @@ void LogEvent(const char* name, std::vector<std::string> parameter_names,
   delete[] parameters;
 }
 
-// Internal version of SetDefaultEventParameters that teakes in two vectors of
-// of know types and converts them into C++ parameters to pass them along to
-// the public SetDefaulteventparameters
+// Internal version of SetDefaultEventParameters that takes in two vectors
+// of known types and converts them into C++ parameters to pass them along to
+// the public SetDefaultEventParameters
 void SetDefaultEventParameters(std::vector<std::string> parameter_names,
               std::vector<firebase::Variant> parameter_values) {
   if (parameter_names.size() != parameter_values.size()) {
@@ -91,10 +91,11 @@ void SetDefaultEventParameters(std::vector<std::string> parameter_names,
   }
   std::vector<Parameter> parameters;
 
-    for(size_t i = 0; i < parameter_names.size(); ++i) {
-      parameters.push_back(Parameter(parameter_names[i].c_str(), parameter_values[i]));
-    }
-    SetDefaultEventParameters(parameters);
+  for(size_t i = 0; i < parameter_names.size(); ++i) {
+    parameters.push_back(Parameter(parameter_names[i].c_str(), parameter_values[i]));
+  }
+
+  SetDefaultEventParameters(parameters);
 }
 
 // Converts from a generic int, int map to the C++ Consent enums
