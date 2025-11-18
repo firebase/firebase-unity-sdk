@@ -146,7 +146,7 @@ namespace Firebase.AI
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
-          HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateStreamGenerateContent");
+          HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateStreamGenerateContent?alt=sse");
 
       // Set the request headers
       await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
