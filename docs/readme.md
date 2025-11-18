@@ -111,8 +111,18 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
+    - Analytics: Added `SetDefaultEventParameters()` which allows developers to
+      specify a list  of parameters that will be set on every event logged.
+    - Analytics: Added a new `LogEvent()` that take in a IEnumerable of
+	  parameters.
+
+### 13.5.0
+-   Changes
     - Firebase AI: Add support for receiving Live API Transcripts.
     - Firebase AI: Added support for using Server Prompt Templates.
+	- Storage: Add support for Firebase Storage emulator via `UseEmulator`.
+      The `UseEmulator` method should be called before invoking any other
+      methods on a new instance of Storage. Default port is 9199.
 
 ### 13.4.0
 -   Changes
