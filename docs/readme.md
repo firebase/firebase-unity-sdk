@@ -112,6 +112,7 @@ Release Notes
 ### Upcoming
 -   Changes
     - Firebase AI: Add support for receiving Live API Transcripts.
+    - Firebase AI: Added support for using Server Prompt Templates.
 
 ### 13.4.0
 -   Changes
