@@ -28,13 +28,6 @@ using System.IO;
 
 namespace Firebase.AI
 {
-  using GenContentFunc = Func<string, IDictionary<string, object>,
-        IEnumerable<ModelContent>, CancellationToken,
-        Task<GenerateContentResponse>>;
-  using StreamContentFunc = Func<string, IDictionary<string, object>,
-        IEnumerable<ModelContent>, CancellationToken,
-        IAsyncEnumerable<GenerateContentResponse>>;
-
   /// <summary>
   /// A type that represents a remote multimodal model (like Gemini), with the ability to generate
   /// content based on defined server prompt templates.

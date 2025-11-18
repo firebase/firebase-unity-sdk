@@ -51,18 +51,15 @@ namespace Firebase.AI.Internal
     internal static string GetTemplateURL(FirebaseApp firebaseApp,
         FirebaseAI.Backend backend, string templateId)
     {
+      var projectUrl = "https://firebasevertexai.googleapis.com/v1beta" +
+          $"/projects/{firebaseApp.Options.ProjectId}";
       if (backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI)
       {
-        return "https://firebasevertexai.googleapis.com/v1beta" +
-            $"/projects/{firebaseApp.Options.ProjectId}" +
-            $"/locations/{backend.Location}" +
-            $"/templates/{templateId}";
+        return $"{projectUrl}/locations/{backend.Location}/templates/{templateId}";
       }
       else if (backend.Provider == FirebaseAI.Backend.InternalProvider.GoogleAI)
       {
-        return "https://firebasevertexai.googleapis.com/v1beta" +
-            $"/projects/{firebaseApp.Options.ProjectId}" +
-            $"/templates/{templateId}";
+        return $"{projectUrl}/templates/{templateId}";
       }
       else
       {
