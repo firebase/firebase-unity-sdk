@@ -109,8 +109,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.6.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 13.3.0.
+    - General (Android): Update to Firebase Android BoM version 34.6.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.6.0.
     - Analytics: Added `SetDefaultEventParameters()` which allows developers to
       specify a list  of parameters that will be set on every event logged.
     - Analytics: Added a new `LogEvent()` that take in a IEnumerable of
