@@ -45,6 +45,10 @@ namespace Firebase.AI
 
     private readonly HttpClient _httpClient;
 
+    /// <summary>
+    /// Intended for internal use only.
+    /// Use `FirebaseAI.GetImagenModel` instead to ensure proper initialization and configuration of the `ImagenModel`.
+    /// </summary>
     internal ImagenModel(FirebaseApp firebaseApp,
                         FirebaseAI.Backend backend,
                         string modelName,
@@ -157,4 +161,72 @@ namespace Firebase.AI
     }
   }
 
+  /// <summary>
+  /// Represents a remote Imagen model with the ability to generate images using server template prompts.
+  /// </summary>
+  public class TemplateImagenModel
+  {
+    private readonly FirebaseApp _firebaseApp;
+    private readonly FirebaseAI.Backend _backend;
+
+    private readonly HttpClient _httpClient;
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// Use `FirebaseAI.GetTemplateImagenModel` instead to ensure proper initialization and configuration of the `TemplateImagenModel`.
+    /// </summary>
+    internal TemplateImagenModel(FirebaseApp firebaseApp,
+        FirebaseAI.Backend backend, RequestOptions? requestOptions = null)
+    {
+      _firebaseApp = firebaseApp;
+      _backend = backend;
+
+      // Create a HttpClient using the timeout requested, or the default one.
+      _httpClient = new HttpClient()
+      {
+        Timeout = requestOptions?.Timeout ?? RequestOptions.DefaultTimeout
+      };
+    }
+
+    /// <summary>
+    /// Generates images using the Template Imagen model and returns them as inline data.
+    /// </summary>
+    /// <param name="templateId">The id of the server prompt template to use.</param>
+    /// <param name="inputs">Any input parameters expected by the server prompt template.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>The generated content response from the model.</returns>
+    /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
+    public async Task<ImagenGenerationResponse<ImagenInlineImage>> GenerateImagesAsync(
+        string templateId, IDictionary<string, object> inputs, CancellationToken cancellationToken = default)
+    {
+      HttpRequestMessage request = new(HttpMethod.Post,
+          HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templatePredict");
+
+      // Set the request headers
+      await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+
+      // Set the content
+      Dictionary<string, object> jsonDict = new()
+      {
+        ["inputs"] = inputs
+      };
+      string bodyJson = Json.Serialize(jsonDict);
+      request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log("Request:\n" + bodyJson);
+#endif
+
+      var response = await _httpClient.SendAsync(request, cancellationToken);
+      await HttpHelpers.ValidateHttpResponse(response);
+
+      string result = await response.Content.ReadAsStringAsync();
+
+#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log("Response:\n" + result);
+#endif
+
+      return ImagenGenerationResponse<ImagenInlineImage>.FromJson(result);
+    }
+  }
 }

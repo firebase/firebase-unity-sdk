@@ -23,6 +23,8 @@ namespace Firebase.AI.Internal
   // Helper functions to help handling the Http calls.
   internal static class HttpHelpers
   {
+    internal static readonly string StreamPrefix = "data: ";
+
     // Get the URL to use for the rest calls based on the backend.
     internal static string GetURL(FirebaseApp firebaseApp,
         FirebaseAI.Backend backend, string modelName)
@@ -39,6 +41,25 @@ namespace Firebase.AI.Internal
         return "https://firebasevertexai.googleapis.com/v1beta" +
             "/projects/" + firebaseApp.Options.ProjectId +
             "/models/" + modelName;
+      }
+      else
+      {
+        throw new NotSupportedException($"Missing support for backend: {backend.Provider}");
+      }
+    }
+
+    internal static string GetTemplateURL(FirebaseApp firebaseApp,
+        FirebaseAI.Backend backend, string templateId)
+    {
+      var projectUrl = "https://firebasevertexai.googleapis.com/v1beta" +
+          $"/projects/{firebaseApp.Options.ProjectId}";
+      if (backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI)
+      {
+        return $"{projectUrl}/locations/{backend.Location}/templates/{templateId}";
+      }
+      else if (backend.Provider == FirebaseAI.Backend.InternalProvider.GoogleAI)
+      {
+        return $"{projectUrl}/templates/{templateId}";
       }
       else
       {

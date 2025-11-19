@@ -225,6 +225,28 @@ namespace Firebase.AI
       return new ImagenModel(_firebaseApp, _backend, modelName,
           generationConfig, safetySettings, requestOptions);
     }
+
+    /// <summary>
+    /// Initializes a `TemplateGenerativeModel` with the given parameters.
+    /// </summary>
+    /// <param name="requestOptions">Configuration parameters for sending requests to the backend.</param>
+    /// <returns>The initialized `TemplateGenerativeModel` instance.</returns>
+    public TemplateGenerativeModel GetTemplateGenerativeModel(
+        RequestOptions? requestOptions = null)
+    {
+      return new TemplateGenerativeModel(_firebaseApp, _backend, requestOptions);
+    }
+
+    /// <summary>
+    /// Initializes a `TemplateImagenModel` with the given parameters.
+    /// </summary>
+    /// <param name="requestOptions">Configuration parameters for sending requests to the backend.</param>
+    /// <returns>The initialized `TemplateImagenModel` instance.</returns>
+    public TemplateImagenModel GetTemplateImagenModel(
+        RequestOptions? requestOptions = null)
+    {
+      return new TemplateImagenModel(_firebaseApp, _backend, requestOptions);
+    }
   }
 
 }
