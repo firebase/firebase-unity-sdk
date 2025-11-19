@@ -115,7 +115,8 @@ Release Notes
       specify a list  of parameters that will be set on every event logged.
     - Analytics: Added a new `LogEvent()` that take in a IEnumerable of
       parameters.
-    - Firebase AI: Added support for using Server Prompt Templates.
+    - Firebase AI: Added support for using
+      [Server Prompt Templates](https://firebase.google.com/docs/ai-logic/server-prompt-templates/get-started).
 
 ### 13.5.0
 -   Changes
