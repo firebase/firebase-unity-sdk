@@ -23,9 +23,11 @@ unity_pack_folder(
   PACK_PATH "Firebase/FirebaseAI"
 )
 
-# For documentation, get only the C# files at the top level,
+# For documentation, get all C# files recursively,
 # which make up the public API.
-file(GLOB firebase_firebaseai_doc_src "src/*.cs")
+file(GLOB_RECURSE firebase_firebaseai_doc_src "src/*.cs")
+# Filter out any files located in src/Internal
+list(FILTER firebase_firebaseai_doc_src EXCLUDE REGEX "src/Internal/")
 unity_pack_documentation_sources(firebaseai
   DOCUMENTATION_SOURCES
     ${firebase_firebaseai_doc_src}
