@@ -75,7 +75,10 @@ namespace Firebase.Sample.FirebaseAI
         TestCountTokens,
         TestYoutubeLink,
         TestGenerateImage,
+#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
+        // Disabled from CI, because of rate limit issues
         TestImagenGenerateImage,
+#endif
         TestImagenGenerateImageOptions,
         TestThinkingBudget,
         TestIncludeThoughts,
@@ -83,7 +86,10 @@ namespace Firebase.Sample.FirebaseAI
         TestUrlContext,
         TestTemplateGenerateContent,
         TestTemplateGenerateContentStream,
+#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
+        // Disabled from CI, because of rate limit issues
         TestTemplateImagenGenerateImage,
+#endif
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
