@@ -21,6 +21,7 @@
 #endif
 
 %include "std_map.i"
+%include "std_vector.i"
 
 %pragma(csharp) moduleclassmodifiers="internal static class"
 %pragma(csharp) modulecode=%{
@@ -118,9 +119,15 @@ void SetConsentWithInts(const std::map<int, int>& settings) {
 // Ignore the LogEvent that takes a Parameter array, as we handle it
 // with a custom version instead.
 %ignore firebase::analytics::LogEvent(const char*, const Parameter*, size_t);
+// Ignore the LogEvent that takes a Parameter vector, as we handle it
+// with a custom version instead.
+%ignore firebase::analytics::LogEvent(const char*, const std::vector<Parameter>&);
 // Ignore the SetDefaultEventParameters that takes a Parameter array, as we
 // handle it with a custom version instead.
 %ignore firebase::analytics::SetDefaultEventParameters(const Parameter*, size_t);
+// Ignore the SetDefaulteventparameters that takes int the vector, as we
+// handle it with a custom version instead.
+%ignore firebase::analytics::SetDefaultEventParameters(const std::vector<Parameter>&);
 // Ignore SetConsent, in order to convert the types with our own function.
 %ignore firebase::analytics::SetConsent;
 // Ignore the Parameter class, as we don't want to expose that to C# at all.
