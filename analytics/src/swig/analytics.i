@@ -121,6 +121,9 @@ void SetConsentWithInts(const std::map<int, int>& settings) {
 // Ignore the SetDefaultEventParameters that takes a Parameter array, as we
 // handle it with a custom version instead.
 %ignore firebase::analytics::SetDefaultEventParameters(const Parameter*, size_t);
+// Ignore the SetDefaulteventparameters that takes int the vector, as we
+// handle it with a custom version instead.
+%ignore firebase::analytics::SetDefaultEventParameters(const std::vector<Parameter>&);
 // Ignore SetConsent, in order to convert the types with our own function.
 %ignore firebase::analytics::SetConsent;
 // Ignore the Parameter class, as we don't want to expose that to C# at all.
