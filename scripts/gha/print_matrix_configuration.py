@@ -122,29 +122,13 @@ TEST_DEVICES = {
   "emulator_target": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-28;google_apis;x86_64"},
   "emulator_latest": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86_64"},
   "emulator_32bit": {"platform": ANDROID, "type": "virtual", "image": "system-images;android-30;google_apis;x86"},
-  "ios_min": {"platform": IOS, "type": "real",
-              "device": [
-                # Slightly different OS versions because of limited FTL selection.
-                "model=iphone8,version=14.7",
-                "model=iphone11pro,version=14.7",
-                "model=iphone12pro,version=14.8",
-              ]},
   "ios_target": {"platform": IOS, "type": "real",
                  "device": [
                    # Slightly different OS versions because of limited FTL selection.
-                   "model=iphone13pro,version=15.7",
-                   "model=iphone8,version=15.7",
-                 ]},
-  "ios_latest": {"platform": IOS, "type": "real",
-                 "device": [
                    "model=iphone14pro,version=16.6",
                    "model=iphone11pro,version=16.6",
-                   "model=iphone8,version=16.6",
-                   "model=ipad10,version=16.6",
                  ]},
-  "simulator_min": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Pro Max", "version": "17.0.1"},
   "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Pro Max", "version": "17.2"},
-  "simulator_latest": {"platform": IOS, "type": "virtual", "name": "iPhone 15 Plus", "version": "17.4"},
   "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "16.1"},
 }
 
