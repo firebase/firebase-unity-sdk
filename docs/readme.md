@@ -109,6 +109,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Added support for Thinking Levels, used by Gemini 3 models
+      to define their thinking configuration, instead of Thinking Budget.
+
 ### 13.6.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.3.0.
