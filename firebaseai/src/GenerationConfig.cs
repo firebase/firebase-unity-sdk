@@ -281,6 +281,18 @@ namespace Firebase.AI
       IncludeThoughts = includeThoughts;
     }
 
+    private string ConvertThinkingLevel()
+    {
+      return Level switch
+      {
+        ThinkingLevel.Minimal => "MINIMAL",
+        ThinkingLevel.Low => "LOW",
+        ThinkingLevel.Medium => "MEDIUM",
+        ThinkingLevel.High => "HIGH",
+        _ => Level.ToString()
+      };
+    }
+
     /// <summary>
     /// Intended for internal use only.
     /// This method is used for serializing the object to JSON for the API request.
@@ -288,7 +300,7 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       Dictionary<string, object> jsonDict = new();
-      jsonDict.AddIfHasValue("thinkingLevel", Level);
+      if (Level.HasValue) jsonDict.Add("thinkingLevel", ConvertThinkingLevel());
       jsonDict.AddIfHasValue("thinkingBudget", ThinkingBudget);
       jsonDict.AddIfHasValue("includeThoughts", IncludeThoughts);
       return jsonDict;
