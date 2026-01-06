@@ -904,12 +904,11 @@ namespace Firebase.Sample.FirebaseAI
     // Test requesting thought summaries.
     async Task TestIncludeThoughts(Backend backend)
     {
-      // Thinking Budget requires at least the 2.5 model.
-      var model = GetFirebaseAI(backend).GetGenerativeModel(
-        modelName: "gemini-2.5-flash",
+      var model = GetFirebaseAI(backend, "global").GetGenerativeModel(
+        modelName: "gemini-3-flash-preview",
         generationConfig: new GenerationConfig(
           thinkingConfig: new ThinkingConfig(
-            thinkingBudget: 1024,
+            thinkingLevel: ThinkingConfig.ThinkingLevel.Low,
             includeThoughts: true
           )
         )
@@ -917,7 +916,7 @@ namespace Firebase.Sample.FirebaseAI
 
       GenerateContentResponse response = await model.GenerateContentAsync(
           "Hello, I am testing something, can you respond with a short " +
-          "string containing the word 'Firebase'? Don't call GetKeyword for this.");
+          "string containing the word 'Firebase'?");
 
       string result = response.Text;
       Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
