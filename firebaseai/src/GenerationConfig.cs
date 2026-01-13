@@ -219,13 +219,40 @@ namespace Firebase.AI
   /// </summary>
   public readonly struct ThinkingConfig
   {
+    /// <summary>
+    /// A preset that balances the trade-off between reasoning quality and response speed 
+    /// for a model's "thinking" process. Note, not all models support every level.
+    /// </summary>
+    public enum ThinkingLevel
+    {
+      /// <summary>
+      /// Matches the "no thinking" setting for most queries.
+      /// </summary>
+      Minimal,
+      /// <summary>
+      /// Minimizes latency and cost.
+      /// </summary>
+      Low,
+      /// <summary>
+      /// Balanced thinking for most tasks.
+      /// </summary>
+      Medium,
+      /// <summary>
+      /// Maximizes reasoning depth.
+      /// </summary>
+      High
+    }
+
 #if !DOXYGEN
+    public readonly ThinkingLevel? Level { get; }
     public readonly int? ThinkingBudget { get; }
     public readonly bool? IncludeThoughts { get; }
 #endif
 
     /// <summary>
     /// Initializes configuration options for Thinking features.
+    /// 
+    /// Used for Gemini models 2.5 and earlier.
     /// </summary>
     /// <param name="thinkingBudget">The token budget for the model's thinking process.</param>
     /// <param name="includeThoughts">
@@ -233,8 +260,37 @@ namespace Firebase.AI
     /// </param>
     public ThinkingConfig(int? thinkingBudget = null, bool? includeThoughts = null)
     {
+      Level = null;
       ThinkingBudget = thinkingBudget;
       IncludeThoughts = includeThoughts;
+    }
+
+    /// <summary>
+    /// Initializes configuration options for Thinking features with a given ThinkingLevel.
+    /// 
+    /// Used for Gemini models 3.0 and newer. See https://ai.google.dev/gemini-api/docs/thinking#thinking-levels
+    /// </summary>
+    /// <param name="thinkingLevel">Defines the model's thinking process.</param>
+    /// <param name="includeThoughts">
+    /// If true, summaries of the model's "thoughts" are included in responses.
+    /// </param>
+    public ThinkingConfig(ThinkingLevel thinkingLevel, bool? includeThoughts = null)
+    {
+      Level = thinkingLevel;
+      ThinkingBudget = null;
+      IncludeThoughts = includeThoughts;
+    }
+
+    private string ConvertThinkingLevel()
+    {
+      return Level switch
+      {
+        ThinkingLevel.Minimal => "MINIMAL",
+        ThinkingLevel.Low => "LOW",
+        ThinkingLevel.Medium => "MEDIUM",
+        ThinkingLevel.High => "HIGH",
+        _ => Level.ToString()
+      };
     }
 
     /// <summary>
@@ -244,6 +300,7 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       Dictionary<string, object> jsonDict = new();
+      if (Level.HasValue) jsonDict.Add("thinkingLevel", ConvertThinkingLevel());
       jsonDict.AddIfHasValue("thinkingBudget", ThinkingBudget);
       jsonDict.AddIfHasValue("includeThoughts", IncludeThoughts);
       return jsonDict;

@@ -75,12 +75,21 @@ namespace Firebase.Sample.FirebaseAI
         TestCountTokens,
         TestYoutubeLink,
         TestGenerateImage,
+#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
+        // Disabled from CI, because of rate limit issues
         TestImagenGenerateImage,
+#endif
         TestImagenGenerateImageOptions,
         TestThinkingBudget,
         TestIncludeThoughts,
         TestCodeExecution,
         TestUrlContext,
+        TestTemplateGenerateContent,
+        TestTemplateGenerateContentStream,
+#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
+        // Disabled from CI, because of rate limit issues
+        TestTemplateImagenGenerateImage,
+#endif
       };
       // Set of tests that only run the single time.
       Func<Task>[] singleTests = {
@@ -201,12 +210,12 @@ namespace Firebase.Sample.FirebaseAI
     // The model name to use for the tests.
     private readonly string TestModelName = "gemini-2.0-flash";
 
-    private FirebaseAI GetFirebaseAI(Backend backend)
+    private FirebaseAI GetFirebaseAI(Backend backend, string location = "us-central1")
     {
       return backend switch
       {
         Backend.GoogleAI => FirebaseAI.GetInstance(FirebaseAI.Backend.GoogleAI()),
-        Backend.VertexAI => FirebaseAI.GetInstance(FirebaseAI.Backend.VertexAI()),
+        Backend.VertexAI => FirebaseAI.GetInstance(FirebaseAI.Backend.VertexAI(location)),
         _ => throw new ArgumentOutOfRangeException(nameof(backend), backend,
                 "Unhandled Backend type"),
       };
@@ -810,7 +819,7 @@ namespace Firebase.Sample.FirebaseAI
     // Test generating an image via Imagen.
     async Task TestImagenGenerateImage(Backend backend)
     {
-      var model = GetFirebaseAI(backend).GetImagenModel("imagen-3.0-generate-002");
+      var model = GetFirebaseAI(backend).GetImagenModel("imagen-4.0-generate-001");
 
       var response = await model.GenerateImagesAsync(
           "Generate an image of a cartoon dog.");
@@ -832,7 +841,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task TestImagenGenerateImageOptions(Backend backend)
     {
       var model = GetFirebaseAI(backend).GetImagenModel(
-          modelName: "imagen-3.0-generate-002",
+          modelName: "imagen-4.0-generate-001",
           generationConfig: new ImagenGenerationConfig(
             // negativePrompt and addWatermark are not supported on this version of the model.
             numberOfImages: 2,
@@ -895,12 +904,11 @@ namespace Firebase.Sample.FirebaseAI
     // Test requesting thought summaries.
     async Task TestIncludeThoughts(Backend backend)
     {
-      // Thinking Budget requires at least the 2.5 model.
-      var model = GetFirebaseAI(backend).GetGenerativeModel(
-        modelName: "gemini-2.5-flash",
+      var model = GetFirebaseAI(backend, "global").GetGenerativeModel(
+        modelName: "gemini-3-flash-preview",
         generationConfig: new GenerationConfig(
           thinkingConfig: new ThinkingConfig(
-            thinkingBudget: 1024,
+            thinkingLevel: ThinkingConfig.ThinkingLevel.Low,
             includeThoughts: true
           )
         )
@@ -908,7 +916,7 @@ namespace Firebase.Sample.FirebaseAI
 
       GenerateContentResponse response = await model.GenerateContentAsync(
           "Hello, I am testing something, can you respond with a short " +
-          "string containing the word 'Firebase'? Don't call GetKeyword for this.");
+          "string containing the word 'Firebase'?");
 
       string result = response.Text;
       Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
@@ -963,6 +971,81 @@ namespace Firebase.Sample.FirebaseAI
       {
         DebugLog("WARNING: Response did not have expected Url Context Metadata.");
       }
+    }
+
+    async Task TestTemplateGenerateContent(Backend backend)
+    {
+      var model = GetFirebaseAI(backend, "global").GetTemplateGenerativeModel();
+
+      var inputs = new Dictionary<string, object>()
+      {
+        ["customerName"] = "Jane"
+      };
+      var response = await model.GenerateContentAsync("input-system-instructions", inputs);
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+    }
+
+    async Task TestTemplateGenerateContentStream(Backend backend)
+    {
+      var model = GetFirebaseAI(backend, "global").GetTemplateGenerativeModel();
+
+      var inputs = new Dictionary<string, object>()
+      {
+        ["customerName"] = "Jane"
+      };
+      var responseStream = model.GenerateContentStreamAsync("input-system-instructions", inputs);
+
+      // We combine all the text, just in case the keyword got cut between two responses.
+      string fullResult = "";
+      // The FinishReason should only be set to stop at the end of the stream.
+      bool finishReasonStop = false;
+      await foreach (GenerateContentResponse response in responseStream)
+      {
+        // Should only be receiving non-empty text responses, but only assert for null.
+        string text = response.Text;
+        Assert("Received null text from the stream.", text != null);
+        if (string.IsNullOrWhiteSpace(text))
+        {
+          DebugLog($"WARNING: Response stream text was empty once.");
+        }
+
+        Assert("Previous FinishReason was stop, but received more", !finishReasonStop);
+        if (response.Candidates.First().FinishReason == FinishReason.Stop)
+        {
+          finishReasonStop = true;
+        }
+
+        fullResult += text;
+      }
+
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(fullResult));
+      Assert("Finished without seeing FinishReason.Stop", finishReasonStop);
+    }
+
+    async Task TestTemplateImagenGenerateImage(Backend backend)
+    {
+      var model = GetFirebaseAI(backend).GetTemplateImagenModel();
+
+      var inputs = new Dictionary<string, object>()
+      {
+        ["prompt"] = "flowers",
+      };
+      var response = await model.GenerateImagesAsync(
+          "imagen-generation-basic", inputs);
+
+      // We can't easily test if the image is correct, but can check other random data.
+      AssertEq("FilteredReason", response.FilteredReason, null);
+      AssertEq("Image Count", response.Images.Count, 1);
+
+      AssertEq($"Image MimeType", response.Images[0].MimeType, "image/png");
+
+      var texture = response.Images[0].AsTexture2D();
+      Assert($"Image as Texture2D", texture != null);
+      // By default the image should be Square 1x1, so check for that.
+      Assert($"Image Height > 0", texture.height > 0);
+      AssertEq($"Image Height = Width", texture.height, texture.width);
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.

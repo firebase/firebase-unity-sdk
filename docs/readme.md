@@ -111,7 +111,27 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
+    - Firebase AI: Added support for Thinking Levels, used by Gemini 3 models
+      to define their thinking configuration, instead of Thinking Budget.
+
+### 13.6.0
+-   Changes
+    - General: Update to Firebase C++ SDK version 13.3.0.
+    - General (Android): Update to Firebase Android BoM version 34.6.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.6.0.
+    - Analytics: Added `SetDefaultEventParameters()` which allows developers to
+      specify a list  of parameters that will be set on every event logged.
+    - Analytics: Added a new `LogEvent()` that take in a IEnumerable of
+      parameters.
+    - Firebase AI: Added support for using
+      [Server Prompt Templates](https://firebase.google.com/docs/ai-logic/server-prompt-templates/get-started).
+
+### 13.5.0
+-   Changes
     - Firebase AI: Add support for receiving Live API Transcripts.
+    - Storage: Add support for Firebase Storage emulator via `UseEmulator`.
+      The `UseEmulator` method should be called before invoking any other
+      methods on a new instance of Storage. Default port is 9199.
 
 ### 13.4.0
 -   Changes
