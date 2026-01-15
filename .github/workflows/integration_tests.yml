@@ -413,7 +413,7 @@ jobs:
           shell: bash
           timeout_minutes: 5
           max_attempts: 3
-          command: npm install -g firebase-tools 
+          command: npm install -g firebase-tools@14.25.0
       - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
@@ -528,7 +528,7 @@ jobs:
           shell: bash
           timeout_minutes: 5
           max_attempts: 3
-          command: npm install -g firebase-tools  
+          command: npm install -g firebase-tools@14.25.0
       - name: Run Desktop integration tests
         if: ${{ matrix.test_device == 'github_runner'  }}
         timeout-minutes: 30
