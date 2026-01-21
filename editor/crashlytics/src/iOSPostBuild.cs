@@ -47,11 +47,52 @@ namespace Firebase.Crashlytics.Editor {
 
     // In Unity 2019.3 - PODS_ROOT is no longer an environment variable that is exposed.
     //                   Use ${PROJECT_DIR}/Pods.
-    private const string RunScriptBody = "chmod u+x \"${PROJECT_DIR}/Pods/FirebaseCrashlytics/run\"\n" +
-        "chmod u+x \"${PROJECT_DIR}/Pods/FirebaseCrashlytics/upload-symbols\"\n" +
-        "\"${PROJECT_DIR}/Pods/FirebaseCrashlytics/run\"";
+    private const string RunScriptBody = @"
+# Define Pods path
+COCOAPODS_RUN_PATH=""${PROJECT_DIR}/Pods/FirebaseCrashlytics/run""
 
-    private const string GooglePlistPath = "${PROJECT_DIR}/GoogleService-Info.plist";
+# Define SPM path.
+SPM_RUN_PATH=""${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run""
+
+# Fall back to checking where the script is running from.
+SCRIPT_DIR_PATH=$(dirname ""$0"")
+SCRIPT_RUN_PATH=""${SCRIPT_DIR_PATH%Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run""
+
+if [ -f ""$COCOAPODS_RUN_PATH"" ]; then
+  # --- Pods path found ---
+  echo ""Running Firebase Crashlytics (Cocoapods)""
+  chmod u+x ""$COCOAPODS_RUN_PATH""
+  chmod u+x ""${PROJECT_DIR}/Pods/FirebaseCrashlytics/upload-symbols""
+  ""$COCOAPODS_RUN_PATH"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
+
+elif [ -f ""$SPM_RUN_PATH"" ]; then
+  # --- SPM path found ---
+  echo ""Running Firebase Crashlytics (SPM at ${BUILD_DIR%/Build/*})""
+  chmod u+x ""$SPM_RUN_PATH""
+  ""$SPM_RUN_PATH"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
+
+elif [ -f ""$SCRIPT_RUN_PATH"" ]; then
+  # --- SPM path found via Script location ---
+  echo ""Running Firebase Crashlytics (SPM via ${SCRIPT_DIR_PATH})""
+  chmod u+x ""$SCRIPT_RUN_PATH""
+  ""$SCRIPT_RUN_PATH"" -gsp ""${PROJECT_DIR}/GoogleService-Info.plist""
+
+else
+  # --- Neither path was found ---
+  echo ""error: Could not find FirebaseCrashlytics 'run' script."" >&2
+  echo ""Checked for Cocoapods path: $COCOAPODS_RUN_PATH"" >&2
+  echo ""Checked for SPM path: $SPM_RUN_PATH"" >&2
+  echo ""Checked for SPM fallback path: $SCRIPT_RUN_PATH"" >&2
+  
+  echo ""--- Debug Xcode Variables ---"" >&2
+  echo ""BUILD_DIR: $BUILD_DIR"" >&2
+  echo ""PROJECT_DIR: $PROJECT_DIR"" >&2
+  echo ""SRCROOT: $SRCROOT"" >&2
+  echo ""-----------------------------"" >&2
+  
+  exit 1
+fi
+";
 
     private const string RunScriptName = "Crashlytics Run Script";
 
@@ -221,9 +262,7 @@ namespace Firebase.Crashlytics.Editor {
     /// </summary>
     /// <returns>Body of the iOS post build run script</returns>
     public static string GetRunScriptBody(IFirebaseConfigurationStorage configurationStorage) {
-      string completeRunScriptBody = RunScriptBody;
-      completeRunScriptBody = String.Format("{0} -gsp \"{1}\"", RunScriptBody, GooglePlistPath);
-      return completeRunScriptBody;
+      return RunScriptBody;
     }
 
     private static void AddCrashlyticsDevelopmentPlatformToPlist(string plistPath) {

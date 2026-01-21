@@ -93,6 +93,8 @@ unity_pack_cs(firebase_database_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Database
+    FIREBASE_SPM_DEPS
+      "FirebaseDatabase|Firebase/Database"
     IOS_DEPS
       "Firebase/Database"
     ANDROID_DEPS

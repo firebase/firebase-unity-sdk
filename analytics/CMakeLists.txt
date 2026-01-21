@@ -122,6 +122,8 @@ unity_pack_cs(firebase_analytics_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Analytics
+    FIREBASE_SPM_DEPS
+      "FirebaseAnalytics|Firebase/Analytics"
     IOS_DEPS
       "Firebase/Analytics"
     ANDROID_DEPS

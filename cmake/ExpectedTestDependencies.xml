@@ -4,6 +4,10 @@ FirebaseTest iOS and Android Dependencies.
 -->
 
 <dependencies>
+  <remoteSwiftPackage url="https://github.com/firebase/firebase-ios-sdk.git" version="1.2.3">
+    <swiftPackage name="TestPackage" replacesPod="TestPod,PinnedTestPod"/>
+    <swiftPackage name="OtherPackage"/>
+  </remoteSwiftPackage>
   <iosPods>
     <iosPod name="TestPod" version="1.2.3" minTargetSdk="7.8">
     </iosPod>

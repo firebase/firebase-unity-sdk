@@ -99,6 +99,8 @@ unity_pack_cs(firebase_app_check_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(AppCheck
+    FIREBASE_SPM_DEPS
+      "FirebaseAppCheck|Firebase/AppCheck"
     IOS_DEPS
       "Firebase/AppCheck"
     ANDROID_DEPS

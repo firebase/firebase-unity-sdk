@@ -92,6 +92,8 @@ unity_pack_cs(firebase_storage_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Storage
+    FIREBASE_SPM_DEPS
+      "FirebaseStorage|Firebase/Storage"
     IOS_DEPS
       "Firebase/Storage"
     ANDROID_DEPS

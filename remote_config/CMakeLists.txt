@@ -81,6 +81,8 @@ unity_pack_cs(firebase_remote_config_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(RemoteConfig
+    FIREBASE_SPM_DEPS
+      "FirebaseRemoteConfig|Firebase/RemoteConfig"
     IOS_DEPS
       "Firebase/RemoteConfig"
     ANDROID_DEPS

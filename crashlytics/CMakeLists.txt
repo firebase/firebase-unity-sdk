@@ -121,6 +121,8 @@ unity_pack_cs(firebase_crashlytics_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Crashlytics
+    FIREBASE_SPM_DEPS
+      "FirebaseCrashlytics|Firebase/Crashlytics"
     IOS_DEPS
       "Firebase/Crashlytics"
     ANDROID_DEPS
