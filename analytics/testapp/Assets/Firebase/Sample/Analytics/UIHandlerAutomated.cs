@@ -147,9 +147,10 @@ namespace Firebase.Sample.Analytics {
         }
       };
       List<Task> tasks = new List<Task>();
-      tasks.Add(Firebase.FirebaseApp.CheckAndFixDependenciesAsync()
-        .ContinueWithOnMainThread(taskHandler));
       try {
+        // Put both calls in a try catch, since either can throw
+        tasks.Add(Firebase.FirebaseApp.CheckAndFixDependenciesAsync()
+          .ContinueWithOnMainThread(taskHandler));
         tasks.Add(Firebase.FirebaseApp.CheckAndFixDependenciesAsync()
           .ContinueWithOnMainThread(taskHandler));
       } catch (System.InvalidOperationException) {
