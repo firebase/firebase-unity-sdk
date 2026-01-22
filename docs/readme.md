@@ -109,8 +109,14 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.7.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 13.4.0.
+    - General (Android): Update to Firebase Android BoM version 34.8.0.
+    - General (iOS): Update to Firebase Swift Package / Cocoapod version 12.8.0.
+    - General: Update to EDM4U version 1.2.187.
+    - General (iOS): Added support for linking against Swift Packages, instead
+      of Cocoapods, via EDM4U.
     - Firebase AI: Added support for Thinking Levels, used by Gemini 3 models
       to define their thinking configuration, instead of Thinking Budget.
 
