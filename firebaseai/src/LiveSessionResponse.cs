@@ -330,7 +330,7 @@ namespace Firebase.AI
         if (jsonDict.TryParseValue("timeLeft", out string timeLeft))
         {
           // Strip off the ending 's'
-          if (timeLeft.EndsWith('s'))
+          if (timeLeft != null && timeLeft.EndsWith('s'))
           {
             seconds = double.Parse(timeLeft.TrimEnd('s'));
           }
