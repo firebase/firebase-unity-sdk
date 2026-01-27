@@ -141,6 +141,10 @@ namespace Firebase.AI
       {
         return new LiveSessionResponse(LiveSessionToolCallCancellation.FromJson(toolCallCancellation));
       }
+      else if (jsonDict.TryParseValue("goAway", out Dictionary<string, object> goAway))
+      {
+        return new LiveSessionResponse(LiveSessionGoingAway.FromJson(goAway));
+      }
       else
       {
         // TODO: Determine if we want to log this, or just ignore it?
@@ -285,6 +289,60 @@ namespace Firebase.AI
     {
       return new LiveSessionToolCallCancellation(
           jsonDict.ParseStringList("ids"));
+    }
+  }
+
+  /// <summary>
+  /// A server message indicating that the server will not be able to service the
+  /// client soon.
+  /// </summary>
+  public readonly struct LiveSessionGoingAway : ILiveSessionMessage
+  {
+    /// <summary>
+    /// The remaining time before the connection will be terminated as ABORTED.
+    /// </summary>
+    public readonly TimeSpan TimeLeft { get; }
+
+    private LiveSessionGoingAway(TimeSpan timeLeft)
+    {
+      TimeLeft = timeLeft;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for deserializing JSON responses and should not be called directly.
+    /// </summary>
+    internal static LiveSessionGoingAway FromJson(Dictionary<string, object> jsonDict)
+    {
+      double seconds = 0;
+
+      // The expected format of the Go Away message is:
+      //
+      // "goAway": {
+      //  "timeLeft": "50s"
+      // }
+      //
+      // What is passed to this method should already be the underlying dictionary,
+      // so we just need to parse the timeLeft string.
+      // If for some reason we fail to parse the string, we want to default to 0.
+      try
+      {
+        if (jsonDict.TryParseValue("timeLeft", out string timeLeft))
+        {
+          // Strip off the ending 's'
+          if (timeLeft.EndsWith('s'))
+          {
+            seconds = double.Parse(timeLeft.TrimEnd('s'));
+          }
+        }
+      }
+      catch (Exception e)
+      {
+        UnityEngine.Debug.LogError("Failed to properly parse GoingAwayNotice: " + e);
+      }
+
+      return new LiveSessionGoingAway(
+          TimeSpan.FromSeconds(seconds));
     }
   }
 
