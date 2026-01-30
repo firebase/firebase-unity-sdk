@@ -26,6 +26,13 @@ public interface IAppCheckProvider {
   /// Returns an AppCheckToken or throws an exception with an error code and
   /// error message.
   System.Threading.Tasks.Task<AppCheckToken> GetTokenAsync();
+
+  /// Returns a limited-use AppCheckToken or throws an exception with an error code and
+  /// error message.
+  ///
+  /// This defaults to calling GetTokenAsync() if not overridden.
+  System.Threading.Tasks.Task<AppCheckToken> GetLimitedUseTokenAsync() => GetTokenAsync();
 }
 
 }
+

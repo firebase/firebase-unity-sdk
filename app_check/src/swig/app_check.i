@@ -46,6 +46,9 @@ typedef void (SWIGSTDCALL *CompleteBuiltInGetToken)(int key, AppCheckToken* toke
 
 // Should be set to the C# function FirebaseAppCheck.GetTokenFromCSharpMethod
 static GetTokenFromCSharp g_get_token_from_csharp = nullptr;
+// Should be set to the C# function FirebaseAppCheck.GetLimitedUseTokenFromCSharpMethod
+static GetTokenFromCSharp g_get_limited_use_token_from_csharp = nullptr;
+
 static int g_pending_token_keys = 0;
 static std::map<int, std::function<void(AppCheckToken, int, const std::string&)>> g_pending_get_tokens;
 static ::firebase::Mutex g_pending_get_tokens_mutex;
@@ -95,6 +98,21 @@ static void CallGetTokenFromCSharp(int key, const char* name) {
   }
 }
 
+// Wrapper that calls g_get_limited_use_token_from_csharp, to get a new AppCheckToken
+// from the C# implementation. Logic to determine the provider is done on
+// the C# side.
+// Should be used with the callback logic to guarantee it is on the Unity thread.
+static void CallGetLimitedUseTokenFromCSharp(int key, const char* name) {
+  if (g_get_limited_use_token_from_csharp) {
+    // Should be calling FirebaseAppCheck.GetLimitedUseTokenFromCSharpMethod
+    g_get_limited_use_token_from_csharp(name, key);
+  } else {
+    // The C# callback has disappeared, so fail the C++ call.
+    FinishGetTokenCallback(key, "", 0, kAppCheckErrorInvalidConfiguration,
+      "Missing AppCheckProvider C# configuration");
+  }
+}
+
 // C++ implementation of the AppCheckProvider that calls up to the
 // C# library. Note that this isn't meant to wrap the C# providers
 // directly, but instead all pass into the C# library itself, which
@@ -120,6 +138,26 @@ class SwigAppCheckProvider : public AppCheckProvider {
       firebase::callback::AddCallback(
         new firebase::callback::CallbackValue1String1<int>(
           key, app_->name(), CallGetTokenFromCSharp));
+    } else {
+      completion_callback({}, kAppCheckErrorInvalidConfiguration,
+        "Missing AppCheckProvider C# configuration");
+    }
+  }
+
+  void GetLimitedUseToken(std::function<void(AppCheckToken, int, const std::string&)>
+                  completion_callback) override {
+    if (g_get_limited_use_token_from_csharp) {
+      // Save the callback in the map, and generate a key
+      int key;
+      {
+        MutexLock lock(g_pending_get_tokens_mutex);
+        key = g_pending_token_keys++;
+        g_pending_get_tokens[key] = completion_callback;
+      }
+      // Queue a call to the C# function that will generate the token.
+      firebase::callback::AddCallback(
+        new firebase::callback::CallbackValue1String1<int>(
+          key, app_->name(), CallGetLimitedUseTokenFromCSharp));
     } else {
       completion_callback({}, kAppCheckErrorInvalidConfiguration,
         "Missing AppCheckProvider C# configuration");
@@ -167,6 +205,19 @@ static SwigAppCheckProviderFactory g_swig_factory;
 // Called from C# to register the C# to call to get a token.
 void SetGetTokenCallback(GetTokenFromCSharp get_token_callback) {
   g_get_token_from_csharp = get_token_callback;
+
+  if (get_token_callback) {
+    // If a valid callback, register the Swig Factory as the one to use.
+    firebase::app_check::AppCheck::SetAppCheckProviderFactory(&g_swig_factory);
+  } else {
+    // If given no callback, clear the factory.
+    firebase::app_check::AppCheck::SetAppCheckProviderFactory(nullptr);
+  }
+}
+
+// Called from C# to register the C# to call to get a limited use token.
+void SetGetLimitedUseTokenCallback(GetTokenFromCSharp get_token_callback) {
+  g_get_limited_use_token_from_csharp = get_token_callback;
 
   if (get_token_callback) {
     // If a valid callback, register the Swig Factory as the one to use.
@@ -259,6 +310,20 @@ void GetTokenFromBuiltInProvider(AppCheckProvider* provider, int key) {
   provider->GetToken(token_callback);
 }
 
+// Called from C# to call the built in provider's GetLimitedUseToken function, and then pass the
+// result back to C# when done.
+void GetLimitedUseTokenFromBuiltInProvider(AppCheckProvider* provider, int key) {
+  auto token_callback{
+    [key](firebase::app_check::AppCheckToken token,
+          int error_code, const std::string& error_message) {
+    // Queue a call to the C# function to pass along the new token.
+    firebase::callback::AddCallback(
+      new firebase::callback::CallbackValue3String1<int, AppCheckToken, int>(
+        key, token, error_code, error_message.c_str(), CallCompleteBuiltInGetToken));
+  }};
+  provider->GetLimitedUseToken(token_callback);
+}
+
 }  // namespace app_check
 }  // firebase
 %}  // End of C++ code
@@ -331,11 +396,13 @@ namespace app_check {
 void SetGetTokenCallback(firebase::app_check::GetTokenFromCSharp get_token_callback);
 void FinishGetTokenCallback(int key, const char* token, int64_t expire_ms,
                             int error_code, const char* error_message);
+void SetGetLimitedUseTokenCallback(firebase::app_check::GetTokenFromCSharp get_token_callback);
 
 void SetTokenChangedCallback(firebase::app_check::AppCheck* app_check,
                              firebase::app_check::TokenChanged token_changed_callback);
 
 void SetCompleteBuiltInGetTokenCallback(firebase::app_check::CompleteBuiltInGetToken);
 void GetTokenFromBuiltInProvider(AppCheckProvider* provider, int key);
+void GetLimitedUseTokenFromBuiltInProvider(AppCheckProvider* provider, int key);
 }  // app_check
 }  // firebase
