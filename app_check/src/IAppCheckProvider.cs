@@ -26,12 +26,17 @@ public interface IAppCheckProvider {
   /// Returns an AppCheckToken or throws an exception with an error code and
   /// error message.
   System.Threading.Tasks.Task<AppCheckToken> GetTokenAsync();
+}
 
+/// @brief Interface for a provider that generates limited-use {@link AppCheckToken}s.
+///
+/// This interface extends IAppCheckProvider to add support for limited-use tokens.
+/// Providers that implement this interface can optionally provide a specific implementation
+/// for generating limited-use tokens.
+public interface ILimitedUseTokenProvider : IAppCheckProvider {
   /// Returns a limited-use AppCheckToken or throws an exception with an error code and
   /// error message.
-  ///
-  /// This defaults to calling GetTokenAsync() if not overridden.
-  System.Threading.Tasks.Task<AppCheckToken> GetLimitedUseTokenAsync() => GetTokenAsync();
+  System.Threading.Tasks.Task<AppCheckToken> GetLimitedUseTokenAsync();
 }
 
 }

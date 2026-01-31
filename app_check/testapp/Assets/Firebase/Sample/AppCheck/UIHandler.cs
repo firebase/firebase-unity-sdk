@@ -50,7 +50,7 @@ namespace Firebase.Sample.AppCheck {
     // If the testapp is running automated tests
     protected bool runningAutomatedTests = false;
 
-    public class TestAppCheckProvider : IAppCheckProvider {
+    public class TestAppCheckProvider : ILimitedUseTokenProvider {
       public TestAppCheckProvider() {}
 
       public System.Threading.Tasks.Task<AppCheckToken> GetTokenAsync() {
