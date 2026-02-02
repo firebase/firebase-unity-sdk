@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 
 namespace Firebase.AppCheck {
 
-internal class BuiltInProviderWrapper : ILimitedUseTokenProvider {
+internal class BuiltInProviderWrapper : IAppCheckProvider {
 
   private static int s_pendingGetTokenKey = 0;
   private static Dictionary<int, TaskCompletionSource<AppCheckToken>> s_pendingGetTokens =

@@ -249,10 +249,7 @@ public sealed class FirebaseAppCheck {
       providerMap[app.Name] = provider;
     }
 
-    // Check if the provider supports Limited Use Tokens explicitly.{
-    taskToRun = provider.GetLimitedUseTokenAsync();
-
-    taskToRun.ContinueWith(task => {
+    provider.GetLimitedUseTokenAsync().ContinueWith(task => {
       if (task.IsFaulted) {
         AppCheckUtil.FinishGetTokenCallback(key, "", 0,
           (int)AppCheckError.Unknown,
