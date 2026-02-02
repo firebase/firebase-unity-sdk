@@ -61,6 +61,9 @@ namespace Firebase.Sample.FirebaseAI
         TestBasicText,
         TestBasicImage,
         TestModelOptions,
+        TestCountTokens,
+#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
+        // Disabled from CI, because of rate limit issues
         TestMultipleCandidates,
         TestBasicTextStream,
         TestFunctionCallingAny,
@@ -72,13 +75,9 @@ namespace Firebase.Sample.FirebaseAI
         TestChatBasicTextPriorHistory,
         TestChatFunctionCalling,
         TestChatBasicTextStream,
-        TestCountTokens,
         TestYoutubeLink,
         TestGenerateImage,
-#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
-        // Disabled from CI, because of rate limit issues
         TestImagenGenerateImage,
-#endif
         TestImagenGenerateImageOptions,
         TestThinkingBudget,
         TestIncludeThoughts,
@@ -86,8 +85,6 @@ namespace Firebase.Sample.FirebaseAI
         TestUrlContext,
         TestTemplateGenerateContent,
         TestTemplateGenerateContentStream,
-#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
-        // Disabled from CI, because of rate limit issues
         TestTemplateImagenGenerateImage,
 #endif
       };

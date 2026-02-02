@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Add `LiveSessionGoingAway` to handle backend closing.
+
 ### 13.7.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.4.0.
