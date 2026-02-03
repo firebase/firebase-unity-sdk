@@ -112,6 +112,7 @@ Release Notes
 ### Upcoming
 -   Changes
     - Firebase AI: Add `LiveSessionGoingAway` to handle backend closing.
+    - Firebase AI: Add support for `CachedContentTokenCount` and `CacheTokensDetails` in `UsageMetadata`.
 
 ### 13.7.0
 -   Changes

@@ -56,7 +56,7 @@ namespace Firebase.Sample.FirebaseAI {
       });
     }
 
-    public string ModelName = "gemini-2.0-flash";
+    public string ModelName = "gemini-2.5-flash";
 
     private int backendSelection = 0;
     private string[] backendChoices = new string[] { "Google AI Backend", "Vertex AI Backend" };
@@ -73,6 +73,7 @@ namespace Firebase.Sample.FirebaseAI {
       DebugLog("Sending message to model: " + message);
       var response = await GetModel().GenerateContentAsync(message);
       DebugLog("Response: " + response.Text);
+      LogUsageMetadata(response.UsageMetadata);
     }
 
     private Chat chatSession = null;
@@ -95,6 +96,17 @@ namespace Firebase.Sample.FirebaseAI {
       DebugLog("Sending chat message: " + message);
       var response = await chatSession.SendMessageAsync(message);
       DebugLog("Chat response: " + response.Text);
+      LogUsageMetadata(response.UsageMetadata);
+    }
+
+    private void LogUsageMetadata(UsageMetadata? metadata) {
+      if (metadata == null) return;
+
+      var m = metadata.Value;
+      DebugLog($"UsageMetadata: Prompt: {m.PromptTokenCount}, Candidates: {m.CandidatesTokenCount}, Total: {m.TotalTokenCount}, Cached: {m.CachedContentTokenCount}");
+      foreach (var detail in m.CacheTokensDetails) {
+          DebugLog($"    {detail.Modality}: {detail.TokenCount}");
+      }
     }
 
     // Exit if escape (or back, on mobile) is pressed.
