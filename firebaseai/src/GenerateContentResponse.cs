@@ -527,6 +527,11 @@ namespace Firebase.AI
     /// The total number of tokens in both the request and response.
     /// </summary>
     public int TotalTokenCount { get; }
+    /// <summary>
+    /// The number of tokens in the prompt that were served from the cache.
+    /// If implicit caching is not active or no content was cached, this will be 0.
+    /// </summary>
+    public int CachedContentTokenCount { get; }
 
     private readonly IReadOnlyList<ModalityTokenCount> _promptTokensDetails;
     /// <summary>
@@ -565,19 +570,34 @@ namespace Firebase.AI
       }
     }
 
+    private readonly IReadOnlyList<ModalityTokenCount> _cacheTokensDetails;
+    /// <summary>
+    /// Detailed breakdown of the cached tokens by modality (e.g., text, image).
+    /// This list provides granular insight into which parts of the content were cached.
+    /// </summary>
+    public IReadOnlyList<ModalityTokenCount> CacheTokensDetails
+    {
+      get
+      {
+        return _cacheTokensDetails ?? new List<ModalityTokenCount>();
+      }
+    }
+
     // Hidden constructor, users don't need to make this.
-    private UsageMetadata(int promptTC, int candidatesTC, int thoughtsTC, int toolUseTC, int totalTC,
+    private UsageMetadata(int promptTC, int candidatesTC, int thoughtsTC, int toolUseTC, int totalTC, int cachedTC,
                           List<ModalityTokenCount> promptDetails, List<ModalityTokenCount> candidateDetails,
-                          List<ModalityTokenCount> toolUseDetails)
+                          List<ModalityTokenCount> toolUseDetails, List<ModalityTokenCount> cacheDetails)
     {
       PromptTokenCount = promptTC;
       CandidatesTokenCount = candidatesTC;
       ThoughtsTokenCount = thoughtsTC;
       ToolUsePromptTokenCount = toolUseTC;
       TotalTokenCount = totalTC;
+      CachedContentTokenCount = cachedTC;
       _promptTokensDetails = promptDetails;
       _candidatesTokensDetails = candidateDetails;
       _toolUsePromptTokensDetails = toolUseDetails;
+      _cacheTokensDetails = cacheDetails;
     }
 
     /// <summary>
@@ -592,9 +612,11 @@ namespace Firebase.AI
         jsonDict.ParseValue<int>("thoughtsTokenCount"),
         jsonDict.ParseValue<int>("toolUsePromptTokenCount"),
         jsonDict.ParseValue<int>("totalTokenCount"),
+        jsonDict.ParseValue<int>("cachedContentTokenCount"),
         jsonDict.ParseObjectList("promptTokensDetails", ModalityTokenCount.FromJson),
         jsonDict.ParseObjectList("candidatesTokensDetails", ModalityTokenCount.FromJson),
-        jsonDict.ParseObjectList("toolUsePromptTokensDetails", ModalityTokenCount.FromJson));
+        jsonDict.ParseObjectList("toolUsePromptTokensDetails", ModalityTokenCount.FromJson),
+        jsonDict.ParseObjectList("cacheTokensDetails", ModalityTokenCount.FromJson));
     }
   }
 
