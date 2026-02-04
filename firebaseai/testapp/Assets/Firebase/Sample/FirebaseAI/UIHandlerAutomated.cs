@@ -52,6 +52,73 @@ namespace Firebase.Sample.FirebaseAI
       GoogleAI,
       VertexAI,
     }
+    // Set of status codes that are retryable.
+    private readonly HashSet<int> RetryableCodes = new HashSet<int> { 429, 503, 504 };
+    // This should give us up to 30 seconds of delay in the last attempt.
+    private const int MaxRetries = 5;
+    private const int InitialRetryDelayMilliseconds = 2000;
+
+    // Helper to check if an exception corresponds to a quota exhaustion error.
+    private bool IsQuotaExhausted(Exception ex)
+    {
+      var msg = ex.Message;
+      return !string.IsNullOrEmpty(msg) && msg.Contains("exceeded your current quota");
+    }
+
+    // Helper to check if an exception corresponds to a retryable error.
+    private bool ShouldRetry(Exception ex) 
+    {
+      if (ex == null) return false;
+
+      if (ex is AggregateException agg)
+      {
+        return agg.InnerExceptions.Any(ShouldRetry);
+      }
+      // Retry UNLESS it is a 429 and the quota is exhausted
+      if (ex.Data["StatusCode"] is int code && RetryableCodes.Contains(code))
+      {
+        return !(code == 429 && IsQuotaExhausted(ex));
+      }
+      return false;
+    }
+
+    // Wraps a test function with retry logic for retryable errors (e.g. 429).
+    // The AI SDK can return 429 errors when the service is rate limited.
+    // Retrying at the github runner level will result in even more load and
+    // therefore potentially more 429 errors. So we try this on per test level.
+    private async Task RetryTestWithExponentialBackoff(string testName, Func<Task> testAction)
+    {
+      int delayMilliseconds = InitialRetryDelayMilliseconds;
+      
+      for (int i = 0; i <= MaxRetries; i++)
+      {
+        try 
+        {
+          await testAction();
+          return;
+        }
+        catch (Exception ex)
+        {
+            // Check if it's a retryable error and we have retries left.
+            if (i < MaxRetries && ShouldRetry(ex))
+            {
+                // Log and wait
+                DebugLog($"Retryable Error encountered in {testName}: Retrying attempt {i + 1} of {MaxRetries}...");
+                DebugLog($"{testName} has error message: {ex.Message}");
+                int jitter = UnityEngine.Random.Range(0, 1000);
+                // As we tend to run multiple tests in parallel especially on github runners running desktop, 
+                // android, and ios all at the same time, we add jitter to the delay to avoid the tests 
+                // hammering the service at the same time.
+                await Task.Delay(delayMilliseconds + jitter);
+                delayMilliseconds *= 2;
+            }
+            else
+            {
+                throw;
+            }
+        }
+      }
+    }
 
     protected override void Start()
     {
@@ -124,13 +191,14 @@ namespace Firebase.Sample.FirebaseAI
       {
         foreach (var testMethod in multiBackendTests)
         {
-          tests.Add(() => testMethod(backend));
-          testNames.Add($"{testMethod.Method.Name}_{backend}");
+          string testName = $"{testMethod.Method.Name}_{backend}";
+          tests.Add(() => RetryTestWithExponentialBackoff(testName, () => testMethod(backend)));
+          testNames.Add(testName);
         }
       }
       foreach (var testMethod in singleTests)
       {
-        tests.Add(testMethod);
+        tests.Add(() => RetryTestWithExponentialBackoff(testMethod.Method.Name, testMethod));
         testNames.Add(testMethod.Method.Name);
       }
 

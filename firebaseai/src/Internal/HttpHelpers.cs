@@ -110,6 +110,7 @@ namespace Firebase.AI.Internal
         $"HTTP request failed with status code: {(int)response.StatusCode} ({response.ReasonPhrase}).\n" +
         $"Error Content: {errorContent}"
       );
+      ex.Data["StatusCode"] = (int)response.StatusCode;
 
       throw ex;
     }
