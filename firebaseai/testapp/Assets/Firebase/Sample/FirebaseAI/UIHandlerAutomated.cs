@@ -1595,7 +1595,7 @@ namespace Firebase.Sample.FirebaseAI
        AssertEq("TotalTokenCount", response.UsageMetadata?.TotalTokenCount, 250);
        AssertEq("CachedContentTokenCount", response.UsageMetadata?.CachedContentTokenCount, 150);
 
-       var cacheTokensDetails = response.UsageMetadata?.CacheTokensDetails.ToList();
+       var cacheTokensDetails = response.UsageMetadata?.CacheTokensDetails;
        AssertEq("CacheTokensDetails.Count", cacheTokensDetails.Count, 1);
        AssertEq("CacheTokensDetails[0].Modality", cacheTokensDetails[0].Modality, ContentModality.Text);
        AssertEq("CacheTokensDetails[0].TokenCount", cacheTokensDetails[0].TokenCount, 150);

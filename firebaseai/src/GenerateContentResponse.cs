@@ -541,7 +541,7 @@ namespace Firebase.AI
     {
       get
       {
-        return _promptTokensDetails ?? new List<ModalityTokenCount>();
+        return _promptTokensDetails ?? Array.Empty<ModalityTokenCount>();
       }
     }
 
@@ -553,7 +553,7 @@ namespace Firebase.AI
     {
       get
       {
-        return _candidatesTokensDetails ?? new List<ModalityTokenCount>();
+        return _candidatesTokensDetails ?? Array.Empty<ModalityTokenCount>();
       }
     }
 
@@ -566,7 +566,7 @@ namespace Firebase.AI
     {
       get
       {
-        return _toolUsePromptTokensDetails ?? new List<ModalityTokenCount>();
+        return _toolUsePromptTokensDetails ?? Array.Empty<ModalityTokenCount>();
       }
     }
 
@@ -579,7 +579,7 @@ namespace Firebase.AI
     {
       get
       {
-        return _cacheTokensDetails ?? new List<ModalityTokenCount>();
+        return _cacheTokensDetails ?? Array.Empty<ModalityTokenCount>();
       }
     }
 
