@@ -66,7 +66,7 @@ namespace Firebase.Sample.FirebaseAI
     }
 
     // Helper to check if an exception corresponds to a retryable error.
-    private bool ShouldRetry(Exception ex) 
+    private bool ShouldRetry(Exception ex)
     {
       if (ex == null) return false;
 
@@ -89,10 +89,10 @@ namespace Firebase.Sample.FirebaseAI
     private async Task RetryTestWithExponentialBackoff(string testName, Func<Task> testAction)
     {
       int delayMilliseconds = InitialRetryDelayMilliseconds;
-      
+
       for (int i = 0; i <= MaxRetries; i++)
       {
-        try 
+        try
         {
           await testAction();
           return;
@@ -106,8 +106,8 @@ namespace Firebase.Sample.FirebaseAI
                 DebugLog($"Retryable Error encountered in {testName}: Retrying attempt {i + 1} of {MaxRetries}...");
                 DebugLog($"{testName} has error message: {ex.Message}");
                 int jitter = UnityEngine.Random.Range(0, 1000);
-                // As we tend to run multiple tests in parallel especially on github runners running desktop, 
-                // android, and ios all at the same time, we add jitter to the delay to avoid the tests 
+                // As we tend to run multiple tests in parallel especially on github runners running desktop,
+                // android, and ios all at the same time, we add jitter to the delay to avoid the tests
                 // hammering the service at the same time.
                 await Task.Delay(delayMilliseconds + jitter);
                 delayMilliseconds *= 2;
