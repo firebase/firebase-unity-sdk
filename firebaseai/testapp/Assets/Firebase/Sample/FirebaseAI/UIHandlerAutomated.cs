@@ -114,6 +114,7 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestThoughtSummary,
         InternalTestCodeExecution,
         InternalTestUrlContextMixedValidity,
+        InternalTestUsageMetadataWithCaching,
       };
 
       // Create the set of tests, combining the above lists.
@@ -1581,6 +1582,23 @@ namespace Firebase.Sample.FirebaseAI
       AssertEq("CandidatesTokensDetails.Count", candidatesDetails.Count, 1);
       AssertEq("CandidatesTokensDetails[0].Modality", candidatesDetails[0].Modality, ContentModality.Text);
       AssertEq("CandidatesTokensDetails[0].TokenCount", candidatesDetails[0].TokenCount, 76);
+    }
+
+    // Test that the UsageMetadata with caching information is getting parsed correctly.
+    async Task InternalTestUsageMetadataWithCaching()
+    {
+       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-cached-content-usage-metadata.json");
+       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+       AssertEq("PromptTokenCount", response.UsageMetadata?.PromptTokenCount, 200);
+       AssertEq("CandidatesTokenCount", response.UsageMetadata?.CandidatesTokenCount, 50);
+       AssertEq("TotalTokenCount", response.UsageMetadata?.TotalTokenCount, 250);
+       AssertEq("CachedContentTokenCount", response.UsageMetadata?.CachedContentTokenCount, 150);
+
+       var cacheTokensDetails = response.UsageMetadata?.CacheTokensDetails;
+       AssertEq("CacheTokensDetails.Count", cacheTokensDetails.Count, 1);
+       AssertEq("CacheTokensDetails[0].Modality", cacheTokensDetails[0].Modality, ContentModality.Text);
+       AssertEq("CacheTokensDetails[0].TokenCount", cacheTokensDetails[0].TokenCount, 150);
     }
 
     // Test that parsing a basic short reply from Google AI endpoint works as expected.
