@@ -104,11 +104,9 @@ public sealed class FirebaseAppCheck {
 
     // Register the callback for C++ SDK to use that will reach this factory.
     if (factory == null) {
-      AppCheckUtil.SetGetTokenCallback(null);
-      AppCheckUtil.SetGetLimitedUseTokenCallback(null);
+      AppCheckUtil.SetGetTokenCallback(null, null);
     } else {
-      AppCheckUtil.SetGetTokenCallback(getTokenDelegate);
-      AppCheckUtil.SetGetLimitedUseTokenCallback(getLimitedUseTokenDelegate);
+      AppCheckUtil.SetGetTokenCallback(getTokenDelegate, getLimitedUseTokenDelegate);
     }
   }
 
