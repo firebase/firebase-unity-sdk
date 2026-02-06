@@ -44,6 +44,9 @@ public sealed class FirebaseAppCheck {
   // Function for C++ to call when it needs to fetch a Token.
   private static AppCheckUtil.GetTokenFromCSharpDelegate getTokenDelegate =
     new AppCheckUtil.GetTokenFromCSharpDelegate(GetTokenFromCSharpMethod);
+  // Function for C++ to call when it needs to fetch a Limited Use Token.
+  private static AppCheckUtil.GetTokenFromCSharpDelegate getLimitedUseTokenDelegate =
+    new AppCheckUtil.GetTokenFromCSharpDelegate(GetLimitedUseTokenFromCSharpMethod);
   // Function for C++ to call when the Token changes.
   private static AppCheckUtil.TokenChangedDelegate tokenChangedDelegate =
     new AppCheckUtil.TokenChangedDelegate(TokenChangedMethod);
@@ -101,9 +104,9 @@ public sealed class FirebaseAppCheck {
 
     // Register the callback for C++ SDK to use that will reach this factory.
     if (factory == null) {
-      AppCheckUtil.SetGetTokenCallback(null);
+      AppCheckUtil.SetGetTokenCallback(null, null);
     } else {
-      AppCheckUtil.SetGetTokenCallback(getTokenDelegate);
+      AppCheckUtil.SetGetTokenCallback(getTokenDelegate, getLimitedUseTokenDelegate);
     }
   }
 
@@ -120,6 +123,24 @@ public sealed class FirebaseAppCheck {
       GetAppCheckTokenAsync(bool forceRefresh) {
     ThrowIfNull();
     return appCheckInternal.GetAppCheckTokenAsync(forceRefresh).ContinueWith(task => {
+      if (task.IsFaulted) {
+        throw task.Exception;
+      }
+      AppCheckTokenInternal tokenInternal = task.Result;
+      return AppCheckToken.FromAppCheckTokenInternal(tokenInternal);
+    });
+  }
+
+  /// Requests a Firebase App Check token. This method should be used ONLY if you need to authorize
+  /// requests to a non-Firebase backend.
+  ///
+  /// Returns limited-use tokens that are intended for use with your non-Firebase backend endpoints
+  /// that are protected with Replay Protection. This method does
+  /// not affect the token generation behavior of the GetAppCheckTokenAsync() method.
+  public System.Threading.Tasks.Task<AppCheckToken>
+      GetLimitedUseAppCheckTokenAsync() {
+    ThrowIfNull();
+    return appCheckInternal.GetLimitedUseAppCheckTokenAsync().ContinueWith(task => {
       if (task.IsFaulted) {
         throw task.Exception;
       }
@@ -187,6 +208,46 @@ public sealed class FirebaseAppCheck {
       providerMap[app.Name] = provider;
     }
     provider.GetTokenAsync().ContinueWith(task => {
+      if (task.IsFaulted) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.Unknown,
+          "Provider returned an Exception: " + task.Exception);
+      } else {
+        AppCheckToken token = task.Result;
+        AppCheckUtil.FinishGetTokenCallback(key, token.Token,
+          token.ExpireTimeMs, 0, "");
+      }
+    });
+  }
+
+  [MonoPInvokeCallback(typeof(AppCheckUtil.GetTokenFromCSharpDelegate))]
+  private static void GetLimitedUseTokenFromCSharpMethod(string appName, int key) {
+    if (appCheckFactory == null) {
+      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+        (int)AppCheckError.InvalidConfiguration,
+        "Missing IAppCheckProviderFactory.");
+      return;
+    }
+    FirebaseApp app = FirebaseApp.GetInstance(appName);
+    if (app == null) {
+      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+        (int)AppCheckError.Unknown,
+        "Unable to find App with name: " + appName);
+      return;
+    }
+    IAppCheckProvider provider;
+    if (!providerMap.TryGetValue(app.Name, out provider)) {
+      provider = appCheckFactory.CreateProvider(app);
+      if (provider == null) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.InvalidConfiguration,
+          "Failed to create IAppCheckProvider for App: " + appName);
+        return;
+      }
+      providerMap[app.Name] = provider;
+    }
+
+    provider.GetLimitedUseTokenAsync().ContinueWith(task => {
       if (task.IsFaulted) {
         AppCheckUtil.FinishGetTokenCallback(key, "", 0,
           (int)AppCheckError.Unknown,

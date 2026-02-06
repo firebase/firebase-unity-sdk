@@ -44,7 +44,8 @@ namespace Firebase.Sample.AppCheck {
       // non-static.
       Func<Task>[] tests = {
         TestGetDebugToken,
-        TestGetAppCheckToken
+        TestGetAppCheckToken,
+        TestGetLimitedUseToken
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -131,6 +132,20 @@ namespace Firebase.Sample.AppCheck {
       });
 
       return tcs.Task;
+    }
+
+    Task TestGetLimitedUseToken() {
+      return FirebaseAppCheck.DefaultInstance.GetLimitedUseAppCheckTokenAsync().ContinueWithOnMainThread(task => {
+        if (task.IsFaulted) {
+          throw task.Exception;
+        } else {
+          Assert("Limited Use token is empty", task.Result.Token != "");
+
+          // The expire time should be within roughly an hour, so check for that.
+          DateTime time = DateTime.UtcNow.AddMinutes(120);
+          Assert("Limited Use token time is too long", task.Result.ExpireTime < time);
+        }
+      });
     }
   }
 }

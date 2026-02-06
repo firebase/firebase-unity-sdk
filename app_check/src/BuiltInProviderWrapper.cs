@@ -62,6 +62,20 @@ internal class BuiltInProviderWrapper : IAppCheckProvider {
     return tcs.Task;
   }
 
+  public System.Threading.Tasks.Task<AppCheckToken> GetLimitedUseTokenAsync() {
+    ThrowIfNull();
+
+    int key;
+    TaskCompletionSource<AppCheckToken> tcs;
+    lock (s_pendingGetTokens) {
+      key = s_pendingGetTokenKey++;
+      tcs = new TaskCompletionSource<AppCheckToken>();
+      s_pendingGetTokens[key] = tcs;
+    }
+    AppCheckUtil.GetLimitedUseTokenFromBuiltInProvider(providerInternal, key);
+    return tcs.Task;
+  }
+
   // This is called from the C++ implementation, on the Unity main thread.
   [MonoPInvokeCallback(typeof(AppCheckUtil.CompleteBuiltInGetTokenDelegate))]
   private static void CompleteBuiltInGetTokenMethod(int key, System.IntPtr tokenCPtr,
