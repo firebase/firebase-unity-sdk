@@ -22,7 +22,7 @@ set(CMAKE_SYSTEM_NAME "iOS")
 # Note, this seems to cause an issue with repeating builds on some cmake versions,
 # the long term fix will likely be to not handle both device and simulator with
 # the same toolchain, and instead merge the libraries after the fact.
-set(CMAKE_OSX_SYSROOT "")
+set(CMAKE_OSX_SYSROOT "iphoneos")
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
 set(CMAKE_XCODE_EFFECTIVE_PLATFORMS "-iphoneos;-iphonesimulator")
 set(IOS_PLATFORM_LOCATION "iPhoneOS.platform;iPhoneSimulator.platform")
