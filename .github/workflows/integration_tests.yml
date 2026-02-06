@@ -406,14 +406,14 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
       - name: Setup Firestore Emulator
         uses: nick-invision/retry@v2
         with:
           shell: bash
           timeout_minutes: 5
           max_attempts: 3
-          command: npm install -g firebase-tools@14.25.0
+          command: npm install -g firebase-tools
       - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
@@ -520,7 +520,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
       - name: Setup Firestore Emulator
         if: ${{ matrix.test_device == 'github_runner'  }}
         uses: nick-invision/retry@v2
@@ -528,7 +528,7 @@ jobs:
           shell: bash
           timeout_minutes: 5
           max_attempts: 3
-          command: npm install -g firebase-tools@14.25.0
+          command: npm install -g firebase-tools
       - name: Run Desktop integration tests
         if: ${{ matrix.test_device == 'github_runner'  }}
         timeout-minutes: 30
