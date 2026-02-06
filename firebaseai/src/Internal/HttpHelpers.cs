@@ -106,13 +106,12 @@ namespace Firebase.AI.Internal
       }
 
       // Construct the exception with as much information as possible.
-      var ex = new HttpRequestException(
+      throw new HttpRequestException(
         $"HTTP request failed with status code: {(int)response.StatusCode} ({response.ReasonPhrase}).\n" +
-        $"Error Content: {errorContent}"
+        $"Error Content: {errorContent}",
+        null,
+        response.StatusCode
       );
-      ex.Data["StatusCode"] = (int)response.StatusCode;
-
-      throw ex;
     }
   }
 }
