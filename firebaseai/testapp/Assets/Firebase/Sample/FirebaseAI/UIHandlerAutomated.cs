@@ -53,7 +53,7 @@ namespace Firebase.Sample.FirebaseAI
       VertexAI,
     }
     // Set of status codes that are retryable.
-    private readonly HashSet<int> RetryableCodes = new HashSet<int> { 429, 503, 504 };
+    private readonly HashSet<HttpStatusCode> RetryableCodes = new HashSet<HttpStatusCode> { HttpStatusCode.TooManyRequests, HttpStatusCode.ServiceUnavailable, HttpStatusCode.GatewayTimeout };
     // This should give us up to 30 seconds of delay in the last attempt.
     private const int MaxRetries = 5;
     private const int InitialRetryDelayMilliseconds = 2000;
@@ -74,10 +74,14 @@ namespace Firebase.Sample.FirebaseAI
       {
         return agg.InnerExceptions.Any(ShouldRetry);
       }
+
       // Retry UNLESS it is a 429 and the quota is exhausted
-      if (ex.Data["StatusCode"] is int code && RetryableCodes.Contains(code))
+      if (ex is HttpRequestException httpEx && httpEx.StatusCode.HasValue)
       {
-        return !(code == 429 && IsQuotaExhausted(ex));
+        if (RetryableCodes.Contains(httpEx.StatusCode.Value))
+        {
+          return !(httpEx.StatusCode.Value == HttpStatusCode.TooManyRequests && IsQuotaExhausted(ex));
+        }
       }
       return false;
     }
