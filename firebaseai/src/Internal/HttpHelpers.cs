@@ -16,6 +16,7 @@
 
 using System;
 using System.Net.Http;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Firebase.AI.Internal
@@ -106,12 +107,27 @@ namespace Firebase.AI.Internal
       }
 
       // Construct the exception with as much information as possible.
-      throw new HttpRequestException(
+      var ex = new HttpRequestException(
         $"HTTP request failed with status code: {(int)response.StatusCode} ({response.ReasonPhrase}).\n" +
         $"Error Content: {errorContent}",
-        null,
-        response.StatusCode
+        null
       );
+      ex.Data["StatusCode"] = response.StatusCode;
+
+      throw ex;
+    }
+  }
+
+  // Extension to get the StatusCode from the exception.
+  internal static class HttpRequestExceptionExtensions
+  {
+    internal static HttpStatusCode? GetStatusCode(this HttpRequestException exception)
+    {
+      if (exception.Data.Contains("StatusCode"))
+      {
+        return (HttpStatusCode)exception.Data["StatusCode"];
+      }
+      return null;
     }
   }
 }

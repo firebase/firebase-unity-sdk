@@ -19,12 +19,14 @@ namespace Firebase.Sample.FirebaseAI
 {
   using Firebase;
   using Firebase.AI;
+  using Firebase.AI.Internal;
   using Firebase.Extensions;
   using System;
   using System.Collections;
   using System.Collections.Generic;
   using System.Linq;
   using System.Net.Http;
+  using System.Net;
   using System.Threading.Tasks;
   using Google.MiniJSON;
   using UnityEngine;
@@ -76,11 +78,13 @@ namespace Firebase.Sample.FirebaseAI
       }
 
       // Retry UNLESS it is a 429 and the quota is exhausted
-      if (ex is HttpRequestException httpEx && httpEx.StatusCode.HasValue)
+      var httpEx = ex as HttpRequestException;
+      if (httpEx != null)
       {
-        if (RetryableCodes.Contains(httpEx.StatusCode.Value))
+        var statusCode = httpEx.GetStatusCode();
+        if (statusCode.HasValue && RetryableCodes.Contains(statusCode.Value))
         {
-          return !(httpEx.StatusCode.Value == HttpStatusCode.TooManyRequests && IsQuotaExhausted(ex));
+          return !(statusCode.Value == HttpStatusCode.TooManyRequests && IsQuotaExhausted(ex));
         }
       }
       return false;
@@ -278,7 +282,7 @@ namespace Firebase.Sample.FirebaseAI
     }
 
     // The model name to use for the tests.
-    private readonly string TestModelName = "gemini-2.0-flash";
+    private readonly string TestModelName = "gemini-2.5-flash";
 
     private FirebaseAI GetFirebaseAI(Backend backend, string location = "us-central1")
     {
