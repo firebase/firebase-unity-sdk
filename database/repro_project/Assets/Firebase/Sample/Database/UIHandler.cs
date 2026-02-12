@@ -144,10 +144,10 @@ namespace Firebase.Sample.Database {
 
         // 1. Remove all listeners
         foreach (var refNode in gameReferences) {
-            // Detach from game node
-            refNode.ValueChanged -= OnValueChanged;
-            refNode.ChildAdded -= OnChildAdded;
-            refNode.ChildRemoved -= OnChildRemoved;
+          // Detach from game node
+          refNode.ValueChanged -= OnValueChanged;
+          refNode.ChildAdded -= OnChildAdded;
+          refNode.ChildRemoved -= OnChildRemoved;
         }
         gameReferences.Clear();
 
@@ -167,16 +167,16 @@ namespace Firebase.Sample.Database {
         // 3. Rebuilds the UI (simulated)
         // 4. Re-attaches the same listeners for each game
         if (snapshot != null && snapshot.ChildrenCount > 0) {
-            foreach (var gameSnapshot in snapshot.Children) {
-                DatabaseReference gameRef = gameSnapshot.Reference;
+          foreach (var gameSnapshot in snapshot.Children) {
+            DatabaseReference gameRef = gameSnapshot.Reference;
 
-                // Attach listeners
-                gameRef.ValueChanged += OnValueChanged;
-                gameRef.ChildAdded += OnChildAdded;
-                gameRef.ChildRemoved += OnChildRemoved;
+            // Attach listeners
+            gameRef.ValueChanged += OnValueChanged;
+            gameRef.ChildAdded += OnChildAdded;
+            gameRef.ChildRemoved += OnChildRemoved;
 
-                gameReferences.Add(gameRef);
-            }
+            gameReferences.Add(gameRef);
+          }
         }
 
         // Delay before next cycle to simulate frame updates or user interaction speed
