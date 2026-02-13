@@ -15,7 +15,7 @@
 # CMake file for the firebase_unity plugin
 
 # Higher CMake version needed for improvments in UseSwig.cmake and string join
-cmake_minimum_required (VERSION 3.13.4)
+cmake_minimum_required(VERSION 3.22)
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_REQUIRED YES) # Don't fall back to an earlier version.
 

@@ -18,7 +18,10 @@ message(STATUS "Using iOS SDK: ${CMAKE_OSX_SYSROOT}")
 
 set(CMAKE_SYSTEM_NAME "tvOS")
 
-set(CMAKE_OSX_SYSROOT "")
+# If not defined, default to device (e.g. for manual builds).
+if(NOT DEFINED CMAKE_OSX_SYSROOT)
+  set(CMAKE_OSX_SYSROOT "appletvos")
+endif()
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
 set(CMAKE_XCODE_EFFECTIVE_PLATFORMS "-appletvos;-tvsimulator")
 set(IOS_PLATFORM_LOCATION "iPhoneOS.platform;iPhoneSimulator.platform")
