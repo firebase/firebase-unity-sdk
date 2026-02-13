@@ -206,14 +206,20 @@ namespace Firebase.Sample.Storage {
 
     // Throw when condition is false.
     private void Assert(string message, bool condition) {
-      if (!condition)
+      if (!condition) {
+        DebugLog(String.Format("Assertion failed ({0}): {1}",
+                               testRunner.CurrentTestDescription, message));
         throw new Exception(String.Format("Assertion failed ({0}): {1}",
                                           testRunner.CurrentTestDescription, message));
+      }
     }
 
     // Throw when value1 != value2.
     private void AssertEq<T>(string message, T value1, T value2) {
       if (!(object.Equals(value1, value2))) {
+        DebugLog(String.Format("Assertion failed ({0}): {1} != {2} ({3})",
+                                testRunner.CurrentTestDescription, value1, value2,
+                                message));
         throw new Exception(String.Format("Assertion failed ({0}): {1} != {2} ({3})",
                                           testRunner.CurrentTestDescription, value1, value2,
                                           message));
