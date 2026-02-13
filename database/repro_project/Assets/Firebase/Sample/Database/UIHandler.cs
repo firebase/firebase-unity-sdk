@@ -130,11 +130,36 @@ namespace Firebase.Sample.Database {
       isReproRunning = true;
       DebugLog("Reproduction loop started.");
       StartCoroutine(ReproLoop());
+      StartCoroutine(SimulateDataChanges());
     }
 
     public void StopRepro() {
       isReproRunning = false;
       DebugLog("Reproduction loop stopped.");
+    }
+
+    // Simulate high-frequency data changes to provoke race conditions
+    // The issue mentions: "when many ValueChanged callbacks are processed."
+    IEnumerator SimulateDataChanges() {
+      var random = new System.Random();
+      while (isReproRunning) {
+        int gameIndex = random.Next(0, GameCount);
+        string gameId = "game_" + gameIndex;
+        DatabaseReference gameRef = FirebaseDatabase.DefaultInstance.GetReference("games").Child(gameId);
+
+        // Update score
+        int newScore = random.Next(0, 1000);
+        gameRef.Child("score").SetValueAsync(newScore);
+
+        // Update a player status occasionally
+        if (random.Next(0, 5) == 0) {
+           string playerStatus = (random.Next(0, 2) == 0) ? "online" : "offline";
+           gameRef.Child("players").Child("player1").SetValueAsync(playerStatus);
+        }
+
+        // Fast update rate
+        yield return new WaitForSeconds(0.05f);
+      }
     }
 
     IEnumerator ReproLoop() {

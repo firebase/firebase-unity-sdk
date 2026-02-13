@@ -32,6 +32,7 @@ The logic is contained in `Assets/Firebase/Sample/Database/UIHandler.cs`.
     *   `GetValueAsync("games")`.
     *   Iterates result and adds 3 listeners per game.
     *   Waits 0.1s (can be adjusted) and repeats.
+*   **SimulateDataChanges()**: A background loop that rapidly updates random game scores and statuses (every 0.05s) to generate `ValueChanged` events during the refresh cycle, increasing the likelihood of race conditions.
 
 ## Original Readme
 
