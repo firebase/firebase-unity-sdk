@@ -858,7 +858,7 @@ namespace Firebase.Sample.FirebaseAI
     // Test being able to generate an image with GenerateContent.
     async Task TestGenerateImage(Backend backend)
     {
-      var model = GetFirebaseAI(backend).GetGenerativeModel("gemini-2.0-flash-exp",
+      var model = GetFirebaseAI(backend).GetGenerativeModel("gemini-2.5-flash-image",
         generationConfig: new GenerationConfig(
           responseModalities: new[] { ResponseModality.Text, ResponseModality.Image })
       );

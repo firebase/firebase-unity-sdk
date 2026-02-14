@@ -15,59 +15,28 @@
  */
 
 using System;
-using System.Net.Http;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Firebase.AI.Internal
+namespace Firebase
 {
   // Helper functions to help handling the Http calls.
   internal static class HttpHelpers
   {
-    internal static readonly string StreamPrefix = "data: ";
-
-    // Get the URL to use for the rest calls based on the backend.
-    internal static string GetURL(FirebaseApp firebaseApp,
-        FirebaseAI.Backend backend, string modelName)
+    internal static async Task SetRequestHeaders(HttpRequestMessage request, FirebaseApp firebaseApp)
     {
-      if (backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI)
+      request.Headers.Add("x-goog-api-key", firebaseApp.Options.ApiKey);
+      string version = FirebaseInterops.GetVersionInfoSdkVersion();
+      request.Headers.Add("x-goog-api-client", $"gl-csharp/8.0 fire/{version}");
+      if (FirebaseInterops.GetIsDataCollectionDefaultEnabled(firebaseApp))
       {
-        return "https://firebasevertexai.googleapis.com/v1beta" +
-            "/projects/" + firebaseApp.Options.ProjectId +
-            "/locations/" + backend.Location +
-            "/publishers/google/models/" + modelName;
+        request.Headers.Add("X-Firebase-AppId", firebaseApp.Options.AppId);
+        request.Headers.Add("X-Firebase-AppVersion", UnityEngine.Application.version);
       }
-      else if (backend.Provider == FirebaseAI.Backend.InternalProvider.GoogleAI)
-      {
-        return "https://firebasevertexai.googleapis.com/v1beta" +
-            "/projects/" + firebaseApp.Options.ProjectId +
-            "/models/" + modelName;
-      }
-      else
-      {
-        throw new NotSupportedException($"Missing support for backend: {backend.Provider}");
-      }
+      // Add additional Firebase tokens to the header.
+      await FirebaseInterops.AddFirebaseTokensAsync(request, firebaseApp);
     }
-
-    internal static string GetTemplateURL(FirebaseApp firebaseApp,
-        FirebaseAI.Backend backend, string templateId)
-    {
-      var projectUrl = "https://firebasevertexai.googleapis.com/v1beta" +
-          $"/projects/{firebaseApp.Options.ProjectId}";
-      if (backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI)
-      {
-        return $"{projectUrl}/locations/{backend.Location}/templates/{templateId}";
-      }
-      else if (backend.Provider == FirebaseAI.Backend.InternalProvider.GoogleAI)
-      {
-        return $"{projectUrl}/templates/{templateId}";
-      }
-      else
-      {
-        throw new NotSupportedException($"Missing support for backend: {backend.Provider}");
-      }
-    }
-
 
     // Helper function to throw an exception if the Http Response indicates failure.
     // Useful as EnsureSuccessStatusCode can leave out relevant information.
@@ -102,6 +71,19 @@ namespace Firebase.AI.Internal
       ex.Data["StatusCode"] = response.StatusCode;
 
       throw ex;
+    }
+  }
+
+  // Extension to get the StatusCode from the exception.
+  internal static class HttpRequestExceptionExtensions
+  {
+    internal static HttpStatusCode? GetStatusCode(this HttpRequestException exception)
+    {
+      if (exception.Data.Contains("StatusCode"))
+      {
+        return (HttpStatusCode)exception.Data["StatusCode"];
+      }
+      return null;
     }
   }
 }

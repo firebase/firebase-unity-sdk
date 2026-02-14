@@ -16,6 +16,7 @@ This file contains boilerplate that is replaced with real values in the magic
     <RootNamespace>@VAR_ROOT_NAMESPACE@</RootNamespace>
     <AssemblyName>@VAR_ASSEMBLY_NAME@</AssemblyName>
     <TargetFrameworkVersion>v@VAR_FRAMEWORK_VERSION@</TargetFrameworkVersion>
+    <LangVersion>@VAR_LANG_VERSION@</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
