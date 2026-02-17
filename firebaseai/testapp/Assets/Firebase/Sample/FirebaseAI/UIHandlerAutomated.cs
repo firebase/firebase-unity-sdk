@@ -421,8 +421,6 @@ namespace Firebase.Sample.FirebaseAI
           topK: 30,
           // Intentionally skipping candidateCount, tested elsewhere.
           maxOutputTokens: 100,
-          presencePenalty: 0.5f,
-          frequencyPenalty: 0.6f,
           stopSequences: new string[] { "HALT" }
         ),
         safetySettings: new SafetySetting[] {
@@ -858,7 +856,7 @@ namespace Firebase.Sample.FirebaseAI
     // Test being able to generate an image with GenerateContent.
     async Task TestGenerateImage(Backend backend)
     {
-      var model = GetFirebaseAI(backend).GetGenerativeModel("gemini-2.0-flash-exp",
+      var model = GetFirebaseAI(backend).GetGenerativeModel("gemini-2.5-flash-image",
         generationConfig: new GenerationConfig(
           responseModalities: new[] { ResponseModality.Text, ResponseModality.Image })
       );
@@ -952,7 +950,7 @@ namespace Firebase.Sample.FirebaseAI
     {
       // Thinking Budget requires at least the 2.5 model.
       var model = GetFirebaseAI(backend).GetGenerativeModel(
-        modelName: "gemini-2.5-flash",
+        modelName: TestModelName,
         generationConfig: new GenerationConfig(
           thinkingConfig: new ThinkingConfig(
             thinkingBudget: 1024
@@ -1030,7 +1028,7 @@ namespace Firebase.Sample.FirebaseAI
 
       var model = GetFirebaseAI(backend).GetGenerativeModel(
         // Url Context requires 2.5 or newer
-        modelName: "gemini-2.5-flash",
+        modelName: TestModelName,
         tools: new Tool[] { new Tool(new UrlContext()) }
       );
 
