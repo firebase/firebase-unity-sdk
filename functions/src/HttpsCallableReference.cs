@@ -33,13 +33,9 @@ namespace Firebase.Functions {
     /// <summary>
     /// Construct a wrapper around the HttpsCallableReferenceInternal object.
     /// </summary>
-    internal HttpsCallableReference(FirebaseFunctions functions,
-      HttpsCallableReferenceInternal callableReferenceInternal) {
+    internal HttpsCallableReference(FirebaseFunctions functions) {
       firebaseFunctions = functions;
-      Internal = callableReferenceInternal;
     }
-
-    private HttpsCallableReferenceInternal Internal { get; set; }
 
     /// <summary>
     ///   Returns the
@@ -74,24 +70,9 @@ namespace Firebase.Functions {
     /// </returns>
     public Task<HttpsCallableResult> CallAsync(object data) {
       var dataVariant = Variant.FromObject(data);
-      return Internal.CallAsync(dataVariant).ContinueWith(task => {
-        // We need to preserve the Internal object during the async call.
-        if (Internal == null) {
-          LogUtil.LogMessage(LogLevel.Error,
-                                 "The underlying object of the HttpsCallableReference was lost.");
-        }
-        if (task.IsFaulted) {
-          // Try to convert the exception into a FunctionsException.
-          var ex = task.Exception;
-          foreach (var inner in ex.InnerExceptions) {
-            if (inner is FirebaseException) {
-              throw new FunctionsException((FirebaseException) inner);
-            }
-          }
-          throw ex;
-        }
-        return new HttpsCallableResult(task.Result.data().ToObject());
-      });
+      // TODO AUSTIN MAKE THIS work
+
+      return HttpsCallableResult(data);
     }
   }
 }

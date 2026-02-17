@@ -43,27 +43,24 @@ namespace Firebase.Functions {
     private static readonly Dictionary<string, FirebaseFunctions> functionsByInstanceKey =
         new Dictionary<string, FirebaseFunctions>();
 
-    // Proxy for the C++ firebase::functions::Functions object.
-    private FirebaseFunctionsInternal functionsInternal;
-    // Proxy for the C++ firebase::app:App object.
-    private readonly FirebaseApp firebaseApp;
+    private readonly FirebaseApp _firebaseApp;
     // Key of this instance within functionsByInstanceKey.
     private string instanceKey;
 
+      //TODO AUSTIN UPDATE THIS COMMENT
     /// <summary>
     /// Construct a this instance associated with the specified app and region.
     /// </summary>
     /// <param name="functions">C# proxy for firebase::functions::Functions.</param>
     /// <param name="app">App the C# proxy functionsInternal was created from.</param>
-    private FirebaseFunctions(FirebaseFunctionsInternal functions, FirebaseApp app,
-        string region) {
-      firebaseApp = app;
-      firebaseApp.AppDisposed += OnAppDisposed;
-      functionsInternal = functions;
-      // As we know there is only one reference to the C++ firebase::functions::Functions object here
-      // we'll let the proxy object take ownership so the C++ object can be deleted when the
-      // proxy's Dispose() method is executed.
-      functionsInternal.SetSwigCMemOwn(true);
+    private FirebaseFunctions (FirebaseApp app, string region) {
+      _firebaseApp = app;
+
+      // TODO AUSTIN: Umm what is this for
+      _firebaseApp.AppDisposed += OnAppDisposed;
+
+
+      // TODO AUSTIN: humm how is this created? Or really is this correct
       instanceKey = InstanceKey(app, region);
     }
 
@@ -80,15 +77,14 @@ namespace Firebase.Functions {
 
     // Remove the reference to this instance from functionsByInstanceKey and dispose the proxy.
     private void Dispose() {
+      // TODO Austin is this really need the GC thingy?
+      // Also do I need to lock this or is it now thread safe? in just c#
+      // I susspect I'll need to come back to this to make it work
       System.GC.SuppressFinalize(this);
       lock (functionsByInstanceKey) {
-        if (functionsInternal == null) return;
         functionsByInstanceKey.Remove(instanceKey);
 
-        functionsInternal.Dispose();
-        functionsInternal = null;
-
-        firebaseApp.AppDisposed -= OnAppDisposed;
+        _firebaseApp.AppDisposed -= OnAppDisposed;
       }
     }
 
@@ -115,7 +111,7 @@ namespace Firebase.Functions {
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </summary>
-    public FirebaseApp App { get { return firebaseApp; } }
+    public FirebaseApp App { get { return _firebaseApp; } }
 
     private static string InstanceKey(FirebaseApp app, string region) {
       return app.Name + "/" + region;
@@ -176,62 +172,42 @@ namespace Firebase.Functions {
     ///   instance.
     /// </returns>
     public static FirebaseFunctions GetInstance(FirebaseApp app, string region) {
+      // TODO AUSTIN is this really needed anymore
+      FirebaseFunctions functions; 
       lock (functionsByInstanceKey) {
         var instanceKey = InstanceKey(app, region);
-        FirebaseFunctions functions = null;
         if (functionsByInstanceKey.TryGetValue(instanceKey, out functions)) {
-          if (functions != null) return functions;
+          return functions;
         }
 
         app = app ?? FirebaseApp.DefaultInstance;
-        InitResult initResult;
-        FirebaseFunctionsInternal functionsInternal =
-          FirebaseFunctionsInternal.GetInstanceInternal(app, region, out initResult);
-        if (initResult != InitResult.Success) {
-          throw new Firebase.InitializationException(
-              initResult,
-              Firebase.ErrorMessages.DllNotFoundExceptionErrorMessage);
-        } else if (functionsInternal == null) {
-          LogUtil.LogMessage(LogLevel.Warning,
-              "Unable to create FirebaseFunctions.");
-          return null;
-        }
 
-        functions = new FirebaseFunctions(functionsInternal, app, region);
+        functions = new FirebaseFunctions (app, region);
         functionsByInstanceKey[instanceKey] = functions;
         return functions;
       }
     }
 
-    // Throw a NullReferenceException if this proxy references a deleted object.
-    private void ThrowIfNull() {
-      if (functionsInternal == null ||
-          FirebaseFunctionsInternal.getCPtr(functionsInternal).Handle == System.IntPtr.Zero) {
-        throw new System.NullReferenceException();
-      }
-    }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a name.
     /// </summary>
     public HttpsCallableReference GetHttpsCallable(string name) {
-      ThrowIfNull();
-      return new HttpsCallableReference(this, functionsInternal.GetHttpsCallable(name));
+      //return new HttpsCallableReference(this, functionsInternal.GetHttpsCallable(name));
+      return new HttpsCallableReference(this);
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
     public HttpsCallableReference GetHttpsCallableFromURL(string url) {
-      ThrowIfNull();
-      return new HttpsCallableReference(this, functionsInternal.GetHttpsCallableFromURL(url));
+      return new HttpsCallableReference(this);
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
     public HttpsCallableReference GetHttpsCallableFromURL(Uri url) {
-      ThrowIfNull();
       return GetHttpsCallableFromURL(url.ToString());
     }
 
@@ -239,8 +215,7 @@ namespace Firebase.Functions {
     ///   Sets an origin of a Cloud Functions Emulator instance to use.
     /// </summary>
     public void UseFunctionsEmulator(string origin) {
-      ThrowIfNull();
-      functionsInternal.UseFunctionsEmulator(origin);
+	//TODO AUSTIN Make this do something
     }
   }
 }
