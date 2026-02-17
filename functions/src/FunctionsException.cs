@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using Unity.VisualScripting;
 
 namespace Firebase.Functions {
   /// <summary>
@@ -33,8 +34,32 @@ namespace Firebase.Functions {
     /// </returns>
     public FunctionsErrorCode ErrorCode { get; private set; }
 
+
+    // TODO AUSTIN Actually make this work
     internal FunctionsException(FirebaseException e): base(e.Message) {
       ErrorCode = (FunctionsErrorCode) e.ErrorCode;
     }
   }
+
+  public enum FunctionsErrorCode
+    {
+        None,
+        Cancelled,
+        Unknown,
+        InvalidArgument,
+        DeadlineExceeded,
+        NotFound,
+        AlreadyExists,
+        PermissionDenied,
+        Unauthenticated,
+        ResourceExhausted,
+        FailedPrecondition,
+        Aborted,
+        OutOfRange,
+        Unimplemented,
+        Internal,
+        Unavailable,
+        DataLoss
+    }
+
 }
