@@ -216,10 +216,10 @@ namespace Firebase.AI
         CancellationToken cancellationToken)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
-          HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":generateContent");
+          Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":generateContent");
 
       // Set the request headers
-      await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(content);
@@ -230,7 +230,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, cancellationToken);
-      await HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.HttpHelpers.ValidateHttpResponse(response);
 
       string result = await response.Content.ReadAsStringAsync();
 
@@ -246,10 +246,10 @@ namespace Firebase.AI
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
-          HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":streamGenerateContent?alt=sse");
+          Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":streamGenerateContent?alt=sse");
 
       // Set the request headers
-      await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(content);
@@ -260,7 +260,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-      await HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.HttpHelpers.ValidateHttpResponse(response);
 
       // We are expecting a Stream as the response, so handle that.
       using var stream = await response.Content.ReadAsStreamAsync();
@@ -286,10 +286,10 @@ namespace Firebase.AI
         CancellationToken cancellationToken)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
-          HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":countTokens");
+          Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":countTokens");
 
       // Set the request headers
-      await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       string bodyJson = MakeCountTokensRequest(content);
@@ -300,7 +300,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, cancellationToken);
-      await HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.HttpHelpers.ValidateHttpResponse(response);
 
       string result = await response.Content.ReadAsStringAsync();
 
