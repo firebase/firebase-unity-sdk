@@ -243,6 +243,7 @@ macro(mono_add_internal name output_type)
     DEFINES
     ASSEMBLY_NAME
     XBUILD_EXE
+    LANG_VERSION
   )
 
   # Parse the arguments into UNITY_MONO_SOURCES and UNITY_MONO_DEPENDS.
@@ -262,6 +263,10 @@ macro(mono_add_internal name output_type)
     set(UNITY_MONO_FRAMEWORK_VERSION "4.7.2")
   endif()
 
+  if ("${UNITY_MONO_LANG_VERSION}" STREQUAL "")
+    set(UNITY_MONO_LANG_VERSION "9.0")
+  endif()
+
   if ("${UNITY_MONO_ASSEMBLY_NAME}" STREQUAL "")
     set(UNITY_MONO_ASSEMBLY_NAME ${UNITY_MONO_MODULE})
   endif()
@@ -270,6 +275,7 @@ macro(mono_add_internal name output_type)
   set(VAR_ROOT_NAMESPACE ${UNITY_MONO_MODULE})
   set(VAR_ASSEMBLY_NAME ${UNITY_MONO_ASSEMBLY_NAME})
   set(VAR_FRAMEWORK_VERSION ${UNITY_MONO_FRAMEWORK_VERSION})
+  set(VAR_LANG_VERSION ${UNITY_MONO_LANG_VERSION})
   set(VAR_REFERENCE "")
   set(VAR_COMPILE "")
   set(VAR_DEFINES "TRACE")

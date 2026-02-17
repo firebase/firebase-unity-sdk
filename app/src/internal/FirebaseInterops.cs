@@ -20,7 +20,7 @@ using System.Net.WebSockets;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace Firebase.AI.Internal
+namespace Firebase
 {
   // Contains internal helper methods for interacting with other Firebase libraries.
   internal static class FirebaseInterops

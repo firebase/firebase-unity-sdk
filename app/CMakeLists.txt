@@ -120,6 +120,12 @@ mono_add_library(firebase_app_cs
 
 unity_pack_cs(firebase_app_cs)
 
+# Pack Internal C# files as raw source for use by other Firebase products
+unity_pack_folder(
+  "${FIREBASE_UNITY_DIR}/app/src/internal/"
+  PACK_PATH "Firebase/FirebaseApp/Internal"
+)
+
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(App
     FIREBASE_SPM_DEPS
