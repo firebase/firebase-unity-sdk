@@ -33,7 +33,7 @@ namespace Firebase.Functions {
     /// <summary>
     /// Construct a wrapper around the HttpsCallableReferenceInternal object.
     /// </summary>
-    internal HttpsCallableReference(FirebaseFunctions functions) {
+    internal HttpsCallableReference(FirebaseFunctions functions, string url) {
       firebaseFunctions = functions;
     }
 
@@ -69,10 +69,10 @@ namespace Firebase.Functions {
     ///   with the result of the function call.
     /// </returns>
     public Task<HttpsCallableResult> CallAsync(object data) {
-      var dataVariant = Variant.FromObject(data);
+
       // TODO AUSTIN MAKE THIS work
 
-      return HttpsCallableResult(data);
+      return Task.FromResult<HttpsCallableResult>(null);
     }
   }
 }

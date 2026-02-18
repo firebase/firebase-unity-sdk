@@ -45,7 +45,10 @@ namespace Firebase.Functions {
 
     private readonly FirebaseApp _firebaseApp;
     // Key of this instance within functionsByInstanceKey.
-    private string instanceKey;
+    private string _instanceKey;
+    private string _emulator_origin;
+    private string _region;
+
 
       //TODO AUSTIN UPDATE THIS COMMENT
     /// <summary>
@@ -55,13 +58,14 @@ namespace Firebase.Functions {
     /// <param name="app">App the C# proxy functionsInternal was created from.</param>
     private FirebaseFunctions (FirebaseApp app, string region) {
       _firebaseApp = app;
+      _region = region;
 
       // TODO AUSTIN: Umm what is this for
       _firebaseApp.AppDisposed += OnAppDisposed;
 
 
       // TODO AUSTIN: humm how is this created? Or really is this correct
-      instanceKey = InstanceKey(app, region);
+      _instanceKey = InstanceKey(app, region);
     }
 
     /// <summary>
@@ -82,7 +86,7 @@ namespace Firebase.Functions {
       // I susspect I'll need to come back to this to make it work
       System.GC.SuppressFinalize(this);
       lock (functionsByInstanceKey) {
-        functionsByInstanceKey.Remove(instanceKey);
+        functionsByInstanceKey.Remove(_instanceKey);
 
         _firebaseApp.AppDisposed -= OnAppDisposed;
       }
@@ -172,7 +176,7 @@ namespace Firebase.Functions {
     ///   instance.
     /// </returns>
     public static FirebaseFunctions GetInstance(FirebaseApp app, string region) {
-      // TODO AUSTIN is this really needed anymore
+      // TODO AUSTIN is this lock really needed anymore
       FirebaseFunctions functions; 
       lock (functionsByInstanceKey) {
         var instanceKey = InstanceKey(app, region);
@@ -188,20 +192,27 @@ namespace Firebase.Functions {
       }
     }
 
+  private string GetUrl(in string name) {
+    string proj = _firebaseApp.Options.ProjectId;
+    string url = string.IsNullOrEmpty(_emulator_origin)
+      ? $"https://{_region}-{proj}.cloudfunctions.net/{name}"
+      : $"{_emulator_origin}/{proj}/{_region}/{name}";
+    return url;
+  }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a name.
     /// </summary>
     public HttpsCallableReference GetHttpsCallable(string name) {
       //return new HttpsCallableReference(this, functionsInternal.GetHttpsCallable(name));
-      return new HttpsCallableReference(this);
+      return new HttpsCallableReference(this, GetUrl(name));
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
     public HttpsCallableReference GetHttpsCallableFromURL(string url) {
-      return new HttpsCallableReference(this);
+      return new HttpsCallableReference(this, url);
     }
 
     /// <summary>
@@ -215,7 +226,7 @@ namespace Firebase.Functions {
     ///   Sets an origin of a Cloud Functions Emulator instance to use.
     /// </summary>
     public void UseFunctionsEmulator(string origin) {
-	//TODO AUSTIN Make this do something
+      _emulator_origin = origin;
     }
   }
 }
