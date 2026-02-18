@@ -62,6 +62,16 @@ namespace Firebase.Sample.AppCheck {
         };
         return Task<AppCheckToken>.FromResult(token);
       }
+
+      public System.Threading.Tasks.Task<AppCheckToken> GetLimitedUseTokenAsync() {
+        // In a normal app, you would connect to the attestation service,
+        // and get a valid token to return.
+        AppCheckToken token = new AppCheckToken() {
+          Token = "TEST_LIMITED_USE_TOKEN",
+          ExpireTime = DateTime.UtcNow.AddMinutes(60)
+        };
+        return Task<AppCheckToken>.FromResult(token);
+      }
     }
 
     public class TestAppCheckProviderFactory : IAppCheckProviderFactory {
@@ -179,6 +189,14 @@ namespace Firebase.Sample.AppCheck {
       }
     }
 
+    void HandleGetLimitedUseAppCheckToken(Task<AppCheckToken> task) {
+      if (task.IsFaulted) {
+        DebugLog("GetLimitedUseAppCheckToken failed: " + task.Exception);
+      } else {
+        PrintToken("GetLimitedUseAppCheckToken succeeded:", task.Result);
+      }
+    }
+
     // Render the buttons and other controls.
     void GUIDisplayControls() {
       if (UIEnabled) {
@@ -207,6 +225,10 @@ namespace Firebase.Sample.AppCheck {
           if (GUILayout.Button("Force New App Check Token")) {
             DebugLog("GetAppCheckTokenAsync(true) triggered!");
             FirebaseAppCheck.DefaultInstance.GetAppCheckTokenAsync(true).ContinueWithOnMainThread(HandleGetAppCheckToken);
+          }
+          if (GUILayout.Button("Get Limited Use Token")) {
+            DebugLog("GetLimitedUseAppCheckTokenAsync() triggered!");
+            FirebaseAppCheck.DefaultInstance.GetLimitedUseAppCheckTokenAsync().ContinueWithOnMainThread(HandleGetLimitedUseAppCheckToken);
           }
           if (GUILayout.Button("Add Token Changed Listener")) {
             AddTokenChangedListener();

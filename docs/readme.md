@@ -109,6 +109,13 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - App Check: Updated App Check to support limited-use tokens. This is a
+      breaking change for custom providers, which must now implement the new
+      `GetLimitedUseTokenAsync` method. If a custom provider does not support
+      this feature, it can return a standard token from this method.
+
 ### 13.8.0
 -   Changes
     - Firebase AI: Add `LiveSessionGoingAway` to handle backend closing.
