@@ -122,7 +122,6 @@ Release Notes
     - Firebase AI: Add support for `CachedContentTokenCount` and `CacheTokensDetails`
       in `UsageMetadata`.
 
-
 ### 13.7.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.4.0.
