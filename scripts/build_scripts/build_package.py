@@ -181,7 +181,7 @@ def main(argv):
 
   if FLAGS.apis:
     # If told to only build a subset, package just those products and exit early.
-    api_list = FLAGS.apis.split(",")
+    api_list = FLAGS.apis.strip("'").split(",")
     if not set(api_list).issubset(set(SUPPORT_TARGETS)):
       raise app.UsageError("apis parameter error, Value should be items in [{}],"
                            "connected with ',', eg 'auth,firestore'".format(

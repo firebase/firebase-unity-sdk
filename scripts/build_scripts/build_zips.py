@@ -769,7 +769,7 @@ def main(argv):
   
   api_target_list = []
   if FLAGS.apis:
-    api_target_list = FLAGS.apis.split(',')
+    api_target_list = FLAGS.apis.strip("'").split(',')
   elif FLAGS.targets:
     api_target_list = FLAGS.targets
   target_arg_list = get_targets_args(api_target_list)
