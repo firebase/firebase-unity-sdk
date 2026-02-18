@@ -84,7 +84,9 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --gha --platform=linux --apis=${{ inputs.apis }} --gen_swig_only
+          python scripts/build_scripts/build_zips.py --gha --platform=linux --apis=${INPUTS_APIS} --gen_swig_only
+        env:
+          INPUTS_APIS: ${{ inputs.apis }}
       
       - name: Check zip files
         shell: bash
