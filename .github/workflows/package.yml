@@ -58,32 +58,48 @@ jobs:
         id: check-input
         shell: bash
         run: |
-          IFS=',' read -r -a input_apis <<< "${{ inputs.apis }}"
+          IFS=',' read -r -a input_apis <<< "${INPUTS_APIS}"
           IFS=',' read -r -a default_apis <<< "${{ env.default_apis }}"
           if [[ ${#input_apis[@]} != ${#default_apis[@]} ]]; then
             echo "package_for_checks=1" >> $GITHUB_OUTPUT
-            echo "package_apis='--apis=${{ inputs.apis }}'" >> $GITHUB_OUTPUT
+            echo "package_apis='--apis=${INPUTS_APIS}'" >> $GITHUB_OUTPUT
           else
             echo "package_for_checks=0" >> $GITHUB_OUTPUT
             echo "package_apis=" >> $GITHUB_OUTPUT
           fi
+        env:
+          INPUTS_APIS: ${{ inputs.apis }}
 
       - name: Print inputs
         shell: bash
         run: |
-          echo runIntegrationTests: ${{ inputs.runIntegrationTests }}
-          echo create_new_branch: ${{ inputs.create_new_branch }}
-          echo release_label: ${{ inputs.release_label }}
-          echo working_branch: ${{ inputs.working_branch }}
-          echo download_android_run: ${{ inputs.download_android_run }}
-          echo download_ios_run: ${{ inputs.download_ios_run }}
-          echo download_linux_run: ${{ inputs.download_linux_run }}
-          echo download_macos_run: ${{ inputs.download_macos_run }}
-          echo download_windows_run: ${{ inputs.download_windows_run }}
-          echo platforms: ${{ inputs.platforms }}"
-          echo apis: ${{ inputs.apis }}"
-          echo is the package for checks: ${{ steps.check-input.outputs.package_for_checks }}
-          echo package_apis: ${{ steps.check-input.outputs.package_apis }}
+          echo runIntegrationTests: ${INPUTS_RUNINTEGRATIONTESTS}
+          echo create_new_branch: ${INPUTS_CREATE_NEW_BRANCH}
+          echo release_label: ${INPUTS_RELEASE_LABEL}
+          echo working_branch: ${INPUTS_WORKING_BRANCH}
+          echo download_android_run: ${INPUTS_DOWNLOAD_ANDROID_RUN}
+          echo download_ios_run: ${INPUTS_DOWNLOAD_IOS_RUN}
+          echo download_linux_run: ${INPUTS_DOWNLOAD_LINUX_RUN}
+          echo download_macos_run: ${INPUTS_DOWNLOAD_MACOS_RUN}
+          echo download_windows_run: ${INPUTS_DOWNLOAD_WINDOWS_RUN}
+          echo platforms: ${INPUTS_PLATFORMS}"
+          echo apis: ${INPUTS_APIS}"
+          echo is the package for checks: ${STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_FOR_CHECKS}
+          echo package_apis: ${STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_APIS}
+        env:
+          INPUTS_RUNINTEGRATIONTESTS: ${{ inputs.runIntegrationTests }}
+          INPUTS_CREATE_NEW_BRANCH: ${{ inputs.create_new_branch }}
+          INPUTS_RELEASE_LABEL: ${{ inputs.release_label }}
+          INPUTS_WORKING_BRANCH: ${{ inputs.working_branch }}
+          INPUTS_DOWNLOAD_ANDROID_RUN: ${{ inputs.download_android_run }}
+          INPUTS_DOWNLOAD_IOS_RUN: ${{ inputs.download_ios_run }}
+          INPUTS_DOWNLOAD_LINUX_RUN: ${{ inputs.download_linux_run }}
+          INPUTS_DOWNLOAD_MACOS_RUN: ${{ inputs.download_macos_run }}
+          INPUTS_DOWNLOAD_WINDOWS_RUN: ${{ inputs.download_windows_run }}
+          INPUTS_PLATFORMS: ${{ inputs.platforms }}
+          INPUTS_APIS: ${{ inputs.apis }}
+          STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_FOR_CHECKS: ${{ steps.check-input.outputs.package_for_checks }}
+          STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_APIS: ${{ steps.check-input.outputs.package_apis }}
 
       - name: Check out base branch
         uses: actions/checkout@v3
@@ -131,9 +147,11 @@ jobs:
         if: inputs.working_branch != ''
         run: |
           git remote update
-          git checkout ${{ inputs.working_branch }}
+          git checkout ${INPUTS_WORKING_BRANCH}
           echo "UPDATE_LOGFILE=update_log.txt" >> $GITHUB_ENV
-          echo "NEW_BRANCH=${{ inputs.working_branch }}" >> $GITHUB_ENV
+          echo "NEW_BRANCH=${INPUTS_WORKING_BRANCH}" >> $GITHUB_ENV
+        env:
+          INPUTS_WORKING_BRANCH: ${{ inputs.working_branch }}
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
       - name: Fetch All in build_starter
@@ -156,7 +174,9 @@ jobs:
 
       - name: Package unitypackage
         run: |
-          python scripts/build_scripts/build_package.py --zip_dir=built_artifact ${{ steps.check-input.outputs.package_apis }}
+          python scripts/build_scripts/build_package.py --zip_dir=built_artifact ${STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_APIS}
+        env:
+          STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_APIS: ${{ steps.check-input.outputs.package_apis }}
 
       - name: Commit Changes if there is any
         if: inputs.working_branch != '' || inputs.create_new_branch == '1'
@@ -181,16 +201,16 @@ jobs:
             date_str=$(date "+%a %b %d %Y")
             commit_title="Update Unity SDK dependencies - ${date_str}"
             commit_body=
-            if [[ -n '${{ github.event.inputs.comment }}' ]]; then
+            if [[ -n '${GITHUB_EVENT_INPUTS_COMMENT}' ]]; then
               # If a comment was provided, start with that instead of blank.
-              commit_body='${{ github.event.inputs.comment }}
+              commit_body='${GITHUB_EVENT_INPUTS_COMMENT}
 
             '
             fi
 
             commit_body="${commit_body}
 
-          > Created by [${{github.workflow}} workflow]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+          > Created by [${GITHUB_WORKFLOW} workflow]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
             git config user.email "firebase-workflow-trigger-bot@google.com"
             git config user.name "firebase-workflow-trigger-bot"
             git config core.commentChar "%"  # so we can use # in git commit messages
@@ -203,12 +223,16 @@ jobs:
             # Push branch
             git push --set-upstream origin "${NEW_BRANCH}"
             # Create pull request
-            pr_number=$(python scripts/gha/create_pull_request.py --token ${{ steps.generate-token.outputs.token }} --head "${NEW_BRANCH}" --base "${{ github.event.inputs.baseBranch }}" --title "${commit_title}" --body "${commit_body}")
+            pr_number=$(python scripts/gha/create_pull_request.py --token ${STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN} --head "${NEW_BRANCH}" --base "${GITHUB_EVENT_INPUTS_BASEBRANCH}" --title "${commit_title}" --body "${commit_body}")
             echo "created_pr_number=${pr_number}" >> $GITHUB_OUTPUT
           else
             echo "::warning ::No changes detected, won't create pull request."
             echo "branch_pushed=0" >> $GITHUB_OUTPUT
           fi
+        env:
+          GITHUB_EVENT_INPUTS_COMMENT: ${{ github.event.inputs.comment }}
+          STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GITHUB_EVENT_INPUTS_BASEBRANCH: ${{ github.event.inputs.baseBranch }}
 
       - name: Create Zip File
         run: |
@@ -298,11 +322,17 @@ jobs:
       run: |
         pip install -r scripts/gha/requirements.txt
         set -e
-        python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} \
-          -b ${{ steps.branch-name.outputs.current_branch }} \
+        python scripts/gha/trigger_workflow.py -t ${STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN} \
+          -b ${STEPS_BRANCH_NAME_OUTPUTS_CURRENT_BRANCH} \
           -w integration_tests.yml \
           -p packaged_sdk_run_id ${{ github.run_id }} \
-          -p platforms ${{ inputs.platforms }} \
-          -p apis ${{ inputs.apis }} \
-          -p test_pull_request ${{ inputs.runIntegrationTests }} \
+          -p platforms ${INPUTS_PLATFORMS} \
+          -p apis ${INPUTS_APIS} \
+          -p test_pull_request ${INPUTS_RUNINTEGRATIONTESTS} \
           -s 10 -A -v
+      env:
+        STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN: ${{ steps.generate-token.outputs.token }}
+        STEPS_BRANCH_NAME_OUTPUTS_CURRENT_BRANCH: ${{ steps.branch-name.outputs.current_branch }}
+        INPUTS_PLATFORMS: ${{ inputs.platforms }}
+        INPUTS_APIS: ${{ inputs.apis }}
+        INPUTS_RUNINTEGRATIONTESTS: ${{ inputs.runIntegrationTests }}

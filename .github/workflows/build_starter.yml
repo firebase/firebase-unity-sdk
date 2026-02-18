@@ -89,17 +89,17 @@ jobs:
       - id: set_outputs
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            platform=$( python scripts/gha/print_matrix_configuration.py -c -w config -k platform -o "${{ github.event.inputs.platforms }}" )
+            platform=$( python scripts/gha/print_matrix_configuration.py -c -w config -k platform -o "${GITHUB_EVENT_INPUTS_PLATFORMS}" )
             echo "platform=${platform}" >> $GITHUB_OUTPUT
-            echo "release_label=${{ github.event.inputs.release_version }}-${{ github.event.inputs.rc_index }}" >> $GITHUB_OUTPUT
-            echo "release_version=${{ github.event.inputs.release_version }}" >> $GITHUB_OUTPUT
-            echo "apis=${{ github.event.inputs.apis }}" >> $GITHUB_OUTPUT
-            echo "unity_version=${{ github.event.inputs.unity_version }}" >> $GITHUB_OUTPUT
-            echo "should_trigger_package=${{ github.event.inputs.should_trigger_package }}" >> $GITHUB_OUTPUT
-            echo "runIntegrationTests=${{ github.event.inputs.runIntegrationTests }}" >> $GITHUB_OUTPUT
-            echo "firebase_cpp_sdk_version=${{ github.event.inputs.firebase_cpp_sdk_version }}" >> $GITHUB_OUTPUT
-            echo "unity_branch=${{ github.event.inputs.unity_branch }}" >> $GITHUB_OUTPUT
-            echo "additional_cmake_flags=${{ github.event.inputs.unity_branch }}" >> $GITHUB_OUTPUT
+            echo "release_label=${GITHUB_EVENT_INPUTS_RELEASE_VERSION}-${GITHUB_EVENT_INPUTS_RC_INDEX}" >> $GITHUB_OUTPUT
+            echo "release_version=${GITHUB_EVENT_INPUTS_RELEASE_VERSION}" >> $GITHUB_OUTPUT
+            echo "apis=${GITHUB_EVENT_INPUTS_APIS}" >> $GITHUB_OUTPUT
+            echo "unity_version=${GITHUB_EVENT_INPUTS_UNITY_VERSION}" >> $GITHUB_OUTPUT
+            echo "should_trigger_package=${GITHUB_EVENT_INPUTS_SHOULD_TRIGGER_PACKAGE}" >> $GITHUB_OUTPUT
+            echo "runIntegrationTests=${GITHUB_EVENT_INPUTS_RUNINTEGRATIONTESTS}" >> $GITHUB_OUTPUT
+            echo "firebase_cpp_sdk_version=${GITHUB_EVENT_INPUTS_FIREBASE_CPP_SDK_VERSION}" >> $GITHUB_OUTPUT
+            echo "unity_branch=${GITHUB_EVENT_INPUTS_UNITY_BRANCH}" >> $GITHUB_OUTPUT
+            echo "additional_cmake_flags=${GITHUB_EVENT_INPUTS_UNITY_BRANCH}" >> $GITHUB_OUTPUT
           else
             echo "platform='Android,iOS,tvOS,Windows,macOS,Linux,Playmode'" >> $GITHUB_OUTPUT
             echo "release_label=nightly-$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_OUTPUT
@@ -114,9 +114,9 @@ jobs:
             if [[ "${{ github.event_name }}" == "schedule" ]]; then
               echo "runIntegrationTests=nightly-packaging" >> $GITHUB_OUTPUT
             elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              if [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == "tests-requested: quick" ]]; then
+              if [[ "${GITHUB_EVENT_ACTION}" == "labeled" && "${GITHUB_EVENT_LABEL_NAME}" == "tests-requested: quick" ]]; then
                 echo "runIntegrationTests=${{ github.event.pull_request.number }}:label-quick-packaging" >> $GITHUB_OUTPUT
-              elif [[ "${{ github.event.action }}" == "labeled" && "${{ github.event.label.name }}" == "tests-requested: full" ]]; then
+              elif [[ "${GITHUB_EVENT_ACTION}" == "labeled" && "${GITHUB_EVENT_LABEL_NAME}" == "tests-requested: full" ]]; then
                 echo "runIntegrationTests=${{ github.event.pull_request.number }}:label-full-packaging" >> $GITHUB_OUTPUT
               else
                 echo "invalid_trigger=1" >> $GITHUB_OUTPUT
@@ -125,6 +125,18 @@ jobs:
               echo "invalid_trigger=1" >> $GITHUB_OUTPUT
             fi
           fi
+        env:
+          GITHUB_EVENT_INPUTS_PLATFORMS: ${{ github.event.inputs.platforms }}
+          GITHUB_EVENT_INPUTS_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
+          GITHUB_EVENT_INPUTS_RC_INDEX: ${{ github.event.inputs.rc_index }}
+          GITHUB_EVENT_INPUTS_APIS: ${{ github.event.inputs.apis }}
+          GITHUB_EVENT_INPUTS_UNITY_VERSION: ${{ github.event.inputs.unity_version }}
+          GITHUB_EVENT_INPUTS_SHOULD_TRIGGER_PACKAGE: ${{ github.event.inputs.should_trigger_package }}
+          GITHUB_EVENT_INPUTS_RUNINTEGRATIONTESTS: ${{ github.event.inputs.runIntegrationTests }}
+          GITHUB_EVENT_INPUTS_FIREBASE_CPP_SDK_VERSION: ${{ github.event.inputs.firebase_cpp_sdk_version }}
+          GITHUB_EVENT_INPUTS_UNITY_BRANCH: ${{ github.event.inputs.unity_branch }}
+          GITHUB_EVENT_ACTION: ${{ github.event.action }}
+          GITHUB_EVENT_LABEL_NAME: ${{ github.event.label.name }}
       - name: Cancel workflow
         if: ${{ steps.set_outputs.outputs.invalid_trigger }}
         uses: andymckay/cancel-action@0.2
@@ -136,16 +148,27 @@ jobs:
           
       - name: Print output
         run: |
-          echo outputs.platform : ${{ steps.set_outputs.outputs.platform }}
-          echo outputs.release_label : ${{ steps.set_outputs.outputs.release_label }}
-          echo outputs.release_version : ${{ steps.set_outputs.outputs.release_version }}
-          echo outputs.apis : ${{ steps.set_outputs.outputs.apis }}
-          echo outputs.unity_version : ${{ steps.set_outputs.outputs.unity_version }}
-          echo outputs.should_trigger_package : ${{ steps.set_outputs.outputs.should_trigger_package }}
-          echo outputs.runIntegrationTests : ${{ steps.set_outputs.outputs.runIntegrationTests }}
-          echo outputs.firebase_cpp_sdk_version : ${{ steps.set_outputs.outputs.firebase_cpp_sdk_version }}
-          echo outputs.unity_branch : ${{ steps.set_outputs.outputs.unity_branch }}
-          echo outputs.additional_cmake_flags : ${{ steps.set_outputs.outputs.additional_cmake_flags }}
+          echo outputs.platform : ${STEPS_SET_OUTPUTS_OUTPUTS_PLATFORM}
+          echo outputs.release_label : ${STEPS_SET_OUTPUTS_OUTPUTS_RELEASE_LABEL}
+          echo outputs.release_version : ${STEPS_SET_OUTPUTS_OUTPUTS_RELEASE_VERSION}
+          echo outputs.apis : ${STEPS_SET_OUTPUTS_OUTPUTS_APIS}
+          echo outputs.unity_version : ${STEPS_SET_OUTPUTS_OUTPUTS_UNITY_VERSION}
+          echo outputs.should_trigger_package : ${STEPS_SET_OUTPUTS_OUTPUTS_SHOULD_TRIGGER_PACKAGE}
+          echo outputs.runIntegrationTests : ${STEPS_SET_OUTPUTS_OUTPUTS_RUNINTEGRATIONTESTS}
+          echo outputs.firebase_cpp_sdk_version : ${STEPS_SET_OUTPUTS_OUTPUTS_FIREBASE_CPP_SDK_VERSION}
+          echo outputs.unity_branch : ${STEPS_SET_OUTPUTS_OUTPUTS_UNITY_BRANCH}
+          echo outputs.additional_cmake_flags : ${STEPS_SET_OUTPUTS_OUTPUTS_ADDITIONAL_CMAKE_FLAGS}
+        env:
+          STEPS_SET_OUTPUTS_OUTPUTS_PLATFORM: ${{ steps.set_outputs.outputs.platform }}
+          STEPS_SET_OUTPUTS_OUTPUTS_RELEASE_LABEL: ${{ steps.set_outputs.outputs.release_label }}
+          STEPS_SET_OUTPUTS_OUTPUTS_RELEASE_VERSION: ${{ steps.set_outputs.outputs.release_version }}
+          STEPS_SET_OUTPUTS_OUTPUTS_APIS: ${{ steps.set_outputs.outputs.apis }}
+          STEPS_SET_OUTPUTS_OUTPUTS_UNITY_VERSION: ${{ steps.set_outputs.outputs.unity_version }}
+          STEPS_SET_OUTPUTS_OUTPUTS_SHOULD_TRIGGER_PACKAGE: ${{ steps.set_outputs.outputs.should_trigger_package }}
+          STEPS_SET_OUTPUTS_OUTPUTS_RUNINTEGRATIONTESTS: ${{ steps.set_outputs.outputs.runIntegrationTests }}
+          STEPS_SET_OUTPUTS_OUTPUTS_FIREBASE_CPP_SDK_VERSION: ${{ steps.set_outputs.outputs.firebase_cpp_sdk_version }}
+          STEPS_SET_OUTPUTS_OUTPUTS_UNITY_BRANCH: ${{ steps.set_outputs.outputs.unity_branch }}
+          STEPS_SET_OUTPUTS_OUTPUTS_ADDITIONAL_CMAKE_FLAGS: ${{ steps.set_outputs.outputs.additional_cmake_flags }}
   
   update_versions:
     uses: ./.github/workflows/update_versions.yml
@@ -167,12 +190,16 @@ jobs:
     steps:
       - id: decide_branch
         run: |
-          if [[ "${{ needs.check_and_prepare.outputs.release_version }}" == "'NoVersion'" ]]; then
+          if [[ "${NEEDS_CHECK_AND_PREPARE_OUTPUTS_RELEASE_VERSION}" == "'NoVersion'" ]]; then
             # Triggered by callable
-            echo "branch=${{ needs.check_and_prepare.outputs.unity_branch }}" >> $GITHUB_OUTPUT
+            echo "branch=${NEEDS_CHECK_AND_PREPARE_OUTPUTS_UNITY_BRANCH}" >> $GITHUB_OUTPUT
           else
-            echo "branch=${{ needs.update_versions.outputs.new_branch }}" >> $GITHUB_OUTPUT
+            echo "branch=${NEEDS_UPDATE_VERSIONS_OUTPUTS_NEW_BRANCH}" >> $GITHUB_OUTPUT
           fi
+        env:
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_RELEASE_VERSION: ${{ needs.check_and_prepare.outputs.release_version }}
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_UNITY_BRANCH: ${{ needs.check_and_prepare.outputs.unity_branch }}
+          NEEDS_UPDATE_VERSIONS_OUTPUTS_NEW_BRANCH: ${{ needs.update_versions.outputs.new_branch }}
 
   build_android:
     name: build-android-unity${{ needs.check_and_prepare.outputs.unity_version }}-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
