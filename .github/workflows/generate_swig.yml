@@ -84,7 +84,8 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --gha --platform=linux --apis=${INPUTS_APIS} --gen_swig_only
+          CLEAN_APIS=$(echo ${INPUTS_APIS} | tr -d "'" | tr -d "\"")
+          python scripts/build_scripts/build_zips.py --gha --platform=linux --apis=${CLEAN_APIS} --gen_swig_only
         env:
           INPUTS_APIS: ${{ inputs.apis }}
       

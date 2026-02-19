@@ -124,7 +124,8 @@ jobs:
             echo "Did not find python3.11"
           fi
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --gha --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --apis=${INPUTS_APIS}
+          CLEAN_APIS=$(echo ${INPUTS_APIS} | tr -d "'" | tr -d "\"")
+          python scripts/build_scripts/build_zips.py --gha --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --apis=${CLEAN_APIS}
         env:
           INPUTS_APIS: ${{ inputs.apis }}
 

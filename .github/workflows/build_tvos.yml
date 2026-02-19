@@ -122,7 +122,8 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --gha --platform=tvos --unity_root=$UNITY_ROOT_DIR --apis=${INPUTS_APIS}
+          CLEAN_APIS=$(echo ${INPUTS_APIS} | tr -d "'" | tr -d "\"")
+          python scripts/build_scripts/build_zips.py --gha --platform=tvos --unity_root=$UNITY_ROOT_DIR --apis=${CLEAN_APIS}
         env:
           INPUTS_APIS: ${{ inputs.apis }}
 

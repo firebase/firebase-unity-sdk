@@ -103,7 +103,8 @@ jobs:
         shell: bash
         run: |
           # TODO add handling cmake_extras
-          python scripts/build_scripts/build_zips.py --gha --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR --apis=${INPUTS_APIS} --gen_documentation_zip
+          CLEAN_APIS=$(echo ${INPUTS_APIS} | tr -d "'" | tr -d "\"")
+          python scripts/build_scripts/build_zips.py --gha --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR --apis=${CLEAN_APIS} --gen_documentation_zip
         env:
           INPUTS_APIS: ${{ inputs.apis }}
       

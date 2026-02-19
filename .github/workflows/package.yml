@@ -174,7 +174,8 @@ jobs:
 
       - name: Package unitypackage
         run: |
-          python scripts/build_scripts/build_package.py --zip_dir=built_artifact ${STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_APIS}
+          CLEAN_APIS=$(echo ${STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_APIS} | tr -d "'" | tr -d "\"")
+          python scripts/build_scripts/build_package.py --zip_dir=built_artifact ${CLEAN_APIS}
         env:
           STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_APIS: ${{ steps.check-input.outputs.package_apis }}
 
