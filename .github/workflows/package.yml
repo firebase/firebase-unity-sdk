@@ -62,7 +62,7 @@ jobs:
           IFS=',' read -r -a default_apis <<< "${{ env.default_apis }}"
           if [[ ${#input_apis[@]} != ${#default_apis[@]} ]]; then
             echo "package_for_checks=1" >> $GITHUB_OUTPUT
-            echo "package_apis='--apis=${INPUTS_APIS}'" >> $GITHUB_OUTPUT
+            echo "package_apis=--apis=${INPUTS_APIS}" >> $GITHUB_OUTPUT
           else
             echo "package_for_checks=0" >> $GITHUB_OUTPUT
             echo "package_apis=" >> $GITHUB_OUTPUT
@@ -202,11 +202,11 @@ jobs:
             date_str=$(date "+%a %b %d %Y")
             commit_title="Update Unity SDK dependencies - ${date_str}"
             commit_body=
-            if [[ -n '${GITHUB_EVENT_INPUTS_COMMENT}' ]]; then
+            if [[ -n "${GITHUB_EVENT_INPUTS_COMMENT}" ]]; then
               # If a comment was provided, start with that instead of blank.
-              commit_body='${GITHUB_EVENT_INPUTS_COMMENT}
+              commit_body="${GITHUB_EVENT_INPUTS_COMMENT}
 
-            '
+            "
             fi
 
             commit_body="${commit_body}

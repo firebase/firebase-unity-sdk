@@ -620,7 +620,7 @@ jobs:
         timeout-minutes: 60
         shell: bash
         run: |
-          python scripts/gha/read_ftl_test_result.py --test_result '${STEPS_FTL_TEST_OUTPUTS_TEST_SUMMARY}' \
+          python scripts/gha/read_ftl_test_result.py --test_result "${STEPS_FTL_TEST_OUTPUTS_TEST_SUMMARY}" \
             --output_path testapps/test-results-"${STEPS_MATRIX_INFO_OUTPUTS_INFO}".log
         env:
           STEPS_FTL_TEST_OUTPUTS_TEST_SUMMARY: ${{ steps.ftl_test.outputs.test_summary }}
