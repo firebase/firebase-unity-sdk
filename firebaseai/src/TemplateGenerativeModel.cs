@@ -108,10 +108,10 @@ namespace Firebase.AI
         CancellationToken cancellationToken)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
-          HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateGenerateContent");
+          Firebase.AI.Internal.HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateGenerateContent");
 
       // Set the request headers
-      await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(inputs, chatHistory);
@@ -122,7 +122,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, cancellationToken);
-      await HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.HttpHelpers.ValidateHttpResponse(response);
 
       string result = await response.Content.ReadAsStringAsync();
 
@@ -139,10 +139,10 @@ namespace Firebase.AI
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
-          HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateStreamGenerateContent?alt=sse");
+          Firebase.AI.Internal.HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateStreamGenerateContent?alt=sse");
 
       // Set the request headers
-      await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(inputs, chatHistory);
@@ -153,7 +153,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-      await HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.HttpHelpers.ValidateHttpResponse(response);
 
       // We are expecting a Stream as the response, so handle that.
       using var stream = await response.Content.ReadAsStreamAsync();
@@ -163,13 +163,13 @@ namespace Firebase.AI
       while ((line = await reader.ReadLineAsync()) != null)
       {
         // Only pass along strings that begin with the expected prefix.
-        if (line.StartsWith(HttpHelpers.StreamPrefix))
+        if (line.StartsWith(Firebase.AI.Internal.HttpHelpers.StreamPrefix))
         {
 #if FIREBASE_LOG_REST_CALLS
           UnityEngine.Debug.Log("Streaming Response:\n" + line);
 #endif
 
-          yield return GenerateContentResponse.FromJson(line[HttpHelpers.StreamPrefix.Length..], _backend.Provider);
+          yield return GenerateContentResponse.FromJson(line[Firebase.AI.Internal.HttpHelpers.StreamPrefix.Length..], _backend.Provider);
         }
       }
     }

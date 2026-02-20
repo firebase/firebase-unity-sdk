@@ -91,10 +91,10 @@ namespace Firebase.AI
         string prompt, CancellationToken cancellationToken)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
-          HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":predict");
+          Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":predict");
 
       // Set the request headers
-      await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       string bodyJson = MakeGenerateImagenRequest(prompt);
@@ -105,7 +105,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, cancellationToken);
-      await HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.HttpHelpers.ValidateHttpResponse(response);
 
       string result = await response.Content.ReadAsStringAsync();
 
@@ -200,10 +200,10 @@ namespace Firebase.AI
         string templateId, IDictionary<string, object> inputs, CancellationToken cancellationToken = default)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
-          HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templatePredict");
+          Firebase.AI.Internal.HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templatePredict");
 
       // Set the request headers
-      await HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       Dictionary<string, object> jsonDict = new()
@@ -218,7 +218,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, cancellationToken);
-      await HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.HttpHelpers.ValidateHttpResponse(response);
 
       string result = await response.Content.ReadAsStringAsync();
 
