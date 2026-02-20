@@ -63,33 +63,33 @@ jobs:
     ### trigger value: manual_trigger, scheduled_trigger, label_trigger, postsubmit_trigger
     - id: set_outputs
       run: |
-        if [[ "${{ github.event.inputs.packaged_sdk_run_id }}" != "" ]]; then
-          echo "::warning ::Downloading SDK package from previous run: https://github.com/${{github.repository}}/actions/runs/${{ github.event.inputs.packaged_sdk_run_id }}"
+        if [[ "${GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID}" != "" ]]; then
+          echo "::warning ::Downloading SDK package from previous run: https://github.com/${{github.repository}}/actions/runs/${GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID}"
         fi
-        if [[ "${{ github.event.inputs.test_pull_request }}" == *"label-quick-packaging" ]]; then
+        if [[ "${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST}" == *"label-quick-packaging" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=label_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=auto" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
-          echo "pr_number=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.event.inputs.test_pull_request }}" == *"label-full-packaging" ]]; then
+          echo "pr_number=$(echo ${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST} | cut -d: -f1)" >> $GITHUB_OUTPUT
+        elif [[ "${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST}" == *"label-full-packaging" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=label_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=expanded" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
-          echo "pr_number=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.event.inputs.test_pull_request }}" == *"pr-close-packaging" ]]; then
+          echo "pr_number=$(echo ${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST} | cut -d: -f1)" >> $GITHUB_OUTPUT
+        elif [[ "${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST}" == *"pr-close-packaging" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=postsubmit_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=auto" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
-          echo "pr_number=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.event.inputs.test_pull_request }}" == "nightly-packaging" ]]; then
+          echo "pr_number=$(echo ${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST} | cut -d: -f1)" >> $GITHUB_OUTPUT
+        elif [[ "${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST}" == "nightly-packaging" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=scheduled_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=expanded" >> $GITHUB_OUTPUT
           echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.event.inputs.test_pull_request }}" == "1" ]]; then
+        elif [[ "${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST}" == "1" ]]; then
           # Triggered by build_starter SDK workflow.
           echo "trigger=manual_trigger" >> $GITHUB_OUTPUT
           echo "requested_tests=auto" >> $GITHUB_OUTPUT
@@ -97,22 +97,26 @@ jobs:
         else
           # Triggered manually
           echo "trigger=manual_trigger" >> $GITHUB_OUTPUT
-          if [[ "${{ github.event.inputs.use_expanded_matrix }}" == "1" ]]; then
+          if [[ "${GITHUB_EVENT_INPUTS_USE_EXPANDED_MATRIX}" == "1" ]]; then
             echo "requested_tests=expanded" >> $GITHUB_OUTPUT
           fi
-          if [[ -z "${{github.event.inputs.test_pull_request}}" ]]; then
+          if [[ -z "${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST}" ]]; then
             # test_pull_request not specified
             echo "github_ref=${{github.sha}}" >> $GITHUB_OUTPUT
-          elif [[ "${{github.event.inputs.test_pull_request}}" == *:* ]]; then
+          elif [[ "${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST}" == *:* ]]; then
             # If specified as pr:commit_hash, split them.
-            echo "github_ref=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f2)" >> $GITHUB_OUTPUT
-            echo "pr_number=$(echo ${{ github.event.inputs.test_pull_request }} | cut -d: -f1)" >> $GITHUB_OUTPUT
+            echo "github_ref=$(echo ${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST} | cut -d: -f2)" >> $GITHUB_OUTPUT
+            echo "pr_number=$(echo ${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST} | cut -d: -f1)" >> $GITHUB_OUTPUT
           else
             # Just the PR specified, use refs/pull/<number>/merge as the ref.
-            echo "github_ref=refs/pull/${{github.event.inputs.test_pull_request}}/merge" >> $GITHUB_OUTPUT
-            echo "pr_number=${{ github.event.inputs.test_pull_request }}" >> $GITHUB_OUTPUT
+            echo "github_ref=refs/pull/${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST}/merge" >> $GITHUB_OUTPUT
+            echo "pr_number=${GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST}" >> $GITHUB_OUTPUT
           fi
         fi
+      env:
+        GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID: ${{ github.event.inputs.packaged_sdk_run_id }}
+        GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST: ${{ github.event.inputs.test_pull_request }}
+        GITHUB_EVENT_INPUTS_USE_EXPANDED_MATRIX: ${{ github.event.inputs.use_expanded_matrix }}
     - uses: actions/checkout@v3
       with:
         ref: ${{steps.set_outputs.outputs.github_ref}}
@@ -128,18 +132,25 @@ jobs:
       env:
         HEAD_REF: ${{github.event.pull_request.head.ref}}
         BASE_REF: ${{github.event.pull_request.base.ref}}
+        GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID: ${{ github.event.inputs.packaged_sdk_run_id }}
+        STEPS_SET_OUTPUTS_OUTPUTS_REQUESTED_TESTS: ${{ steps.set_outputs.outputs.requested_tests }}
+        GITHUB_EVENT_INPUTS_APIS: ${{github.event.inputs.apis}}
+        GITHUB_EVENT_INPUTS_UNITY_VERSIONS: ${{github.event.inputs.unity_versions}}
+        GITHUB_EVENT_INPUTS_PLATFORMS: ${{github.event.inputs.platforms}}
+        GITHUB_EVENT_INPUTS_BUILD_OS: ${{github.event.inputs.build_os}}
+        GITHUB_EVENT_INPUTS_MOBILE_TEST_ON: ${{github.event.inputs.mobile_test_on}}
       run: |
         # Log that we ran against a given packaged SDK.
-        if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
-          echo "::warning ::Downloading package from previous run: https://github.com/${{github.repository}}/actions/runs/${{ github.event.inputs.packaged_sdk_run_id }}"
+        if [[ -n "${GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID}" ]]; then
+          echo "::warning ::Downloading package from previous run: https://github.com/${{github.repository}}/actions/runs/${GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID}"
         fi
-        if [[ "${{ steps.set_outputs.outputs.requested_tests }}" == "expanded" ]]; then 
+        if [[ "${STEPS_SET_OUTPUTS_OUTPUTS_REQUESTED_TESTS}" == "expanded" ]]; then 
           TEST_MATRIX_PARAM=-m=expanded
           echo "::warning ::Running on the expanded matrix"
-        elif [[ "${{ steps.set_outputs.outputs.requested_tests }}" == "minimal" ]]; then 
+        elif [[ "${STEPS_SET_OUTPUTS_OUTPUTS_REQUESTED_TESTS}" == "minimal" ]]; then 
           TEST_MATRIX_PARAM=-m=minimal
           echo "::warning ::Running on the minimal matrix"
-        elif [[ "${{ steps.set_outputs.outputs.requested_tests }}" == "auto" ]]; then 
+        elif [[ "${STEPS_SET_OUTPUTS_OUTPUTS_REQUESTED_TESTS}" == "auto" ]]; then 
           # auto-diff only apply when running in a PR. 
           # diff against the PR's base. "git merge-base main branch_name" will give the common ancestor of both branches.
           MERGE_BASE=$(git merge-base "origin/${HEAD_REF}" "origin/${BASE_REF}" || true)
@@ -152,20 +163,23 @@ jobs:
         fi
         # To feed input into the job matrix, we first need to convert to a JSON
         # list. Then we can use fromJson to define the field in the matrix for the tests job.
-        echo "apis=$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k apis -o "${{github.event.inputs.apis}}" ${TEST_MATRIX_PARAM} )" >> $GITHUB_OUTPUT
-        echo "build_matrix=$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" -mobile_test_on "${{github.event.inputs.mobile_test_on}}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
-        echo "test_matrix=$( python scripts/gha/print_matrix_configuration.py -test_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" -mobile_test_on "${{github.event.inputs.mobile_test_on}}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
-        echo "playmode_matrix=$( python scripts/gha/print_matrix_configuration.py -playmode_matrix -unity_versions "${{github.event.inputs.unity_versions}}" -platforms "${{github.event.inputs.platforms}}" -os "${{github.event.inputs.build_os}}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
+        echo "apis=$( python scripts/gha/print_matrix_configuration.py -c -w integration_tests -k apis -o "${GITHUB_EVENT_INPUTS_APIS}" ${TEST_MATRIX_PARAM} )" >> $GITHUB_OUTPUT
+        echo "build_matrix=$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${GITHUB_EVENT_INPUTS_UNITY_VERSIONS}" -platforms "${GITHUB_EVENT_INPUTS_PLATFORMS}" -os "${GITHUB_EVENT_INPUTS_BUILD_OS}" -mobile_test_on "${GITHUB_EVENT_INPUTS_MOBILE_TEST_ON}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
+        echo "test_matrix=$( python scripts/gha/print_matrix_configuration.py -test_matrix -unity_versions "${GITHUB_EVENT_INPUTS_UNITY_VERSIONS}" -platforms "${GITHUB_EVENT_INPUTS_PLATFORMS}" -os "${GITHUB_EVENT_INPUTS_BUILD_OS}" -mobile_test_on "${GITHUB_EVENT_INPUTS_MOBILE_TEST_ON}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
+        echo "playmode_matrix=$( python scripts/gha/print_matrix_configuration.py -playmode_matrix -unity_versions "${GITHUB_EVENT_INPUTS_UNITY_VERSIONS}" -platforms "${GITHUB_EVENT_INPUTS_PLATFORMS}" -os "${GITHUB_EVENT_INPUTS_BUILD_OS}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
     - name: Update PR label and comment
       if: steps.set_outputs.outputs.pr_number
       run: |
         #Add the in-progress label and remove any previous labels.
         python scripts/gha/it_workflow.py --stage start \
           --token ${{github.token}} \
-          --issue_number ${{steps.set_outputs.outputs.pr_number}} \
-          --actor ${{github.actor}} \
-          --commit ${{steps.set_outputs.outputs.github_ref}} \
+          --issue_number ${STEPS_SET_OUTPUTS_OUTPUTS_PR_NUMBER} \
+          --actor ${GITHUB_ACTOR} \
+          --commit ${STEPS_SET_OUTPUTS_OUTPUTS_GITHUB_REF} \
           --run_id ${{github.run_id}}
+      env:
+        STEPS_SET_OUTPUTS_OUTPUTS_PR_NUMBER: ${{steps.set_outputs.outputs.pr_number}}
+        STEPS_SET_OUTPUTS_OUTPUTS_GITHUB_REF: ${{steps.set_outputs.outputs.github_ref}}
 
   build_testapp:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
@@ -184,8 +198,13 @@ jobs:
       - id: matrix_info
         shell: bash
         run: |
-          echo "info=${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}" >> $GITHUB_OUTPUT
-          echo "artifact_suffix=${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.ios_sdk }}" >> $GITHUB_OUTPUT
+          echo "info=${MATRIX_UNITY_VERSION}-${MATRIX_OS}-${MATRIX_PLATFORM}-${MATRIX_IOS_SDK}" >> $GITHUB_OUTPUT
+          echo "artifact_suffix=${MATRIX_UNITY_VERSION}-${MATRIX_OS}-${MATRIX_IOS_SDK}" >> $GITHUB_OUTPUT
+        env:
+          MATRIX_UNITY_VERSION: ${{ matrix.unity_version }}
+          MATRIX_OS: ${{matrix.os}}
+          MATRIX_PLATFORM: ${{ matrix.platform }}
+          MATRIX_IOS_SDK: ${{ matrix.ios_sdk }}
       - uses: actions/checkout@v3
       - name: Setup python
         uses: actions/setup-python@v4
@@ -239,23 +258,29 @@ jobs:
         timeout-minutes: 240
         shell: bash
         run: |
-          if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
+          if [[ -n "${GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID}" ]]; then
             unzip -q firebase_unity_sdk.zip -d ~/Downloads/
           else
             curl -L "https://firebase.google.com/download/unity" -o ~/Downloads/firebase_unity_sdk.zip
             unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           fi
           python scripts/gha/build_testapps.py \
-            --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u ${{ env.UNITY_VERSION }} \
-            --p "${{ matrix.platform }}" \
-            --ios_sdk "${{ matrix.ios_sdk }}" \
+            --t ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS} \
+            --u ${UNITY_VERSION} \
+            --p "${MATRIX_PLATFORM}" \
+            --ios_sdk "${MATRIX_IOS_SDK}" \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
-            --artifact_name "${{ steps.matrix_info.outputs.info }}" \
+            --artifact_name "${STEPS_MATRIX_INFO_OUTPUTS_INFO}" \
             --notimestamp \
             --force_latest_runtime \
             --ci
+        env:
+          GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID: ${{ github.event.inputs.packaged_sdk_run_id }}
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS: ${{ needs.check_and_prepare.outputs.apis }}
+          MATRIX_PLATFORM: ${{ matrix.platform }}
+          MATRIX_IOS_SDK: ${{ matrix.ios_sdk }}
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
@@ -267,10 +292,12 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          if [ ! -f build-results-${{ steps.matrix_info.outputs.info }}.log.json ]; then
+          if [ ! -f build-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json ]; then
             # No summary was created, make a placeholder one.
-            echo "__SUMMARY_MISSING__" > build-results-${{ steps.matrix_info.outputs.info }}.log.json
+            echo "__SUMMARY_MISSING__" > build-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json
           fi
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload build results artifact
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -288,7 +315,9 @@ jobs:
       - name: Delete Mobile integration tests artifact
         if: ${{ contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }} || true
+        run: rm -rf testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO} || true
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload Desktop build logs artifact  # Mobile build logs are uploaded with integration tests artifact
         uses: actions/upload-artifact@v4
         if: ${{ !contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
@@ -306,7 +335,9 @@ jobs:
       - name: Delete Linux integration tests artifact
         if: ${{ contains(matrix.platform, 'Linux') && !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Linux || true
+        run: rm -rf testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO}/Linux || true
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload macOS integration tests artifact
         uses: actions/upload-artifact@v4
         if: ${{ contains(matrix.platform, 'macOS') && !cancelled() }}
@@ -317,7 +348,9 @@ jobs:
       - name: Delete macOS integration tests artifact
         if: ${{ contains(matrix.platform, 'macOS') && !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/macOS || true
+        run: rm -rf testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO}/macOS || true
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload Windows integration tests artifact
         uses: actions/upload-artifact@v4
         if: ${{ contains(matrix.platform, 'Windows') && !cancelled() }}
@@ -328,7 +361,9 @@ jobs:
       - name: Delete Windows integration tests artifact
         if: ${{ contains(matrix.platform, 'Windows') && !cancelled() }}
         shell: bash
-        run: rm -rf testapps-${{ steps.matrix_info.outputs.info }}/Windows || true
+        run: rm -rf testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO}/Windows || true
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Download log artifacts
         if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
         uses: actions/download-artifact@v4
@@ -341,18 +376,24 @@ jobs:
         run: |
           python scripts/gha/it_workflow.py --stage progress \
             --token ${{github.token}} \
-            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
-            --actor ${{github.actor}} \
-            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --issue_number ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER}\
+            --actor ${GITHUB_ACTOR} \
+            --commit ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF} \
             --run_id ${{github.run_id}}
+        env:
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER: ${{needs.check_and_prepare.outputs.pr_number}}
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Summarize build results
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat build-results-${{ steps.matrix_info.outputs.info }}.log
-          if [[ "${{ job.status }}" != "success" ]]; then
+          cat build-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log
+          if [[ "${JOB_STATUS}" != "success" ]]; then
             exit 1
           fi
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+          JOB_STATUS: ${{ job.status }}
 
   playmode_test:
     name: test-${{ matrix.unity_version }}-${{matrix.os}}-Playmode
@@ -366,7 +407,10 @@ jobs:
       - id: matrix_info
         shell: bash
         run: |
-          echo "info=${{ matrix.unity_version }}-${{matrix.os}}-Playmode-github_runner-${{ matrix.os }}" >> $GITHUB_OUTPUT
+          echo "info=${MATRIX_UNITY_VERSION}-${MATRIX_OS}-Playmode-github_runner-${MATRIX_OS}" >> $GITHUB_OUTPUT
+        env:
+          MATRIX_UNITY_VERSION: ${{ matrix.unity_version }}
+          MATRIX_OS: ${{ matrix.os }}
       - uses: actions/checkout@v3
       - name: Setup python
         uses: actions/setup-python@v4
@@ -418,22 +462,26 @@ jobs:
         shell: bash
         run: |
           firebase emulators:start --only firestore &
-          if [[ -n "${{ github.event.inputs.packaged_sdk_run_id }}" ]]; then
+          if [[ -n "${GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID}" ]]; then
             unzip -q firebase_unity_sdk.zip -d ~/Downloads/
           else
             curl -L "https://firebase.google.com/download/unity" -o ~/Downloads/firebase_unity_sdk.zip
             unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           fi
           python scripts/gha/build_testapps.py \
-            --t ${{ needs.check_and_prepare.outputs.apis }} \
-            --u ${{ env.UNITY_VERSION }} \
+            --t ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS} \
+            --u ${UNITY_VERSION} \
             --p Playmode \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
             --output_directory "${{ github.workspace }}" \
-            --artifact_name "${{ steps.matrix_info.outputs.info }}" \
+            --artifact_name "${STEPS_MATRIX_INFO_OUTPUTS_INFO}" \
             --notimestamp \
             --force_latest_runtime \
             --ci
+        env:
+          GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID: ${{ github.event.inputs.packaged_sdk_run_id }}
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS: ${{ needs.check_and_prepare.outputs.apis }}
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
@@ -445,10 +493,12 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          if [ ! -f test-results-${{ steps.matrix_info.outputs.info }}.log.json ]; then
+          if [ ! -f test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json ]; then
             # No summary was created, make a placeholder one.
-            echo "__SUMMARY_MISSING__" > test-results-${{ steps.matrix_info.outputs.info }}.log.json
+            echo "__SUMMARY_MISSING__" > test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json
           fi
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload test results artifact
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -462,18 +512,24 @@ jobs:
         run: |
           python scripts/gha/it_workflow.py --stage progress \
             --token ${{github.token}} \
-            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
-            --actor ${{github.actor}} \
-            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --issue_number ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER}\
+            --actor ${GITHUB_ACTOR} \
+            --commit ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF} \
             --run_id ${{github.run_id}}
+        env:
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER: ${{needs.check_and_prepare.outputs.pr_number}}
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat test-results-${{ steps.matrix_info.outputs.info }}.log
-          if [[ "${{ job.status }}" != "success" ]]; then
+          cat test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log
+          if [[ "${JOB_STATUS}" != "success" ]]; then
             exit 1
           fi
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+          JOB_STATUS: ${{ job.status }}
 
   integration_test:
     name: test-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}
@@ -489,8 +545,15 @@ jobs:
       - id: matrix_info
         shell: bash
         run: |
-          echo "info=${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}" >> $GITHUB_OUTPUT
-          echo "artifact_path=testapps-${{ matrix.platform }}-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.ios_sdk }}" >> $GITHUB_OUTPUT
+          echo "info=${MATRIX_UNITY_VERSION}-${MATRIX_BUILD_OS}-${MATRIX_PLATFORM}-${MATRIX_TEST_DEVICE}-${MATRIX_TEST_OS}" >> $GITHUB_OUTPUT
+          echo "artifact_path=testapps-${MATRIX_PLATFORM}-${MATRIX_UNITY_VERSION}-${MATRIX_BUILD_OS}-${MATRIX_IOS_SDK}" >> $GITHUB_OUTPUT
+        env:
+          MATRIX_UNITY_VERSION: ${{ matrix.unity_version }}
+          MATRIX_BUILD_OS: ${{matrix.build_os}}
+          MATRIX_PLATFORM: ${{ matrix.platform }}
+          MATRIX_TEST_DEVICE: ${{ matrix.test_device }}
+          MATRIX_TEST_OS: ${{ matrix.test_os }}
+          MATRIX_IOS_SDK: ${{ matrix.ios_sdk }}
       - uses: actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
@@ -536,7 +599,9 @@ jobs:
         run: |
           firebase emulators:start --only firestore &
           python scripts/gha/desktop_tester.py --testapp_dir testapps \
-            --logfile_name "${{ steps.matrix_info.outputs.info }}"
+            --logfile_name "${STEPS_MATRIX_INFO_OUTPUTS_INFO}"
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Run Mobile integration tests on real device via FTL
         id: ftl_test
         if: ${{ matrix.device_type == 'real' }}
@@ -555,8 +620,11 @@ jobs:
         timeout-minutes: 60
         shell: bash
         run: |
-          python scripts/gha/read_ftl_test_result.py --test_result '${{ steps.ftl_test.outputs.test_summary }}' \
-            --output_path testapps/test-results-"${{ steps.matrix_info.outputs.info }}".log
+          python scripts/gha/read_ftl_test_result.py --test_result "${STEPS_FTL_TEST_OUTPUTS_TEST_SUMMARY}" \
+            --output_path testapps/test-results-"${STEPS_MATRIX_INFO_OUTPUTS_INFO}".log
+        env:
+          STEPS_FTL_TEST_OUTPUTS_TEST_SUMMARY: ${{ steps.ftl_test.outputs.test_summary }}
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Print available devices
         if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
         run: |
@@ -604,9 +672,11 @@ jobs:
         shell: bash
         run: |
           # If testapps do not exist, then it's a build error not test error. 
-          if [ -d "testapps/testapps-${{ steps.matrix_info.outputs.info }}" &&  ! -f testapps/test-results-${{ steps.matrix_info.outputs.info }}.log.json ]; then
-            mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${{ steps.matrix_info.outputs.info }}.log.json
+          if [ -d "testapps/testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO}" &&  ! -f testapps/test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json ]; then
+            mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json
           fi
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload test results artifact
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
@@ -626,18 +696,24 @@ jobs:
         run: |
           python scripts/gha/it_workflow.py --stage progress \
             --token ${{github.token}} \
-            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
-            --actor ${{github.actor}} \
-            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --issue_number ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER}\
+            --actor ${GITHUB_ACTOR} \
+            --commit ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF} \
             --run_id ${{github.run_id}}
+        env:
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER: ${{needs.check_and_prepare.outputs.pr_number}}
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Summarize test results
         if: ${{ !cancelled() }}
         shell: bash
         run: |
-          cat testapps/test-results-${{ steps.matrix_info.outputs.info }}.log
-          if [[ "${{ job.status }}" != "success" ]]; then
+          cat testapps/test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log
+          if [[ "${JOB_STATUS}" != "success" ]]; then
             exit 1
           fi
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+          JOB_STATUS: ${{ job.status }}
 
   summarize_results:
     name: "summarize-results"
@@ -673,24 +749,32 @@ jobs:
         run: |
           python scripts/gha/it_workflow.py --stage end \
             --token ${{github.token}} \
-            --issue_number ${{needs.check_and_prepare.outputs.pr_number}}\
-            --actor ${{github.actor}} \
-            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --issue_number ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER}\
+            --actor ${GITHUB_ACTOR} \
+            --commit ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF} \
             --run_id ${{github.run_id}} \
-            --new_token ${{steps.generate-token.outputs.token}}
+            --new_token ${STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN}
+        env:
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER: ${{needs.check_and_prepare.outputs.pr_number}}
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF: ${{needs.check_and_prepare.outputs.github_ref}}
+          STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN: ${{steps.generate-token.outputs.token}}
       - name: Update Daily Report
         if: needs.check_and_prepare.outputs.trigger == 'scheduled_trigger'
         run: |
           python scripts/gha/it_workflow.py --stage report \
             --token ${{github.token}} \
-            --actor ${{github.actor}} \
-            --commit ${{needs.check_and_prepare.outputs.github_ref}} \
+            --actor ${GITHUB_ACTOR} \
+            --commit ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF} \
             --run_id ${{github.run_id}}
+        env:
+          NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Print SDK package info
         run: |
-          if [[ "${{ github.event.inputs.packaged_sdk_run_id }}" != "" ]]; then
-            echo "run_id: ${{ github.event.inputs.packaged_sdk_run_id }}"
+          if [[ "${GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID}" != "" ]]; then
+            echo "run_id: ${GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID}"
           fi
+        env:
+          GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID: ${{ github.event.inputs.packaged_sdk_run_id }}
       - name: Summarize results into GitHub log
         run: python scripts/gha/summarize_test_results.py --dir test_results --github_log
 
@@ -720,8 +804,10 @@ jobs:
       - name: Retry failed tests
         run: |
           echo "::warning ::Attempting to retry failed tests"
-          python scripts/gha/trigger_workflow.py -t ${{ steps.generate-token.outputs.token }} \
+          python scripts/gha/trigger_workflow.py -t ${STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN} \
           -w retry-test-failures.yml \
           -p run_id ${{ github.run_id }} \
           -s 10 \
           -A
+        env:
+          STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN: ${{ steps.generate-token.outputs.token }}

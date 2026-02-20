@@ -62,32 +62,43 @@ jobs:
         run: |
           if [[ "${{ inputs.triggered_by_callable }}" == "true" ]]; then
             # Triggered by callable
-            if [[ "${{ inputs.base_branch }}" == "" ]]; then
-              echo "base_branch=${{ github.ref }}" >> $GITHUB_OUTPUT
+            if [[ "${INPUTS_BASE_BRANCH}" == "" ]]; then
+              echo "base_branch=${GITHUB_REF}" >> $GITHUB_OUTPUT
             else
-              echo "base_branch=${{ inputs.base_branch }}" >> $GITHUB_OUTPUT
+              echo "base_branch=${INPUTS_BASE_BRANCH}" >> $GITHUB_OUTPUT
             fi
             
-            echo "package_version_number=${{ inputs.package_version_number }}" >> $GITHUB_OUTPUT
-            echo "cpp_release_version=${{ inputs.cpp_release_version }}" >> $GITHUB_OUTPUT
+            echo "package_version_number=${INPUTS_PACKAGE_VERSION_NUMBER}" >> $GITHUB_OUTPUT
+            echo "cpp_release_version=${INPUTS_CPP_RELEASE_VERSION}" >> $GITHUB_OUTPUT
           else
-            if [[ "${{ github.event.inputs.base_branch }}" == "" ]]; then
-              echo "base_branch=${{ github.ref }}" >> $GITHUB_OUTPUT
+            if [[ "${GITHUB_EVENT_INPUTS_BASE_BRANCH}" == "" ]]; then
+              echo "base_branch=${GITHUB_REF}" >> $GITHUB_OUTPUT
             else
-              echo "base_branch=${{ github.event.inputs.base_branch }}" >> $GITHUB_OUTPUT
+              echo "base_branch=${GITHUB_EVENT_INPUTS_BASE_BRANCH}" >> $GITHUB_OUTPUT
             fi
-            echo "base_branch=${{ github.event.inputs.base_branch }}" >> $GITHUB_OUTPUT
-            echo "package_version_number=${{ github.event.inputs.package_version_number }}" >> $GITHUB_OUTPUT
-            echo "cpp_release_version=${{ github.event.inputs.cpp_release_version }}" >> $GITHUB_OUTPUT
+            echo "base_branch=${GITHUB_EVENT_INPUTS_BASE_BRANCH}" >> $GITHUB_OUTPUT
+            echo "package_version_number=${GITHUB_EVENT_INPUTS_PACKAGE_VERSION_NUMBER}" >> $GITHUB_OUTPUT
+            echo "cpp_release_version=${GITHUB_EVENT_INPUTS_CPP_RELEASE_VERSION}" >> $GITHUB_OUTPUT
           fi
+        env:
+          INPUTS_BASE_BRANCH: ${{ inputs.base_branch }}
+          INPUTS_PACKAGE_VERSION_NUMBER: ${{ inputs.package_version_number }}
+          INPUTS_CPP_RELEASE_VERSION: ${{ inputs.cpp_release_version }}
+          GITHUB_EVENT_INPUTS_BASE_BRANCH: ${{ github.event.inputs.base_branch }}
+          GITHUB_EVENT_INPUTS_PACKAGE_VERSION_NUMBER: ${{ github.event.inputs.package_version_number }}
+          GITHUB_EVENT_INPUTS_CPP_RELEASE_VERSION: ${{ github.event.inputs.cpp_release_version }}
 
       - name: Print inputs
         shell: bash
         run: |
           echo triggered_by_callable: ${{ inputs.triggered_by_callable }}
-          echo base_branch: ${{ steps.decide_input.outputs.base_branch }}
-          echo package_version_number: ${{ steps.decide_input.outputs.package_version_number }}
-          echo cpp_release_version: ${{ steps.decide_input.outputs.cpp_release_version }}
+          echo base_branch: ${STEPS_DECIDE_INPUT_OUTPUTS_BASE_BRANCH}
+          echo package_version_number: ${STEPS_DECIDE_INPUT_OUTPUTS_PACKAGE_VERSION_NUMBER}
+          echo cpp_release_version: ${STEPS_DECIDE_INPUT_OUTPUTS_CPP_RELEASE_VERSION}
+        env:
+          STEPS_DECIDE_INPUT_OUTPUTS_BASE_BRANCH: ${{ steps.decide_input.outputs.base_branch }}
+          STEPS_DECIDE_INPUT_OUTPUTS_PACKAGE_VERSION_NUMBER: ${{ steps.decide_input.outputs.package_version_number }}
+          STEPS_DECIDE_INPUT_OUTPUTS_CPP_RELEASE_VERSION: ${{ steps.decide_input.outputs.cpp_release_version }}
 
       - name: Check out base branch
         uses: actions/checkout@v3
@@ -124,9 +135,11 @@ jobs:
         id: name-branch
         run: |
           date_str=$(date "+%Y%m%d-%H%M%S")
-          new_branch=release-${{ steps.decide_input.outputs.package_version_number }}-${date_str}
+          new_branch=release-${STEPS_DECIDE_INPUT_OUTPUTS_PACKAGE_VERSION_NUMBER}-${date_str}
           echo "NEW_BRANCH=${new_branch}" >> $GITHUB_ENV
           echo "new_branch=${new_branch}" >> $GITHUB_OUTPUT
+        env:
+          STEPS_DECIDE_INPUT_OUTPUTS_PACKAGE_VERSION_NUMBER: ${{ steps.decide_input.outputs.package_version_number }}
 
       - name: Create new branch
         run: |
@@ -138,7 +151,9 @@ jobs:
       - name: Update Unity SDK version and dependencies
         run: |
           cd firebase-unity-sdk
-          python scripts/update_versions.py --unity_sdk_version=${{ steps.decide_input.outputs.package_version_number }}
+          python scripts/update_versions.py --unity_sdk_version=${STEPS_DECIDE_INPUT_OUTPUTS_PACKAGE_VERSION_NUMBER}
+        env:
+          STEPS_DECIDE_INPUT_OUTPUTS_PACKAGE_VERSION_NUMBER: ${{ steps.decide_input.outputs.package_version_number }}
 
       - name: Push branch if there are changes
         id: push-branch
@@ -148,16 +163,16 @@ jobs:
             date_str=$(date "+%a %b %d %Y")
             commit_title="Update Unity SDK dependencies - ${date_str}"
             commit_body=
-            if [[ -n '${{ github.event.inputs.comment }}' ]]; then
+            if [[ -n "${GITHUB_EVENT_INPUTS_COMMENT}" ]]; then
               # If a comment was provided, start with that instead of blank.
-              commit_body='${{ github.event.inputs.comment }}
+              commit_body="${GITHUB_EVENT_INPUTS_COMMENT}
 
-            '
+            "
             fi
 
             commit_body="${commit_body}
 
-          > Created by [${{github.workflow}} workflow]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+          > Created by [${GITHUB_WORKFLOW} workflow]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
             git config user.email "firebase-workflow-trigger-bot@google.com"
             git config user.name "firebase-workflow-trigger-bot"
             git config core.commentChar "%"  # so we can use # in git commit messages
@@ -170,19 +185,26 @@ jobs:
             # Push branch
             git push --set-upstream origin "${NEW_BRANCH}"
             # Create pull request
-            pr_number=$(python scripts/gha/create_pull_request.py --token ${{ steps.generate-pr-token.outputs.token }} --head "${NEW_BRANCH}" --base "${{ steps.decide_input.outputs.base_branch }}" --title "${commit_title}" --body "${commit_body}")
+            pr_number=$(python scripts/gha/create_pull_request.py --token ${STEPS_GENERATE_PR_TOKEN_OUTPUTS_TOKEN} --head "${NEW_BRANCH}" --base "${STEPS_DECIDE_INPUT_OUTPUTS_BASE_BRANCH}" --title "${commit_title}" --body "${commit_body}")
             echo "created_pr_number=${pr_number}" >> $GITHUB_OUTPUT
           else
             echo "::warning ::No changes detected, won't create pull request."
             echo "branch_pushed=0" >> $GITHUB_OUTPUT
           fi
+        env:
+          GITHUB_EVENT_INPUTS_COMMENT: ${{ github.event.inputs.comment }}
+          STEPS_GENERATE_PR_TOKEN_OUTPUTS_TOKEN: ${{ steps.generate-pr-token.outputs.token }}
+          STEPS_DECIDE_INPUT_OUTPUTS_BASE_BRANCH: ${{ steps.decide_input.outputs.base_branch }}
 
       - name: Decide output
         id: decide-output
         run: |
-          if [[ "${{ steps.push-branch.outputs.branch_pushed }}" == "1" ]]; then
+          if [[ "${STEPS_PUSH_BRANCH_OUTPUTS_BRANCH_PUSHED}" == "1" ]]; then
             # Triggered by callable
-            echo "new_branch=${{ steps.name-branch.outputs.new_branch }}" >> $GITHUB_OUTPUT
+            echo "new_branch=${STEPS_NAME_BRANCH_OUTPUTS_NEW_BRANCH}" >> $GITHUB_OUTPUT
           else
             echo "new_branch=" >> $GITHUB_OUTPUT
           fi
+        env:
+          STEPS_PUSH_BRANCH_OUTPUTS_BRANCH_PUSHED: ${{ steps.push-branch.outputs.branch_pushed }}
+          STEPS_NAME_BRANCH_OUTPUTS_NEW_BRANCH: ${{ steps.name-branch.outputs.new_branch }}
