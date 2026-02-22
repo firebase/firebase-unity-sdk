@@ -41,6 +41,7 @@ namespace Firebase.Functions {
     }
   }
 
+// TODO AUSTIN: Should this be in its own file?
   public enum FunctionsErrorCode
     {
         None,

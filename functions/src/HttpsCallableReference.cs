@@ -19,6 +19,11 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Http;
+using System.Net;
+using Firebase.Functions.Internal;
+using System.Text;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace Firebase.Functions {
   /// <summary>Represents a reference to a Google Cloud Functions HTTPS callable function.</summary>
@@ -28,13 +33,18 @@ namespace Firebase.Functions {
   /// </remarks>
   public sealed class HttpsCallableReference {
     // Functions object this reference was created from.
-    private readonly FirebaseFunctions firebaseFunctions;
+    private readonly FirebaseFunctions _firebaseFunctions;
+    private readonly string _url;
+    private readonly HttpClient _httpClient;
 
     /// <summary>
     /// Construct a wrapper around the HttpsCallableReferenceInternal object.
     /// </summary>
     internal HttpsCallableReference(FirebaseFunctions functions, string url) {
-      firebaseFunctions = functions;
+      _firebaseFunctions = functions;
+      _url = url;
+      // TODO Austin: include the proper timeouts
+      _httpClient = new HttpClient();
     }
 
     /// <summary>
@@ -47,7 +57,7 @@ namespace Firebase.Functions {
     ///   <see cref="FirebaseFunctions" />
     ///   service.
     /// </returns>
-    public FirebaseFunctions Functions { get { return firebaseFunctions; } }
+    public FirebaseFunctions Functions { get { return _firebaseFunctions; } }
 
     /// <summary>
     ///   ...
@@ -69,10 +79,35 @@ namespace Firebase.Functions {
     ///   with the result of the function call.
     /// </returns>
     public Task<HttpsCallableResult> CallAsync(object data) {
+      return InternalCallAsync(data);
+    }
 
-      // TODO AUSTIN MAKE THIS work
+    private StringContent MakeFunctionsRequest(object data) {
+      var encodedData = FunctionsSerializer.Serialize(data);
+      return new StringContent(encodedData, Encoding.UTF8, "application/json");
+    }
 
-      return Task.FromResult<HttpsCallableResult>(null);
+    private async Task<HttpsCallableResult> InternalCallAsync(object data) {
+      HttpRequestMessage request =  new(HttpMethod.Post, _url);
+      await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App);
+      request.Content = MakeFunctionsRequest(data);
+
+//#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log("Request:\n" + request.Content);
+//#endif
+      // TODO pipe through cancellation tokens
+      var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+      // TODO Austin wrap in try catch and return expected functions error
+      await HttpHelpers.ValidateHttpResponse(response);
+
+      string result = await response.Content.ReadAsStringAsync();
+
+//#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log("Response:\n" + result);
+//#endif
+    var responseData =  FunctionsSerializer.Deserialize(result);
+    UnityEngine.Debug.Log("Response data:\n" + responseData);
+    return new HttpsCallableResult(responseData);
     }
   }
 }

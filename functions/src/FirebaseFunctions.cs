@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace Firebase.Functions {
   /// <summary>
@@ -61,10 +63,19 @@ namespace Firebase.Functions {
       _region = region;
 
       // TODO AUSTIN: Umm what is this for
-      _firebaseApp.AppDisposed += OnAppDisposed;
+      // _firebaseApp.AppDisposed += OnAppDisposed;
+      var appType = _firebaseApp.GetType();
+      
+      var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+      if (appDisposedEvent != null) {
+        UnityEngine.Debug.Log("functions reflexion type time");
+          //appDisposedEvent.AddEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
+      } else {
+          UnityEngine.Debug.LogWarning("FirebaseFunctions: AppDisposed event not found via reflection.");
+      }
 
-
-      // TODO AUSTIN: humm how is this created? Or really is this correct
+UnityEngine.Debug.Log("functions post Time");
+      // TODO AUSTIN: humm how is this created? Or really is this corrects
       _instanceKey = InstanceKey(app, region);
     }
 
@@ -88,7 +99,12 @@ namespace Firebase.Functions {
       lock (functionsByInstanceKey) {
         functionsByInstanceKey.Remove(_instanceKey);
 
-        _firebaseApp.AppDisposed -= OnAppDisposed;
+        // _firebaseApp.AppDisposed -= OnAppDisposed;
+        var appType = _firebaseApp.GetType();
+        var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (appDisposedEvent != null) {
+            //appDisposedEvent.RemoveEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
+        }
       }
     }
 
@@ -105,7 +121,9 @@ namespace Firebase.Functions {
     ///   instance.
     /// </value>
     public static FirebaseFunctions DefaultInstance {
-      get { return GetInstance(FirebaseApp.DefaultInstance); }
+      get { 
+        UnityEngine.Debug.Log("Ok lets get here");
+        return GetInstance(FirebaseApp.DefaultInstance); }
     }
 
     /// <summary>
@@ -138,6 +156,7 @@ namespace Firebase.Functions {
     ///   instance.
     /// </returns>
     public static FirebaseFunctions GetInstance(FirebaseApp app) {
+      UnityEngine.Debug.Log("Get the instance?");
       return GetInstance(app, "us-central1");
     }
 
@@ -176,6 +195,7 @@ namespace Firebase.Functions {
     ///   instance.
     /// </returns>
     public static FirebaseFunctions GetInstance(FirebaseApp app, string region) {
+      UnityEngine.Debug.Log("progress");
       // TODO AUSTIN is this lock really needed anymore
       FirebaseFunctions functions; 
       lock (functionsByInstanceKey) {
@@ -183,10 +203,11 @@ namespace Firebase.Functions {
         if (functionsByInstanceKey.TryGetValue(instanceKey, out functions)) {
           return functions;
         }
-
+         UnityEngine.Debug.Log("Appy App Time");
         app = app ?? FirebaseApp.DefaultInstance;
-
+          UnityEngine.Debug.Log("functions App Time");
         functions = new FirebaseFunctions (app, region);
+        UnityEngine.Debug.Log("functions post Time");
         functionsByInstanceKey[instanceKey] = functions;
         return functions;
       }
@@ -204,7 +225,6 @@ namespace Firebase.Functions {
     ///   Creates a <see cref="HttpsCallableReference" /> given a name.
     /// </summary>
     public HttpsCallableReference GetHttpsCallable(string name) {
-      //return new HttpsCallableReference(this, functionsInternal.GetHttpsCallable(name));
       return new HttpsCallableReference(this, GetUrl(name));
     }
 
