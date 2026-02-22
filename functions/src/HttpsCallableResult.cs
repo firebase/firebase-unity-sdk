@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-namespace Firebase.Functions {
-  public sealed class HttpsCallableResult {
-    internal HttpsCallableResult(object data) {
+namespace Firebase.Functions
+{
+  public sealed class HttpsCallableResult
+  {
+    internal HttpsCallableResult(object data)
+    {
       this.Data = data;
     }
 

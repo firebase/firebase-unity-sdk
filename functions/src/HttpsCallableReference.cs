@@ -25,13 +25,15 @@ using Firebase.Functions.Internal;
 using System.Text;
 using System.Runtime.InteropServices.WindowsRuntime;
 
-namespace Firebase.Functions {
+namespace Firebase.Functions
+{
   /// <summary>Represents a reference to a Google Cloud Functions HTTPS callable function.</summary>
   /// <remarks>
   ///   Represents a reference to a Google Cloud Functions HTTPS callable function.
   ///   (see <a href="https://cloud.google.com/functions/">Google Cloud Functions</a>)
   /// </remarks>
-  public sealed class HttpsCallableReference {
+  public sealed class HttpsCallableReference
+  {
     // Functions object this reference was created from.
     private readonly FirebaseFunctions _firebaseFunctions;
     private readonly string _url;
@@ -40,11 +42,13 @@ namespace Firebase.Functions {
     /// <summary>
     /// Construct a wrapper around the HttpsCallableReferenceInternal object.
     /// </summary>
-    internal HttpsCallableReference(FirebaseFunctions functions, string url) {
+    internal HttpsCallableReference(FirebaseFunctions functions, string url)
+    {
       _firebaseFunctions = functions;
       _url = url;
-      // TODO Austin: include the proper timeouts
+      // Default timeout is 70 seconds matching native SDKs.
       _httpClient = new HttpClient();
+      _httpClient.Timeout = TimeSpan.FromSeconds(70);
     }
 
     /// <summary>
@@ -66,7 +70,8 @@ namespace Firebase.Functions {
     ///   A <see cref="Task"/>
     ///   with the result of the function call.
     /// </returns>
-    public Task<HttpsCallableResult> CallAsync() {
+    public Task<HttpsCallableResult> CallAsync()
+    {
       return CallAsync(null);
     }
 
@@ -78,16 +83,19 @@ namespace Firebase.Functions {
     ///   A <see cref="Task"/>
     ///   with the result of the function call.
     /// </returns>
-    public Task<HttpsCallableResult> CallAsync(object data) {
+    public Task<HttpsCallableResult> CallAsync(object data)
+    {
       return InternalCallAsync(data);
     }
 
-    private StringContent MakeFunctionsRequest(object data) {
+    private StringContent MakeFunctionsRequest(object data)
+    {
       var encodedData = FunctionsSerializer.Serialize(data);
       return new StringContent(encodedData, Encoding.UTF8, "application/json");
     }
 
-    private async Task<HttpsCallableResult> InternalCallAsync(object data) {
+    private async Task<HttpsCallableResult> InternalCallAsync(object data)
+    {
       HttpRequestMessage request =  new(HttpMethod.Post, _url);
       await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App);
       request.Content = MakeFunctionsRequest(data);
@@ -97,8 +105,21 @@ namespace Firebase.Functions {
 //#endif
       // TODO pipe through cancellation tokens
       var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-      // TODO Austin wrap in try catch and return expected functions error
-      await HttpHelpers.ValidateHttpResponse(response);
+      if (!response.IsSuccessStatusCode)
+      {
+        string errorBody = "";
+        if (response.Content != null)
+        {
+          try
+          {
+            errorBody = await response.Content.ReadAsStringAsync();
+          } catch(Exception e)
+          {
+            UnityEngine.Debug.LogWarning("Failed to read error response: " + e.Message);
+          }
+        }
+        throw FunctionsErrorParser.ParseError(response, errorBody);
+      }
 
       string result = await response.Content.ReadAsStringAsync();
 

@@ -16,10 +16,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace Firebase.Functions {
+namespace Firebase.Functions
+{
   /// <summary>
   ///   FirebaseFunctions is a service that supports calling Google Cloud Functions.
   /// </summary>
@@ -40,73 +42,72 @@ namespace Firebase.Functions {
   ///   obtainable from
   ///   <see cref="FirebaseApp.DefaultInstance" />.
   /// </remarks>
-  public sealed class FirebaseFunctions {
-    // Dictionary of FirebaseFunctions instances indexed by a key FirebaseFunctionsInternal.InstanceKey.
-    private static readonly Dictionary<string, FirebaseFunctions> functionsByInstanceKey =
-        new Dictionary<string, FirebaseFunctions>();
+  public sealed class FirebaseFunctions
+  {
+    private static readonly ConcurrentDictionary<string, FirebaseFunctions> _instances = new();
 
     private readonly FirebaseApp _firebaseApp;
-    // Key of this instance within functionsByInstanceKey.
-    private string _instanceKey;
     private string _emulator_origin;
     private string _region;
 
 
-      //TODO AUSTIN UPDATE THIS COMMENT
+
+    // Key of this instance within _instances
+    private string _instanceKey;
+
     /// <summary>
-    /// Construct a this instance associated with the specified app and region.
+    /// Construct this instance associated with the specified app and region.
     /// </summary>
-    /// <param name="functions">C# proxy for firebase::functions::Functions.</param>
-    /// <param name="app">App the C# proxy functionsInternal was created from.</param>
-    private FirebaseFunctions (FirebaseApp app, string region) {
+    private FirebaseFunctions (FirebaseApp app, string region)
+    {
       _firebaseApp = app;
       _region = region;
-
-      // TODO AUSTIN: Umm what is this for
-      // _firebaseApp.AppDisposed += OnAppDisposed;
-      var appType = _firebaseApp.GetType();
-      
-      var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-      if (appDisposedEvent != null) {
-        UnityEngine.Debug.Log("functions reflexion type time");
-          //appDisposedEvent.AddEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
-      } else {
-          UnityEngine.Debug.LogWarning("FirebaseFunctions: AppDisposed event not found via reflection.");
-      }
-
-UnityEngine.Debug.Log("functions post Time");
-      // TODO AUSTIN: humm how is this created? Or really is this corrects
       _instanceKey = InstanceKey(app, region);
+
+      // Add a listener to FirebaseApp's internal AppDisposed event to prevent
+      // caching disposed apps indefinitely.
+      var appType = _firebaseApp.GetType();
+      var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+      if (appDisposedEvent != null)
+      {
+        appDisposedEvent.AddEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
+      }
+      else
+      {
+        UnityEngine.Debug.LogWarning("FirebaseFunctions: AppDisposed event not found via reflection.");
+      }
     }
 
     /// <summary>
-    /// Remove the reference to this object from the functionsByInstanceKey dictionary.
+    /// Remove the reference to this object from the _instances dictionary.
     /// </summary>
-    ~FirebaseFunctions() {
+    ~FirebaseFunctions()
+    {
       Dispose();
     }
 
-    void OnAppDisposed(object sender, System.EventArgs eventArgs) {
+    void OnAppDisposed(object sender, System.EventArgs eventArgs)
+    {
       Dispose();
     }
 
-    // Remove the reference to this instance from functionsByInstanceKey and dispose the proxy.
-    private void Dispose() {
-      // TODO Austin is this really need the GC thingy?
-      // Also do I need to lock this or is it now thread safe? in just c#
-      // I susspect I'll need to come back to this to make it work
+    // Remove the reference to this instance from _instances and clean up events.
+    private void Dispose()
+    {
       System.GC.SuppressFinalize(this);
-      lock (functionsByInstanceKey) {
-        functionsByInstanceKey.Remove(_instanceKey);
+      
+      _instances.TryRemove(_instanceKey, out _);
 
-        // _firebaseApp.AppDisposed -= OnAppDisposed;
-        var appType = _firebaseApp.GetType();
-        var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (appDisposedEvent != null) {
-            //appDisposedEvent.RemoveEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
-        }
+      var appType = _firebaseApp.GetType();
+      var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+      if (appDisposedEvent != null)
+      {
+        appDisposedEvent.RemoveEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
       }
     }
+
+
+
 
     /// <summary>
     ///   Returns the
@@ -120,10 +121,9 @@ UnityEngine.Debug.Log("functions post Time");
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </value>
-    public static FirebaseFunctions DefaultInstance {
-      get { 
-        UnityEngine.Debug.Log("Ok lets get here");
-        return GetInstance(FirebaseApp.DefaultInstance); }
+    public static FirebaseFunctions DefaultInstance
+    {
+      get { return GetInstance(FirebaseApp.DefaultInstance); }
     }
 
     /// <summary>
@@ -135,7 +135,8 @@ UnityEngine.Debug.Log("functions post Time");
     /// </summary>
     public FirebaseApp App { get { return _firebaseApp; } }
 
-    private static string InstanceKey(FirebaseApp app, string region) {
+    private static string InstanceKey(FirebaseApp app, string region)
+    {
       return app.Name + "/" + region;
     }
 
@@ -155,8 +156,8 @@ UnityEngine.Debug.Log("functions post Time");
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </returns>
-    public static FirebaseFunctions GetInstance(FirebaseApp app) {
-      UnityEngine.Debug.Log("Get the instance?");
+    public static FirebaseFunctions GetInstance(FirebaseApp app)
+    {
       return GetInstance(app, "us-central1");
     }
 
@@ -173,7 +174,8 @@ UnityEngine.Debug.Log("functions post Time");
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </returns>
-    public static FirebaseFunctions GetInstance(string region) {
+    public static FirebaseFunctions GetInstance(string region)
+    {
       return GetInstance(FirebaseApp.DefaultInstance, region);
     }
 
@@ -194,26 +196,24 @@ UnityEngine.Debug.Log("functions post Time");
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </returns>
-    public static FirebaseFunctions GetInstance(FirebaseApp app, string region) {
-      UnityEngine.Debug.Log("progress");
-      // TODO AUSTIN is this lock really needed anymore
-      FirebaseFunctions functions; 
-      lock (functionsByInstanceKey) {
-        var instanceKey = InstanceKey(app, region);
-        if (functionsByInstanceKey.TryGetValue(instanceKey, out functions)) {
-          return functions;
-        }
-         UnityEngine.Debug.Log("Appy App Time");
-        app = app ?? FirebaseApp.DefaultInstance;
-          UnityEngine.Debug.Log("functions App Time");
-        functions = new FirebaseFunctions (app, region);
-        UnityEngine.Debug.Log("functions post Time");
-        functionsByInstanceKey[instanceKey] = functions;
-        return functions;
+    public static FirebaseFunctions GetInstance(FirebaseApp app, string region)
+    {
+      if (app == null)
+      {
+        app = FirebaseApp.DefaultInstance;
       }
+
+      string key = InstanceKey(app, region);
+      if (_instances.ContainsKey(key))
+      {
+        return _instances[key];
+      }
+
+      return _instances.GetOrAdd(key, _ => new FirebaseFunctions(app, region));
     }
 
-  private string GetUrl(in string name) {
+  private string GetUrl(in string name)
+  {
     string proj = _firebaseApp.Options.ProjectId;
     string url = string.IsNullOrEmpty(_emulator_origin)
       ? $"https://{_region}-{proj}.cloudfunctions.net/{name}"
@@ -224,28 +224,32 @@ UnityEngine.Debug.Log("functions post Time");
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a name.
     /// </summary>
-    public HttpsCallableReference GetHttpsCallable(string name) {
+    public HttpsCallableReference GetHttpsCallable(string name)
+    {
       return new HttpsCallableReference(this, GetUrl(name));
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
-    public HttpsCallableReference GetHttpsCallableFromURL(string url) {
+    public HttpsCallableReference GetHttpsCallableFromURL(string url)
+    {
       return new HttpsCallableReference(this, url);
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
-    public HttpsCallableReference GetHttpsCallableFromURL(Uri url) {
+    public HttpsCallableReference GetHttpsCallableFromURL(Uri url)
+    {
       return GetHttpsCallableFromURL(url.ToString());
     }
 
     /// <summary>
     ///   Sets an origin of a Cloud Functions Emulator instance to use.
     /// </summary>
-    public void UseFunctionsEmulator(string origin) {
+    public void UseFunctionsEmulator(string origin)
+    {
       _emulator_origin = origin;
     }
   }

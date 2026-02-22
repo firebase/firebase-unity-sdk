@@ -21,29 +21,36 @@ using System.IO;
 using System.Net;
 using Unity.VisualScripting;
 
-namespace Firebase.Functions {
+namespace Firebase.Functions
+{
   /// <summary>
   ///   Represents an Exception resulting from an operation on a
   ///   <see cref="FunctionsReference" />
   /// </summary>
   [Serializable]
-  public sealed class FunctionsException : Exception {
+  public sealed class FunctionsException : Exception
+  {
     /// <returns>
     /// A code that indicates the type of error that occurred. This value will
     /// be one of the set of constants defined on <see cref="FunctionsException" />.
     /// </returns>
     public FunctionsErrorCode ErrorCode { get; private set; }
 
+    internal FunctionsException(FunctionsErrorCode code, string message) : base(message)
+    {
+      ErrorCode = code;
+    }
 
     // TODO AUSTIN Actually make this work
-    internal FunctionsException(FirebaseException e): base(e.Message) {
+    internal FunctionsException(FirebaseException e): base(e.Message)
+    {
       ErrorCode = (FunctionsErrorCode) e.ErrorCode;
     }
   }
 
 // TODO AUSTIN: Should this be in its own file?
   public enum FunctionsErrorCode
-    {
+  {
         None,
         Cancelled,
         Unknown,
