@@ -32,7 +32,7 @@ namespace Firebase.Functions
   {
     /// <returns>
     /// A code that indicates the type of error that occurred. This value will
-    /// be one of the set of constants defined on <see cref="FunctionsException" />.
+    /// be one of the set of constants defined on <see cref="FunctionsErrorCode" />.
     /// </returns>
     public FunctionsErrorCode ErrorCode { get; private set; }
 
@@ -41,33 +41,9 @@ namespace Firebase.Functions
       ErrorCode = code;
     }
 
-    // TODO AUSTIN Actually make this work
     internal FunctionsException(FirebaseException e): base(e.Message)
     {
       ErrorCode = (FunctionsErrorCode) e.ErrorCode;
     }
   }
-
-// TODO AUSTIN: Should this be in its own file?
-  public enum FunctionsErrorCode
-  {
-        None,
-        Cancelled,
-        Unknown,
-        InvalidArgument,
-        DeadlineExceeded,
-        NotFound,
-        AlreadyExists,
-        PermissionDenied,
-        Unauthenticated,
-        ResourceExhausted,
-        FailedPrecondition,
-        Aborted,
-        OutOfRange,
-        Unimplemented,
-        Internal,
-        Unavailable,
-        DataLoss
-    }
-
-}
+}`

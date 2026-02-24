@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
+using System.Net.Http;
 
 namespace Firebase.Functions
 {
@@ -49,8 +50,17 @@ namespace Firebase.Functions
     private readonly FirebaseApp _firebaseApp;
     private string _emulator_origin;
     private string _region;
+    private EventInfo _appDisposedEvent;
+    private MethodInfo _appDisposedMethod;
 
+    private readonly HttpClient _httpClient;
 
+    private static void LogError(string message)
+    {
+#if FUNCTIONS_DEBUG_LOGGING
+      UnityEngine.Debug.LogError(message);
+#endif
+    }
 
     // Key of this instance within _instances
     private string _instanceKey;
@@ -58,49 +68,48 @@ namespace Firebase.Functions
     /// <summary>
     /// Construct this instance associated with the specified app and region.
     /// </summary>
-private FirebaseFunctions(FirebaseApp app, string region)
-{
-    _firebaseApp = app;
-    _region = region;
-    _instanceKey = InstanceKey(app, region);
-
-    try
-{
-    var appType = _firebaseApp.GetType();
-    var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-    
-    if (appDisposedEvent != null)
+    private FirebaseFunctions(FirebaseApp app, string region)
     {
-        // 1. Get YOUR handler method
-        var methodInfo = this.GetType().GetMethod("OnAppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+      _firebaseApp = app;
+      _region = region;
+      _instanceKey = InstanceKey(app, region);
+
+      // Default timeout is 70 seconds matching native SDKs.
+      _httpClient = new HttpClient();
+      _httpClient.Timeout = TimeSpan.FromSeconds(70);
+
+      try
+      {
+        var appType = _firebaseApp.GetType();
+        _appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
         
-        // 2. Create the delegate
-        Delegate handlerDelegate = Delegate.CreateDelegate(appDisposedEvent.EventHandlerType, this, methodInfo);
-        
-        // 3. THE FIX: Grab the non-public 'add' method directly (passing 'true' means include non-public)
-        var addMethod = appDisposedEvent.GetAddMethod(true); 
-        
-        if (addMethod != null)
+        if (_appDisposedEvent != null)
         {
-            // 4. Invoke the hidden 'add_AppDisposed' method!
-            addMethod.Invoke(_firebaseApp, new object[] { handlerDelegate });
-            UnityEngine.Debug.Log("Success! Attached to internal AppDisposed event.");
+            _appDisposedMethod = this.GetType().GetMethod("OnAppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            
+            Delegate handlerDelegate = Delegate.CreateDelegate(_appDisposedEvent.EventHandlerType, this, _appDisposedMethod);
+            
+            var addMethod = _appDisposedEvent.GetAddMethod(true); 
+            
+            if (addMethod != null)
+            {
+                addMethod.Invoke(_firebaseApp, new object[] { handlerDelegate });
+            }
+            else
+            {
+                LogError("Found the event, but couldn't find its hidden 'add' method.");
+            }
         }
         else
         {
-            UnityEngine.Debug.LogError("Found the event, but couldn't find its hidden 'add' method.");
+            LogError("AppDisposed event not found via reflection.");
         }
+      }
+      catch (System.Exception ex)
+      {
+        LogError($"Failed to attach to AppDisposed via reflection: {ex.Message}");
+      }
     }
-    else
-    {
-        UnityEngine.Debug.LogWarning("AppDisposed event not found via reflection.");
-    }
-}
-catch (System.Exception ex)
-{
-    UnityEngine.Debug.LogError($"Failed to attach to AppDisposed via reflection: {ex.Message}");
-}
-}
 
     /// <summary>
     /// Remove the reference to this object from the _instances dictionary.
@@ -121,17 +130,14 @@ catch (System.Exception ex)
       System.GC.SuppressFinalize(this);
       
       _instances.TryRemove(_instanceKey, out _);
-
-      var appType = _firebaseApp.GetType();
-      var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-      if (appDisposedEvent != null)
+      if (_appDisposedEvent != null)
       {
-        appDisposedEvent.RemoveEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
+        _appDisposedEvent.RemoveEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
       }
+      _httpClient.Dispose();
     }
 
-
-
+    internal HttpClient HttpClient { get { return _httpClient; } }
 
     /// <summary>
     ///   Returns the

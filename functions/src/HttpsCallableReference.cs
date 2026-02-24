@@ -37,8 +37,6 @@ namespace Firebase.Functions
     // Functions object this reference was created from.
     private readonly FirebaseFunctions _firebaseFunctions;
     private readonly string _url;
-    private readonly HttpClient _httpClient;
-
     /// <summary>
     /// Construct a wrapper around the HttpsCallableReferenceInternal object.
     /// </summary>
@@ -46,9 +44,6 @@ namespace Firebase.Functions
     {
       _firebaseFunctions = functions;
       _url = url;
-      // Default timeout is 70 seconds matching native SDKs.
-      _httpClient = new HttpClient();
-      _httpClient.Timeout = TimeSpan.FromSeconds(70);
     }
 
     /// <summary>
@@ -102,11 +97,11 @@ namespace Firebase.Functions
       await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App, "Bearer");
       request.Content = MakeFunctionsRequest(data);
 
-//#if FIREBASE_LOG_REST_CALLS
+#if FIREBASE_LOG_REST_CALLS
       UnityEngine.Debug.Log("Request:\n" + request.Content);
-//#endif
+#endif
       // TODO pipe through cancellation tokens
-      var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+      var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
       if (!response.IsSuccessStatusCode)
       {
         string errorBody = "";
@@ -125,9 +120,9 @@ namespace Firebase.Functions
 
       string result = await response.Content.ReadAsStringAsync();
 
-//#if FIREBASE_LOG_REST_CALLS
+#if FIREBASE_LOG_REST_CALLS
       UnityEngine.Debug.Log("Response:\n" + result);
-//#endif
+#endif
     var responseData =  FunctionsSerializer.Deserialize(result);
     UnityEngine.Debug.Log("Response data:\n" + responseData);
     return new HttpsCallableResult(responseData);
