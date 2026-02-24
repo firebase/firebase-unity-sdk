@@ -122,7 +122,7 @@ def _get_testapp_log_text_from_gcs(gcs_path):
 
 def _gcs_list_dir(gcs_path):
   """Recursively returns a list of contents for a directory on GCS."""
-  args = ["gcloud", "storage", "ls", "--recursive", gcs_path]
+  args = ["gcs.GCLOUD", "storage", "ls", "--recursive", gcs_path]
   logging.info("Listing GCS contents: %s", " ".join(args))
   result = subprocess.run(args=args, capture_output=True, text=True, check=True)
   return result.stdout.splitlines()
@@ -131,7 +131,7 @@ def _gcs_list_dir(gcs_path):
 def _gcs_read_file(gcs_path):
   """Extracts the contents of a file on GCS."""
   gcs_path = gcs.relative_path_to_gs_uri(gcs_path)
-  args = ["gcloud", "storage", "cat", gcs_path]
+  args = ["gcs.GCLOUD", "storage", "cat", gcs_path]
   logging.info("Reading GCS file: %s", " ".join(args))
   result = subprocess.run(args=args, capture_output=True, text=True, check=True)
   return result.stdout
