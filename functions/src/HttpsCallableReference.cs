@@ -97,7 +97,9 @@ namespace Firebase.Functions
     private async Task<HttpsCallableResult> InternalCallAsync(object data)
     {
       HttpRequestMessage request =  new(HttpMethod.Post, _url);
-      await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App);
+      // Functions uses Bearer tokens for authentication.
+      // This is different from the default Firebase token prefix used by other Firebase services.
+      await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App, "Bearer");
       request.Content = MakeFunctionsRequest(data);
 
 //#if FIREBASE_LOG_REST_CALLS

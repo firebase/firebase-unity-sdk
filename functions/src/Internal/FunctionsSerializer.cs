@@ -29,43 +29,81 @@ namespace Firebase.Functions.Internal
     internal static string Serialize(object data)
     {
       var encodedData = Encode(data);
+      // The request body must be a JSON object with a "data" field.
+      // See: https://firebase.google.com/docs/functions/callable-reference#request_body
       return Json.Serialize(new Dictionary<string, object>() { ["data"] = encodedData });
     }
 
     internal static object Encode(object obj)
     {
-      if (obj is long longValue)
+      switch (obj)
       {
-        // Wrap Int64 in special protobuf object
-        return new Dictionary<string, object>
-        {
-      { "@type", "type.googleapis.com/google.protobuf.Int64Value" },
-      { "value", longValue.ToString() }
-    };
+        case null:
+          return null;
+        case string s:
+          return s;
+        case int _:
+        case short _:
+        case byte _:
+        case sbyte _:
+        case ushort _:
+        case uint _:
+        case long _:
+          // Consistent with legacy Variant, wrap all integers as Int64Value.
+          return WrapLong(Convert.ToInt64(obj));
+        case float f:
+          return f;
+        case double d:
+          return d;
+        case bool b:
+          return b;
+        case byte[] blob:
+          return WrapBytes(blob);
+        case IList list:
+          return EncodeList(list);
+        case IDictionary dict:
+          return EncodeDictionary(dict);
+        default:
+          throw new ArgumentException($"Invalid type {obj.GetType()} for encoding");
       }
-      else if (obj is IDictionary dict)
-      {
-        // Recursively encode dictionary values
-        var newDict = new Dictionary<string, object>();
-        foreach (DictionaryEntry entry in dict)
-        {
-          newDict[entry.Key.ToString()] = Encode(entry.Value);
-        }
-        return newDict;
-      }
-      else if (obj is IEnumerable list && !(obj is string))
-      {
-        // Recursively encode enumerable elements
-        var newList = new List<object>();
-        foreach (var item in list)
-        {
-          newList.Add(Encode(item));
-        }
-        return newList;
-      }
+    }
 
-      // Return other primitives (string, bool, double) as-is
-      return obj;
+    private static List<object> EncodeList(IList list)
+    {
+      var newList = new List<object>();
+      foreach (var item in list)
+      {
+        newList.Add(Encode(item));
+      }
+      return newList;
+    }
+
+    private static Dictionary<string, object> EncodeDictionary(IDictionary dict)
+    {
+      var newDict = new Dictionary<string, object>();
+      foreach (DictionaryEntry entry in dict)
+      {
+        newDict[entry.Key.ToString()] = Encode(entry.Value);
+      }
+      return newDict;
+    }
+
+    private static object WrapLong(long value)
+    {
+      return new Dictionary<string, object>
+      {
+        { "@type", "type.googleapis.com/google.protobuf.Int64Value" },
+        { "value", value.ToString() }
+      };
+    }
+
+    private static object WrapBytes(byte[] value)
+    {
+      return new Dictionary<string, object>
+      {
+        { "@type", "type.googleapis.com/google.protobuf.BytesValue" },
+        { "value", Convert.ToBase64String(value) }
+      };
     }
 
     internal static object Deserialize(string data)
@@ -108,15 +146,31 @@ namespace Firebase.Functions.Internal
     {
       if (obj is Dictionary<string, object> dict)
       {
-        // Check for the Int64 signature
-        if (dict.ContainsKey("@type") &&
-          dict["@type"] as string == "type.googleapis.com/google.protobuf.Int64Value")
+        // Check for specific proto3 wrappers
+        if (dict.TryGetValue("@type", out var typeObj) && typeObj is string type)
+        {
+          if (type == "type.googleapis.com/google.protobuf.Int64Value")
           {
-          if (dict.TryGetValue("value", out var valueStr) && valueStr is string s)
-          {
-            if (long.TryParse(s, out long longValue))
+            if (dict.TryGetValue("value", out var valueStr) && valueStr is string s)
             {
-              return longValue;
+              if (long.TryParse(s, out long longValue))
+              {
+                return longValue;
+              }
+            }
+          }
+          else if (type == "type.googleapis.com/google.protobuf.BytesValue")
+          {
+            if (dict.TryGetValue("value", out var valueStr) && valueStr is string s)
+            {
+              try
+              {
+                return Convert.FromBase64String(s);
+              }
+              catch (FormatException)
+              {
+                // Fallback to returning dictionary if invalid base64
+              }
             }
           }
         }

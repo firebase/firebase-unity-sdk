@@ -404,7 +404,7 @@ namespace Firebase.Internal
     }
 
     // Adds the other Firebase tokens to the HttpRequest, as available.
-    internal static async Task AddFirebaseTokensAsync(HttpRequestMessage request, FirebaseApp firebaseApp)
+    internal static async Task AddFirebaseTokensAsync(HttpRequestMessage request, FirebaseApp firebaseApp, string authTokenPrefix = "Firebase")
     {
       string appCheckToken = await GetAppCheckTokenAsync(firebaseApp);
       if (!string.IsNullOrEmpty(appCheckToken))
@@ -415,12 +415,12 @@ namespace Firebase.Internal
       string authToken = await GetAuthTokenAsync(firebaseApp);
       if (!string.IsNullOrEmpty(authToken))
       {
-        request.Headers.Add(authHeader, $"Firebase {authToken}");
+        request.Headers.Add(authHeader, $"{authTokenPrefix} {authToken}");
       }
     }
 
     // Adds the other Firebase tokens to the WebSocket, as available.
-    internal static async Task AddFirebaseTokensAsync(ClientWebSocket socket, FirebaseApp firebaseApp)
+    internal static async Task AddFirebaseTokensAsync(ClientWebSocket socket, FirebaseApp firebaseApp, string authTokenPrefix = "Firebase")
     {
       string appCheckToken = await GetAppCheckTokenAsync(firebaseApp);
       if (!string.IsNullOrEmpty(appCheckToken))
@@ -431,7 +431,7 @@ namespace Firebase.Internal
       string authToken = await GetAuthTokenAsync(firebaseApp);
       if (!string.IsNullOrEmpty(authToken))
       {
-        socket.Options.SetRequestHeader(authHeader, $"Firebase {authToken}");
+        socket.Options.SetRequestHeader(authHeader, $"{authTokenPrefix} {authToken}");
       }
     }
   }

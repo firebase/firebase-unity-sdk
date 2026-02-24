@@ -58,25 +58,49 @@ namespace Firebase.Functions
     /// <summary>
     /// Construct this instance associated with the specified app and region.
     /// </summary>
-    private FirebaseFunctions (FirebaseApp app, string region)
-    {
-      _firebaseApp = app;
-      _region = region;
-      _instanceKey = InstanceKey(app, region);
+private FirebaseFunctions(FirebaseApp app, string region)
+{
+    _firebaseApp = app;
+    _region = region;
+    _instanceKey = InstanceKey(app, region);
 
-      // Add a listener to FirebaseApp's internal AppDisposed event to prevent
-      // caching disposed apps indefinitely.
-      var appType = _firebaseApp.GetType();
-      var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-      if (appDisposedEvent != null)
-      {
-        appDisposedEvent.AddEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
-      }
-      else
-      {
-        UnityEngine.Debug.LogWarning("FirebaseFunctions: AppDisposed event not found via reflection.");
-      }
+    try
+{
+    var appType = _firebaseApp.GetType();
+    var appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+    
+    if (appDisposedEvent != null)
+    {
+        // 1. Get YOUR handler method
+        var methodInfo = this.GetType().GetMethod("OnAppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        
+        // 2. Create the delegate
+        Delegate handlerDelegate = Delegate.CreateDelegate(appDisposedEvent.EventHandlerType, this, methodInfo);
+        
+        // 3. THE FIX: Grab the non-public 'add' method directly (passing 'true' means include non-public)
+        var addMethod = appDisposedEvent.GetAddMethod(true); 
+        
+        if (addMethod != null)
+        {
+            // 4. Invoke the hidden 'add_AppDisposed' method!
+            addMethod.Invoke(_firebaseApp, new object[] { handlerDelegate });
+            UnityEngine.Debug.Log("Success! Attached to internal AppDisposed event.");
+        }
+        else
+        {
+            UnityEngine.Debug.LogError("Found the event, but couldn't find its hidden 'add' method.");
+        }
     }
+    else
+    {
+        UnityEngine.Debug.LogWarning("AppDisposed event not found via reflection.");
+    }
+}
+catch (System.Exception ex)
+{
+    UnityEngine.Debug.LogError($"Failed to attach to AppDisposed via reflection: {ex.Message}");
+}
+}
 
     /// <summary>
     /// Remove the reference to this object from the _instances dictionary.
