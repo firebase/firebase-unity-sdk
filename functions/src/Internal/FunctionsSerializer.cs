@@ -83,6 +83,10 @@ namespace Firebase.Functions.Internal
       var newDict = new Dictionary<string, object>();
       foreach (DictionaryEntry entry in dict)
       {
+        if (entry.Key == null)
+        {
+          throw new ArgumentException("Dictionary keys cannot be null");
+        }
         newDict[entry.Key.ToString()] = Encode(entry.Value);
       }
       return newDict;
