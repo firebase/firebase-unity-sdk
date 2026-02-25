@@ -46,4 +46,4 @@ namespace Firebase.Functions
       ErrorCode = (FunctionsErrorCode) e.ErrorCode;
     }
   }
-}`
+}

@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net;
 using Firebase.Functions.Internal;
+using Firebase.Internal;
 using System.Text;
 using System.Runtime.InteropServices.WindowsRuntime;
 
