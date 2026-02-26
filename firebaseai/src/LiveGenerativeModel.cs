@@ -125,15 +125,15 @@ namespace Firebase.AI
       string endpoint = GetURL();
 
       // Set initial headers
-      string version = FirebaseInterops.GetVersionInfoSdkVersion();
+      string version = Firebase.Internal.FirebaseInterops.GetVersionInfoSdkVersion();
       clientWebSocket.Options.SetRequestHeader("x-goog-api-client", $"gl-csharp/8.0 fire/{version}");
-      if (FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp))
+      if (Firebase.Internal.FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp))
       {
         clientWebSocket.Options.SetRequestHeader("X-Firebase-AppId", _firebaseApp.Options.AppId);
         clientWebSocket.Options.SetRequestHeader("X-Firebase-AppVersion", UnityEngine.Application.version);
       }
       // Add additional Firebase tokens to the header.
-      await FirebaseInterops.AddFirebaseTokensAsync(clientWebSocket, _firebaseApp);
+      await Firebase.Internal.FirebaseInterops.AddFirebaseTokensAsync(clientWebSocket, _firebaseApp);
 
       // Add a timeout to the initial connection, using the RequestOptions.
       using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

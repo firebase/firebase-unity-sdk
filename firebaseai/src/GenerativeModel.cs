@@ -219,7 +219,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":generateContent");
 
       // Set the request headers
-      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(content);
@@ -230,7 +230,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, cancellationToken);
-      await Firebase.HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
 
       string result = await response.Content.ReadAsStringAsync();
 
@@ -249,7 +249,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":streamGenerateContent?alt=sse");
 
       // Set the request headers
-      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(content);
@@ -260,7 +260,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-      await Firebase.HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
 
       // We are expecting a Stream as the response, so handle that.
       using var stream = await response.Content.ReadAsStreamAsync();
@@ -289,7 +289,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":countTokens");
 
       // Set the request headers
-      await Firebase.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
       string bodyJson = MakeCountTokensRequest(content);
@@ -300,7 +300,7 @@ namespace Firebase.AI
 #endif
 
       var response = await _httpClient.SendAsync(request, cancellationToken);
-      await Firebase.HttpHelpers.ValidateHttpResponse(response);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
 
       string result = await response.Content.ReadAsStringAsync();
 

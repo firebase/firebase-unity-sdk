@@ -19,7 +19,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Firebase
+namespace Firebase.Internal
 {
   // Helper functions to help handling the Http calls.
   internal static class HttpHelpers
