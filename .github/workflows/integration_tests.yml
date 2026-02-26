@@ -264,8 +264,9 @@ jobs:
             curl -L "https://firebase.google.com/download/unity" -o ~/Downloads/firebase_unity_sdk.zip
             unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           fi
+          CLEAN_APIS=$(echo ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS} | tr -d "'" | tr -d "\"")
           python scripts/gha/build_testapps.py \
-            --t ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS} \
+            --t ${CLEAN_APIS} \
             --u ${UNITY_VERSION} \
             --p "${MATRIX_PLATFORM}" \
             --ios_sdk "${MATRIX_IOS_SDK}" \
@@ -468,8 +469,9 @@ jobs:
             curl -L "https://firebase.google.com/download/unity" -o ~/Downloads/firebase_unity_sdk.zip
             unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
           fi
+          CLEAN_APIS=$(echo ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS} | tr -d "'" | tr -d "\"")
           python scripts/gha/build_testapps.py \
-            --t ${NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS} \
+            --t ${CLEAN_APIS} \
             --u ${UNITY_VERSION} \
             --p Playmode \
             --plugin_dir ~/Downloads/firebase_unity_sdk \
