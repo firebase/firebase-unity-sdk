@@ -18,6 +18,7 @@
 namespace Firebase.Sample.FirebaseAI
 {
   using Firebase;
+  using Firebase.Internal;
   using Firebase.AI;
   using Firebase.AI.Internal;
   using Firebase.Extensions;
