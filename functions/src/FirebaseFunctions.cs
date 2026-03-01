@@ -15,9 +15,7 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Reflection;
 using System.Net.Http;
 
@@ -82,27 +80,27 @@ namespace Firebase.Functions
       {
         var appType = _firebaseApp.GetType();
         _appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        
+
         if (_appDisposedEvent != null)
         {
-            _appDisposedMethod = this.GetType().GetMethod("OnAppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            
-            Delegate handlerDelegate = Delegate.CreateDelegate(_appDisposedEvent.EventHandlerType, this, _appDisposedMethod);
-            
-            var addMethod = _appDisposedEvent.GetAddMethod(true); 
-            
-            if (addMethod != null)
-            {
-                addMethod.Invoke(_firebaseApp, new object[] { handlerDelegate });
-            }
-            else
-            {
-                LogError("Found the event, but couldn't find its hidden 'add' method.");
-            }
+          _appDisposedMethod = this.GetType().GetMethod("OnAppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+          Delegate handlerDelegate = Delegate.CreateDelegate(_appDisposedEvent.EventHandlerType, this, _appDisposedMethod);
+
+          var addMethod = _appDisposedEvent.GetAddMethod(true);
+
+          if (addMethod != null)
+          {
+            addMethod.Invoke(_firebaseApp, new object[] { handlerDelegate });
+          }
+          else
+          {
+            LogError("Found the event, but couldn't find its hidden 'add' method.");
+          }
         }
         else
         {
-            LogError("AppDisposed event not found via reflection.");
+          LogError("AppDisposed event not found via reflection.");
         }
       }
       catch (System.Exception ex)
@@ -128,7 +126,7 @@ namespace Firebase.Functions
     private void Dispose()
     {
       System.GC.SuppressFinalize(this);
-      
+
       _instances.TryRemove(_instanceKey, out _);
       if (_appDisposedEvent != null)
       {
@@ -234,22 +232,17 @@ namespace Firebase.Functions
       }
 
       string key = InstanceKey(app, region);
-      if (_instances.ContainsKey(key))
-      {
-        return _instances[key];
-      }
-
       return _instances.GetOrAdd(key, _ => new FirebaseFunctions(app, region));
     }
 
-  private string GetUrl(in string name)
-  {
-    string proj = _firebaseApp.Options.ProjectId;
-    string url = string.IsNullOrEmpty(_emulator_origin)
-      ? $"https://{_region}-{proj}.cloudfunctions.net/{name}"
-      : $"{_emulator_origin}/{proj}/{_region}/{name}";
-    return url;
-  }
+    private string GetUrl(in string name)
+    {
+      string proj = _firebaseApp.Options.ProjectId;
+      string url = string.IsNullOrEmpty(_emulator_origin)
+        ? $"https://{_region}-{proj}.cloudfunctions.net/{name}"
+        : $"{_emulator_origin}/{proj}/{_region}/{name}";
+      return url;
+    }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a name.

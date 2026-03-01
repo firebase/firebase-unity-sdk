@@ -15,11 +15,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Net;
-using Unity.VisualScripting;
 
 namespace Firebase.Functions
 {
@@ -41,9 +36,9 @@ namespace Firebase.Functions
       ErrorCode = code;
     }
 
-    internal FunctionsException(FirebaseException e): base(e.Message)
+    internal FunctionsException(FirebaseException e) : base(e.Message)
     {
-      ErrorCode = (FunctionsErrorCode) e.ErrorCode;
+      ErrorCode = (FunctionsErrorCode)e.ErrorCode;
     }
   }
 }

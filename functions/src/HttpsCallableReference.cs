@@ -15,16 +15,11 @@
  */
 
 using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
-using System.Net;
 using Firebase.Functions.Internal;
 using Firebase.Internal;
 using System.Text;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace Firebase.Functions
 {
@@ -92,7 +87,7 @@ namespace Firebase.Functions
 
     private async Task<HttpsCallableResult> InternalCallAsync(object data)
     {
-      HttpRequestMessage request =  new(HttpMethod.Post, _url);
+      HttpRequestMessage request = new(HttpMethod.Post, _url);
       // Functions uses Bearer tokens for authentication.
       // This is different from the default Firebase token prefix used by other Firebase services.
       await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App, "Bearer");
@@ -111,7 +106,8 @@ namespace Firebase.Functions
           try
           {
             errorBody = await response.Content.ReadAsStringAsync();
-          } catch(Exception e)
+          }
+          catch (Exception e)
           {
             UnityEngine.Debug.LogWarning("Failed to read error response: " + e.Message);
           }
@@ -124,9 +120,8 @@ namespace Firebase.Functions
 #if FIREBASE_LOG_REST_CALLS
       UnityEngine.Debug.Log("Response:\n" + result);
 #endif
-    var responseData =  FunctionsSerializer.Deserialize(result);
-    UnityEngine.Debug.Log("Response data:\n" + responseData);
-    return new HttpsCallableResult(responseData);
+      var responseData = FunctionsSerializer.Deserialize(result);
+      return new HttpsCallableResult(responseData);
     }
   }
 }
