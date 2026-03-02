@@ -19,8 +19,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Net.Http;
 
-namespace Firebase.Functions
-{
+namespace Firebase.Functions {
   /// <summary>
   ///   FirebaseFunctions is a service that supports calling Google Cloud Functions.
   /// </summary>
@@ -41,8 +40,7 @@ namespace Firebase.Functions
   ///   obtainable from
   ///   <see cref="FirebaseApp.DefaultInstance" />.
   /// </remarks>
-  public sealed class FirebaseFunctions
-  {
+  public sealed class FirebaseFunctions {
     private static readonly ConcurrentDictionary<string, FirebaseFunctions> _instances = new();
 
     private readonly FirebaseApp _firebaseApp;
@@ -50,11 +48,11 @@ namespace Firebase.Functions
     private string _region;
     private EventInfo _appDisposedEvent;
     private MethodInfo _appDisposedMethod;
+    private Delegate _onAppDisposedHandler;
 
     private readonly HttpClient _httpClient;
 
-    private static void LogError(string message)
-    {
+    private static void LogError(string message) {
 #if FUNCTIONS_DEBUG_LOGGING
       UnityEngine.Debug.LogError(message);
 #endif
@@ -66,8 +64,7 @@ namespace Firebase.Functions
     /// <summary>
     /// Construct this instance associated with the specified app and region.
     /// </summary>
-    private FirebaseFunctions(FirebaseApp app, string region)
-    {
+    private FirebaseFunctions(FirebaseApp app, string region) {
       _firebaseApp = app;
       _region = region;
       _instanceKey = InstanceKey(app, region);
@@ -76,35 +73,29 @@ namespace Firebase.Functions
       _httpClient = new HttpClient();
       _httpClient.Timeout = TimeSpan.FromSeconds(70);
 
-      try
-      {
+      try {
         var appType = _firebaseApp.GetType();
         _appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
-        if (_appDisposedEvent != null)
-        {
+        if (_appDisposedEvent != null) {
           _appDisposedMethod = this.GetType().GetMethod("OnAppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
-          Delegate handlerDelegate = Delegate.CreateDelegate(_appDisposedEvent.EventHandlerType, this, _appDisposedMethod);
+          _onAppDisposedHandler = Delegate.CreateDelegate(_appDisposedEvent.EventHandlerType, this, _appDisposedMethod);
 
           var addMethod = _appDisposedEvent.GetAddMethod(true);
 
-          if (addMethod != null)
-          {
-            addMethod.Invoke(_firebaseApp, new object[] { handlerDelegate });
+          if (addMethod != null) {
+            addMethod.Invoke(_firebaseApp, new object[] { _onAppDisposedHandler });
           }
-          else
-          {
+          else {
             LogError("Found the event, but couldn't find its hidden 'add' method.");
           }
         }
-        else
-        {
+        else {
           LogError("AppDisposed event not found via reflection.");
         }
       }
-      catch (System.Exception ex)
-      {
+      catch (System.Exception ex) {
         LogError($"Failed to attach to AppDisposed via reflection: {ex.Message}");
       }
     }
@@ -112,25 +103,22 @@ namespace Firebase.Functions
     /// <summary>
     /// Remove the reference to this object from the _instances dictionary.
     /// </summary>
-    ~FirebaseFunctions()
-    {
+    ~FirebaseFunctions() {
       Dispose();
     }
 
-    void OnAppDisposed(object sender, System.EventArgs eventArgs)
-    {
+    void OnAppDisposed(object sender, System.EventArgs eventArgs) {
       Dispose();
     }
 
     // Remove the reference to this instance from _instances and clean up events.
-    private void Dispose()
-    {
+    private void Dispose() {
       System.GC.SuppressFinalize(this);
 
       _instances.TryRemove(_instanceKey, out _);
-      if (_appDisposedEvent != null)
-      {
-        _appDisposedEvent.RemoveEventHandler(_firebaseApp, new EventHandler(OnAppDisposed));
+      if (_appDisposedEvent != null && _onAppDisposedHandler != null) {
+        var removeMethod = _appDisposedEvent.GetRemoveMethod(true);
+        removeMethod?.Invoke(_firebaseApp, new object[] { _onAppDisposedHandler });
       }
       _httpClient.Dispose();
     }
@@ -149,8 +137,7 @@ namespace Firebase.Functions
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </value>
-    public static FirebaseFunctions DefaultInstance
-    {
+    public static FirebaseFunctions DefaultInstance {
       get { return GetInstance(FirebaseApp.DefaultInstance); }
     }
 
@@ -163,8 +150,7 @@ namespace Firebase.Functions
     /// </summary>
     public FirebaseApp App { get { return _firebaseApp; } }
 
-    private static string InstanceKey(FirebaseApp app, string region)
-    {
+    private static string InstanceKey(FirebaseApp app, string region) {
       return app.Name + "/" + region;
     }
 
@@ -184,8 +170,7 @@ namespace Firebase.Functions
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </returns>
-    public static FirebaseFunctions GetInstance(FirebaseApp app)
-    {
+    public static FirebaseFunctions GetInstance(FirebaseApp app) {
       return GetInstance(app, "us-central1");
     }
 
@@ -202,8 +187,7 @@ namespace Firebase.Functions
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </returns>
-    public static FirebaseFunctions GetInstance(string region)
-    {
+    public static FirebaseFunctions GetInstance(string region) {
       return GetInstance(FirebaseApp.DefaultInstance, region);
     }
 
@@ -224,10 +208,8 @@ namespace Firebase.Functions
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </returns>
-    public static FirebaseFunctions GetInstance(FirebaseApp app, string region)
-    {
-      if (app == null)
-      {
+    public static FirebaseFunctions GetInstance(FirebaseApp app, string region) {
+      if (app == null) {
         app = FirebaseApp.DefaultInstance;
       }
 
@@ -235,8 +217,7 @@ namespace Firebase.Functions
       return _instances.GetOrAdd(key, _ => new FirebaseFunctions(app, region));
     }
 
-    private string GetUrl(in string name)
-    {
+    private string GetUrl(in string name) {
       string proj = _firebaseApp.Options.ProjectId;
       string url = string.IsNullOrEmpty(_emulator_origin)
         ? $"https://{_region}-{proj}.cloudfunctions.net/{name}"
@@ -247,32 +228,28 @@ namespace Firebase.Functions
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a name.
     /// </summary>
-    public HttpsCallableReference GetHttpsCallable(string name)
-    {
+    public HttpsCallableReference GetHttpsCallable(string name) {
       return new HttpsCallableReference(this, GetUrl(name));
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
-    public HttpsCallableReference GetHttpsCallableFromURL(string url)
-    {
+    public HttpsCallableReference GetHttpsCallableFromURL(string url) {
       return new HttpsCallableReference(this, url);
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
-    public HttpsCallableReference GetHttpsCallableFromURL(Uri url)
-    {
+    public HttpsCallableReference GetHttpsCallableFromURL(Uri url) {
       return GetHttpsCallableFromURL(url.ToString());
     }
 
     /// <summary>
     ///   Sets an origin of a Cloud Functions Emulator instance to use.
     /// </summary>
-    public void UseFunctionsEmulator(string origin)
-    {
+    public void UseFunctionsEmulator(string origin) {
       _emulator_origin = origin;
     }
   }
