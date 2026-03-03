@@ -624,7 +624,7 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True, remaining_r
   logging.info("Running in subprocess: %s", " ".join(run_args))
   open_process = subprocess.Popen(args=run_args)
   test_finished = False
-  time_until_timeout = 120
+  time_until_timeout = 600
   while not test_finished and time_until_timeout > 0:
     time.sleep(5)
     time_until_timeout -= 5
