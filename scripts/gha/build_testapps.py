@@ -1136,12 +1136,27 @@ def _fix_path(path):
 def _run(args, timeout=_DEFAULT_TIMEOUT_SECONDS, capture_output=False, text=None, check=True):
   """Executes a command in a subprocess."""
   logging.info("Running in subprocess: %s", " ".join(args))
-  return subprocess.run(
-      args=args,
-      timeout=timeout,
-      capture_output=capture_output,
-      text=text,
-      check=check)
+  try:
+    return subprocess.run(
+        args=args,
+        timeout=timeout,
+        capture_output=capture_output,
+        text=text,
+        check=check)
+  except subprocess.CalledProcessError as e:
+    # Attempt to find a log file in the arguments and print its contents
+    if "-logFile" in args:
+        try:
+            log_index = args.index("-logFile") + 1
+            if log_index < len(args):
+                log_file = args[log_index]
+                if os.path.exists(log_file):
+                    logging.error("Subprocess failed. Contents of %s:", log_file)
+                    with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
+                        logging.error(f.read())
+        except Exception as log_e:
+            logging.error("Failed to read log file: %s", str(log_e))
+    raise e
 
 
 @attr.s(frozen=True, eq=False)
