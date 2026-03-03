@@ -65,6 +65,7 @@ import platform
 import subprocess
 import glob
 import os
+import random
 
 from absl import app
 from absl import flags
@@ -336,6 +337,10 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
   # successful activation and ignore the error in that case.
   unity_full_version = SETTINGS[unity_version][get_os()]["version"]
   unity_executable = SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
+
+  # Shuffle the list of serial IDs to reduce the chance of collisions between concurrent jobs
+  random.shuffle(serial_ids)
+
   logging.info("Found %d licenses. Attempting each.", len(serial_ids))
   for i, serial_id in enumerate(serial_ids):
     logging.info("Attempting license %d", i)
