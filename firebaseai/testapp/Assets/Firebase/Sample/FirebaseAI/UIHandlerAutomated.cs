@@ -218,7 +218,7 @@ namespace Firebase.Sample.FirebaseAI
       );
 
       // Some of the AI tests tend to take a bit longer, so increase the timeout.
-      testRunner.TestTimeoutSeconds = 120f;
+      testRunner.TestTimeoutSeconds = 240f;
 
       base.Start();
     }
