@@ -1153,7 +1153,8 @@ def _run(args, timeout=_DEFAULT_TIMEOUT_SECONDS, capture_output=False, text=None
                 if os.path.exists(log_file):
                     logging.error("Subprocess failed. Contents of %s:", log_file)
                     with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
-                        logging.error(f.read())
+                        for line in f:
+                            logging.error(line.rstrip())
         except Exception as log_e:
             logging.error("Failed to read log file: %s", str(log_e))
     raise e
