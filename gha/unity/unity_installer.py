@@ -339,7 +339,7 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
   unity_executable = SETTINGS["unity_executable"][get_os()].replace(UNITY_VERSION_PLACEHOLDER, unity_full_version)
 
   # Shuffle the list of serial IDs to reduce the chance of collisions between concurrent jobs
-  random.shuffle(serial_ids)
+  serial_ids = random.sample(serial_ids, len(serial_ids))
 
   logging.info("Found %d licenses. Attempting each.", len(serial_ids))
   for i, serial_id in enumerate(serial_ids):
