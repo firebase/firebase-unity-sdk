@@ -109,11 +109,14 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.9.0
 -   Changes
+    - General (Android): Update to Firebase Android BoM version 34.10.0.
+    - General (iOS): Update to Firebase SPM/Cocoapods version 12.10.0.
+    - Firestore (iOS): Fix crash when using Auth or App Check Credentials.
     - App Check: Updated App Check to support limited-use tokens. This is a
       breaking change for custom providers, which must now implement the new
-      `GetLimitedUseTokenAsync` method. If a custom provider does not support
+     `GetLimitedUseTokenAsync` method. If a custom provider does not support
       this feature, it can return a standard token from this method.
 
 ### 13.8.0
