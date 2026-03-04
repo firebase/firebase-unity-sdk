@@ -55,19 +55,21 @@ def main(argv):
     raise app.UsageError("Too many command-line arguments.")
 
   testapp_dir = _fix_path(FLAGS.testapp_dir)
-  testapp_name = FLAGS.testapp_name
+  
+  # testapp_name is now an API filter (e.g. "analytics") 
+  api_filter = FLAGS.testapp_name.lower()
+  
+  target_file_name = "testapp.exe" if platform.system() == "Windows" else "testapp"
 
-  if platform.system() == "Windows":
-    testapp_name += ".exe"
-
-  logging.info("Searching for file named '%s' in %s", testapp_name, testapp_dir)
+  logging.info("Searching for file named '%s' with API filter '%s' in %s", target_file_name, api_filter, testapp_dir)
   testapps = []
   for file_dir, _, file_names in os.walk(testapp_dir):
     for file_name in file_names:
-      # match Testapp names, e.g. "Firebase Analytics Unity Testapp"
       # Ignore files ending with _s.debug, since Linux generates debug files
-      if testapp_name in file_name.lower() and not file_name.endswith("_s.debug"):
-        testapps.append(os.path.join(file_dir, file_name))
+      if file_name.lower() == target_file_name.lower() and not file_name.endswith("_s.debug"):
+        full_path = os.path.join(file_dir, file_name)
+        if api_filter == "testapp" or api_filter in full_path.lower():
+          testapps.append(full_path)
 
   if not testapps:
     logging.error("No testapps found.")
