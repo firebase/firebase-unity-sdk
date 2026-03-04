@@ -104,12 +104,12 @@ def main(argv):
       break
     if job['conclusion'] == 'failure':
       job_logs = firebase_github.download_job_logs(FLAGS.token, job['id'])
-      if job['name'].startswith('build-'):
+      if 'build-' in job['name']:
         # Retry build jobs that timed out
         if re.search(r'timed? ?out|network error|maximum execution time',
                      job_logs, re.IGNORECASE):
           should_rerun_jobs = True
-      elif job['name'].startswith('test-'):
+      elif 'test-' in job['name'] or 'playmode_test' in job['name']:
         # Tests should always be retried (for now).
         should_rerun_jobs = True
 

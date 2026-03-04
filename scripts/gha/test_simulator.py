@@ -110,6 +110,9 @@ flags.DEFINE_string(
     "testapp_dir", None,
     "Testapps in this directory will be tested.")
 flags.DEFINE_string(
+    "testapp_name", "testapp",
+    "Name of the testapps to test. Filters apps by matching this substring.")
+flags.DEFINE_string(
     "ios_device", None,
     "iOS device, which is a combination of device name and os version"
     "See module docstring for details on how to set and get this id. "
@@ -171,7 +174,7 @@ def main(argv):
     # .app is treated as a directory, not a file in MacOS
     for directory in directories:
       full_path = os.path.join(file_dir, directory)
-      if directory.endswith(".app"):
+      if directory.endswith(".app") and FLAGS.testapp_name.lower() in directory.lower():
         if "tvOS" in file_dir:
           tvos_testapps.append(full_path)
         elif "iOS" in file_dir:
@@ -179,7 +182,7 @@ def main(argv):
 
     for file_name in file_names:
       full_path = os.path.join(file_dir, file_name)
-      if file_name.endswith(".apk"):
+      if file_name.endswith(".apk") and FLAGS.testapp_name.lower() in file_name.lower():
         android_testapps.append(full_path)    
 
   if not ios_testapps and not tvos_testapps and not android_testapps:
