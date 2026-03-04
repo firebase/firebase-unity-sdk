@@ -48,7 +48,7 @@ set(FIREBASE_DATABASE_ANDROID_DEPS
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:26.1.0"
+    "com.google.firebase:firebase-firestore:26.1.1"
     "com.google.firebase:firebase-analytics:23.0.0"
 )
 
@@ -58,7 +58,7 @@ set(FIREBASE_FUNCTIONS_ANDROID_DEPS
 )
 
 set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-installations:19.0.1"
+    "com.google.firebase:firebase-installations:19.1.0"
     "com.google.firebase:firebase-analytics:23.0.0"
 )
 
