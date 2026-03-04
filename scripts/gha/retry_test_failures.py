@@ -24,6 +24,7 @@ import datetime
 import json
 import re
 import shutil
+import os
 
 from absl import app
 from absl import flags
@@ -111,6 +112,17 @@ def main(argv):
       elif job['name'].startswith('test-'):
         # Tests should always be retried (for now).
         should_rerun_jobs = True
+
+  if not should_rerun_jobs:
+    # Check if we have any failed jobs that have exhausted retries.
+    for job_name in failed_jobs:
+      job = failed_jobs[job_name]
+      if job['conclusion'] == 'failure' and job['run_attempt'] > MAX_RETRIES:
+        logging.info("Job %s exhausted retries.", job_name)
+        if 'GITHUB_OUTPUT' in os.environ:
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+            print(f"max_retries_exhausted=true", file=fh)
+        break
 
   if should_rerun_jobs:
     logging.info("Re-running failed jobs in workflow run %s", FLAGS.run_id)
