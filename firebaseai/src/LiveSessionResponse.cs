@@ -145,6 +145,10 @@ namespace Firebase.AI
       {
         return new LiveSessionResponse(LiveSessionGoingAway.FromJson(goAway));
       }
+      else if (jsonDict.TryParseValue("sessionResumptionUpdate", out Dictionary<string, object> sessionResumptionUpdate))
+      {
+        return new LiveSessionResponse(LiveSessionResumptionUpdate.FromJson(sessionResumptionUpdate));
+      }
       else
       {
         // TODO: Determine if we want to log this, or just ignore it?
@@ -368,6 +372,65 @@ namespace Firebase.AI
     internal static Transcription FromJson(Dictionary<string, object> jsonDict)
     {
       return new Transcription(jsonDict.ParseValue<string>("text"));
+    }
+  }
+
+  /// <summary>
+  /// An update of the session resumption state.
+  /// </summary>
+  public readonly struct LiveSessionResumptionUpdate : ILiveSessionMessage
+  {
+    /// <summary>
+    /// The new handle that represents the state that can be resumed. Empty if
+    /// `resumable` is false.
+    /// </summary>
+    public readonly string NewHandle { get; }
+
+    /// <summary>
+    /// Indicates if the session can be resumed at this point.
+    /// </summary>
+    public readonly bool? Resumable { get; }
+
+    /// <summary>
+    /// The index of the last client message that is included in the state
+    /// represented by this update.
+    /// </summary>
+    public readonly int? LastConsumedClientMessageIndex { get; }
+
+    private LiveSessionResumptionUpdate(string newHandle, bool? resumable, int? lastConsumedClientMessageIndex)
+    {
+      NewHandle = newHandle;
+      Resumable = resumable;
+      LastConsumedClientMessageIndex = lastConsumedClientMessageIndex;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for deserializing JSON responses and should not be called directly.
+    /// </summary>
+    internal static LiveSessionResumptionUpdate FromJson(Dictionary<string, object> jsonDict)
+    {
+      string newHandle = null;
+      if (jsonDict.TryGetValue("newHandle", out object handleObj) && handleObj is string strHandle)
+      {
+        newHandle = strHandle;
+      }
+
+      bool? resumable = null;
+      if (jsonDict.TryGetValue("resumable", out object resumableObj) && resumableObj is bool bResumable)
+      {
+        resumable = bResumable;
+      }
+
+      int? lastConsumedClientMessageIndex = null;
+      if (jsonDict.TryGetValue("lastConsumedClientMessageIndex", out object objIndex))
+      {
+        try {
+          lastConsumedClientMessageIndex = System.Convert.ToInt32(objIndex);
+        } catch { /* ignore */ }
+      }
+
+      return new LiveSessionResumptionUpdate(newHandle, resumable, lastConsumedClientMessageIndex);
     }
   }
 
