@@ -21,7 +21,6 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Firebase.AI.Internal;
 using Google.MiniJSON;
 
 namespace Firebase.AI

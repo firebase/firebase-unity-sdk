@@ -15,26 +15,30 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Net;
 
-namespace Firebase.Functions {
+namespace Firebase.Functions
+{
   /// <summary>
   ///   Represents an Exception resulting from an operation on a
   ///   <see cref="FunctionsReference" />
   /// </summary>
   [Serializable]
-  public sealed class FunctionsException : Exception {
+  public sealed class FunctionsException : Exception
+  {
     /// <returns>
     /// A code that indicates the type of error that occurred. This value will
-    /// be one of the set of constants defined on <see cref="FunctionsException" />.
+    /// be one of the set of constants defined on <see cref="FunctionsErrorCode" />.
     /// </returns>
     public FunctionsErrorCode ErrorCode { get; private set; }
 
-    internal FunctionsException(FirebaseException e): base(e.Message) {
-      ErrorCode = (FunctionsErrorCode) e.ErrorCode;
+    internal FunctionsException(FunctionsErrorCode code, string message) : base(message)
+    {
+      ErrorCode = code;
+    }
+
+    internal FunctionsException(FirebaseException e) : base(e.Message)
+    {
+      ErrorCode = (FunctionsErrorCode)e.ErrorCode;
     }
   }
 }

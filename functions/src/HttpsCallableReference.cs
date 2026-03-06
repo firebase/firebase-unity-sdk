@@ -15,31 +15,32 @@
  */
 
 using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Http;
+using Firebase.Functions.Internal;
+using Firebase.Internal;
+using System.Text;
 
-namespace Firebase.Functions {
+namespace Firebase.Functions
+{
   /// <summary>Represents a reference to a Google Cloud Functions HTTPS callable function.</summary>
   /// <remarks>
   ///   Represents a reference to a Google Cloud Functions HTTPS callable function.
   ///   (see <a href="https://cloud.google.com/functions/">Google Cloud Functions</a>)
   /// </remarks>
-  public sealed class HttpsCallableReference {
+  public sealed class HttpsCallableReference
+  {
     // Functions object this reference was created from.
-    private readonly FirebaseFunctions firebaseFunctions;
-
+    private readonly FirebaseFunctions _firebaseFunctions;
+    private readonly string _url;
     /// <summary>
     /// Construct a wrapper around the HttpsCallableReferenceInternal object.
     /// </summary>
-    internal HttpsCallableReference(FirebaseFunctions functions,
-      HttpsCallableReferenceInternal callableReferenceInternal) {
-      firebaseFunctions = functions;
-      Internal = callableReferenceInternal;
+    internal HttpsCallableReference(FirebaseFunctions functions, string url)
+    {
+      _firebaseFunctions = functions;
+      _url = url;
     }
-
-    private HttpsCallableReferenceInternal Internal { get; set; }
 
     /// <summary>
     ///   Returns the
@@ -51,7 +52,7 @@ namespace Firebase.Functions {
     ///   <see cref="FirebaseFunctions" />
     ///   service.
     /// </returns>
-    public FirebaseFunctions Functions { get { return firebaseFunctions; } }
+    public FirebaseFunctions Functions { get { return _firebaseFunctions; } }
 
     /// <summary>
     ///   ...
@@ -60,7 +61,8 @@ namespace Firebase.Functions {
     ///   A <see cref="Task"/>
     ///   with the result of the function call.
     /// </returns>
-    public Task<HttpsCallableResult> CallAsync() {
+    public Task<HttpsCallableResult> CallAsync()
+    {
       return CallAsync(null);
     }
 
@@ -72,26 +74,54 @@ namespace Firebase.Functions {
     ///   A <see cref="Task"/>
     ///   with the result of the function call.
     /// </returns>
-    public Task<HttpsCallableResult> CallAsync(object data) {
-      var dataVariant = Variant.FromObject(data);
-      return Internal.CallAsync(dataVariant).ContinueWith(task => {
-        // We need to preserve the Internal object during the async call.
-        if (Internal == null) {
-          LogUtil.LogMessage(LogLevel.Error,
-                                 "The underlying object of the HttpsCallableReference was lost.");
-        }
-        if (task.IsFaulted) {
-          // Try to convert the exception into a FunctionsException.
-          var ex = task.Exception;
-          foreach (var inner in ex.InnerExceptions) {
-            if (inner is FirebaseException) {
-              throw new FunctionsException((FirebaseException) inner);
-            }
+    public Task<HttpsCallableResult> CallAsync(object data)
+    {
+      return InternalCallAsync(data);
+    }
+
+    private StringContent MakeFunctionsRequest(object data)
+    {
+      var encodedData = FunctionsSerializer.Serialize(data);
+      return new StringContent(encodedData, Encoding.UTF8, "application/json");
+    }
+
+    private async Task<HttpsCallableResult> InternalCallAsync(object data)
+    {
+      HttpRequestMessage request = new(HttpMethod.Post, _url);
+      // Functions uses Bearer tokens for authentication.
+      // This is different from the default Firebase token prefix used by other Firebase services.
+      await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App, "Bearer");
+      request.Content = MakeFunctionsRequest(data);
+
+#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log("Request:\n" + request.Content);
+#endif
+      // TODO pipe through cancellation tokens
+      var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+      if (!response.IsSuccessStatusCode)
+      {
+        string errorBody = "";
+        if (response.Content != null)
+        {
+          try
+          {
+            errorBody = await response.Content.ReadAsStringAsync();
           }
-          throw ex;
+          catch (Exception e)
+          {
+            UnityEngine.Debug.LogWarning("Failed to read error response: " + e.Message);
+          }
         }
-        return new HttpsCallableResult(task.Result.data().ToObject());
-      });
+        throw FunctionsErrorParser.ParseError(response, errorBody);
+      }
+
+      string result = await response.Content.ReadAsStringAsync();
+
+#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log("Response:\n" + result);
+#endif
+      var responseData = FunctionsSerializer.Deserialize(result);
+      return new HttpsCallableResult(responseData);
     }
   }
 }
