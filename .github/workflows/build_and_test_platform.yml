@@ -26,6 +26,9 @@ on:
         default: ""
         description: "Comma-separated list of APIs to build and test (e.g. analytics,firestore)"
 
+permissions:
+  contents: read
+
 jobs:
   build_testapp:
     name: build-${{ inputs.platform }}-${{ inputs.unity_version }}
