@@ -46,6 +46,7 @@ from integration_testing import gcs
 FLAGS = flags.FLAGS
 flags.DEFINE_string("test_result", None, "FTL test result in JSON format.")
 flags.DEFINE_string("output_path", None, "Log will be write into this path.")
+flags.DEFINE_string("testapp_name", None, "Optional. If provided, only parse the test result for the app who's path contains this name")
 
 @attr.s(frozen=False, eq=False)
 class Test(object):
@@ -61,6 +62,9 @@ def main(argv):
   test_result = json.loads(FLAGS.test_result)
   tests = []
   for app in test_result.get("apps"):
+    app_path = app.get("testapp_path")
+    if FLAGS.testapp_name and FLAGS.testapp_name.lower() not in app_path.lower():
+      continue
     tests.append(_parse_testapp_to_test(app))
 
   (output_dir, file_name) = os.path.split(os.path.abspath(FLAGS.output_path))

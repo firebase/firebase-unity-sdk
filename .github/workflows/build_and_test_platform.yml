@@ -1,0 +1,349 @@
+name: Build and Test Platform
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        required: true
+        type: string
+        description: "The platform to build and test (e.g. Android, iOS, Windows)"
+      build_os:
+        required: true
+        type: string
+        description: "The runner OS to use for the build step"
+      unity_version:
+        required: true
+        type: string
+        description: "The Unity version to use for the build step"
+      mobile_device_types:
+        required: false
+        type: string
+        default: "real,virtual"
+        description: "For mobile platforms, which device types to test (e.g. real, virtual)"
+      apis:
+        required: false
+        type: string
+        default: ""
+        description: "Comma-separated list of APIs to build and test (e.g. analytics,firestore)"
+
+permissions:
+  contents: read
+
+jobs:
+  build_testapp:
+    name: build-${{ inputs.platform }}-${{ inputs.unity_version }}
+    runs-on: ${{ inputs.build_os }}
+    env:
+      xcodeVersion: "16.2"
+    steps:
+      - uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.31.0"
+      - id: matrix_info
+        shell: bash
+        run: |
+          echo "info=${MATRIX_UNITY_VERSION}-${MATRIX_OS}-${MATRIX_PLATFORM}-${MATRIX_IOS_SDK}" >> $GITHUB_OUTPUT
+          echo "artifact_suffix=${MATRIX_UNITY_VERSION}-${MATRIX_OS}-${MATRIX_IOS_SDK}" >> $GITHUB_OUTPUT
+        env:
+          MATRIX_UNITY_VERSION: ${{ inputs.unity_version }}
+          MATRIX_OS: ${{ inputs.build_os }}
+          MATRIX_PLATFORM: ${{ inputs.platform }}
+          # Pass NA for ios_sdk during the single build step, or dynamic if needed later
+          MATRIX_IOS_SDK: "NA"
+      - uses: actions/checkout@v4
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install python deps
+        timeout-minutes: 10
+        shell: bash
+        run: pip install -r scripts/gha/requirements.txt
+      - name: setup Xcode version
+        if: runner.os == 'macOS'
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
+      - id: unity_setup
+        uses: ./gha/unity
+        timeout-minutes: 30
+        with:
+          version: ${{ inputs.unity_version }}
+          platforms: ${{ inputs.platform }}
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          serial_ids: ${{ secrets.SERIAL_ID }}
+      - name: Workaround tvOS XCode 15 issue
+        if: ${{ contains(inputs.platform, 'tvOS') && contains(inputs.unity_version, '2020') }}
+        shell: bash
+        run: |
+          find /Applications/Unity/Hub/Editor -type f -name 'UnityViewControllerBase.h' -exec sed -i '' 's/#import <GameController\/GCController.h>/#import <GameController\/GCEventViewController.h>/g' {} \;
+      - name: Prepare for integration tests
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
+      - name: Setup Android keystore
+        if: ${{ contains(inputs.platform, 'Android') }}
+        shell: bash
+        run: |
+          mkdir -p ~/.android
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.TEST_SECRET }}" \
+              --output ~/.android/debug.keystore "scripts/gha-encrypted/debug_keystore.gpg"
+      - name: Fetch prebuilt packaged SDK from previous run
+        if: ${{ inputs.packaged_sdk_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: 'firebase_unity_sdk.zip'
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.packaged_sdk_run_id }}
+
+      - name: Build integration tests
+        timeout-minutes: 240
+        shell: bash
+        run: |
+          if [[ -n "${PACKAGED_SDK_RUN_ID}" ]]; then
+            unzip -q firebase_unity_sdk.zip -d ~/Downloads/
+          else
+            curl -L "https://firebase.google.com/download/unity" -o ~/Downloads/firebase_unity_sdk.zip
+            unzip -q ~/Downloads/firebase_unity_sdk.zip -d ~/Downloads/
+          fi
+          CLEAN_APIS=$(echo ${APIS} | tr -d "'" | tr -d "\"")
+          python scripts/gha/build_testapps.py \
+            --t ${CLEAN_APIS} \
+            --u ${UNITY_VERSION} \
+            --p "${PLATFORM}" \
+            --ios_sdk "NA" \
+            --plugin_dir ~/Downloads/firebase_unity_sdk \
+            --output_directory "${{ github.workspace }}" \
+            --artifact_name "${STEPS_MATRIX_INFO_OUTPUTS_INFO}" \
+            --notimestamp \
+            --force_latest_runtime \
+            --ci
+        env:
+          PACKAGED_SDK_RUN_ID: ${{ inputs.packaged_sdk_run_id }}
+          APIS: ${{ inputs.apis }}
+          PLATFORM: ${{ inputs.platform }}
+          UNITY_VERSION: ${{ inputs.unity_version }}
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+
+      - name: Return Unity license
+        if: always()
+        uses: ./gha/unity
+        with:
+          version: ${{ inputs.unity_version }}
+          release_license: "true"
+
+      - name: Prepare results summary artifact
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          if [ ! -f build-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json ]; then
+            echo "__SUMMARY_MISSING__" > build-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json
+          fi
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+
+      - name: Upload build results artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: build_and_test_results-build-${{ steps.matrix_info.outputs.info }}
+          path: build-results-${{ steps.matrix_info.outputs.info }}*
+          retention-days: 2
+
+      - name: Upload Mobile integration tests artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ contains('Android,iOS,tvOS', inputs.platform) && !cancelled() }}
+        with:
+          name: testapps-${{ inputs.platform }}-${{ steps.matrix_info.outputs.artifact_suffix }}
+          path: testapps-${{ steps.matrix_info.outputs.info }}
+          retention-days: 2
+
+      - name: Upload Desktop integration tests artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ !contains('Android,iOS,tvOS', inputs.platform) && !cancelled() }}
+        with:
+          name: testapps-${{ inputs.platform }}-${{ steps.matrix_info.outputs.artifact_suffix }}
+          path: testapps-${{ steps.matrix_info.outputs.info }}/${{ inputs.platform }}
+          retention-days: 2
+
+  prepare_tests:
+    needs: build_testapp
+    runs-on: ubuntu-latest
+    outputs:
+      test_matrix: ${{ steps.set-matrix.outputs.test_matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate Test Matrix
+        id: set-matrix
+        run: |
+          matrix=$(python scripts/gha/print_matrix_configuration.py -test_matrix \
+            -platforms ${{ inputs.platform }} \
+            -os ${{ inputs.build_os }} \
+            -unity_versions ${{ inputs.unity_version }} \
+            -mobile_test_on ${{ inputs.mobile_device_types }} \
+            -apis "${{ inputs.apis }}")
+          echo "test_matrix=$matrix" >> $GITHUB_OUTPUT
+
+  integration_test:
+    needs: [build_testapp, prepare_tests]
+    name: test-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.api }}
+    runs-on: ${{ matrix.test_os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare_tests.outputs.test_matrix) }}
+    env:
+      xcodeVersion: "16.2"
+    steps:
+      - id: matrix_info
+        shell: bash
+        run: |
+          echo "info=${MATRIX_UNITY_VERSION}-${MATRIX_BUILD_OS}-${MATRIX_PLATFORM}-${MATRIX_TEST_DEVICE}-${MATRIX_TEST_OS}-${MATRIX_API}" >> $GITHUB_OUTPUT
+          echo "artifact_path=testapps-${MATRIX_PLATFORM}-${MATRIX_UNITY_VERSION}-${MATRIX_BUILD_OS}-NA" >> $GITHUB_OUTPUT
+        env:
+          MATRIX_UNITY_VERSION: ${{ matrix.unity_version }}
+          MATRIX_BUILD_OS: ${{ matrix.build_os }}
+          MATRIX_PLATFORM: ${{ matrix.platform }}
+          MATRIX_TEST_DEVICE: ${{ matrix.test_device }}
+          MATRIX_TEST_OS: ${{ matrix.test_os }}
+          MATRIX_API: ${{ matrix.api }}
+      - uses: actions/checkout@v4
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install python deps
+        timeout-minutes: 10
+        shell: bash
+        run: pip install -r scripts/gha/requirements.txt
+      - name: setup Xcode version
+        if: runner.os == 'macOS'
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
+      - name: Download Testapp artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: testapps
+          name: ${{ steps.matrix_info.outputs.artifact_path }}
+      - name: Set up Node (22)
+        if: ${{ matrix.test_device == 'github_runner'  }}
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Setup java for Firestore emulator
+        if: ${{ matrix.test_device == 'github_runner'  }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup Firestore Emulator
+        if: ${{ matrix.test_device == 'github_runner'  }}
+        uses: nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 5
+          max_attempts: 3
+          command: npm install -g firebase-tools
+
+      - name: Run Desktop integration tests
+        if: ${{ matrix.test_device == 'github_runner'  }}
+        timeout-minutes: 30
+        shell: bash
+        run: |
+          firebase emulators:start --only firestore &
+          python scripts/gha/desktop_tester.py --testapp_dir testapps \
+            --testapp_name ${{ matrix.api }} \
+            --logfile_name "${STEPS_MATRIX_INFO_OUTPUTS_INFO}"
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+
+      - name: Run Mobile integration tests on real device via FTL
+        id: ftl_test
+        if: ${{ matrix.device_type == 'real' }}
+        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.4
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
+          testapp_dir: testapps
+          test_type: "game-loop"
+          timeout: 1200
+          test_devices: ${{ matrix.device_detail }}
+          test_device_selection: random
+          max_attempts: 3
+          validator: ${GITHUB_WORKSPACE}/scripts/gha/read_ftl_test_result.py
+        
+      - name: Read FTL Test Result
+        if: ${{ matrix.device_type == 'real' && !cancelled() }}
+        timeout-minutes: 60
+        shell: bash
+        run: |
+          python scripts/gha/read_ftl_test_result.py --test_result "${STEPS_FTL_TEST_OUTPUTS_TEST_SUMMARY}" \
+            --testapp_name ${{ matrix.api }} \
+            --output_path testapps/test-results-"${STEPS_MATRIX_INFO_OUTPUTS_INFO}".log
+        env:
+          STEPS_FTL_TEST_OUTPUTS_TEST_SUMMARY: ${{ steps.ftl_test.outputs.test_summary }}
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+
+      - name: Print available devices
+        if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
+        run: |
+          xcrun xctrace list devices
+      - name: Create keychain (macOS Simulator)
+        if: ${{ contains('iOS,tvOS', matrix.platform) && matrix.device_type == 'virtual'}}
+        shell: bash
+        run: |
+          echo "Creating temporary keychain"
+          security delete-keychain tmp-keychain 2> /dev/null || true
+          security -i <<EOF
+          create-keychain -p ${{ secrets.TEST_SECRET }} tmp-keychain
+          set-keychain-settings tmp-keychain
+          unlock-keychain -p ${{ secrets.TEST_SECRET }} tmp-keychain
+          EOF
+          security list-keychains -d user -s tmp-keychain
+          security default-keychain -s tmp-keychain
+
+      - name: Run Mobile integration tests on virtual device locally
+        timeout-minutes: 120
+        if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
+        run: |
+          python scripts/gha/test_simulator.py --testapp_dir testapps \
+            --tvos_device "${{ matrix.test_device }}" \
+            --ios_device "${{ matrix.test_device }}" \
+            --android_device "${{ matrix.test_device }}" \
+            --testapp_name ${{ matrix.api }} \
+            --logfile_name "${{ steps.matrix_info.outputs.info }}" \
+            --ci
+
+      - name: Delete keychain (macOS Simulator)
+        if: ${{ always() && contains('iOS,tvOS', matrix.platform) && matrix.device_type == 'virtual' }}
+        shell: bash
+        run: |
+          security list-keychains -d user -s login.keychain
+          security delete-keychain tmp-keychain || true
+
+      - name: Prepare results summary artifact
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          if [ -d "testapps/testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO}" && ! -f testapps/test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json ]; then
+            mkdir -p testapps && echo "__SUMMARY_MISSING__" > testapps/test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json
+          fi
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+
+      - name: Upload test results artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_and_test_results-test-${{ steps.matrix_info.outputs.info }}
+          path: testapps/test-results-${{ steps.matrix_info.outputs.info }}*
+          retention-days: 2
+
+      - name: Summarize test results
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          cat testapps/test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log
+          if [[ "${JOB_STATUS}" != "success" ]]; then
+            exit 1
+          fi
+        env:
+          STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+          JOB_STATUS: ${{ job.status }}

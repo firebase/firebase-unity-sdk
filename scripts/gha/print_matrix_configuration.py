@@ -289,7 +289,7 @@ def get_testapp_playmode_matrix(matrix_type, unity_versions, platforms, build_os
   return matrix
 
 
-def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mobile_device_types):
+def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mobile_device_types, apis=None):
   # matrix structure:
   # {
   #   "unity_version":"2020",
@@ -299,7 +299,8 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
   #   "test_device":"android_target",
   #   "device_detail":"model=blueline,version=28", # secondary info
   #   "device_type":"real",   # secondary info
-  #   "ios_sdk": "NA"
+  #   "ios_sdk": "NA",
+  #   "api": "analytics"
   # }
 
   if matrix_type: unity_versions = get_value("integration_tests", matrix_type, "unity_versions")
@@ -323,9 +324,17 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
     if platform==ANDROID and build_os==MACOS_RUNNER:
       continue
 
+    # Default to a mock array with a single element `None` so the loop always runs at least once
+    # and gracefully passes `None` into the target dict if `apis` is omitted.
+    target_apis = apis if apis else [None]
+
     if platform in [WINDOWS, MACOS, LINUX]:
       test_os = _get_test_os(platform)
-      matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "device_detail": "NA", "device_type": "NA", "ios_sdk": "NA"})
+      for api in target_apis:
+        matrix_entry = {"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": "github_runner", "device_detail": "NA", "device_type": "NA", "ios_sdk": "NA"}
+        if api:
+          matrix_entry["api"] = api
+        matrix["include"].append(matrix_entry)
     else:
       # for iOS, tvOS platforms, exclude non macOS build_os
       if platform in [IOS, TVOS] and build_os!=MACOS_RUNNER:
@@ -343,7 +352,11 @@ def get_testapp_test_matrix(matrix_type, unity_versions, platforms, build_os, mo
         if device_platform == platform and device_type in mobile_device_types:
           test_os = _get_test_os(platform, device_type)
           ios_sdk = device_type if device_platform in [IOS, TVOS] else "NA"
-          matrix["include"].append({"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_detail": device_detail, "device_type": device_type, "ios_sdk": ios_sdk})
+          for api in target_apis:
+            matrix_entry = {"unity_version": unity_version, "platform": platform, "build_os": build_os, "test_os": test_os, "test_device": mobile_device, "device_detail": device_detail, "device_type": device_type, "ios_sdk": ios_sdk}
+            if api:
+              matrix_entry["api"] = api
+            matrix["include"].append(matrix_entry)
 
   return matrix
 
@@ -377,7 +390,8 @@ def main():
     print(get_testapp_playmode_matrix(args.matrix_type, args.unity_versions.split(','), args.platforms, args.os.split(',')))
     return
   if args.test_matrix:
-    print(get_testapp_test_matrix(args.matrix_type, args.unity_versions.split(','), args.platforms.split(','), args.os.split(','), args.mobile_test_on.split(',')))
+    target_apis = args.apis.split(',') if args.apis else None
+    print(get_testapp_test_matrix(args.matrix_type, args.unity_versions.split(','), args.platforms.split(','), args.os.split(','), args.mobile_test_on.split(','), apis=target_apis))
     return
 
   value = get_value(args.workflow, args.matrix_type, args.parm_key, args.config)
@@ -401,6 +415,7 @@ def parse_cmdline_args():
   parser.add_argument('-platforms', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
   parser.add_argument('-os', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
   parser.add_argument('-mobile_test_on', help='Use with -build_matrix/-test_matrix/-playmode_matrix')
+  parser.add_argument('-apis', help='Optional apis to inject into the returned matrix combination dicts. Use with -test_matrix.')
   args = parser.parse_args()
   return args
 
