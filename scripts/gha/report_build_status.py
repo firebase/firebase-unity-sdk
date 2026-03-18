@@ -475,42 +475,48 @@ def main(argv):
         run['log_success'] = True
         run['log_results'] = ''
         artifacts = firebase_github.list_artifacts(FLAGS.token, run['id'])
+        artifact_contents = None
         if 'build_and_test_results' in [a['name'] for a in artifacts]:
           artifact_id = [a['id'] for a in artifacts if a['name'] == 'build_and_test_results'][0]
           artifact_contents = firebase_github.download_artifact(FLAGS.token, artifact_id)
-          if artifact_contents:
-            artifact_data = io.BytesIO(artifact_contents)
-            artifact_zip = zipfile.ZipFile(artifact_data)
-            with tempfile.TemporaryDirectory() as tmpdir:
-              artifact_zip.extractall(path=tmpdir)
-              (success, results) = summarize_test_results.summarize_logs(tmpdir, False, False, True)
-              run['log_success'] = success
-              run['log_results'] = results
-              logging.info("Integration test %s results (via artifact): %s", run['id'], run['log_results'])
-          else:
-            # Artifacts expire after some time, so if they are gone, we need
-            # to read the GitHub logs instead.  This is much slower, so we
-            # prefer to read artifacts instead whenever possible.
-            logging.info("Reading github logs for run %s instead", run['id'])
+        if artifact_contents:
+          artifact_data = io.BytesIO(artifact_contents)
+          artifact_zip = zipfile.ZipFile(artifact_data)
+          with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_zip.extractall(path=tmpdir)
+            (success, results) = summarize_test_results.summarize_logs(tmpdir, False, False, True)
+            run['log_success'] = success
+            run['log_results'] = results
+            logging.info("Integration test %s results (via artifact): %s", run['id'], run['log_results'])
+        else:
+          # Artifacts expire after some time, so if they are gone, we need
+          # to read the GitHub logs instead.  This is much slower, so we
+          # prefer to read artifacts instead whenever possible.
+          logging.info("Reading github logs for run %s instead", run['id'])
 
-            logs_url = run['logs_url']
-            headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': 'Bearer %s' % FLAGS.token}
-            with requests.get(logs_url, headers=headers, stream=True) as response:
-              if response.status_code == 200:
-                logs_compressed_data = io.BytesIO(response.content)
-                logs_zip = zipfile.ZipFile(logs_compressed_data)
-                m = get_message_from_github_log(
-                  logs_zip,
-                  r'(?:[0-9]*_)?summarize-results(?:/.*Summarize results into GitHub.*)?',
-                  r'\[error\]INTEGRATION TEST FAILURES\n—+\n(.*)$')
-                if m:
-                  run['log_success'] = False
-                  m2 = re.match(r'(.*?)^' + day, m.group(1), re.MULTILINE | re.DOTALL)
-                  if m2:
-                    run['log_results'] = m2.group(1)
-                  else:
-                    run['log_results'] = m.group(1)
-                  logging.info("Integration test %s results (via log): %s", run['id'], run['log_results'])
+          logs_url = run['logs_url']
+          headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': 'Bearer %s' % FLAGS.token}
+          with requests.get(logs_url, headers=headers, stream=True) as response:
+            if response.status_code == 200:
+              logs_compressed_data = io.BytesIO(response.content)
+              logs_zip = zipfile.ZipFile(logs_compressed_data)
+              m = get_message_from_github_log(
+                logs_zip,
+                r'(?:[0-9]*_)?summarize-results(?:/.*Summarize results into GitHub.*)?',
+                r'(?:\[error\]|::error\s*::)INTEGRATION TEST FAILURES(?:%0A|\n)—+(?:%0A|\n)(.*)$')
+              if m:
+                run['log_success'] = False
+                m2 = re.match(r'(.*?)^' + day, m.group(1), re.MULTILINE | re.DOTALL)
+                if m2:
+                  run['log_results'] = m2.group(1)
+                else:
+                  run['log_results'] = m.group(1)
+                logging.info("Integration test %s results (via log): %s", run['id'], run['log_results'])
+              else:
+                # If we didn't find the error text we're looking for, then we must assume it failed.
+                # It was either flakiness, build failure, or no failures were reported due to missing artifacts.
+                run['log_success'] = False
+                run['log_results'] = "[BUILD] [ERROR] Unknown Error. Could not find summarize-results log failure string."
         bar.next()
 
     _cache['all_days'] = all_days
