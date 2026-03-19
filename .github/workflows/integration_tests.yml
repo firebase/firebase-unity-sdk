@@ -282,6 +282,10 @@ jobs:
           MATRIX_PLATFORM: ${{ matrix.platform }}
           MATRIX_IOS_SDK: ${{ matrix.ios_sdk }}
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+      - name: Sleep for 15 minutes (macOS only grace period)
+        if: always() && runner.os == 'macOS'
+        run: sleep 900
+        shell: bash
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
@@ -484,6 +488,10 @@ jobs:
           GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID: ${{ github.event.inputs.packaged_sdk_run_id }}
           NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS: ${{ needs.check_and_prepare.outputs.apis }}
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
+      - name: Sleep for 30 minutes (macOS only grace period)
+        if: always() && runner.os == 'macOS'
+        run: sleep 1800
+        shell: bash
       - name: Return Unity license
         # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
         if: always()
