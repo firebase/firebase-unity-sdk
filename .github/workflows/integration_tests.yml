@@ -282,13 +282,8 @@ jobs:
           MATRIX_PLATFORM: ${{ matrix.platform }}
           MATRIX_IOS_SDK: ${{ matrix.ios_sdk }}
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
-      - name: Sleep for 15 minutes (macOS only grace period)
-        if: always() && runner.os == 'macOS'
-        run: sleep 900
-        shell: bash
-      - name: Return Unity license
-        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
-        if: always()
+      - name: Return Unity license (Non-macOS only)
+        if: always() && runner.os != 'macOS'
         uses: ./gha/unity
         with:
           version: ${{ matrix.unity_version }}
@@ -488,13 +483,8 @@ jobs:
           GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID: ${{ github.event.inputs.packaged_sdk_run_id }}
           NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS: ${{ needs.check_and_prepare.outputs.apis }}
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
-      - name: Sleep for 30 minutes (macOS only grace period)
-        if: always() && runner.os == 'macOS'
-        run: sleep 1800
-        shell: bash
-      - name: Return Unity license
-        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
-        if: always()
+      - name: Return Unity license (Non-macOS only)
+        if: always() && runner.os != 'macOS'
         uses: ./gha/unity
         with:
           version: ${{ matrix.unity_version }}
@@ -821,3 +811,20 @@ jobs:
           -A
         env:
           STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN: ${{ steps.generate-token.outputs.token }}
+
+  teardown_unity_license:
+    name: "teardown-unity-license"
+    runs-on: macos-latest
+    # Wait for both build and playmode to finish before returning the license
+    needs: [build_testapp, playmode_test]
+    if: always()
+    strategy:
+      fail-fast: false
+      matrix:
+        unity_version: ['2021', '2022']
+    steps:
+      - name: Return Unity license
+        uses: ./gha/unity
+        with:
+          version: ${{ matrix.unity_version }}
+          release_license: "true"
