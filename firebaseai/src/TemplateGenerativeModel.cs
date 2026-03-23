@@ -89,7 +89,9 @@ namespace Firebase.AI
     }
 
     private string MakeGenerateContentRequest(IDictionary<string, object> inputs,
-        IEnumerable<ModelContent> chatHistory)
+        IEnumerable<ModelContent> chatHistory,
+        IEnumerable<TemplateTool> tools,
+        TemplateToolConfig toolConfig)
     {
       var jsonDict = new Dictionary<string, object>()
       {
@@ -99,12 +101,22 @@ namespace Firebase.AI
       {
         jsonDict["history"] = chatHistory.Select(t => t.ToJson()).ToList();
       }
+      if (tools != null && tools.Any())
+      {
+        jsonDict["tools"] = tools.Select(t => t.ToJson()).ToList();
+      }
+      if (toolConfig != null)
+      {
+        jsonDict["toolConfig"] = toolConfig.ToJson();
+      }
       return Json.Serialize(jsonDict);
     }
 
-    private async Task<GenerateContentResponse> GenerateContentAsyncInternal(
+    internal async Task<GenerateContentResponse> GenerateContentAsyncInternal(
         string templateId, IDictionary<string, object> inputs,
         IEnumerable<ModelContent> chatHistory,
+        IEnumerable<TemplateTool> tools,
+        TemplateToolConfig toolConfig,
         CancellationToken cancellationToken)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
@@ -114,7 +126,7 @@ namespace Firebase.AI
       await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
-      string bodyJson = MakeGenerateContentRequest(inputs, chatHistory);
+      string bodyJson = MakeGenerateContentRequest(inputs, chatHistory, tools, toolConfig);
       request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
 #if FIREBASE_LOG_REST_CALLS
@@ -133,9 +145,11 @@ namespace Firebase.AI
       return GenerateContentResponse.FromJson(result, _backend.Provider);
     }
 
-    private async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
+    internal async IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsyncInternal(
         string templateId, IDictionary<string, object> inputs,
         IEnumerable<ModelContent> chatHistory,
+        IEnumerable<TemplateTool> tools,
+        TemplateToolConfig toolConfig,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
       HttpRequestMessage request = new(HttpMethod.Post,
@@ -145,7 +159,7 @@ namespace Firebase.AI
       await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
 
       // Set the content
-      string bodyJson = MakeGenerateContentRequest(inputs, chatHistory);
+      string bodyJson = MakeGenerateContentRequest(inputs, chatHistory, tools, toolConfig);
       request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
 #if FIREBASE_LOG_REST_CALLS
@@ -172,6 +186,27 @@ namespace Firebase.AI
           yield return GenerateContentResponse.FromJson(line[Firebase.AI.Internal.HttpHelpers.StreamPrefix.Length..], _backend.Provider);
         }
       }
+    }
+
+    /// <summary>
+    /// Starts a <see cref="TemplateChatSession"/> that uses this template generative model to respond to messages.
+    /// </summary>
+    /// <param name="templateId">The id of the server prompt template to use.</param>
+    /// <param name="inputs">Any input parameters expected by the server prompt template.</param>
+    /// <param name="history">Optional chat history.</param>
+    /// <param name="tools">Optional tools (e.g., auto functions) to use.</param>
+    /// <param name="toolConfig">Optional tool configuration.</param>
+    /// <param name="maxTurns">Maximum number of interactions for auto functions to execute.</param>
+    /// <returns>A new <see cref="TemplateChatSession"/> instance.</returns>
+    public TemplateChatSession StartChat(
+        string templateId,
+        IDictionary<string, object> inputs = null,
+        IEnumerable<ModelContent> history = null,
+        IEnumerable<TemplateTool> tools = null,
+        TemplateToolConfig toolConfig = null,
+        int maxTurns = 5)
+    {
+      return TemplateChatSession.InternalCreateChat(this, templateId, inputs, history, tools, toolConfig, maxTurns);
     }
   }
 }
