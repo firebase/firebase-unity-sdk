@@ -823,6 +823,13 @@ jobs:
       matrix:
         unity_version: ['2021', '2022']
     steps:
+      - uses: actions/checkout@v3
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install python deps
+        run: pip install -r scripts/gha/requirements.txt
       - name: Return Unity license
         uses: ./gha/unity
         with:
