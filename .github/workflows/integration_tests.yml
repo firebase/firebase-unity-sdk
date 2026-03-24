@@ -51,6 +51,7 @@ jobs:
       build_matrix: ${{ steps.matrix_config.outputs.build_matrix }}
       test_matrix: ${{ steps.matrix_config.outputs.test_matrix }}
       playmode_matrix: ${{ steps.matrix_config.outputs.playmode_matrix }}
+      macos_runner: ${{ steps.matrix_config.outputs.macos_runner }}
     steps:
     ### Fail the workflow if the user does not have admin access to run the tests.
     - name: Check if user has permission to trigger tests
@@ -167,6 +168,7 @@ jobs:
         echo "build_matrix=$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${GITHUB_EVENT_INPUTS_UNITY_VERSIONS}" -platforms "${GITHUB_EVENT_INPUTS_PLATFORMS}" -os "${GITHUB_EVENT_INPUTS_BUILD_OS}" -mobile_test_on "${GITHUB_EVENT_INPUTS_MOBILE_TEST_ON}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
         echo "test_matrix=$( python scripts/gha/print_matrix_configuration.py -test_matrix -unity_versions "${GITHUB_EVENT_INPUTS_UNITY_VERSIONS}" -platforms "${GITHUB_EVENT_INPUTS_PLATFORMS}" -os "${GITHUB_EVENT_INPUTS_BUILD_OS}" -mobile_test_on "${GITHUB_EVENT_INPUTS_MOBILE_TEST_ON}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
         echo "playmode_matrix=$( python scripts/gha/print_matrix_configuration.py -playmode_matrix -unity_versions "${GITHUB_EVENT_INPUTS_UNITY_VERSIONS}" -platforms "${GITHUB_EVENT_INPUTS_PLATFORMS}" -os "${GITHUB_EVENT_INPUTS_BUILD_OS}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
+        echo "macos_runner=$(grep '^MACOS_RUNNER = ' scripts/gha/print_matrix_configuration.py | cut -d'\"' -f2)" >> $GITHUB_OUTPUT
     - name: Update PR label and comment
       if: steps.set_outputs.outputs.pr_number
       run: |
@@ -814,9 +816,9 @@ jobs:
 
   teardown_unity_license:
     name: "teardown-unity-license"
-    runs-on: macos-latest
+    runs-on: ${{ needs.check_and_prepare.outputs.macos_runner }}
     # Wait for both build and playmode to finish before returning the license
-    needs: [build_testapp, playmode_test]
+    needs: [check_and_prepare, build_testapp, playmode_test]
     if: always()
     strategy:
       fail-fast: false
