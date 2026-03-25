@@ -62,7 +62,7 @@ namespace Firebase.Functions {
     private string _instanceKey;
 
     /// <summary>
-    /// Construct this instance associated with the specified app and region.
+    /// Construct an instance associated with the specified app and region.
     /// </summary>
     private FirebaseFunctions(FirebaseApp app, string region) {
       _firebaseApp = app;

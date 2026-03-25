@@ -21,9 +21,21 @@ using Google.MiniJSON;
 
 namespace Firebase.Functions.Internal
 {
-  // Helper functions to help encode and decode firebase functions data.
+  /// <summary>
+  /// Helper functions to help encode and decode firebase functions data.
+  /// A custom serializer is necessary on top of MiniJSON because Cloud Functions requires
+  /// specific data formatting for its callable protocol. Specifically, it requires:
+  /// 1. Request payloads to be wrapped in a `{"data": ...}` envelope.
+  /// 2. Integers (longs) to be explicitly wrapped in `type.googleapis.com/google.protobuf.Int64Value` to avoid precision loss in JavaScript or generic JSON parsers.
+  /// 3. Byte arrays (`byte[]`) to be wrapped in `type.googleapis.com/google.protobuf.BytesValue` and base64 encoded.
+  /// 4. Response parsing to unwrap the `{"data": ...}` or `{"result": ...}` payload and parse standard error JSON formats into FunctionsException.
+  /// </summary>
   internal static class FunctionsSerializer
   {
+    /// <summary>
+    /// Serializes an object into a JSON string suitable for the Cloud Functions callable protocol.
+    /// This includes encoding specific types and wrapping the payload in a `{"data": ...}` envelope.
+    /// </summary>
     internal static string Serialize(object data)
     {
       var encodedData = Encode(data);
@@ -32,6 +44,10 @@ namespace Firebase.Functions.Internal
       return Json.Serialize(new Dictionary<string, object>() { ["data"] = encodedData });
     }
 
+    /// <summary>
+    /// Recursively encodes objects, lists, and dictionaries into types supported by the Cloud Functions backend.
+    /// Specifically encodes longs using WrapLong and byte arrays using WrapBytes.
+    /// </summary>
     internal static object Encode(object obj)
     {
       switch (obj)
@@ -90,6 +106,10 @@ namespace Firebase.Functions.Internal
       return newDict;
     }
 
+    /// <summary>
+    /// Wraps an integer (long) in `type.googleapis.com/google.protobuf.Int64Value`
+    /// to avoid precision loss in JavaScript or generic JSON parsers.
+    /// </summary>
     private static object WrapLong(long value)
     {
       return new Dictionary<string, object>
@@ -99,6 +119,10 @@ namespace Firebase.Functions.Internal
       };
     }
 
+    /// <summary>
+    /// Wraps a byte array (`byte[]`) in `type.googleapis.com/google.protobuf.BytesValue`
+    /// and base64 encodes the value.
+    /// </summary>
     private static object WrapBytes(byte[] value)
     {
       return new Dictionary<string, object>
@@ -108,6 +132,11 @@ namespace Firebase.Functions.Internal
       };
     }
 
+    /// <summary>
+    /// Deserializes a parsed JSON string from the Cloud Functions callable protocol.
+    /// Unwraps the `{"data": ...}` or `{"result": ...}` payload and handles parsing
+    /// standard error formats into FunctionsException if present.
+    /// </summary>
     internal static object Deserialize(string data)
     {
       var deserializedData = Json.Deserialize(data);
@@ -144,6 +173,10 @@ namespace Firebase.Functions.Internal
       throw new FunctionsException(FunctionsErrorCode.Internal, "INTERNAL");
     }
 
+    /// <summary>
+    /// Recursively decodes a deserialized JSON object back into regular C# types.
+    /// Specifically unwraps `Int64Value` and `BytesValue` Protocol Buffer formats.
+    /// </summary>
     internal static object Decode(object obj)
     {
       if (obj is Dictionary<string, object> dict)

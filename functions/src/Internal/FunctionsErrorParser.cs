@@ -24,6 +24,10 @@ namespace Firebase.Functions.Internal
   // Helper class to map HTTP responses to FunctionsErrorCode and extract error details.
   internal static class FunctionsErrorParser
   {
+    /// <summary>
+    /// Maps an HTTP status code to the corresponding FunctionsErrorCode.
+    /// Default is Internal if no specific mapping exists.
+    /// </summary>
     internal static FunctionsErrorCode MapHttpStatusToEnum(int httpStatusCode)
     {
       switch (httpStatusCode)
@@ -40,10 +44,15 @@ namespace Firebase.Functions.Internal
         case 501: return FunctionsErrorCode.Unimplemented;
         case 503: return FunctionsErrorCode.Unavailable;
         case 504: return FunctionsErrorCode.DeadlineExceeded;
+        // This shouldn't happen, but the iOS and Android SDKs default to INTERNAL.
         default: return FunctionsErrorCode.Internal;
       }
     }
 
+    /// <summary>
+    /// Maps a canonical status string (e.g., from a JSON error response) to the corresponding FunctionsErrorCode.
+    /// Default is Internal if no specific mapping exists.
+    /// </summary>
     internal static FunctionsErrorCode MapStatusStringToEnum(string status)
     {
       switch (status)
@@ -69,6 +78,9 @@ namespace Firebase.Functions.Internal
       }
     }
 
+    /// <summary>
+    /// Returns a human-readable description for a given FunctionsErrorCode.
+    /// </summary>
     internal static string ErrorDescription(FunctionsErrorCode code)
     {
       switch (code)
@@ -94,6 +106,11 @@ namespace Firebase.Functions.Internal
       }
     }
 
+    /// <summary>
+    /// Parses an HTTP response to extract the FunctionsErrorCode and error message,
+    /// returning a FunctionsException containing these details.
+    /// Fallbacks to HTTP status code if the JSON body cannot be parsed.
+    /// </summary>
     internal static FunctionsException ParseError(HttpResponseMessage response, string responseBody)
     {
       int statusCode = (int)response.StatusCode;
