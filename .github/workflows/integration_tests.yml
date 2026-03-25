@@ -168,7 +168,6 @@ jobs:
         echo "build_matrix=$( python scripts/gha/print_matrix_configuration.py -build_matrix -unity_versions "${GITHUB_EVENT_INPUTS_UNITY_VERSIONS}" -platforms "${GITHUB_EVENT_INPUTS_PLATFORMS}" -os "${GITHUB_EVENT_INPUTS_BUILD_OS}" -mobile_test_on "${GITHUB_EVENT_INPUTS_MOBILE_TEST_ON}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
         echo "test_matrix=$( python scripts/gha/print_matrix_configuration.py -test_matrix -unity_versions "${GITHUB_EVENT_INPUTS_UNITY_VERSIONS}" -platforms "${GITHUB_EVENT_INPUTS_PLATFORMS}" -os "${GITHUB_EVENT_INPUTS_BUILD_OS}" -mobile_test_on "${GITHUB_EVENT_INPUTS_MOBILE_TEST_ON}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
         echo "playmode_matrix=$( python scripts/gha/print_matrix_configuration.py -playmode_matrix -unity_versions "${GITHUB_EVENT_INPUTS_UNITY_VERSIONS}" -platforms "${GITHUB_EVENT_INPUTS_PLATFORMS}" -os "${GITHUB_EVENT_INPUTS_BUILD_OS}" ${TEST_MATRIX_PARAM})" >> $GITHUB_OUTPUT
-        echo "macos_runner=$(grep '^MACOS_RUNNER = ' scripts/gha/print_matrix_configuration.py | cut -d'\"' -f2)" >> $GITHUB_OUTPUT
     - name: Update PR label and comment
       if: steps.set_outputs.outputs.pr_number
       run: |
@@ -816,9 +815,9 @@ jobs:
 
   teardown_unity_license:
     name: "teardown-unity-license"
-    runs-on: ${{ needs.check_and_prepare.outputs.macos_runner }}
+    runs-on: macos-14
     # Wait for both build and playmode to finish before returning the license
-    needs: [check_and_prepare, build_testapp, playmode_test]
+    needs: [build_testapp, playmode_test]
     if: always()
     strategy:
       fail-fast: false
