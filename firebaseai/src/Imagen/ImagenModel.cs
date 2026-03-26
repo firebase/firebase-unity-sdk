@@ -34,6 +34,13 @@ namespace Firebase.AI
   /// for more details about the image generation capabilities offered by the Imagen model in the
   /// Firebase AI SDK SDK.
   /// </summary>
+  /// <remarks>
+  /// All Imagen models are deprecated and will shut down as early as June 2026.
+  /// As a replacement, you can [migrate your apps to use Gemini Image models
+  /// (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
+  /// </remarks>
+  /// @deprecated All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
+  [Obsolete("All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the \"Nano Banana\" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)")]
   public class ImagenModel
   {
     private readonly FirebaseApp _firebaseApp;
@@ -164,6 +171,13 @@ namespace Firebase.AI
   /// <summary>
   /// Represents a remote Imagen model with the ability to generate images using server template prompts.
   /// </summary>
+  /// <remarks>
+  /// All Imagen models are deprecated and will shut down as early as June 2026.
+  /// As a replacement, you can [migrate your apps to use Gemini Image models
+  /// (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
+  /// </remarks>
+  /// @deprecated All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
+  [Obsolete("All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the \"Nano Banana\" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)")]
   public class TemplateImagenModel
   {
     private readonly FirebaseApp _firebaseApp;
