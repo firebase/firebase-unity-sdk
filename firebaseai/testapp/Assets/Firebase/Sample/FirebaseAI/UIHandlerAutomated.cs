@@ -892,7 +892,9 @@ namespace Firebase.Sample.FirebaseAI
     // Test generating an image via Imagen.
     async Task TestImagenGenerateImage(Backend backend)
     {
+      #pragma warning disable
       var model = GetFirebaseAI(backend).GetImagenModel("imagen-4.0-generate-001");
+      #pragma warning restore
 
       var response = await model.GenerateImagesAsync(
           "Generate an image of a cartoon dog.");
@@ -913,6 +915,7 @@ namespace Firebase.Sample.FirebaseAI
     // Test generating an image via Imagen with various options.
     async Task TestImagenGenerateImageOptions(Backend backend)
     {
+      #pragma warning disable
       var model = GetFirebaseAI(backend).GetImagenModel(
           modelName: "imagen-4.0-generate-001",
           generationConfig: new ImagenGenerationConfig(
@@ -925,6 +928,7 @@ namespace Firebase.Sample.FirebaseAI
             safetyFilterLevel: ImagenSafetySettings.SafetyFilterLevel.BlockLowAndAbove,
             personFilterLevel: ImagenSafetySettings.PersonFilterLevel.BlockAll),
           requestOptions: new RequestOptions(timeout: TimeSpan.FromMinutes(1)));
+      #pragma warning restore
 
       var response = await model.GenerateImagesAsync(
           "Generate an image of a cartoon dog.");
@@ -1099,7 +1103,9 @@ namespace Firebase.Sample.FirebaseAI
 
     async Task TestTemplateImagenGenerateImage(Backend backend)
     {
+      #pragma warning disable
       var model = GetFirebaseAI(backend).GetTemplateImagenModel();
+      #pragma warning restore
 
       var inputs = new Dictionary<string, object>()
       {
@@ -1790,7 +1796,9 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestGenerateImagesBase64()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-generate-images-base64.json");
+      #pragma warning disable
       var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
+      #pragma warning restore
 
       AssertEq("FilteredReason", response.FilteredReason, null);
       AssertEq("Image Count", response.Images.Count, 4);
@@ -1809,7 +1817,9 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestGenerateImagesAllFiltered()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-all-filtered.json");
+      #pragma warning disable
       var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
+      #pragma warning restore
 
       AssertEq("FilteredReason", response.FilteredReason,
         "Unable to show generated images. All images were filtered out because " +
@@ -1822,7 +1832,9 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestGenerateImagesBase64SomeFiltered()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-base64-some-filtered.json");
+      #pragma warning disable
       var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
+      #pragma warning restore
 
       AssertEq("FilteredReason", response.FilteredReason,
         "Your current safety filter threshold filtered out 2 generated images. " +
