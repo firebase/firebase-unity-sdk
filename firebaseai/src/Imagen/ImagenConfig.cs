@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
 
 namespace Firebase.AI
@@ -26,6 +27,13 @@ namespace Firebase.AI
   /// documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/image/generate-images#aspect-ratio)
   /// for more details and examples of the supported aspect ratios.
   /// </summary>
+  /// <remarks>
+  /// All Imagen models are deprecated and will shut down as early as June 2026.
+  /// As a replacement, you can [migrate your apps to use Gemini Image models
+  /// (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
+  /// </remarks>
+  /// @deprecated All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
+  [Obsolete("All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the \"Nano Banana\" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)")]
   public enum ImagenAspectRatio
   {
     /// <summary>
@@ -141,6 +149,13 @@ namespace Firebase.AI
   /// models](https://firebase.google.com/docs/vertex-ai/model-parameters?platform=unity#imagen) to
   /// learn about parameters available for use with Imagen models, including how to configure them.
   /// </summary>
+  /// <remarks>
+  /// All Imagen models are deprecated and will shut down as early as June 2026.
+  /// As a replacement, you can [migrate your apps to use Gemini Image models
+  /// (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
+  /// </remarks>
+  /// @deprecated All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
+  [Obsolete("All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the \"Nano Banana\" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)")]
   public readonly struct ImagenGenerationConfig
   {
 #if !DOXYGEN
