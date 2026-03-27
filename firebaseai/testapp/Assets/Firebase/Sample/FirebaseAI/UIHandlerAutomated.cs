@@ -162,6 +162,7 @@ namespace Firebase.Sample.FirebaseAI
         TestTemplateGenerateContent,
         TestTemplateGenerateContentStream,
         TestTemplateImagenGenerateImage,
+        TestJsonSchemaStructureOutput
 #endif
       };
       // Set of tests that only run the single time.
@@ -1125,6 +1126,35 @@ namespace Firebase.Sample.FirebaseAI
       // By default the image should be Square 1x1, so check for that.
       Assert($"Image Height > 0", texture.height > 0);
       AssertEq($"Image Height = Width", texture.height, texture.width);
+    }
+
+    async Task TestJsonSchemaStructureOutput(Backend backend)
+    {
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
+        generationConfig: new GenerationConfig(
+          responseMimeType: "application/json",
+          responseJsonSchema: JsonSchema.Object(
+            properties: new Dictionary<string, JsonSchema>
+            {
+              { "metadata", JsonSchema.Ref("#/$defs/metadata_schema") }
+            },
+            schemaDefinitions: new Dictionary<string, JsonSchema>
+            {
+              {
+                "metadata_schema", JsonSchema.Object(
+                  properties: new Dictionary<string, JsonSchema> {
+                    { "id", JsonSchema.String() },
+                    { "data", JsonSchema.String() }
+                  }
+                )
+              }
+            })));
+
+      var response = await model.GenerateContentAsync(
+        "Hello, I am testing setting the response schema with an object, cause you give me some random values.");
+
+      // There isn't much guarantee on what this will respond with. We just want non-empty.
+      Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.

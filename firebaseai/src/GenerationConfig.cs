@@ -37,6 +37,7 @@ namespace Firebase.AI
     private readonly string[] _stopSequences;
     private readonly string _responseMimeType;
     private readonly Schema _responseSchema;
+    private readonly JsonSchema _responseJsonSchema;
     private readonly List<ResponseModality> _responseModalities;
     private readonly ThinkingConfig? _thinkingConfig;
 
@@ -142,6 +143,16 @@ namespace Firebase.AI
     /// [Control generated output](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/control-generated-output)
     /// guide for more details.</param>
     /// 
+    /// <param name="responseJsonSchema">Output JSON schema of the generated candidate text. If set, a compatible
+    /// `responseMimeType` must also be set.
+    ///
+    /// Compatible MIME types:
+    /// - `application/json`: JsonSchema for JSON response.
+    ///
+    /// Refer to the
+    /// [Control generated output](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/control-generated-output)
+    /// guide for more details.</param>
+    /// 
     /// <param name="responseModalities">
     /// The data types (modalities) that may be returned in model responses.
     ///
@@ -168,6 +179,7 @@ namespace Firebase.AI
         string[] stopSequences = null,
         string responseMimeType = null,
         Schema responseSchema = null,
+        JsonSchema responseJsonSchema = null,
         IEnumerable<ResponseModality> responseModalities = null,
         ThinkingConfig? thinkingConfig = null)
     {
@@ -181,6 +193,7 @@ namespace Firebase.AI
       _stopSequences = stopSequences;
       _responseMimeType = responseMimeType;
       _responseSchema = responseSchema;
+      _responseJsonSchema = responseJsonSchema;
       _responseModalities = responseModalities != null ?
           new List<ResponseModality>(responseModalities) : null;
       _thinkingConfig = thinkingConfig;
@@ -203,6 +216,7 @@ namespace Firebase.AI
       if (_stopSequences != null && _stopSequences.Length > 0) jsonDict["stopSequences"] = _stopSequences;
       if (!string.IsNullOrWhiteSpace(_responseMimeType)) jsonDict["responseMimeType"] = _responseMimeType;
       if (_responseSchema != null) jsonDict["responseSchema"] = _responseSchema.ToJson();
+      if (_responseJsonSchema != null) jsonDict["responseJsonSchema"] = _responseJsonSchema.ToJson();
       if (_responseModalities != null && _responseModalities.Count > 0)
       {
         jsonDict["responseModalities"] =

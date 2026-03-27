@@ -40,6 +40,7 @@ namespace Firebase.AI
     private string Name { get; }
     private string Description { get; }
     private Schema Parameters { get; }
+    private JsonSchema JsonParameters { get; }
 
     /// <summary>
     /// Constructs a new `FunctionDeclaration`.
@@ -57,6 +58,26 @@ namespace Firebase.AI
       Name = name;
       Description = description;
       Parameters = Schema.Object(parameters, optionalParameters);
+      JsonParameters = null;
+    }
+
+    /// <summary>
+    /// Constructs a new `FunctionDeclaration`.
+    /// </summary>
+    /// <param name="name">The name of the function; must be a-z, A-Z, 0-9, or contain
+    ///   underscores and dashes, with a maximum length of 63.</param>
+    /// <param name="description">A brief description of the function.</param>
+    /// <param name="parameters">Describes the parameters to this function.</param>
+    /// <param name="optionalParameters">The names of parameters that may be omitted by the model
+    ///   in function calls; by default, all parameters are considered required.</param>
+    public FunctionDeclaration(string name, string description,
+        IDictionary<string, JsonSchema> parameters,
+        IEnumerable<string> optionalParameters = null)
+    {
+      Name = name;
+      Description = description;
+      Parameters = null;
+      JsonParameters = JsonSchema.Object(parameters, optionalParameters);;
     }
 
     /// <summary>
@@ -65,11 +86,21 @@ namespace Firebase.AI
     /// </summary>
     internal Dictionary<string, object> ToJson()
     {
-      return new() {
+      var json = new Dictionary<string, object>() {
       { "name", Name },
       { "description", Description },
-      { "parameters", Parameters.ToJson() },
     };
+      // Only one of these will likely be set, but just check
+      if (JsonParameters != null)
+      {
+        json["parametersJsonSchema"] = JsonParameters.ToJson();
+      }
+      if (Parameters != null)
+      {
+        json["parameters"] = Parameters.ToJson();
+      }
+
+      return json;
     }
   }
 
