@@ -160,6 +160,11 @@ static AttributeType& %mangle(Class) ##_## AttributeName ## _get_func(Class* sel
 %ignore firebase::storage::StorageReference::GetBytes;
 %ignore firebase::storage::StorageReference::PutBytes;
 %ignore firebase::storage::StorageReference::PutFile;
+// Ignore List methods and StorageListResult since StorageListResult is not wrapped yet.
+%ignore firebase::storage::StorageReference::List;
+%ignore firebase::storage::StorageReference::ListLastResult;
+%ignore firebase::storage::StorageListResult;
+
 // Remove the copy operator as the proxy uses the copy constructor.
 %ignore firebase::storage::StorageReference::operator=(const StorageReference&);
 
