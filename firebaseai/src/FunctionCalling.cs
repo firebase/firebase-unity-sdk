@@ -77,7 +77,7 @@ namespace Firebase.AI
       Name = name;
       Description = description;
       Parameters = null;
-      JsonParameters = JsonSchema.Object(parameters, optionalParameters);;
+      JsonParameters = JsonSchema.Object(parameters, optionalParameters);
     }
 
     /// <summary>
