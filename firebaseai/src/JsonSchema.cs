@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Firebase.AI.Internal;
 
 namespace Firebase.AI
 {
   /// <summary>
-  /// A `Schema` object allows the definition of input and output data types.
+  /// A `JsonSchema` object allows the definition of input and output data types.
   ///
   /// These types can be objects, but also primitives and arrays. Represents a select subset of an
-  /// [OpenAPI 3.0 schema object](https://spec.openapis.org/oas/v3.0.3#schema).
+  /// [JsonSchema object](https://json-schema.org/specification).
   /// </summary>
-  public class Schema
+  public class JsonSchema
   {
 
     /// <summary>
@@ -45,18 +46,18 @@ namespace Firebase.AI
     private string TypeAsString =>
       Type switch
       {
-        SchemaType.String => "STRING",
-        SchemaType.Number => "NUMBER",
-        SchemaType.Integer => "INTEGER",
-        SchemaType.Boolean => "BOOLEAN",
-        SchemaType.Array => "ARRAY",
-        SchemaType.Object => "OBJECT",
+        SchemaType.String => "string",
+        SchemaType.Number => "number",
+        SchemaType.Integer => "integer",
+        SchemaType.Boolean => "boolean",
+        SchemaType.Array => "array",
+        SchemaType.Object => "object",
         null => null,
         _ => throw new ArgumentOutOfRangeException(nameof(Type), Type, "Invalid SchemaType value")
       };
 
     /// <summary>
-    /// Modifiers describing the expected format of a string `Schema`.
+    /// Modifiers describing the expected format of a string `JsonSchema`.
     /// </summary>
     public readonly struct StringFormat
     {
@@ -106,9 +107,9 @@ namespace Firebase.AI
     /// </summary>
     public IReadOnlyList<string> EnumValues { get; }
     /// <summary>
-    /// Schema of the elements of type "Array".
+    /// JsonSchema of the elements of type "Array".
     /// </summary>
-    public Schema Items { get; }
+    public JsonSchema Items { get; }
     /// <summary>
     /// An integer specifying the minimum number of items the generated "Array" must contain.
     /// </summary>
@@ -130,7 +131,7 @@ namespace Firebase.AI
     /// <summary>
     /// Properties of type "Object".
     /// </summary>
-    public IReadOnlyDictionary<string, Schema> Properties { get; }
+    public IReadOnlyDictionary<string, JsonSchema> Properties { get; }
 
     /// <summary>
     /// Required properties of type "Object".
@@ -148,33 +149,46 @@ namespace Firebase.AI
     public IReadOnlyList<string> PropertyOrdering { get; }
 
     /// <summary>
-    /// An array of `Schema` objects. The generated data must be valid against *any* (one or more)
+    /// An array of `JsonSchema` objects. The generated data must be valid against *any* (one or more)
     /// of the schemas listed in this array. This allows specifying multiple possible structures or
     /// types for a single field.
     ///
     /// For example, a value could be either a `String` or an `Int`:
     /// ```
-    /// Schema.AnyOf(new [] { Schema.String(), Schema.Int() })
+    /// JsonSchema.AnyOf(new [] { JsonSchema.String(), JsonSchema.Int() })
     /// ```
     /// </summary>
-    public IReadOnlyList<Schema> AnyOfSchemas { get; }
+    public IReadOnlyList<JsonSchema> AnyOfSchemas { get; }
 
-    private Schema(
+    /// <summary>
+    /// A reference to a JsonSchema defined in a parent Object's SchemaDefinitions.
+    /// Should generally be the form "#/$defs/schema_name"
+    /// </summary>
+    public string SchemaReference { get; }
+
+    /// <summary>
+    /// A set of JsonSchema definitions, that can be used be JsonSchema.Ref objects.
+    /// </summary>
+    public IReadOnlyDictionary<string, JsonSchema> SchemaDefinitions { get; }
+
+    private JsonSchema(
         SchemaType? type,
         string description = null,
         string title = null,
         bool? nullable = null,
         string format = null,
         IEnumerable<string> enumValues = null,
-        Schema items = null,
+        JsonSchema items = null,
         int? minItems = null,
         int? maxItems = null,
         double? minimum = null,
         double? maximum = null,
-        IDictionary<string, Schema> properties = null,
+        IDictionary<string, JsonSchema> properties = null,
         IEnumerable<string> requiredProperties = null,
         IEnumerable<string> propertyOrdering = null,
-        IEnumerable<Schema> anyOf = null)
+        IEnumerable<JsonSchema> anyOf = null,
+        string schemaReference = null,
+        IDictionary<string, JsonSchema> schemaDefinitions = null)
     {
       Type = type;
       Description = description;
@@ -187,31 +201,33 @@ namespace Firebase.AI
       MaxItems = maxItems;
       Minimum = minimum;
       Maximum = maximum;
-      Properties = (properties == null) ? null : new Dictionary<string, Schema>(properties);
+      Properties = (properties == null) ? null : new Dictionary<string, JsonSchema>(properties);
       RequiredProperties = requiredProperties?.ToList();
       PropertyOrdering = propertyOrdering?.ToList();
       AnyOfSchemas = anyOf?.ToList();
+      SchemaReference = schemaReference;
+      SchemaDefinitions = (schemaDefinitions == null) ? null : new Dictionary<string, JsonSchema>(schemaDefinitions);
     }
 
     /// <summary>
-    /// Returns a `Schema` representing a boolean value.
+    /// Returns a `JsonSchema` representing a boolean value.
     /// </summary>
     /// <param name="description">An optional description of what the boolean should contain or represent.</param>
     /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
-    public static Schema Boolean(
+    public static JsonSchema Boolean(
         string description = null,
         bool nullable = false)
     {
-      return new Schema(SchemaType.Boolean,
+      return new JsonSchema(SchemaType.Boolean,
           description: description,
           nullable: nullable
         );
     }
 
     /// <summary>
-    /// Returns a `Schema` for a 32-bit signed integer number.
+    /// Returns a `JsonSchema` for a 32-bit signed integer number.
     /// 
-    /// **Important:** This `Schema` provides a hint to the model that it should generate a 32-bit
+    /// **Important:** This `JsonSchema` provides a hint to the model that it should generate a 32-bit
     ///   integer, but only guarantees that the value will be an integer. Therefore it's *possible*
     ///   that decoding it as an `int` could overflow.
     /// </summary>
@@ -221,23 +237,22 @@ namespace Firebase.AI
     ///   equal to the specified minimum.</param>
     /// <param name="maximum">If specified, instructs the model that the value should be less than or
     ///   equal to the specified maximum.</param>
-    public static Schema Int(
+    public static JsonSchema Int(
         string description = null,
         bool nullable = false,
         int? minimum = null,
         int? maximum = null)
     {
-      return new Schema(SchemaType.Integer,
+      return new JsonSchema(SchemaType.Integer,
           description: description,
           nullable: nullable,
-          format: "int32",
           minimum: minimum,
           maximum: maximum
         );
     }
 
     /// <summary>
-    /// Returns a `Schema` for a 64-bit signed integer number.
+    /// Returns a `JsonSchema` for a 64-bit signed integer number.
     /// </summary>
     /// <param name="description">An optional description of what the number should contain or represent.</param>
     /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
@@ -245,13 +260,13 @@ namespace Firebase.AI
     ///   equal to the specified minimum.</param>
     /// <param name="maximum">If specified, instructs the model that the value should be less than or
     ///   equal to the specified maximum.</param>
-    public static Schema Long(
+    public static JsonSchema Long(
         string description = null,
         bool nullable = false,
         long? minimum = null,
         long? maximum = null)
     {
-      return new Schema(SchemaType.Integer,
+      return new JsonSchema(SchemaType.Integer,
           description: description,
           nullable: nullable,
           minimum: minimum,
@@ -260,7 +275,7 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// Returns a `Schema` for a double-precision floating-point number.
+    /// Returns a `JsonSchema` for a double-precision floating-point number.
     /// </summary>
     /// <param name="description">An optional description of what the number should contain or represent.</param>
     /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
@@ -268,13 +283,13 @@ namespace Firebase.AI
     ///   equal to the specified minimum.</param>
     /// <param name="maximum">If specified, instructs the model that the value should be less than or
     ///   equal to the specified maximum.</param>
-    public static Schema Double(
+    public static JsonSchema Double(
         string description = null,
         bool nullable = false,
         double? minimum = null,
         double? maximum = null)
     {
-      return new Schema(SchemaType.Number,
+      return new JsonSchema(SchemaType.Number,
           description: description,
           nullable: nullable,
           minimum: minimum,
@@ -283,9 +298,9 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// Returns a `Schema` for a single-precision floating-point number.
+    /// Returns a `JsonSchema` for a single-precision floating-point number.
     ///
-    /// **Important:** This `Schema` provides a hint to the model that it should generate a
+    /// **Important:** This `JsonSchema` provides a hint to the model that it should generate a
     ///   single-precision floating-point number, but only guarantees that the value will be a number.
     ///   Therefore it's *possible* that decoding it as a `float` could overflow.
     /// </summary>
@@ -295,33 +310,32 @@ namespace Firebase.AI
     ///   equal to the specified minimum.</param>
     /// <param name="maximum">If specified, instructs the model that the value should be less than or
     ///   equal to the specified maximum.</param>
-    public static Schema Float(
+    public static JsonSchema Float(
         string description = null,
         bool nullable = false,
         float? minimum = null,
         float? maximum = null)
     {
-      return new Schema(SchemaType.Number,
+      return new JsonSchema(SchemaType.Number,
           description: description,
           nullable: nullable,
-          format: "float",
           minimum: minimum,
           maximum: maximum
         );
     }
 
     /// <summary>
-    /// Returns a `Schema` for a string.
+    /// Returns a `JsonSchema` for a string.
     /// </summary>
     /// <param name="description">An optional description of what the string should contain or represent.</param>
     /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
     /// <param name="format">An optional pattern that values need to adhere to.</param>
-    public static Schema String(
+    public static JsonSchema String(
         string description = null,
         bool nullable = false,
         StringFormat? format = null)
     {
-      return new Schema(SchemaType.String,
+      return new JsonSchema(SchemaType.String,
           description: description,
           nullable: nullable,
           format: format?.Format
@@ -329,20 +343,20 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// Returns a `Schema` representing an object.
+    /// Returns a `JsonSchema` representing an object.
     ///
     /// This schema instructs the model to produce data of type "Object", which has keys of type
     /// "String" and values of any other data type (including nested "Objects"s).
     ///
-    /// **Example:** A `City` could be represented with the following object `Schema`.
+    /// **Example:** A `City` could be represented with the following object `JsonSchema`.
     /// ```
-    /// Schema.Object(properties: new Dictionary() {
-    ///   { "name", Schema.String() },
-    ///   { "population", Schema.Integer() }
+    /// JsonSchema.Object(properties: new Dictionary() {
+    ///   { "name", JsonSchema.String() },
+    ///   { "population", JsonSchema.Integer() }
     /// })
     /// ```
     /// </summary>
-    /// <param name="properties">The map of the object's property names to their `Schema`s.</param>
+    /// <param name="properties">The map of the object's property names to their `JsonSchema`s.</param>
     /// <param name="optionalProperties">The list of optional properties. They must correspond to the keys
     ///   provided in the `properties` map. By default it's empty, signaling the model that all
     ///   properties are to be included.</param>
@@ -351,13 +365,14 @@ namespace Firebase.AI
     /// <param name="description">An optional description of what the object represents.</param>
     /// <param name="title">An optional human-readable name/summary for the object schema.</param>
     /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
-    public static Schema Object(
-        IDictionary<string, Schema> properties,
+    public static JsonSchema Object(
+        IDictionary<string, JsonSchema> properties,
         IEnumerable<string> optionalProperties = null,
         IEnumerable<string> propertyOrdering = null,
         string description = null,
         string title = null,
-        bool nullable = false)
+        bool nullable = false,
+        IDictionary<string, JsonSchema> schemaDefinitions = null)
     {
       if (properties == null)
       {
@@ -381,34 +396,35 @@ namespace Firebase.AI
       var required =
           properties.Keys.Except(optionalProperties ?? Enumerable.Empty<string>()).ToList();
 
-      return new Schema(SchemaType.Object,
+      return new JsonSchema(SchemaType.Object,
           description: description,
           title: title,
           nullable: nullable,
           properties: properties,
           requiredProperties: required,
-          propertyOrdering: propertyOrdering
+          propertyOrdering: propertyOrdering,
+          schemaDefinitions: schemaDefinitions
         );
     }
 
     /// <summary>
-    /// Returns a `Schema` for an array.
+    /// Returns a `JsonSchema` for an array.
     /// </summary>
-    /// <param name="items">The `Schema` of the elements stored in the array.</param>
+    /// <param name="items">The `JsonSchema` of the elements stored in the array.</param>
     /// <param name="description">An optional description of what the array represents.</param>
     /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
     /// <param name="minItems">Instructs the model to produce at least the specified minimum number of elements
     ///   in the array.</param>
     /// <param name="maxItems">Instructs the model to produce at most the specified minimum number of elements
     ///   in the array.</param>
-    public static Schema Array(
-        Schema items,
+    public static JsonSchema Array(
+        JsonSchema items,
         string description = null,
         bool nullable = false,
         int? minItems = null,
         int? maxItems = null)
     {
-      return new Schema(SchemaType.Array,
+      return new JsonSchema(SchemaType.Array,
           description: description,
           nullable: nullable,
           items: items,
@@ -418,22 +434,22 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// Returns a `Schema` for an enumeration.
+    /// Returns a `JsonSchema` for an enumeration.
     ///
     /// For example, the cardinal directions can be represented as:
     /// ```
-    /// Schema.Enum(new string[]{ "North", "East", "South", "West" }, "Cardinal directions")
+    /// JsonSchema.Enum(new string[]{ "North", "East", "South", "West" }, "Cardinal directions")
     /// ```
     /// </summary>
     /// <param name="values">The list of valid values for this enumeration.</param>
     /// <param name="description">An optional description of what the enum represents.</param>
     /// <param name="nullable">Indicates whether the value can be `null`. Defaults to `false`.</param>
-    public static Schema Enum(
+    public static JsonSchema Enum(
         IEnumerable<string> values,
         string description = null,
         bool nullable = false)
     {
-      return new Schema(SchemaType.String,
+      return new JsonSchema(SchemaType.String,
           description: description,
           nullable: nullable,
           enumValues: values,
@@ -442,17 +458,17 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// Returns a `Schema` representing a value that must conform to *any* (one or more) of the
+    /// Returns a `JsonSchema` representing a value that must conform to *any* (one or more) of the
     /// provided sub-schemas.
     ///
     /// This schema instructs the model to produce data that is valid against at least one of the
     /// schemas listed in the `schemas` array. This is useful when a field can accept multiple
     /// distinct types or structures.
     /// </summary>
-    /// <param name="schemas">An array of `Schema` objects. The generated data must be valid against at least
+    /// <param name="schemas">An array of `JsonSchema` objects. The generated data must be valid against at least
     ///   one of these schemas. The array must not be empty.</param>
-    public static Schema AnyOf(
-        IEnumerable<Schema> schemas)
+    public static JsonSchema AnyOf(
+        IEnumerable<JsonSchema> schemas)
     {
       if (schemas == null || !schemas.Any())
       {
@@ -460,9 +476,16 @@ namespace Firebase.AI
       }
 
       // The backend doesn't define a SchemaType for AnyOf, instead using the existence of 'anyOf'.
-      return new Schema(null,
+      return new JsonSchema(null,
           anyOf: schemas
         );
+    }
+
+    public static JsonSchema Ref(string schemaReference)
+    {
+      return new JsonSchema(null,
+        schemaReference: schemaReference
+      );
     }
 
     /// <summary>
@@ -471,9 +494,8 @@ namespace Firebase.AI
     /// </summary>
     internal Dictionary<string, object> ToJson()
     {
-      Dictionary<string, object> json = new() {
-      { "type", TypeAsString }
-    };
+      Dictionary<string, object> json = new();
+      json.AddIfHasValue("type", TypeAsString);
       if (!string.IsNullOrWhiteSpace(Description))
       {
         json["description"] = Description;
@@ -531,6 +553,19 @@ namespace Firebase.AI
       if (AnyOfSchemas != null && AnyOfSchemas.Any())
       {
         json["anyOf"] = AnyOfSchemas.Select(s => s.ToJson()).ToList();
+      }
+      if (!string.IsNullOrWhiteSpace(SchemaReference))
+      {
+        json["$ref"] = SchemaReference;
+      }
+      if (SchemaDefinitions != null && SchemaDefinitions.Any())
+      {
+        Dictionary<string, object> defsJson = new();
+        foreach (var kvp in SchemaDefinitions)
+        {
+          defsJson[kvp.Key] = kvp.Value.ToJson();
+        }
+        json["$defs"] = defsJson;
       }
 
       return json;
