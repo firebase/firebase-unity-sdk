@@ -46,12 +46,12 @@ namespace Firebase.AI
     private string TypeAsString =>
       Type switch
       {
-        SchemaType.String => "STRING",
-        SchemaType.Number => "NUMBER",
-        SchemaType.Integer => "INTEGER",
-        SchemaType.Boolean => "BOOLEAN",
-        SchemaType.Array => "ARRAY",
-        SchemaType.Object => "OBJECT",
+        SchemaType.String => "string",
+        SchemaType.Number => "number",
+        SchemaType.Integer => "integer",
+        SchemaType.Boolean => "boolean",
+        SchemaType.Array => "array",
+        SchemaType.Object => "object",
         null => null,
         _ => throw new ArgumentOutOfRangeException(nameof(Type), Type, "Invalid SchemaType value")
       };
@@ -246,7 +246,6 @@ namespace Firebase.AI
       return new JsonSchema(SchemaType.Integer,
           description: description,
           nullable: nullable,
-          format: "int32",
           minimum: minimum,
           maximum: maximum
         );
@@ -320,7 +319,6 @@ namespace Firebase.AI
       return new JsonSchema(SchemaType.Number,
           description: description,
           nullable: nullable,
-          format: "float",
           minimum: minimum,
           maximum: maximum
         );
