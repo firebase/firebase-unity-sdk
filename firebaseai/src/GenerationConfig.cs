@@ -134,7 +134,7 @@ namespace Firebase.AI
     /// `responseSchema`.</param>
     /// 
     /// <param name="responseSchema">Output schema of the generated candidate text. If set, a compatible
-    /// `responseMimeType` must also be set.
+    /// `responseMimeType` must also be set. Note that if this is set, responseJsonSchema should be left null.
     ///
     /// Compatible MIME types:
     /// - `application/json`: Schema for JSON response.
@@ -144,7 +144,7 @@ namespace Firebase.AI
     /// guide for more details.</param>
     /// 
     /// <param name="responseJsonSchema">Output JSON schema of the generated candidate text. If set, a compatible
-    /// `responseMimeType` must also be set.
+    /// `responseMimeType` must also be set. Note that if this is set, responseSchema should be left null.
     ///
     /// Compatible MIME types:
     /// - `application/json`: JsonSchema for JSON response.
