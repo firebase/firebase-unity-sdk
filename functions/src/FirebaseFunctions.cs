@@ -15,7 +15,9 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Net.Http;
 
 namespace Firebase.Functions {
   /// <summary>
@@ -39,36 +41,67 @@ namespace Firebase.Functions {
   ///   <see cref="FirebaseApp.DefaultInstance" />.
   /// </remarks>
   public sealed class FirebaseFunctions {
-    // Dictionary of FirebaseFunctions instances indexed by a key FirebaseFunctionsInternal.InstanceKey.
-    private static readonly Dictionary<string, FirebaseFunctions> functionsByInstanceKey =
-        new Dictionary<string, FirebaseFunctions>();
+    private static readonly ConcurrentDictionary<string, FirebaseFunctions> _instances = new();
 
-    // Proxy for the C++ firebase::functions::Functions object.
-    private FirebaseFunctionsInternal functionsInternal;
-    // Proxy for the C++ firebase::app:App object.
-    private readonly FirebaseApp firebaseApp;
-    // Key of this instance within functionsByInstanceKey.
-    private string instanceKey;
+    private readonly FirebaseApp _firebaseApp;
+    private string _emulator_origin;
+    private string _region;
+    private EventInfo _appDisposedEvent;
+    private MethodInfo _appDisposedMethod;
+    private Delegate _onAppDisposedHandler;
+
+    private readonly HttpClient _httpClient;
+
+    private static void LogError(string message) {
+#if FUNCTIONS_DEBUG_LOGGING
+      UnityEngine.Debug.LogError(message);
+#endif
+    }
+
+    // Key of this instance within _instances
+    private string _instanceKey;
 
     /// <summary>
-    /// Construct a this instance associated with the specified app and region.
+    /// Construct an instance associated with the specified app and region.
     /// </summary>
-    /// <param name="functions">C# proxy for firebase::functions::Functions.</param>
-    /// <param name="app">App the C# proxy functionsInternal was created from.</param>
-    private FirebaseFunctions(FirebaseFunctionsInternal functions, FirebaseApp app,
-        string region) {
-      firebaseApp = app;
-      firebaseApp.AppDisposed += OnAppDisposed;
-      functionsInternal = functions;
-      // As we know there is only one reference to the C++ firebase::functions::Functions object here
-      // we'll let the proxy object take ownership so the C++ object can be deleted when the
-      // proxy's Dispose() method is executed.
-      functionsInternal.SetSwigCMemOwn(true);
-      instanceKey = InstanceKey(app, region);
+    private FirebaseFunctions(FirebaseApp app, string region) {
+      _firebaseApp = app;
+      _region = region;
+      _instanceKey = InstanceKey(app, region);
+
+      // Default timeout is 70 seconds matching native SDKs.
+      _httpClient = new HttpClient();
+      _httpClient.Timeout = TimeSpan.FromSeconds(70);
+
+      try {
+        var appType = _firebaseApp.GetType();
+        _appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+        if (_appDisposedEvent != null) {
+          _appDisposedMethod = this.GetType().GetMethod("OnAppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+          _onAppDisposedHandler = Delegate.CreateDelegate(_appDisposedEvent.EventHandlerType, this, _appDisposedMethod);
+
+          var addMethod = _appDisposedEvent.GetAddMethod(true);
+
+          if (addMethod != null) {
+            addMethod.Invoke(_firebaseApp, new object[] { _onAppDisposedHandler });
+          }
+          else {
+            LogError("Found the event, but couldn't find its hidden 'add' method.");
+          }
+        }
+        else {
+          LogError("AppDisposed event not found via reflection.");
+        }
+      }
+      catch (System.Exception ex) {
+        LogError($"Failed to attach to AppDisposed via reflection: {ex.Message}");
+      }
     }
 
     /// <summary>
-    /// Remove the reference to this object from the functionsByInstanceKey dictionary.
+    /// Remove the reference to this object from the _instances dictionary.
     /// </summary>
     ~FirebaseFunctions() {
       Dispose();
@@ -78,19 +111,19 @@ namespace Firebase.Functions {
       Dispose();
     }
 
-    // Remove the reference to this instance from functionsByInstanceKey and dispose the proxy.
+    // Remove the reference to this instance from _instances and clean up events.
     private void Dispose() {
       System.GC.SuppressFinalize(this);
-      lock (functionsByInstanceKey) {
-        if (functionsInternal == null) return;
-        functionsByInstanceKey.Remove(instanceKey);
 
-        functionsInternal.Dispose();
-        functionsInternal = null;
-
-        firebaseApp.AppDisposed -= OnAppDisposed;
+      _instances.TryRemove(_instanceKey, out _);
+      if (_appDisposedEvent != null && _onAppDisposedHandler != null) {
+        var removeMethod = _appDisposedEvent.GetRemoveMethod(true);
+        removeMethod?.Invoke(_firebaseApp, new object[] { _onAppDisposedHandler });
       }
+      _httpClient.Dispose();
     }
+
+    internal HttpClient HttpClient { get { return _httpClient; } }
 
     /// <summary>
     ///   Returns the
@@ -115,7 +148,7 @@ namespace Firebase.Functions {
     ///   <see cref="FirebaseFunctions" />
     ///   instance.
     /// </summary>
-    public FirebaseApp App { get { return firebaseApp; } }
+    public FirebaseApp App { get { return _firebaseApp; } }
 
     private static string InstanceKey(FirebaseApp app, string region) {
       return app.Name + "/" + region;
@@ -176,62 +209,40 @@ namespace Firebase.Functions {
     ///   instance.
     /// </returns>
     public static FirebaseFunctions GetInstance(FirebaseApp app, string region) {
-      lock (functionsByInstanceKey) {
-        var instanceKey = InstanceKey(app, region);
-        FirebaseFunctions functions = null;
-        if (functionsByInstanceKey.TryGetValue(instanceKey, out functions)) {
-          if (functions != null) return functions;
-        }
-
-        app = app ?? FirebaseApp.DefaultInstance;
-        InitResult initResult;
-        FirebaseFunctionsInternal functionsInternal =
-          FirebaseFunctionsInternal.GetInstanceInternal(app, region, out initResult);
-        if (initResult != InitResult.Success) {
-          throw new Firebase.InitializationException(
-              initResult,
-              Firebase.ErrorMessages.DllNotFoundExceptionErrorMessage);
-        } else if (functionsInternal == null) {
-          LogUtil.LogMessage(LogLevel.Warning,
-              "Unable to create FirebaseFunctions.");
-          return null;
-        }
-
-        functions = new FirebaseFunctions(functionsInternal, app, region);
-        functionsByInstanceKey[instanceKey] = functions;
-        return functions;
+      if (app == null) {
+        app = FirebaseApp.DefaultInstance;
       }
+
+      string key = InstanceKey(app, region);
+      return _instances.GetOrAdd(key, _ => new FirebaseFunctions(app, region));
     }
 
-    // Throw a NullReferenceException if this proxy references a deleted object.
-    private void ThrowIfNull() {
-      if (functionsInternal == null ||
-          FirebaseFunctionsInternal.getCPtr(functionsInternal).Handle == System.IntPtr.Zero) {
-        throw new System.NullReferenceException();
-      }
+    private string GetUrl(in string name) {
+      string proj = _firebaseApp.Options.ProjectId;
+      string url = string.IsNullOrEmpty(_emulator_origin)
+        ? $"https://{_region}-{proj}.cloudfunctions.net/{name}"
+        : $"{_emulator_origin}/{proj}/{_region}/{name}";
+      return url;
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a name.
     /// </summary>
     public HttpsCallableReference GetHttpsCallable(string name) {
-      ThrowIfNull();
-      return new HttpsCallableReference(this, functionsInternal.GetHttpsCallable(name));
+      return new HttpsCallableReference(this, GetUrl(name));
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
     public HttpsCallableReference GetHttpsCallableFromURL(string url) {
-      ThrowIfNull();
-      return new HttpsCallableReference(this, functionsInternal.GetHttpsCallableFromURL(url));
+      return new HttpsCallableReference(this, url);
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
     public HttpsCallableReference GetHttpsCallableFromURL(Uri url) {
-      ThrowIfNull();
       return GetHttpsCallableFromURL(url.ToString());
     }
 
@@ -239,8 +250,7 @@ namespace Firebase.Functions {
     ///   Sets an origin of a Cloud Functions Emulator instance to use.
     /// </summary>
     public void UseFunctionsEmulator(string origin) {
-      ThrowIfNull();
-      functionsInternal.UseFunctionsEmulator(origin);
+      _emulator_origin = origin;
     }
   }
 }

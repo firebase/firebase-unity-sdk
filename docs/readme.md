@@ -125,6 +125,7 @@ Release Notes
       breaking change for custom providers, which must now implement the new
      `GetLimitedUseTokenAsync` method. If a custom provider does not support
       this feature, it can return a standard token from this method.
+    - Functions: Rewrote internal serialization logic to C#. Removes dependency on internal C++ implementation.
 
 ### 13.8.0
 -   Changes
