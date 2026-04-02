@@ -15,6 +15,7 @@
  */
 
 using System.Collections.Generic;
+using Firebase.AI.Internal;
 
 namespace Firebase.AI
 {
@@ -43,7 +44,6 @@ namespace Firebase.AI
     public class FunctionDeclaration : ITemplateTool
     {
       public string Name { get; }
-      public string Description { get; }
       public JsonSchema JsonParameters { get; }
 
       /// <summary>
@@ -66,11 +66,12 @@ namespace Firebase.AI
       /// </summary>
       Dictionary<string, object> ITemplateTool.ToJson()
       {
-        return new Dictionary<string, object>()
+        var jsonDict = new Dictionary<string, object>()
         {
-          { "name", Name },
-          { "input_schema", JsonParameters?.ToJson() ?? new Dictionary<string, object>() }
+          { "name", Name }
         };
+        jsonDict.AddIfHasValue("inputSchema", JsonParameters?.ToJson());
+        return jsonDict;
       }
     }
   }
