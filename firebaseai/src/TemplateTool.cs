@@ -71,7 +71,10 @@ namespace Firebase.AI
           { "name", Name }
         };
         jsonDict.AddIfHasValue("inputSchema", JsonParameters?.ToJson());
-        return jsonDict;
+        return new Dictionary<string, object>()
+        {
+          { "templateFunctions", jsonDict }
+        };
       }
     }
   }
