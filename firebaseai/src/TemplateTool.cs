@@ -53,11 +53,11 @@ namespace Firebase.AI
       /// <param name="parameters">Dictionary of parameters schema.</param>
       /// <param name="optionalParameters">List of parameter names that are not required.</param>
       public FunctionDeclaration(string name,
-          IDictionary<string, JsonSchema> parameters = null,
+          IDictionary<string, JsonSchema> parameters,
           IEnumerable<string> optionalParameters = null)
       {
         Name = name;
-        JsonParameters = parameters != null ? JsonSchema.Object(parameters, optionalParameters) : null;
+        JsonParameters = JsonSchema.Object(parameters, optionalParameters);
       }
 
       /// <summary>
@@ -68,9 +68,9 @@ namespace Firebase.AI
       {
         var jsonDict = new Dictionary<string, object>()
         {
-          { "name", Name }
+          { "name", Name },
+          { "inputSchema", JsonParameters.ToJson() }
         };
-        jsonDict.AddIfHasValue("inputSchema", JsonParameters?.ToJson());
         return new Dictionary<string, object>()
         {
           { "templateFunctions", jsonDict }
