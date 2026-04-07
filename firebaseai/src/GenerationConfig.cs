@@ -40,6 +40,7 @@ namespace Firebase.AI
     private readonly JsonSchema _responseJsonSchema;
     private readonly List<ResponseModality> _responseModalities;
     private readonly ThinkingConfig? _thinkingConfig;
+    private readonly ImageConfig? _imageConfig;
 
     /// <summary>
     /// Creates a new `GenerationConfig` value.
@@ -168,6 +169,9 @@ namespace Firebase.AI
     /// An error will be returned if this field is set for models that don't
     /// support thinking.
     /// </param>
+    /// <param name="imageConfig">
+    /// Configuration for the aspect ratio and size of generated images.
+    /// </param>
     public GenerationConfig(
         float? temperature = null,
         float? topP = null,
@@ -181,7 +185,8 @@ namespace Firebase.AI
         Schema responseSchema = null,
         JsonSchema responseJsonSchema = null,
         IEnumerable<ResponseModality> responseModalities = null,
-        ThinkingConfig? thinkingConfig = null)
+        ThinkingConfig? thinkingConfig = null,
+        ImageConfig? imageConfig = null)
     {
       _temperature = temperature;
       _topP = topP;
@@ -197,6 +202,7 @@ namespace Firebase.AI
       _responseModalities = responseModalities != null ?
           new List<ResponseModality>(responseModalities) : null;
       _thinkingConfig = thinkingConfig;
+      _imageConfig = imageConfig;
     }
 
     /// <summary>
@@ -223,6 +229,7 @@ namespace Firebase.AI
             _responseModalities.Select(EnumConverters.ResponseModalityToString).ToList();
       }
       if (_thinkingConfig != null) jsonDict["thinkingConfig"] = _thinkingConfig?.ToJson();
+      if (_imageConfig != null) jsonDict["imageConfig"] = _imageConfig?.ToJson();
 
       return jsonDict;
     }
