@@ -176,7 +176,7 @@ namespace Firebase.AI
 
       foreach (var part in Response.Candidates[candidateIndex].Content.Parts)
       {
-        if (part is ModelContent.TextPart textPart)
+        if (part is ModelContent.TextPart textPart && !textPart.IsThought)
         {
           T result = (T)SerializationHelpers.JsonStringToType(textPart.Text, typeof(T));
           parsedResults[candidateIndex] = result;
