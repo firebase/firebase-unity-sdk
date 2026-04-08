@@ -26,7 +26,7 @@ namespace Firebase.AI
     /// <summary>
     /// The aspect ratio of generated images.
     /// </summary>
-    public readonly struct AspectRatio
+    public readonly struct AspectRatio : System.IEquatable<AspectRatio>
     {
       public string Value { get; }
       public AspectRatio(string value) { Value = value; }
@@ -47,12 +47,19 @@ namespace Firebase.AI
       public static readonly AspectRatio Ultrawide21x9 = new AspectRatio("21:9");
 
       public override string ToString() => Value;
+
+      public bool Equals(AspectRatio other) => Value == other.Value;
+      public override bool Equals(object obj) => obj is AspectRatio other && Equals(other);
+      public override int GetHashCode() => Value?.GetHashCode() ?? 0;
+
+      public static bool operator ==(AspectRatio left, AspectRatio right) => left.Equals(right);
+      public static bool operator !=(AspectRatio left, AspectRatio right) => !left.Equals(right);
     }
 
     /// <summary>
     /// The size of images to generate.
     /// </summary>
-    public readonly struct ImageSize
+    public readonly struct ImageSize : System.IEquatable<ImageSize>
     {
       public string Value { get; }
       public ImageSize(string value) { Value = value; }
@@ -63,6 +70,13 @@ namespace Firebase.AI
       public static readonly ImageSize Size4K = new ImageSize("4K");
 
       public override string ToString() => Value;
+
+      public bool Equals(ImageSize other) => Value == other.Value;
+      public override bool Equals(object obj) => obj is ImageSize other && Equals(other);
+      public override int GetHashCode() => Value?.GetHashCode() ?? 0;
+
+      public static bool operator ==(ImageSize left, ImageSize right) => left.Equals(right);
+      public static bool operator !=(ImageSize left, ImageSize right) => !left.Equals(right);
     }
 
     public AspectRatio? AspectRatio { get; }
@@ -77,8 +91,8 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       Dictionary<string, object> jsonDict = new();
-      if (AspectRatio.HasValue) jsonDict["aspectRatio"] = AspectRatio.Value.Value;
-      if (ImageSize.HasValue) jsonDict["imageSize"] = ImageSize.Value.Value;
+      if (AspectRatio?.Value != null) jsonDict["aspectRatio"] = AspectRatio.Value.Value;
+      if (ImageSize?.Value != null) jsonDict["imageSize"] = ImageSize.Value.Value;
       return jsonDict;
     }
   }
