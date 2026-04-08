@@ -51,6 +51,7 @@ jobs:
       build_matrix: ${{ steps.matrix_config.outputs.build_matrix }}
       test_matrix: ${{ steps.matrix_config.outputs.test_matrix }}
       playmode_matrix: ${{ steps.matrix_config.outputs.playmode_matrix }}
+      macos_runner: ${{ steps.matrix_config.outputs.macos_runner }}
     steps:
     ### Fail the workflow if the user does not have admin access to run the tests.
     - name: Check if user has permission to trigger tests
@@ -282,9 +283,11 @@ jobs:
           MATRIX_PLATFORM: ${{ matrix.platform }}
           MATRIX_IOS_SDK: ${{ matrix.ios_sdk }}
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
-      - name: Return Unity license
-        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
-        if: always()
+      - name: Return Unity license (Non-macOS only)
+        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running.
+        # Note: macOS is handled by the 'teardown-unity-license' step.
+        # This is due to a quirk with licenses see the teardown-unity-license' step.
+        if: always() && runner.os != 'macOS'
         uses: ./gha/unity
         with:
           version: ${{ matrix.unity_version }}
@@ -484,9 +487,11 @@ jobs:
           GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID: ${{ github.event.inputs.packaged_sdk_run_id }}
           NEEDS_CHECK_AND_PREPARE_OUTPUTS_APIS: ${{ needs.check_and_prepare.outputs.apis }}
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
-      - name: Return Unity license
-        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running. 
-        if: always()
+      - name: Return Unity license (Non-macOS only)
+        # Always returns true, even when job failed or canceled. But will not run when a critical failure prevents the task from running.
+        # Note: macOS is handled by the 'teardown-unity-license' step.
+        # This is due to a quirk with licenses see the teardown-unity-license step for more information
+        if: always() && runner.os != 'macOS'
         uses: ./gha/unity
         with:
           version: ${{ matrix.unity_version }}
@@ -813,3 +818,41 @@ jobs:
           -A
         env:
           STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN: ${{ steps.generate-token.outputs.token }}
+
+  teardown_unity_license:
+    name: "teardown-unity-license"
+    # When one Mac runner is released, the license is removed from all of them.
+    # This appears to be quirk of the Github actions Mac VM's and the Unity license server.
+    # For some reason the Unity license server see all the Mac runners as the same machine.
+    # As a result returning one machine's license returns it from all the machines.
+    # Our best guess is something to do with the MAC address all being the same across the Mac runners.
+    # Therefore we wait for the builds to complete before returning the license.
+    # Ensures that all the build and playmode tests complete before the license is returned from all the machines.
+    runs-on: macos-14
+    # Wait for both build and playmode to finish before returning the license
+    needs: [build_testapp, playmode_test]
+    if: always()
+    strategy:
+      fail-fast: false
+      matrix:
+        unity_version: ['2021', '2022']
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install python deps
+        run: pip install -r scripts/gha/requirements.txt
+      - name: Activate Unity license
+        uses: ./gha/unity
+        with:
+          version: ${{ matrix.unity_version }}
+          username: ${{ secrets.UNITY_USERNAME }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+          serial_ids: ${{ secrets.SERIAL_ID }}
+      - name: Return Unity license
+        uses: ./gha/unity
+        with:
+          version: ${{ matrix.unity_version }}
+          release_license: "true"
