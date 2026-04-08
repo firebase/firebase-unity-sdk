@@ -26,83 +26,59 @@ namespace Firebase.AI
     /// <summary>
     /// The aspect ratio of generated images.
     /// </summary>
-    public enum AspectRatio
+    public readonly struct AspectRatio
     {
-      Square1x1,
-      Portrait9x16,
-      Landscape16x9,
-      Portrait3x4,
-      Landscape4x3,
-      Portrait2x3,
-      Landscape3x2,
-      Portrait4x5,
-      Landscape5x4,
-      Portrait1x4,
-      Landscape4x1,
-      Portrait1x8,
-      Landscape8x1,
-      Ultrawide21x9
+      public string Value { get; }
+      public AspectRatio(string value) { Value = value; }
+
+      public static readonly AspectRatio Square1x1 = new AspectRatio("1:1");
+      public static readonly AspectRatio Portrait9x16 = new AspectRatio("9:16");
+      public static readonly AspectRatio Landscape16x9 = new AspectRatio("16:9");
+      public static readonly AspectRatio Portrait3x4 = new AspectRatio("3:4");
+      public static readonly AspectRatio Landscape4x3 = new AspectRatio("4:3");
+      public static readonly AspectRatio Portrait2x3 = new AspectRatio("2:3");
+      public static readonly AspectRatio Landscape3x2 = new AspectRatio("3:2");
+      public static readonly AspectRatio Portrait4x5 = new AspectRatio("4:5");
+      public static readonly AspectRatio Landscape5x4 = new AspectRatio("5:4");
+      public static readonly AspectRatio Portrait1x4 = new AspectRatio("1:4");
+      public static readonly AspectRatio Landscape4x1 = new AspectRatio("4:1");
+      public static readonly AspectRatio Portrait1x8 = new AspectRatio("1:8");
+      public static readonly AspectRatio Landscape8x1 = new AspectRatio("8:1");
+      public static readonly AspectRatio Ultrawide21x9 = new AspectRatio("21:9");
+
+      public override string ToString() => Value;
     }
 
     /// <summary>
     /// The size of images to generate.
     /// </summary>
-    public enum ImageSize
+    public readonly struct ImageSize
     {
-      Size512,
-      Size1K,
-      Size2K,
-      Size4K
+      public string Value { get; }
+      public ImageSize(string value) { Value = value; }
+
+      public static readonly ImageSize Size512 = new ImageSize("512");
+      public static readonly ImageSize Size1K = new ImageSize("1K");
+      public static readonly ImageSize Size2K = new ImageSize("2K");
+      public static readonly ImageSize Size4K = new ImageSize("4K");
+
+      public override string ToString() => Value;
     }
 
-    public AspectRatio? Ratio { get; }
-    public ImageSize? Size { get; }
+    public AspectRatio? AspectRatio { get; }
+    public ImageSize? ImageSize { get; }
 
     public ImageConfig(AspectRatio? aspectRatio = null, ImageSize? imageSize = null)
     {
-      Ratio = aspectRatio;
-      Size = imageSize;
-    }
-
-    internal static string ConvertAspectRatio(AspectRatio aspectRatio)
-    {
-      return aspectRatio switch
-      {
-        AspectRatio.Square1x1 => "1:1",
-        AspectRatio.Portrait9x16 => "9:16",
-        AspectRatio.Landscape16x9 => "16:9",
-        AspectRatio.Portrait3x4 => "3:4",
-        AspectRatio.Landscape4x3 => "4:3",
-        AspectRatio.Portrait2x3 => "2:3",
-        AspectRatio.Landscape3x2 => "3:2",
-        AspectRatio.Portrait4x5 => "4:5",
-        AspectRatio.Landscape5x4 => "5:4",
-        AspectRatio.Portrait1x4 => "1:4",
-        AspectRatio.Landscape4x1 => "4:1",
-        AspectRatio.Portrait1x8 => "1:8",
-        AspectRatio.Landscape8x1 => "8:1",
-        AspectRatio.Ultrawide21x9 => "21:9",
-        _ => aspectRatio.ToString(),
-      };
-    }
-
-    internal static string ConvertImageSize(ImageSize imageSize)
-    {
-      return imageSize switch
-      {
-        ImageSize.Size512 => "512",
-        ImageSize.Size1K => "1K",
-        ImageSize.Size2K => "2K",
-        ImageSize.Size4K => "4K",
-        _ => imageSize.ToString(),
-      };
+      AspectRatio = aspectRatio;
+      ImageSize = imageSize;
     }
 
     internal Dictionary<string, object> ToJson()
     {
       Dictionary<string, object> jsonDict = new();
-      if (Ratio.HasValue) jsonDict["aspectRatio"] = ConvertAspectRatio(Ratio.Value);
-      if (Size.HasValue) jsonDict["imageSize"] = ConvertImageSize(Size.Value);
+      if (AspectRatio.HasValue) jsonDict["aspectRatio"] = AspectRatio.Value.Value;
+      if (ImageSize.HasValue) jsonDict["imageSize"] = ImageSize.Value.Value;
       return jsonDict;
     }
   }
