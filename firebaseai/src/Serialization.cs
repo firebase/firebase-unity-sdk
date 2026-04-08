@@ -54,6 +54,27 @@ namespace Firebase.AI
       {
         if (obj == null) return null;
 
+        // If the type is an interface, try to convert it to something we can handle.
+        if (type.IsInterface)
+        {
+          if (type.IsGenericType)
+          {
+            Type genericDef = type.GetGenericTypeDefinition();
+            // Common interfaces to List<T>
+            if (genericDef == typeof(IEnumerable<>) ||
+                genericDef == typeof(IList<>) ||
+                genericDef == typeof(ICollection<>))
+            {
+              type = typeof(List<>).MakeGenericType(type.GetGenericArguments()[0]);
+            }
+            else if (type == typeof(IList) ||
+                type == typeof(IEnumerable))
+            {
+              type = typeof(List<object>);
+            }
+          }
+        }
+
         // Convert the arg into the approriate type
         if (obj is Type t)
         {
@@ -61,7 +82,8 @@ namespace Firebase.AI
         }
         else if (type.IsEnum)
         {
-          return Enum.Parse(type, obj as string);
+          if (obj is string str) return Enum.Parse(type, str);
+          return Enum.ToObject(type, obj);
         }
         else if (type.IsArray)
         {
@@ -137,8 +159,6 @@ namespace Firebase.AI
               prop.SetValue(item, ObjectToType(kvp.Value, prop.PropertyType));
               continue;
             }
-
-            UnityEngine.Debug.LogWarning($"Failed to find field for key {kvp.Key}");
           }
           catch (Exception e)
           {
