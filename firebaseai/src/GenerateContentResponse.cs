@@ -131,6 +131,63 @@ namespace Firebase.AI
   }
 
   /// <summary>
+  /// The model's response to a generate object request.
+  /// 
+  /// The object is deserialized using reflection. If you would like to implement your own
+  /// deserialization method, have your class T implement the `IFirebaseDeserializable` interface.
+  /// </summary>
+  /// <typeparam name="T">The type of the underlying Result</typeparam>
+  public readonly struct GenerateObjectResponse<T>
+  {
+    /// <summary>
+    /// The underlying `GenerateContentResponse` returned from the Model.
+    /// </summary>
+    public readonly GenerateContentResponse Response { get; }
+
+    /// <summary>
+    /// The deserialized object from the first Candidate response.
+    /// </summary>
+    public T Result => GetResult(0);
+
+    private readonly Dictionary<int, T> parsedResults;
+
+    /// <summary>
+    /// Intended for internal use. Call `GenerativeModel.GenerateObjectAsync`
+    /// to get a valid one.
+    /// </summary>
+    internal GenerateObjectResponse(GenerateContentResponse response)
+    {
+      Response = response;
+      parsedResults = new();
+    }
+
+    /// <summary>
+    /// Parse the resulting object from the requested candidate response.
+    /// </summary>
+    /// <param name="candidateIndex">The index of the candidate to parse.
+    ///   Note that getting multiple candidates requires configuration settings.</param>
+    /// <returns>The deserialized object.</returns>
+    public T GetResult(int candidateIndex = 0)
+    {
+      if (parsedResults.TryGetValue(candidateIndex, out var t))
+      {
+        return t;
+      }
+
+      foreach (var part in Response.Candidates[candidateIndex].Content.Parts)
+      {
+        if (part is ModelContent.TextPart textPart)
+        {
+          T result = (T)SerializationHelpers.JsonStringToType(textPart.Text, typeof(T));
+          parsedResults[candidateIndex] = result;
+          return result;
+        }
+      }
+      return default;
+    }
+  }
+
+  /// <summary>
   /// A type describing possible reasons to block a prompt.
   /// </summary>
   public enum BlockReason
