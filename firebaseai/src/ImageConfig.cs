@@ -91,8 +91,8 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       Dictionary<string, object> jsonDict = new();
-      if (AspectRatio?.Value != null) jsonDict["aspectRatio"] = AspectRatio.Value.Value;
-      if (ImageSize?.Value != null) jsonDict["imageSize"] = ImageSize.Value.Value;
+      if (AspectRatio?.Value is string aspectRatio) jsonDict["aspectRatio"] = aspectRatio;
+      if (ImageSize?.Value is string imageSize) jsonDict["imageSize"] = imageSize;
       return jsonDict;
     }
   }

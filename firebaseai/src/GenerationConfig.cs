@@ -228,8 +228,8 @@ namespace Firebase.AI
         jsonDict["responseModalities"] =
             _responseModalities.Select(EnumConverters.ResponseModalityToString).ToList();
       }
-      if (_thinkingConfig != null) jsonDict["thinkingConfig"] = _thinkingConfig?.ToJson();
-      if (_imageConfig != null) jsonDict["imageConfig"] = _imageConfig?.ToJson();
+      if (_thinkingConfig != null) jsonDict["thinkingConfig"] = _thinkingConfig.Value.ToJson();
+      if (_imageConfig != null) jsonDict["imageConfig"] = _imageConfig.Value.ToJson();
 
       return jsonDict;
     }
