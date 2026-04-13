@@ -23,6 +23,40 @@ using Google.MiniJSON;
 namespace Firebase.AI
 {
   /// <summary>
+  /// Attribute that can be used to define various fields when generating
+  /// the JsonSchema for it.
+  /// </summary>
+  [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field)]
+  public class SchemaInfoAttribute : Attribute
+  {
+    /// <summary>
+    /// A human-readable explanation of the purpose of the schema or property.
+    /// </summary>
+    public string Description { get; set; } = null;
+
+    /// <summary>
+    /// A human-readable name/summary for the schema or a specific property.
+    /// </summary>
+    public string Title { get; set; } = null;
+
+    /// <summary>
+    /// Indicates if the value may be null.
+    /// </summary>
+    public bool Nullable { get; set; } = false;
+
+    /// <summary>
+    /// The format of the data.
+    /// </summary>
+    public string Format { get; set; } = null;
+
+    /// <summary>
+    /// Indicates that the property should be considered as optional.
+    /// Properties are considered required by default.
+    /// </summary>
+    public bool Optional { get; set; } = false;
+  }
+
+  /// <summary>
   /// Interface to define a method to construct the object from a Dictionary<string, object>.
   /// 
   /// The Firebase AI Logic SDK by default will attempt to use reflection when deserializing objects,
@@ -79,6 +113,10 @@ namespace Firebase.AI
         if (obj is Type t)
         {
           return t;
+        }
+        else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+          return ObjectToType(obj, Nullable.GetUnderlyingType(type));
         }
         else if (type.IsEnum)
         {
