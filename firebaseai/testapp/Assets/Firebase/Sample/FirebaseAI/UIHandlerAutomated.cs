@@ -1167,7 +1167,6 @@ namespace Firebase.Sample.FirebaseAI
     {
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(
-          thinkingConfig: new ThinkingConfig(includeThoughts: true),
           responseMimeType: "application/json",
           responseJsonSchema: JsonSchema.FromType(typeof(SampleRecord))));
 

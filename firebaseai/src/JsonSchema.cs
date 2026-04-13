@@ -606,7 +606,8 @@ namespace Firebase.AI
       // Check if there is a defined function on the type to make the JsonSchema
       var toSchemaMethod = type.GetMethod("ToJsonSchema",
           BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-      if (toSchemaMethod != null && toSchemaMethod.ReturnType == typeof(JsonSchema))
+      if (toSchemaMethod != null && toSchemaMethod.ReturnType == typeof(JsonSchema) &&
+          toSchemaMethod.GetParameters().Length == 0)
       {
         return (JsonSchema)toSchemaMethod.Invoke(null, null);
       }
@@ -677,6 +678,11 @@ namespace Firebase.AI
       }
       else if (type.IsGenericType && typeof(IEnumerable).IsAssignableFrom(type))
       {
+        // There isn't a great way to handle dictionaries, so bail out.
+        if (typeof(IDictionary).IsAssignableFrom(type))
+        {
+          return null;
+        }
         Type elementType = type.GetGenericArguments()[0];
         JsonSchema elementSchema = FromTypeInternal(elementType, null, null, definitions, false, out _);
         return Array(elementSchema, description, nullable: nullable);
@@ -717,24 +723,29 @@ namespace Firebase.AI
           null, null);
       foreach (var info in infos)
       {
-        // Pull if the field is optional while converting it
+        JsonSchema jsonSchema = null;
         bool optional = false;
         if (info is FieldInfo fieldInfo)
         {
-          properties[fieldInfo.Name] = FromTypeInternal(fieldInfo.FieldType, info, null, definitions, false, out optional);
+          jsonSchema = FromTypeInternal(fieldInfo.FieldType, info, null, definitions, false, out optional);
         }
         else if (info is PropertyInfo propertyInfo)
         {
-          properties[propertyInfo.Name] = FromTypeInternal(propertyInfo.PropertyType, info, null, definitions, false, out optional);
+          jsonSchema = FromTypeInternal(propertyInfo.PropertyType, info, null, definitions, false, out optional);
         }
 
-        if (optional)
+        if (jsonSchema != null)
         {
-          optionalProperties.Add(info.Name);
+          properties[info.Name] = jsonSchema;
+          if (optional)
+          {
+            optionalProperties.Add(info.Name);
+          }
         }
       }
 
-      return Object(properties, description: description, title: schemaInfo?.Title,
+      return Object(properties, optionalProperties: optionalProperties,
+          description: description, title: schemaInfo?.Title,
           nullable: nullable, schemaDefinitions: includeDefinitions ? definitions : null);
     }
   }

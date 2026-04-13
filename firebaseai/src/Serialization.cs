@@ -30,27 +30,28 @@ namespace Firebase.AI
   public class SchemaInfoAttribute : Attribute
   {
     /// <summary>
-    /// 
+    /// A human-readable explanation of the purpose of the schema or property.
     /// </summary>
     public string Description { get; set; } = null;
 
     /// <summary>
-    /// 
+    /// A human-readable name/summary for the schema or a specific property.
     /// </summary>
     public string Title { get; set; } = null;
 
     /// <summary>
-    /// 
+    /// Indicates if the value may be null.
     /// </summary>
     public bool Nullable { get; set; } = false;
 
     /// <summary>
-    /// 
+    /// The format of the data.
     /// </summary>
     public string Format { get; set; } = null;
 
     /// <summary>
-    /// 
+    /// Indicates that the property should be considered as optional.
+    /// Properties are considered required by default.
     /// </summary>
     public bool Optional { get; set; } = false;
   }
