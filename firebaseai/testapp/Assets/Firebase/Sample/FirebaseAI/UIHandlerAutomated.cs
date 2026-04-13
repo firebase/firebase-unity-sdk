@@ -1169,7 +1169,6 @@ namespace Firebase.Sample.FirebaseAI
         generationConfig: new GenerationConfig(
           thinkingConfig: new ThinkingConfig(includeThoughts: true),
           responseMimeType: "application/json",
-                )
           responseJsonSchema: JsonSchema.FromType(typeof(SampleRecord))));
 
       var response = await model.GenerateObjectAsync<SampleRecord>(
