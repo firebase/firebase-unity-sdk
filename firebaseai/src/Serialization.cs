@@ -114,6 +114,10 @@ namespace Firebase.AI
         {
           return t;
         }
+        else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+          return ObjectToType(obj, Nullable.GetUnderlyingType(type));
+        }
         else if (type.IsEnum)
         {
           if (obj is string str) return Enum.Parse(type, str);

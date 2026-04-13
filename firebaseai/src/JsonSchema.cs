@@ -596,6 +596,13 @@ namespace Firebase.AI
 
       if (type == null) return null;
 
+      // Handle Nullable<T> by unwrapping it.
+      bool isNullableValueType = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+      if (isNullableValueType)
+      {
+        type = System.Nullable.GetUnderlyingType(type);
+      }
+
       // If the given type has Schema info, pull it from that
       var schemaInfo = memberInfo == null ?
           type.GetCustomAttribute<SchemaInfoAttribute>() :
@@ -683,7 +690,9 @@ namespace Firebase.AI
         {
           return null;
         }
-        Type elementType = type.GetGenericArguments()[0];
+        Type elementType = type.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            ?.GetGenericArguments()[0] ?? typeof(object);
         JsonSchema elementSchema = FromTypeInternal(elementType, null, null, definitions, false, out _);
         return Array(elementSchema, description, nullable: nullable);
       }
