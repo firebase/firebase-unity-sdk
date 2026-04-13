@@ -1128,33 +1128,55 @@ namespace Firebase.Sample.FirebaseAI
       AssertEq($"Image Height = Width", texture.height, texture.width);
     }
 
+    // Class used for validating JsonSchema generation
+    public class SampleRecord
+    {
+      public enum MyColor
+      {
+        Red,
+        Green,
+        Blue
+      }
+
+      [SchemaInfo(Description = "The first and last name of a person")]
+      public string name;
+
+      public int age;
+
+      public bool Alive { get; set; }
+
+      [SchemaInfo(Description = "How much of their life they have left.")]
+      [Range(0, 1)]
+      public double Percent;
+
+      public MyColor eye_color;
+
+      [SchemaInfo(Optional = true)]
+      public char BloodType;
+
+      [SchemaInfo(Nullable = true)]
+      public SampleRecord[] Children;
+
+      public override string ToString()
+      {
+        return $"{name} {age} {Alive} {Percent} {eye_color} [{string.Join(", ", Children.Select(t => $"({t})"))}]";
+      }
+    }
+
     async Task TestJsonSchemaStructureOutput(Backend backend)
     {
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(
+          thinkingConfig: new ThinkingConfig(includeThoughts: true),
           responseMimeType: "application/json",
-          responseJsonSchema: JsonSchema.Object(
-            properties: new Dictionary<string, JsonSchema>
-            {
-              { "metadata", JsonSchema.Ref("#/$defs/metadata_schema") }
-            },
-            schemaDefinitions: new Dictionary<string, JsonSchema>
-            {
-              {
-                "metadata_schema", JsonSchema.Object(
-                  properties: new Dictionary<string, JsonSchema> {
-                    { "id", JsonSchema.String() },
-                    { "data", JsonSchema.String() }
-                  }
                 )
-              }
-            })));
+          responseJsonSchema: JsonSchema.FromType(typeof(SampleRecord))));
 
-      var response = await model.GenerateContentAsync(
+      var response = await model.GenerateObjectAsync<SampleRecord>(
         "Hello, I am testing setting the response schema with an object, cause you give me some random values.");
 
       // There isn't much guarantee on what this will respond with. We just want non-empty.
-      Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
+      Assert("Response was missing a Name.", !string.IsNullOrWhiteSpace(response.Result.name));
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.

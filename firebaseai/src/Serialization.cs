@@ -23,6 +23,39 @@ using Google.MiniJSON;
 namespace Firebase.AI
 {
   /// <summary>
+  /// Attribute that can be used to define various fields when generating
+  /// the JsonSchema for it.
+  /// </summary>
+  [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field)]
+  public class SchemaInfoAttribute : Attribute
+  {
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Description { get; set; } = null;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Title { get; set; } = null;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public bool Nullable { get; set; } = false;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Format { get; set; } = null;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public bool Optional { get; set; } = false;
+  }
+
+  /// <summary>
   /// Interface to define a method to construct the object from a Dictionary<string, object>.
   /// 
   /// The Firebase AI Logic SDK by default will attempt to use reflection when deserializing objects,
