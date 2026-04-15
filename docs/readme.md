@@ -116,6 +116,7 @@ Release Notes
       [migrate your apps to use Gemini Image models (the "Nano Banana" models)](https://firebase.google.com/docs/ai-logic/imagen-models-migration).
     - Firebase AI: Add support for the JsonSchema formatting.
     - Firebase AI: Add support for simplified object generation with GenerateObjectAsync.
+    - Firebase AI: Add support for automated function calling in Chat with AutoFunctionDeclaration.
     - Firebase AI: Add support for TemplateChatSession.
     - Functions: Rewrote internal serialization logic to C#. Removes dependency on internal C++ implementation.
 

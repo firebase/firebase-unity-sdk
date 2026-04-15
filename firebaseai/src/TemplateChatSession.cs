@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Firebase.AI.Internal;
@@ -49,6 +50,9 @@ namespace Firebase.AI
     private readonly List<ITemplateTool> tools;
     private readonly TemplateToolConfig? toolConfig;
 
+    private readonly Dictionary<string, BaseAutoFunctionDeclaration> autoFunctionDeclarations;
+    private readonly int autoFunctionTurnLimit;
+
     /// <summary>
     /// The previous content from the chat that has been successfully sent and received from the
     /// model. This will be provided to the model for each message sent as context for the discussion.
@@ -64,10 +68,12 @@ namespace Firebase.AI
         IDictionary<string, object> inputs,
         IEnumerable<ModelContent> initialHistory,
         IEnumerable<ITemplateTool> tools,
-        TemplateToolConfig? toolConfig)
+        TemplateToolConfig? toolConfig,
+        int autoFunctionTurnLimit)
     {
       generativeModel = model;
       this.generateContentFunc = generateContentFunc;
+      this.generateContentStreamFunc = generateContentStreamFunc;
       this.templateId = templateId;
       if (inputs != null)
       {
@@ -80,6 +86,18 @@ namespace Firebase.AI
       chatHistory = initialHistory?.ToList() ?? new List<ModelContent>();
       this.tools = tools?.ToList() ?? new List<ITemplateTool>();
       this.toolConfig = toolConfig;
+
+      // Pull out the Automatic Functions
+      var autoFunctions = tools?.OfType<BaseAutoFunctionDeclaration>();
+      if (autoFunctions != null && autoFunctions.Any())
+      {
+        autoFunctionDeclarations = autoFunctions.ToDictionary(afd => afd.Name);
+      }
+      else
+      {
+        autoFunctionDeclarations = null;
+      }
+      this.autoFunctionTurnLimit = autoFunctionTurnLimit;
     }
 
     /// <summary>
@@ -94,11 +112,12 @@ namespace Firebase.AI
         IDictionary<string, object> inputs,
         IEnumerable<ModelContent> initialHistory,
         IEnumerable<ITemplateTool> tools,
-        TemplateToolConfig? toolConfig)
+        TemplateToolConfig? toolConfig,
+        int autoFunctionTurnLimit)
     {
       return new TemplateChatSession(
         model, generateContentFunc, generateContentStreamFunc, templateId, inputs,
-        initialHistory, tools, toolConfig);
+        initialHistory, tools, toolConfig, autoFunctionTurnLimit);
     }
 
     /// <summary>
@@ -110,7 +129,7 @@ namespace Firebase.AI
     public Task<GenerateContentResponse> SendMessageAsync(
         ModelContent content, CancellationToken cancellationToken = default)
     {
-      return SendMessageAsyncInternal(content, cancellationToken);
+      return SendMessageAsyncInternal(new[] { content }, cancellationToken);
     }
 
     /// <summary>
@@ -122,33 +141,83 @@ namespace Firebase.AI
     public Task<GenerateContentResponse> SendMessageAsync(
         string text, CancellationToken cancellationToken = default)
     {
-      return SendMessageAsync(ModelContent.Text(text), cancellationToken);
+      return SendMessageAsync(new[] { ModelContent.Text(text) }, cancellationToken);
     }
 
-    private async Task<GenerateContentResponse> SendMessageAsyncInternal(
-        ModelContent content, CancellationToken cancellationToken)
+    /// <summary>
+    /// Sends a message using the existing history of this chat as context.
+    /// </summary>
+    /// <param name="content">The input given to the model as a prompt.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>The model's response if no error occurred.</returns>
+    public Task<GenerateContentResponse> SendMessageAsync(
+        IEnumerable<ModelContent> content, CancellationToken cancellationToken = default)
     {
-      // Make sure that the request is set to to role "user".
-      ModelContent fixedRequest = FirebaseAIExtensions.ConvertToUser(content);
-      // Set up the context to send in the history and request
-      List<ModelContent> fullRequest = new(chatHistory) { fixedRequest };
+      return SendMessageAsyncInternal(content, cancellationToken);
+    }
 
-      // Note: GenerateContentAsync can throw exceptions if there was a problem, but
-      // we allow it to just be passed back to the user.
-      GenerateContentResponse response = await generateContentFunc(
-          templateId, inputs, fullRequest, tools, toolConfig, cancellationToken);
 
-      // Only after getting a valid response, add both to the history for later.
-      // But either way pass the response along to the user.
-      if (response.Candidates.Any())
+    /// <summary>
+    /// Sends a message using the existing history of this chat as context.
+    /// </summary>
+    /// <param name="content">The input given to the model as a prompt.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>A stream of generated content responses from the model.</returns>
+    public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
+        ModelContent content, CancellationToken cancellationToken = default)
+    {
+      return SendMessageStreamAsync(new[] { content }, cancellationToken);
+    }
+    /// <summary>
+    /// Sends a message using the existing history of this chat as context.
+    /// </summary>
+    /// <param name="text">The text given to the model as a prompt.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>A stream of generated content responses from the model.</returns>
+    public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
+        string text, CancellationToken cancellationToken = default)
+    {
+      return SendMessageStreamAsync(new ModelContent[] { ModelContent.Text(text) }, cancellationToken);
+    }
+    /// <summary>
+    /// Sends a message using the existing history of this chat as context.
+    /// </summary>
+    /// <param name="content">The input given to the model as a prompt.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>A stream of generated content responses from the model.</returns>
+    public IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
+        IEnumerable<ModelContent> content, CancellationToken cancellationToken = default)
+    {
+      return SendMessageStreamAsyncInternal(content, cancellationToken);
+    }
+
+    private Task<GenerateContentResponse> SendMessageAsyncInternal(
+        IEnumerable<ModelContent> requestContent, CancellationToken cancellationToken)
+    {
+      Task<GenerateContentResponse> wrappedGenerateContentFunc(List<ModelContent> fullRequest)
       {
-        ModelContent responseContent = response.Candidates.First().Content;
-
-        chatHistory.Add(fixedRequest);
-        chatHistory.Add(responseContent.ConvertToModel());
+        return generateContentFunc(templateId, inputs, fullRequest,
+            tools, toolConfig, cancellationToken);
       }
 
-      return response;
+      return ChatSessionHelpers.SendMessageAsync(chatHistory,
+          autoFunctionDeclarations, autoFunctionTurnLimit,
+          requestContent, wrappedGenerateContentFunc);
+    }
+
+    private IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsyncInternal(
+        IEnumerable<ModelContent> requestContent,
+        CancellationToken cancellationToken = default)
+    {
+      IAsyncEnumerable<GenerateContentResponse> wrappedGenerateContentStreamFunc(List<ModelContent> fullRequest)
+      {
+        return generateContentStreamFunc(templateId, inputs, fullRequest,
+            tools, toolConfig, cancellationToken);
+      }
+
+      return ChatSessionHelpers.SendMessageStreamAsync(chatHistory,
+          autoFunctionDeclarations, autoFunctionTurnLimit,
+          requestContent, wrappedGenerateContentStreamFunc);
     }
   }
 }
