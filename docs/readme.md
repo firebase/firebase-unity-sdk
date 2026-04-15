@@ -111,6 +111,7 @@ Release Notes
 -------------
 ### 13.10.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 13.6.0.
     - General (Android): Update to Firebase Android BoM version 34.12.0.
     - General (iOS): Update to Firebase Cocoapods version 12.12.0.
     - Firebase AI: All Imagen models are deprecated and will shut down as early
