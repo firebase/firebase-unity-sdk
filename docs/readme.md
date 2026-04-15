@@ -109,8 +109,10 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.10.0
 -   Changes
+    - General (Android): Update to Firebase Android BoM version 34.12.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.12.0.
     - Firebase AI: All Imagen models are deprecated and will shut down as early
       as June 2026. As a replacement, you can
       [migrate your apps to use Gemini Image models (the "Nano Banana" models)](https://firebase.google.com/docs/ai-logic/imagen-models-migration).

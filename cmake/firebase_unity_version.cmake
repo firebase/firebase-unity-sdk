@@ -20,7 +20,7 @@ set(FIREBASE_UNITY_SDK_VERSION "13.10.0"
 set(FIREBASE_IOS_POD_VERSION "12.12.0"
     CACHE STRING "The version of the top-level Firebase Cocoapod to use.")
 
-set(FIREBASE_SPM_VERSION "12.10.0"
+set(FIREBASE_SPM_VERSION "12.12.0"
     CACHE STRING "The version of the top-level Firebase Swift Package to use.")
 
 # https://github.com/googlesamples/unity-jar-resolver
