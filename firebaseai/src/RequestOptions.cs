@@ -44,7 +44,7 @@ namespace Firebase.AI
     /// Intended for internal use only.
     /// This provides access to the default turn limit value.
     /// </summary>
-    internal static int DefaultAutoFunctionTurnLimit = 5;
+    internal const int DefaultAutoFunctionTurnLimit = 5;
 
     /// <summary>
     /// Intended for internal use only.
