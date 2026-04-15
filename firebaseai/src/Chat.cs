@@ -58,11 +58,7 @@ namespace Firebase.AI
 
       if (autoFunctions != null && autoFunctions.Any())
       {
-        autoFunctionDeclarations = new();
-        foreach (var afd in autoFunctions)
-        {
-          autoFunctionDeclarations[afd.Name] = afd;
-        }
+        autoFunctionDeclarations = autoFunctions.ToDictionary(afd => afd.Name);
       }
       else
       {

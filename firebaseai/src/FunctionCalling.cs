@@ -434,6 +434,10 @@ namespace Firebase.AI
     public BaseAutoFunctionDeclaration(Delegate callable, string description,
         string name = null)
     {
+      if (callable == null)
+      {
+        throw new ArgumentNullException(nameof(callable));
+      }
       Name = name ?? callable.Method.Name;
       Description = description;
 

@@ -88,14 +88,14 @@ namespace Firebase.AI
       this.toolConfig = toolConfig;
 
       // Pull out the Automatic Functions
-      var autoFunctions = tools?.OfType<TemplateTool.AutoFunctionDeclaration>();
+      var autoFunctions = tools?.OfType<BaseAutoFunctionDeclaration>();
       if (autoFunctions != null && autoFunctions.Any())
       {
-        autoFunctionDeclarations = new();
-        foreach (var afd in autoFunctions)
-        {
-          autoFunctionDeclarations[afd.Name] = afd;
-        }
+        autoFunctionDeclarations = autoFunctions.ToDictionary(afd => afd.Name);
+      }
+      else
+      {
+        autoFunctionDeclarations = null;
       }
       this.autoFunctionTurnLimit = autoFunctionTurnLimit;
     }

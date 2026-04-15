@@ -324,24 +324,21 @@ namespace Firebase.AI.Internal
   {
     // Checks the response for automatic functions, and handles calling them.
     // Requires that all the requested functions are automatic.
-    public static bool TryHandleAutoFunctionCalls(
+    public async static Task<List<ModelContent.Part>> HandleAutoFunctionCallsAsync(
         GenerateContentResponse response,
-        Dictionary<string, BaseAutoFunctionDeclaration> autoFunctionDeclarations,
-        out IEnumerable<ModelContent.Part> output)
+        Dictionary<string, BaseAutoFunctionDeclaration> autoFunctionDeclarations)
     {
       // If we have no auto functions, we can exit early
       if (autoFunctionDeclarations == null || !autoFunctionDeclarations.Any())
       {
-        output = default;
-        return false;
+        return null;
       }
 
       // We need to verify we can handle all the requested functions.
       // If not, we pass them all back to the user.
       if (!response.FunctionCalls.Select(fc => fc.Name).All(name => autoFunctionDeclarations.ContainsKey(name)))
       {
-        output = default;
-        return false;
+        return null;
       }
 
       List<ModelContent.Part> results = new();
@@ -352,7 +349,8 @@ namespace Firebase.AI.Internal
 
         try
         {
-          results.Add(HandleAutoFunctionCall(functionCall, autoFunction));
+          var part = await HandleAutoFunctionCallAsync(functionCall, autoFunction);
+          results.Add(part);
         }
         catch (Exception e)
         {
@@ -360,12 +358,11 @@ namespace Firebase.AI.Internal
         }
       }
 
-      output = results;
-      return true;
+      return results;
     }
 
     // Handle a specific Function call request with the matching AutoFunctionDeclaration
-    public static ModelContent.FunctionResponsePart HandleAutoFunctionCall(
+    private async static Task<ModelContent.FunctionResponsePart> HandleAutoFunctionCallAsync(
         ModelContent.FunctionCallPart functionCall,
         BaseAutoFunctionDeclaration autoFunctionDeclaration)
     {
@@ -390,14 +387,13 @@ namespace Firebase.AI.Internal
       var result = autoFunctionDeclaration.Callable.DynamicInvoke(args.ToArray());
       if (result is Task task)
       {
-        // Wait for the task to finish
-        task.Wait();
+        await task;
 
         var resultType = result.GetType();
         if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(Task<>))
         {
           // Pull the underlying Result from the task.
-          result = ((dynamic)task).Result;
+          result = resultType.GetProperty("Result").GetValue(task);
         }
         else
         {
@@ -437,7 +433,8 @@ namespace Firebase.AI.Internal
       while (response.FunctionCalls.Any() && turnsTaken < autoFunctionTurnLimit)
       {
         turnsTaken++;
-        if (AutomatedHelpers.TryHandleAutoFunctionCalls(response, autoFunctionDeclarations, out var functionResponses))
+        var functionResponses = await AutomatedHelpers.HandleAutoFunctionCallsAsync(response, autoFunctionDeclarations);
+        if (functionResponses != null)
         {
           fixedRequests.Add(response.Candidates.First().Content);
           fixedRequests.Add(new ModelContent(functionResponses));
@@ -504,8 +501,8 @@ namespace Firebase.AI.Internal
             // If the response include a Function call, we want to try to automatically call it
             if (response.FunctionCalls.Any())
             {
-              if (AutomatedHelpers.TryHandleAutoFunctionCalls(response,
-                  autoFunctionDeclarations, out var functionResponses))
+              var functionResponses = await AutomatedHelpers.HandleAutoFunctionCallsAsync(response, autoFunctionDeclarations);
+              if (functionResponses != null)
               {
                 // Add the result of the function calls to the request for next time.
                 var functionResult = new ModelContent(functionResponses);
