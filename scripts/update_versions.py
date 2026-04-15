@@ -188,6 +188,11 @@ def update_unity_version(unity_sdk_version):
         podversion = get_ios_pod_version_from_cpp()
         newline = "set(FIREBASE_IOS_POD_VERSION \"" + podversion + "\""
         replacement = replacement + newline + "\n"
+      elif "FIREBASE_SPM_VERSION" in line:
+        # Reuse the Cocoapod version number, as they are typically the same
+        podversion = get_ios_pod_version_from_cpp()
+        newline = "set(FIREBASE_SPM_VERSION \"" + podversion + "\""
+        replacement = replacement + newline + "\n"
       elif "FIREBASE_UNITY_JAR_RESOLVER_VERSION" in line:
         jar_version = get_latest_repo_tag('googlesamples/unity-jar-resolver')
         jar_version = jar_version.lstrip("v") # jar resolver need to strip "v" from the tag
