@@ -178,19 +178,19 @@ def update_android_deps():
 def update_unity_version(unity_sdk_version):
   version_cmake_path = os.path.join(os.getcwd(), "cmake", "firebase_unity_version.cmake")
   replacement = ""
+  podversion = get_ios_pod_version_from_cpp()
+  print(podversion)
   with open(version_cmake_path, "r") as f:
     datafile = f.readlines()
     for line in datafile:
       if "FIREBASE_UNITY_SDK_VERSION" in line:
         newline = "set(FIREBASE_UNITY_SDK_VERSION \"" + unity_sdk_version + "\""
         replacement = replacement + newline + "\n"
-      elif "FIREBASE_IOS_POD_VERSION" in line:
-        podversion = get_ios_pod_version_from_cpp()
+      elif podversion and "FIREBASE_IOS_POD_VERSION" in line:
         newline = "set(FIREBASE_IOS_POD_VERSION \"" + podversion + "\""
         replacement = replacement + newline + "\n"
-      elif "FIREBASE_SPM_VERSION" in line:
+      elif podversion and "FIREBASE_SPM_VERSION" in line:
         # Reuse the Cocoapod version number, as they are typically the same
-        podversion = get_ios_pod_version_from_cpp()
         newline = "set(FIREBASE_SPM_VERSION \"" + podversion + "\""
         replacement = replacement + newline + "\n"
       elif "FIREBASE_UNITY_JAR_RESOLVER_VERSION" in line:
