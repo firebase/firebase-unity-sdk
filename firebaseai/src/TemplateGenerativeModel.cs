@@ -35,6 +35,7 @@ namespace Firebase.AI
   {
     private readonly FirebaseApp _firebaseApp;
     private readonly FirebaseAI.Backend _backend;
+    private readonly RequestOptions? _requestOptions;
 
     private readonly HttpClient _httpClient;
 
@@ -105,7 +106,8 @@ namespace Firebase.AI
     {
       return TemplateChatSession.InternalCreateChat(
         this, GenerateContentAsyncInternal, GenerateContentStreamAsyncInternal,
-        templateId, inputs, history, tools, toolConfig);
+        templateId, inputs, history, tools, toolConfig,
+        _requestOptions?.AutoFunctionTurnLimit ?? RequestOptions.DefaultAutoFunctionTurnLimit);
     }
 
     private string MakeGenerateContentRequest(IDictionary<string, object> inputs,

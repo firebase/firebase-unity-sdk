@@ -41,12 +41,26 @@ namespace Firebase.AI
     internal TimeSpan Timeout => _timeout ?? DefaultTimeout;
 
     /// <summary>
+    /// Intended for internal use only.
+    /// This provides access to the default turn limit value.
+    /// </summary>
+    internal static int DefaultAutoFunctionTurnLimit = 5;
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This provides access to the timeout value used for API requests.
+    /// </summary>
+    internal int AutoFunctionTurnLimit { get; }
+
+    /// <summary>
     /// Initialize a `RequestOptions` object.
     /// </summary>
     /// <param name="timeout">The request's timeout interval. Defaults to 180 seconds if given null.</param>
-    public RequestOptions(TimeSpan? timeout = null)
+    /// <param name="autoFunctionTurnLimit">When handling automatic functions, how many iterations will it attempt before stopping. Defaults to 5.</param>
+    public RequestOptions(TimeSpan? timeout = null, int? autoFunctionTurnLimit = null)
     {
       _timeout = timeout;
+      AutoFunctionTurnLimit = autoFunctionTurnLimit ?? DefaultAutoFunctionTurnLimit;
     }
   }
 

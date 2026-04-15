@@ -32,6 +32,9 @@ namespace Firebase.AI
     private readonly GenerativeModel generativeModel;
     private readonly List<ModelContent> chatHistory;
 
+    private readonly Dictionary<string, BaseAutoFunctionDeclaration> autoFunctionDeclarations;
+    private readonly int autoFunctionTurnLimit;
+
     /// <summary>
     /// The previous content from the chat that has been successfully sent and received from the
     /// model. This will be provided to the model for each message sent as context for the discussion.
@@ -39,7 +42,8 @@ namespace Firebase.AI
     public IReadOnlyList<ModelContent> History => chatHistory;
 
     // Note: No public constructor, get one through GenerativeModel.StartChat
-    private Chat(GenerativeModel model, IEnumerable<ModelContent> initialHistory)
+    private Chat(GenerativeModel model, IEnumerable<ModelContent> initialHistory,
+        IEnumerable<BaseAutoFunctionDeclaration> autoFunctions, int autoFunctionTurnLimit)
     {
       generativeModel = model;
 
@@ -51,15 +55,30 @@ namespace Firebase.AI
       {
         chatHistory = new List<ModelContent>();
       }
+
+      if (autoFunctions != null && autoFunctions.Any())
+      {
+        autoFunctionDeclarations = new();
+        foreach (var afd in autoFunctions)
+        {
+          autoFunctionDeclarations[afd.Name] = afd;
+        }
+      }
+      else
+      {
+        autoFunctionDeclarations = null;
+      }
+      this.autoFunctionTurnLimit = autoFunctionTurnLimit;
     }
 
     /// <summary>
     /// Intended for internal use only.
     /// Use `GenerativeModel.StartChat` instead to ensure proper initialization and configuration of the `Chat`.
     /// </summary>
-    internal static Chat InternalCreateChat(GenerativeModel model, IEnumerable<ModelContent> initialHistory)
+    internal static Chat InternalCreateChat(GenerativeModel model, IEnumerable<ModelContent> initialHistory,
+        IEnumerable<BaseAutoFunctionDeclaration> autoFunctionDeclarations, int autoFunctionTurnLimit)
     {
-      return new Chat(model, initialHistory);
+      return new Chat(model, initialHistory, autoFunctionDeclarations, autoFunctionTurnLimit);
     }
 
     /// <summary>
@@ -142,70 +161,31 @@ namespace Firebase.AI
       return SendMessageStreamAsyncInternal(content, cancellationToken);
     }
 
-    private async Task<GenerateContentResponse> SendMessageAsyncInternal(
+    private Task<GenerateContentResponse> SendMessageAsyncInternal(
         IEnumerable<ModelContent> requestContent, CancellationToken cancellationToken = default)
     {
-      // Make sure that the requests are set to to role "user".
-      List<ModelContent> fixedRequests = requestContent.Select(FirebaseAIExtensions.ConvertToUser).ToList();
-      // Set up the context to send in the request
-      List<ModelContent> fullRequest = new(chatHistory);
-      fullRequest.AddRange(fixedRequests);
-
-      // Note: GenerateContentAsync can throw exceptions if there was a problem, but
-      // we allow it to just be passed back to the user.
-      GenerateContentResponse response = await generativeModel.GenerateContentAsync(fullRequest, cancellationToken);
-
-      // Only after getting a valid response, add both to the history for later.
-      // But either way pass the response along to the user.
-      if (response.Candidates.Any())
+      Task<GenerateContentResponse> generateContentFunc(List<ModelContent> fullRequest)
       {
-        ModelContent responseContent = response.Candidates.First().Content;
-
-        chatHistory.AddRange(fixedRequests);
-        chatHistory.Add(responseContent.ConvertToModel());
+        return generativeModel.GenerateContentAsync(fullRequest, cancellationToken);
       }
 
-      return response;
+      return ChatSessionHelpers.SendMessageAsync(chatHistory,
+          autoFunctionDeclarations, autoFunctionTurnLimit,
+          requestContent, generateContentFunc);
     }
 
-    private async IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsyncInternal(
+    private IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsyncInternal(
         IEnumerable<ModelContent> requestContent,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
-      // Make sure that the requests are set to to role "user".
-      List<ModelContent> fixedRequests = requestContent.Select(FirebaseAIExtensions.ConvertToUser).ToList();
-      // Set up the context to send in the request
-      List<ModelContent> fullRequest = new(chatHistory);
-      fullRequest.AddRange(fixedRequests);
-
-      List<ModelContent> responseContents = new();
-      bool saveHistory = true;
-      // Note: GenerateContentStreamAsync can throw exceptions if there was a problem, but
-      // we allow it to just be passed back to the user.
-      await foreach (GenerateContentResponse response in
-          generativeModel.GenerateContentStreamAsync(fullRequest, cancellationToken))
+      IAsyncEnumerable<GenerateContentResponse> generateContentStreamFunc(List<ModelContent> fullRequest)
       {
-        // If the response had a problem, we still want to pass it along to the user for context,
-        // but we don't want to save the history anymore.
-        if (response.Candidates.Any())
-        {
-          ModelContent responseContent = response.Candidates.First().Content;
-          responseContents.Add(responseContent.ConvertToModel());
-        }
-        else
-        {
-          saveHistory = false;
-        }
-
-        yield return response;
+        return generativeModel.GenerateContentStreamAsync(fullRequest, cancellationToken);
       }
 
-      // After getting all the responses, and they were all valid, add everything to the history
-      if (saveHistory)
-      {
-        chatHistory.AddRange(fixedRequests);
-        chatHistory.AddRange(responseContents);
-      }
+      return ChatSessionHelpers.SendMessageStreamAsync(chatHistory,
+          autoFunctionDeclarations, autoFunctionTurnLimit,
+          requestContent, generateContentStreamFunc);
     }
   }
 

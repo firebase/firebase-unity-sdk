@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
-using Firebase.AI.Internal;
 
 namespace Firebase.AI
 {
@@ -44,7 +44,7 @@ namespace Firebase.AI
     public class FunctionDeclaration : ITemplateTool
     {
       public string Name { get; }
-      public JsonSchema JsonParameters { get; }
+      public JsonSchema Parameters { get; }
 
       /// <summary>
       /// Constructs a TemplateTool.FunctionDeclaration
@@ -57,7 +57,7 @@ namespace Firebase.AI
           IEnumerable<string> optionalParameters = null)
       {
         Name = name;
-        JsonParameters = JsonSchema.Object(parameters, optionalParameters);
+        Parameters = JsonSchema.Object(parameters, optionalParameters);
       }
 
       /// <summary>
@@ -69,7 +69,28 @@ namespace Firebase.AI
         var jsonDict = new Dictionary<string, object>()
         {
           { "name", Name },
-          { "inputSchema", JsonParameters.ToJson() }
+          { "inputSchema", Parameters.ToJson() }
+        };
+        return new Dictionary<string, object>()
+        {
+          { "templateFunctions", jsonDict }
+        };
+      }
+    }
+
+    public class AutoFunctionDeclaration : BaseAutoFunctionDeclaration, ITemplateTool
+    {
+      public AutoFunctionDeclaration(Delegate callable,
+          string name = null)
+          : base(callable, null, name)
+      { }
+
+      Dictionary<string, object> ITemplateTool.ToJson()
+      {
+        var jsonDict = new Dictionary<string, object>()
+        {
+          { "name", Name },
+          { "inputSchema", Parameters.ToJson() }
         };
         return new Dictionary<string, object>()
         {

@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using Firebase.AI.Internal;
 
 namespace Firebase.AI
 {
@@ -86,9 +88,9 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       var json = new Dictionary<string, object>() {
-      { "name", Name },
-      { "description", Description },
-    };
+        { "name", Name },
+        { "description", Description },
+      };
       // Only one of these will likely be set, but just check
       if (JsonParameters != null)
       {
@@ -101,6 +103,27 @@ namespace Firebase.AI
 
       return json;
     }
+  }
+
+  /// <summary>
+  /// Structured representation of a function declaration, designed
+  /// to be automatically handled when using Chat, instead of requiring
+  /// manual handling.
+  /// 
+  /// See `FunctionDeclaration` for more information.
+  /// </summary>
+  public class AutoFunctionDeclaration : BaseAutoFunctionDeclaration
+  {
+    /// <summary>
+    /// Constructs a new `AutoFunctionDeclaration`
+    /// </summary>
+    /// <param name="callable">The delegate that will be called automatically when requested by the model.</param>
+    /// <param name="description">A brief description of the function.</param>
+    /// <param name="name">Optional name to use for the function, used to overwrite the delegate name.</param>
+    public AutoFunctionDeclaration(Delegate callable, string description,
+        string name = null)
+        : base(callable, description, name)
+    { }
   }
 
   /// <summary>
@@ -134,6 +157,7 @@ namespace Firebase.AI
     // No public properties, on purpose since it is meant for user input only
 
     private List<FunctionDeclaration> FunctionDeclarations { get; }
+    internal List<AutoFunctionDeclaration> AutoFunctionDeclarations { get; }
     private GoogleSearch? GoogleSearch { get; }
     private CodeExecution? CodeExecution { get; }
     private UrlContext? UrlContext { get; }
@@ -146,6 +170,7 @@ namespace Firebase.AI
     public Tool(params FunctionDeclaration[] functionDeclarations)
     {
       FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
+      AutoFunctionDeclarations = null;
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = null;
@@ -158,6 +183,34 @@ namespace Firebase.AI
     public Tool(IEnumerable<FunctionDeclaration> functionDeclarations)
     {
       FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
+      AutoFunctionDeclarations = null;
+      GoogleSearch = null;
+      CodeExecution = null;
+      UrlContext = null;
+    }
+
+    /// <summary>
+    /// Creates a tool that allows the model to perform function calling.
+    /// </summary>
+    /// <param name="functionDeclarations">A list of `FunctionDeclarations` available to the model
+    ///   that can be used for function calling.</param>
+    public Tool(params AutoFunctionDeclaration[] functionDeclarations)
+    {
+      FunctionDeclarations = null;
+      AutoFunctionDeclarations = new List<AutoFunctionDeclaration>(functionDeclarations);
+      GoogleSearch = null;
+      CodeExecution = null;
+      UrlContext = null;
+    }
+    /// <summary>
+    /// Creates a tool that allows the model to perform function calling.
+    /// </summary>
+    /// <param name="functionDeclarations">A list of `FunctionDeclarations` available to the model
+    ///   that can be used for function calling.</param>
+    public Tool(IEnumerable<AutoFunctionDeclaration> functionDeclarations)
+    {
+      FunctionDeclarations = null;
+      AutoFunctionDeclarations = new List<AutoFunctionDeclaration>(functionDeclarations);
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = null;
@@ -171,6 +224,7 @@ namespace Firebase.AI
     public Tool(GoogleSearch googleSearch)
     {
       FunctionDeclarations = null;
+      AutoFunctionDeclarations = null;
       GoogleSearch = googleSearch;
       CodeExecution = null;
       UrlContext = null;
@@ -184,6 +238,7 @@ namespace Firebase.AI
     public Tool(CodeExecution codeExecution)
     {
       FunctionDeclarations = null;
+      AutoFunctionDeclarations = null;
       GoogleSearch = null;
       CodeExecution = codeExecution;
       UrlContext = null;
@@ -198,6 +253,7 @@ namespace Firebase.AI
     public Tool(UrlContext urlContext)
     {
       FunctionDeclarations = null;
+      AutoFunctionDeclarations = null;
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = urlContext;
@@ -210,9 +266,18 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       var json = new Dictionary<string, object>();
+      List<Dictionary<string, object>> functionDeclarations = new();
       if (FunctionDeclarations != null && FunctionDeclarations.Any())
       {
-        json["functionDeclarations"] = FunctionDeclarations.Select(f => f.ToJson()).ToList();
+        functionDeclarations.AddRange(FunctionDeclarations.Select(f => f.ToJson()));
+      }
+      if (AutoFunctionDeclarations != null && AutoFunctionDeclarations.Any())
+      {
+        functionDeclarations.AddRange(AutoFunctionDeclarations.Select(f => f.ToJson()));
+      }
+      if (functionDeclarations.Count > 0)
+      {
+        json["functionDeclarations"] = functionDeclarations;
       }
       if (GoogleSearch.HasValue)
       {
@@ -341,5 +406,70 @@ namespace Firebase.AI
       return json;
     }
   }
+
+  /// <summary>
+  /// Attribute that can be attached to parameters to give them a description,
+  /// used when using `AutoFunctionDeclaration`.
+  /// </summary>
+  [AttributeUsage(AttributeTargets.Parameter)]
+  public class AutoFunctionDescriptionAttribute : Attribute
+  {
+    public AutoFunctionDescriptionAttribute(string description)
+    {
+      Description = description;
+    }
+
+    public string Description { get; set; } = null;
+  }
+
+#if !DOXYGEN
+  public abstract class BaseAutoFunctionDeclaration
+  {
+    internal string Name { get; }
+    internal string Description { get; }
+    internal JsonSchema Parameters { get; }
+
+    internal Delegate Callable { get; }
+
+    public BaseAutoFunctionDeclaration(Delegate callable, string description,
+        string name = null)
+    {
+      Name = name ?? callable.Method.Name;
+      Description = description;
+
+      Dictionary<string, JsonSchema> parameters = new();
+      List<string> optionalParameters = new();
+      // Construct the Parameters based on the given Delegate
+      foreach (var pInfo in callable.Method.GetParameters())
+      {
+        var attr = pInfo.GetCustomAttribute<AutoFunctionDescriptionAttribute>();
+        parameters.Add(pInfo.Name,
+            JsonSchema.FromType(pInfo.ParameterType, attr?.Description));
+        if (pInfo.HasDefaultValue)
+        {
+          optionalParameters.Add(pInfo.Name);
+        }
+      }
+      Parameters = JsonSchema.Object(parameters, optionalParameters);
+
+      Callable = callable;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      var json = new Dictionary<string, object>() {
+        { "name", Name },
+        { "parametersJsonSchema", Parameters.ToJson() }
+      };
+      json.AddIfHasValue("description", Description);
+
+      return json;
+    }
+  }
+#endif // !DOXYGEN
 
 }

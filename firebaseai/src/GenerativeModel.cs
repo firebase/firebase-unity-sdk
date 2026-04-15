@@ -255,7 +255,12 @@ namespace Firebase.AI
     /// <param name="history">Initial content history to start with.</param>
     public Chat StartChat(IEnumerable<ModelContent> history)
     {
-      return Chat.InternalCreateChat(this, history);
+      // If we have auto functions, we pass them separately.
+      var autoFunctions = _tools?.Select(tool => tool.AutoFunctionDeclarations)
+          .Where(afd => afd != null)
+          .SelectMany(inner => inner);
+      return Chat.InternalCreateChat(this, history, autoFunctions,
+          _requestOptions?.AutoFunctionTurnLimit ?? RequestOptions.DefaultAutoFunctionTurnLimit);
     }
     #endregion
 

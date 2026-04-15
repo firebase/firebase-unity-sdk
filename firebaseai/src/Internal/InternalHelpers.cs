@@ -17,6 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Firebase.AI.Internal
 {
@@ -317,4 +320,219 @@ namespace Firebase.AI.Internal
     }
   }
 
+  internal static class AutomatedHelpers
+  {
+    // Checks the response for automatic functions, and handles calling them.
+    // Requires that all the requested functions are automatic.
+    public static bool TryHandleAutoFunctionCalls(
+        GenerateContentResponse response,
+        Dictionary<string, BaseAutoFunctionDeclaration> autoFunctionDeclarations,
+        out IEnumerable<ModelContent.Part> output)
+    {
+      // If we have no auto functions, we can exit early
+      if (autoFunctionDeclarations == null || !autoFunctionDeclarations.Any())
+      {
+        output = default;
+        return false;
+      }
+
+      // We need to verify we can handle all the requested functions.
+      // If not, we pass them all back to the user.
+      if (!response.FunctionCalls.Select(fc => fc.Name).All(name => autoFunctionDeclarations.ContainsKey(name)))
+      {
+        output = default;
+        return false;
+      }
+
+      List<ModelContent.Part> results = new();
+      // We have AutoFunctions for all the calls, so execute each
+      foreach (var functionCall in response.FunctionCalls)
+      {
+        var autoFunction = autoFunctionDeclarations[functionCall.Name];
+
+        try
+        {
+          results.Add(HandleAutoFunctionCall(functionCall, autoFunction));
+        }
+        catch (Exception e)
+        {
+          UnityEngine.Debug.LogException(e);
+        }
+      }
+
+      output = results;
+      return true;
+    }
+
+    // Handle a specific Function call request with the matching AutoFunctionDeclaration
+    public static ModelContent.FunctionResponsePart HandleAutoFunctionCall(
+        ModelContent.FunctionCallPart functionCall,
+        BaseAutoFunctionDeclaration autoFunctionDeclaration)
+    {
+      // The parameters from the function call are not guaranteed to be in the correct order.
+      // So we need to use reflection to get the correct order.
+      List<object> args = new();
+      foreach (var pInfo in autoFunctionDeclaration.Callable.Method.GetParameters())
+      {
+        if (functionCall.Args.TryGetValue(pInfo.Name, out var arg))
+        {
+          // Convert the arg into the approriate type
+          object convertedArg = SerializationHelpers.ObjectToType(arg, pInfo.ParameterType);
+
+          args.Add(convertedArg);
+        }
+        else if (pInfo.HasDefaultValue)
+        {
+          args.Add(pInfo.DefaultValue);
+        }
+      }
+
+      var result = autoFunctionDeclaration.Callable.DynamicInvoke(args.ToArray());
+      if (result is Task task)
+      {
+        // Wait for the task to finish
+        task.Wait();
+
+        var resultType = result.GetType();
+        if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(Task<>))
+        {
+          // Pull the underlying Result from the task.
+          result = ((dynamic)task).Result;
+        }
+        else
+        {
+          // It was a regular Task without a result, so treat it as null
+          result = null;
+        }
+      }
+
+      return new ModelContent.FunctionResponsePart(
+          functionCall.Name,
+          new Dictionary<string, object> { { "result", result } },
+          functionCall.Id);
+    }
+  }
+
+  internal static class ChatSessionHelpers
+  {
+    internal static async Task<GenerateContentResponse> SendMessageAsync(
+        List<ModelContent> chatHistory,
+        Dictionary<string, BaseAutoFunctionDeclaration> autoFunctionDeclarations,
+        int autoFunctionTurnLimit,
+        IEnumerable<ModelContent> requestContent,
+        Func<List<ModelContent>, Task<GenerateContentResponse>> generateContentFunc)
+    {
+      // Make sure that the request is set to to role "user".
+      List<ModelContent> fixedRequests = requestContent.Select(FirebaseAIExtensions.ConvertToUser).ToList();
+      // Set up the context to send in the history and request
+      List<ModelContent> fullRequest = new(chatHistory);
+      fullRequest.AddRange(fixedRequests);
+
+      // Note: GenerateContentAsync can throw exceptions if there was a problem, but
+      // we allow it to just be passed back to the user.
+      GenerateContentResponse response = await generateContentFunc(fullRequest);
+
+      // If there are any FunctionCalls, we want to resolve the Auto ones.
+      int turnsTaken = 0;
+      while (response.FunctionCalls.Any() && turnsTaken < autoFunctionTurnLimit)
+      {
+        turnsTaken++;
+        if (AutomatedHelpers.TryHandleAutoFunctionCalls(response, autoFunctionDeclarations, out var functionResponses))
+        {
+          fixedRequests.Add(response.Candidates.First().Content);
+          fixedRequests.Add(new ModelContent(functionResponses));
+
+          fullRequest.Clear();
+          fullRequest.AddRange(chatHistory);
+          fullRequest.AddRange(fixedRequests);
+
+          response = await generateContentFunc(fullRequest);
+        }
+        else
+        {
+          break;
+        }
+      }
+
+      // Only after getting a valid response, add both to the history for later.
+      // But either way pass the response along to the user.
+      if (response.Candidates.Any())
+      {
+        ModelContent responseContent = response.Candidates.First().Content;
+
+        chatHistory.AddRange(fixedRequests);
+        chatHistory.Add(responseContent.ConvertToModel());
+      }
+
+      return response;
+    }
+
+    internal static async IAsyncEnumerable<GenerateContentResponse> SendMessageStreamAsync(
+        List<ModelContent> chatHistory,
+        Dictionary<string, BaseAutoFunctionDeclaration> autoFunctionDeclarations,
+        int autoFunctionTurnLimit,
+        IEnumerable<ModelContent> requestContent,
+        Func<List<ModelContent>, IAsyncEnumerable<GenerateContentResponse>> generateContentStreamFunc)
+    {
+      // Make sure that the requests are set to to role "user".
+      List<ModelContent> fixedRequests = requestContent.Select(FirebaseAIExtensions.ConvertToUser).ToList();
+      // Set up the context to send in the request
+      List<ModelContent> fullRequest = new(chatHistory);
+      fullRequest.AddRange(fixedRequests);
+
+      List<ModelContent> responseContents = new();
+      bool saveHistory = true;
+      bool autoFunctionCalled = false;
+      int autoFunctionTurns = 0;
+      do
+      {
+        autoFunctionTurns++;
+        autoFunctionCalled = false;
+        // Note: GenerateContentStreamAsync can throw exceptions if there was a problem, but
+        // we allow it to just be passed back to the user.
+        await foreach (GenerateContentResponse response in generateContentStreamFunc(fullRequest))
+        {
+          // If the response had a problem, we still want to pass it along to the user for context,
+          // but we don't want to save the history anymore.
+          if (response.Candidates.Any())
+          {
+            ModelContent responseContent = response.Candidates.First().Content;
+            var content = responseContent.ConvertToModel();
+            responseContents.Add(content);
+            fullRequest.Add(content);
+
+            // If the response include a Function call, we want to try to automatically call it
+            if (response.FunctionCalls.Any())
+            {
+              if (AutomatedHelpers.TryHandleAutoFunctionCalls(response,
+                  autoFunctionDeclarations, out var functionResponses))
+              {
+                // Add the result of the function calls to the request for next time.
+                var functionResult = new ModelContent(functionResponses);
+                responseContents.Add(functionResult);
+                fullRequest.Add(functionResult);
+                autoFunctionCalled = true;
+                // We don't want to pass the response back to the user.
+                continue;
+              }
+            }
+          }
+          else
+          {
+            saveHistory = false;
+          }
+
+          yield return response;
+        }
+        // If an AutoFunction was called, and we aren't past the limit yet, we go again.
+      } while (autoFunctionCalled && autoFunctionTurns <= autoFunctionTurnLimit);
+
+      // After getting all the responses, and they were all valid, add everything to the history
+      if (saveHistory)
+      {
+        chatHistory.AddRange(fixedRequests);
+        chatHistory.AddRange(responseContents);
+      }
+    }
+  }
 }

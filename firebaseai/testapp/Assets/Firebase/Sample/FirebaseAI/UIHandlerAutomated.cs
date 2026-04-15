@@ -162,7 +162,10 @@ namespace Firebase.Sample.FirebaseAI
         TestTemplateGenerateContent,
         TestTemplateGenerateContentStream,
         TestTemplateImagenGenerateImage,
-        TestJsonSchemaStructureOutput
+        TestJsonSchemaStructureOutput,
+        TestTemplateChat,
+        TestTemplateChatStreamAutoFunction,
+        TestChatAutoFunctionCalling
 #endif
       };
       // Set of tests that only run the single time.
@@ -1128,6 +1131,59 @@ namespace Firebase.Sample.FirebaseAI
       AssertEq($"Image Height = Width", texture.height, texture.width);
     }
 
+    async Task TestTemplateChat(Backend backend)
+    {
+      var model = GetFirebaseAI(backend, "global").GetTemplateGenerativeModel();
+
+      var chat = model.StartChat("function-calling-weather");
+
+      // The template defines a function for the model to call, which we trigger, and respond to.
+      var response1 = await chat.SendMessageAsync("What was the weather in San Jose, CA, on January 1, 2026?");
+
+      var functionCallPart = response1.FunctionCalls?.First();
+      AssertEq("Function Call Name", functionCallPart?.Name, "fetchWeather");
+
+      var response2 = await chat.SendMessageAsync(
+        ModelContent.FunctionResponse("fetchWeather",
+          new Dictionary<string, object>
+          {
+            { "result", "Cloudy, with a chance of meatballs" }
+          },
+          functionCallPart?.Id)
+      );
+
+      // There isn't much guarantee on what this will respond with. We just want non-empty.
+      Assert("Response was empty.", !string.IsNullOrWhiteSpace(response2.Text));
+    }
+
+    private class TestAutoFunctionLocation
+    {
+      public string city;
+      public string state;
+    }
+
+    async Task TestTemplateChatStreamAutoFunction(Backend backend)
+    {
+      var model = GetFirebaseAI(backend, "global").GetTemplateGenerativeModel();
+
+      var chat = model.StartChat("function-calling-weather",
+          tools: new[] {
+            // This function declaration matches what the server prompt defines
+            new TemplateTool.AutoFunctionDeclaration(
+                (Func<TestAutoFunctionLocation, string, string>)((location, date) => "Cloudy with a chance of meatballs"),
+                name: "fetchWeather")
+          });
+
+      // The template defines a function for the model to call, which we trigger, and respond to.
+      var responseStream = chat.SendMessageStreamAsync("What was the weather in San Jose, CA, on January 1, 2026?");
+
+      await foreach (var response in responseStream)
+      {
+        // There isn't much guarantee on what this will respond with. We just want non-empty.
+        Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
+      }
+    }
+
     // Class used for validating JsonSchema generation
     public class SampleRecord
     {
@@ -1141,7 +1197,7 @@ namespace Firebase.Sample.FirebaseAI
       [SchemaInfo(Description = "The first and last name of a person")]
       public string name;
 
-      public int age;
+      public int? age;
 
       public bool Alive { get; set; }
 
@@ -1156,6 +1212,8 @@ namespace Firebase.Sample.FirebaseAI
 
       [SchemaInfo(Nullable = true)]
       public SampleRecord[] Children;
+
+      public Dictionary<int, string> Dummy;
 
       public override string ToString()
       {
@@ -1175,6 +1233,45 @@ namespace Firebase.Sample.FirebaseAI
 
       // There isn't much guarantee on what this will respond with. We just want non-empty.
       Assert("Response was missing a Name.", !string.IsNullOrWhiteSpace(response.Result.name));
+    }
+
+    string LastInput = null;
+    const int TestPrice = 10;
+    Task<int> TestAutoFunctionPriceCheck([AutoFunctionDescription("The fruit to check for")] string input)
+    {
+      // Save the input, to check against
+      LastInput = input;
+      return Task.FromResult(10);
+    }
+
+    async Task TestChatAutoFunctionCalling(Backend backend)
+    {
+      var tool = new Tool(new AutoFunctionDeclaration(
+          (Func<string, Task<int>>)TestAutoFunctionPriceCheck,
+          description: "Checks the price of the given item"));
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
+        tools: new Tool[] { tool }
+      );
+      var chat = model.StartChat();
+
+      // Clear the saved last input first
+      LastInput = null;
+      string expectedInput = "Banana";
+      GenerateContentResponse response = await chat.SendMessageAsync(
+          $"Hello, I am testing function calling with Chat. How much does a {expectedInput} cost?");
+
+      // We don't know exactly how the response will be phrased, but it should have text
+      Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
+      // Ideally the response will include the price, though it isn't guaranteed.
+      if (!response.Text.Contains($"{TestPrice}"))
+      {
+        DebugLog($"WARNING: Response string was missing the expected price of {TestPrice}: " +
+            $"\n{response.Text}");
+      }
+
+      // Check if the recorded LastInput for the function matches what we expect.
+      Assert($"LastInput != ExpectedInput ({LastInput}, {expectedInput})",
+          string.Equals(LastInput, expectedInput, StringComparison.CurrentCultureIgnoreCase));
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
