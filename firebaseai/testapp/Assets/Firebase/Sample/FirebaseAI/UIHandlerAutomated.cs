@@ -172,7 +172,7 @@ namespace Firebase.Sample.FirebaseAI
         TestUrlContext,
         TestTemplateImagenGenerateImage,
       };
-      // Construct the set of tests to run, based
+      // Construct the set of tests to run, based on the environment
       List<Func<Backend, Task>> multiBackendTests = new(basicMultiBackendTests);
 #if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
       multiBackendTests.AddRange(editorMultiBackendTests);
