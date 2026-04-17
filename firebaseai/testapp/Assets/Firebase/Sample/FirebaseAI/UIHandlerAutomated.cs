@@ -132,43 +132,56 @@ namespace Firebase.Sample.FirebaseAI
     protected override void Start()
     {
       // Set of tests that use multiple backends.
-      Func<Backend, Task>[] multiBackendTests = {
+      // When running on CI, these tests will be run on all devices
+      Func<Backend, Task>[] basicMultiBackendTests = {
         TestCreateModel,
         TestBasicText,
         TestBasicImage,
         TestModelOptions,
-        TestCountTokens,
-#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
-        // Disabled from CI, because of rate limit issues
+        TestCountTokens
+      };
+      // When running on CI, these tests are only run in the Editor
+      Func<Backend, Task>[] editorMultiBackendTests = {
         TestMultipleCandidates,
         TestBasicTextStream,
         TestFunctionCallingAny,
         TestFunctionCallingNone,
         TestEnumSchemaResponse,
         TestAnyOfSchemaResponse,
-        TestSearchGrounding,
         TestChatBasicTextNoHistory,
         TestChatBasicTextPriorHistory,
         TestChatFunctionCalling,
         TestChatBasicTextStream,
-        TestYoutubeLink,
-        TestGenerateImage,
-        TestImagenGenerateImage,
-        TestImagenGenerateImageOptions,
         TestThinkingBudget,
-        TestIncludeThoughts,
-        TestCodeExecution,
-        TestUrlContext,
         TestTemplateGenerateContent,
         TestTemplateGenerateContentStream,
-        TestTemplateImagenGenerateImage,
         TestJsonSchemaStructureOutput,
         TestTemplateChat,
         TestTemplateChatStreamAutoFunction,
         TestChatAutoFunctionCalling
-#endif
       };
-      // Set of tests that only run the single time.
+      // When running on CI, these tests aren't run since they are more flakey
+      Func<Backend, Task>[] complexMultiBackendTests = {
+        TestIncludeThoughts,
+        TestYoutubeLink,
+        TestGenerateImage,
+        TestImagenGenerateImage,
+        TestImagenGenerateImageOptions,
+        TestSearchGrounding,
+        TestCodeExecution,
+        TestUrlContext,
+        TestTemplateImagenGenerateImage,
+      };
+      // Construct the set of tests to run, based on the environment
+      List<Func<Backend, Task>> multiBackendTests = new(basicMultiBackendTests);
+#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
+      multiBackendTests.AddRange(editorMultiBackendTests);
+#endif
+#if !FIREBASE_RUNNING_FROM_CI
+      multiBackendTests.AddRange(complexMultiBackendTests);
+#endif
+
+      // Set of tests that only run the single time, will be run on all devices.
       Func<Task>[] singleTests = {
         TestReadFile,
         TestReadSecureFile,
