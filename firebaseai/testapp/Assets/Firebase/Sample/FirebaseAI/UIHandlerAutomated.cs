@@ -160,7 +160,7 @@ namespace Firebase.Sample.FirebaseAI
         TestTemplateChatStreamAutoFunction,
         TestChatAutoFunctionCalling
       };
-      // When running on CI, these tests aren't run since they are more flakey
+      // Only run these tests if FIREBASEAI_COMPLEX_TESTS is enabled
       Func<Backend, Task>[] complexMultiBackendTests = {
         TestIncludeThoughts,
         TestYoutubeLink,
@@ -177,7 +177,7 @@ namespace Firebase.Sample.FirebaseAI
 #if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
       multiBackendTests.AddRange(editorMultiBackendTests);
 #endif
-#if !FIREBASE_RUNNING_FROM_CI
+#if FIREBASEAI_COMPLEX_TESTS
       multiBackendTests.AddRange(complexMultiBackendTests);
 #endif
 
