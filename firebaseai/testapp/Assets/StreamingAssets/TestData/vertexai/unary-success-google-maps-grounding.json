@@ -1,0 +1,722 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "Here are some pizza restaurants near you:\n\n*   **Joe's Pizza** at 124 Fulton St is a long-time family-owned pizzeria that serves classic pies and slices. They offer takeout, delivery, and dine-in options and are open from 10:00 AM to 3:00 AM.\n*   **Stage Door Pizzeria** at 26 Vesey St is a pizza parlor that offers upside-down slices and calzones. They are open from 10:00 AM to 8:00 PM and offer takeout, delivery, and dine-in options.\n*   **Famous Calabria Pizza** at 27 St James Pl offers slices, salads, and Italian entrees. They are open from 10:00 AM to 9:00 PM and offer takeout, delivery, and dine-in options.\n*   **Kesté Pizza e Vino** at 77 Fulton St serves Neapolitan wood-fired pizzas with vegan and gluten-free options. They are open from 11:00 AM to 9:30 PM.\n*   **Little Italy Pizzeria and Deli** at 50 Fulton St is open 24/7 and serves a variety of thin-crust pies and slices. They offer takeout, delivery, and dine-in options.\n*   **Little Italy Pizza** at 154 Church St is a bustling late-night pizza outlet that serves hefty slices and pies. They offer takeout, delivery, and dine-in options and are open until 12:00 AM.\n*   **Little Italy Pizza - Park Place** at 11 Park Pl prepares pizza by the slice, full pies, and calzones for takeout and delivery. They are open from 10:00 AM to 7:00 PM.\n*   **Rosella's Pizzeria** at 164 William St is a casual pizza parlor that offers a variety of slices and pies, plus pastas, subs, and salads. They are open from 10:00 AM to 10:00 PM.\n*   **Abitino’s Pizza Financial District** at 32 Broadway is open from 10:00 AM to 8:00 PM and offers takeout, delivery, and dine-in options.\n*   **Traditas Pizza** at 83 Maiden Ln offers familiar slices and pies with a variety of toppings, plus pasta. They are open from 10:00 AM to 9:00 PM.\n*   **Luna Pizza** at 225 Park Row is a simple eatery that serves a range of classic Italian dishes including NYC-style pizza and sandwiches. They are open from 10:00 AM to 8:40 PM.\n*   **Zia Maria Little Italy** at 138 Mulberry St serves house-made pasta, pizza, and other Italian classics. They are open from 11:00 AM to 10:00 PM.\n*   **Eataly** at 101 Liberty St is an Italian market that offers counters, restaurants, and cooking demos. They are open from 7:00 AM to 11:00 PM.\n*   **The Pie Guy Pizza** at 83-85 Baxter St serves New York-style pies along with slices and other comfort fare. They are open from 10:00 AM to 8:00 PM.\n*   **Hank's Pizza** at 110 Trinity Pl offers New York-style pies and slices plus sandwiches and salads. They are open from 10:00 AM to 9:00 PM.\n*   **Siena Pizza** at 14 Rector St specializes in pizzas with a variety of toppings, plus homemade meatballs and cannoli. They are open from 11:00 AM to 11:00 PM.\n*   **Underground Pizza** at 3 Hanover Square offers NYC-style & thin-crust specialty pies plus pasta & Italian sandwiches. They are open from 10:00 AM to 9:00 PM.\n*   **Lucia Pizza Of SoHo** at 375 Canal St serves a variety of thin-crust pizzas by the slice, as well as pies. They are open from 11:00 AM to 10:00 PM.\n*   **La Pizza & La Pasta** at 101 Liberty St is a casual restaurant for Italian comfort food. They are open from 11:00 AM to 10:00 PM.\n*   **Serafina Tribeca** at 95 W Broadway offers thin-crust pizza and homemade pasta. They are open from 12:00 PM to 10:00 PM.\n\nI hope this helps you find some great pizza!\n"
+          }
+        ]
+      },
+      "finishReason": "STOP",
+      "safetyRatings": [
+        {
+          "category": "HARM_CATEGORY_HATE_SPEECH",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.00091606966,
+          "severity": "HARM_SEVERITY_NEGLIGIBLE",
+          "severityScore": 0.056709766
+        },
+        {
+          "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.0070035825,
+          "severity": "HARM_SEVERITY_NEGLIGIBLE",
+          "severityScore": 0.0430225
+        },
+        {
+          "category": "HARM_CATEGORY_HARASSMENT",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.0014974517,
+          "severity": "HARM_SEVERITY_NEGLIGIBLE",
+          "severityScore": 0.069172755
+        },
+        {
+          "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.0005436438,
+          "severity": "HARM_SEVERITY_NEGLIGIBLE",
+          "severityScore": 0.019413292
+        }
+      ],
+      "groundingMetadata": {
+        "retrievalQueries": [
+          "pizza restaurants near me"
+        ],
+        "groundingChunks": [
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=10332424901773702701",
+              "title": "Joe’s Pizza",
+              "placeId": "places/ChIJqdNaaBVbwokRLTafYrQlZI8"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=2701502875049963870",
+              "title": "Stage Door Pizzeria",
+              "placeId": "places/ChIJV4zXcCVbwokRXrEMO42qfSU"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=4421433968052157188",
+              "title": "Famous Calabria Pizza",
+              "placeId": "places/ChIJH83KFSRawokRBDuYp8QWXD0"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=12530857028410656409",
+              "title": "Kesté Pizza e Vino",
+              "placeId": "places/ChIJ6ffdpJNZwokRmcafdROM5q0"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=17898085436872455458",
+              "title": "Little Italy Pizzeria and Deli",
+              "placeId": "places/ChIJozrpOT1awokRIvVfcODFYvg"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=4220952323027039852",
+              "title": "Little Italy Pizza",
+              "placeId": "places/ChIJuXASOB9awokRbPbiM8bVkzo"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=3171214220453940517",
+              "title": "Little Italy Pizza - Park Place",
+              "placeId": "places/ChIJDYX_wRhawokRJQ3THIhqAiw"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=11737504804342449142",
+              "title": "Rosella's Pizzeria",
+              "placeId": "places/ChIJJ7FgvSJawokR9sNFfG7-46I"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=11167941577254722832",
+              "title": "Abitino’s Pizza Financial District",
+              "placeId": "places/ChIJW-se-fFbwokREF2VuLF__Jo"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=13252479367159462576",
+              "title": "Traditas Pizza",
+              "placeId": "places/ChIJR2acUDRbwokRsLq7EMVD6rc"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=5509424183060619077",
+              "title": "Luna Pizza",
+              "placeId": "places/ChIJJXgZmSZawokRRV9GtBpodUw"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=17592187765502933062",
+              "title": "Zia Maria Little Italy",
+              "placeId": "places/ChIJm7QTo_lZwokRRnjGuJABJPQ"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=1416786665941882505",
+              "title": "Eataly",
+              "placeId": "places/ChIJvx7i_BlawokRidb5WfdvqRM"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=1263887110027579112",
+              "title": "The Pie Guy Pizza",
+              "placeId": "places/ChIJtTEDk_lbwokR6I5jVaE6ihE"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=2425724581361028425",
+              "title": "Hank's Pizza",
+              "placeId": "places/ChIJU3wsQvRbwokRSQ31mqfnqSE"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=14488889139642070063",
+              "title": "Siena Pizza",
+              "placeId": "places/ChIJcY3r5xBawokRL3RhNujfEsk"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=5022977731717236697",
+              "title": "Underground Pizza",
+              "placeId": "places/ChIJqW49gRZawokR2Qe0VaIztUU"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=11072084929580057864",
+              "title": "Lucia Pizza Of SoHo",
+              "placeId": "places/ChIJt2LXGrlZwokRCEWTvpTyp5k"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=450230826278165661",
+              "title": "La Pizza & La Pasta",
+              "placeId": "places/ChIJD3o8HABbwokRnZw9E42KPwY"
+            }
+          },
+          {
+            "maps": {
+              "uri": "https://maps.google.com/?cid=111023806773972114",
+              "title": "Serafina Tribeca",
+              "placeId": "places/ChIJ-0VhGB9awokRksxfZJBvigE"
+            }
+          }
+        ],
+        "groundingSupports": [
+          {
+            "segment": {
+              "startIndex": 43,
+              "endIndex": 152,
+              "text": "*   **Joe's Pizza** at 124 Fulton St is a long-time family-owned pizzeria that serves classic pies and slices"
+            },
+            "groundingChunkIndices": [
+              0
+            ],
+            "confidenceScores": [
+              0.7392373
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 154,
+              "endIndex": 241,
+              "text": "They offer takeout, delivery, and dine-in options and are open from 10:00 AM to 3:00 AM"
+            },
+            "groundingChunkIndices": [
+              0
+            ],
+            "confidenceScores": [
+              0.886766
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 243,
+              "endIndex": 347,
+              "text": "*   **Stage Door Pizzeria** at 26 Vesey St is a pizza parlor that offers upside-down slices and calzones"
+            },
+            "groundingChunkIndices": [
+              1
+            ],
+            "confidenceScores": [
+              0.9153079
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 349,
+              "endIndex": 436,
+              "text": "They are open from 10:00 AM to 8:00 PM and offer takeout, delivery, and dine-in options"
+            },
+            "groundingChunkIndices": [
+              1
+            ],
+            "confidenceScores": [
+              0.8336369
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 438,
+              "endIndex": 528,
+              "text": "*   **Famous Calabria Pizza** at 27 St James Pl offers slices, salads, and Italian entrees"
+            },
+            "groundingChunkIndices": [
+              2
+            ],
+            "confidenceScores": [
+              0.5303842
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 530,
+              "endIndex": 617,
+              "text": "They are open from 10:00 AM to 9:00 PM and offer takeout, delivery, and dine-in options"
+            },
+            "groundingChunkIndices": [
+              2
+            ],
+            "confidenceScores": [
+              0.8870799
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 619,
+              "endIndex": 733,
+              "text": "*   **Kesté Pizza e Vino** at 77 Fulton St serves Neapolitan wood-fired pizzas with vegan and gluten-free options"
+            },
+            "groundingChunkIndices": [
+              3
+            ],
+            "confidenceScores": [
+              0.95013124
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 735,
+              "endIndex": 773,
+              "text": "They are open from 11:00 AM to 9:30 PM"
+            },
+            "groundingChunkIndices": [
+              3
+            ],
+            "confidenceScores": [
+              0.004622229
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 775,
+              "endIndex": 893,
+              "text": "*   **Little Italy Pizzeria and Deli** at 50 Fulton St is open 24/7 and serves a variety of thin-crust pies and slices"
+            },
+            "groundingChunkIndices": [
+              4
+            ],
+            "confidenceScores": [
+              0.9163377
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 895,
+              "endIndex": 944,
+              "text": "They offer takeout, delivery, and dine-in options"
+            },
+            "groundingChunkIndices": [
+              4
+            ],
+            "confidenceScores": [
+              0.77168286
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 946,
+              "endIndex": 1061,
+              "text": "*   **Little Italy Pizza** at 154 Church St is a bustling late-night pizza outlet that serves hefty slices and pies"
+            },
+            "groundingChunkIndices": [
+              5
+            ],
+            "confidenceScores": [
+              0.65264255
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1063,
+              "endIndex": 1140,
+              "text": "They offer takeout, delivery, and dine-in options and are open until 12:00 AM"
+            },
+            "groundingChunkIndices": [
+              5
+            ],
+            "confidenceScores": [
+              0.7578804
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1142,
+              "endIndex": 1273,
+              "text": "*   **Little Italy Pizza - Park Place** at 11 Park Pl prepares pizza by the slice, full pies, and calzones for takeout and delivery"
+            },
+            "groundingChunkIndices": [
+              6
+            ],
+            "confidenceScores": [
+              0.39108777
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1275,
+              "endIndex": 1313,
+              "text": "They are open from 10:00 AM to 7:00 PM"
+            },
+            "groundingChunkIndices": [
+              6
+            ],
+            "confidenceScores": [
+              0.8670869
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1315,
+              "endIndex": 1456,
+              "text": "*   **Rosella's Pizzeria** at 164 William St is a casual pizza parlor that offers a variety of slices and pies, plus pastas, subs, and salads"
+            },
+            "groundingChunkIndices": [
+              7
+            ],
+            "confidenceScores": [
+              0.58752716
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1458,
+              "endIndex": 1497,
+              "text": "They are open from 10:00 AM to 10:00 PM"
+            },
+            "groundingChunkIndices": [
+              7
+            ],
+            "confidenceScores": [
+              0.86994255
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1499,
+              "endIndex": 1641,
+              "text": "*   **Abitino’s Pizza Financial District** at 32 Broadway is open from 10:00 AM to 8:00 PM and offers takeout, delivery, and dine-in options"
+            },
+            "groundingChunkIndices": [
+              8
+            ],
+            "confidenceScores": [
+              0.19525482
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1643,
+              "endIndex": 1752,
+              "text": "*   **Traditas Pizza** at 83 Maiden Ln offers familiar slices and pies with a variety of toppings, plus pasta"
+            },
+            "groundingChunkIndices": [
+              9
+            ],
+            "confidenceScores": [
+              0.9361249
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1754,
+              "endIndex": 1792,
+              "text": "They are open from 10:00 AM to 9:00 PM"
+            },
+            "groundingChunkIndices": [
+              9
+            ],
+            "confidenceScores": [
+              0.87773615
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1794,
+              "endIndex": 1934,
+              "text": "*   **Luna Pizza** at 225 Park Row is a simple eatery that serves a range of classic Italian dishes including NYC-style pizza and sandwiches"
+            },
+            "groundingChunkIndices": [
+              10
+            ],
+            "confidenceScores": [
+              0.92122453
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1936,
+              "endIndex": 1974,
+              "text": "They are open from 10:00 AM to 8:40 PM"
+            },
+            "groundingChunkIndices": [
+              10
+            ],
+            "confidenceScores": [
+              0.9085015
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 1976,
+              "endIndex": 2084,
+              "text": "*   **Zia Maria Little Italy** at 138 Mulberry St serves house-made pasta, pizza, and other Italian classics"
+            },
+            "groundingChunkIndices": [
+              11
+            ],
+            "confidenceScores": [
+              0.94767386
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2086,
+              "endIndex": 2125,
+              "text": "They are open from 11:00 AM to 10:00 PM"
+            },
+            "groundingChunkIndices": [
+              11
+            ],
+            "confidenceScores": [
+              0.004208436
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2127,
+              "endIndex": 2233,
+              "text": "*   **Eataly** at 101 Liberty St is an Italian market that offers counters, restaurants, and cooking demos"
+            },
+            "groundingChunkIndices": [
+              12
+            ],
+            "confidenceScores": [
+              0.4715432
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2235,
+              "endIndex": 2273,
+              "text": "They are open from 7:00 AM to 11:00 PM"
+            },
+            "groundingChunkIndices": [
+              12
+            ],
+            "confidenceScores": [
+              0.0060814177
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2275,
+              "endIndex": 2387,
+              "text": "*   **The Pie Guy Pizza** at 83-85 Baxter St serves New York-style pies along with slices and other comfort fare"
+            },
+            "groundingChunkIndices": [
+              13
+            ],
+            "confidenceScores": [
+              0.88684046
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2389,
+              "endIndex": 2427,
+              "text": "They are open from 10:00 AM to 8:00 PM"
+            },
+            "groundingChunkIndices": [
+              13
+            ],
+            "confidenceScores": [
+              0.8809011
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2429,
+              "endIndex": 2532,
+              "text": "*   **Hank's Pizza** at 110 Trinity Pl offers New York-style pies and slices plus sandwiches and salads"
+            },
+            "groundingChunkIndices": [
+              14
+            ],
+            "confidenceScores": [
+              0.43037176
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2534,
+              "endIndex": 2572,
+              "text": "They are open from 10:00 AM to 9:00 PM"
+            },
+            "groundingChunkIndices": [
+              14
+            ],
+            "confidenceScores": [
+              0.88239455
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2574,
+              "endIndex": 2695,
+              "text": "*   **Siena Pizza** at 14 Rector St specializes in pizzas with a variety of toppings, plus homemade meatballs and cannoli"
+            },
+            "groundingChunkIndices": [
+              15
+            ],
+            "confidenceScores": [
+              0.760938
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2697,
+              "endIndex": 2736,
+              "text": "They are open from 11:00 AM to 11:00 PM"
+            },
+            "groundingChunkIndices": [
+              15
+            ],
+            "confidenceScores": [
+              0.8966358
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2738,
+              "endIndex": 2860,
+              "text": "*   **Underground Pizza** at 3 Hanover Square offers NYC-style & thin-crust specialty pies plus pasta & Italian sandwiches"
+            },
+            "groundingChunkIndices": [
+              16
+            ],
+            "confidenceScores": [
+              0.6956693
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2862,
+              "endIndex": 2900,
+              "text": "They are open from 10:00 AM to 9:00 PM"
+            },
+            "groundingChunkIndices": [
+              16
+            ],
+            "confidenceScores": [
+              0.90786636
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 2902,
+              "endIndex": 3013,
+              "text": "*   **Lucia Pizza Of SoHo** at 375 Canal St serves a variety of thin-crust pizzas by the slice, as well as pies"
+            },
+            "groundingChunkIndices": [
+              17
+            ],
+            "confidenceScores": [
+              0.6947625
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 3015,
+              "endIndex": 3054,
+              "text": "They are open from 11:00 AM to 10:00 PM"
+            },
+            "groundingChunkIndices": [
+              17
+            ],
+            "confidenceScores": [
+              0.89399594
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 3056,
+              "endIndex": 3149,
+              "text": "*   **La Pizza & La Pasta** at 101 Liberty St is a casual restaurant for Italian comfort food"
+            },
+            "groundingChunkIndices": [
+              18
+            ],
+            "confidenceScores": [
+              0.61462355
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 3151,
+              "endIndex": 3190,
+              "text": "They are open from 11:00 AM to 10:00 PM"
+            },
+            "groundingChunkIndices": [
+              18
+            ],
+            "confidenceScores": [
+              0.46315598
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 3192,
+              "endIndex": 3276,
+              "text": "*   **Serafina Tribeca** at 95 W Broadway offers thin-crust pizza and homemade pasta"
+            },
+            "groundingChunkIndices": [
+              19
+            ],
+            "confidenceScores": [
+              0.8873792
+            ]
+          },
+          {
+            "segment": {
+              "startIndex": 3278,
+              "endIndex": 3317,
+              "text": "They are open from 12:00 PM to 10:00 PM"
+            },
+            "groundingChunkIndices": [
+              19
+            ],
+            "confidenceScores": [
+              0.0061006695
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 8,
+    "candidatesTokenCount": 1054,
+    "totalTokenCount": 1062,
+    "trafficType": "ON_DEMAND",
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 8
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 1054
+      }
+    ]
+  },
+  "modelVersion": "gemini-2.0-flash",
+  "createTime": "2026-01-27T16:21:55.245730Z",
+  "responseId": "I-Z4aeL_DuGmlu8P9Krl-QU"
+}

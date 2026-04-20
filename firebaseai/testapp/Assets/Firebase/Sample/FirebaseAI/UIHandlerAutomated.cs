@@ -170,6 +170,7 @@ namespace Firebase.Sample.FirebaseAI
         TestSearchGrounding,
         TestCodeExecution,
         TestUrlContext,
+        TestGoogleMaps,
         TestTemplateImagenGenerateImage,
       };
       // Construct the set of tests to run, based on the environment
@@ -195,6 +196,7 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestVertexAIGrounding,
         InternalTestGoogleAIGrounding,
         InternalTestGoogleAIGroundingEmptyChunks,
+        InternalTestMapsGrounding,
         InternalTestGroundingMetadata_Empty,
         InternalTestSegment_Empty,
         InternalTestCountTokenResponse,
@@ -1287,6 +1289,35 @@ namespace Firebase.Sample.FirebaseAI
           string.Equals(LastInput, expectedInput, StringComparison.CurrentCultureIgnoreCase));
     }
 
+    // Test grounding with Google Maps.
+    async Task TestGoogleMaps(Backend backend)
+    {
+      // Use a model that supports grounding.
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
+        tools: new Tool[] { new Tool(new GoogleMaps()) },
+        toolConfig: new ToolConfig(
+          // Give it the location of the Statue of Liberty
+          retrievalConfig: new RetrievalConfig(new LatLng(40.6892, -74.0445)))
+      );
+
+      // A prompt that should trigger the map data.
+      GenerateContentResponse response = await model.GenerateContentAsync("Find me one famous statue that is nearby?");
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      var candidate = response.Candidates.First();
+      Assert("GroundingMetadata should not be null when GoogleMaps tool is used.",
+          candidate.GroundingMetadata.HasValue);
+
+      var groundingMetadata = candidate.GroundingMetadata.Value;
+
+      Assert("GroundingChunks should have Maps data.",
+          groundingMetadata.GroundingChunks.Any(gc => gc.GoogleMaps != null));
+    }
+
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
     async Task TestReadFile()
     {
@@ -1752,6 +1783,35 @@ namespace Firebase.Sample.FirebaseAI
           "Segment.Text",
           support.Segment.Text,
           "There is a 0% chance of rain and the humidity is around 41%.");
+    }
+
+    // Test that parsing a Vertex AI response with Maps GroundingMetadata works.
+    // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/vertexai/unary-success-google-maps-grounding.json
+    async Task InternalTestMapsGrounding()
+    {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-google-maps-grounding.json");
+
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var candidate = response.Candidates.First();
+      Assert("Candidate should have GroundingMetadata", candidate.GroundingMetadata.HasValue);
+
+      var grounding = candidate.GroundingMetadata.Value;
+
+      AssertEq("GroundingChunks count", grounding.GroundingChunks.Count(), 20);
+      var chunk = grounding.GroundingChunks.First();
+      Assert("GroundingChunk.GoogleMaps should not be null", chunk.GoogleMaps.HasValue);
+      var mapsChunk = chunk.GoogleMaps.Value;
+      AssertEq("GoogleMapsGroundingChunk.Title", mapsChunk.Title, "Joe’s Pizza");
+      AssertEq("GoogleMapsGroundingChunk.Uri", mapsChunk.Uri, new Uri("https://maps.google.com/?cid=10332424901773702701"));
+      AssertEq("GoogleMapsGroundingChunk.PlaceId", mapsChunk.PlaceId, "places/ChIJqdNaaBVbwokRLTafYrQlZI8");
+
+      AssertEq("GroundingSupports count", grounding.GroundingSupports.Count(), 39);
+      var support = grounding.GroundingSupports.First();
+      AssertEq("GroundingChunkIndices count", support.GroundingChunkIndices.Count(), 1);
+      AssertEq("GroundingChunkIndices content", support.GroundingChunkIndices.First(), 0);
+      AssertEq("Segment text", support.Segment.Text, "*   **Joe's Pizza** at 124 Fulton St is a long-time family-owned pizzeria that serves classic pies and slices");
     }
 
     // Test parsing an empty GroundingMetadata object.

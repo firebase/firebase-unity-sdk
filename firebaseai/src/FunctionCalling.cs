@@ -147,6 +147,21 @@ namespace Firebase.AI
   public readonly struct CodeExecution { }
 
   /// <summary>
+  /// A tool that allows the model to use Grounding with Google Maps.
+  ///
+  /// Grounding with Google Maps can be used to allow the model to connect to Google
+  /// Maps to incorporate location-based information into its responses.
+  ///
+  /// When using this feature, you are required to comply with the "Grounding with
+  /// Google Maps" usage requirements for your chosen API provider:
+  /// {@link https://ai.google.dev/gemini-api/terms#grounding-with-google-maps |
+  /// Gemini Developer API} or Vertex AI Gemini API (see 
+  /// {@link https://cloud.google.com/terms/service-terms | Service Terms} section 
+  /// within the Service Specific Terms).
+  /// </summary>
+  public readonly struct GoogleMaps { }
+
+  /// <summary>
   /// A helper tool that the model may use when generating responses.
   ///
   /// A `Tool` is a piece of code that enables the system to interact with external systems to
@@ -161,6 +176,7 @@ namespace Firebase.AI
     private GoogleSearch? GoogleSearch { get; }
     private CodeExecution? CodeExecution { get; }
     private UrlContext? UrlContext { get; }
+    private GoogleMaps? GoogleMaps { get; }
 
     /// <summary>
     /// Creates a tool that allows the model to perform function calling.
@@ -174,6 +190,7 @@ namespace Firebase.AI
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = null;
+      GoogleMaps = null;
     }
     /// <summary>
     /// Creates a tool that allows the model to perform function calling.
@@ -187,6 +204,7 @@ namespace Firebase.AI
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = null;
+      GoogleMaps = null;
     }
 
     /// <summary>
@@ -201,6 +219,7 @@ namespace Firebase.AI
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = null;
+      GoogleMaps = null;
     }
     /// <summary>
     /// Creates a tool that allows the model to perform function calling.
@@ -214,6 +233,7 @@ namespace Firebase.AI
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = null;
+      GoogleMaps = null;
     }
 
     /// <summary>
@@ -228,6 +248,7 @@ namespace Firebase.AI
       GoogleSearch = googleSearch;
       CodeExecution = null;
       UrlContext = null;
+      GoogleMaps = null;
     }
 
     /// <summary>
@@ -242,6 +263,7 @@ namespace Firebase.AI
       GoogleSearch = null;
       CodeExecution = codeExecution;
       UrlContext = null;
+      GoogleMaps = null;
     }
 
     /// <summary>
@@ -257,6 +279,23 @@ namespace Firebase.AI
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = urlContext;
+      GoogleMaps = null;
+    }
+
+    /// <summary>
+    /// Creates a tool that allows the model to use Grounding for Google Maps.
+    /// </summary>
+    /// <param name="googleMaps">The Grounding for Google Maps configuration. The
+    /// presence of this object in the list of tools enables the model to use
+    /// Grounding for Google Maps.</param>
+    public Tool(GoogleMaps googleMaps)
+    {
+      FunctionDeclarations = null;
+      AutoFunctionDeclarations = null;
+      GoogleSearch = null;
+      CodeExecution = null;
+      UrlContext = null;
+      GoogleMaps = googleMaps;
     }
 
     /// <summary>
@@ -291,6 +330,10 @@ namespace Firebase.AI
       {
         json["urlContext"] = new Dictionary<string, object>();
       }
+      if (GoogleMaps.HasValue)
+      {
+        json["googleMaps"] = new Dictionary<string, object>();
+      }
       return json;
     }
   }
@@ -302,16 +345,21 @@ namespace Firebase.AI
   {
     // No public properties, on purpose since it is meant for user input only
 
-    private FunctionCallingConfig? Config { get; }
+    private FunctionCallingConfig? FunctionConfig { get; }
+    private RetrievalConfig? RetrievalConfig { get; }
 
     /// <summary>
     /// Constructs a new `ToolConfig`.
     /// </summary>
     /// <param name="functionCallingConfig">Configures how the model should use the
     ///   provided functions.</param>
-    public ToolConfig(FunctionCallingConfig? functionCallingConfig = null)
+    /// <param name="retrievalConfig">Configures how the model should use
+    ///   the provided retrieval options.</param>
+    public ToolConfig(FunctionCallingConfig? functionCallingConfig = null,
+        RetrievalConfig? retrievalConfig = null)
     {
-      Config = functionCallingConfig;
+      FunctionConfig = functionCallingConfig;
+      RetrievalConfig = retrievalConfig;
     }
 
     /// <summary>
@@ -321,9 +369,13 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       var json = new Dictionary<string, object>();
-      if (Config.HasValue)
+      if (FunctionConfig.HasValue)
       {
-        json["functionCallingConfig"] = Config?.ToJson();
+        json["functionCallingConfig"] = FunctionConfig?.ToJson();
+      }
+      if (RetrievalConfig.HasValue)
+      {
+        json["retrievalConfig"] = RetrievalConfig?.ToJson();
       }
       return json;
     }
@@ -404,6 +456,72 @@ namespace Firebase.AI
         json["allowedFunctionNames"] = AllowedFunctionNames;
       }
       return json;
+    }
+  }
+
+  /// <summary>
+  /// An struct that represents a latitude/longitude pair.
+  /// </summary>
+  public readonly struct LatLng
+  {
+    private double Latitude { get; }
+    private double Longitude { get; }
+
+    /// <summary>
+    /// Constructs a LatLng object with the given coordinates.
+    /// </summary>
+    public LatLng(double latitude, double longitude)
+    {
+      Latitude = latitude;
+      Longitude = longitude;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      return new()
+      {
+        { "latitude", Latitude },
+        { "longitude", Longitude }
+      };
+    }
+  }
+
+  /// <summary>
+  /// Information which can be used by tools during inference calls.
+  /// </summary>
+  public readonly struct RetrievalConfig
+  {
+    private LatLng? LatLng { get; }
+    private string LanguageCode { get; }
+
+    /// <summary>
+    /// Creates a retrieval configuration.
+    /// </summary>
+    /// <param name="latLng">An object that represents a latitude/longitude pair.</param>
+    /// <param name="languageCode">The language code of the user.</param>
+    public RetrievalConfig(LatLng? latLng = null, string languageCode = null)
+    {
+      LatLng = latLng;
+      LanguageCode = languageCode;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      var dict = new Dictionary<string, object>();
+      if (LatLng.HasValue)
+      {
+        dict["latLng"] = LatLng?.ToJson();
+      }
+      dict.AddIfHasValue("languageCode", LanguageCode);
+      return dict;
     }
   }
 

@@ -105,7 +105,17 @@ namespace Firebase.AI
   /// </summary>
   public readonly struct TemplateToolConfig
   {
-    // This is intentionally empty, but things will be added in the future.
+    private RetrievalConfig? RetrievalConfig { get; }
+
+    /// <summary>
+    /// Constructs a new `TemplateToolConfig`.
+    /// </summary>
+    /// <param name="retrievalConfig">Configures how the model should use
+    ///   the provided retrieval options.</param>
+    public TemplateToolConfig(RetrievalConfig? retrievalConfig = null)
+    {
+      RetrievalConfig = retrievalConfig;
+    }
 
     /// <summary>
     /// Intended for internal use only.
@@ -113,7 +123,12 @@ namespace Firebase.AI
     /// </summary>
     internal IDictionary<string, object> ToJson()
     {
-      return new Dictionary<string, object>();
+      var dict = new Dictionary<string, object>();
+      if (RetrievalConfig.HasValue)
+      {
+        dict["retrievalConfig"] = RetrievalConfig?.ToJson();
+      }
+      return dict;
     }
   }
 }
