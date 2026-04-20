@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Add support for Google Maps grounding.
+
 ### 13.10.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.6.0.

@@ -282,6 +282,14 @@ namespace Firebase.AI
   /// [Gemini Developer API](https://ai.google.dev/gemini-api/terms#grounding-with-google-search)
   /// or Vertex AI Gemini API (see [Service Terms](https://cloud.google.com/terms/service-terms)
   /// section within the Service Specific Terms).
+  /// 
+  /// > Important: If using Grounding with Google Maps", you are required to
+  /// comply with the "Grounding With Google Maps" usage requirements for your chosen API
+  /// provider: [Gemini Developer API]
+  /// (https://ai.google.dev/gemini-api/terms#grounding-with-google-maps)
+  /// or Vertex AI Gemini API (see [Service Terms] 
+  /// (https://cloud.google.com/terms/service-terms) section within the Service Specific
+  /// Terms).
   /// </summary>
   public readonly struct GroundingMetadata
   {
@@ -398,15 +406,22 @@ namespace Firebase.AI
     /// </summary>
     public WebGroundingChunk? Web { get; }
 
-    private GroundingChunk(WebGroundingChunk? web)
+    /// <summary>
+    /// Contains details if the grounding chunk is from a Google Maps source.
+    /// </summary>
+    public GoogleMapsGroundingChunk? GoogleMaps { get; }
+
+    private GroundingChunk(WebGroundingChunk? web, GoogleMapsGroundingChunk? googleMaps)
     {
       Web = web;
+      GoogleMaps = googleMaps;
     }
 
     internal static GroundingChunk FromJson(Dictionary<string, object> jsonDict)
     {
       return new GroundingChunk(
-        jsonDict.ParseNullableObject("web", WebGroundingChunk.FromJson)
+        jsonDict.ParseNullableObject("web", WebGroundingChunk.FromJson),
+        jsonDict.ParseNullableObject("maps", GoogleMapsGroundingChunk.FromJson)
       );
     }
   }
@@ -450,6 +465,48 @@ namespace Firebase.AI
         uri,
         jsonDict.ParseValue<string>("title"),
         jsonDict.ParseValue<string>("domain")
+      );
+    }
+  }
+
+  /// <summary>
+  /// A grounding chunk sourced from the web.
+  /// </summary>
+  public readonly struct GoogleMapsGroundingChunk
+  {
+    /// <summary>
+    /// The URI of the place.
+    /// </summary>
+    public System.Uri Uri { get; }
+    /// <summary>
+    /// The title of the place.
+    /// </summary>
+    public string Title { get; }
+    /// <summary>
+    /// This Place's resource name, in `places/{place_id}` format. This can be used to
+    /// look up the place in the Google Maps API
+    /// </summary>
+    public string PlaceId { get; }
+
+    private GoogleMapsGroundingChunk(System.Uri uri, string title, string placeId)
+    {
+      Uri = uri;
+      Title = title;
+      PlaceId = placeId;
+    }
+
+    internal static GoogleMapsGroundingChunk FromJson(Dictionary<string, object> jsonDict)
+    {
+      Uri uri = null;
+      if (jsonDict.TryParseValue("uri", out string uriString))
+      {
+        uri = new Uri(uriString);
+      }
+
+      return new GoogleMapsGroundingChunk(
+        uri,
+        jsonDict.ParseValue<string>("title"),
+        jsonDict.ParseValue<string>("placeId")
       );
     }
   }
