@@ -111,7 +111,7 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
-    - Firebase AI: Add support for Google Maps grounding.
+    - Firebase AI: Add support for Grounding with Google Maps.
 
 ### 13.10.0
 -   Changes
