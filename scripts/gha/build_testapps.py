@@ -640,9 +640,8 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True, remaining_r
         logging.info("License check caused assembly reload. Retrying tests.")
         open_process.kill()
         # Don't count this against the remaining_retries amount, since the test didn't fail
-        perform_in_editor_tests(dir_helper, retry_on_license_check=False,
+        return perform_in_editor_tests(dir_helper, retry_on_license_check=False,
                                 remaining_retries=remaining_retries)
-        return
   open_process.kill()
   logging.info("Finished running playmode tests")
 
@@ -651,18 +650,17 @@ def perform_in_editor_tests(dir_helper, retry_on_license_check=True, remaining_r
     if results.passes and not results.fails:  # Success
       logging.info(results.summary)
     else:  # Failed
+      logging.info("Test failed. Summary:\n%s", results.summary)
       if remaining_retries > 0:
-        logging.info("Test failed, but will retry %d more times" % remaining_retries)
-        perform_in_editor_tests(dir_helper, retry_on_license_check=retry_on_license_check,
+        logging.info("Retrying %d more times" % remaining_retries)
+        return perform_in_editor_tests(dir_helper, retry_on_license_check=retry_on_license_check,
                                 remaining_retries=remaining_retries-1)
-        return
       raise RuntimeError(results.summary)
   else:  # Generally caused by timeout or crash
     if remaining_retries > 0:
       logging.info("Test timed out or crashed, but will retry %d more times" % remaining_retries)
-      perform_in_editor_tests(dir_helper, retry_on_license_check=retry_on_license_check,
+      return perform_in_editor_tests(dir_helper, retry_on_license_check=retry_on_license_check,
                               remaining_retries=remaining_retries-1)
-      return
     raise RuntimeError(
         "Tests did not finish running. Log tail:\n" + results.summary)
 
