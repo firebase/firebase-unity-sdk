@@ -283,7 +283,7 @@ namespace Firebase.AI
   /// or Vertex AI Gemini API (see [Service Terms](https://cloud.google.com/terms/service-terms)
   /// section within the Service Specific Terms).
   /// 
-  /// > Important: If using Grounding with Google Maps", you are required to
+  /// > Important: If using Grounding with Google Maps, you are required to
   /// comply with the "Grounding With Google Maps" usage requirements for your chosen API
   /// provider: [Gemini Developer API]
   /// (https://ai.google.dev/gemini-api/terms#grounding-with-google-maps)
@@ -470,7 +470,7 @@ namespace Firebase.AI
   }
 
   /// <summary>
-  /// A grounding chunk sourced from the web.
+  /// A grounding chunk sourced from Google Maps.
   /// </summary>
   public readonly struct GoogleMapsGroundingChunk
   {

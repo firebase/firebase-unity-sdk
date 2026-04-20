@@ -147,7 +147,7 @@ namespace Firebase.AI
   public readonly struct CodeExecution { }
 
   /// <summary>
-  /// A tool that allows the model to use Grounding with Google Search.
+  /// A tool that allows the model to use Grounding with Google Maps.
   ///
   /// Grounding with Google Maps can be used to allow the model to connect to Google
   /// Maps to incorporate location-based information into its responses.
@@ -283,7 +283,7 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// Creates a tool that allows the model to user Grounding for Google Maps.
+    /// Creates a tool that allows the model to use Grounding for Google Maps.
     /// </summary>
     /// <param name="googleMaps">The Grounding for Google Maps configuration. The
     /// presence of this object in the list of tools enables the model to use
@@ -501,8 +501,8 @@ namespace Firebase.AI
     /// <summary>
     /// Creates a retrieval configuration.
     /// </summary>
-    /// <param name="latLng">An object that represents a latitude/longitude pair.</parm>
-    /// <param name="languageCode">The language code of the user.</parm>
+    /// <param name="latLng">An object that represents a latitude/longitude pair.</param>
+    /// <param name="languageCode">The language code of the user.</param>
     public RetrievalConfig(LatLng? latLng = null, string languageCode = null)
     {
       LatLng = latLng;
