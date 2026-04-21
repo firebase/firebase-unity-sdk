@@ -30,14 +30,14 @@ namespace Firebase.Storage {
     internal StorageListResult(FirebaseStorage storage, StorageListResultInternal internalResult) {
       this.internalResult = internalResult;
 
-      prefixes = new List<StorageReference>();
       var prefixesCount = internalResult.prefixes_count();
+      prefixes = new List<StorageReference>((int)prefixesCount);
       for (uint i = 0; i < prefixesCount; i++) {
         prefixes.Add(new StorageReference(storage, internalResult.prefixes_get(i)));
       }
 
-      items = new List<StorageReference>();
       var itemsCount = internalResult.items_count();
+      items = new List<StorageReference>((int)itemsCount);
       for (uint i = 0; i < itemsCount; i++) {
         items.Add(new StorageReference(storage, internalResult.items_get(i)));
       }
@@ -46,12 +46,12 @@ namespace Firebase.Storage {
     /// <summary>
     /// Gets the list of prefixes (folders) returned by the List operation.
     /// </summary>
-    public IEnumerable<StorageReference> Prefixes { get { return prefixes; } }
+    public IReadOnlyList<StorageReference> Prefixes { get { return prefixes; } }
 
     /// <summary>
     /// Gets the list of items (files) returned by the List operation.
     /// </summary>
-    public IEnumerable<StorageReference> Items { get { return items; } }
+    public IReadOnlyList<StorageReference> Items { get { return items; } }
 
     /// <summary>
     /// Gets a page token that can be used to resume the List operation, or an empty string if there are no more results.

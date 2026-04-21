@@ -485,18 +485,18 @@ namespace Firebase.Storage {
     ///   <see cref="StorageReference" />
     ///   .
     /// </summary>
-    /// <param name="maxItems">The maximum number of items to return.</param>
+    /// <param name="maxResults">The maximum number of items to return.</param>
     /// <param name="pageToken">A page token to resume from.</param>
     /// <returns>
     ///   A <see cref="Task"/>
     ///   which can be used to monitor the operation and obtain the result.
     /// </returns>
-    public Task<StorageListResult> ListAsync(int maxItems = 1000, string pageToken = null) {
+    public Task<StorageListResult> ListAsync(int maxResults = 1000, string pageToken = null) {
       Task<StorageListResultInternal> internalTask;
       if (pageToken != null) {
-        internalTask = Internal.ListAsync(maxItems, pageToken);
+        internalTask = Internal.ListAsync(maxResults, pageToken);
       } else {
-        internalTask = Internal.ListAsync(maxItems);
+        internalTask = Internal.ListAsync(maxResults);
       }
 
       var tcs = new TaskCompletionSource<StorageListResult>();
