@@ -481,6 +481,33 @@ namespace Firebase.Storage {
     }
 
     /// <summary>
+    ///   Retrieves a list of prefixes and items under this
+    ///   <see cref="StorageReference" />
+    ///   .
+    /// </summary>
+    /// <param name="maxItems">The maximum number of items to return.</param>
+    /// <param name="pageToken">A page token to resume from.</param>
+    /// <returns>
+    ///   A <see cref="Task"/>
+    ///   which can be used to monitor the operation and obtain the result.
+    /// </returns>
+    public Task<StorageListResult> ListAsync(int maxItems = 1000, string pageToken = null) {
+      Task<StorageListResultInternal> internalTask;
+      if (pageToken != null) {
+        internalTask = Internal.ListAsync(maxItems, pageToken);
+      } else {
+        internalTask = Internal.ListAsync(maxItems);
+      }
+
+      var tcs = new TaskCompletionSource<StorageListResult>();
+      internalTask.ContinueWith(task => {
+          CompleteTask(task, tcs, () => { return new StorageListResult(this.Storage, task.Result); },
+                       "ListAsync");
+        });
+      return tcs.Task;
+    }
+
+    /// <summary>
     ///   Retrieves a long lived download URL with a revokable token.
     /// </summary>
     /// <remarks>

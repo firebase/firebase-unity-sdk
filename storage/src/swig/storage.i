@@ -20,6 +20,7 @@
 %include "app/src/swig/null_check_this.i"
 %include "app/src/swig/init_result.i"
 %include "app/src/swig/serial_dispose.i"
+%include "std_vector.i"
 
 // Include required headers and predefined types for the generated C++ module.
 %{
@@ -71,6 +72,7 @@ static CppInstanceManager<Storage> g_storage_instances;
 %SWIG_FUTURE(Future_StorageMetadata, MetadataInternal, internal,
              firebase::storage::Metadata, FirebaseException)
 %SWIG_FUTURE(Future_Size, long, internal, size_t, FirebaseException)
+%SWIG_FUTURE(Future_StorageListResult, StorageListResultInternal, internal, firebase::storage::StorageListResult, FirebaseException)
 
 
 // TODO: Move this into App
@@ -160,10 +162,6 @@ static AttributeType& %mangle(Class) ##_## AttributeName ## _get_func(Class* sel
 %ignore firebase::storage::StorageReference::GetBytes;
 %ignore firebase::storage::StorageReference::PutBytes;
 %ignore firebase::storage::StorageReference::PutFile;
-// Ignore List methods and StorageListResult since StorageListResult is not wrapped yet.
-%ignore firebase::storage::StorageReference::List;
-%ignore firebase::storage::StorageReference::ListLastResult;
-%ignore firebase::storage::StorageListResult;
 
 // Remove the copy operator as the proxy uses the copy constructor.
 %ignore firebase::storage::StorageReference::operator=(const StorageReference&);
@@ -217,6 +215,7 @@ static AttributeType& %mangle(Class) ##_## AttributeName ## _get_func(Class* sel
   }
 }
 
+%rename("StorageListResultInternal") firebase::storage::StorageListResult;
 %rename("MetadataInternal") firebase::storage::Metadata;
 // Configure properties for get / set methods on the Metadata class.
 %safeattributestring(firebase::storage::Metadata, std::string, Bucket, bucket);
@@ -480,6 +479,17 @@ class MonitorController;
 %include "storage/src/include/firebase/storage/common.h"
 %include "storage/src/include/firebase/storage/controller.h"
 %include "storage/src/include/firebase/storage/listener.h"
+%ignore firebase::storage::StorageListResult::items;
+%ignore firebase::storage::StorageListResult::prefixes;
+
+%extend firebase::storage::StorageListResult {
+  size_t items_count() const { return self->items().size(); }
+  firebase::storage::StorageReference items_get(size_t index) const { return self->items()[index]; }
+  size_t prefixes_count() const { return self->prefixes().size(); }
+  firebase::storage::StorageReference prefixes_get(size_t index) const { return self->prefixes()[index]; }
+}
+
+%include "storage/src/include/firebase/storage/list_result.h"
 %include "storage/src/include/firebase/storage/metadata.h"
 %include "storage/src/include/firebase/storage/storage_reference.h"
 %include "storage/src/swig/monitor_controller.h"

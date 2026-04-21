@@ -52,7 +52,7 @@ if(FIREBASE_INCLUDE_UNITY)
     set(UNITY_PATH_SUFFIXES "Editor/Data/Managed" "Editor/Data/MonoBleedingEdge/bin"
                             "Editor/Data/Mono/bin")
   elseif(CMAKE_HOST_APPLE)
-    set(UNITY_PATH_SUFFIXES "Unity.app/Contents/Managed" "PlaybackEngines/iOSSupport"
+    set(UNITY_PATH_SUFFIXES "Unity.app/Contents/Resources/Scripting/Managed" "Unity.app/Contents/Managed" "PlaybackEngines/iOSSupport"
                             "Unity.app/Contents/MonoBleedingEdge/bin" "Unity.app/Contents/Mono/bin")
   elseif(CMAKE_HOST_UNIX) # Linux
     set(UNITY_PATH_SUFFIXES "Editor/Data/Managed" "Editor/Data/PlaybackEngines/iOSSupport"

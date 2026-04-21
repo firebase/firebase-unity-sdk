@@ -140,6 +140,7 @@ namespace Firebase.Sample.Storage {
         TestUploadSmallFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFileWithCancelation,
+        TestList,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -1093,5 +1094,55 @@ namespace Firebase.Sample.Storage {
     }
 
     // TODO: Upload and attempt to partially download a file.
+
+    Task TestList() {
+      DebugLog("TestList");
+      string baseFolder = "test_list_" + Guid.NewGuid().ToString() + "/";
+      string file1Path = baseFolder + "file1.txt";
+      string file2Path = baseFolder + "file2.txt";
+      string file3Path = baseFolder + "file3.txt";
+      string file4Path = baseFolder + "prefix/file4.txt";
+
+      // Upload files
+      return UploadToPath(file1Path, SMALL_FILE_CONTENTS, MetadataTestMode.None, UploadBytesAsync, ValidateUploadSuccessfulNotFile)
+        .ContinueWithOnMainThread(t1 => {
+          return UploadToPath(file2Path, SMALL_FILE_CONTENTS, MetadataTestMode.None, UploadBytesAsync, ValidateUploadSuccessfulNotFile);
+        }).Unwrap()
+        .ContinueWithOnMainThread(t2 => {
+          return UploadToPath(file3Path, SMALL_FILE_CONTENTS, MetadataTestMode.None, UploadBytesAsync, ValidateUploadSuccessfulNotFile);
+        }).Unwrap()
+        .ContinueWithOnMainThread(t3 => {
+          return UploadToPath(file4Path, SMALL_FILE_CONTENTS, MetadataTestMode.None, UploadBytesAsync, ValidateUploadSuccessfulNotFile);
+        }).Unwrap()
+        .ContinueWithOnMainThread(t4 => {
+          // List with maxResultsPerPage: 2 to test pagination
+          var storageRef = FirebaseStorage.DefaultInstance.GetReference(baseFolder);
+          return storageRef.ListAsync(maxItems: 2).ContinueWithOnMainThread(listTask => {
+            Assert("listTask.IsFaulted", !listTask.IsFaulted);
+            Assert("listTask.IsCanceled", !listTask.IsCanceled);
+            var result = listTask.Result;
+            Assert("result != null", result != null);
+            
+            // We should get 2 items (order is not guaranteed, but we should have exactly 2)
+            AssertEq("result.Items.Count", System.Linq.Enumerable.Count(result.Items), 2);
+            Assert("result.NextPageToken != null", !string.IsNullOrEmpty(result.NextPageToken));
+
+            // Fetch page 2
+            return storageRef.ListAsync(maxItems: 2, pageToken: result.NextPageToken).ContinueWithOnMainThread(listTask2 => {
+              Assert("listTask2.IsFaulted", !listTask2.IsFaulted);
+              var result2 = listTask2.Result;
+              AssertEq("result2.Items.Count + result2.Prefixes.Count", System.Linq.Enumerable.Count(result2.Items) + System.Linq.Enumerable.Count(result2.Prefixes), 2); // 1 item remaining + 1 prefix
+              
+              // Verify we can find the prefix
+              bool foundPrefix = false;
+              foreach (var prefix in result2.Prefixes) {
+                if (prefix.Name == "prefix") foundPrefix = true;
+              }
+              
+              return CompletedTask();
+            }).Unwrap();
+          }).Unwrap();
+        }).Unwrap();
+    }
   }
 }
