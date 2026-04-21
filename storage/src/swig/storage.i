@@ -20,7 +20,6 @@
 %include "app/src/swig/null_check_this.i"
 %include "app/src/swig/init_result.i"
 %include "app/src/swig/serial_dispose.i"
-%include "std_vector.i"
 
 // Include required headers and predefined types for the generated C++ module.
 %{
