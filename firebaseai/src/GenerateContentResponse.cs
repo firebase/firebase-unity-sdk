@@ -131,6 +131,63 @@ namespace Firebase.AI
   }
 
   /// <summary>
+  /// The model's response to a generate object request.
+  /// 
+  /// The object is deserialized using reflection. If you would like to implement your own
+  /// deserialization method, have your class T implement the `IFirebaseDeserializable` interface.
+  /// </summary>
+  /// <typeparam name="T">The type of the underlying Result</typeparam>
+  public readonly struct GenerateObjectResponse<T>
+  {
+    /// <summary>
+    /// The underlying `GenerateContentResponse` returned from the Model.
+    /// </summary>
+    public readonly GenerateContentResponse Response { get; }
+
+    /// <summary>
+    /// The deserialized object from the first Candidate response.
+    /// </summary>
+    public T Result => GetResult(0);
+
+    private readonly Dictionary<int, T> parsedResults;
+
+    /// <summary>
+    /// Intended for internal use. Call `GenerativeModel.GenerateObjectAsync`
+    /// to get a valid one.
+    /// </summary>
+    internal GenerateObjectResponse(GenerateContentResponse response)
+    {
+      Response = response;
+      parsedResults = new();
+    }
+
+    /// <summary>
+    /// Parse the resulting object from the requested candidate response.
+    /// </summary>
+    /// <param name="candidateIndex">The index of the candidate to parse.
+    ///   Note that getting multiple candidates requires configuration settings.</param>
+    /// <returns>The deserialized object.</returns>
+    public T GetResult(int candidateIndex = 0)
+    {
+      if (parsedResults.TryGetValue(candidateIndex, out var t))
+      {
+        return t;
+      }
+
+      foreach (var part in Response.Candidates[candidateIndex].Content.Parts)
+      {
+        if (part is ModelContent.TextPart textPart && !textPart.IsThought)
+        {
+          T result = (T)SerializationHelpers.JsonStringToType(textPart.Text, typeof(T));
+          parsedResults[candidateIndex] = result;
+          return result;
+        }
+      }
+      return default;
+    }
+  }
+
+  /// <summary>
   /// A type describing possible reasons to block a prompt.
   /// </summary>
   public enum BlockReason
@@ -223,6 +280,12 @@ namespace Firebase.AI
   /// > Important: If using Grounding with Google Search, you are required to comply with the
   /// "Grounding with Google Search" usage requirements for your chosen API provider:
   /// [Gemini Developer API](https://ai.google.dev/gemini-api/terms#grounding-with-google-search)
+  /// or Vertex AI Gemini API (see [Service Terms](https://cloud.google.com/terms/service-terms)
+  /// section within the Service Specific Terms).
+  /// 
+  /// > Important: If using Grounding with Google Maps, you are required to
+  /// comply with the "Grounding With Google Maps" usage requirements for your chosen API
+  /// provider: [Gemini Developer API](https://ai.google.dev/gemini-api/terms#grounding-with-google-maps)
   /// or Vertex AI Gemini API (see [Service Terms](https://cloud.google.com/terms/service-terms)
   /// section within the Service Specific Terms).
   /// </summary>
@@ -341,15 +404,22 @@ namespace Firebase.AI
     /// </summary>
     public WebGroundingChunk? Web { get; }
 
-    private GroundingChunk(WebGroundingChunk? web)
+    /// <summary>
+    /// Contains details if the grounding chunk is from a Google Maps source.
+    /// </summary>
+    public GoogleMapsGroundingChunk? GoogleMaps { get; }
+
+    private GroundingChunk(WebGroundingChunk? web, GoogleMapsGroundingChunk? googleMaps)
     {
       Web = web;
+      GoogleMaps = googleMaps;
     }
 
     internal static GroundingChunk FromJson(Dictionary<string, object> jsonDict)
     {
       return new GroundingChunk(
-        jsonDict.ParseNullableObject("web", WebGroundingChunk.FromJson)
+        jsonDict.ParseNullableObject("web", WebGroundingChunk.FromJson),
+        jsonDict.ParseNullableObject("maps", GoogleMapsGroundingChunk.FromJson)
       );
     }
   }
@@ -393,6 +463,48 @@ namespace Firebase.AI
         uri,
         jsonDict.ParseValue<string>("title"),
         jsonDict.ParseValue<string>("domain")
+      );
+    }
+  }
+
+  /// <summary>
+  /// A grounding chunk sourced from Google Maps.
+  /// </summary>
+  public readonly struct GoogleMapsGroundingChunk
+  {
+    /// <summary>
+    /// The URI of the place.
+    /// </summary>
+    public System.Uri Uri { get; }
+    /// <summary>
+    /// The title of the place.
+    /// </summary>
+    public string Title { get; }
+    /// <summary>
+    /// This Place's resource name, in `places/{place_id}` format. This can be used to
+    /// look up the place in the Google Maps API
+    /// </summary>
+    public string PlaceId { get; }
+
+    private GoogleMapsGroundingChunk(System.Uri uri, string title, string placeId)
+    {
+      Uri = uri;
+      Title = title;
+      PlaceId = placeId;
+    }
+
+    internal static GoogleMapsGroundingChunk FromJson(Dictionary<string, object> jsonDict)
+    {
+      Uri uri = null;
+      if (jsonDict.TryParseValue("uri", out string uriString))
+      {
+        uri = new Uri(uriString);
+      }
+
+      return new GoogleMapsGroundingChunk(
+        uri,
+        jsonDict.ParseValue<string>("title"),
+        jsonDict.ParseValue<string>("placeId")
       );
     }
   }

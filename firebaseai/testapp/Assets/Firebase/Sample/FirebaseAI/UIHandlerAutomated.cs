@@ -132,40 +132,57 @@ namespace Firebase.Sample.FirebaseAI
     protected override void Start()
     {
       // Set of tests that use multiple backends.
-      Func<Backend, Task>[] multiBackendTests = {
+      // When running on CI, these tests will be run on all devices
+      Func<Backend, Task>[] basicMultiBackendTests = {
         TestCreateModel,
         TestBasicText,
         TestBasicImage,
         TestModelOptions,
-        TestCountTokens,
-#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
-        // Disabled from CI, because of rate limit issues
+        TestCountTokens
+      };
+      // When running on CI, these tests are only run in the Editor
+      Func<Backend, Task>[] editorMultiBackendTests = {
         TestMultipleCandidates,
         TestBasicTextStream,
         TestFunctionCallingAny,
         TestFunctionCallingNone,
         TestEnumSchemaResponse,
         TestAnyOfSchemaResponse,
-        TestSearchGrounding,
         TestChatBasicTextNoHistory,
         TestChatBasicTextPriorHistory,
         TestChatFunctionCalling,
         TestChatBasicTextStream,
+        TestThinkingBudget,
+        TestTemplateGenerateContent,
+        TestTemplateGenerateContentStream,
+        TestJsonSchemaStructureOutput,
+        TestTemplateChat,
+        TestTemplateChatStreamAutoFunction,
+        TestChatAutoFunctionCalling
+      };
+      // When running on CI, these tests aren't run since they are more flakey
+      Func<Backend, Task>[] complexMultiBackendTests = {
+        TestIncludeThoughts,
         TestYoutubeLink,
         TestGenerateImage,
         TestImagenGenerateImage,
         TestImagenGenerateImageOptions,
-        TestThinkingBudget,
-        TestIncludeThoughts,
+        TestSearchGrounding,
         TestCodeExecution,
         TestUrlContext,
-        TestTemplateGenerateContent,
-        TestTemplateGenerateContentStream,
+        TestGoogleMaps,
         TestTemplateImagenGenerateImage,
-        TestJsonSchemaStructureOutput
-#endif
       };
-      // Set of tests that only run the single time.
+      // Construct the set of tests to run, based on the environment
+      List<Func<Backend, Task>> multiBackendTests = new(basicMultiBackendTests);
+#if !(FIREBASE_RUNNING_FROM_CI && !UNITY_EDITOR)
+      multiBackendTests.AddRange(editorMultiBackendTests);
+#endif
+#if !FIREBASE_RUNNING_FROM_CI
+      multiBackendTests.AddRange(complexMultiBackendTests);
+#endif
+
+      // Set of tests that only run the single time, will be run on all devices.
       Func<Task>[] singleTests = {
         TestReadFile,
         TestReadSecureFile,
@@ -181,6 +198,7 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestVertexAIGrounding,
         InternalTestGoogleAIGrounding,
         InternalTestGoogleAIGroundingEmptyChunks,
+        InternalTestMapsGrounding,
         InternalTestGroundingMetadata_Empty,
         InternalTestSegment_Empty,
         InternalTestCountTokenResponse,
@@ -1130,33 +1148,176 @@ namespace Firebase.Sample.FirebaseAI
       AssertEq($"Image Height = Width", texture.height, texture.width);
     }
 
+    async Task TestTemplateChat(Backend backend)
+    {
+      var model = GetFirebaseAI(backend, "global").GetTemplateGenerativeModel();
+
+      var chat = model.StartChat("function-calling-weather");
+
+      // The template defines a function for the model to call, which we trigger, and respond to.
+      var response1 = await chat.SendMessageAsync("What was the weather in San Jose, CA, on January 1, 2026?");
+
+      var functionCallPart = response1.FunctionCalls?.First();
+      AssertEq("Function Call Name", functionCallPart?.Name, "fetchWeather");
+
+      var response2 = await chat.SendMessageAsync(
+        ModelContent.FunctionResponse("fetchWeather",
+          new Dictionary<string, object>
+          {
+            { "result", "Cloudy, with a chance of meatballs" }
+          },
+          functionCallPart?.Id)
+      );
+
+      // There isn't much guarantee on what this will respond with. We just want non-empty.
+      Assert("Response was empty.", !string.IsNullOrWhiteSpace(response2.Text));
+    }
+
+    private class TestAutoFunctionLocation
+    {
+      public string city;
+      public string state;
+    }
+
+    async Task TestTemplateChatStreamAutoFunction(Backend backend)
+    {
+      var model = GetFirebaseAI(backend, "global").GetTemplateGenerativeModel();
+
+      var chat = model.StartChat("function-calling-weather",
+          tools: new[] {
+            // This function declaration matches what the server prompt defines
+            new TemplateTool.AutoFunctionDeclaration(
+                (Func<TestAutoFunctionLocation, string, string>)((location, date) => "Cloudy with a chance of meatballs"),
+                name: "fetchWeather")
+          });
+
+      // The template defines a function for the model to call, which we trigger, and respond to.
+      var responseStream = chat.SendMessageStreamAsync("What was the weather in San Jose, CA, on January 1, 2026?");
+
+      await foreach (var response in responseStream)
+      {
+        // There isn't much guarantee on what this will respond with. We just want non-empty.
+        Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
+      }
+    }
+
+    // Class used for validating JsonSchema generation
+    public class SampleRecord
+    {
+      public enum MyColor
+      {
+        Red,
+        Green,
+        Blue
+      }
+
+      [SchemaInfo(Description = "The first and last name of a person")]
+      public string name;
+
+      public int? age;
+
+      public bool Alive { get; set; }
+
+      [SchemaInfo(Description = "How much of their life they have left.")]
+      [Range(0, 1)]
+      public double Percent;
+
+      public MyColor eye_color;
+
+      [SchemaInfo(Optional = true)]
+      public char BloodType;
+
+      [SchemaInfo(Nullable = true)]
+      public SampleRecord[] Children;
+
+      public Dictionary<int, string> Dummy;
+
+      public override string ToString()
+      {
+        return $"{name} {age} {Alive} {Percent} {eye_color} [{string.Join(", ", Children.Select(t => $"({t})"))}]";
+      }
+    }
+
     async Task TestJsonSchemaStructureOutput(Backend backend)
     {
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(
           responseMimeType: "application/json",
-          responseJsonSchema: JsonSchema.Object(
-            properties: new Dictionary<string, JsonSchema>
-            {
-              { "metadata", JsonSchema.Ref("#/$defs/metadata_schema") }
-            },
-            schemaDefinitions: new Dictionary<string, JsonSchema>
-            {
-              {
-                "metadata_schema", JsonSchema.Object(
-                  properties: new Dictionary<string, JsonSchema> {
-                    { "id", JsonSchema.String() },
-                    { "data", JsonSchema.String() }
-                  }
-                )
-              }
-            })));
+          responseJsonSchema: JsonSchema.FromType(typeof(SampleRecord))));
 
-      var response = await model.GenerateContentAsync(
+      var response = await model.GenerateObjectAsync<SampleRecord>(
         "Hello, I am testing setting the response schema with an object, cause you give me some random values.");
 
       // There isn't much guarantee on what this will respond with. We just want non-empty.
+      Assert("Response was missing a Name.", !string.IsNullOrWhiteSpace(response.Result.name));
+    }
+
+    string LastInput = null;
+    const int TestPrice = 10;
+    Task<int> TestAutoFunctionPriceCheck([AutoFunctionDescription("The fruit to check for")] string input)
+    {
+      // Save the input, to check against
+      LastInput = input;
+      return Task.FromResult(10);
+    }
+
+    async Task TestChatAutoFunctionCalling(Backend backend)
+    {
+      var tool = new Tool(new AutoFunctionDeclaration(
+          (Func<string, Task<int>>)TestAutoFunctionPriceCheck,
+          description: "Checks the price of the given item"));
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
+        tools: new Tool[] { tool }
+      );
+      var chat = model.StartChat();
+
+      // Clear the saved last input first
+      LastInput = null;
+      string expectedInput = "Banana";
+      GenerateContentResponse response = await chat.SendMessageAsync(
+          $"Hello, I am testing function calling with Chat. How much does a {expectedInput} cost?");
+
+      // We don't know exactly how the response will be phrased, but it should have text
       Assert("Response was empty.", !string.IsNullOrWhiteSpace(response.Text));
+      // Ideally the response will include the price, though it isn't guaranteed.
+      if (!response.Text.Contains($"{TestPrice}"))
+      {
+        DebugLog($"WARNING: Response string was missing the expected price of {TestPrice}: " +
+            $"\n{response.Text}");
+      }
+
+      // Check if the recorded LastInput for the function matches what we expect.
+      Assert($"LastInput != ExpectedInput ({LastInput}, {expectedInput})",
+          string.Equals(LastInput, expectedInput, StringComparison.CurrentCultureIgnoreCase));
+    }
+
+    // Test grounding with Google Maps.
+    async Task TestGoogleMaps(Backend backend)
+    {
+      // Use a model that supports grounding.
+      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
+        tools: new Tool[] { new Tool(new GoogleMaps()) },
+        toolConfig: new ToolConfig(
+          // Give it the location of the Statue of Liberty
+          retrievalConfig: new RetrievalConfig(new LatLng(40.6892, -74.0445)))
+      );
+
+      // A prompt that should trigger the map data.
+      GenerateContentResponse response = await model.GenerateContentAsync("Find me one famous statue that is nearby?");
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+
+      string result = response.Text;
+      Assert("Response text was missing", !string.IsNullOrWhiteSpace(result));
+
+      var candidate = response.Candidates.First();
+      Assert("GroundingMetadata should not be null when GoogleMaps tool is used.",
+          candidate.GroundingMetadata.HasValue);
+
+      var groundingMetadata = candidate.GroundingMetadata.Value;
+
+      Assert("GroundingChunks should have Maps data.",
+          groundingMetadata.GroundingChunks.Any(gc => gc.GoogleMaps != null));
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
@@ -1677,6 +1838,35 @@ namespace Firebase.Sample.FirebaseAI
           "Segment.Text",
           support.Segment.Text,
           "There is a 0% chance of rain and the humidity is around 41%.");
+    }
+
+    // Test that parsing a Vertex AI response with Maps GroundingMetadata works.
+    // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/vertexai/unary-success-google-maps-grounding.json
+    async Task InternalTestMapsGrounding()
+    {
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-google-maps-grounding.json");
+
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+
+      Assert("Response missing candidates.", response.Candidates.Any());
+      var candidate = response.Candidates.First();
+      Assert("Candidate should have GroundingMetadata", candidate.GroundingMetadata.HasValue);
+
+      var grounding = candidate.GroundingMetadata.Value;
+
+      AssertEq("GroundingChunks count", grounding.GroundingChunks.Count(), 20);
+      var chunk = grounding.GroundingChunks.First();
+      Assert("GroundingChunk.GoogleMaps should not be null", chunk.GoogleMaps.HasValue);
+      var mapsChunk = chunk.GoogleMaps.Value;
+      AssertEq("GoogleMapsGroundingChunk.Title", mapsChunk.Title, "Joe’s Pizza");
+      AssertEq("GoogleMapsGroundingChunk.Uri", mapsChunk.Uri, new Uri("https://maps.google.com/?cid=10332424901773702701"));
+      AssertEq("GoogleMapsGroundingChunk.PlaceId", mapsChunk.PlaceId, "places/ChIJqdNaaBVbwokRLTafYrQlZI8");
+
+      AssertEq("GroundingSupports count", grounding.GroundingSupports.Count(), 39);
+      var support = grounding.GroundingSupports.First();
+      AssertEq("GroundingChunkIndices count", support.GroundingChunkIndices.Count(), 1);
+      AssertEq("GroundingChunkIndices content", support.GroundingChunkIndices.First(), 0);
+      AssertEq("Segment text", support.Segment.Text, "*   **Joe's Pizza** at 124 Fulton St is a long-time family-owned pizzeria that serves classic pies and slices");
     }
 
     // Test parsing an empty GroundingMetadata object.

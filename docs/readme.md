@@ -111,10 +111,20 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
+    - Firebase AI: Add support for Grounding with Google Maps.
+    - Storage: Added `ListAsync` API to list items and prefixes under a reference.
+
+### 13.10.0
+-   Changes
+    - General: Update to Firebase C++ SDK version 13.6.0.
+    - General (Android): Update to Firebase Android BoM version 34.12.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.12.0.
     - Firebase AI: All Imagen models are deprecated and will shut down as early
       as June 2026. As a replacement, you can
       [migrate your apps to use Gemini Image models (the "Nano Banana" models)](https://firebase.google.com/docs/ai-logic/imagen-models-migration).
     - Firebase AI: Add support for the JsonSchema formatting.
+    - Firebase AI: Add support for simplified object generation with GenerateObjectAsync.
+    - Firebase AI: Add support for automated function calling in Chat with AutoFunctionDeclaration.
     - Firebase AI: Add support for TemplateChatSession.
     - Functions: Rewrote internal serialization logic to C#. Removes dependency on internal C++ implementation.
 

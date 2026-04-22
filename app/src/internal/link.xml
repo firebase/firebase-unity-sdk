@@ -1,0 +1,9 @@
+<linker>
+  <assembly fullname="Firebase.Auth">
+    <type fullname="Firebase.Auth.FirebaseAuth" preserve="all"/>
+    <type fullname="Firebase.Auth.FirebaseUser" preserve="all"/>
+  </assembly>
+  <assembly fullname="Firebase.AppCheck">
+    <type fullname="Firebase.AppCheck.FirebaseAppCheck" preserve="all"/>
+  </assembly>
+</linker>

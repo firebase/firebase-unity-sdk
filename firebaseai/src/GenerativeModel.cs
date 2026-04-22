@@ -158,6 +158,54 @@ namespace Firebase.AI
     }
 
     /// <summary>
+    /// Generates an object from input `ModelContent` given to the model as a prompt.
+    /// Note that this requires configuring the model to respond with a `Schema` or `JsonSchema`
+    /// that matches the type T.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to generate.</typeparam>
+    /// <param name="content">The input given to the model as a prompt.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>The `GenerateObjectResponse` from the model, which contains the Result.</returns>
+    public async Task<GenerateObjectResponse<T>> GenerateObjectAsync<T>(
+        ModelContent content, CancellationToken cancellationToken = default)
+    {
+      var response = await GenerateContentAsync(content, cancellationToken);
+      return new GenerateObjectResponse<T>(response);
+    }
+
+    /// <summary>
+    /// Generates an object from input text given to the model as a prompt.
+    /// Note that this requires configuring the model to respond with a Schema or JsonSchema
+    /// that matches the type T.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to generate.</typeparam>
+    /// <param name="text">The text given to the model as a prompt.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>The `GenerateObjectResponse` from the model, which contains the Result.</returns>
+    public async Task<GenerateObjectResponse<T>> GenerateObjectAsync<T>(
+        string text, CancellationToken cancellationToken = default)
+    {
+      var response = await GenerateContentAsync(text, cancellationToken);
+      return new GenerateObjectResponse<T>(response);
+    }
+
+    /// <summary>
+    /// Generates an object from input `ModelContent` given to the model as a prompt.
+    /// Note that this requires configuring the model to respond with a `Schema` or `JsonSchema`
+    /// that matches the type T.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to generate.</typeparam>
+    /// <param name="content">The input given to the model as a prompt.</param>
+    /// <param name="cancellationToken">An optional token to cancel the operation.</param>
+    /// <returns>The `GenerateObjectResponse` from the model, which contains the Result.</returns>
+    public async Task<GenerateObjectResponse<T>> GenerateObjectAsync<T>(
+        IEnumerable<ModelContent> content, CancellationToken cancellationToken = default)
+    {
+      var response = await GenerateContentAsync(content, cancellationToken);
+      return new GenerateObjectResponse<T>(response);
+    }
+
+    /// <summary>
     /// Counts the number of tokens in a prompt using the model's tokenizer.
     /// </summary>
     /// <param name="content">The input given to the model as a prompt.</param>
@@ -207,7 +255,12 @@ namespace Firebase.AI
     /// <param name="history">Initial content history to start with.</param>
     public Chat StartChat(IEnumerable<ModelContent> history)
     {
-      return Chat.InternalCreateChat(this, history);
+      // If we have auto functions, we pass them separately.
+      var autoFunctions = _tools?.Select(tool => tool.AutoFunctionDeclarations)
+          .Where(afd => afd != null)
+          .SelectMany(inner => inner);
+      return Chat.InternalCreateChat(this, history, autoFunctions,
+          _requestOptions?.AutoFunctionTurnLimit ?? RequestOptions.DefaultAutoFunctionTurnLimit);
     }
     #endregion
 

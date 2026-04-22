@@ -15,8 +15,10 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Firebase.AI.Internal;
 
 namespace Firebase.AI
@@ -481,6 +483,10 @@ namespace Firebase.AI
         );
     }
 
+    /// <summary>
+    /// Returns a `JsonSchema` that references a definition in a parent object.
+    /// </summary>
+    /// <param name="schemaReference">The path to the definition, typically "$/defs/class_name"</param>
     public static JsonSchema Ref(string schemaReference)
     {
       return new JsonSchema(null,
@@ -569,6 +575,187 @@ namespace Firebase.AI
       }
 
       return json;
+    }
+
+    /// <summary>
+    /// Generates a JsonSchema for the given type, using reflection.
+    /// Note that if the type implements: static JsonSchema ToJsonSchema(), that function
+    /// will be called to generate the JsonSchema.
+    /// </summary>
+    /// <param name="type">The type to construct the JsonSchema of.</param>
+    /// <param name="description">The description to use for the returned JsonSchema</param>
+    public static JsonSchema FromType(Type type, string description = null)
+    {
+      return FromTypeInternal(type, null, description, new Dictionary<string, JsonSchema>(), true, out _);
+    }
+
+    private static JsonSchema FromTypeInternal(Type type, MemberInfo memberInfo, string description,
+        Dictionary<string, JsonSchema> definitions, bool topLevel, out bool optional)
+    {
+      optional = false;
+
+      if (type == null) return null;
+
+      // Handle Nullable<T> by unwrapping it.
+      bool isNullableValueType = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+      if (isNullableValueType)
+      {
+        type = System.Nullable.GetUnderlyingType(type);
+      }
+
+      // If the given type has Schema info, pull it from that
+      var schemaInfo = memberInfo == null ?
+          type.GetCustomAttribute<SchemaInfoAttribute>() :
+          memberInfo.GetCustomAttribute<SchemaInfoAttribute>();
+
+      optional = schemaInfo?.Optional ?? false;
+
+      // Check if there is a defined function on the type to make the JsonSchema
+      var toSchemaMethod = type.GetMethod("ToJsonSchema",
+          BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+      if (toSchemaMethod != null && toSchemaMethod.ReturnType == typeof(JsonSchema) &&
+          toSchemaMethod.GetParameters().Length == 0)
+      {
+        return (JsonSchema)toSchemaMethod.Invoke(null, null);
+      }
+
+      // If not provided a description, check the schemaInfo object
+      description ??= schemaInfo?.Description;
+      bool nullable = schemaInfo != null && schemaInfo.Nullable;
+
+      // Check for the commonly used attribute Range, for Min and Max
+      float? min = null;
+      float? max = null;
+      var rangeAttr = memberInfo == null ?
+          type.GetCustomAttribute<UnityEngine.RangeAttribute>() :
+          memberInfo.GetCustomAttribute<UnityEngine.RangeAttribute>();
+      if (rangeAttr != null)
+      {
+        min = rangeAttr.min;
+        max = rangeAttr.max;
+      }
+
+      if (type.IsPrimitive)
+      {
+        // Possible primitives:
+        //   bool
+        //   byte, sbyte, short, ushort, int, uint, long, ulong, float, double
+        //   char  *Not clearly mapped*
+        //   IntPtr, UIntPtr  *Not clearly mapped*
+        if (type == typeof(bool))
+        {
+          return Boolean(description: description, nullable: nullable);
+        }
+        else if (type == typeof(float))
+        {
+          return Float(description: description, nullable: nullable,
+              minimum: min, maximum: max);
+        }
+        else if (type == typeof(double))
+        {
+          return Double(description: description, nullable: nullable,
+              minimum: min, maximum: max);
+        }
+        else if (type == typeof(long) || type == typeof(ulong))
+        {
+          return Long(description: description, nullable: nullable,
+              minimum: (long?)min, maximum: (long?)max);
+        }
+        else
+        {
+          // Treat everything else as an Int. While there could be logic to add to set
+          // minimum and maximums based on the type, it will likely be unnecessary.
+          return Int(description: description, nullable: nullable,
+              minimum: (int?)min, maximum: (int?)max);
+        }
+      }
+      else if (type.IsEnum)
+      {
+        return Enum(type.GetEnumNames(), description: description, nullable: nullable);
+      }
+      else if (type == typeof(string))
+      {
+        return String(description: description, nullable: nullable);
+      }
+      else if (type.IsArray)
+      {
+        Type elementType = type.GetElementType();
+        JsonSchema elementSchema = FromTypeInternal(elementType, null, null, definitions, false, out _);
+        return Array(elementSchema, description: description, nullable: nullable);
+      }
+      else if (type.IsGenericType && typeof(IEnumerable).IsAssignableFrom(type))
+      {
+        // There isn't a great way to handle dictionaries, so bail out.
+        if (typeof(IDictionary).IsAssignableFrom(type))
+        {
+          return null;
+        }
+        Type elementType = type.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            ?.GetGenericArguments()[0] ?? typeof(object);
+        JsonSchema elementSchema = FromTypeInternal(elementType, null, null, definitions, false, out _);
+        return Array(elementSchema, description, nullable: nullable);
+      }
+      else
+      {
+        // Assume it is an Object
+        // If this is not at the top level, we want to add it to the definitions, and use a ref instead
+        if (!topLevel)
+        {
+          string key = type.FullName;
+          if (!definitions.ContainsKey(key))
+          {
+            definitions[key] = null; // Placeholder to prevent infinite recursion.
+            JsonSchema jsonSchema = GenerateObject(type, schemaInfo, description, definitions, false);
+            definitions[key] = jsonSchema;
+          }
+
+          return Ref($"#/$defs/{key}");
+        }
+
+        // Generate the top level object, which will include any found definitions.
+        return GenerateObject(type, schemaInfo, description, definitions, topLevel);
+      }
+    }
+
+    private static JsonSchema GenerateObject(Type type, SchemaInfoAttribute schemaInfo, string description,
+        Dictionary<string, JsonSchema> definitions, bool includeDefinitions)
+    {
+      bool nullable = schemaInfo != null && schemaInfo.Nullable;
+
+      Dictionary<string, JsonSchema> properties = new();
+      List<string> optionalProperties = new();
+      // Get the public Fields and Properties
+      var infos = type.FindMembers(
+          MemberTypes.Field | MemberTypes.Property,
+          BindingFlags.Instance | BindingFlags.Public,
+          null, null);
+      foreach (var info in infos)
+      {
+        JsonSchema jsonSchema = null;
+        bool optional = false;
+        if (info is FieldInfo fieldInfo)
+        {
+          jsonSchema = FromTypeInternal(fieldInfo.FieldType, info, null, definitions, false, out optional);
+        }
+        else if (info is PropertyInfo propertyInfo)
+        {
+          jsonSchema = FromTypeInternal(propertyInfo.PropertyType, info, null, definitions, false, out optional);
+        }
+
+        if (jsonSchema != null)
+        {
+          properties[info.Name] = jsonSchema;
+          if (optional)
+          {
+            optionalProperties.Add(info.Name);
+          }
+        }
+      }
+
+      return Object(properties, optionalProperties: optionalProperties,
+          description: description, title: schemaInfo?.Title,
+          nullable: nullable, schemaDefinitions: includeDefinitions ? definitions : null);
     }
   }
 

@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using Firebase.AI.Internal;
 
 namespace Firebase.AI
 {
@@ -86,9 +88,9 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       var json = new Dictionary<string, object>() {
-      { "name", Name },
-      { "description", Description },
-    };
+        { "name", Name },
+        { "description", Description },
+      };
       // Only one of these will likely be set, but just check
       if (JsonParameters != null)
       {
@@ -101,6 +103,27 @@ namespace Firebase.AI
 
       return json;
     }
+  }
+
+  /// <summary>
+  /// Structured representation of a function declaration, designed
+  /// to be automatically handled when using Chat, instead of requiring
+  /// manual handling.
+  /// 
+  /// See `FunctionDeclaration` for more information.
+  /// </summary>
+  public class AutoFunctionDeclaration : BaseAutoFunctionDeclaration
+  {
+    /// <summary>
+    /// Constructs a new `AutoFunctionDeclaration`
+    /// </summary>
+    /// <param name="callable">The delegate that will be called automatically when requested by the model.</param>
+    /// <param name="description">A brief description of the function.</param>
+    /// <param name="name">Optional name to use for the function, used to overwrite the delegate name.</param>
+    public AutoFunctionDeclaration(Delegate callable, string description,
+        string name = null)
+        : base(callable, description, name)
+    { }
   }
 
   /// <summary>
@@ -124,6 +147,21 @@ namespace Firebase.AI
   public readonly struct CodeExecution { }
 
   /// <summary>
+  /// A tool that allows the model to use Grounding with Google Maps.
+  ///
+  /// Grounding with Google Maps can be used to allow the model to connect to Google
+  /// Maps to incorporate location-based information into its responses.
+  ///
+  /// When using this feature, you are required to comply with the "Grounding with
+  /// Google Maps" usage requirements for your chosen API provider:
+  /// {@link https://ai.google.dev/gemini-api/terms#grounding-with-google-maps |
+  /// Gemini Developer API} or Vertex AI Gemini API (see 
+  /// {@link https://cloud.google.com/terms/service-terms | Service Terms} section 
+  /// within the Service Specific Terms).
+  /// </summary>
+  public readonly struct GoogleMaps { }
+
+  /// <summary>
   /// A helper tool that the model may use when generating responses.
   ///
   /// A `Tool` is a piece of code that enables the system to interact with external systems to
@@ -134,9 +172,11 @@ namespace Firebase.AI
     // No public properties, on purpose since it is meant for user input only
 
     private List<FunctionDeclaration> FunctionDeclarations { get; }
+    internal List<AutoFunctionDeclaration> AutoFunctionDeclarations { get; }
     private GoogleSearch? GoogleSearch { get; }
     private CodeExecution? CodeExecution { get; }
     private UrlContext? UrlContext { get; }
+    private GoogleMaps? GoogleMaps { get; }
 
     /// <summary>
     /// Creates a tool that allows the model to perform function calling.
@@ -146,9 +186,11 @@ namespace Firebase.AI
     public Tool(params FunctionDeclaration[] functionDeclarations)
     {
       FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
+      AutoFunctionDeclarations = null;
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = null;
+      GoogleMaps = null;
     }
     /// <summary>
     /// Creates a tool that allows the model to perform function calling.
@@ -158,9 +200,40 @@ namespace Firebase.AI
     public Tool(IEnumerable<FunctionDeclaration> functionDeclarations)
     {
       FunctionDeclarations = new List<FunctionDeclaration>(functionDeclarations);
+      AutoFunctionDeclarations = null;
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = null;
+      GoogleMaps = null;
+    }
+
+    /// <summary>
+    /// Creates a tool that allows the model to perform function calling.
+    /// </summary>
+    /// <param name="functionDeclarations">A list of `FunctionDeclarations` available to the model
+    ///   that can be used for function calling.</param>
+    public Tool(params AutoFunctionDeclaration[] functionDeclarations)
+    {
+      FunctionDeclarations = null;
+      AutoFunctionDeclarations = new List<AutoFunctionDeclaration>(functionDeclarations);
+      GoogleSearch = null;
+      CodeExecution = null;
+      UrlContext = null;
+      GoogleMaps = null;
+    }
+    /// <summary>
+    /// Creates a tool that allows the model to perform function calling.
+    /// </summary>
+    /// <param name="functionDeclarations">A list of `FunctionDeclarations` available to the model
+    ///   that can be used for function calling.</param>
+    public Tool(IEnumerable<AutoFunctionDeclaration> functionDeclarations)
+    {
+      FunctionDeclarations = null;
+      AutoFunctionDeclarations = new List<AutoFunctionDeclaration>(functionDeclarations);
+      GoogleSearch = null;
+      CodeExecution = null;
+      UrlContext = null;
+      GoogleMaps = null;
     }
 
     /// <summary>
@@ -171,9 +244,11 @@ namespace Firebase.AI
     public Tool(GoogleSearch googleSearch)
     {
       FunctionDeclarations = null;
+      AutoFunctionDeclarations = null;
       GoogleSearch = googleSearch;
       CodeExecution = null;
       UrlContext = null;
+      GoogleMaps = null;
     }
 
     /// <summary>
@@ -184,9 +259,11 @@ namespace Firebase.AI
     public Tool(CodeExecution codeExecution)
     {
       FunctionDeclarations = null;
+      AutoFunctionDeclarations = null;
       GoogleSearch = null;
       CodeExecution = codeExecution;
       UrlContext = null;
+      GoogleMaps = null;
     }
 
     /// <summary>
@@ -198,9 +275,27 @@ namespace Firebase.AI
     public Tool(UrlContext urlContext)
     {
       FunctionDeclarations = null;
+      AutoFunctionDeclarations = null;
       GoogleSearch = null;
       CodeExecution = null;
       UrlContext = urlContext;
+      GoogleMaps = null;
+    }
+
+    /// <summary>
+    /// Creates a tool that allows the model to use Grounding for Google Maps.
+    /// </summary>
+    /// <param name="googleMaps">The Grounding for Google Maps configuration. The
+    /// presence of this object in the list of tools enables the model to use
+    /// Grounding for Google Maps.</param>
+    public Tool(GoogleMaps googleMaps)
+    {
+      FunctionDeclarations = null;
+      AutoFunctionDeclarations = null;
+      GoogleSearch = null;
+      CodeExecution = null;
+      UrlContext = null;
+      GoogleMaps = googleMaps;
     }
 
     /// <summary>
@@ -210,9 +305,18 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       var json = new Dictionary<string, object>();
+      List<Dictionary<string, object>> functionDeclarations = new();
       if (FunctionDeclarations != null && FunctionDeclarations.Any())
       {
-        json["functionDeclarations"] = FunctionDeclarations.Select(f => f.ToJson()).ToList();
+        functionDeclarations.AddRange(FunctionDeclarations.Select(f => f.ToJson()));
+      }
+      if (AutoFunctionDeclarations != null && AutoFunctionDeclarations.Any())
+      {
+        functionDeclarations.AddRange(AutoFunctionDeclarations.Select(f => f.ToJson()));
+      }
+      if (functionDeclarations.Count > 0)
+      {
+        json["functionDeclarations"] = functionDeclarations;
       }
       if (GoogleSearch.HasValue)
       {
@@ -226,6 +330,10 @@ namespace Firebase.AI
       {
         json["urlContext"] = new Dictionary<string, object>();
       }
+      if (GoogleMaps.HasValue)
+      {
+        json["googleMaps"] = new Dictionary<string, object>();
+      }
       return json;
     }
   }
@@ -237,16 +345,21 @@ namespace Firebase.AI
   {
     // No public properties, on purpose since it is meant for user input only
 
-    private FunctionCallingConfig? Config { get; }
+    private FunctionCallingConfig? FunctionConfig { get; }
+    private RetrievalConfig? RetrievalConfig { get; }
 
     /// <summary>
     /// Constructs a new `ToolConfig`.
     /// </summary>
     /// <param name="functionCallingConfig">Configures how the model should use the
     ///   provided functions.</param>
-    public ToolConfig(FunctionCallingConfig? functionCallingConfig = null)
+    /// <param name="retrievalConfig">Configures how the model should use
+    ///   the provided retrieval options.</param>
+    public ToolConfig(FunctionCallingConfig? functionCallingConfig = null,
+        RetrievalConfig? retrievalConfig = null)
     {
-      Config = functionCallingConfig;
+      FunctionConfig = functionCallingConfig;
+      RetrievalConfig = retrievalConfig;
     }
 
     /// <summary>
@@ -256,9 +369,13 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       var json = new Dictionary<string, object>();
-      if (Config.HasValue)
+      if (FunctionConfig.HasValue)
       {
-        json["functionCallingConfig"] = Config?.ToJson();
+        json["functionCallingConfig"] = FunctionConfig?.ToJson();
+      }
+      if (RetrievalConfig.HasValue)
+      {
+        json["retrievalConfig"] = RetrievalConfig?.ToJson();
       }
       return json;
     }
@@ -341,5 +458,140 @@ namespace Firebase.AI
       return json;
     }
   }
+
+  /// <summary>
+  /// An struct that represents a latitude/longitude pair.
+  /// </summary>
+  public readonly struct LatLng
+  {
+    private double Latitude { get; }
+    private double Longitude { get; }
+
+    /// <summary>
+    /// Constructs a LatLng object with the given coordinates.
+    /// </summary>
+    public LatLng(double latitude, double longitude)
+    {
+      Latitude = latitude;
+      Longitude = longitude;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      return new()
+      {
+        { "latitude", Latitude },
+        { "longitude", Longitude }
+      };
+    }
+  }
+
+  /// <summary>
+  /// Information which can be used by tools during inference calls.
+  /// </summary>
+  public readonly struct RetrievalConfig
+  {
+    private LatLng? LatLng { get; }
+    private string LanguageCode { get; }
+
+    /// <summary>
+    /// Creates a retrieval configuration.
+    /// </summary>
+    /// <param name="latLng">An object that represents a latitude/longitude pair.</param>
+    /// <param name="languageCode">The language code of the user.</param>
+    public RetrievalConfig(LatLng? latLng = null, string languageCode = null)
+    {
+      LatLng = latLng;
+      LanguageCode = languageCode;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      var dict = new Dictionary<string, object>();
+      if (LatLng.HasValue)
+      {
+        dict["latLng"] = LatLng?.ToJson();
+      }
+      dict.AddIfHasValue("languageCode", LanguageCode);
+      return dict;
+    }
+  }
+
+  /// <summary>
+  /// Attribute that can be attached to parameters to give them a description,
+  /// used when using `AutoFunctionDeclaration`.
+  /// </summary>
+  [AttributeUsage(AttributeTargets.Parameter)]
+  public class AutoFunctionDescriptionAttribute : Attribute
+  {
+    public AutoFunctionDescriptionAttribute(string description)
+    {
+      Description = description;
+    }
+
+    public string Description { get; set; } = null;
+  }
+
+#if !DOXYGEN
+  public abstract class BaseAutoFunctionDeclaration
+  {
+    internal string Name { get; }
+    internal string Description { get; }
+    internal JsonSchema Parameters { get; }
+
+    internal Delegate Callable { get; }
+
+    public BaseAutoFunctionDeclaration(Delegate callable, string description,
+        string name = null)
+    {
+      if (callable == null)
+      {
+        throw new ArgumentNullException(nameof(callable));
+      }
+      Name = name ?? callable.Method.Name;
+      Description = description;
+
+      Dictionary<string, JsonSchema> parameters = new();
+      List<string> optionalParameters = new();
+      // Construct the Parameters based on the given Delegate
+      foreach (var pInfo in callable.Method.GetParameters())
+      {
+        var attr = pInfo.GetCustomAttribute<AutoFunctionDescriptionAttribute>();
+        parameters.Add(pInfo.Name,
+            JsonSchema.FromType(pInfo.ParameterType, attr?.Description));
+        if (pInfo.HasDefaultValue)
+        {
+          optionalParameters.Add(pInfo.Name);
+        }
+      }
+      Parameters = JsonSchema.Object(parameters, optionalParameters);
+
+      Callable = callable;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      var json = new Dictionary<string, object>() {
+        { "name", Name },
+        { "parametersJsonSchema", Parameters.ToJson() }
+      };
+      json.AddIfHasValue("description", Description);
+
+      return json;
+    }
+  }
+#endif // !DOXYGEN
 
 }

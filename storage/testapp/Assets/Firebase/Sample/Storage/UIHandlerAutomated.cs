@@ -140,6 +140,7 @@ namespace Firebase.Sample.Storage {
         TestUploadSmallFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFileWithCancelation,
+        TestList,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -1092,6 +1093,38 @@ namespace Firebase.Sample.Storage {
           predownloadOperation: () => { CancelAfterDelayInSeconds(CANCELATION_DELAY_SECONDS); });
     }
 
-    // TODO: Upload and attempt to partially download a file.
+    async Task TestList() {
+      string baseFolder = "test_list_" + Guid.NewGuid().ToString() + "/";
+      string file1Path = baseFolder + "file1.txt";
+      string file2Path = baseFolder + "file2.txt";
+      string file3Path = baseFolder + "file3.txt";
+      string file4Path = baseFolder + "prefix/file4.txt";
+
+      // Upload files
+      await UploadToPath(file1Path, SMALL_FILE_CONTENTS, MetadataTestMode.None, UploadBytesAsync, ValidateUploadSuccessfulNotFile);
+      await UploadToPath(file2Path, SMALL_FILE_CONTENTS, MetadataTestMode.None, UploadBytesAsync, ValidateUploadSuccessfulNotFile);
+      await UploadToPath(file3Path, SMALL_FILE_CONTENTS, MetadataTestMode.None, UploadBytesAsync, ValidateUploadSuccessfulNotFile);
+      await UploadToPath(file4Path, SMALL_FILE_CONTENTS, MetadataTestMode.None, UploadBytesAsync, ValidateUploadSuccessfulNotFile);
+
+      // List with maxResultsPerPage: 2 to test pagination
+      var storageRef = FirebaseStorage.DefaultInstance.GetReference(baseFolder);
+      var result = await storageRef.ListAsync(maxResults: 2);
+      Assert("result != null", result != null);
+      
+      // We should get 2 items (order is not guaranteed, but we should have exactly 2)
+      AssertEq("result.Items.Count + result.Prefixes.Count", result.Items.Count + result.Prefixes.Count, 2);
+      Assert("result.NextPageToken != null", !string.IsNullOrEmpty(result.NextPageToken));
+
+      // Fetch page 2
+      var result2 = await storageRef.ListAsync(maxResults: 2, pageToken: result.NextPageToken);
+      AssertEq("result2.Items.Count + result2.Prefixes.Count", result2.Items.Count + result2.Prefixes.Count, 2); // 1 item remaining + 1 prefix
+      
+      // Verify we can find the prefix
+      bool foundPrefix = false;
+      foreach (var prefix in result2.Prefixes) {
+        if (prefix.Name == "prefix") foundPrefix = true;
+      }
+      Assert("foundPrefix", foundPrefix);
+    }
   }
 }
