@@ -513,10 +513,14 @@ def main(argv):
                   run['log_results'] = m.group(1)
                 logging.info("Integration test %s results (via log): %s", run['id'], run['log_results'])
               else:
-                # If we didn't find the error text we're looking for, then we must assume it failed.
-                # It was either flakiness, build failure, or no failures were reported due to missing artifacts.
-                run['log_success'] = False
-                run['log_results'] = "[BUILD] [ERROR] Unknown Error. Could not find summarize-results log failure string."
+                if run.get('conclusion') == 'success':
+                  logging.info("Integration test %s results (via log): Success (no failure block found)", run['id'])
+                else:
+                  # If we didn't find the error text we're looking for, then we must assume it failed.
+                  # It was either flakiness, build failure, or no failures were reported due to missing artifacts.
+                  run['log_success'] = False
+                  run['log_results'] = "[BUILD] [ERROR] Unknown Error. Could not find summarize-results log failure string."
+                  logging.info("Integration test %s results (via log): %s", run['id'], run['log_results'])
         bar.next()
 
     _cache['all_days'] = all_days
