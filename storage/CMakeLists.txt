@@ -30,6 +30,7 @@ set(firebase_storage_src_documented
   src/StorageException.cs
   src/StorageProgress.cs
   src/StorageReference.cs
+  src/StorageListResult.cs
   src/UploadState.cs
 )
 
