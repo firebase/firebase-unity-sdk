@@ -743,6 +743,8 @@ jobs:
           path: test_results
           pattern: build_and_test_results-*
           merge-multiple: true
+      # Upload the combined log artifacts so report_build_status.py can download and parse
+      # the JSON results directly, which is much faster and more reliable than scraping the GitHub text logs.
       - name: Upload combined log artifacts
         uses: actions/upload-artifact@v4
         with:
