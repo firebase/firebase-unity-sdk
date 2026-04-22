@@ -743,6 +743,12 @@ jobs:
           path: test_results
           pattern: build_and_test_results-*
           merge-multiple: true
+      - name: Upload combined log artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_and_test_results
+          path: test_results/*
+          retention-days: ${{ env.artifactRetentionDays }}
       # Use a different token to remove the "in-progress" label,
       # to allow the removal to trigger the "Check Labels" workflow.
       - name: Generate token for GitHub API
