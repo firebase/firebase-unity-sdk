@@ -1,0 +1,21 @@
+{
+    "name": "Firebase.FirebaseAI.TestApp",
+    "rootNamespace": "Firebase.Sample.FirebaseAI",
+    "references": [
+        "Firebase.App.Internal",
+        "Firebase.FirebaseAI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Firebase.App.dll",
+        "Firebase.Platform.dll",
+        "Google.MiniJson.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
