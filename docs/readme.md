@@ -112,6 +112,7 @@ Release Notes
 ### Upcoming
 -   Changes
     - Firebase AI: Add support for Grounding with Google Maps.
+    - Firebase AI: Improved image configuration when using Nano Banana.
     - Storage: Added `ListAsync` API to list items and prefixes under a reference.
 
 ### 13.10.0
