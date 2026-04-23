@@ -880,7 +880,9 @@ namespace Firebase.Sample.FirebaseAI
     {
       var model = GetFirebaseAI(backend).GetGenerativeModel("gemini-2.5-flash-image",
         generationConfig: new GenerationConfig(
-          responseModalities: new[] { ResponseModality.Text, ResponseModality.Image })
+          responseModalities: new[] { ResponseModality.Text, ResponseModality.Image },
+          imageConfig: new ImageConfig(
+              aspectRatio: ImageConfig.AspectRatio.Square1x1))
       );
 
       GenerateContentResponse response = await model.GenerateContentAsync(
@@ -892,6 +894,7 @@ namespace Firebase.Sample.FirebaseAI
       // We don't care much about the response, just that there is an image, and text.
       bool foundText = false;
       bool foundImage = false;
+      Texture2D image = new(1, 2);
       var candidate = response.Candidates.First();
       foreach (var part in candidate.Content.Parts)
       {
@@ -904,10 +907,13 @@ namespace Firebase.Sample.FirebaseAI
           if (dataPart.MimeType.Contains("image"))
           {
             foundImage = true;
+            image.LoadImage(dataPart.Data.ToArray());
           }
         }
       }
       Assert($"Missing expected modalities. Text: {foundText}, Image: {foundImage}", foundText && foundImage);
+      // The height and width should match, since we requested a 1x1 aspect ratio.
+      AssertEq("Image dimensions should match.", image.height, image.width);
     }
 
     // Test generating an image via Imagen.
@@ -1544,7 +1550,7 @@ namespace Firebase.Sample.FirebaseAI
     }
 
     // Test that parsing a response with expanded FinishReason works.
-    async Task InternalTestFinishReasonExpanded()
+    Task InternalTestFinishReasonExpanded()
     {
       string jsonStr = @"{
         ""candidates"": [{
@@ -1558,10 +1564,10 @@ namespace Firebase.Sample.FirebaseAI
       Dictionary<string, object> json = (Dictionary<string, object>)Json.Deserialize(jsonStr);
       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
-      Assert(""Response missing candidates."", response.Candidates.Any());
+      Assert("Response missing candidates.", response.Candidates.Any());
       Candidate candidate = response.Candidates.First();
-      AssertEq(""FinishReason"", candidate.FinishReason, FinishReason.ImageSafety);
-      
+      AssertEq("FinishReason", candidate.FinishReason, FinishReason.ImageSafety);
+
       // Test another one
       jsonStr = @"{
         ""candidates"": [{
@@ -1572,7 +1578,9 @@ namespace Firebase.Sample.FirebaseAI
       json = (Dictionary<string, object>)Json.Deserialize(jsonStr);
       response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
       candidate = response.Candidates.First();
-      AssertEq(""FinishReason"", candidate.FinishReason, FinishReason.MalformedResponse);
+      AssertEq("FinishReason", candidate.FinishReason, FinishReason.MalformedResponse);
+
+      return Task.CompletedTask;
     }
 
     // Test that ImageConfig serialization works as expected.
@@ -1581,17 +1589,17 @@ namespace Firebase.Sample.FirebaseAI
       var imageConfig = new ImageConfig(ImageConfig.AspectRatio.Landscape16x9, ImageConfig.ImageSize.Size1K);
       var json = imageConfig.ToJson();
 
-      AssertEq(""ImageConfig.aspectRatio"", json[""aspectRatio""], ""16:9"");
-      AssertEq(""ImageConfig.imageSize"", json[""imageSize""], ""1K"");
+      AssertEq("ImageConfig.aspectRatio", json["aspectRatio"], "16:9");
+      AssertEq("ImageConfig.imageSize", json["imageSize"], "1K");
 
       var genConfig = new GenerationConfig(imageConfig: imageConfig);
       var genJson = genConfig.ToJson();
 
-      Assert(""GenerationConfig missing imageConfig"", genJson.ContainsKey(""imageConfig""));
-      var imageConfigJson = genJson[""imageConfig""] as Dictionary<string, object>;
-      Assert(""imageConfig is not a dictionary"", imageConfigJson != null);
-      AssertEq(""imageConfigJson.aspectRatio"", imageConfigJson[""aspectRatio""], ""16:9"");
-      AssertEq(""imageConfigJson.imageSize"", imageConfigJson[""imageSize""], ""1K"");
+      Assert("GenerationConfig missing imageConfig", genJson.ContainsKey("imageConfig"));
+      var imageConfigJson = genJson["imageConfig"] as Dictionary<string, object>;
+      Assert("imageConfig is not a dictionary", imageConfigJson != null);
+      AssertEq("imageConfigJson.aspectRatio", imageConfigJson["aspectRatio"], "16:9");
+      AssertEq("imageConfigJson.imageSize", imageConfigJson["imageSize"], "1K");
       
       return Task.CompletedTask;
     }
