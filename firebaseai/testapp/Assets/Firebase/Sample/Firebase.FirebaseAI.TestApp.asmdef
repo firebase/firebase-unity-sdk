@@ -12,7 +12,8 @@
     "precompiledReferences": [
         "Firebase.App.dll",
         "Firebase.Platform.dll",
-        "Google.MiniJson.dll"
+        "Google.MiniJson.dll",
+        "Firebase.TaskExtension.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
