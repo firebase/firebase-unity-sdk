@@ -87,6 +87,15 @@ python scripts/build_scripts/build_zips.py --platform=<target platform> --target
 
 > **Note:** Supported library names: analytics, app_check, auth, crashlytics, database, firebaseai, firestore, functions, installations, messaging, remote_config, storage
 
+## Unity Assembly Definitions (.asmdef)
+
+For the assemblies written in C# where the code is directly included in the `unitypackage` or `tgz` (in the case of UPM), we use Unity Assembly Definitions (`.asmdef`). This is required for including pure C# code within Unity Package Manager (`.tgz`) packages.
+
+For now, this is enabled for:
+- **Firebase AI** (`Firebase.FirebaseAI`)
+- **Functions** (`Firebase.Functions`)
+- **App Core** (`Firebase.App.Internal`)
+
 ## Packaging
 
 We can package the built artifacts to better imported by Unity Editor.

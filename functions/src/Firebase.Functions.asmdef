@@ -1,0 +1,20 @@
+{
+    "name": "Firebase.Functions",
+    "rootNamespace": "Firebase.Functions",
+    "references": [
+        "Firebase.App.Internal"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Firebase.App.dll",
+        "Firebase.Platform.dll",
+        "Google.MiniJson.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
