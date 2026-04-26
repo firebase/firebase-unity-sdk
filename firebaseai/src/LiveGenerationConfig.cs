@@ -94,9 +94,11 @@ namespace Firebase.AI
     private readonly float? _frequencyPenalty;
     private readonly AudioTranscriptionConfig? _inputAudioTranscription;
     private readonly AudioTranscriptionConfig? _outputAudioTranscription;
+    private readonly ContextWindowCompressionConfig? _contextWindowCompression;
 
     internal readonly AudioTranscriptionConfig? InputAudioTranscription => _inputAudioTranscription;
     internal readonly AudioTranscriptionConfig? OutputAudioTranscription => _outputAudioTranscription;
+    internal readonly ContextWindowCompressionConfig? ContextWindowCompression => _contextWindowCompression;
 
     /// <summary>
     /// Creates a new `LiveGenerationConfig` value.
@@ -191,7 +193,8 @@ namespace Firebase.AI
         float? presencePenalty = null,
         float? frequencyPenalty = null,
         AudioTranscriptionConfig? inputAudioTranscription = null,
-        AudioTranscriptionConfig? outputAudioTranscription = null)
+        AudioTranscriptionConfig? outputAudioTranscription = null,
+        ContextWindowCompressionConfig? contextWindowCompression = null)
     {
       _speechConfig = speechConfig;
       _responseModalities = responseModalities != null ?
@@ -204,6 +207,7 @@ namespace Firebase.AI
       _frequencyPenalty = frequencyPenalty;
       _inputAudioTranscription = inputAudioTranscription;
       _outputAudioTranscription = outputAudioTranscription;
+      _contextWindowCompression = contextWindowCompression;
     }
 
     /// <summary>
@@ -225,6 +229,7 @@ namespace Firebase.AI
       if (_maxOutputTokens.HasValue) jsonDict["maxOutputTokens"] = _maxOutputTokens.Value;
       if (_presencePenalty.HasValue) jsonDict["presencePenalty"] = _presencePenalty.Value;
       if (_frequencyPenalty.HasValue) jsonDict["frequencyPenalty"] = _frequencyPenalty.Value;
+      if (_contextWindowCompression != null) jsonDict["contextWindowCompression"] = _contextWindowCompression.ToJson();
 
       return jsonDict;
     }

@@ -117,34 +117,35 @@ namespace Firebase.AI
     /// </summary>
     /// <param name="cancellationToken">The token that can be used to cancel the creation of the session.</param>
     /// <returns>The LiveSession, once it is established.</returns>
-    public async Task<LiveSession> ConnectAsync(CancellationToken cancellationToken = default)
+    public async Task<LiveSession> ConnectAsync(SessionResumptionConfig? sessionResumption = null, CancellationToken cancellationToken = default)
     {
-      ClientWebSocket clientWebSocket = new();
-
-      string endpoint = GetURL();
-
-      // Set initial headers
-      string version = Firebase.Internal.FirebaseInterops.GetVersionInfoSdkVersion();
-      clientWebSocket.Options.SetRequestHeader("x-goog-api-client", $"gl-csharp/8.0 fire/{version}");
-      if (Firebase.Internal.FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp))
+      Func<SessionResumptionConfig?, CancellationToken, Task<ClientWebSocket>> connectFactory = async (resumptionConfig, cancelToken) =>
       {
-        clientWebSocket.Options.SetRequestHeader("X-Firebase-AppId", _firebaseApp.Options.AppId);
-        clientWebSocket.Options.SetRequestHeader("X-Firebase-AppVersion", UnityEngine.Application.version);
-      }
-      // Add additional Firebase tokens to the header.
-      await Firebase.Internal.FirebaseInterops.AddFirebaseTokensAsync(clientWebSocket, _firebaseApp);
+        ClientWebSocket clientWebSocket = new();
+        string endpoint = GetURL();
 
-      // Add a timeout to the initial connection, using the RequestOptions.
-      using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-      TimeSpan connectionTimeout = _requestOptions?.Timeout ?? RequestOptions.DefaultTimeout;
-      connectionCts.CancelAfter(connectionTimeout);
+        // Set initial headers
+        string version = Firebase.Internal.FirebaseInterops.GetVersionInfoSdkVersion();
+        clientWebSocket.Options.SetRequestHeader("x-goog-api-client", $"gl-csharp/8.0 fire/{version}");
+        if (Firebase.Internal.FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp))
+        {
+          clientWebSocket.Options.SetRequestHeader("X-Firebase-AppId", _firebaseApp.Options.AppId);
+          clientWebSocket.Options.SetRequestHeader("X-Firebase-AppVersion", UnityEngine.Application.version);
+        }
+        // Add additional Firebase tokens to the header.
+        await Firebase.Internal.FirebaseInterops.AddFirebaseTokensAsync(clientWebSocket, _firebaseApp);
 
-      await clientWebSocket.ConnectAsync(new Uri(endpoint), connectionCts.Token);
+        // Add a timeout to the initial connection, using the RequestOptions.
+        using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(cancelToken);
+        TimeSpan connectionTimeout = _requestOptions?.Timeout ?? RequestOptions.DefaultTimeout;
+        connectionCts.CancelAfter(connectionTimeout);
 
-      if (clientWebSocket.State != WebSocketState.Open)
-      {
-        throw new WebSocketException("ClientWebSocket failed to connect, can't create LiveSession.");
-      }
+        await clientWebSocket.ConnectAsync(new Uri(endpoint), connectionCts.Token);
+
+        if (clientWebSocket.State != WebSocketState.Open)
+        {
+          throw new WebSocketException("ClientWebSocket failed to connect, can't create LiveSession.");
+        }
 
       try
       {
@@ -174,25 +175,36 @@ namespace Firebase.AI
         {
           setupDict["tools"] = _tools.Select(t => t.ToJson()).ToList();
         }
+
+        if (resumptionConfig != null)
+        {
+          setupDict["sessionResumption"] = resumptionConfig.ToJson();
+        }
+        if (_liveConfig?.ContextWindowCompression != null)
+        {
+          setupDict["contextWindowCompression"] = _liveConfig?.ContextWindowCompression.ToJson();
+        }
+
         Dictionary<string, object> jsonDict = new() {
         { "setup", setupDict }
       };
 
         var byteArray = Encoding.UTF8.GetBytes(Json.Serialize(jsonDict));
-        await clientWebSocket.SendAsync(new ArraySegment<byte>(byteArray), WebSocketMessageType.Binary, true, cancellationToken);
+        await clientWebSocket.SendAsync(new ArraySegment<byte>(byteArray), WebSocketMessageType.Binary, true, cancelToken);
 
-        return new LiveSession(clientWebSocket);
+        return clientWebSocket;
       }
       catch (Exception)
       {
-        if (clientWebSocket.State == WebSocketState.Open)
-        {
-          // Try to clean up the WebSocket, to avoid leaking connections.
-          await clientWebSocket.CloseAsync(WebSocketCloseStatus.EndpointUnavailable,
-              "Failed to send initial setup message.", CancellationToken.None);
-        }
+        // Try to clean up the WebSocket, to avoid leaking connections.
+        // It might not be available in scope, we rely on GC mostly here unless we catch on clientWebSocket explicitly.
+        // Wait, clientWebSocket is available because this is all within the lambda!
         throw;
       }
+    };
+
+      var webSocket = await connectFactory(sessionResumption, cancellationToken);
+      return new LiveSession(webSocket, connectFactory);
     }
   }
 
