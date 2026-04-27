@@ -96,6 +96,15 @@ function(build_uni TARGET_LINK_LIB_NAMES PROJECT_LIST_HEADER_VARIABLE)
       COMMENT "Strip debug symbols done on final binary. lib${FIREBASE_APP_UNI_VERSIONED}.so")
   endif()
 
+  if(APPLE AND NOT FIREBASE_IOS_BUILD)
+    target_link_options(firebase_app_uni PRIVATE "-Wl,-dead_strip")
+
+    add_custom_command(TARGET firebase_app_uni POST_BUILD
+      COMMAND strip -x "$<TARGET_FILE:firebase_app_uni>"
+      COMMENT "Stripping symbols from Mac bundle"
+    )
+  endif()
+
   unity_pack_native(firebase_app_uni)
 
   set_property(TARGET firebase_app_uni

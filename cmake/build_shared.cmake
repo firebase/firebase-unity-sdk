@@ -116,6 +116,15 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
       COMMENT "Strip debug symbols done on final binary. lib${OUTPUT_NAME}.so")
   endif()
   
+  if(APPLE AND NOT FIREBASE_IOS_BUILD)
+    target_link_options(${shared_target} PRIVATE "-Wl,-dead_strip")
+
+    add_custom_command(TARGET ${shared_target} POST_BUILD
+      COMMAND strip -x "$<TARGET_FILE:${shared_target}>"
+      COMMENT "Stripping symbols from Mac bundle"
+    )
+  endif()
+
   unity_pack_native(${shared_target})
 
   if(ANDROID)
