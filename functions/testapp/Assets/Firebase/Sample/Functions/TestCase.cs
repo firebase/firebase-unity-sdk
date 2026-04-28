@@ -20,8 +20,11 @@ namespace Firebase.Sample.Functions {
   using System.Threading.Tasks;
 
   public class TestCase {
-    // The name of the HTTPS callable function to call.
+    // The display name of the test.
     public string Name { get; private set; }
+
+    // The name of the HTTPS callable function to call.
+    public string FunctionName { get; private set; }
 
     // The parameters to pass to the function.
     public object Input { get; private set; }
@@ -35,10 +38,11 @@ namespace Firebase.Sample.Functions {
     // The options to pass to the function.
     public HttpsCallableOptions Options { get; private set; }
 
-    public TestCase(string name, object input, object expectedResult,
+    public TestCase(string name, string functionName, object input, object expectedResult,
         FunctionsErrorCode expectedError = FunctionsErrorCode.None,
         HttpsCallableOptions options = null) {
       Name = name;
+      FunctionName = functionName;
       Input = input;
       ExpectedData = expectedResult;
       ExpectedError = expectedError;
@@ -48,7 +52,7 @@ namespace Firebase.Sample.Functions {
     // Returns the CallableReference to be used by the test. Overridable to allow
     // different ways to generate the CallableReference.
     public virtual HttpsCallableReference GetReference(FirebaseFunctions functions) {
-      return functions.GetHttpsCallable(Name, Options);
+      return functions.GetHttpsCallable(FunctionName, Options);
     }
 
     // Runs the given test and returns whether it passed.
