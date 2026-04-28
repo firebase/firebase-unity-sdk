@@ -114,6 +114,7 @@ Release Notes
     - General (iOS): Improve initialization to address intermittent crashes on iOS 26.
       ([#1436](https://github.com/firebase/firebase-unity-sdk/issues/1436)).
     - Firebase AI: Add support for Grounding with Google Maps.
+    - Firebase AI: Improved image configuration when using Nano Banana.
     - Storage: Added `ListAsync` API to list items and prefixes under a reference.
     - Functions: Fixed tgz export, added missing asmdef for functions. Fixes issue where Functions were not being exported correctly in the tgz build.
     - Firebase AI: Fix tgz export, added missing asmdef for Firebase AI. Fixes issue where Firebase AI was not being exported correctly in the tgz build.
