@@ -32,18 +32,23 @@ namespace Firebase.Sample.Functions {
     // The error code expected to be returned from the function.
     public FunctionsErrorCode ExpectedError { get; private set; }
 
+    // The options to pass to the function.
+    public HttpsCallableOptions Options { get; private set; }
+
     public TestCase(string name, object input, object expectedResult,
-        FunctionsErrorCode expectedError = FunctionsErrorCode.None) {
+        FunctionsErrorCode expectedError = FunctionsErrorCode.None,
+        HttpsCallableOptions options = null) {
       Name = name;
       Input = input;
       ExpectedData = expectedResult;
       ExpectedError = expectedError;
+      Options = options;
     }
 
     // Returns the CallableReference to be used by the test. Overridable to allow
     // different ways to generate the CallableReference.
     public virtual HttpsCallableReference GetReference(FirebaseFunctions functions) {
-      return functions.GetHttpsCallable(Name);
+      return functions.GetHttpsCallable(Name, Options);
     }
 
     // Runs the given test and returns whether it passed.
@@ -102,7 +107,7 @@ namespace Firebase.Sample.Functions {
 
     // Generate the CallableReference using the URL
     public override HttpsCallableReference GetReference(FirebaseFunctions functions) {
-      return functions.GetHttpsCallableFromURL(URL);
+      return functions.GetHttpsCallableFromURL(URL, Options);
     }
   }
 }

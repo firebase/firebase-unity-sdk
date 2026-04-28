@@ -34,6 +34,7 @@ namespace Firebase.Sample.Functions {
     protected bool UIEnabled = false;
     private DependencyStatus dependencyStatus = DependencyStatus.UnavailableOther;
     protected FirebaseFunctions functions;
+    private string appCheckDebugToken = "REPLACE_WITH_APP_CHECK_TOKEN";
 
     // When the app starts, check to make sure that we have
     // the required dependencies to use Firebase, and if not,
@@ -51,6 +52,33 @@ namespace Firebase.Sample.Functions {
     }
 
     protected virtual void InitializeFirebase() {
+      try {
+        var debugFactoryType = Type.GetType("Firebase.AppCheck.DebugAppCheckProviderFactory, Firebase.AppCheck");
+        var appCheckType = Type.GetType("Firebase.AppCheck.FirebaseAppCheck, Firebase.AppCheck");
+        
+        if (debugFactoryType != null && appCheckType != null) {
+          DebugLog("Initializing Firebase App Check with Debug Provider via reflection");
+          var instanceProp = debugFactoryType.GetProperty("Instance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+          var debugFactoryInstance = instanceProp.GetValue(null);
+          
+          var setDebugTokenMethod = debugFactoryType.GetMethod("SetDebugToken", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+          setDebugTokenMethod.Invoke(debugFactoryInstance, new object[] { appCheckDebugToken });
+          
+          var setProviderFactoryMethod = appCheckType.GetMethod("SetAppCheckProviderFactory", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+          setProviderFactoryMethod.Invoke(null, new object[] { debugFactoryInstance });
+          
+          // Initialize the AppCheck instance so it's available.
+          var getInstanceMethod = appCheckType.GetMethod("GetInstance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public, null, new Type[] { typeof(FirebaseApp) }, null);
+          getInstanceMethod.Invoke(null, new object[] { FirebaseApp.DefaultInstance });
+          
+          DebugLog("Successfully initialized App Check via reflection");
+        } else {
+          DebugLog("AppCheck assembly not found, skipping initialization");
+        }
+      } catch (Exception e) {
+        DebugLog("Failed to initialize App Check via reflection: " + e.Message);
+      }
+
       functions = FirebaseFunctions.DefaultInstance;
       UIEnabled = true;
 
@@ -93,6 +121,9 @@ namespace Firebase.Sample.Functions {
       if (GUILayout.Button("addNumbers")) {
         StartCoroutine(AddNumbers(5, 7));
       }
+      if (GUILayout.Button("addNumbers (Limited Use)")) {
+        StartCoroutine(AddNumbersLimitedUse(5, 7));
+      }
       GUILayout.EndVertical();
     }
 
@@ -113,6 +144,27 @@ namespace Firebase.Sample.Functions {
         // The function succeeded.
         var result = (IDictionary)callTask.Result.Data;
         DebugLog(String.Format("AddNumbers: {0}", result["operationResult"]));
+      });
+      yield return new WaitUntil(() => task.IsCompleted);
+    }
+
+    protected IEnumerator AddNumbersLimitedUse(int firstNumber, int secondNumber) {
+      var func = functions.GetHttpsCallable("addNumbers", new HttpsCallableOptions { LimitedUseAppCheckTokens = true });
+      var data = new Dictionary<string, object>();
+      data["firstNumber"] = firstNumber;
+      data["secondNumber"] = secondNumber;
+
+      var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) => {
+        if (callTask.IsFaulted) {
+          // The function unexpectedly failed.
+          DebugLog("FAILED!");
+          DebugLog(String.Format("  Error: {0}", callTask.Exception));
+          return;
+        }
+
+        // The function succeeded.
+        var result = (IDictionary)callTask.Result.Data;
+        DebugLog(String.Format("AddNumbers (Limited Use): {0}", result["operationResult"]));
       });
       yield return new WaitUntil(() => task.IsCompleted);
     }
