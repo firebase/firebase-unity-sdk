@@ -228,22 +228,22 @@ namespace Firebase.Functions {
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a name.
     /// </summary>
-    public HttpsCallableReference GetHttpsCallable(string name) {
-      return new HttpsCallableReference(this, GetUrl(name));
+    public HttpsCallableReference GetHttpsCallable(string name, HttpsCallableOptions options = null) {
+      return new HttpsCallableReference(this, GetUrl(name), options);
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
-    public HttpsCallableReference GetHttpsCallableFromURL(string url) {
-      return new HttpsCallableReference(this, url);
+    public HttpsCallableReference GetHttpsCallableFromURL(string url, HttpsCallableOptions options = null) {
+      return new HttpsCallableReference(this, url, options);
     }
 
     /// <summary>
     ///   Creates a <see cref="HttpsCallableReference" /> given a URL.
     /// </summary>
-    public HttpsCallableReference GetHttpsCallableFromURL(Uri url) {
-      return GetHttpsCallableFromURL(url.ToString());
+    public HttpsCallableReference GetHttpsCallableFromURL(Uri url, HttpsCallableOptions options = null) {
+      return GetHttpsCallableFromURL(url.ToString(), options);
     }
 
     /// <summary>

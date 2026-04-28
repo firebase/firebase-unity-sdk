@@ -129,6 +129,10 @@ def main(argv):
   _patch_file(file_path, "REPLACE_WITH_APP_CHECK_TOKEN", debug_token)
   file_path = os.path.join(repo_dir, "app_check", "testapp", "Assets", "Firebase", "Sample", CAPITALIZATIONS["app_check"], "UIHandler.cs")
   _patch_file(file_path, "REPLACE_WITH_APP_CHECK_TOKEN", debug_token)
+  file_path = os.path.join(repo_dir, "functions", "testapp", "Assets", "Firebase", "Sample", CAPITALIZATIONS["functions"], "UIHandlerAutomated.cs")
+  _patch_file(file_path, "REPLACE_WITH_APP_CHECK_TOKEN", debug_token)
+  file_path = os.path.join(repo_dir, "functions", "testapp", "Assets", "Firebase", "Sample", CAPITALIZATIONS["functions"], "UIHandler.cs")
+  _patch_file(file_path, "REPLACE_WITH_APP_CHECK_TOKEN", debug_token)
 
   print("Attempting to decrypt GCS service account key file.")
   decrypted_key_file = os.path.join(secrets_dir, "gcs_key_file.json")

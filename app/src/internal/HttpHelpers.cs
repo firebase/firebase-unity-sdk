@@ -24,7 +24,7 @@ namespace Firebase.Internal
   // Helper functions to help handling the Http calls.
   internal static class HttpHelpers
   {
-    internal static async Task SetRequestHeaders(HttpRequestMessage request, FirebaseApp firebaseApp, string authPrefix = "Firebase")
+    internal static async Task SetRequestHeaders(HttpRequestMessage request, FirebaseApp firebaseApp, string authPrefix = "Firebase", bool limitedUseAppCheckTokens = false)
     {
       request.Headers.Add("x-goog-api-key", firebaseApp.Options.ApiKey);
       string version = FirebaseInterops.GetVersionInfoSdkVersion();
@@ -35,7 +35,7 @@ namespace Firebase.Internal
         request.Headers.Add("X-Firebase-AppVersion", UnityEngine.Application.version);
       }
       // Add additional Firebase tokens to the header.
-      await FirebaseInterops.AddFirebaseTokensAsync(request, firebaseApp, authPrefix);
+      await FirebaseInterops.AddFirebaseTokensAsync(request, firebaseApp, authPrefix, limitedUseAppCheckTokens);
     }
 
     // Helper function to throw an exception if the Http Response indicates failure.
