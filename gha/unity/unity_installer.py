@@ -291,7 +291,8 @@ def install_unity_hub():
     run('sudo mkdir -p "/Library/Application Support/Unity"')
     run(f'sudo chown -R {os.environ["USER"]} "/Library/Application Support/Unity"')
   elif runner_os == WINDOWS:
-    run(f'{unity_hub_installer} /S', max_attempts=MAX_ATTEMPTS)
+    full_path = path.abspath(unity_hub_installer)
+    run(f'"{full_path}" /S', max_attempts=MAX_ATTEMPTS)
   elif runner_os == LINUX:
     # https://docs.unity3d.com/hub/manual/InstallHub.html#install-hub-linux
     run('sudo sh -c \'echo "deb https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list\'')
@@ -304,9 +305,10 @@ def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
   while attempt_num <= max_attempts:
     try:
       response = requests.get(unity_hub_url)
+      response.raise_for_status()
       open(unity_hub_installer, "wb").write(response.content)
     except Exception as e:
-      logging.info("download unity hub failed. URL: %s (attempt %s of %s). Exception: %s", Exception, e)
+      logging.info("download unity hub failed. URL: %s (attempt %s of %s). Exception: %s", unity_hub_url, attempt_num, max_attempts, e)
       if attempt_num >= max_attempts:
         raise
     else:
