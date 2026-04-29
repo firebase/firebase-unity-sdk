@@ -44,6 +44,9 @@ namespace Firebase.Sample.Functions {
         data["firstNumber"] = 5;
         data["secondNumber"] = 7;
         var expected = new Dictionary<string, object>();
+        expected["firstNumber"] = 5L;
+        expected["secondNumber"] = 7L;
+        expected["operator"] = "+";
         expected["operationResult"] = 12L;
         yield return new TestCase("addNumbersWithLimitedUse", "addNumbers", data, expected, FunctionsErrorCode.None, new HttpsCallableOptions { LimitedUseAppCheckTokens = true });
       }
