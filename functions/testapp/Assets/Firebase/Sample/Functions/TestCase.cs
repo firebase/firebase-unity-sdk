@@ -105,7 +105,7 @@ namespace Firebase.Sample.Functions {
 
     public TestCaseWithURL(string name, System.Uri url, object input, object expectedResult,
         FunctionsErrorCode expectedError = FunctionsErrorCode.None)
-          : base(name, input, expectedResult, expectedError) {
+          : base(name, url.ToString(), input, expectedResult, expectedError) {
             URL = url;
         }
 
