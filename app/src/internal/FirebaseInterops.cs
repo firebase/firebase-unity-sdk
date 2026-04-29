@@ -251,7 +251,7 @@ namespace Firebase.Internal
         {
           if (_appCheckGetLimitedUseTokenMethod == null)
           {
-            LogError("GetLimitedUseAppCheckTokenAsync instance via reflection.");
+            LogError("Failed to find GetLimitedUseAppCheckTokenAsync method via reflection.");
             return null;
           }
           taskObject = _appCheckGetLimitedUseTokenMethod.Invoke(appCheckInstance, null);
