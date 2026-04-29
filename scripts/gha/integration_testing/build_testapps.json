@@ -133,13 +133,15 @@
       "platforms": ["Android", "Playmode", "iOS", "tvOS", "Desktop"],
       "plugins": [
         "FirebaseFunctions.unitypackage",
-        "FirebaseAuth.unitypackage"
+        "FirebaseAuth.unitypackage",
+        "FirebaseAppCheck.unitypackage"
       ],
       "provision": "Firebase_Dev_Wildcard.mobileprovision",
       "upm_packages": [
         "com.google.external-dependency-manager-*.tgz",
         "com.google.firebase.app-*.tgz",
         "com.google.firebase.auth-*.tgz",
+        "com.google.firebase.app-check-*.tgz",
         "com.google.firebase.functions-*.tgz"
       ]
     },
