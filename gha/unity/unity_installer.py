@@ -357,7 +357,10 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
         return
       else:
         logging.info("Failed to activate license %d", i)
-        return 1
+        continue
+
+  logging.error("All licenses failed to activate.")
+  return 1
 
 
 def release_license(logfile, unity_version):
@@ -384,17 +387,18 @@ def run(command, check=True, max_attempts=1):
   while attempt_num <= max_attempts:
     try:
       logging.info("run_with_retry: %s (attempt %s of %s)", command, attempt_num, max_attempts)
-      result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+      result = subprocess.run(command, capture_output=True, text=True, shell=True)
       if result.stdout:
-        logging.info("cmd stdout: %s", result.stdout.read().strip())
+        logging.info("cmd stdout: %s", result.stdout.strip())
       if result.stderr:
-        logging.info("cmd stderr: %s", result.stderr.read().strip())
+        logging.info("cmd stderr: %s", result.stderr.strip())
+      if check and result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
+      break
     except subprocess.SubprocessError as e:
       logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", command, attempt_num, max_attempts, e)
-      if check and (attempt_num >= max_attempts):
+      if attempt_num >= max_attempts:
         raise
-    else:
-      break
     attempt_num += 1
 
 
