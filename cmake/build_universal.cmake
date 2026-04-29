@@ -96,12 +96,21 @@ function(build_uni TARGET_LINK_LIB_NAMES PROJECT_LIST_HEADER_VARIABLE)
       COMMENT "Strip debug symbols done on final binary. lib${FIREBASE_APP_UNI_VERSIONED}.so")
   endif()
 
-  if(APPLE AND NOT FIREBASE_IOS_BUILD)
+  # Strip the debug symbols from the Mac build to reduce size
+  if(APPLE AND NOT FIREBASE_IOS_BUILD AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_options(firebase_app_uni PRIVATE "-Wl,-dead_strip")
 
     add_custom_command(TARGET firebase_app_uni POST_BUILD
-      COMMAND strip -x "$<TARGET_FILE:firebase_app_uni>"
+      COMMAND "${CMAKE_STRIP}" -x "$<TARGET_FILE:firebase_app_uni>"
       COMMENT "Stripping symbols from Mac bundle"
+    )
+  endif()
+
+  # Strip the debug symbols from the Linux build to reduce size
+  if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_custom_command(TARGET firebase_app_uni POST_BUILD
+      COMMAND "${CMAKE_STRIP}" --strip-unneeded "$<TARGET_FILE:firebase_app_uni>"
+      COMMENT "Stripping symbols from Linux shared object"
     )
   endif()
 
