@@ -90,7 +90,7 @@ UNITY_HUB_URL_ARM_MAC = "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubS
 SETTINGS = {
   # Used for downloading Unity Hub
   "unity_hub_url": {
-    WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe",
+    WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup-x64.exe",
     # Note that this is for x86 architecture. UNITY_HUB_URL_ARM_MAC above is used for arm64
     MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg",
     LINUX: "",
