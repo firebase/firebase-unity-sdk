@@ -10,6 +10,7 @@ namespace Firebase.Sample.Functions {
   public class UIHandlerAutomated : UIHandler {
     private Firebase.Sample.AutomatedTestRunner testRunner;
     private Firebase.Auth.FirebaseAuth firebaseAuth;
+    private string appCheckDebugTokenForAutomated = "REPLACE_WITH_APP_CHECK_TOKEN";
 
     // Returns the set of all integration tests.
     public static IEnumerable<TestCase> AllTests() {
@@ -35,24 +36,37 @@ namespace Firebase.Sample.Functions {
         expectedArray.Add(3L);
         expected["array"] = expectedArray;
 
-        yield return new TestCase("dataTest", data, expected);
+        yield return new TestCase("dataTest", "dataTest", data, expected);
+      }
+
+      {
+        var data = new Dictionary<string, object>();
+        data["firstNumber"] = 5;
+        data["secondNumber"] = 7;
+        var expected = new Dictionary<string, object>();
+        expected["firstNumber"] = 5L;
+        expected["secondNumber"] = 7L;
+        expected["operator"] = "+";
+        expected["operationResult"] = 12L;
+        yield return new TestCase("addNumbersWithLimitedUse", "addNumbers", data, expected, FunctionsErrorCode.None, new HttpsCallableOptions { LimitedUseAppCheckTokens = true });
       }
 
       var empty = new Dictionary<string, object>();
-      yield return new TestCase("scalarTest", 17, 76L);
-      yield return new TestCase("tokenTest", empty, empty);
+      yield return new TestCase("scalarTest", "scalarTest", 17, 76L);
+      yield return new TestCase("scalarTestwithLimitedUse", "scalarTest", 17, 76L, FunctionsErrorCode.None, new HttpsCallableOptions { LimitedUseAppCheckTokens = true });
+      yield return new TestCase("tokenTest", "tokenTest", empty, empty);
       // Only run this on iOS and Android.
-      // yield return new TestCase("instanceIdTest", empty, empty);
-      yield return new TestCase("nullTest", null, null);
+      // yield return new TestCase("instanceIdTest", "instanceIdTest", empty, empty);
+      yield return new TestCase("nullTest", "nullTest", null, null);
 
       // Test various error cases.
-      yield return new TestCase("missingResultTest", null, null,
+      yield return new TestCase("missingResultTest", "missingResultTest", null, null,
         FunctionsErrorCode.Internal);
-      yield return new TestCase("unhandledErrorTest", null, null,
+      yield return new TestCase("unhandledErrorTest", "unhandledErrorTest", null, null,
         FunctionsErrorCode.Internal);
-      yield return new TestCase("unknownErrorTest", null, null,
+      yield return new TestCase("unknownErrorTest", "unknownErrorTest", null, null,
         FunctionsErrorCode.Internal);
-      yield return new TestCase("explicitErrorTest", null, null,
+      yield return new TestCase("explicitErrorTest", "explicitErrorTest", null, null,
         FunctionsErrorCode.OutOfRange);
 
       // Test calling via Url
@@ -80,6 +94,33 @@ namespace Firebase.Sample.Functions {
     }
 
     protected override void InitializeFirebase() {
+      try {
+        var debugFactoryType = Type.GetType("Firebase.AppCheck.DebugAppCheckProviderFactory, Firebase.AppCheck");
+        var appCheckType = Type.GetType("Firebase.AppCheck.FirebaseAppCheck, Firebase.AppCheck");
+        
+        if (debugFactoryType != null && appCheckType != null) {
+          DebugLog("Initializing Firebase App Check with Debug Provider via reflection");
+          var instanceProp = debugFactoryType.GetProperty("Instance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+          var debugFactoryInstance = instanceProp.GetValue(null);
+          
+          var setDebugTokenMethod = debugFactoryType.GetMethod("SetDebugToken", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+          setDebugTokenMethod.Invoke(debugFactoryInstance, new object[] { appCheckDebugTokenForAutomated });
+          
+          var setProviderFactoryMethod = appCheckType.GetMethod("SetAppCheckProviderFactory", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+          setProviderFactoryMethod.Invoke(null, new object[] { debugFactoryInstance });
+          
+          // Initialize the AppCheck instance so it's available.
+          var getInstanceMethod = appCheckType.GetMethod("GetInstance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public, null, new Type[] { typeof(FirebaseApp) }, null);
+          getInstanceMethod.Invoke(null, new object[] { FirebaseApp.DefaultInstance });
+          
+          DebugLog("Successfully initialized App Check via reflection");
+        } else {
+          DebugLog("AppCheck assembly not found, skipping initialization");
+        }
+      } catch (Exception e) {
+        DebugLog("Failed to initialize App Check via reflection: " + e.Message);
+      }
+
       // One of the automated tests requires Auth, so we want to sign in before running it.
       firebaseAuth = Firebase.Auth.FirebaseAuth.DefaultInstance;
       firebaseAuth.SignInAnonymouslyAsync().ContinueWithOnMainThread(
