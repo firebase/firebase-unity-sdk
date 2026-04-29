@@ -130,7 +130,7 @@
       "captial_name": "Functions",
       "bundle_id": "com.google.firebase.unity.functions.testapp",
       "testapp_path": "functions/testapp",
-      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Desktop"],
+      "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
         "FirebaseFunctions.unitypackage",
         "FirebaseAuth.unitypackage",
