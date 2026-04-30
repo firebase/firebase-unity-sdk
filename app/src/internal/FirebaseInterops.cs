@@ -60,9 +60,10 @@ namespace Firebase.Internal
 
     private static void LogError(string message)
     {
-#if FIREBASEAI_DEBUG_LOGGING
+//TODO AustinBenoit Must revet this change before merging
+//#if FIREBASEAI_DEBUG_LOGGING
       UnityEngine.Debug.LogError(message);
-#endif
+//#endif
     }
 
     // Cache the methods needed for FirebaseApp reflection.
