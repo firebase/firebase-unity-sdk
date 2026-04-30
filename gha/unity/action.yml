@@ -71,6 +71,6 @@ runs:
           --version ${{ inputs.version }}  \
           --username "${{ inputs.username }}" \
           --password "${{ inputs.password }}" \
-          --serial_ids "INVALID-SERIAL-NUMBER,${{ inputs.serial_ids }}" \
+          --serial_ids "${{ inputs.serial_ids }}" \
           --logfile "testapps/activate_license.log"
         cat testapps/activate_license.log
