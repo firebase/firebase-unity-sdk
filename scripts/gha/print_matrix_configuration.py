@@ -89,15 +89,11 @@ BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(
 TEST_DEVICES = {
   "android_min": {"platform": ANDROID, "type": "real",
                   "device": [
-                    "model=1610,version=23",  # vivo 1610
-                    "model=hammerhead,version=23", # Nexus 5
-                    "model=harpia,version=23",  # Moto G Play
+                    "model=blueline,version=28", # Pixel 3
                   ]},
   "android_target": {"platform": ANDROID, "type": "real",
                      "device": [
                        "model=blueline,version=28", # Pixel 3
-                       "model=gts3lltevzw,version=28",  # Galaxy Tab S3
-                       "model=SH-01L,version=28",  # AQUOS sense2 SH-01L
                      ]},
   "android_latest": {"platform": ANDROID, "type": "real",
                      "device": [
