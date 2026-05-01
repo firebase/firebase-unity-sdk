@@ -206,15 +206,6 @@ download_external_sources()
 # properly. Force it here for all projects.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(NOT MSVC AND NOT ANDROID)
-  if("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64" OR
-     "${CMAKE_GENERATOR_PLATFORM}" STREQUAL "")
-    add_compile_options(-m64)
-  else()
-    add_compile_options(-m32)
-  endif()
-endif()
-
 if(UNIX AND NOT APPLE) # we only need this for linux
   # Report undefined symbols
   set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
@@ -227,6 +218,17 @@ endif()
 
 # Add the Firebase libraries to the target using the function from the SDK.
 add_subdirectory(${FIREBASE_CPP_SDK_DIR} bin/ EXCLUDE_FROM_ALL)
+
+# Fix for Xcode multi-target dependency issue in firebase-cpp-sdk
+if (TARGET firebase_app AND TARGET app_generated_google_services_includes)
+  add_dependencies(firebase_app app_generated_google_services_includes)
+endif()
+if (TARGET firebase_testing AND TARGET generate_testing_fps)
+  add_dependencies(firebase_testing generate_testing_fps)
+endif()
+if (TARGET firebase_analytics AND TARGET FIREBASE_ANALYTICS_GENERATED_HEADERS)
+  add_dependencies(firebase_analytics FIREBASE_ANALYTICS_GENERATED_HEADERS)
+endif()
 
 # Windows runtime mode, either MD or MT depending on whether you are using
 # /MD or /MT. For more information see:
