@@ -223,6 +223,7 @@ def get_tvos_args(source_path):
   result_args = []
   toolchain_path = os.path.join(source_path, "cmake", "unity_tvos.cmake")
   result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_path)
+  result_args.extend(["-G", "Xcode"])
   # check device input
   global g_target_devices
   if FLAGS.device:
@@ -249,6 +250,7 @@ def get_ios_args(source_path):
   toolchain_path = os.path.join(source_path, "cmake", "unity_ios.cmake")
   # toolchain args is required
   result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_path)
+  result_args.extend(["-G", "Xcode"])
   # check device input
   if FLAGS.device:
     for device in FLAGS.device:
@@ -581,8 +583,8 @@ def make_tvos_target(build_dir):
     Args:
       The full path to the directory to perform the build in.
   """
-  subprocess.call('make', cwd=build_dir)
-  subprocess.call(['cpack', '.'], cwd=build_dir)
+  subprocess.call(["cmake", "--build", ".", "--config", "Release"], cwd=build_dir)
+  subprocess.call(['cpack', '-C', 'Release', '.'], cwd=build_dir)
 
 def make_tvos_multi_arch_build(cmake_args):
   """Make tvos build for different architectures, and then combine
@@ -819,14 +821,19 @@ def main(argv):
     if (not FLAGS.gen_swig_only):
       if is_windows_build():
         # no make command in windows. TODO make config passable
-        subprocess.call("cmake --build .  --config Release")
+        subprocess.call(["cmake", "--build", ".", "--config", "Release"])
+      elif is_ios_build():
+        subprocess.call(["cmake", "--build", ".", "--config", "Release"])
       else:
         subprocess.call("make")
 
       cmake_pack_args = [
         "cpack",
-        ".",
       ]
+      if is_windows_build() or is_ios_build():
+        cmake_pack_args.extend(["-C", "Release"])
+      cmake_pack_args.append(".")
+
       subprocess.call(cmake_pack_args)
     else:
       subprocess.call(["cmake", "--build", ".", "--target", "firebase_swig_targets"])
