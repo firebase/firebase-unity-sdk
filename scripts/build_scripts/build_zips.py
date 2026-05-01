@@ -819,10 +819,8 @@ def main(argv):
   else:
     subprocess.call(cmake_setup_args)
     if (not FLAGS.gen_swig_only):
-      if is_windows_build():
-        # no make command in windows. TODO make config passable
-        subprocess.call(["cmake", "--build", ".", "--config", "Release"])
-      elif is_ios_build():
+      if is_windows_build() or is_ios_build():
+        # no make command in windows or when using Xcode generator. TODO make config passable
         subprocess.call(["cmake", "--build", ".", "--config", "Release"])
       else:
         subprocess.call("make")
