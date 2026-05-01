@@ -115,6 +115,8 @@ macro(mono_add_external_library name projpath)
       /p:Platform=${platform}
       /p:DebugSymbols=true
       /p:DebugType=Full
+      /p:TargetName=${DLL_NAME}
+      /p:AssemblyName=${DLL_NAME}
       ${absprojpath}
     DEPENDS
       ${projpath}
