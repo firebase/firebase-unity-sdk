@@ -1,0 +1,17 @@
+{
+    "name": "Firebase.App.Internal",
+    "rootNamespace": "Firebase.Internal",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Firebase.App.dll",
+        "Firebase.Platform.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
