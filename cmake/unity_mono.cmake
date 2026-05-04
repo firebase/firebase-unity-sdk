@@ -61,7 +61,7 @@ define_property(TARGET
 macro(mono_add_external_library name projpath)
 
   set(single OUTPUT_NAME XBUILD_EXE)
-  set(multi SOURCES)
+  set(multi SOURCES REFERENCES)
 
   # Parse the arguments into UNITY_MONO_SOURCES and UNITY_MONO_DEPENDS.
   cmake_parse_arguments(UNITY_MONO "" "${single}" "${multi}" ${ARGN})
@@ -105,6 +105,13 @@ macro(mono_add_external_library name projpath)
     set(CSHARP_BUILD_EXE "${MONO_CSHARP_BUILD_EXE}")
   endif()
 
+  set(file_deps "")
+  foreach(ref ${UNITY_MONO_REFERENCES})
+    get_target_property(ref_dllname ${ref} LIBRARY_OUTPUT_NAME)
+    get_target_property(ref_dllpath ${ref} LIBRARY_OUTPUT_DIRECTORY)
+    list(APPEND file_deps "${ref_dllpath}/${ref_dllname}")
+  endforeach()
+
   add_custom_command(
     COMMAND
       ${CSHARP_BUILD_EXE}
@@ -115,9 +122,12 @@ macro(mono_add_external_library name projpath)
       /p:Platform=${platform}
       /p:DebugSymbols=true
       /p:DebugType=Full
+      /p:TargetName=${DLL_NAME}
+      /p:AssemblyName=${DLL_NAME}
       ${absprojpath}
     DEPENDS
       ${projpath}
+      ${file_deps}
     OUTPUT
       ${outdir}/${DLL_NAME}.dll
     COMMENT
@@ -371,6 +381,8 @@ macro(mono_add_internal name output_type)
       ${UNITY_MONO_SOURCES}
     XBUILD_EXE
       ${UNITY_CSHARP_BUILD_EXE}
+    REFERENCES
+      ${UNITY_MONO_REFERENCES}
   )
 
   if(UNITY_MONO_DEPENDS)

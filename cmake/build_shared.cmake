@@ -115,7 +115,25 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
       "lib${OUTPUT_NAME}.so"
       COMMENT "Strip debug symbols done on final binary. lib${OUTPUT_NAME}.so")
   endif()
-  
+
+  # Strip the debug symbols from the Mac build to reduce sizes
+  if(APPLE AND NOT FIREBASE_IOS_BUILD AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_link_options(${shared_target} PRIVATE "-Wl,-dead_strip")
+
+    add_custom_command(TARGET ${shared_target} POST_BUILD
+      COMMAND "${CMAKE_STRIP}" -x "$<TARGET_FILE:${shared_target}>"
+      COMMENT "Stripping symbols from Mac bundle"
+    )
+  endif()
+
+  # Strip the debug symbols from the Linux build to reduce size
+  if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_custom_command(TARGET ${shared_target} POST_BUILD
+      COMMAND "${CMAKE_STRIP}" --strip-unneeded "$<TARGET_FILE:${shared_target}>"
+      COMMENT "Stripping symbols from Linux shared object"
+    )
+  endif()
+
   unity_pack_native(${shared_target})
 
   if(ANDROID)

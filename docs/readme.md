@@ -111,6 +111,8 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
+    - General: Strip debug symbols from Mac and Linux libraries, to reduce library size.
+    - General: Enforce the Xcode CMake generator for iOS and tvOS SDKs.
     - General (iOS): Improve initialization to address intermittent crashes on iOS 26.
       ([#1436](https://github.com/firebase/firebase-unity-sdk/issues/1436)).
     - Firebase AI: Add support for Grounding with Google Maps.
