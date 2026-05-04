@@ -44,7 +44,7 @@ macro(ios_pack name output_name)
   # Parse the arguments into UNITY_MONO_SOURCES and UNITY_MONO_DEPENDS.
   cmake_parse_arguments(UNITY_PACK "" "" "${multi}" ${ARGN})
 
-  set(IOS_PACK_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/generated/${output_name}.sh")
+  set(IOS_PACK_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/generated/${output_name}_$<CONFIG>.sh")
   SET(TARGET_FILE "${output_name}.a")
   set(content "#!/bin/bash\n")
 
@@ -60,13 +60,9 @@ macro(ios_pack name output_name)
     endif()
   endforeach()
 
-  file(WRITE ${IOS_PACK_SCRIPT}.in ${content})
-
   file(GENERATE
-    OUTPUT
-      ${IOS_PACK_SCRIPT}
-    INPUT
-      ${IOS_PACK_SCRIPT}.in
+    OUTPUT ${IOS_PACK_SCRIPT}
+    CONTENT "${content}"
   )
 
   add_custom_command(
