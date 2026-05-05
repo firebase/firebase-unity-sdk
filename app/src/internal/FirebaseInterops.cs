@@ -164,6 +164,21 @@ namespace Firebase.Internal
         _appCheckType = Type.GetType(firebaseAppCheckTypeName);
         if (_appCheckType == null)
         {
+          try
+          {
+            Assembly appCheckAssembly = Assembly.Load("Firebase.AppCheck");
+            if (appCheckAssembly != null)
+            {
+              _appCheckType = appCheckAssembly.GetType("Firebase.AppCheck.FirebaseAppCheck");
+            }
+          }
+          catch (Exception)
+          {
+            // Silently ignore if the assembly is truly not present in the project
+          }
+        }
+        if (_appCheckType == null)
+        {
           return;
         }
 
