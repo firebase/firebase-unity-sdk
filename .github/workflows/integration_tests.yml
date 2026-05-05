@@ -227,7 +227,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           username: ${{ secrets.UNITY_USERNAME }}
           password: ${{ secrets.UNITY_PASSWORD }}
-          serial_ids: ${{ secrets.SERIAL_ID }}
+          serial_ids: "${{ secrets.SERIAL_ID }},${{ secrets.SERIAL_ID_2 }}"
       - name: Workaround tvOS XCode 15 issue
         if: ${{ contains(matrix.platform, 'tvOS') && contains(matrix.unity_version, '2020') }}
         shell: bash
@@ -433,7 +433,7 @@ jobs:
           platforms: Playmode
           username: ${{ secrets.UNITY_USERNAME }}
           password: ${{ secrets.UNITY_PASSWORD }}
-          serial_ids: ${{ secrets.SERIAL_ID }}
+          serial_ids: "${{ secrets.SERIAL_ID }},${{ secrets.SERIAL_ID_2 }}"
       - name: Prepare for integration tests
         timeout-minutes: 10
         shell: bash
@@ -858,7 +858,7 @@ jobs:
           version: ${{ matrix.unity_version }}
           username: ${{ secrets.UNITY_USERNAME }}
           password: ${{ secrets.UNITY_PASSWORD }}
-          serial_ids: ${{ secrets.SERIAL_ID }}
+          serial_ids: "${{ secrets.SERIAL_ID }},${{ secrets.SERIAL_ID_2 }}"
       - name: Return Unity license
         uses: ./gha/unity
         with:

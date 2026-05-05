@@ -90,7 +90,7 @@ UNITY_HUB_URL_ARM_MAC = "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubS
 SETTINGS = {
   # Used for downloading Unity Hub
   "unity_hub_url": {
-    WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe",
+    WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup-x64.exe",
     # Note that this is for x86 architecture. UNITY_HUB_URL_ARM_MAC above is used for arm64
     MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg",
     LINUX: "",
@@ -291,7 +291,8 @@ def install_unity_hub():
     run('sudo mkdir -p "/Library/Application Support/Unity"')
     run(f'sudo chown -R {os.environ["USER"]} "/Library/Application Support/Unity"')
   elif runner_os == WINDOWS:
-    run(f'{unity_hub_installer} /S', max_attempts=MAX_ATTEMPTS)
+    full_path = path.abspath(unity_hub_installer)
+    run(f'"{full_path}" /S', max_attempts=MAX_ATTEMPTS)
   elif runner_os == LINUX:
     # https://docs.unity3d.com/hub/manual/InstallHub.html#install-hub-linux
     run('sudo sh -c \'echo "deb https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list\'')
@@ -304,9 +305,10 @@ def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
   while attempt_num <= max_attempts:
     try:
       response = requests.get(unity_hub_url)
+      response.raise_for_status()
       open(unity_hub_installer, "wb").write(response.content)
     except Exception as e:
-      logging.info("download unity hub failed. URL: %s (attempt %s of %s). Exception: %s", Exception, e)
+      logging.info("download unity hub failed. URL: %s (attempt %s of %s). Exception: %s", unity_hub_url, attempt_num, max_attempts, e)
       if attempt_num >= max_attempts:
         raise
     else:
@@ -357,7 +359,10 @@ def activate_license(username, password, serial_ids, logfile, unity_version):
         return
       else:
         logging.info("Failed to activate license %d", i)
-        return 1
+        continue
+
+  logging.error("All licenses failed to activate.")
+  return 1
 
 
 def release_license(logfile, unity_version):
@@ -384,17 +389,18 @@ def run(command, check=True, max_attempts=1):
   while attempt_num <= max_attempts:
     try:
       logging.info("run_with_retry: %s (attempt %s of %s)", command, attempt_num, max_attempts)
-      result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+      result = subprocess.run(command, capture_output=True, text=True, shell=True)
       if result.stdout:
-        logging.info("cmd stdout: %s", result.stdout.read().strip())
+        logging.info("cmd stdout: %s", result.stdout.strip())
       if result.stderr:
-        logging.info("cmd stderr: %s", result.stderr.read().strip())
+        logging.info("cmd stderr: %s", result.stderr.strip())
+      if check and result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
+      break
     except subprocess.SubprocessError as e:
       logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", command, attempt_num, max_attempts, e)
-      if check and (attempt_num >= max_attempts):
+      if attempt_num >= max_attempts:
         raise
-    else:
-      break
     attempt_num += 1
 
 
