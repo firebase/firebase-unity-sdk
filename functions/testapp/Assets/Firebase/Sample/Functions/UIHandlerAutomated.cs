@@ -1,4 +1,6 @@
 namespace Firebase.Sample.Functions {
+  using Firebase;
+  using Firebase.AppCheck;
   using Firebase.Extensions;
   using Firebase.Functions;
   using System;
@@ -93,34 +95,13 @@ namespace Firebase.Sample.Functions {
       base.Start();
     }
 
-    protected override void InitializeFirebase() {
-      try {
-        var debugFactoryType = Type.GetType("Firebase.AppCheck.DebugAppCheckProviderFactory, Firebase.AppCheck");
-        var appCheckType = Type.GetType("Firebase.AppCheck.FirebaseAppCheck, Firebase.AppCheck");
-        
-        if (debugFactoryType != null && appCheckType != null) {
-          DebugLog("Initializing Firebase App Check with Debug Provider via reflection");
-          var instanceProp = debugFactoryType.GetProperty("Instance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
-          var debugFactoryInstance = instanceProp.GetValue(null);
-          
-          var setDebugTokenMethod = debugFactoryType.GetMethod("SetDebugToken", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-          setDebugTokenMethod.Invoke(debugFactoryInstance, new object[] { appCheckDebugTokenForAutomated });
-          
-          var setProviderFactoryMethod = appCheckType.GetMethod("SetAppCheckProviderFactory", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
-          setProviderFactoryMethod.Invoke(null, new object[] { debugFactoryInstance });
-          
-          // Initialize the AppCheck instance so it's available.
-          var getInstanceMethod = appCheckType.GetMethod("GetInstance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public, null, new Type[] { typeof(FirebaseApp) }, null);
-          getInstanceMethod.Invoke(null, new object[] { FirebaseApp.DefaultInstance });
-          
-          DebugLog("Successfully initialized App Check via reflection");
-        } else {
-          DebugLog("AppCheck assembly not found, skipping initialization");
-        }
-      } catch (Exception e) {
-        DebugLog("Failed to initialize App Check via reflection: " + e.Message);
-      }
+    protected override void InitializeAppCheck() {
+      DebugLog("Initializing App Check directly in automated handler");
+      DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugTokenForAutomated);
+      FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
+    }
 
+    protected override void InitializeFirebase() {
       // One of the automated tests requires Auth, so we want to sign in before running it.
       firebaseAuth = Firebase.Auth.FirebaseAuth.DefaultInstance;
       firebaseAuth.SignInAnonymouslyAsync().ContinueWithOnMainThread(
