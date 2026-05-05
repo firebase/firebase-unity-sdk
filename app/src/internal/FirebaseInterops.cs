@@ -60,10 +60,9 @@ namespace Firebase.Internal
 
     private static void LogError(string message)
     {
-//TODO AustinBenoit Must revet this change before merging
-//#if FIREBASEAI_DEBUG_LOGGING
+#if FIREBASEAI_DEBUG_LOGGING
       UnityEngine.Debug.LogError(message);
-//#endif
+#endif
     }
 
     // Cache the methods needed for FirebaseApp reflection.
@@ -159,17 +158,14 @@ namespace Firebase.Internal
 
       try
       {
-        UnityEngine.Debug.Log("[FirebaseInterops] Initializing AppCheck Reflection...");
         // Set this to false, to allow easy failing out via return.
         _appCheckReflectionInitialized = false;
 
         _appCheckType = Type.GetType(firebaseAppCheckTypeName);
         if (_appCheckType == null)
         {
-          UnityEngine.Debug.Log("[FirebaseInterops] Firebase.AppCheck assembly not found.");
           return;
         }
-        UnityEngine.Debug.Log("[FirebaseInterops] Found Firebase.AppCheck assembly.");
 
         // Get the static method GetInstance(FirebaseApp app)
         _appCheckGetInstanceMethod = _appCheckType.GetMethod(
@@ -200,8 +196,6 @@ namespace Firebase.Internal
           LogError($"Could not find {getLimitedUseAppCheckTokenMethodName} method via reflection.");
           return;
         }
-        UnityEngine.Debug.Log("[FirebaseInterops] Found GetLimitedUseAppCheckTokenAsync method.");
-
 
         // Should be Task<AppCheckToken>
         Type appCheckTokenTaskType = _appCheckGetTokenMethod.ReturnType;
@@ -224,7 +218,6 @@ namespace Firebase.Internal
           return;
         }
 
-        UnityEngine.Debug.Log("[FirebaseInterops] AppCheck Reflection Initialized successfully.");
         _appCheckReflectionInitialized = true;
       }
       catch (Exception e)
@@ -236,11 +229,9 @@ namespace Firebase.Internal
     // Gets the AppCheck Token, assuming there is one. Otherwise, returns null.
     internal static async Task<string> GetAppCheckTokenAsync(FirebaseApp firebaseApp, bool limitedUse = false)
     {
-      UnityEngine.Debug.Log($"[FirebaseInterops] GetAppCheckTokenAsync called (limitedUse={limitedUse})");
       // If AppCheck reflection failed for any reason, nothing to do.
       if (!_appCheckReflectionInitialized)
       {
-        UnityEngine.Debug.Log("[FirebaseInterops] _appCheckReflectionInitialized is false, returning null.");
         return null;
       }
 
@@ -296,7 +287,6 @@ namespace Firebase.Internal
 
         // Get the Token property from the AppCheckToken struct
         string finalToken = _appCheckTokenTokenProperty.GetValue(tokenResult) as string;
-        UnityEngine.Debug.Log($"[FirebaseInterops] Successfully fetched App Check token (Length: {(finalToken != null ? finalToken.Length : 0)})");
         return finalToken;
       }
       catch (Exception e)
@@ -450,7 +440,6 @@ namespace Firebase.Internal
       }
       else if (limitedUseAppCheckTokens)
       {
-        UnityEngine.Debug.Log($"[FirebaseInterops] Failed to retrieve limited use token. Token null? {appCheckToken == null}. Reflection Initialized? {_appCheckReflectionInitialized}");
         throw new InvalidOperationException("Failed to retrieve Limited Use App Check Token.");
       }
 
