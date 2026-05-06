@@ -390,6 +390,52 @@ namespace Firebase.AI
     }
 
     /// <summary>
+    /// Resumes an existing live session with the server.
+    ///
+    /// This closes the current WebSocket connection and establishes a new one using
+    /// the same configuration as the original session.
+    /// </summary>
+    /// <param name="sessionResumption">The configuration for session resumption.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    public async Task ResumeSessionAsync(SessionResumptionConfig sessionResumption = null, CancellationToken cancellationToken = default)
+    {
+      if (_clientWebSocketFactory == null)
+      {
+        throw new InvalidOperationException("ResumeSession is not supported on this instance.");
+      }
+
+      ClientWebSocket newSession = await _clientWebSocketFactory(sessionResumption, cancellationToken);
+      ClientWebSocket oldSession;
+      
+      await _sendLock.WaitAsync(cancellationToken);
+      try 
+      {
+        oldSession = _clientWebSocket;
+        _clientWebSocket = newSession;
+      }
+      finally
+      {
+        _sendLock.Release();
+      }
+
+      try
+      {
+        if (oldSession.State == WebSocketState.Open)
+        {
+          await oldSession.CloseAsync(WebSocketCloseStatus.NormalClosure, "Session resumed", CancellationToken.None);
+        }
+      }
+      catch (Exception)
+      {
+        // Ignore errors when closing the old socket.
+      }
+      finally
+      {
+        oldSession.Dispose();
+      }
+    }
+
+    /// <summary>
     /// Close the `LiveSession`.
     /// </summary>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
