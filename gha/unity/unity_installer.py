@@ -395,7 +395,16 @@ def run(command, check=True, max_attempts=1):
       if result.stderr:
         logging.info("cmd stderr: %s", result.stderr.strip())
       if check and result.returncode != 0:
-        raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
+        stdout_str = result.stdout or ""
+        stderr_str = result.stderr or ""
+        if "install-modules" in command and (
+            "already installed" in stdout_str.lower() or
+            "no modules found to install" in stdout_str.lower() or
+            "already installed" in stderr_str.lower() or
+            "no modules found to install" in stderr_str.lower()):
+          logging.info("Module already installed. Treating command as successful.")
+        else:
+          raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
       break
     except subprocess.SubprocessError as e:
       logging.exception("run_with_retry: %s (attempt %s of %s) FAILED: %s", command, attempt_num, max_attempts, e)
