@@ -52,15 +52,14 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configurati
       "-scheme", scheme,
       "-configuration", configuration,
       "-quiet",
-      "BUILD_DIR=" + output_dir
+      "BUILD_DIR=" + output_dir,
+      "EXCLUDED_ARCHS="
   ]
 
   if ios_sdk == "device":
     args.extend(['CODE_SIGN_IDENTITY=""',
       "CODE_SIGNING_REQUIRED=NO",
       "CODE_SIGNING_ALLOWED=NO"])
-  elif ios_sdk == "simulator":
-    args.extend(['-arch', "x86_64"])
 
   if not path:
     raise ValueError("Must supply a path.")
