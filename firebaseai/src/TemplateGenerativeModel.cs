@@ -63,14 +63,16 @@ namespace Firebase.AI
     /// </summary>
     /// <param name="templateId">The id of the server prompt template to use.</param>
     /// <param name="inputs">Any input parameters expected by the server prompt template.</param>
+    /// <param name="toolConfig">Optional tool configuration.</param>
     /// <param name="cancellationToken">An optional token to cancel the operation.</param>
     /// <returns>The generated content response from the model.</returns>
     /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
     public Task<GenerateContentResponse> GenerateContentAsync(
         string templateId, IDictionary<string, object> inputs,
+        TemplateToolConfig? toolConfig = null,
         CancellationToken cancellationToken = default)
     {
-      return GenerateContentAsyncInternal(templateId, inputs, null, null, null, cancellationToken);
+      return GenerateContentAsyncInternal(templateId, inputs, null, null, toolConfig, cancellationToken);
     }
 
     /// <summary>
@@ -78,14 +80,16 @@ namespace Firebase.AI
     /// </summary>
     /// <param name="templateId">The id of the server prompt template to use.</param>
     /// <param name="inputs">Any input parameters expected by the server prompt template.</param>
+    /// <param name="toolConfig">Optional tool configuration.</param>
     /// <param name="cancellationToken">An optional token to cancel the operation.</param>
     /// <returns>A stream of generated content responses from the model.</returns>
     /// <exception cref="HttpRequestException">Thrown when an error occurs during content generation.</exception>
     public IAsyncEnumerable<GenerateContentResponse> GenerateContentStreamAsync(
-            string templateId, IDictionary<string, object> inputs,
-            CancellationToken cancellationToken = default)
+        string templateId, IDictionary<string, object> inputs,
+        TemplateToolConfig? toolConfig = null,
+        CancellationToken cancellationToken = default)
     {
-      return GenerateContentStreamAsyncInternal(templateId, inputs, null, null, null, cancellationToken);
+      return GenerateContentStreamAsyncInternal(templateId, inputs, null, null, toolConfig, cancellationToken);
     }
 
     /// <summary>
