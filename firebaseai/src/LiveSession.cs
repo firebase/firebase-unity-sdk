@@ -395,8 +395,7 @@ namespace Firebase.AI
       }
 
       ClientWebSocket newSession = await _clientWebSocketFactory(sessionResumption, cancellationToken);
-      ClientWebSocket oldSession = _clientWebSocket;
-
+      ClientWebSocket oldSession = Volatile.Read(ref _clientWebSocket);
       Volatile.Write(ref _clientWebSocket, newSession);
 
       try
