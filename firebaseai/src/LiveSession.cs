@@ -309,15 +309,7 @@ namespace Firebase.AI
         // Because of resumption, the clientWebSocket could potentially change, so work around that.
         ClientWebSocket currentWebSocket;
 
-        await _sendLock.WaitAsync(cancellationToken);
-        try
-        {
-          currentWebSocket = _clientWebSocket;
-        }
-        finally
-        {
-          _sendLock.Release();
-        }
+        currentWebSocket = Volatile.Read(ref _clientWebSocket);
 
         ValueWebSocketReceiveResult result;
         try
@@ -326,8 +318,7 @@ namespace Firebase.AI
         }
         catch (Exception) when (currentWebSocket != _clientWebSocket && !cancellationToken.IsCancellationRequested)
         {
-          // The previous socket was closed because of session resumption, so reset the loop after waiting a bit.
-          await Task.Delay(10, cancellationToken);
+          // The previous socket was closed because of session resumption, so reset the loop.
           continue;
         }
 
@@ -336,8 +327,7 @@ namespace Firebase.AI
           // Close initiated by the server
           if (currentWebSocket != _clientWebSocket && !cancellationToken.IsCancellationRequested)
           {
-            // The previous socket was closed because of session resumption, so reset the loop after waiting a bit.
-            await Task.Delay(10, cancellationToken);
+            // The previous socket was closed because of session resumption, so reset the loop.
             continue;
           }
 
@@ -405,18 +395,9 @@ namespace Firebase.AI
       }
 
       ClientWebSocket newSession = await _clientWebSocketFactory(sessionResumption, cancellationToken);
-      ClientWebSocket oldSession;
-      
-      await _sendLock.WaitAsync(cancellationToken);
-      try 
-      {
-        oldSession = _clientWebSocket;
-        _clientWebSocket = newSession;
-      }
-      finally
-      {
-        _sendLock.Release();
-      }
+      ClientWebSocket oldSession = _clientWebSocket;
+
+      Volatile.Write(ref _clientWebSocket, newSession);
 
       try
       {

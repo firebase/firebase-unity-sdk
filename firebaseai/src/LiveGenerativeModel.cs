@@ -207,9 +207,9 @@ namespace Firebase.AI
       async Task<ClientWebSocket> getClientWebSocket(
           SessionResumptionConfig innerSessionResumption, CancellationToken innerCancellationToken)
       {
-        ClientWebSocket clientWebSocket = await CreateClientWebSocketAsync(cancellationToken);
+        ClientWebSocket clientWebSocket = await CreateClientWebSocketAsync(innerCancellationToken);
 
-        await SendSetupMessageAsync(clientWebSocket, innerSessionResumption, cancellationToken);
+        await SendSetupMessageAsync(clientWebSocket, innerSessionResumption, innerCancellationToken);
 
         return clientWebSocket;
       }
