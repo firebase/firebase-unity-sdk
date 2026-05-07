@@ -26,14 +26,17 @@ using Google.MiniJSON;
 
 namespace Firebase.AI
 {
+  using ClientWebSocketFactory = Func<SessionResumptionConfig, CancellationToken, Task<ClientWebSocket>>;
+
   /// <summary>
   /// Manages asynchronous communication with Gemini model over a WebSocket
   /// connection.
   /// </summary>
   public class LiveSession : IDisposable
   {
-
-    private readonly ClientWebSocket _clientWebSocket;
+    private ClientWebSocket _clientWebSocket;
+    // Used for session resumption
+    private readonly ClientWebSocketFactory _clientWebSocketFactory;
 
     private readonly SemaphoreSlim _sendLock = new(1, 1);
 
@@ -44,7 +47,8 @@ namespace Firebase.AI
     /// Intended for internal use only.
     /// Use `LiveGenerativeModel.ConnectAsync` instead to ensure proper initialization.
     /// </summary>
-    internal LiveSession(ClientWebSocket clientWebSocket)
+    internal LiveSession(ClientWebSocket clientWebSocket,
+        ClientWebSocketFactory webSocketFactory)
     {
       if (clientWebSocket.State != WebSocketState.Open)
       {
@@ -53,10 +57,13 @@ namespace Firebase.AI
       }
 
       _clientWebSocket = clientWebSocket;
+      _clientWebSocketFactory = webSocketFactory;
     }
 
     protected virtual void Dispose(bool disposing)
     {
+      if (!disposing) return;
+
       lock (_disposeLock)
       {
         if (!_disposed)
@@ -65,6 +72,8 @@ namespace Firebase.AI
           {
             _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "LiveSession disposed", CancellationToken.None);
           }
+          _clientWebSocket.Dispose();
+          _sendLock.Dispose();
 
           _disposed = true;
         }
@@ -297,12 +306,44 @@ namespace Firebase.AI
       Memory<byte> buffer = new(receiveBuffer);
       while (!cancellationToken.IsCancellationRequested)
       {
-        ValueWebSocketReceiveResult result = await _clientWebSocket.ReceiveAsync(buffer, cancellationToken);
+        // Because of resumption, the clientWebSocket could potentially change, so work around that.
+        ClientWebSocket currentWebSocket;
+
+        currentWebSocket = Volatile.Read(ref _clientWebSocket);
+
+        ValueWebSocketReceiveResult result;
+        try
+        {
+          result = await currentWebSocket.ReceiveAsync(buffer, cancellationToken);
+        }
+        catch (Exception) when (currentWebSocket != _clientWebSocket && !cancellationToken.IsCancellationRequested)
+        {
+          // The previous socket was closed because of session resumption, so reset the loop.
+          continue;
+        }
 
         if (result.MessageType == WebSocketMessageType.Close)
         {
           // Close initiated by the server
-          // TODO: Should this just close without logging anything?
+          if (currentWebSocket != _clientWebSocket && !cancellationToken.IsCancellationRequested)
+          {
+            // The previous socket was closed because of session resumption, so reset the loop.
+            continue;
+          }
+
+#if FIREBASEAI_DEBUG_LOGGING
+          if (currentWebSocket.CloseStatus == WebSocketCloseStatus.NormalClosure)
+          {
+            UnityEngine.Debug.Log(
+                $"WebSocket closed normally. Description: {currentWebSocket.CloseStatusDescription}");
+          }
+          else
+          {
+            UnityEngine.Debug.LogWarning(
+                $"WebSocket closed abnormally. Status: {currentWebSocket.CloseStatus}, " +
+                $"Description: {currentWebSocket.CloseStatusDescription}");
+          }
+#endif
           break;
         }
         else if (result.MessageType == WebSocketMessageType.Text)
@@ -336,6 +377,42 @@ namespace Firebase.AI
       }
       // Check cancellation again, in case that is why it is finished.
       cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    /// <summary>
+    /// Resumes an existing live session with the server.
+    ///
+    /// This closes the current WebSocket connection and establishes a new one using
+    /// the same configuration as the original session.
+    /// </summary>
+    /// <param name="sessionResumption">The configuration for session resumption.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    public async Task ResumeSessionAsync(SessionResumptionConfig sessionResumption = null, CancellationToken cancellationToken = default)
+    {
+      if (_clientWebSocketFactory == null)
+      {
+        throw new InvalidOperationException("ResumeSession is not supported on this instance.");
+      }
+
+      ClientWebSocket newSession = await _clientWebSocketFactory(sessionResumption, cancellationToken);
+      ClientWebSocket oldSession = Volatile.Read(ref _clientWebSocket);
+      Volatile.Write(ref _clientWebSocket, newSession);
+
+      try
+      {
+        if (oldSession.State == WebSocketState.Open)
+        {
+          await oldSession.CloseAsync(WebSocketCloseStatus.NormalClosure, "Session resumed", CancellationToken.None);
+        }
+      }
+      catch (Exception)
+      {
+        // Ignore errors when closing the old socket.
+      }
+      finally
+      {
+        oldSession.Dispose();
+      }
     }
 
     /// <summary>

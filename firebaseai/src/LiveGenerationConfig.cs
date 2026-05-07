@@ -80,6 +80,68 @@ namespace Firebase.AI
   }
 
   /// <summary>
+  /// Configures the sliding window context compression mechanism.
+  /// </summary>
+  public readonly struct SlidingWindow
+  {
+    /// <summary>
+    /// The session reduction target, i.e., how many tokens we should keep.
+    /// </summary>
+    public int? TargetTokens { get; }
+
+    public SlidingWindow(int? targetTokens = null)
+    {
+      TargetTokens = targetTokens;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      var dict = new Dictionary<string, object>();
+      dict.AddIfHasValue("targetTokens", TargetTokens);
+      return dict;
+    }
+  }
+
+  /// <summary>
+  /// Enables context window compression to manage the model's context window.
+  /// </summary>
+  public readonly struct ContextWindowCompressionConfig
+  {
+    /// <summary>
+    /// The number of tokens (before running a turn) that triggers the context
+    /// window compression.
+    /// </summary>
+    public int? TriggerTokens { get; }
+
+    /// <summary>
+    /// The sliding window compression mechanism.
+    /// </summary>
+    public SlidingWindow? SlidingWindow { get; }
+
+    public ContextWindowCompressionConfig(int? triggerTokens = null, SlidingWindow? slidingWindow = null)
+    {
+      TriggerTokens = triggerTokens;
+      SlidingWindow = slidingWindow;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for serializing the object to JSON for the API request.
+    /// </summary>
+    internal Dictionary<string, object> ToJson()
+    {
+      var dict = new Dictionary<string, object>();
+      dict.AddIfHasValue("triggerTokens", TriggerTokens);
+      dict.AddIfHasValue("slidingWindow", SlidingWindow?.ToJson());
+      return dict;
+    }
+  }
+
+  /// <summary>
   /// A struct defining model parameters to be used when generating live session content.
   /// </summary>
   public readonly struct LiveGenerationConfig
@@ -94,9 +156,11 @@ namespace Firebase.AI
     private readonly float? _frequencyPenalty;
     private readonly AudioTranscriptionConfig? _inputAudioTranscription;
     private readonly AudioTranscriptionConfig? _outputAudioTranscription;
+    private readonly ContextWindowCompressionConfig? _contextWindowCompression;
 
     internal readonly AudioTranscriptionConfig? InputAudioTranscription => _inputAudioTranscription;
     internal readonly AudioTranscriptionConfig? OutputAudioTranscription => _outputAudioTranscription;
+    internal readonly ContextWindowCompressionConfig? ContextWindowCompression => _contextWindowCompression;
 
     /// <summary>
     /// Creates a new `LiveGenerationConfig` value.
@@ -191,7 +255,8 @@ namespace Firebase.AI
         float? presencePenalty = null,
         float? frequencyPenalty = null,
         AudioTranscriptionConfig? inputAudioTranscription = null,
-        AudioTranscriptionConfig? outputAudioTranscription = null)
+        AudioTranscriptionConfig? outputAudioTranscription = null,
+        ContextWindowCompressionConfig? contextWindowCompression = null)
     {
       _speechConfig = speechConfig;
       _responseModalities = responseModalities != null ?
@@ -204,6 +269,7 @@ namespace Firebase.AI
       _frequencyPenalty = frequencyPenalty;
       _inputAudioTranscription = inputAudioTranscription;
       _outputAudioTranscription = outputAudioTranscription;
+      _contextWindowCompression = contextWindowCompression;
     }
 
     /// <summary>
@@ -213,21 +279,55 @@ namespace Firebase.AI
     internal Dictionary<string, object> ToJson()
     {
       Dictionary<string, object> jsonDict = new();
-      if (_speechConfig.HasValue) jsonDict["speechConfig"] = _speechConfig?.ToJson();
+      jsonDict.AddIfHasValue("speechConfig", _speechConfig?.ToJson());
       if (_responseModalities != null && _responseModalities.Any())
       {
         jsonDict["responseModalities"] =
             _responseModalities.Select(EnumConverters.ResponseModalityToString).ToList();
       }
-      if (_temperature.HasValue) jsonDict["temperature"] = _temperature.Value;
-      if (_topP.HasValue) jsonDict["topP"] = _topP.Value;
-      if (_topK.HasValue) jsonDict["topK"] = _topK.Value;
-      if (_maxOutputTokens.HasValue) jsonDict["maxOutputTokens"] = _maxOutputTokens.Value;
-      if (_presencePenalty.HasValue) jsonDict["presencePenalty"] = _presencePenalty.Value;
-      if (_frequencyPenalty.HasValue) jsonDict["frequencyPenalty"] = _frequencyPenalty.Value;
+      jsonDict.AddIfHasValue("temperature", _temperature);
+      jsonDict.AddIfHasValue("topP", _topP);
+      jsonDict.AddIfHasValue("topK", _topK);
+      jsonDict.AddIfHasValue("maxOutputTokens", _maxOutputTokens);
+      jsonDict.AddIfHasValue("presencePenalty", _presencePenalty);
+      jsonDict.AddIfHasValue("frequencyPenalty", _frequencyPenalty);
 
       return jsonDict;
     }
   }
 
+  /// <summary>
+  /// Configuration for the session resumption mechanism.
+  /// </summary>
+  public class SessionResumptionConfig
+  {
+    /// <summary>
+    /// The session resumption handle of the previous session to restore.
+    /// </summary>
+    public string Handle { get; }
+
+    /// <summary>
+    /// Create a new, resumable Session.
+    /// </summary>
+    public SessionResumptionConfig()
+    {
+      Handle = null;
+    }
+
+    /// <summary>
+    /// Resume a previous Session with the given handle.
+    /// </summary>
+    public SessionResumptionConfig(string handle)
+    {
+      Handle = handle;
+    }
+
+
+    internal Dictionary<string, object> ToJson()
+    {
+      var dict = new Dictionary<string, object>();
+      dict.AddIfHasValue("handle", Handle);
+      return dict;
+    }
+  }
 }

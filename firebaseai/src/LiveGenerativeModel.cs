@@ -21,6 +21,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Firebase.AI.Internal;
 using Google.MiniJSON;
 
 namespace Firebase.AI
@@ -109,15 +110,8 @@ namespace Firebase.AI
       }
     }
 
-    /// <summary>
-    /// Establishes a connection to a live generation service.
-    ///
-    /// This function handles the WebSocket connection setup and returns an `LiveSession`
-    /// object that can be used to communicate with the service.
-    /// </summary>
-    /// <param name="cancellationToken">The token that can be used to cancel the creation of the session.</param>
-    /// <returns>The LiveSession, once it is established.</returns>
-    public async Task<LiveSession> ConnectAsync(CancellationToken cancellationToken = default)
+    // Create the initial ClientWebSocket with the appropriate headers.
+    private async Task<ClientWebSocket> CreateClientWebSocketAsync(CancellationToken cancellationToken)
     {
       ClientWebSocket clientWebSocket = new();
 
@@ -146,42 +140,45 @@ namespace Firebase.AI
         throw new WebSocketException("ClientWebSocket failed to connect, can't create LiveSession.");
       }
 
+      return clientWebSocket;
+    }
+
+    // Given an initialized ClientWebSocket, handles the initial setup message.
+    private async Task SendSetupMessageAsync(
+        ClientWebSocket clientWebSocket,
+        SessionResumptionConfig sessionResumption,
+        CancellationToken cancellationToken)
+    {
       try
       {
         // Send the initial setup message
-        Dictionary<string, object> setupDict = new() {
-        { "model", $"projects/{_firebaseApp.Options.ProjectId}/locations/{_backend.Location}/publishers/google/models/{_modelName}" }
-      };
+        Dictionary<string, object> setupDict = new()
+        {
+          { "model", GetModelName() }
+        };
         if (_liveConfig != null)
         {
           setupDict["generationConfig"] = _liveConfig?.ToJson();
 
           // Input/Output Transcriptions are defined on the config, but need to be set here.
-          if (_liveConfig?.InputAudioTranscription.HasValue ?? false)
-          {
-            setupDict["inputAudioTranscription"] = _liveConfig?.InputAudioTranscription?.ToJson();
-          }
-          if (_liveConfig?.OutputAudioTranscription.HasValue ?? false)
-          {
-            setupDict["outputAudioTranscription"] = _liveConfig?.OutputAudioTranscription?.ToJson();
-          }
+          setupDict.AddIfHasValue("inputAudioTranscription", _liveConfig?.InputAudioTranscription?.ToJson());
+          setupDict.AddIfHasValue("outputAudioTranscription", _liveConfig?.OutputAudioTranscription?.ToJson());
+          // Similarly for the Context Window Compression.
+          setupDict.AddIfHasValue("contextWindowCompression", _liveConfig?.ContextWindowCompression?.ToJson());
         }
-        if (_systemInstruction.HasValue)
-        {
-          setupDict["systemInstruction"] = _systemInstruction?.ToJson();
-        }
+        setupDict.AddIfHasValue("systemInstruction", _systemInstruction?.ToJson());
         if (_tools != null && _tools.Length > 0)
         {
           setupDict["tools"] = _tools.Select(t => t.ToJson()).ToList();
         }
-        Dictionary<string, object> jsonDict = new() {
-        { "setup", setupDict }
-      };
+        setupDict.AddIfHasValue("sessionResumption", sessionResumption?.ToJson());
+        Dictionary<string, object> jsonDict = new()
+        {
+          { "setup", setupDict }
+        };
 
         var byteArray = Encoding.UTF8.GetBytes(Json.Serialize(jsonDict));
         await clientWebSocket.SendAsync(new ArraySegment<byte>(byteArray), WebSocketMessageType.Binary, true, cancellationToken);
-
-        return new LiveSession(clientWebSocket);
       }
       catch (Exception)
       {
@@ -193,6 +190,33 @@ namespace Firebase.AI
         }
         throw;
       }
+    }
+
+    /// <summary>
+    /// Establishes a connection to a live generation service.
+    ///
+    /// This function handles the WebSocket connection setup and returns an `LiveSession`
+    /// object that can be used to communicate with the service.
+    /// </summary>
+    /// <param name="cancellationToken">The token that can be used to cancel the creation of the session.</param>
+    /// <returns>The LiveSession, once it is established.</returns>
+    public async Task<LiveSession> ConnectAsync(
+        SessionResumptionConfig sessionResumption = null,
+        CancellationToken cancellationToken = default)
+    {
+      async Task<ClientWebSocket> getClientWebSocket(
+          SessionResumptionConfig innerSessionResumption, CancellationToken innerCancellationToken)
+      {
+        ClientWebSocket clientWebSocket = await CreateClientWebSocketAsync(innerCancellationToken);
+
+        await SendSetupMessageAsync(clientWebSocket, innerSessionResumption, innerCancellationToken);
+
+        return clientWebSocket;
+      }
+
+      var initialWebSocket = await getClientWebSocket(sessionResumption, cancellationToken);
+
+      return new LiveSession(initialWebSocket, getClientWebSocket);
     }
   }
 
