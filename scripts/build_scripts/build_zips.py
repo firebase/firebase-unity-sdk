@@ -278,10 +278,9 @@ def get_ios_args(source_path):
   else:
     g_target_architectures = archs_to_check
 
-  if len(g_target_architectures) != len(IOS_SUPPORT_ARCHITECTURE):
-    # Need to override only if the archs are not default
-    result_args.append("-DCMAKE_OSX_ARCHITECTURES=" +
-                       ";".join(g_target_architectures))
+  # Always override to ensure Xcode builds both architectures
+  result_args.append("-DCMAKE_OSX_ARCHITECTURES=" +
+                     ";".join(g_target_architectures))
 
   if len(devices) != len(SUPPORT_DEVICE):
     # Need to override if only passed in device or simulator
