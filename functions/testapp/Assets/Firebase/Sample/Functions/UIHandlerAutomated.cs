@@ -79,6 +79,7 @@ namespace Firebase.Sample.Functions {
     }
 
     protected override void Start() {
+      InitializeAppCheck();
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       var testCases = AllTests().ToArray();
@@ -92,6 +93,7 @@ namespace Firebase.Sample.Functions {
       );
 
       UIEnabled = false;
+
       base.Start();
     }
 
@@ -102,8 +104,6 @@ namespace Firebase.Sample.Functions {
     }
 
     protected override void InitializeFirebase() {
-      var app = FirebaseApp.DefaultInstance;
-      DebugLog(String.Format("Initializing Firebase App: {0} ({1})", app.Name, app.Options.AppId));
       // One of the automated tests requires Auth, so we want to sign in before running it.
       firebaseAuth = Firebase.Auth.FirebaseAuth.DefaultInstance;
       firebaseAuth.SignInAnonymouslyAsync().ContinueWithOnMainThread(

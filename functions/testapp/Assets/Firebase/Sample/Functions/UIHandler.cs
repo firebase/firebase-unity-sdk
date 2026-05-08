@@ -16,7 +16,7 @@ namespace Firebase.Sample.Functions {
   using Firebase;
   using Firebase.Extensions;
   using Firebase.Functions;
-  using Firebase.AppCheck;
+
   using System;
   using System.Collections;
   using System.Collections.Generic;
@@ -35,13 +35,13 @@ namespace Firebase.Sample.Functions {
     protected bool UIEnabled = false;
     private DependencyStatus dependencyStatus = DependencyStatus.UnavailableOther;
     protected FirebaseFunctions functions;
-    private string appCheckDebugToken = "REPLACE_WITH_APP_CHECK_TOKEN";
+
 
     // When the app starts, check to make sure that we have
     // the required dependencies to use Firebase, and if not,
     // add them if possible.
     protected virtual void Start() {
-      InitializeAppCheck();
+
       FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task => {
         dependencyStatus = task.Result;
         if (dependencyStatus == DependencyStatus.Available) {
@@ -53,10 +53,7 @@ namespace Firebase.Sample.Functions {
       });
     }
 
-    protected virtual void InitializeAppCheck() {
-      DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugToken);
-      FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
-    }
+
 
     protected virtual void InitializeFirebase() {
       functions = FirebaseFunctions.DefaultInstance;
@@ -101,9 +98,7 @@ namespace Firebase.Sample.Functions {
       if (GUILayout.Button("addNumbers")) {
         StartCoroutine(AddNumbers(5, 7));
       }
-      if (GUILayout.Button("addNumbers (Limited Use)")) {
-        StartCoroutine(AddNumbersLimitedUse(5, 7));
-      }
+
       GUILayout.EndVertical();
     }
 
@@ -128,26 +123,7 @@ namespace Firebase.Sample.Functions {
       yield return new WaitUntil(() => task.IsCompleted);
     }
 
-    protected IEnumerator AddNumbersLimitedUse(int firstNumber, int secondNumber) {
-      var func = functions.GetHttpsCallable("addNumbers", new HttpsCallableOptions { LimitedUseAppCheckTokens = true });
-      var data = new Dictionary<string, object>();
-      data["firstNumber"] = firstNumber;
-      data["secondNumber"] = secondNumber;
 
-      var task = func.CallAsync(data).ContinueWithOnMainThread((callTask) => {
-        if (callTask.IsFaulted) {
-          // The function unexpectedly failed.
-          DebugLog("FAILED!");
-          DebugLog(String.Format("  Error: {0}", callTask.Exception));
-          return;
-        }
-
-        // The function succeeded.
-        var result = (IDictionary)callTask.Result.Data;
-        DebugLog(String.Format("AddNumbers (Limited Use): {0}", result["operationResult"]));
-      });
-      yield return new WaitUntil(() => task.IsCompleted);
-    }
 
     // Render the buttons and other controls.
     void GUIDisplayControls() {
