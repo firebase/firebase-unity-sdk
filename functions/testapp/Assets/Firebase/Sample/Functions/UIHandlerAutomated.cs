@@ -93,11 +93,11 @@ namespace Firebase.Sample.Functions {
       );
 
       UIEnabled = false;
-
+      InitializeAppCheck();
       base.Start();
     }
 
-    protected override void InitializeAppCheck() {
+    protected void InitializeAppCheck() {
       DebugLog("Initializing App Check directly in automated handler");
       DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugTokenForAutomated);
       FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
