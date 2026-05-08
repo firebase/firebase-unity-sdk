@@ -93,7 +93,7 @@ namespace Firebase.Sample.Functions {
       );
 
       UIEnabled = false;
-      InitializeAppCheck();
+
       base.Start();
     }
 
