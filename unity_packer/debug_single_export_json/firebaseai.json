@@ -153,6 +153,12 @@
           ]
         },
         {
+          "importer": "DefaultImporter",
+          "paths": [
+            "Firebase/FirebaseApp/Internal/"
+          ]
+        },
+        {
           "labels": [
             "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
           ],

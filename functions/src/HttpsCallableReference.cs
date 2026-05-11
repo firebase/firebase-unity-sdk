@@ -33,13 +33,15 @@ namespace Firebase.Functions
     // Functions object this reference was created from.
     private readonly FirebaseFunctions _firebaseFunctions;
     private readonly string _url;
+    private readonly HttpsCallableOptions _options;
     /// <summary>
     /// Construct a wrapper around the HttpsCallableReferenceInternal object.
     /// </summary>
-    internal HttpsCallableReference(FirebaseFunctions functions, string url)
+    internal HttpsCallableReference(FirebaseFunctions functions, string url, HttpsCallableOptions options = null)
     {
       _firebaseFunctions = functions;
       _url = url;
+      _options = options;
     }
 
     /// <summary>
@@ -90,7 +92,8 @@ namespace Firebase.Functions
       HttpRequestMessage request = new(HttpMethod.Post, _url);
       // Functions uses Bearer tokens for authentication.
       // This is different from the default Firebase token prefix used by other Firebase services.
-      await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App, "Bearer");
+      bool limitedUseAppCheckTokens = _options != null && _options.LimitedUseAppCheckTokens;
+      await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App, "Bearer", limitedUseAppCheckTokens);
       request.Content = MakeFunctionsRequest(data);
 
 #if FIREBASE_LOG_REST_CALLS

@@ -1,4 +1,6 @@
 namespace Firebase.Sample.Functions {
+  using Firebase;
+  using Firebase.AppCheck;
   using Firebase.Extensions;
   using Firebase.Functions;
   using System;
@@ -10,6 +12,7 @@ namespace Firebase.Sample.Functions {
   public class UIHandlerAutomated : UIHandler {
     private Firebase.Sample.AutomatedTestRunner testRunner;
     private Firebase.Auth.FirebaseAuth firebaseAuth;
+    private string appCheckDebugTokenForAutomated = "REPLACE_WITH_APP_CHECK_TOKEN";
 
     // Returns the set of all integration tests.
     public static IEnumerable<TestCase> AllTests() {
@@ -35,24 +38,37 @@ namespace Firebase.Sample.Functions {
         expectedArray.Add(3L);
         expected["array"] = expectedArray;
 
-        yield return new TestCase("dataTest", data, expected);
+        yield return new TestCase("dataTest", "dataTest", data, expected);
+      }
+
+      {
+        var data = new Dictionary<string, object>();
+        data["firstNumber"] = 5;
+        data["secondNumber"] = 7;
+        var expected = new Dictionary<string, object>();
+        expected["firstNumber"] = 5L;
+        expected["secondNumber"] = 7L;
+        expected["operator"] = "+";
+        expected["operationResult"] = 12L;
+        yield return new TestCase("addNumbersWithLimitedUse", "addNumbers", data, expected, FunctionsErrorCode.None, new HttpsCallableOptions { LimitedUseAppCheckTokens = true });
       }
 
       var empty = new Dictionary<string, object>();
-      yield return new TestCase("scalarTest", 17, 76L);
-      yield return new TestCase("tokenTest", empty, empty);
+      yield return new TestCase("scalarTest", "scalarTest", 17, 76L);
+      yield return new TestCase("scalarTestwithLimitedUse", "scalarTest", 17, 76L, FunctionsErrorCode.None, new HttpsCallableOptions { LimitedUseAppCheckTokens = true });
+      yield return new TestCase("tokenTest", "tokenTest", empty, empty);
       // Only run this on iOS and Android.
-      // yield return new TestCase("instanceIdTest", empty, empty);
-      yield return new TestCase("nullTest", null, null);
+      // yield return new TestCase("instanceIdTest", "instanceIdTest", empty, empty);
+      yield return new TestCase("nullTest", "nullTest", null, null);
 
       // Test various error cases.
-      yield return new TestCase("missingResultTest", null, null,
+      yield return new TestCase("missingResultTest", "missingResultTest", null, null,
         FunctionsErrorCode.Internal);
-      yield return new TestCase("unhandledErrorTest", null, null,
+      yield return new TestCase("unhandledErrorTest", "unhandledErrorTest", null, null,
         FunctionsErrorCode.Internal);
-      yield return new TestCase("unknownErrorTest", null, null,
+      yield return new TestCase("unknownErrorTest", "unknownErrorTest", null, null,
         FunctionsErrorCode.Internal);
-      yield return new TestCase("explicitErrorTest", null, null,
+      yield return new TestCase("explicitErrorTest", "explicitErrorTest", null, null,
         FunctionsErrorCode.OutOfRange);
 
       // Test calling via Url
@@ -63,6 +79,7 @@ namespace Firebase.Sample.Functions {
     }
 
     protected override void Start() {
+      InitializeAppCheck();
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       var testCases = AllTests().ToArray();
@@ -76,7 +93,14 @@ namespace Firebase.Sample.Functions {
       );
 
       UIEnabled = false;
+
       base.Start();
+    }
+
+    protected void InitializeAppCheck() {
+      DebugLog("Initializing App Check directly in automated handler");
+      DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugTokenForAutomated);
+      FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
     }
 
     protected override void InitializeFirebase() {
