@@ -36,6 +36,7 @@ namespace Firebase.Sample.FirebaseAI
 #if INCLUDE_FIREBASE_AUTH
   using Firebase.Auth;
 #endif
+  using Firebase.AppCheck;
 
   // An automated version of the UIHandler that runs tests on Firebase AI.
   public class UIHandlerAutomated : UIHandler
@@ -44,6 +45,15 @@ namespace Firebase.Sample.FirebaseAI
     delegate Task TaskValidationDelegate(Task task);
 
     private Firebase.Sample.AutomatedTestRunner testRunner;
+
+    private string appCheckDebugTokenForAutomated = "REPLACE_WITH_APP_CHECK_TOKEN";
+
+    protected void InitializeAppCheck()
+    {
+      DebugLog("Initializing App Check directly in automated handler");
+      DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugTokenForAutomated);
+      FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
+    }
 
     // Texture used for tests involving images.
     public Texture2D RedBlueTexture;
@@ -131,6 +141,7 @@ namespace Firebase.Sample.FirebaseAI
 
     protected override void Start()
     {
+      InitializeAppCheck();
       // Set of tests that use multiple backends.
       // When running on CI, these tests will be run on all devices
       Func<Backend, Task>[] basicMultiBackendTests = {
@@ -138,7 +149,10 @@ namespace Firebase.Sample.FirebaseAI
         TestBasicText,
         TestBasicImage,
         TestModelOptions,
-        TestCountTokens
+        TestCountTokens,
+        TestFirebaseAIInstanceCaching,
+        TestLiveModel,
+        TestImagen
       };
       // When running on CI, these tests are only run in the Editor
       Func<Backend, Task>[] editorMultiBackendTests = {
@@ -302,12 +316,12 @@ namespace Firebase.Sample.FirebaseAI
     // The model name to use for the tests.
     private readonly string TestModelName = "gemini-3.1-flash-lite";
 
-    private FirebaseAI GetFirebaseAI(Backend backend, string location = "global")
+    private FirebaseAI GetFirebaseAI(Backend backend, string location = "global", bool useLimitedUseAppCheckTokens = true)
     {
       return backend switch
       {
-        Backend.GoogleAI => FirebaseAI.GetInstance(FirebaseAI.Backend.GoogleAI()),
-        Backend.VertexAI => FirebaseAI.GetInstance(FirebaseAI.Backend.VertexAI(location)),
+        Backend.GoogleAI => FirebaseAI.GetInstance(FirebaseAI.Backend.GoogleAI(), useLimitedUseAppCheckTokens),
+        Backend.VertexAI => FirebaseAI.GetInstance(FirebaseAI.Backend.VertexAI(location), useLimitedUseAppCheckTokens),
         _ => throw new ArgumentOutOfRangeException(nameof(backend), backend,
                 "Unhandled Backend type"),
       };
@@ -325,6 +339,52 @@ namespace Firebase.Sample.FirebaseAI
       var model = CreateGenerativeModel(backend);
       Assert("Failed to create a GenerativeModel.", model != null);
       return Task.CompletedTask;
+    }
+
+    // Test that FirebaseAI instances are correctly cached based on limited use settings.
+    Task TestFirebaseAIInstanceCaching(Backend backend)
+    {
+      var ai1 = GetFirebaseAI(backend, useLimitedUseAppCheckTokens: false);
+      var ai2 = GetFirebaseAI(backend, useLimitedUseAppCheckTokens: true);
+      var ai3 = GetFirebaseAI(backend, useLimitedUseAppCheckTokens: false);
+
+      Assert("Instances with different limited use settings should be different.", ai1 != ai2);
+      Assert("Instances with the same limited use settings should be the same.", ai1 == ai3);
+      return Task.CompletedTask;
+    }
+
+    // Test if the Live model works with the default backend.
+    async Task TestLiveModel(Backend backend)
+    {
+      var ai = GetFirebaseAI(backend);
+      // Only the flash-live models support the Live API.
+      var model = ai.GetLiveModel("gemini-2.0-flash-exp");
+
+      // We can't easily verify that the token used is a limited use one without a mock backend,
+      // but we can at least verify that the connection succeeds and we get a response.
+      using var session = await model.ConnectAsync();
+      await session.SendTextRealtimeAsync("Say hello");
+
+      await foreach (var response in session.ReceiveAsync())
+      {
+        Assert("Response text was empty.", !string.IsNullOrEmpty(response.Text));
+        // We only care about the first response for this test.
+        break;
+      }
+    }
+
+    // Test if the Imagen model works with the default backend.
+    async Task TestImagen(Backend backend)
+    {
+      var ai = GetFirebaseAI(backend);
+      #pragma warning disable
+      var model = ai.GetImagenModel("imagen-3.0-generate-002");
+      #pragma warning restore
+
+      // We can't easily verify that the token used is a limited use one without a mock backend,
+      // but we can at least verify that the request succeeds.
+      var response = await model.GenerateImagesAsync("Generate an image of a cartoon dog.");
+      Assert("Response missing images.", response.Images.Any());
     }
 
     // Test if it can set a string in, and get a string output.

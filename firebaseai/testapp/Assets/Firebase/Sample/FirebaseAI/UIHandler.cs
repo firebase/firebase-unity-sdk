@@ -16,6 +16,7 @@ namespace Firebase.Sample.FirebaseAI {
   using Firebase;
   using Firebase.AI;
   using Firebase.Extensions;
+  using Firebase.AppCheck;
   using System;
   using System.Collections;
   using System.Collections.Generic;
@@ -40,8 +41,18 @@ namespace Firebase.Sample.FirebaseAI {
 
     private DependencyStatus dependencyStatus = DependencyStatus.UnavailableOther;
 
+    private string appCheckDebugToken = "REPLACE_WITH_APP_CHECK_TOKEN";
+
+    protected void InitializeAppCheck() {
+      DebugLog("Initializing App Check directly in manual UIHandler");
+      DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugToken);
+      FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
+    }
+
     protected virtual void Start() {
       UIEnabled = true;
+      InitializeAppCheck();
+      InitializeFirebase();
     }
 
     protected void InitializeFirebase() {
@@ -65,7 +76,7 @@ namespace Firebase.Sample.FirebaseAI {
           ? FirebaseAI.Backend.GoogleAI()
           : FirebaseAI.Backend.VertexAI();
 
-      return FirebaseAI.GetInstance(backend).GetGenerativeModel(ModelName);
+      return FirebaseAI.GetInstance(backend, useLimitedUseAppCheckTokens: true).GetGenerativeModel(ModelName);
     }
 
     // Send a single message to the Generative Model, without any history.

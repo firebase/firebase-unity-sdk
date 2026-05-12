@@ -49,6 +49,7 @@ namespace Firebase.AI
     private readonly Tool[] _tools;
     private readonly ModelContent? _systemInstruction;
     private readonly RequestOptions? _requestOptions;
+    private readonly bool _useLimitedUseAppCheckTokens;
 
     /// <summary>
     /// Intended for internal use only.
@@ -60,7 +61,8 @@ namespace Firebase.AI
                                  LiveGenerationConfig? liveConfig = null,
                                  Tool[] tools = null,
                                  ModelContent? systemInstruction = null,
-                                 RequestOptions? requestOptions = null)
+                                 RequestOptions? requestOptions = null,
+                                 bool useLimitedUseAppCheckTokens = false)
     {
       _firebaseApp = firebaseApp;
       _backend = backend;
@@ -69,6 +71,7 @@ namespace Firebase.AI
       _tools = tools;
       _systemInstruction = systemInstruction;
       _requestOptions = requestOptions;
+      _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
     }
 
     private string GetURL()
@@ -126,7 +129,7 @@ namespace Firebase.AI
         clientWebSocket.Options.SetRequestHeader("X-Firebase-AppVersion", UnityEngine.Application.version);
       }
       // Add additional Firebase tokens to the header.
-      await Firebase.Internal.FirebaseInterops.AddFirebaseTokensAsync(clientWebSocket, _firebaseApp);
+      await Firebase.Internal.FirebaseInterops.AddFirebaseTokensAsync(clientWebSocket, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
 
       // Add a timeout to the initial connection, using the RequestOptions.
       using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

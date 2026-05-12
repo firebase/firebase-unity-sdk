@@ -92,11 +92,13 @@ namespace Firebase.AI
 
     private readonly FirebaseApp _firebaseApp;
     private readonly Backend _backend;
+    private readonly bool _useLimitedUseAppCheckTokens;
 
-    private FirebaseAI(FirebaseApp firebaseApp, Backend backend)
+    private FirebaseAI(FirebaseApp firebaseApp, Backend backend, bool useLimitedUseAppCheckTokens)
     {
       _firebaseApp = firebaseApp;
       _backend = backend;
+      _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
     }
 
     /// <summary>
@@ -114,18 +116,22 @@ namespace Firebase.AI
     /// Returns a `FirebaseAI` instance with the default `FirebaseApp` and the given Backend.
     /// </summary>
     /// <param name="backend">The backend AI service to use.</param>
+    /// <param name="useLimitedUseAppCheckTokens">Whether to use limited use App Check tokens for
+    /// requests.</param>
     /// <returns>A configured instance of `FirebaseAI`.</returns>
-    public static FirebaseAI GetInstance(Backend? backend = null)
+    public static FirebaseAI GetInstance(Backend? backend = null, bool useLimitedUseAppCheckTokens = false)
     {
-      return GetInstance(FirebaseApp.DefaultInstance, backend);
+      return GetInstance(FirebaseApp.DefaultInstance, backend, useLimitedUseAppCheckTokens);
     }
     /// <summary>
     /// Returns a `FirebaseAI` instance with the given `FirebaseApp` and Backend.
     /// </summary>
     /// <param name="app">The custom `FirebaseApp` used for initialization.</param>
     /// <param name="backend">The backend AI service to use.</param>
+    /// <param name="useLimitedUseAppCheckTokens">Whether to use limited use App Check tokens for
+    /// requests.</param>
     /// <returns>A configured instance of `FirebaseAI`.</returns>
-    public static FirebaseAI GetInstance(FirebaseApp app, Backend? backend = null)
+    public static FirebaseAI GetInstance(FirebaseApp app, Backend? backend = null, bool useLimitedUseAppCheckTokens = false)
     {
       if (app == null)
       {
@@ -135,13 +141,13 @@ namespace Firebase.AI
       Backend resolvedBackend = backend ?? Backend.GoogleAI();
 
       // FirebaseAI instances are keyed by a combination of the app name and backend.
-      string key = $"{app.Name}::{resolvedBackend}";
+      string key = $"{app.Name}::{resolvedBackend}::{useLimitedUseAppCheckTokens}";
       if (_instances.ContainsKey(key))
       {
         return _instances[key];
       }
 
-      return _instances.GetOrAdd(key, _ => new FirebaseAI(app, resolvedBackend));
+      return _instances.GetOrAdd(key, _ => new FirebaseAI(app, resolvedBackend, useLimitedUseAppCheckTokens));
     }
 
     /// <summary>
@@ -173,7 +179,8 @@ namespace Firebase.AI
     {
       return new GenerativeModel(_firebaseApp, _backend, modelName,
           generationConfig, safetySettings, tools,
-          toolConfig, systemInstruction, requestOptions);
+          toolConfig, systemInstruction, requestOptions,
+          _useLimitedUseAppCheckTokens);
     }
 
     /// <summary>
@@ -200,7 +207,8 @@ namespace Firebase.AI
     {
       return new LiveGenerativeModel(_firebaseApp, _backend, modelName,
           liveGenerationConfig, tools,
-          systemInstruction, requestOptions);
+          systemInstruction, requestOptions,
+          _useLimitedUseAppCheckTokens);
     }
 
     /// <summary>
@@ -230,7 +238,8 @@ namespace Firebase.AI
         RequestOptions? requestOptions = null)
     {
       return new ImagenModel(_firebaseApp, _backend, modelName,
-          generationConfig, safetySettings, requestOptions);
+          generationConfig, safetySettings, requestOptions,
+          _useLimitedUseAppCheckTokens);
     }
 
     /// <summary>
@@ -241,7 +250,8 @@ namespace Firebase.AI
     public TemplateGenerativeModel GetTemplateGenerativeModel(
         RequestOptions? requestOptions = null)
     {
-      return new TemplateGenerativeModel(_firebaseApp, _backend, requestOptions);
+      return new TemplateGenerativeModel(_firebaseApp, _backend, requestOptions,
+          _useLimitedUseAppCheckTokens);
     }
 
     /// <summary>
@@ -259,7 +269,8 @@ namespace Firebase.AI
     public TemplateImagenModel GetTemplateImagenModel(
         RequestOptions? requestOptions = null)
     {
-      return new TemplateImagenModel(_firebaseApp, _backend, requestOptions);
+      return new TemplateImagenModel(_firebaseApp, _backend, requestOptions,
+          _useLimitedUseAppCheckTokens);
     }
   }
 
