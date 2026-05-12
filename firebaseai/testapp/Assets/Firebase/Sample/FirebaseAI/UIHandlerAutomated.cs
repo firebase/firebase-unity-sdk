@@ -114,7 +114,7 @@ namespace Firebase.Sample.FirebaseAI
             // Log and wait
             DebugLog($"Retryable Error encountered in {testName}: Retrying attempt {i + 1} of {MaxRetries}...");
             DebugLog($"{testName} has error message: {ex.Message}");
-            int jitter = UnityEngine.Random.Range(0, 1000);
+            int jitter = new System.Random().Next(1000);
             // As we tend to run multiple tests in parallel especially on github runners running desktop,
             // android, and ios all at the same time, we add jitter to the delay to avoid the tests
             // hammering the service at the same time.
