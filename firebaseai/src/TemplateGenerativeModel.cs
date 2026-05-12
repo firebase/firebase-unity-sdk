@@ -36,6 +36,7 @@ namespace Firebase.AI
     private readonly FirebaseApp _firebaseApp;
     private readonly FirebaseAI.Backend _backend;
     private readonly RequestOptions? _requestOptions;
+    private readonly bool _useLimitedUseAppCheckTokens;
 
     private readonly HttpClient _httpClient;
 
@@ -46,10 +47,12 @@ namespace Firebase.AI
     /// </summary>
     internal TemplateGenerativeModel(FirebaseApp firebaseApp,
                                      FirebaseAI.Backend backend,
-                                     RequestOptions? requestOptions = null)
+                                     RequestOptions? requestOptions = null,
+                                     bool useLimitedUseAppCheckTokens = false)
     {
       _firebaseApp = firebaseApp;
       _backend = backend;
+      _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
 
       // Create a HttpClient using the timeout requested, or the default one.
       _httpClient = new HttpClient()
@@ -148,7 +151,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateGenerateContent");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(inputs, chatHistory, tools, toolConfig);
@@ -181,7 +184,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateStreamGenerateContent?alt=sse");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(inputs, chatHistory, tools, toolConfig);
