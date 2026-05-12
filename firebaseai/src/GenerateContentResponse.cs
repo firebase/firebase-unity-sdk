@@ -409,10 +409,10 @@ namespace Firebase.AI
     /// </summary>
     public GoogleMapsGroundingChunk? Maps { get; }
 
-    private GroundingChunk(WebGroundingChunk? web, GoogleMapsGroundingChunk? googleMaps)
+    private GroundingChunk(WebGroundingChunk? web, GoogleMapsGroundingChunk? maps)
     {
       Web = web;
-      Maps = googleMaps;
+      Maps = maps;
     }
 
     internal static GroundingChunk FromJson(Dictionary<string, object> jsonDict)
