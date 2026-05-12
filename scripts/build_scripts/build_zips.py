@@ -79,6 +79,7 @@ ANDROID_SUPPORT_ARCHITECTURE = ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
 MACOS_SUPPORT_ARCHITECTURE = ["x86_64", "arm64"]
 
 g_target_architectures = []
+g_target_devices = []
 g_cpp_sdk_realpath = ""
 
 FLAGS = flags.FLAGS
@@ -252,45 +253,45 @@ def get_ios_args(source_path):
   result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_path)
   result_args.extend(["-G", "Xcode"])
   # check device input
+  global g_target_devices
   if FLAGS.device:
     for device in FLAGS.device:
       if device not in SUPPORT_DEVICE:
         raise app.UsageError(
             'Wrong device type {}, please pick from {}'.format(
                 device, ",".join(SUPPORT_DEVICE)))
-    devices = FLAGS.device
+    g_target_devices = FLAGS.device
   else:
-    devices = SUPPORT_DEVICE
+    g_target_devices = SUPPORT_DEVICE
 
   global g_target_architectures
   # check architecture input
-  if (len(devices) > 1):
+  if (len(g_target_devices) > 1):
     archs_to_check = IOS_SUPPORT_ARCHITECTURE
   else:
-    archs_to_check = IOS_CONFIG_DICT[devices[0]]["architecture"]
+    archs_to_check = IOS_CONFIG_DICT[g_target_devices[0]]["architecture"]
   if FLAGS.architecture:
     for arch in FLAGS.architecture:
       if arch not in archs_to_check:
         raise app.UsageError(
             'Wrong architecture "{}" for device type {}, please pick from {}'.format(
-                arch, ",".join(devices), ",".join(archs_to_check)))
+                arch, ",".join(g_target_devices), ",".join(archs_to_check)))
     g_target_architectures = FLAGS.architecture
   else:
     g_target_architectures = archs_to_check
 
-  if len(g_target_architectures) != len(IOS_SUPPORT_ARCHITECTURE):
-    # Need to override only if the archs are not default
-    result_args.append("-DCMAKE_OSX_ARCHITECTURES=" +
-                       ";".join(g_target_architectures))
+  # Always override to ensure Xcode builds both architectures
+  result_args.append("-DCMAKE_OSX_ARCHITECTURES=" +
+                     ";".join(g_target_architectures))
 
-  if len(devices) != len(SUPPORT_DEVICE):
+  if len(g_target_devices) != len(SUPPORT_DEVICE):
     # Need to override if only passed in device or simulator
     result_args.append("-DCMAKE_OSX_SYSROOT=" +
-                       IOS_CONFIG_DICT[devices[0]]["osx_sysroot"])
+                       IOS_CONFIG_DICT[g_target_devices[0]]["osx_sysroot"])
     result_args.append("-DCMAKE_XCODE_EFFECTIVE_PLATFORMS=" +
-                       "-"+IOS_CONFIG_DICT[devices[0]]["osx_sysroot"])
+                       "-"+IOS_CONFIG_DICT[g_target_devices[0]]["osx_sysroot"])
     result_args.append("-DIOS_PLATFORM_LOCATION=" +
-                       IOS_CONFIG_DICT[devices[0]]["ios_platform_location"])
+                       IOS_CONFIG_DICT[g_target_devices[0]]["ios_platform_location"])
   return result_args
 
 
@@ -666,6 +667,124 @@ def make_tvos_multi_arch_build(cmake_args):
   logging.info("Generated Darwin (tvOS) multi-arch (%s) zip %s",
                ",".join(g_target_architectures), final_zip_path)
 
+def configure_ios_target(device, arch, cmake_args):
+  """Configure the ios build for the given device and architecture.
+     Assumed to be called from the build directory.
+
+    Args:
+      device: Building for device or simulator.
+      arch: The architecture to build for.
+      cmake_args: Additional cmake arguments to use.
+
+    Returns:
+      The directory that the project is configured in.
+  """
+  build_args = cmake_args.copy()
+  build_args.append("-DCMAKE_OSX_ARCHITECTURES=" + arch)
+  build_args.append("-DCMAKE_OSX_SYSROOT=" +
+                      IOS_CONFIG_DICT[device]["osx_sysroot"])
+  build_args.append("-DCMAKE_XCODE_EFFECTIVE_PLATFORMS=" +
+                       "-"+IOS_CONFIG_DICT[device]["osx_sysroot"])
+  build_args.append("-DIOS_PLATFORM_LOCATION=" +
+                       IOS_CONFIG_DICT[device]["ios_platform_location"])
+
+  if not os.path.exists(arch):
+    os.makedirs(arch)
+  build_dir = os.path.join(os.getcwd(), arch)
+  subprocess.call(build_args, cwd=build_dir)
+  return build_dir
+
+def make_ios_target(build_dir):
+  """Builds the previously configured cmake project in the given directory.
+
+    Args:
+      The full path to the directory to perform the build in.
+  """
+  subprocess.call(["cmake", "--build", ".", "--config", "Release"], cwd=build_dir)
+  subprocess.call(['cpack', '-C', 'Release', '.'], cwd=build_dir)
+
+def make_ios_multi_arch_build(cmake_args):
+  """Make ios build for different architectures, and then combine
+    them together into fat libraries and a single zip file.
+
+    Args:
+      cmake_args: cmake arguments used to build each architecture.
+  """
+  global g_target_devices
+  current_folder = os.getcwd()
+  target_architectures = []
+
+  # build multiple architectures
+  current_folder = os.getcwd()
+  threads = []
+  for device in g_target_devices:
+    for arch in IOS_CONFIG_DICT[device]["architecture"]:
+      # Skip arm64 simulator build to avoid collision with arm64 device build in fat static library
+      if device == "simulator" and arch == "arm64":
+        continue
+      target_architectures.append(arch)
+      # Run the configure step sequentially, since they can clobber the shared Cocoapod cache
+      build_dir = configure_ios_target(device, arch, cmake_args)
+      # Run the builds in parallel
+      t = threading.Thread(target=make_ios_target, args=(build_dir,))
+      t.start()
+      threads.append(t)
+
+  # Wait for the builds to be finished
+  for t in threads:
+    t.join()
+
+  # Merge the different zip files together, using lipo on the library files
+  zip_base_name = ""
+  library_list = []
+  base_temp_dir = tempfile.mkdtemp()
+  for arch in target_architectures:
+    # find *.zip in subfolder architecture
+    arch_zip_path = glob.glob(os.path.join(arch, "*-iOS.zip"))
+    if not arch_zip_path:
+      logging.error("No *-iOS.zip generated for architecture %s", arch)
+      return
+    if not zip_base_name:
+      # first architecture, so extract to the final temp folder. The following
+      # library files will merge to the ones in this folder.
+      zip_base_name = arch_zip_path[0]
+      with zipfile.ZipFile(zip_base_name) as zip_file:
+        zip_file.extractall(base_temp_dir)
+      library_list.extend(glob.glob(os.path.join(
+          base_temp_dir, "**", "*.a"), recursive=True))
+    else:
+      temporary_dir = tempfile.mkdtemp()
+      # from the second *-iOS.zip, we only need to extract *.a files to operate the merge.
+      with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
+        for file in zip_file.namelist():
+          if file.endswith('.a'):
+            zip_file.extract(file, temporary_dir)
+
+      for library_file in library_list:
+        library_name = os.path.basename(library_file)
+        matching_files = glob.glob(os.path.join(
+            temporary_dir, "Plugins", "iOS", "Firebase", library_name))
+        if matching_files:
+          merge_args = [
+              "lipo",
+              library_file,
+              matching_files[0],
+              "-create",
+              "-output",
+              library_file,
+          ]
+          subprocess.call(merge_args)
+          logging.info("merging %s to %s", matching_files[0], library_name)
+
+  # archive the temp folder to the final firebase_unity-<version>-iOS.zip
+  final_zip_path = os.path.join(current_folder, os.path.basename(zip_base_name))
+  with zipfile.ZipFile(final_zip_path, "w", allowZip64=True) as zip_file:
+    for current_root, _, filenames in os.walk(base_temp_dir):
+      for filename in filenames:
+        fullpath = os.path.join(current_root, filename)
+        zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
+  logging.info("Generated Darwin (iOS) multi-arch zip %s", final_zip_path)
+
 def gen_documentation_zip():
   """If the flag was enabled, builds the zip file containing source files to document.
   """
@@ -816,10 +935,12 @@ def main(argv):
     make_macos_multi_arch_build(cmake_setup_args)
   elif is_tvos_build():
     make_tvos_multi_arch_build(cmake_setup_args)
+  elif is_ios_build():
+    make_ios_multi_arch_build(cmake_setup_args)
   else:
     subprocess.call(cmake_setup_args)
     if (not FLAGS.gen_swig_only):
-      if is_windows_build() or is_ios_build():
+      if is_windows_build():
         # no make command in windows or when using Xcode generator. TODO make config passable
         subprocess.call(["cmake", "--build", ".", "--config", "Release"])
       else:
@@ -828,7 +949,7 @@ def main(argv):
       cmake_pack_args = [
         "cpack",
       ]
-      if is_windows_build() or is_ios_build():
+      if is_windows_build():
         cmake_pack_args.extend(["-C", "Release"])
       cmake_pack_args.append(".")
 
