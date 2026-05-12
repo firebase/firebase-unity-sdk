@@ -407,12 +407,12 @@ namespace Firebase.AI
     /// <summary>
     /// Contains details if the grounding chunk is from a Google Maps source.
     /// </summary>
-    public GoogleMapsGroundingChunk? GoogleMaps { get; }
+    public GoogleMapsGroundingChunk? Maps { get; }
 
-    private GroundingChunk(WebGroundingChunk? web, GoogleMapsGroundingChunk? googleMaps)
+    private GroundingChunk(WebGroundingChunk? web, GoogleMapsGroundingChunk? maps)
     {
       Web = web;
-      GoogleMaps = googleMaps;
+      Maps = maps;
     }
 
     internal static GroundingChunk FromJson(Dictionary<string, object> jsonDict)

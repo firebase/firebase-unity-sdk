@@ -1216,7 +1216,7 @@ namespace Firebase.Sample.FirebaseAI
       var groundingMetadata = candidate.GroundingMetadata.Value;
 
       Assert("GroundingChunks should have Maps data.",
-          groundingMetadata.GroundingChunks.Any(gc => gc.GoogleMaps != null));
+          groundingMetadata.GroundingChunks.Any(gc => gc.Maps != null));
     }
 
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
@@ -1757,8 +1757,8 @@ namespace Firebase.Sample.FirebaseAI
 
       AssertEq("GroundingChunks count", grounding.GroundingChunks.Count(), 20);
       var chunk = grounding.GroundingChunks.First();
-      Assert("GroundingChunk.GoogleMaps should not be null", chunk.GoogleMaps.HasValue);
-      var mapsChunk = chunk.GoogleMaps.Value;
+      Assert("GroundingChunk.Maps should not be null", chunk.Maps.HasValue);
+      var mapsChunk = chunk.Maps.Value;
       AssertEq("GoogleMapsGroundingChunk.Title", mapsChunk.Title, "Joe’s Pizza");
       AssertEq("GoogleMapsGroundingChunk.Uri", mapsChunk.Uri, new Uri("https://maps.google.com/?cid=10332424901773702701"));
       AssertEq("GoogleMapsGroundingChunk.PlaceId", mapsChunk.PlaceId, "places/ChIJqdNaaBVbwokRLTafYrQlZI8");
