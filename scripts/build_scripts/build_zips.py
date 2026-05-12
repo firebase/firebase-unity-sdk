@@ -943,15 +943,13 @@ def main(argv):
       if is_windows_build():
         # no make command in windows or when using Xcode generator. TODO make config passable
         subprocess.call(["cmake", "--build", ".", "--config", "Release"])
-      elif is_ios_build(): 
-        subprocess.call(["cmake", "--build", ".", "--config", "Release", "--", "-arch", "arm64", "-arch", "x86_64"])
       else:
         subprocess.call("make")
 
       cmake_pack_args = [
         "cpack",
       ]
-      if is_windows_build() or is_ios_build():
+      if is_windows_build():
         cmake_pack_args.extend(["-C", "Release"])
       cmake_pack_args.append(".")
 
