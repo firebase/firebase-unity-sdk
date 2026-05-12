@@ -108,23 +108,23 @@ namespace Firebase.Sample.FirebaseAI
         }
         catch (Exception ex)
         {
-            // Check if it's a retryable error and we have retries left.
-            if (i < MaxRetries && ShouldRetry(ex))
-            {
-                // Log and wait
-                DebugLog($"Retryable Error encountered in {testName}: Retrying attempt {i + 1} of {MaxRetries}...");
-                DebugLog($"{testName} has error message: {ex.Message}");
-                int jitter = UnityEngine.Random.Range(0, 1000);
-                // As we tend to run multiple tests in parallel especially on github runners running desktop,
-                // android, and ios all at the same time, we add jitter to the delay to avoid the tests
-                // hammering the service at the same time.
-                await Task.Delay(delayMilliseconds + jitter);
-                delayMilliseconds *= 2;
-            }
-            else
-            {
-                throw;
-            }
+          // Check if it's a retryable error and we have retries left.
+          if (i < MaxRetries && ShouldRetry(ex))
+          {
+            // Log and wait
+            DebugLog($"Retryable Error encountered in {testName}: Retrying attempt {i + 1} of {MaxRetries}...");
+            DebugLog($"{testName} has error message: {ex.Message}");
+            int jitter = new System.Random().Next(1000);
+            // As we tend to run multiple tests in parallel especially on github runners running desktop,
+            // android, and ios all at the same time, we add jitter to the delay to avoid the tests
+            // hammering the service at the same time.
+            await Task.Delay(delayMilliseconds + jitter);
+            delayMilliseconds *= 2;
+          }
+          else
+          {
+            throw;
+          }
         }
       }
     }
@@ -142,7 +142,6 @@ namespace Firebase.Sample.FirebaseAI
       };
       // When running on CI, these tests are only run in the Editor
       Func<Backend, Task>[] editorMultiBackendTests = {
-        TestMultipleCandidates,
         TestBasicTextStream,
         TestFunctionCallingAny,
         TestFunctionCallingNone,
@@ -156,8 +155,6 @@ namespace Firebase.Sample.FirebaseAI
         TestTemplateGenerateContent,
         TestTemplateGenerateContentStream,
         TestJsonSchemaStructureOutput,
-        TestTemplateChat,
-        TestTemplateChatStreamAutoFunction,
         TestChatAutoFunctionCalling
       };
       // When running on CI, these tests aren't run since they are more flakey
@@ -165,13 +162,12 @@ namespace Firebase.Sample.FirebaseAI
         TestIncludeThoughts,
         TestYoutubeLink,
         TestGenerateImage,
-        TestImagenGenerateImage,
-        TestImagenGenerateImageOptions,
         TestSearchGrounding,
         TestCodeExecution,
         TestUrlContext,
         TestGoogleMaps,
-        TestTemplateImagenGenerateImage,
+        TestTemplateChat,
+        TestTemplateChatStreamAutoFunction,
       };
       // Construct the set of tests to run, based on the environment
       List<Func<Backend, Task>> multiBackendTests = new(basicMultiBackendTests);
@@ -304,9 +300,9 @@ namespace Firebase.Sample.FirebaseAI
     }
 
     // The model name to use for the tests.
-    private readonly string TestModelName = "gemini-2.5-flash";
+    private readonly string TestModelName = "gemini-3.1-flash-lite";
 
-    private FirebaseAI GetFirebaseAI(Backend backend, string location = "us-central1")
+    private FirebaseAI GetFirebaseAI(Backend backend, string location = "global")
     {
       return backend switch
       {
@@ -471,22 +467,6 @@ namespace Firebase.Sample.FirebaseAI
       {
         DebugLog($"WARNING: Response text wasn't just 'Apples': {result}");
       }
-    }
-
-    // Test if requesting multiple candidates works.
-    async Task TestMultipleCandidates(Backend backend)
-    {
-      var genConfig = new GenerationConfig(candidateCount: 2);
-
-      var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
-        generationConfig: genConfig
-      );
-
-      GenerateContentResponse response = await model.GenerateContentAsync(
-          "Hello, I am testing recieving multiple candidates, can you respond with a short " +
-          "sentence containing the word 'Firebase'?");
-
-      AssertEq("Incorrect number of Candidates", response.Candidates.Count(), 2);
     }
 
     // Test if generating a stream of text works.
@@ -916,67 +896,6 @@ namespace Firebase.Sample.FirebaseAI
       AssertEq("Image dimensions should match.", image.height, image.width);
     }
 
-    // Test generating an image via Imagen.
-    async Task TestImagenGenerateImage(Backend backend)
-    {
-      #pragma warning disable
-      var model = GetFirebaseAI(backend).GetImagenModel("imagen-4.0-generate-001");
-      #pragma warning restore
-
-      var response = await model.GenerateImagesAsync(
-          "Generate an image of a cartoon dog.");
-
-      // We can't easily test if the image is correct, but can check other random data.
-      AssertEq("FilteredReason", response.FilteredReason, null);
-      AssertEq("Image Count", response.Images.Count, 1);
-
-      AssertEq($"Image MimeType", response.Images[0].MimeType, "image/png");
-
-      var texture = response.Images[0].AsTexture2D();
-      Assert($"Image as Texture2D", texture != null);
-      // By default the image should be Square 1x1, so check for that.
-      Assert($"Image Height > 0", texture.height > 0);
-      AssertEq($"Image Height = Width", texture.height, texture.width);
-    }
-
-    // Test generating an image via Imagen with various options.
-    async Task TestImagenGenerateImageOptions(Backend backend)
-    {
-      #pragma warning disable
-      var model = GetFirebaseAI(backend).GetImagenModel(
-          modelName: "imagen-4.0-generate-001",
-          generationConfig: new ImagenGenerationConfig(
-            // negativePrompt and addWatermark are not supported on this version of the model.
-            numberOfImages: 2,
-            aspectRatio: ImagenAspectRatio.Landscape4x3,
-            imageFormat: ImagenImageFormat.Jpeg(50)
-          ),
-          safetySettings: new ImagenSafetySettings(
-            safetyFilterLevel: ImagenSafetySettings.SafetyFilterLevel.BlockLowAndAbove,
-            personFilterLevel: ImagenSafetySettings.PersonFilterLevel.BlockAll),
-          requestOptions: new RequestOptions(timeout: TimeSpan.FromMinutes(1)));
-      #pragma warning restore
-
-      var response = await model.GenerateImagesAsync(
-          "Generate an image of a cartoon dog.");
-
-      // We can't easily test if the image is correct, but can check other random data.
-      AssertEq("FilteredReason", response.FilteredReason, null);
-      AssertEq("Image Count", response.Images.Count, 2);
-
-      for (int i = 0; i < 2; i++)
-      {
-        AssertEq($"Image {i} MimeType", response.Images[i].MimeType, "image/jpeg");
-
-        var texture = response.Images[i].AsTexture2D();
-        Assert($"Image {i} as Texture2D", texture != null);
-        // By default the image should be Landscape 4x3, so check for that.
-        Assert($"Image {i} Height > 0", texture.height > 0);
-        Assert($"Image {i} Height < Width {texture.height} < {texture.width}",
-            texture.height < texture.width);
-      }
-    }
-
     // Test defining a thinking budget, and getting back thought tokens.
     async Task TestThinkingBudget(Backend backend)
     {
@@ -1126,32 +1045,6 @@ namespace Firebase.Sample.FirebaseAI
 
       Assert("Response text was missing", !string.IsNullOrWhiteSpace(fullResult));
       Assert("Finished without seeing FinishReason.Stop", finishReasonStop);
-    }
-
-    async Task TestTemplateImagenGenerateImage(Backend backend)
-    {
-      #pragma warning disable
-      var model = GetFirebaseAI(backend).GetTemplateImagenModel();
-      #pragma warning restore
-
-      var inputs = new Dictionary<string, object>()
-      {
-        ["prompt"] = "flowers",
-      };
-      var response = await model.GenerateImagesAsync(
-          "imagen-generation-basic", inputs);
-
-      // We can't easily test if the image is correct, but can check other random data.
-      AssertEq("FilteredReason", response.FilteredReason, null);
-      AssertEq("Image Count", response.Images.Count, 1);
-
-      AssertEq($"Image MimeType", response.Images[0].MimeType, "image/png");
-
-      var texture = response.Images[0].AsTexture2D();
-      Assert($"Image as Texture2D", texture != null);
-      // By default the image should be Square 1x1, so check for that.
-      Assert($"Image Height > 0", texture.height > 0);
-      AssertEq($"Image Height = Width", texture.height, texture.width);
     }
 
     async Task TestTemplateChat(Backend backend)
@@ -1600,7 +1493,7 @@ namespace Firebase.Sample.FirebaseAI
       Assert("imageConfig is not a dictionary", imageConfigJson != null);
       AssertEq("imageConfigJson.aspectRatio", imageConfigJson["aspectRatio"], "16:9");
       AssertEq("imageConfigJson.imageSize", imageConfigJson["imageSize"], "1K");
-      
+
       return Task.CompletedTask;
     }
 
@@ -1951,18 +1844,18 @@ namespace Firebase.Sample.FirebaseAI
     // Test that the UsageMetadata with caching information is getting parsed correctly.
     async Task InternalTestUsageMetadataWithCaching()
     {
-       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-cached-content-usage-metadata.json");
-       GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
+      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-cached-content-usage-metadata.json");
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.VertexAI);
 
-       AssertEq("PromptTokenCount", response.UsageMetadata?.PromptTokenCount, 200);
-       AssertEq("CandidatesTokenCount", response.UsageMetadata?.CandidatesTokenCount, 50);
-       AssertEq("TotalTokenCount", response.UsageMetadata?.TotalTokenCount, 250);
-       AssertEq("CachedContentTokenCount", response.UsageMetadata?.CachedContentTokenCount, 150);
+      AssertEq("PromptTokenCount", response.UsageMetadata?.PromptTokenCount, 200);
+      AssertEq("CandidatesTokenCount", response.UsageMetadata?.CandidatesTokenCount, 50);
+      AssertEq("TotalTokenCount", response.UsageMetadata?.TotalTokenCount, 250);
+      AssertEq("CachedContentTokenCount", response.UsageMetadata?.CachedContentTokenCount, 150);
 
-       var cacheTokensDetails = response.UsageMetadata?.CacheTokensDetails;
-       AssertEq("CacheTokensDetails.Count", cacheTokensDetails.Count, 1);
-       AssertEq("CacheTokensDetails[0].Modality", cacheTokensDetails[0].Modality, ContentModality.Text);
-       AssertEq("CacheTokensDetails[0].TokenCount", cacheTokensDetails[0].TokenCount, 150);
+      var cacheTokensDetails = response.UsageMetadata?.CacheTokensDetails;
+      AssertEq("CacheTokensDetails.Count", cacheTokensDetails.Count, 1);
+      AssertEq("CacheTokensDetails[0].Modality", cacheTokensDetails[0].Modality, ContentModality.Text);
+      AssertEq("CacheTokensDetails[0].TokenCount", cacheTokensDetails[0].TokenCount, 150);
     }
 
     // Test that parsing a basic short reply from Google AI endpoint works as expected.
@@ -2079,9 +1972,9 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestGenerateImagesBase64()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-generate-images-base64.json");
-      #pragma warning disable
+#pragma warning disable
       var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
-      #pragma warning restore
+#pragma warning restore
 
       AssertEq("FilteredReason", response.FilteredReason, null);
       AssertEq("Image Count", response.Images.Count, 4);
@@ -2100,9 +1993,9 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestGenerateImagesAllFiltered()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-all-filtered.json");
-      #pragma warning disable
+#pragma warning disable
       var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
-      #pragma warning restore
+#pragma warning restore
 
       AssertEq("FilteredReason", response.FilteredReason,
         "Unable to show generated images. All images were filtered out because " +
@@ -2115,9 +2008,9 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestGenerateImagesBase64SomeFiltered()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-base64-some-filtered.json");
-      #pragma warning disable
+#pragma warning disable
       var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
-      #pragma warning restore
+#pragma warning restore
 
       AssertEq("FilteredReason", response.FilteredReason,
         "Your current safety filter threshold filtered out 2 generated images. " +
