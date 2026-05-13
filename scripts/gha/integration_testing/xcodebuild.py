@@ -75,7 +75,7 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configurati
 
   xcode_version = _get_xcode_version()
   if xcode_version and xcode_version >= 16:
-    args.append("-disablePackageRepositorySandboxing")
+    args.extend(("-DisablePackageRepositorySandboxing", "YES"))
 
   if ios_sdk == "device":
     args.extend(['CODE_SIGN_IDENTITY=""',
