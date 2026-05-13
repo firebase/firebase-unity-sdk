@@ -29,7 +29,25 @@ the .app to .ipa.
 """
 
 import os
+import re
 import shutil
+import subprocess
+
+
+def _get_xcode_version():
+  """Helper to determine major Xcode version."""
+  try:
+    result = subprocess.run(
+        ["xcodebuild", "-version"],
+        capture_output=True,
+        text=True,
+        check=True)
+    match = re.search(r"Xcode\s+(\d+)", result.stdout)
+    if match:
+      return int(match.group(1))
+  except Exception:
+    pass
+  return None
 
 
 def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configuration):
@@ -54,6 +72,10 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configurati
       "-quiet",
       "BUILD_DIR=" + output_dir
   ]
+
+  xcode_version = _get_xcode_version()
+  if xcode_version and xcode_version >= 16:
+    args.append("-disablePackageRepositorySandboxing")
 
   if ios_sdk == "device":
     args.extend(['CODE_SIGN_IDENTITY=""',
