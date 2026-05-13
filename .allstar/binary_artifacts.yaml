@@ -2,4 +2,3 @@
 ignorePaths:
 - aar_builder/classes.jar
 - messaging/activity/classes.jar
-- network_request.exe

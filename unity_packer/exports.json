@@ -106,8 +106,6 @@
             "Editor Default Resources/",
             "Firebase/Editor/generate_xml_from_google_services_json.exe",
             "Firebase/Editor/generate_xml_from_google_services_json.py",
-            "Firebase/Editor/network_request.exe",
-            "Firebase/Editor/network_request.py",
             "Firebase/Editor/AppDependencies.xml",
             "Firebase/m2repository/com/google/firebase/firebase-app-unity/"
           ]
