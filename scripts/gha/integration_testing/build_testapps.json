@@ -95,12 +95,14 @@
       "testapp_path": "firebaseai/testapp",
       "platforms": ["Android", "Playmode", "iOS", "tvOS", "Windows", "macOS", "Linux"],
       "plugins": [
-        "FirebaseAI.unitypackage"
+        "FirebaseAI.unitypackage",
+        "FirebaseAppCheck.unitypackage"
       ],
       "provision": "Firebase_Dev_Wildcard.mobileprovision",
       "upm_packages": [
         "com.google.external-dependency-manager-*.tgz",
         "com.google.firebase.app-*.tgz",
+        "com.google.firebase.app-check-*.tgz",
         "com.google.firebase.firebaseai-*.tgz"
       ]
     },
