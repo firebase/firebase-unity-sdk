@@ -109,8 +109,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.11.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 13.7.0.
+    - General (Android): Update to Firebase Android BoM version 34.13.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.13.0.
     - General: Strip debug symbols from Mac and Linux libraries, to reduce library size.
     - General: Enforce the Xcode CMake generator for iOS and tvOS SDKs.
     - General (iOS): Improve initialization to address intermittent crashes on iOS 26.
