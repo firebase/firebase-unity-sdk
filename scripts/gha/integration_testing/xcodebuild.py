@@ -75,6 +75,12 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configurati
 
   xcode_version = _get_xcode_version()
   if xcode_version and xcode_version >= 16:
+    # Prepend command-line defaults overrides immediately after the "xcodebuild" command.
+    args[1:1] = [
+        "-DisablePackageRepositorySandboxing", "YES",
+        "-IDEPackageSupportDisableSandboxing", "YES"
+    ]
+
     try:
       # com.apple.dt.Xcode keys
       subprocess.run(
