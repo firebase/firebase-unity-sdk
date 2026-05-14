@@ -77,14 +77,4 @@ if(FIREBASE_INCLUDE_UNITY)
     "${FIREBASE_CPP_SDK_DIR}/generate_xml_from_google_services_json.py"
     PACK_PATH "Firebase/Editor"
   )
-
-  unity_pack_file(
-    "${FIREBASE_UNITY_DIR}/network_request.exe"
-    PACK_PATH "Firebase/Editor"
-  )
-
-  unity_pack_file(
-    "${FIREBASE_UNITY_DIR}/network_request.py"
-    PACK_PATH "Firebase/Editor"
-  )
 endif()
