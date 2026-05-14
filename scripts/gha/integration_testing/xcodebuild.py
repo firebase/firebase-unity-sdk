@@ -76,8 +76,33 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configurati
   xcode_version = _get_xcode_version()
   if xcode_version and xcode_version >= 16:
     try:
+      # com.apple.dt.Xcode keys
       subprocess.run(
           ["defaults", "write", "com.apple.dt.Xcode", "DisablePackageRepositorySandboxing", "-bool", "YES"],
+          check=True,
+          capture_output=True)
+      subprocess.run(
+          ["defaults", "write", "com.apple.dt.Xcode", "IDEPackageSupportDisableSandboxing", "-bool", "YES"],
+          check=True,
+          capture_output=True)
+
+      # com.apple.dt.xcodebuild keys
+      subprocess.run(
+          ["defaults", "write", "com.apple.dt.xcodebuild", "DisablePackageRepositorySandboxing", "-bool", "YES"],
+          check=True,
+          capture_output=True)
+      subprocess.run(
+          ["defaults", "write", "com.apple.dt.xcodebuild", "IDEPackageSupportDisableSandboxing", "-bool", "YES"],
+          check=True,
+          capture_output=True)
+
+      # Global domain keys
+      subprocess.run(
+          ["defaults", "write", "-g", "DisablePackageRepositorySandboxing", "-bool", "YES"],
+          check=True,
+          capture_output=True)
+      subprocess.run(
+          ["defaults", "write", "-g", "IDEPackageSupportDisableSandboxing", "-bool", "YES"],
           check=True,
           capture_output=True)
     except Exception:
