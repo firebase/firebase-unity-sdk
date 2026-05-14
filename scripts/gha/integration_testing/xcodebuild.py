@@ -75,14 +75,37 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configurati
 
   xcode_version = _get_xcode_version()
   if xcode_version and xcode_version >= 16:
-    # Prepend command-line defaults overrides immediately after the "xcodebuild" command.
-    args[1:1] = [
-        "-DisablePackageRepositorySandboxing", "YES",
-        "-IDEPackageSupportDisableSandboxing", "YES"
-    ]
-
     try:
-      # com.apple.dt.Xcode keys
+      import pwd
+      # Retrieve genuine home directory independent of temporary GHA shell overrides.
+      try:
+        real_home = pwd.getpwuid(os.getuid()).pw_dir
+      except Exception:
+        real_home = os.path.expanduser("~")
+
+      # Gather all preference directories to populate plists in.
+      pref_dirs = []
+      if real_home:
+        pref_dirs.append(os.path.join(real_home, "Library", "Preferences"))
+      env_home = os.environ.get("HOME")
+      if env_home:
+        pref_dirs.append(os.path.join(env_home, "Library", "Preferences"))
+
+      # Write directly to preference plist files.
+      for pref_dir in set(pref_dirs):
+        os.makedirs(pref_dir, exist_ok=True)
+        for filename in ["com.apple.dt.Xcode.plist", "com.apple.dt.xcodebuild.plist", ".GlobalPreferences.plist"]:
+          plist_path = os.path.join(pref_dir, filename)
+          subprocess.run(
+              ["defaults", "write", plist_path, "DisablePackageRepositorySandboxing", "-bool", "YES"],
+              check=True,
+              capture_output=True)
+          subprocess.run(
+              ["defaults", "write", plist_path, "IDEPackageSupportDisableSandboxing", "-bool", "YES"],
+              check=True,
+              capture_output=True)
+
+      # Write via standard macOS domains.
       subprocess.run(
           ["defaults", "write", "com.apple.dt.Xcode", "DisablePackageRepositorySandboxing", "-bool", "YES"],
           check=True,
@@ -92,7 +115,6 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configurati
           check=True,
           capture_output=True)
 
-      # com.apple.dt.xcodebuild keys
       subprocess.run(
           ["defaults", "write", "com.apple.dt.xcodebuild", "DisablePackageRepositorySandboxing", "-bool", "YES"],
           check=True,
@@ -102,7 +124,6 @@ def get_args_for_build(path, scheme, output_dir, ios_sdk, target_os, configurati
           check=True,
           capture_output=True)
 
-      # Global domain keys
       subprocess.run(
           ["defaults", "write", "-g", "DisablePackageRepositorySandboxing", "-bool", "YES"],
           check=True,
