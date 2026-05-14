@@ -61,12 +61,12 @@ permissions: write-all
 jobs:
   build_tvos:
     name: build-tvos-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       fail-fast: false
 
     env:
-      xcodeVersion: "26.4"
+      xcodeVersion: "26.2"
 
     steps:
       - uses: lukka/get-cmake@latest
