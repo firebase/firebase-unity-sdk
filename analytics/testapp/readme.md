@@ -187,6 +187,35 @@ Press some of the buttons to log some events to your Firebase project.
 After around 5 hours, data should be visible under the *Analytics* tab in
 the [Firebase Console](https://firebase.google.com/console/)).
 
+## iOS Testing LogAppleTransaction
+
+To test the log apple transaction function, you should use the exported Xcode project and Xcode's simulated transactions.
+The manual test will involve running the testapp and verifying that it logs a transaction to the console.
+
+  - Step 1: Set up the Local Xcode Environment
+    - After building the sample for iOS and opening the exported project in Xcode:
+    - In Xcode, go to File > New > File from Template and create a StoreKit Configuration File (.storekit).
+      - Give the configuration any name.
+      - Target the `Unity-iPhone` scheme (or the relevant target for your exported app).
+    - Add at least one dummy product to this file. 
+      - Do this by selecting the file in Xcode and clicking the + button in the bottom left corner.
+      - Choose a Consumable in app purchase product. 
+      - Give it a Reference name of your choice (e.g. "ReferenceAppleIapProduct").
+      - Give it a Product ID of your choice (e.g. "com.example.nonconsumable").
+    - Make the app use the store kit file. In the top bar go to Product > Scheme > Edit Scheme...
+      - In the left hand menu select Run
+      - Select the Options tab on the top
+      - Set the StoreKit Configuration dropdown to your new .storekit file.
+  - Step 2: Validate logging transactions
+    - You can create a simulated transaction for testing.
+    - To create a simulated transaction ID:
+        - Go to Debug > StoreKit > Manage Transactions.
+        - Click the + button in the bottom left corner.
+        - Select the Consumable in app purchase product.
+        - Use the generated transaction ID in your code or test case.
+    - When you call `FirebaseAnalytics.LogAppleTransactionAsync(transactionId)` with the simulated transaction ID:
+      - It should log the transaction to the console. Both the Xcode console and firebase console should show a log for an in app purchase.
+
 
 ## Troubleshooting
 
