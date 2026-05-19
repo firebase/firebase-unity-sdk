@@ -136,7 +136,6 @@ void SetConsentWithInts(const std::map<int, int>& settings) {
 // GetSessionId returns Future<long long> in SWIG.
 %include "app/src/swig/future.i"
 %SWIG_FUTURE(Future_LongLong, long, internal, long long, FirebaseException)
-%SWIG_FUTURE(FutureVoid, void, internal, void, FirebaseException)
 
 // Ignore the Consent enums, so we can use commented ones in C#
 %ignore firebase::analytics::ConsentType;
