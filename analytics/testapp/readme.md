@@ -189,7 +189,7 @@ the [Firebase Console](https://firebase.google.com/console/)).
 
 ## iOS Testing LogAppleTransaction
 
-To test the log apple transaction function, you should use the exported Xcode project and Xcode's simulated transactions.
+To test the LogAppleTransaction function, you should use the exported Xcode project and Xcode's simulated transactions.
 The manual test will involve running the testapp and verifying that it logs a transaction to the console.
 
   - Step 1: Set up the Local Xcode Environment

@@ -111,7 +111,7 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
-    - Analytics: Add support for Apple's Store kit 2 transactions. Add new  `LogAppleTransactionAsync` method
+    - Analytics: Add support for Apple's StoreKit 2 transactions. Add new `LogAppleTransactionAsync` method
       that takes in the App Store transaction string and logs the transaction.
       
 

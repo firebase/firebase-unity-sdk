@@ -360,9 +360,9 @@ public static partial class FirebaseAnalytics {
   /// </summary>
   /// <remarks>
   /// This method is intended for Unity developers on iOS who process transactions
-  /// via In-app purchases and need whish to log those purchases through Google Analytics. 
+  /// via In-app purchases and wish to log those purchases through Google Analytics. 
   /// The provided ID must map 1:1 with the native Apple `Transaction.id`. 
-  /// If a matching transaction is not found in the apple devices purchase history then 
+  /// If a matching transaction is not found in the Apple device's purchase history then 
   /// nothing will be logged to analytics. 
   /// 
   /// </remarks>
