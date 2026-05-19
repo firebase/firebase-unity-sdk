@@ -32,14 +32,14 @@ namespace Firebase.AI.Internal
     {
       if (backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI)
       {
-        return "https://firebasevertexai.googleapis.com/v1beta" +
+        return "https://staging-firebasevertexai.sandbox.googleapis.com/v1beta" +
             "/projects/" + firebaseApp.Options.ProjectId +
             "/locations/" + backend.Location +
             "/publishers/google/models/" + modelName;
       }
       else if (backend.Provider == FirebaseAI.Backend.InternalProvider.GoogleAI)
       {
-        return "https://firebasevertexai.googleapis.com/v1beta" +
+        return "https://staging-firebasevertexai.sandbox.googleapis.com/v1beta" +
             "/projects/" + firebaseApp.Options.ProjectId +
             "/models/" + modelName;
       }

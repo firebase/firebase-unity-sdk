@@ -50,9 +50,8 @@ namespace Firebase.Sample.FirebaseAI
 
     protected void InitializeAppCheck()
     {
-      DebugLog("Initializing App Check directly in automated handler");
-      DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugTokenForAutomated);
-      FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
+      DebugLog("Initializing App Check with native iOS App Attest Provider");
+      FirebaseAppCheck.SetAppCheckProviderFactory(AppAttestProviderFactory.Instance);
     }
 
     // Texture used for tests involving images.
@@ -152,7 +151,8 @@ namespace Firebase.Sample.FirebaseAI
         TestCountTokens,
         TestFirebaseAIInstanceCaching,
         TestLiveModel,
-        TestImagen
+        TestImagen,
+        TestLimitedUseTokenRejectionOnReuse
       };
       // When running on CI, these tests are only run in the Editor
       Func<Backend, Task>[] editorMultiBackendTests = {
@@ -351,6 +351,76 @@ namespace Firebase.Sample.FirebaseAI
       Assert("Instances with different limited use settings should be different.", ai1 != ai2);
       Assert("Instances with the same limited use settings should be the same.", ai1 == ai3);
       return Task.CompletedTask;
+    }
+
+    // Test that using a limited-use App Check token a second time is rejected by the backend.
+    async Task TestLimitedUseTokenRejectionOnReuse(Backend backend)
+    {
+      var appCheck = FirebaseAppCheck.GetInstance(FirebaseApp.DefaultInstance);
+      string tokenString = "";
+      bool firstAttemptFailed = false;
+      try
+      {
+        var appCheckToken = await appCheck.GetLimitedUseAppCheckTokenAsync();
+        tokenString = appCheckToken.Token;
+        DebugLog($"Obtained limited-use App Check token: {tokenString}");
+        UnityEngine.Debug.LogWarning($"[TEST INFO] Obtained limited-use App Check token: {tokenString}");
+      }
+      catch (Exception ex)
+      {
+        DebugLog($"Failed to obtain limited-use App Check token: {ex.Message}");
+        UnityEngine.Debug.LogError($"[TEST INFO] Failed to obtain limited-use App Check token. Exception:\n{ex}");
+        // Use a dummy token to guarantee HTTP requests are sent and backend responses are logged regardless.
+        tokenString = "DUMMY_FAILED_TOKEN";
+        firstAttemptFailed = true;
+      }
+
+      var aiBackend = backend == Backend.GoogleAI ? FirebaseAI.Backend.GoogleAI() : FirebaseAI.Backend.VertexAI("us-central1");
+      string url = Firebase.AI.Internal.HttpHelpers.GetURL(FirebaseApp.DefaultInstance, aiBackend, TestModelName) + ":generateContent";
+
+      string bodyJson = "{\"contents\":[{\"parts\":[{\"text\":\"Hello\"}]}]}";
+
+      using var httpClient = new HttpClient();
+
+      // First attempt
+      HttpRequestMessage request1 = new(HttpMethod.Post, url);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request1, FirebaseApp.DefaultInstance, limitedUseAppCheckTokens: false);
+      request1.Headers.Remove("X-Firebase-AppCheck");
+      request1.Headers.Add("X-Firebase-AppCheck", tokenString);
+      request1.Content = new StringContent(bodyJson, System.Text.Encoding.UTF8, "application/json");
+
+      try
+      {
+        var response1 = await httpClient.SendAsync(request1);
+        string respBody1 = await response1.Content.ReadAsStringAsync();
+        DebugLog($"First attempt Status Code: {response1.StatusCode}. Response message:\n{respBody1}");
+        UnityEngine.Debug.LogWarning($"[TEST INFO] First attempt Status Code: {response1.StatusCode}. Response message:\n{respBody1}");
+        await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response1);
+      }
+      catch (Exception ex)
+      {
+        UnityEngine.Debug.LogError($"[TEST INFO] First attempt failed/rejected. Exception:\n{ex}");
+        firstAttemptFailed = true;
+      }
+
+      // Second attempt with the exact same token should be rejected.
+      HttpRequestMessage request2 = new(HttpMethod.Post, url);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request2, FirebaseApp.DefaultInstance, limitedUseAppCheckTokens: false);
+      request2.Headers.Remove("X-Firebase-AppCheck");
+      request2.Headers.Add("X-Firebase-AppCheck", tokenString);
+      request2.Content = new StringContent(bodyJson, System.Text.Encoding.UTF8, "application/json");
+
+      var response2 = await httpClient.SendAsync(request2);
+      string errorMessage = await response2.Content.ReadAsStringAsync();
+      DebugLog($"Second attempt Status Code: {response2.StatusCode}. Response message:\n{errorMessage}");
+      UnityEngine.Debug.LogWarning($"[TEST INFO] Second attempt Status Code: {response2.StatusCode}. Response message:\n{errorMessage}");
+
+      Assert("First attempt to obtain token or call the backend failed.", !firstAttemptFailed);
+
+      Assert("Second attempt with the same limited-use token should be rejected.", !response2.IsSuccessStatusCode);
+      int statusCode = (int)response2.StatusCode;
+      Assert($"Expected a client error (e.g. 401/403) on token reuse, but got {response2.StatusCode}", 
+          statusCode >= 400 && statusCode < 500);
     }
 
     // Test if the Live model works with the default backend.
