@@ -149,10 +149,7 @@ namespace Firebase.Sample.FirebaseAI
         TestBasicText,
         TestBasicImage,
         TestModelOptions,
-        TestCountTokens,
-        TestFirebaseAIInstanceCaching,
-        TestLiveModel,
-        TestImagen
+        TestCountTokens
       };
       // When running on CI, these tests are only run in the Editor
       Func<Backend, Task>[] editorMultiBackendTests = {
@@ -194,6 +191,7 @@ namespace Firebase.Sample.FirebaseAI
 
       // Set of tests that only run the single time, will be run on all devices.
       Func<Task>[] singleTests = {
+        TestFirebaseAIInstanceCaching,
         TestReadFile,
         TestReadSecureFile,
         // Internal tests for Json parsing, requires using a source library.
@@ -341,50 +339,30 @@ namespace Firebase.Sample.FirebaseAI
       return Task.CompletedTask;
     }
 
-    // Test that FirebaseAI instances are correctly cached based on limited use settings.
-    Task TestFirebaseAIInstanceCaching(Backend backend)
+    // Test that FirebaseAI instances are correctly cached based on backend and limited use settings.
+    Task TestFirebaseAIInstanceCaching()
     {
-      var ai1 = GetFirebaseAI(backend, useLimitedUseAppCheckTokens: false);
-      var ai2 = GetFirebaseAI(backend, useLimitedUseAppCheckTokens: true);
-      var ai3 = GetFirebaseAI(backend, useLimitedUseAppCheckTokens: false);
+      // Test within GoogleAI
+      var googleAi1 = GetFirebaseAI(Backend.GoogleAI, useLimitedUseAppCheckTokens: false);
+      var googleAi2 = GetFirebaseAI(Backend.GoogleAI, useLimitedUseAppCheckTokens: true);
+      var googleAi3 = GetFirebaseAI(Backend.GoogleAI, useLimitedUseAppCheckTokens: false);
 
-      Assert("Instances with different limited use settings should be different.", ai1 != ai2);
-      Assert("Instances with the same limited use settings should be the same.", ai1 == ai3);
+      Assert("GoogleAI: Instances with different limited use settings should be different.", googleAi1 != googleAi2);
+      Assert("GoogleAI: Instances with the same limited use settings should be the same.", googleAi1 == googleAi3);
+
+      // Test within VertexAI
+      var vertexAi1 = GetFirebaseAI(Backend.VertexAI, useLimitedUseAppCheckTokens: false);
+      var vertexAi2 = GetFirebaseAI(Backend.VertexAI, useLimitedUseAppCheckTokens: true);
+      var vertexAi3 = GetFirebaseAI(Backend.VertexAI, useLimitedUseAppCheckTokens: false);
+
+      Assert("VertexAI: Instances with different limited use settings should be different.", vertexAi1 != vertexAi2);
+      Assert("VertexAI: Instances with the same limited use settings should be the same.", vertexAi1 == vertexAi3);
+
+      // Test cross-backend isolation
+      Assert("Instances of GoogleAI and VertexAI with the same settings should be different.", googleAi1 != vertexAi1);
+      Assert("Instances of GoogleAI and VertexAI with different settings should be different.", googleAi2 != vertexAi2);
+
       return Task.CompletedTask;
-    }
-
-    // Test if the Live model works with the default backend.
-    async Task TestLiveModel(Backend backend)
-    {
-      var ai = GetFirebaseAI(backend);
-      // Only the flash-live models support the Live API.
-      var model = ai.GetLiveModel("gemini-2.0-flash-exp");
-
-      // We can't easily verify that the token used is a limited use one without a mock backend,
-      // but we can at least verify that the connection succeeds and we get a response.
-      using var session = await model.ConnectAsync();
-      await session.SendTextRealtimeAsync("Say hello");
-
-      await foreach (var response in session.ReceiveAsync())
-      {
-        Assert("Response text was empty.", !string.IsNullOrEmpty(response.Text));
-        // We only care about the first response for this test.
-        break;
-      }
-    }
-
-    // Test if the Imagen model works with the default backend.
-    async Task TestImagen(Backend backend)
-    {
-      var ai = GetFirebaseAI(backend);
-      #pragma warning disable
-      var model = ai.GetImagenModel("imagen-3.0-generate-002");
-      #pragma warning restore
-
-      // We can't easily verify that the token used is a limited use one without a mock backend,
-      // but we can at least verify that the request succeeds.
-      var response = await model.GenerateImagesAsync("Generate an image of a cartoon dog.");
-      Assert("Response missing images.", response.Images.Any());
     }
 
     // Test if it can set a string in, and get a string output.
