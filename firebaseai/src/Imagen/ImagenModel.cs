@@ -49,6 +49,7 @@ namespace Firebase.AI
     private readonly ImagenGenerationConfig? _generationConfig;
     private readonly ImagenSafetySettings? _safetySettings;
     private readonly RequestOptions? _requestOptions;
+    private readonly bool _useLimitedUseAppCheckTokens;
 
     private readonly HttpClient _httpClient;
 
@@ -61,7 +62,8 @@ namespace Firebase.AI
                         string modelName,
                         ImagenGenerationConfig? generationConfig = null,
                         ImagenSafetySettings? safetySettings = null,
-                        RequestOptions? requestOptions = null)
+                        RequestOptions? requestOptions = null,
+                        bool useLimitedUseAppCheckTokens = false)
     {
       _firebaseApp = firebaseApp;
       _backend = backend;
@@ -69,6 +71,7 @@ namespace Firebase.AI
       _generationConfig = generationConfig;
       _safetySettings = safetySettings;
       _requestOptions = requestOptions;
+      _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
 
       // Create a HttpClient using the timeout requested, or the default one.
       _httpClient = new HttpClient()
@@ -101,7 +104,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":predict");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
 
       // Set the content
       string bodyJson = MakeGenerateImagenRequest(prompt);
@@ -182,6 +185,7 @@ namespace Firebase.AI
   {
     private readonly FirebaseApp _firebaseApp;
     private readonly FirebaseAI.Backend _backend;
+    private readonly bool _useLimitedUseAppCheckTokens;
 
     private readonly HttpClient _httpClient;
 
@@ -190,10 +194,12 @@ namespace Firebase.AI
     /// Use `FirebaseAI.GetTemplateImagenModel` instead to ensure proper initialization and configuration of the `TemplateImagenModel`.
     /// </summary>
     internal TemplateImagenModel(FirebaseApp firebaseApp,
-        FirebaseAI.Backend backend, RequestOptions? requestOptions = null)
+        FirebaseAI.Backend backend, RequestOptions? requestOptions = null,
+        bool useLimitedUseAppCheckTokens = false)
     {
       _firebaseApp = firebaseApp;
       _backend = backend;
+      _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
 
       // Create a HttpClient using the timeout requested, or the default one.
       _httpClient = new HttpClient()
@@ -217,7 +223,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templatePredict");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
 
       // Set the content
       Dictionary<string, object> jsonDict = new()

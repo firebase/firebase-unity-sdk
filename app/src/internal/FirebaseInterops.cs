@@ -442,9 +442,9 @@ namespace Firebase.Internal
     }
 
     // Adds the other Firebase tokens to the WebSocket, as available.
-    internal static async Task AddFirebaseTokensAsync(ClientWebSocket socket, FirebaseApp firebaseApp, string authTokenPrefix = "Firebase")
+    internal static async Task AddFirebaseTokensAsync(ClientWebSocket socket, FirebaseApp firebaseApp, string authTokenPrefix = "Firebase", bool limitedUseAppCheckTokens = false)
     {
-      string appCheckToken = await GetAppCheckTokenAsync(firebaseApp);
+      string appCheckToken = await GetAppCheckTokenAsync(firebaseApp, limitedUseAppCheckTokens);
       if (!string.IsNullOrEmpty(appCheckToken))
       {
         socket.Options.SetRequestHeader(appCheckHeader, appCheckToken);

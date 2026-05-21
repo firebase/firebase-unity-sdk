@@ -13,7 +13,8 @@
         "Firebase.App.dll",
         "Firebase.Platform.dll",
         "Google.MiniJson.dll",
-        "Firebase.TaskExtension.dll"
+        "Firebase.TaskExtension.dll",
+        "Firebase.AppCheck.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

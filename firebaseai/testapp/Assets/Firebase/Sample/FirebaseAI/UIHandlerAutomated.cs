@@ -36,6 +36,7 @@ namespace Firebase.Sample.FirebaseAI
 #if INCLUDE_FIREBASE_AUTH
   using Firebase.Auth;
 #endif
+  using Firebase.AppCheck;
 
   // An automated version of the UIHandler that runs tests on Firebase AI.
   public class UIHandlerAutomated : UIHandler
@@ -44,6 +45,15 @@ namespace Firebase.Sample.FirebaseAI
     delegate Task TaskValidationDelegate(Task task);
 
     private Firebase.Sample.AutomatedTestRunner testRunner;
+
+    private string appCheckDebugTokenForAutomated = "REPLACE_WITH_APP_CHECK_TOKEN";
+
+    protected void InitializeAppCheck()
+    {
+      DebugLog("Initializing App Check directly in automated handler");
+      DebugAppCheckProviderFactory.Instance.SetDebugToken(appCheckDebugTokenForAutomated);
+      FirebaseAppCheck.SetAppCheckProviderFactory(DebugAppCheckProviderFactory.Instance);
+    }
 
     // Texture used for tests involving images.
     public Texture2D RedBlueTexture;
@@ -131,6 +141,7 @@ namespace Firebase.Sample.FirebaseAI
 
     protected override void Start()
     {
+      InitializeAppCheck();
       // Set of tests that use multiple backends.
       // When running on CI, these tests will be run on all devices
       Func<Backend, Task>[] basicMultiBackendTests = {
@@ -180,6 +191,7 @@ namespace Firebase.Sample.FirebaseAI
 
       // Set of tests that only run the single time, will be run on all devices.
       Func<Task>[] singleTests = {
+        TestFirebaseAIInstanceCaching,
         TestReadFile,
         TestReadSecureFile,
         // Internal tests for Json parsing, requires using a source library.
@@ -302,12 +314,12 @@ namespace Firebase.Sample.FirebaseAI
     // The model name to use for the tests.
     private readonly string TestModelName = "gemini-3.1-flash-lite";
 
-    private FirebaseAI GetFirebaseAI(Backend backend, string location = "global")
+    private FirebaseAI GetFirebaseAI(Backend backend, string location = "global", bool useLimitedUseAppCheckTokens = true)
     {
       return backend switch
       {
-        Backend.GoogleAI => FirebaseAI.GetInstance(FirebaseAI.Backend.GoogleAI()),
-        Backend.VertexAI => FirebaseAI.GetInstance(FirebaseAI.Backend.VertexAI(location)),
+        Backend.GoogleAI => FirebaseAI.GetInstance(FirebaseAI.Backend.GoogleAI(), useLimitedUseAppCheckTokens),
+        Backend.VertexAI => FirebaseAI.GetInstance(FirebaseAI.Backend.VertexAI(location), useLimitedUseAppCheckTokens),
         _ => throw new ArgumentOutOfRangeException(nameof(backend), backend,
                 "Unhandled Backend type"),
       };
@@ -324,6 +336,32 @@ namespace Firebase.Sample.FirebaseAI
     {
       var model = CreateGenerativeModel(backend);
       Assert("Failed to create a GenerativeModel.", model != null);
+      return Task.CompletedTask;
+    }
+
+    // Test that FirebaseAI instances are correctly cached based on backend and limited use settings.
+    Task TestFirebaseAIInstanceCaching()
+    {
+      // Test within GoogleAI
+      var googleAi1 = GetFirebaseAI(Backend.GoogleAI, useLimitedUseAppCheckTokens: false);
+      var googleAi2 = GetFirebaseAI(Backend.GoogleAI, useLimitedUseAppCheckTokens: true);
+      var googleAi3 = GetFirebaseAI(Backend.GoogleAI, useLimitedUseAppCheckTokens: false);
+
+      Assert("GoogleAI: Instances with different limited use settings should be different.", googleAi1 != googleAi2);
+      Assert("GoogleAI: Instances with the same limited use settings should be the same.", googleAi1 == googleAi3);
+
+      // Test within VertexAI
+      var vertexAi1 = GetFirebaseAI(Backend.VertexAI, useLimitedUseAppCheckTokens: false);
+      var vertexAi2 = GetFirebaseAI(Backend.VertexAI, useLimitedUseAppCheckTokens: true);
+      var vertexAi3 = GetFirebaseAI(Backend.VertexAI, useLimitedUseAppCheckTokens: false);
+
+      Assert("VertexAI: Instances with different limited use settings should be different.", vertexAi1 != vertexAi2);
+      Assert("VertexAI: Instances with the same limited use settings should be the same.", vertexAi1 == vertexAi3);
+
+      // Test cross-backend isolation
+      Assert("Instances of GoogleAI and VertexAI with the same settings should be different.", googleAi1 != vertexAi1);
+      Assert("Instances of GoogleAI and VertexAI with different settings should be different.", googleAi2 != vertexAi2);
+
       return Task.CompletedTask;
     }
 

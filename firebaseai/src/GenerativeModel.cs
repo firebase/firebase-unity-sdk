@@ -45,6 +45,7 @@ namespace Firebase.AI
     private readonly ToolConfig? _toolConfig;
     private readonly ModelContent? _systemInstruction;
     private readonly RequestOptions? _requestOptions;
+    private readonly bool _useLimitedUseAppCheckTokens;
 
     private readonly HttpClient _httpClient;
     // String prefix to look for when handling streaming a response.
@@ -62,7 +63,8 @@ namespace Firebase.AI
                              Tool[] tools = null,
                              ToolConfig? toolConfig = null,
                              ModelContent? systemInstruction = null,
-                             RequestOptions? requestOptions = null)
+                             RequestOptions? requestOptions = null,
+                             bool useLimitedUseAppCheckTokens = false)
     {
       _firebaseApp = firebaseApp;
       _backend = backend;
@@ -74,6 +76,7 @@ namespace Firebase.AI
       // Make sure that the system instructions have the role "system".
       _systemInstruction = systemInstruction?.ConvertToSystem();
       _requestOptions = requestOptions;
+      _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
 
       // Create a HttpClient using the timeout requested, or the default one.
       _httpClient = new HttpClient()
@@ -272,7 +275,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":generateContent");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(content);
@@ -302,7 +305,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":streamGenerateContent?alt=sse");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(content);
@@ -342,7 +345,7 @@ namespace Firebase.AI
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":countTokens");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
 
       // Set the content
       string bodyJson = MakeCountTokensRequest(content);
