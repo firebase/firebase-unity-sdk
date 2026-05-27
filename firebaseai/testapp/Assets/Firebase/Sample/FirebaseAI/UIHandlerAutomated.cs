@@ -256,7 +256,7 @@ namespace Firebase.Sample.FirebaseAI
     protected override void Update()
     {
       base.Update();
-      if (testRunner != null && isFirebaseInitialized)
+      if (testRunner != null && isFirebaseInitializationComplete)
       {
         testRunner.Update();
       }

@@ -40,7 +40,7 @@ namespace Firebase.Sample.FirebaseAI {
     private float textAreaLineHeight;
 
     private DependencyStatus dependencyStatus = DependencyStatus.UnavailableOther;
-    protected bool isFirebaseInitialized = false;
+    protected bool isFirebaseInitializationComplete = false;
 
     private string appCheckDebugToken = "REPLACE_WITH_APP_CHECK_TOKEN";
 
@@ -56,19 +56,20 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     protected void InitializeFirebase() {
-      FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task => {
+      FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+      {
         dependencyStatus = task.Result;
         if (dependencyStatus == DependencyStatus.Available)
         {
           DebugLog("Firebase Ready: " + FirebaseApp.DefaultInstance);
           UIEnabled = true;
-          isFirebaseInitialized = true;
         }
         else
         {
           Debug.LogError(
             "Could not resolve all Firebase dependencies: " + dependencyStatus);
         }
+        isFirebaseInitializationComplete = true;
       });
     }
 
