@@ -36,6 +36,7 @@
 #include "app_check/src/include/firebase/app_check/debug_provider.h"
 #include "app_check/src/include/firebase/app_check/device_check_provider.h"
 #include "app_check/src/include/firebase/app_check/play_integrity_provider.h"
+#include "app_check/src/include/firebase/app_check/recaptcha_provider.h"
 
 namespace firebase {
 namespace app_check {
@@ -344,6 +345,8 @@ void GetLimitedUseTokenFromBuiltInProvider(AppCheckProvider* provider, int key) 
   firebase::app_check::DeviceCheckProviderFactory;
 %rename("PlayIntegrityProviderFactoryInternal")
   firebase::app_check::PlayIntegrityProviderFactory;
+%rename("RecaptchaProviderFactoryInternal")
+  firebase::app_check::RecaptchaProviderFactory;
 
 // Ignore the Error enum, since it will just be done by hand.
 %ignore firebase::app_check::AppCheckError;

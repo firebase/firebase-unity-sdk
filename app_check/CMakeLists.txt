@@ -36,6 +36,7 @@ set(firebase_app_check_src
   src/DebugAppCheckProviderFactory.cs
   src/DeviceCheckProviderFactory.cs
   src/PlayIntegrityProviderFactory.cs
+  src/RecaptchaProviderFactory.cs
 )
 
 if(NOT FIREBASE_UNI_LIBRARY AND APPLE AND NOT IOS)
