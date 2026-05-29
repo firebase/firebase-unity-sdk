@@ -378,6 +378,7 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(
 %include "app_check/src/include/firebase/app_check/debug_provider.h"
 %include "app_check/src/include/firebase/app_check/device_check_provider.h"
 %include "app_check/src/include/firebase/app_check/play_integrity_provider.h"
+%include "app_check/src/include/firebase/app_check/recaptcha_provider.h"
 %include "app_check/src/include/firebase/app_check.h"
 
 // Declare the new C++ functions we added in this file that we want

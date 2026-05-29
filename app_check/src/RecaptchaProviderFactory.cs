@@ -39,7 +39,7 @@ public sealed class RecaptchaProviderFactory : IAppCheckProviderFactory {
 
   private void ThrowIfNull() {
     if (factoryInternal == null ||
-        RecaptchaProviderFactoryFactoryInternal.getCPtr(factoryInternal).Handle == System.IntPtr.Zero) {
+        RecaptchaProviderFactoryInternal.getCPtr(factoryInternal).Handle == System.IntPtr.Zero) {
       throw new System.NullReferenceException();
     }
   }
