@@ -192,6 +192,21 @@ namespace Firebase.Sample.Analytics {
       }).Unwrap();
     }
 
+    // Log a dummy Apple transaction
+    public Task DisplayLogAppleTransaction() {
+      return FirebaseAnalytics.LogAppleTransactionAsync("dummy_transaction_id").ContinueWithOnMainThread(task => {
+        if (task.IsCanceled) {
+          DebugLog("LogAppleTransaction was canceled.");
+        } else if (task.IsFaulted) {
+          DebugLog(String.Format("Encountered an error logging Apple transaction: {0}",
+                                  task.Exception.ToString()));
+        } else if (task.IsCompleted) {
+          DebugLog("LogAppleTransaction completed successfully.");
+        }
+        return task;
+      }).Unwrap();
+    }
+
     // Output text to the debug log text field, as well as the console.
     public void DebugLog(string s) {
       print(s);
@@ -256,6 +271,9 @@ namespace Firebase.Sample.Analytics {
 	}
         if (GUILayout.Button("Test SetConsent")) {
           AnalyticsSetConsent();
+        }
+        if (GUILayout.Button("Test LogAppleTransaction")) {
+          DisplayLogAppleTransaction();
         }
         GUILayout.EndVertical();
         GUILayout.EndScrollView();
