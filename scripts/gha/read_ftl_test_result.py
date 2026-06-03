@@ -44,8 +44,12 @@ from integration_testing import gcs
 
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("test_result", None, "FTL test result in JSON format.")
-flags.DEFINE_string("output_path", None, "Log will be write into this path.")
+# This script can be loaded by multiple threads at once, which can cause problems with
+# the flags, as they are defined globally, so make sure they are only defined once.
+if "test_result" not in FLAGS:
+  flags.DEFINE_string("test_result", None, "FTL test result in JSON format.")
+if "output_path" not in FLAGS:
+  flags.DEFINE_string("output_path", None, "Log will be write into this path.")
 
 @attr.s(frozen=False, eq=False)
 class Test(object):
