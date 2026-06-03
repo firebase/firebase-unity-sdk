@@ -130,6 +130,8 @@ void SetConsentWithInts(const std::map<int, int>& settings) {
 %ignore firebase::analytics::SetDefaultEventParameters(const std::vector<Parameter>&);
 // Ignore SetConsent, in order to convert the types with our own function.
 %ignore firebase::analytics::SetConsent;
+// Ignore SetLogCallback, as we don't want to expose C++ log callback directly.
+%ignore firebase::analytics::SetLogCallback;
 // Ignore the Parameter class, as we don't want to expose that to C# at all.
 %ignore firebase::analytics::Parameter;
 
