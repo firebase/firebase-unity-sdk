@@ -348,8 +348,10 @@ void GetLimitedUseTokenFromBuiltInProvider(AppCheckProvider* provider, int key) 
 // Ignore the Error enum, since it will just be done by hand.
 %ignore firebase::app_check::AppCheckError;
 
-// Ignore GetToken, which is going to have to be handled differently
+// Ignore GetToken and GetLimitedUseToken,
+// which have to be handled differently
 %ignore GetToken;
+%ignore GetLimitedUseToken;
 
 // This code block is added directly to the C# module class (AppCheckUtil)
 %pragma(csharp) modulecode=%{
