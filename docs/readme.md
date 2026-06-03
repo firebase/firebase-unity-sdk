@@ -109,6 +109,12 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Analytics: Add support for Apple's StoreKit 2 transactions. Add new `LogAppleTransactionAsync` method
+      that takes in the App Store transaction string and logs the transaction.
+      
+
 ### 13.11.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.7.0.
