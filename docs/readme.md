@@ -109,8 +109,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.12.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 13.8.0.
+    - General (Android): Update to Firebase Android BoM version 34.14.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.14.0.
     - Analytics: Add support for Apple's StoreKit 2 transactions. Add new `LogAppleTransactionAsync` method
       that takes in the App Store transaction string and logs the transaction.
       
