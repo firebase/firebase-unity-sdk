@@ -257,9 +257,10 @@ namespace Firebase.Sample.Analytics {
     }
 
     Task TestLogAppleTransaction() {
-      // On iOS, this should fail with a dummy ID if no simulated transaction is set up.
+      // On iOS and tvOS, this should fail with a dummy ID if no simulated transaction is set up.
       // On other platforms, it should be a no-op and succeed.
-      if (Application.platform == RuntimePlatform.IPhonePlayer) {
+      if (Application.platform == RuntimePlatform.IPhonePlayer ||
+          Application.platform == RuntimePlatform.tvOS) {
         return base.DisplayLogAppleTransaction()
           .ContinueWithOnMainThread(t => {
             if (t.IsFaulted) {
