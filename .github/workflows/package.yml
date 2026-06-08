@@ -317,7 +317,7 @@ jobs:
         private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
     - name: Get branch name
       id: branch-name
-      uses: tj-actions/branch-names@v7.0.7
+      uses: tj-actions/branch-names@5250492686b253f06fa55861556d1027b067aeb5
     - name: Use GitHub API to start workflow
       shell: bash
       run: |
@@ -333,7 +333,7 @@ jobs:
           -s 10 -A -v
       env:
         STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN: ${{ steps.generate-token.outputs.token }}
-        STEPS_BRANCH_NAME_OUTPUTS_CURRENT_BRANCH: ${{ steps.branch-name.outputs.current_branch }}
+        STEPS_BRANCH_NAME_OUTPUTS_CURRENT_BRANCH: ${{ steps.branch-names.outputs.current_branch }}
         INPUTS_PLATFORMS: ${{ inputs.platforms }}
         INPUTS_APIS: ${{ inputs.apis }}
         INPUTS_RUNINTEGRATIONTESTS: ${{ inputs.runIntegrationTests }}
