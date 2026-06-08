@@ -96,7 +96,7 @@ namespace Firebase.Sample.FirebaseAI {
       }
       catch (Exception e)
       {
-        DebugLog("Error while generating content:\n" + e.Message);
+        DebugLog("Error while generating content:\n" + e);
       }
     }
 
@@ -126,7 +126,7 @@ namespace Firebase.Sample.FirebaseAI {
       }
       catch (Exception e)
       {
-        DebugLog("Error while generating content:\n" + e.Message);
+        DebugLog("Error while generating content:\n" + e);
       }
     }
 
