@@ -73,7 +73,7 @@ namespace Firebase.Sample.FirebaseAI {
       });
     }
 
-    public string ModelName = "gemini-2.5-flash";
+    public string ModelName = "gemini-3.1-flash-lite";
 
     private int backendSelection = 0;
     private string[] backendChoices = new string[] { "Google AI Backend", "Vertex AI Backend" };
@@ -87,10 +87,17 @@ namespace Firebase.Sample.FirebaseAI {
 
     // Send a single message to the Generative Model, without any history.
     async Task SendSingleMessage(string message) {
-      DebugLog("Sending message to model: " + message);
-      var response = await GetModel().GenerateContentAsync(message);
-      DebugLog("Response: " + response.Text);
-      LogUsageMetadata(response.UsageMetadata);
+      try
+      {
+        DebugLog("Sending message to model: " + message);
+        var response = await GetModel().GenerateContentAsync(message);
+        DebugLog("Response: " + response.Text);
+        LogUsageMetadata(response.UsageMetadata);
+      }
+      catch (Exception e)
+      {
+        DebugLog("Error while generating content:\n" + e.Message);
+      }
     }
 
     private Chat chatSession = null;
@@ -110,10 +117,17 @@ namespace Firebase.Sample.FirebaseAI {
         return;
       }
 
-      DebugLog("Sending chat message: " + message);
-      var response = await chatSession.SendMessageAsync(message);
-      DebugLog("Chat response: " + response.Text);
-      LogUsageMetadata(response.UsageMetadata);
+      try
+      {
+        DebugLog("Sending chat message: " + message);
+        var response = await chatSession.SendMessageAsync(message);
+        DebugLog("Chat response: " + response.Text);
+        LogUsageMetadata(response.UsageMetadata);
+      }
+      catch (Exception e)
+      {
+        DebugLog("Error while generating content:\n" + e.Message);
+      }
     }
 
     private void LogUsageMetadata(UsageMetadata? metadata) {
