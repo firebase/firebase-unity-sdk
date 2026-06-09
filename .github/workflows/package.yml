@@ -333,7 +333,7 @@ jobs:
           -s 10 -A -v
       env:
         STEPS_GENERATE_TOKEN_OUTPUTS_TOKEN: ${{ steps.generate-token.outputs.token }}
-        STEPS_BRANCH_NAME_OUTPUTS_CURRENT_BRANCH: ${{ steps.branch-names.outputs.current_branch }}
+        STEPS_BRANCH_NAME_OUTPUTS_CURRENT_BRANCH: ${{ steps.branch-name.outputs.current_branch }}
         INPUTS_PLATFORMS: ${{ inputs.platforms }}
         INPUTS_APIS: ${{ inputs.apis }}
         INPUTS_RUNINTEGRATIONTESTS: ${{ inputs.runIntegrationTests }}
