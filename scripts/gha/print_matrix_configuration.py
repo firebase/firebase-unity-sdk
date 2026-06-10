@@ -55,7 +55,7 @@ TVOS = "tvOS"
 PLAYMODE = "Playmode"
 
 # GitHub Runner
-WINDOWS_RUNNER = "windows-latest"
+WINDOWS_RUNNER = "windows-2022"
 MACOS_RUNNER = "macos-15"
 LINUX_RUNNER = "ubuntu-22.04"
 
