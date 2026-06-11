@@ -114,7 +114,6 @@ Release Notes
     - Firebase AI: Add support for advanced speech configurations, enabling multi-speaker setup and language code preference
       in text-to-speech generation.
 
-
 ### 13.12.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.8.0.
