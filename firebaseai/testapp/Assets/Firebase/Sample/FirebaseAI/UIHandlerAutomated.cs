@@ -199,6 +199,7 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestFinishReasonExpanded,
         InternalTestImageConfigSerialization,
         InternalTestSpeechConfigSerialization,
+        InternalTestSpeechConfigValidations,
         InternalTestCitations,
         InternalTestBlockedSafetyWithMessage,
         InternalTestFinishReasonSafetyNoContent,
@@ -1596,6 +1597,50 @@ namespace Firebase.Sample.FirebaseAI
       var speechConfigJson = genJson["speechConfig"] as Dictionary<string, object>;
       Assert("speechConfig is not a dictionary", speechConfigJson != null);
       Assert("speechConfigJson missing multiSpeakerVoiceConfig", speechConfigJson.ContainsKey("multiSpeakerVoiceConfig"));
+
+      return Task.CompletedTask;
+    }
+
+    // Test that SpeechConfig validations throw correct exceptions.
+    Task InternalTestSpeechConfigValidations()
+    {
+      // 1. Uninitialized MultiSpeakerVoiceConfig (default struct) should not serialize to JSON
+      var defaultMultiSpeech = SpeechConfig.UseMultiSpeakerVoice(default(MultiSpeakerVoiceConfig));
+      var defaultJson = defaultMultiSpeech.ToJson();
+      Assert("defaultJson should not contain multiSpeakerVoiceConfig", !defaultJson.ContainsKey("multiSpeakerVoiceConfig"));
+
+      // 2. SpeakerVoiceConfig.UsePrebuiltVoice should throw ArgumentException on null/empty speaker
+      try
+      {
+        SpeakerVoiceConfig.UsePrebuiltVoice(null, "Kore");
+        Assert("Should have thrown ArgumentException for null speaker", false);
+      }
+      catch (System.ArgumentException)
+      {
+        // Expected
+      }
+
+      // 3. SpeakerVoiceConfig.UsePrebuiltVoice should throw ArgumentException on null/empty voiceName
+      try
+      {
+        SpeakerVoiceConfig.UsePrebuiltVoice("Joe", "");
+        Assert("Should have thrown ArgumentException for empty voiceName", false);
+      }
+      catch (System.ArgumentException)
+      {
+        // Expected
+      }
+
+      // 4. MultiSpeakerVoiceConfig should throw ArgumentNullException on null enumerable
+      try
+      {
+        new MultiSpeakerVoiceConfig(null);
+        Assert("Should have thrown ArgumentNullException for null speakerVoiceConfigs", false);
+      }
+      catch (System.ArgumentNullException)
+      {
+        // Expected
+      }
 
       return Task.CompletedTask;
     }

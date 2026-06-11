@@ -74,7 +74,7 @@ namespace Firebase.AI
           } }
         };
       }
-      else if (multiSpeakerVoiceConfig.HasValue)
+      else if (multiSpeakerVoiceConfig.HasValue && multiSpeakerVoiceConfig.Value.SpeakerVoiceConfigs != null)
       {
         dict["multiSpeakerVoiceConfig"] = multiSpeakerVoiceConfig.Value.ToJson();
       }
@@ -104,7 +104,7 @@ namespace Firebase.AI
     /// <param name="speakerVoiceConfigs"></param>
     public MultiSpeakerVoiceConfig(IEnumerable<SpeakerVoiceConfig> speakerVoiceConfigs)
     {
-      SpeakerVoiceConfigs = speakerVoiceConfigs;
+      SpeakerVoiceConfigs = speakerVoiceConfigs ?? throw new System.ArgumentNullException(nameof(speakerVoiceConfigs));
     }
 
     internal Dictionary<string, object> ToJson()
@@ -152,6 +152,14 @@ namespace Firebase.AI
     /// <returns></returns>
     public static SpeakerVoiceConfig UsePrebuiltVoice(string speaker, string voiceName)
     {
+      if (string.IsNullOrWhiteSpace(speaker))
+      {
+        throw new System.ArgumentException("Speaker name cannot be null or empty.", nameof(speaker));
+      }
+      if (string.IsNullOrWhiteSpace(voiceName))
+      {
+        throw new System.ArgumentException("Voice name cannot be null or empty.", nameof(voiceName));
+      }
       return new SpeakerVoiceConfig(speaker, voiceName);
     }
 
