@@ -41,6 +41,7 @@ namespace Firebase.AI
     private readonly List<ResponseModality> _responseModalities;
     private readonly ThinkingConfig? _thinkingConfig;
     private readonly ImageConfig? _imageConfig;
+    private readonly SpeechConfig? _speechConfig;
 
     /// <summary>
     /// Creates a new `GenerationConfig` value.
@@ -172,6 +173,9 @@ namespace Firebase.AI
     /// <param name="imageConfig">
     /// Configuration for the aspect ratio and size of generated images.
     /// </param>
+    /// <param name="speechConfig">
+    /// Configuration for controlling the voice of the model during conversation.
+    /// </param>
     public GenerationConfig(
         float? temperature = null,
         float? topP = null,
@@ -186,7 +190,8 @@ namespace Firebase.AI
         JsonSchema responseJsonSchema = null,
         IEnumerable<ResponseModality> responseModalities = null,
         ThinkingConfig? thinkingConfig = null,
-        ImageConfig? imageConfig = null)
+        ImageConfig? imageConfig = null,
+        SpeechConfig? speechConfig = null)
     {
       _temperature = temperature;
       _topP = topP;
@@ -203,6 +208,7 @@ namespace Firebase.AI
           new List<ResponseModality>(responseModalities) : null;
       _thinkingConfig = thinkingConfig;
       _imageConfig = imageConfig;
+      _speechConfig = speechConfig;
     }
 
     /// <summary>
@@ -230,6 +236,7 @@ namespace Firebase.AI
       }
       if (_thinkingConfig != null) jsonDict["thinkingConfig"] = _thinkingConfig.Value.ToJson();
       if (_imageConfig != null) jsonDict["imageConfig"] = _imageConfig.Value.ToJson();
+      if (_speechConfig != null) jsonDict["speechConfig"] = _speechConfig.Value.ToJson();
 
       return jsonDict;
     }
