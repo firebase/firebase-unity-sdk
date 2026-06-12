@@ -22,6 +22,9 @@ namespace Firebase.AI
 {
   /// <summary>
   /// A struct used to configure speech generation settings.
+  ///
+  /// Note: Multi-speaker configurations are not supported by the Live API (e.g.,
+  /// <see cref="LiveGenerationConfig"/>).
   /// </summary>
   public readonly struct SpeechConfig
   {
@@ -49,6 +52,9 @@ namespace Firebase.AI
 
     /// <summary>
     /// Configure speech synthesis with multiple speakers.
+    ///
+    /// Note: Multi-speaker configurations are not supported by the Live API (e.g.,
+    /// <see cref="LiveGenerationConfig"/>).
     /// </summary>
     /// <param name="multiSpeakerVoiceConfig"></param>
     /// <param name="languageCode"></param>
