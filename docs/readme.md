@@ -113,6 +113,8 @@ Release Notes
 - Changes
     - Firebase AI: Add support for advanced speech configurations, enabling multi-speaker setup and language code preference
       in text-to-speech generation.
+    - General: Fixed an issue with Firebase.App.Internal, Firebase.Functions, and Firebase.FirebaseAI 
+      asmdefs that were causing build issues on unsupported platforms.
 
 ### 13.12.0
 -   Changes
