@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - General: Fixed an issue with Firebase.App.Internal, Firebase.Functions, and Firebase.FirebaseAI asmdefs that were causing build issues on unsupported platforms.
+
 ### 13.12.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.8.0.
