@@ -198,6 +198,8 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestBasicReplyShort,
         InternalTestFinishReasonExpanded,
         InternalTestImageConfigSerialization,
+        InternalTestSpeechConfigSerialization,
+        InternalTestSpeechConfigValidations,
         InternalTestCitations,
         InternalTestBlockedSafetyWithMessage,
         InternalTestFinishReasonSafetyNoContent,
@@ -1531,6 +1533,114 @@ namespace Firebase.Sample.FirebaseAI
       Assert("imageConfig is not a dictionary", imageConfigJson != null);
       AssertEq("imageConfigJson.aspectRatio", imageConfigJson["aspectRatio"], "16:9");
       AssertEq("imageConfigJson.imageSize", imageConfigJson["imageSize"], "1K");
+
+      return Task.CompletedTask;
+    }
+
+    // Test that SpeechConfig serialization works as expected.
+    Task InternalTestSpeechConfigSerialization()
+    {
+      // 1. Single Speaker with languageCode
+      var singleSpeechConfig = SpeechConfig.UsePrebuiltVoice("Kore", "en-US");
+      var singleJson = singleSpeechConfig.ToJson();
+
+      Assert("singleJson missing voiceConfig", singleJson.ContainsKey("voiceConfig"));
+      var voiceConfigJson = singleJson["voiceConfig"] as Dictionary<string, object>;
+      Assert("voiceConfig is not a dictionary", voiceConfigJson != null);
+      Assert("voiceConfigJson missing prebuiltVoiceConfig", voiceConfigJson.ContainsKey("prebuiltVoiceConfig"));
+      var prebuiltVoiceConfigJson = voiceConfigJson["prebuiltVoiceConfig"] as Dictionary<string, object>;
+      Assert("prebuiltVoiceConfig is not a dictionary", prebuiltVoiceConfigJson != null);
+      AssertEq("prebuiltVoiceConfig.voiceName", prebuiltVoiceConfigJson["voiceName"], "Kore");
+      AssertEq("singleJson.languageCode", singleJson["languageCode"], "en-US");
+
+      // 2. Multi-Speaker with languageCode
+      var multiSpeechConfig = SpeechConfig.UseMultiSpeakerVoice(
+        new MultiSpeakerVoiceConfig(new List<SpeakerVoiceConfig> {
+          SpeakerVoiceConfig.UsePrebuiltVoice("Joe", "Kore"),
+          SpeakerVoiceConfig.UsePrebuiltVoice("Jane", "Puck")
+        }),
+        "en-US"
+      );
+      var multiJson = multiSpeechConfig.ToJson();
+
+      Assert("multiJson missing multiSpeakerVoiceConfig", multiJson.ContainsKey("multiSpeakerVoiceConfig"));
+      var multiSpeakerVoiceConfigJson = multiJson["multiSpeakerVoiceConfig"] as Dictionary<string, object>;
+      Assert("multiSpeakerVoiceConfig is not a dictionary", multiSpeakerVoiceConfigJson != null);
+      Assert("multiSpeakerVoiceConfigJson missing speakerVoiceConfigs", multiSpeakerVoiceConfigJson.ContainsKey("speakerVoiceConfigs"));
+      var speakerVoiceConfigsList = multiSpeakerVoiceConfigJson["speakerVoiceConfigs"] as List<object>;
+      Assert("speakerVoiceConfigs is not a List<object>", speakerVoiceConfigsList != null);
+      AssertEq("speakerVoiceConfigs count", speakerVoiceConfigsList.Count, 2);
+
+      var joeConfig = speakerVoiceConfigsList[0] as Dictionary<string, object>;
+      Assert("joeConfig is not a dictionary", joeConfig != null);
+      AssertEq("joe speaker name", joeConfig["speaker"], "Joe");
+      var joeVoiceConfig = joeConfig["voiceConfig"] as Dictionary<string, object>;
+      Assert("joeVoiceConfig is not a dictionary", joeVoiceConfig != null);
+      var joePrebuilt = joeVoiceConfig["prebuiltVoiceConfig"] as Dictionary<string, object>;
+      AssertEq("joe voice name", joePrebuilt["voiceName"], "Kore");
+
+      var janeConfig = speakerVoiceConfigsList[1] as Dictionary<string, object>;
+      Assert("janeConfig is not a dictionary", janeConfig != null);
+      AssertEq("jane speaker name", janeConfig["speaker"], "Jane");
+      var janeVoiceConfig = janeConfig["voiceConfig"] as Dictionary<string, object>;
+      Assert("janeVoiceConfig is not a dictionary", janeVoiceConfig != null);
+      var janePrebuilt = janeVoiceConfig["prebuiltVoiceConfig"] as Dictionary<string, object>;
+      AssertEq("jane voice name", janePrebuilt["voiceName"], "Puck");
+
+      AssertEq("multiJson.languageCode", multiJson["languageCode"], "en-US");
+
+      // 3. Integration with GenerationConfig
+      var genConfig = new GenerationConfig(speechConfig: multiSpeechConfig);
+      var genJson = genConfig.ToJson();
+
+      Assert("GenerationConfig missing speechConfig", genJson.ContainsKey("speechConfig"));
+      var speechConfigJson = genJson["speechConfig"] as Dictionary<string, object>;
+      Assert("speechConfig is not a dictionary", speechConfigJson != null);
+      Assert("speechConfigJson missing multiSpeakerVoiceConfig", speechConfigJson.ContainsKey("multiSpeakerVoiceConfig"));
+
+      return Task.CompletedTask;
+    }
+
+    // Test that SpeechConfig validations throw correct exceptions.
+    Task InternalTestSpeechConfigValidations()
+    {
+      // 1. Uninitialized MultiSpeakerVoiceConfig (default struct) should not serialize to JSON
+      var defaultMultiSpeech = SpeechConfig.UseMultiSpeakerVoice(default(MultiSpeakerVoiceConfig));
+      var defaultJson = defaultMultiSpeech.ToJson();
+      Assert("defaultJson should not contain multiSpeakerVoiceConfig", !defaultJson.ContainsKey("multiSpeakerVoiceConfig"));
+
+      // 2. SpeakerVoiceConfig.UsePrebuiltVoice should throw ArgumentException on null/empty speaker
+      try
+      {
+        SpeakerVoiceConfig.UsePrebuiltVoice(null, "Kore");
+        Assert("Should have thrown ArgumentException for null speaker", false);
+      }
+      catch (System.ArgumentException)
+      {
+        // Expected
+      }
+
+      // 3. SpeakerVoiceConfig.UsePrebuiltVoice should throw ArgumentException on null/empty voiceName
+      try
+      {
+        SpeakerVoiceConfig.UsePrebuiltVoice("Joe", "");
+        Assert("Should have thrown ArgumentException for empty voiceName", false);
+      }
+      catch (System.ArgumentException)
+      {
+        // Expected
+      }
+
+      // 4. MultiSpeakerVoiceConfig should throw ArgumentNullException on null enumerable
+      try
+      {
+        new MultiSpeakerVoiceConfig(null);
+        Assert("Should have thrown ArgumentNullException for null speakerVoiceConfigs", false);
+      }
+      catch (System.ArgumentNullException)
+      {
+        // Expected
+      }
 
       return Task.CompletedTask;
     }
