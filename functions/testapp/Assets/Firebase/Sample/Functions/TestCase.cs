@@ -17,6 +17,7 @@ namespace Firebase.Sample.Functions {
   using Firebase.Extensions;
   using Firebase.Functions;
   using System;
+  using System.Collections.Generic;
   using System.Threading.Tasks;
 
   public class TestCase {
@@ -56,7 +57,7 @@ namespace Firebase.Sample.Functions {
     }
 
     // Runs the given test and returns whether it passed.
-    public Task RunAsync(FirebaseFunctions functions,
+    public virtual Task RunAsync(FirebaseFunctions functions,
         Utils.Reporter reporter) {
       var func = GetReference(functions);
       return func.CallAsync(Input).ContinueWithOnMainThread((task) => {
@@ -112,6 +113,92 @@ namespace Firebase.Sample.Functions {
     // Generate the CallableReference using the URL
     public override HttpsCallableReference GetReference(FirebaseFunctions functions) {
       return functions.GetHttpsCallableFromURL(URL, Options);
+    }
+  }
+
+  // TestCase that tests streaming.
+  public class StreamingTestCase : TestCase {
+    // List of expected messages/results in order.
+    public List<StreamResponse> ExpectedStreamResponses { get; private set; }
+
+    public StreamingTestCase(string name, string functionName, object input, List<StreamResponse> expectedResponses, HttpsCallableOptions options = null)
+        : base(name, functionName, input, null, FunctionsErrorCode.None, options) {
+      ExpectedStreamResponses = expectedResponses;
+    }
+
+    public override Task RunAsync(FirebaseFunctions functions, Utils.Reporter reporter) {
+      var func = GetReference(functions);
+      var tcs = new TaskCompletionSource<bool>();
+
+      Task.Run(async () => {
+        try {
+          int index = 0;
+          await foreach (var response in func.StreamAsync(Input)) {
+            if (index >= ExpectedStreamResponses.Count) {
+              throw new Exception(String.Format("Got more stream responses than expected ({0}).", index + 1));
+            }
+            var expected = ExpectedStreamResponses[index];
+            if (response.GetType() != expected.GetType()) {
+              throw new Exception(String.Format("Response type mismatch at index {0}. Got {1}, want {2}.",
+                index, response.GetType().Name, expected.GetType().Name));
+            }
+            if (response is StreamResponse.Message gotMsg && expected is StreamResponse.Message expMsg) {
+              if (!Utils.DeepEquals(expMsg.Data, gotMsg.Data, reporter)) {
+                throw new Exception(String.Format("Message mismatch at index {0}. Got {1}, want {2}.",
+                  index, Utils.DebugString(gotMsg.Data), Utils.DebugString(expMsg.Data)));
+              }
+            } else if (response is StreamResponse.Result gotResult && expected is StreamResponse.Result expResult) {
+              if (!Utils.DeepEquals(expResult.Data, gotResult.Data, reporter)) {
+                throw new Exception(String.Format("Result mismatch at index {0}. Got {1}, want {2}.",
+                  index, Utils.DebugString(gotResult.Data), Utils.DebugString(expResult.Data)));
+              }
+            }
+            index++;
+          }
+
+          if (index < ExpectedStreamResponses.Count) {
+            throw new Exception(String.Format("Got fewer stream responses than expected. Got {0}, want {1}.",
+              index, ExpectedStreamResponses.Count));
+          }
+
+          tcs.SetResult(true);
+        } catch (Exception e) {
+          tcs.SetException(e);
+        }
+      });
+
+      return tcs.Task;
+    }
+  }
+
+  // TestCase that tests streaming with expected error.
+  public class StreamingTestCaseWithError : TestCase {
+    public StreamingTestCaseWithError(string name, string functionName, object input, FunctionsErrorCode expectedError, HttpsCallableOptions options = null)
+        : base(name, functionName, input, null, expectedError, options) {}
+
+    public override Task RunAsync(FirebaseFunctions functions, Utils.Reporter reporter) {
+      var func = GetReference(functions);
+      var tcs = new TaskCompletionSource<bool>();
+
+      Task.Run(async () => {
+        try {
+          await foreach (var response in func.StreamAsync(Input)) {
+            // We expect an error, so we shouldn't get standard responses.
+          }
+          tcs.SetException(new Exception("Stream completed successfully but expected error: " + ExpectedError));
+        } catch (FunctionsException ex) {
+          if (ex.ErrorCode != ExpectedError) {
+            tcs.SetException(new Exception(String.Format("Got error {0} but expected {1}. Message: {2}", ex.ErrorCode, ExpectedError, ex.Message)));
+          } else {
+            reporter(String.Format("  Got expected stream error {0}: {1}", ex.ErrorCode, ex.Message));
+            tcs.SetResult(true);
+          }
+        } catch (Exception e) {
+          tcs.SetException(e);
+        }
+      });
+
+      return tcs.Task;
     }
   }
 }

@@ -16,6 +16,7 @@
 'use strict';
 
 const functions = require('firebase-functions/v1');
+const functionsV2 = require('firebase-functions/v2');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
@@ -41,3 +42,34 @@ exports.addNumbers = functions.https.onCall((data) => {
     operationResult: firstNumber + secondNumber,
   };
 });
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+const streamData = ["hello", "world", "this", "is", "cool"];
+
+async function* generateText() {
+  for (const chunk of streamData) {
+    yield chunk;
+    await sleep(100);
+  }
+};
+
+exports.genStream = functionsV2.https.onCall(
+  async (request, response) => {
+    if (request.acceptsStreaming) {
+      for await (const chunk of generateText()) {
+        response.sendChunk(chunk);
+      }
+    }
+    return streamData.join(" ");
+  }
+);
+
+exports.genStreamError = functionsV2.https.onCall(
+  async (request, response) => {
+    throw Error("BOOM");
+  }
+);
+
