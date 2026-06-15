@@ -111,7 +111,7 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
-    - General: Fixed an issue with `App Internal`, `Functions`, and `FirebaseAI` asmdefs that were causing build issues on unsupported platforms.
+    - General: Fixed an issue with Firebase.App.Internal, Firebase.Functions, and Firebase.FirebaseAI asmdefs that were causing build issues on unsupported platforms.
 
 ### 13.12.0
 -   Changes
