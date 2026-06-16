@@ -73,13 +73,13 @@ namespace Firebase.Sample.Functions {
 
       // Stream tests
       {
-        var expected = new List<StreamResponse> {
-          new StreamResponse.Message { Data = "hello" },
-          new StreamResponse.Message { Data = "world" },
-          new StreamResponse.Message { Data = "this" },
-          new StreamResponse.Message { Data = "is" },
-          new StreamResponse.Message { Data = "cool" },
-          new StreamResponse.Result { Data = "hello world this is cool" }
+        var expected = new List<ExpectedStreamResponse> {
+          new ExpectedStreamResponse { IsResult = false, Data = "hello" },
+          new ExpectedStreamResponse { IsResult = false, Data = "world" },
+          new ExpectedStreamResponse { IsResult = false, Data = "this" },
+          new ExpectedStreamResponse { IsResult = false, Data = "is" },
+          new ExpectedStreamResponse { IsResult = false, Data = "cool" },
+          new ExpectedStreamResponse { IsResult = true, Data = "hello world this is cool" }
         };
         yield return new StreamingTestCase("streamTest", "genStream", null, expected);
       }

@@ -199,12 +199,12 @@ namespace Firebase.Functions.Internal
 
         if (dict.TryGetValue("message", out var messageValue))
         {
-          return new StreamResponse.Message { Data = Decode(messageValue) };
+          return new StreamResponse.Message(Decode(messageValue));
         }
 
         if (dict.TryGetValue("result", out var resultValue))
         {
-          return new StreamResponse.Result { Data = Decode(resultValue) };
+          return new StreamResponse.Result(Decode(resultValue));
         }
 
         throw new FunctionsException(FunctionsErrorCode.Internal, "Response is missing result or message field.");

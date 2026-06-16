@@ -26,7 +26,8 @@ namespace Firebase.Functions
     /// </summary>
     public sealed class Message : StreamResponse
     {
-      public object Data { get; internal set; }
+      internal Message(object data) { Data = data; }
+      public object Data { get; private set; }
     }
 
     /// <summary>
@@ -34,7 +35,8 @@ namespace Firebase.Functions
     /// </summary>
     public sealed class Result : StreamResponse
     {
-      public object Data { get; internal set; }
+      internal Result(object data) { Data = data; }
+      public object Data { get; private set; }
     }
   }
 }
