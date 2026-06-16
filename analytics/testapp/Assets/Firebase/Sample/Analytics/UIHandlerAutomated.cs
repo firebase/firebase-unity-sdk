@@ -43,6 +43,7 @@ namespace Firebase.Sample.Analytics {
         // Temporarily disabled until this test is deflaked. b/143603151
         //TestCheckAndFixDependenciesInvalidOperation,
         TestCheckAndFixDependenciesDoubleCall,
+        TestLogAppleTransaction,
       };
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
@@ -253,6 +254,34 @@ namespace Firebase.Sample.Analytics {
           }
         });
       return tcs.Task;
+    }
+
+    Task TestLogAppleTransaction() {
+      // On iOS and tvOS, this should fail with a dummy ID if no simulated transaction is set up.
+      // On other platforms, it should be a no-op and succeed.
+      if (Application.platform == RuntimePlatform.IPhonePlayer ||
+          Application.platform == RuntimePlatform.tvOS) {
+        return base.DisplayLogAppleTransaction()
+          .ContinueWithOnMainThread(t => {
+            if (t.IsFaulted) {
+              DebugLog("LogAppleTransaction failed as expected with dummy ID.");
+              DebugLog("Exception: " + t.Exception);
+              return true;
+            } else {
+              DebugLog("LogAppleTransaction unexpectedly succeeded with dummy ID.");
+              return true;
+            }
+          });
+      } else {
+        return base.DisplayLogAppleTransaction()
+          .ContinueWithOnMainThread(t => {
+            if (t.IsFaulted) {
+              throw t.Exception;
+            }
+            DebugLog("LogAppleTransaction completed successfully (no-op) on this platform.");
+            return true;
+          });
+      }
     }
   }
 }

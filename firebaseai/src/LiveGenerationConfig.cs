@@ -22,24 +22,46 @@ namespace Firebase.AI
 {
   /// <summary>
   /// A struct used to configure speech generation settings.
+  ///
+  /// Note: Multi-speaker configurations are not supported by the Live API (e.g.,
+  /// <see cref="LiveGenerationConfig"/>).
   /// </summary>
   public readonly struct SpeechConfig
   {
     internal readonly string voice;
+    internal readonly MultiSpeakerVoiceConfig? multiSpeakerVoiceConfig;
+    internal readonly string languageCode;
 
-    private SpeechConfig(string voice)
+    private SpeechConfig(string voice, MultiSpeakerVoiceConfig? multiSpeakerVoiceConfig, string languageCode)
     {
       this.voice = voice;
+      this.multiSpeakerVoiceConfig = multiSpeakerVoiceConfig;
+      this.languageCode = languageCode;
     }
 
     /// <summary>
     /// See https://cloud.google.com/text-to-speech/docs/chirp3-hd for the list of available voices.
     /// </summary>
     /// <param name="voice"></param>
+    /// <param name="languageCode"></param>
     /// <returns></returns>
-    public static SpeechConfig UsePrebuiltVoice(string voice)
+    public static SpeechConfig UsePrebuiltVoice(string voice, string languageCode = null)
     {
-      return new SpeechConfig(voice);
+      return new SpeechConfig(voice, null, languageCode);
+    }
+
+    /// <summary>
+    /// Configure speech synthesis with multiple speakers.
+    ///
+    /// Note: Multi-speaker configurations are not supported by the Live API (e.g.,
+    /// <see cref="LiveGenerationConfig"/>).
+    /// </summary>
+    /// <param name="multiSpeakerVoiceConfig"></param>
+    /// <param name="languageCode"></param>
+    /// <returns></returns>
+    public static SpeechConfig UseMultiSpeakerVoice(MultiSpeakerVoiceConfig multiSpeakerVoiceConfig, string languageCode = null)
+    {
+      return new SpeechConfig(null, multiSpeakerVoiceConfig, languageCode);
     }
 
     /// <summary>
@@ -58,8 +80,105 @@ namespace Firebase.AI
           } }
         };
       }
+      else if (multiSpeakerVoiceConfig.HasValue && multiSpeakerVoiceConfig.Value.SpeakerVoiceConfigs != null)
+      {
+        dict["multiSpeakerVoiceConfig"] = multiSpeakerVoiceConfig.Value.ToJson();
+      }
+
+      if (!string.IsNullOrWhiteSpace(languageCode))
+      {
+        dict["languageCode"] = languageCode;
+      }
 
       return dict;
+    }
+  }
+
+  /// <summary>
+  /// Configuration for a multi-speaker audio generation setup.
+  /// </summary>
+  public readonly struct MultiSpeakerVoiceConfig
+  {
+    /// <summary>
+    /// The speaker voice configurations.
+    /// </summary>
+    public IEnumerable<SpeakerVoiceConfig> SpeakerVoiceConfigs { get; }
+
+    /// <summary>
+    /// Create a new `MultiSpeakerVoiceConfig` value.
+    /// </summary>
+    /// <param name="speakerVoiceConfigs"></param>
+    public MultiSpeakerVoiceConfig(IEnumerable<SpeakerVoiceConfig> speakerVoiceConfigs)
+    {
+      SpeakerVoiceConfigs = speakerVoiceConfigs ?? throw new System.ArgumentNullException(nameof(speakerVoiceConfigs));
+    }
+
+    internal Dictionary<string, object> ToJson()
+    {
+      Dictionary<string, object> dict = new();
+      if (SpeakerVoiceConfigs != null)
+      {
+        var list = new List<object>();
+        foreach (var svc in SpeakerVoiceConfigs)
+        {
+          list.Add(svc.ToJson());
+        }
+        dict["speakerVoiceConfigs"] = list;
+      }
+      return dict;
+    }
+  }
+
+  /// <summary>
+  /// Configures a participating speaker within a multi-speaker setup.
+  /// </summary>
+  public readonly struct SpeakerVoiceConfig
+  {
+    /// <summary>
+    /// The name of the speaker.
+    /// </summary>
+    public string Speaker { get; }
+
+    /// <summary>
+    /// The name of the voice.
+    /// </summary>
+    public string VoiceName { get; }
+
+    private SpeakerVoiceConfig(string speaker, string voiceName)
+    {
+      Speaker = speaker;
+      VoiceName = voiceName;
+    }
+
+    /// <summary>
+    /// Create a new `SpeakerVoiceConfig` using a prebuilt voice.
+    /// </summary>
+    /// <param name="speaker"></param>
+    /// <param name="voiceName"></param>
+    /// <returns></returns>
+    public static SpeakerVoiceConfig UsePrebuiltVoice(string speaker, string voiceName)
+    {
+      if (string.IsNullOrWhiteSpace(speaker))
+      {
+        throw new System.ArgumentException("Speaker name cannot be null or empty.", nameof(speaker));
+      }
+      if (string.IsNullOrWhiteSpace(voiceName))
+      {
+        throw new System.ArgumentException("Voice name cannot be null or empty.", nameof(voiceName));
+      }
+      return new SpeakerVoiceConfig(speaker, voiceName);
+    }
+
+    internal Dictionary<string, object> ToJson()
+    {
+      return new Dictionary<string, object>() {
+        { "speaker", Speaker },
+        { "voiceConfig", new Dictionary<string, object>() {
+          { "prebuiltVoiceConfig" , new Dictionary<string, object>() {
+            { "voiceName", VoiceName }
+          } }
+        } }
+      };
     }
   }
 

@@ -354,6 +354,25 @@ public static partial class FirebaseAnalytics {
   public static void SetUserProperty(string name, string property) {
     FirebaseAnalyticsInternal.SetUserProperty(name, property);
   }
+
+  /// <summary>
+  /// Logs an in-app purchase transaction specifically for Apple's StoreKit 2.
+  /// </summary>
+  /// <remarks>
+  /// This method is intended for Unity developers on iOS who process transactions
+  /// via In-app purchases and wish to log those purchases through Google Analytics. 
+  /// The provided ID must map 1:1 with the native Apple `Transaction.id`. 
+  /// If a matching transaction is not found in the Apple device's purchase history then 
+  /// nothing will be logged to analytics. 
+  /// 
+  /// </remarks>
+  /// <param name="transactionId">The native Apple transaction identifier (e.g.,
+  /// extracted from Unity IAP's <c>purchasedProduct.transactionID</c>).</param>
+  /// <returns>A Task that completes when the native StoreKit 2 transaction 
+  /// is successfully located and logged.</returns> 
+  public static System.Threading.Tasks.Task LogAppleTransactionAsync(string transactionId) {
+    return FirebaseAnalyticsInternal.LogAppleTransactionAsync(transactionId);
+  }
 }
 
 }

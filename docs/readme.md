@@ -109,6 +109,22 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Firebase AI: Add support for advanced speech configurations, enabling multi-speaker setup and language code preference
+      in text-to-speech generation.
+    - General: Fixed an issue with Firebase.App.Internal, Firebase.Functions, and Firebase.FirebaseAI 
+      asmdefs that were causing build issues on unsupported platforms.
+
+### 13.12.0
+-   Changes
+    - General: Update to Firebase C++ SDK version 13.8.0.
+    - General (Android): Update to Firebase Android BoM version 34.14.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.14.0.
+    - Analytics: Add support for Apple's StoreKit 2 transactions. Add new `LogAppleTransactionAsync` method
+      that takes in the App Store transaction string and logs the transaction.
+      
+
 ### 13.11.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.7.0.
