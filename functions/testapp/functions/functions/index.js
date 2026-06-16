@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const functionsV2 = require("firebase-functions/v2");
 
 // Creates a function that consumes limited-use App Check tokens
