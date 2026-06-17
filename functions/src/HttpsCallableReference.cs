@@ -104,7 +104,7 @@ namespace Firebase.Functions
       UnityEngine.Debug.Log("Request:\n" + request.Content);
 #endif
       // TODO pipe through cancellation tokens
-      var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+      using var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
       if (!response.IsSuccessStatusCode)
       {
         string errorBody = "";
@@ -120,6 +120,11 @@ namespace Firebase.Functions
           }
         }
         throw FunctionsErrorParser.ParseError(response, errorBody);
+      }
+
+      if (response.Content == null)
+      {
+        throw new FunctionsException(FunctionsErrorCode.Internal, "Response content is null.");
       }
 
       string result = await response.Content.ReadAsStringAsync();
@@ -163,7 +168,7 @@ namespace Firebase.Functions
 #endif
 
       // Use ResponseHeadersRead to avoid loading the whole stream at once.
-      var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+      using var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
       if (!response.IsSuccessStatusCode)
       {
         string errorBody = "";
@@ -179,6 +184,11 @@ namespace Firebase.Functions
           }
         }
         throw FunctionsErrorParser.ParseError(response, errorBody);
+      }
+
+      if (response.Content == null)
+      {
+        throw new FunctionsException(FunctionsErrorCode.Internal, "Response content is null.");
       }
 
       using var stream = await response.Content.ReadAsStreamAsync();
