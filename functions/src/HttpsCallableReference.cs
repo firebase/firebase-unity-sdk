@@ -93,7 +93,7 @@ namespace Firebase.Functions
 
     private async Task<HttpsCallableResult> InternalCallAsync(object data)
     {
-      HttpRequestMessage request = new(HttpMethod.Post, _url);
+      using var request = new HttpRequestMessage(HttpMethod.Post, _url);
       // Functions uses Bearer tokens for authentication.
       // This is different from the default Firebase token prefix used by other Firebase services.
       bool limitedUseAppCheckTokens = _options != null && _options.LimitedUseAppCheckTokens;
@@ -155,9 +155,12 @@ namespace Firebase.Functions
       return InternalStreamAsync(data, cancellationToken);
     }
 
-    private async IAsyncEnumerable<StreamResponse> InternalStreamAsync(object data, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    private async IAsyncEnumerable<StreamResponse> InternalStreamAsync(object data, CancellationToken originalToken, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-      HttpRequestMessage request = new(HttpMethod.Post, _url);
+      using var cts = CancellationTokenSource.CreateLinkedTokenSource(originalToken, cancellationToken);
+      var linkedToken = cts.Token;
+
+      using var request = new HttpRequestMessage(HttpMethod.Post, _url);
       bool limitedUseAppCheckTokens = _options != null && _options.LimitedUseAppCheckTokens;
       await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App, "Bearer", limitedUseAppCheckTokens);
       request.Content = MakeFunctionsRequest(data);
@@ -168,7 +171,7 @@ namespace Firebase.Functions
 #endif
 
       // Use ResponseHeadersRead to avoid loading the whole stream at once.
-      using var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+      using var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedToken);
       if (!response.IsSuccessStatusCode)
       {
         string errorBody = "";
@@ -193,44 +196,52 @@ namespace Firebase.Functions
 
       using var stream = await response.Content.ReadAsStreamAsync();
       using var reader = new StreamReader(stream);
+      using var registration = linkedToken.Register(() => response.Dispose());
 
       StringBuilder currentEventData = new StringBuilder();
 
       string line;
-      while ((line = await reader.ReadLineAsync()) != null)
+      try
       {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // An empty line indicates the end of an event
-        if (string.IsNullOrWhiteSpace(line))
+        while ((line = await reader.ReadLineAsync()) != null)
         {
-          if (currentEventData.Length > 0)
+          linkedToken.ThrowIfCancellationRequested();
+
+          // An empty line indicates the end of an event
+          if (string.IsNullOrWhiteSpace(line))
           {
-            string jsonText = currentEventData.ToString();
-            currentEventData.Clear();
+            if (currentEventData.Length > 0)
+            {
+              string jsonText = currentEventData.ToString();
+              currentEventData.Clear();
 
 #if FIREBASE_LOG_REST_CALLS
-            UnityEngine.Debug.Log("Streaming Response:\n" + jsonText);
+              UnityEngine.Debug.Log("Streaming Response:\n" + jsonText);
 #endif
-            yield return FunctionsSerializer.DeserializeStreamResponse(jsonText);
+              yield return FunctionsSerializer.DeserializeStreamResponse(jsonText);
+            }
+            continue;
           }
-          continue;
-        }
 
-        // Skip comments
-        if (line.StartsWith(":"))
-        {
-          continue;
-        }
+          // Skip comments
+          if (line.StartsWith(":"))
+          {
+            continue;
+          }
 
-        if (line.StartsWith("data: "))
-        {
-          currentEventData.Append(line.Substring(6));
+          if (line.StartsWith("data: "))
+          {
+            currentEventData.Append(line.Substring(6));
+          }
+          else if (line.StartsWith("data:"))
+          {
+            currentEventData.Append(line.Substring(5));
+          }
         }
-        else if (line.StartsWith("data:"))
-        {
-          currentEventData.Append(line.Substring(5));
-        }
+      }
+      catch (Exception) when (linkedToken.IsCancellationRequested)
+      {
+        linkedToken.ThrowIfCancellationRequested();
       }
     }
   }
