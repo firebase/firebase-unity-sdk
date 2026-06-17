@@ -21,6 +21,9 @@ namespace Firebase.Functions
   /// </summary>
   public abstract class StreamResponse
   {
+    // Prevent external inheritance.
+    internal StreamResponse() {}
+
     /// <summary>
     /// An intermediate event message yielded during the stream.
     /// </summary>
