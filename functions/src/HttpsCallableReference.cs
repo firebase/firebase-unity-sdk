@@ -93,7 +93,7 @@ namespace Firebase.Functions
 
     private async Task<HttpsCallableResult> InternalCallAsync(object data)
     {
-      using var request = new HttpRequestMessage(HttpMethod.Post, _url);
+      HttpRequestMessage request = new(HttpMethod.Post, _url);
       // Functions uses Bearer tokens for authentication.
       // This is different from the default Firebase token prefix used by other Firebase services.
       bool limitedUseAppCheckTokens = _options != null && _options.LimitedUseAppCheckTokens;
@@ -160,7 +160,7 @@ namespace Firebase.Functions
       using var cts = CancellationTokenSource.CreateLinkedTokenSource(originalToken, cancellationToken);
       var linkedToken = cts.Token;
 
-      using var request = new HttpRequestMessage(HttpMethod.Post, _url);
+      HttpRequestMessage request = new(HttpMethod.Post, _url);
       bool limitedUseAppCheckTokens = _options != null && _options.LimitedUseAppCheckTokens;
       await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App, "Bearer", limitedUseAppCheckTokens);
       request.Content = MakeFunctionsRequest(data);
