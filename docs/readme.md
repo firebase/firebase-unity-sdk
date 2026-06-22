@@ -109,8 +109,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### 13.13.0
 - Changes
+    - General: Update to Firebase C++ SDK version 13.9.0.
+    - General (Android): Update to Firebase Android BoM version 34.15.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.15.0.
     - Firebase AI: Add support for advanced speech configurations, enabling multi-speaker setup and language code preference
       in text-to-speech generation.
     - General: Fixed an issue with Firebase.App.Internal, Firebase.Functions, and Firebase.FirebaseAI 
