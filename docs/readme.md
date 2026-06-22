@@ -123,6 +123,7 @@ Release Notes
     - General (iOS): Update to Firebase Cocoapods version 12.14.0.
     - Analytics: Add support for Apple's StoreKit 2 transactions. Add new `LogAppleTransactionAsync` method
       that takes in the App Store transaction string and logs the transaction.
+    - Firebase AI: Add in support for limited use App Check Tokens
       
 
 ### 13.11.0
