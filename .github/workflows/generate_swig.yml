@@ -36,22 +36,24 @@ jobs:
       fail-fast: false
       
     steps:
-      - uses: lukka/get-cmake@latest
+      - uses: lukka/get-cmake@80ed063af494e28dd56b85fb7a630f2f8f55ceed # ratchet:lukka/get-cmake@latest
         with:
           cmakeVersion: "~3.31.0"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           submodules: true
+          persist-credentials: false
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
           submodules: true
           ref: ${{ inputs.firebase_cpp_sdk_version }}
+          persist-credentials: false
 
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
           python-version: '3.9'
 
@@ -100,7 +102,7 @@ jobs:
           fi
 
       - name: Upload Documentation Sources
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         with:
           name: documentation_sources
           path: linux_unity/documentation_sources.zip
