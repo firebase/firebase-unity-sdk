@@ -57,7 +57,7 @@ on:
 
 permissions:
   contents: read
-  actions: write
+
 
 
 env:
@@ -66,6 +66,9 @@ env:
 jobs:
   check_and_prepare:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write
     outputs:
       platform: ${{ steps.set_outputs.outputs.platform }}
       release_label: ${{ steps.set_outputs.outputs.release_label }}

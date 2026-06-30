@@ -15,11 +15,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Get token for firebase-workflow-trigger
-        uses: tibdex/github-app-token@32691ba7c9e7063bd457bd8f2a5703138591fa58 # ratchet:tibdex/github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1
         id: generate-token
         with:
-          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+          private-key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          permission-actions: write
 
       - name: Setup python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4

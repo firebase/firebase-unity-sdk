@@ -106,7 +106,8 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ inputs.working_branch }}
-          persist-credentials: false
+          # Ignored since the GITHUB_TOKEN needs to be persisted for this workflow.
+          persist-credentials: true # zizmor: ignore[artipacked]
 
       - name: Setup Python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
@@ -125,11 +126,12 @@ jobs:
         # 
         # This method is preferred over the "personal access token" solution, as the GitHub App's scope is limited to just
         # the firebase-cpp-sdk repository.
-        uses: tibdex/github-app-token@32691ba7c9e7063bd457bd8f2a5703138591fa58 # ratchet:tibdex/github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1
         id: generate-token
         with:
-          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+          private-key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          permission-pull-requests: write
 
       - name: Name new branch
         if: inputs.working_branch == '' && inputs.create_new_branch == '1'
@@ -313,11 +315,12 @@ jobs:
       # 
       # This method is preferred over the "personal access token" solution, as the GitHub App's scope is limited to just
       # the firebase-cpp-sdk repository.
-      uses: tibdex/github-app-token@32691ba7c9e7063bd457bd8f2a5703138591fa58 # ratchet:tibdex/github-app-token@v1
+      uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1
       id: generate-token
       with:
-        app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-        private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+        app-id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+        private-key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+        permission-actions: write
     - name: Get branch name
       id: branch-name
       uses: tj-actions/branch-names@5250492686b253f06fa55861556d1027b067aeb5
