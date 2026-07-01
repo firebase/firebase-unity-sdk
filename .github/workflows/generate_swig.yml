@@ -26,7 +26,8 @@ on:
         required: false
         type: string
 
-permissions: write-all
+permissions:
+  contents: read
 
 jobs:
   generate_swig:

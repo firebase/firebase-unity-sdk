@@ -56,7 +56,8 @@ on:
         required: true
         type: string
 
-permissions: write-all
+permissions:
+  contents: read
 
 jobs:
   build_tvos:

@@ -180,6 +180,9 @@ jobs:
   update_versions:
     uses: ./.github/workflows/update_versions.yml
     needs: check_and_prepare
+    permissions:
+      contents: write
+      pull-requests: write
     if: (needs.check_and_prepare.outputs.release_version!='NoVersion')
     with:
       triggered_by_callable: true
@@ -291,6 +294,9 @@ jobs:
     name: package ${{ needs.check_and_prepare.outputs.release_label }}
     needs: [check_and_prepare, build_android, build_ios, build_tvos, build_linux, build_macos, build_windows, decide_build_branch]
     uses: ./.github/workflows/package.yml
+    permissions:
+      contents: write
+      pull-requests: write
     if: (needs.check_and_prepare.outputs.should_trigger_package == 'true') && !cancelled() && !failure()
     with:
       release_label: ${{ needs.check_and_prepare.outputs.release_label }}

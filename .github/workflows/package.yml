@@ -42,7 +42,9 @@ on:
       WORKFLOW_TRIGGER_APP_PRIVATE_KEY:
         required: true
 
-permissions: write-all
+permissions:
+  contents: write
+  pull-requests: write
 
 env:
   # Use SHA256 for hashing files.
