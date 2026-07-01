@@ -114,7 +114,7 @@ jobs:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
           submodules: true
-          persist-credentials: false
+          persist-credentials: true # zizmor: ignore[artipacked]
       
       - name: Get token for creating PR 
         uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1

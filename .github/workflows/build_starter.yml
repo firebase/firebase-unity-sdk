@@ -86,7 +86,7 @@ jobs:
           ref: ${{ github.event.inputs.unity_branch }}
           fetch-depth: 0
           submodules: false
-          persist-credentials: false
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:

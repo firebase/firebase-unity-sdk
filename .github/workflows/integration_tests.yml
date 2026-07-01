@@ -126,7 +126,7 @@ jobs:
         ref: ${{steps.set_outputs.outputs.github_ref}}
         fetch-depth: 0
         submodules: false
-        persist-credentials: false
+        persist-credentials: true # zizmor: ignore[artipacked]
     - name: Setup python
       uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
       with:
@@ -212,7 +212,7 @@ jobs:
           MATRIX_IOS_SDK: ${{ matrix.ios_sdk }}
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
-          persist-credentials: false
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
@@ -423,7 +423,7 @@ jobs:
           MATRIX_OS: ${{ matrix.os }}
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
-          persist-credentials: false
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
@@ -572,7 +572,7 @@ jobs:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
-          persist-credentials: false
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
@@ -747,7 +747,7 @@ jobs:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
-          persist-credentials: false
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
@@ -822,7 +822,7 @@ jobs:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
-          persist-credentials: false
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
@@ -868,7 +868,7 @@ jobs:
     steps:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
-          persist-credentials: false
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
         uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:

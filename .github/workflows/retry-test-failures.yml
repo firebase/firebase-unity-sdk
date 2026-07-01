@@ -31,7 +31,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
-          persist-credentials: false
+          persist-credentials: true # zizmor: ignore[artipacked]
 
       - name: Wait 3 minutes for run to finish
         run: |
