@@ -36,6 +36,11 @@ on:
         default: 'analytics,app_check,auth,crashlytics,database,firebaseai,firestore,functions,installations,messaging,remote_config,storage'
         required: true
         type: string
+    secrets:
+      WORKFLOW_TRIGGER_APP_ID:
+        required: true
+      WORKFLOW_TRIGGER_APP_PRIVATE_KEY:
+        required: true
 
 permissions: write-all
 

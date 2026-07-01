@@ -28,6 +28,12 @@ on:
       new_branch:
         description: "The branch update version created"
         value: ${{ jobs.update_versions.outputs.new_branch }}
+    secrets:
+      WORKFLOW_TRIGGER_APP_ID:
+        required: true
+      WORKFLOW_TRIGGER_APP_PRIVATE_KEY:
+        required: true
+      
 
   workflow_dispatch:
     inputs:
