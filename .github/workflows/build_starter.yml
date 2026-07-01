@@ -145,10 +145,10 @@ jobs:
           GITHUB_EVENT_ACTION: ${{ github.event.action }}
           GITHUB_EVENT_LABEL_NAME: ${{ github.event.label.name }}
       - name: Cancel workflow
-        if: ${{ steps.set_outputs.outputs.invalid_trigger }}
+        if: steps.set_outputs.outputs.invalid_trigger
         uses: andymckay/cancel-action@8f8510d9dea52fcc8eb6ca10d6ce47fd5fc43cd8 # ratchet:andymckay/cancel-action@0.2
       - name: Wait for workflow cancellation
-        if: ${{ steps.set_outputs.outputs.invalid_trigger }} 
+        if: steps.set_outputs.outputs.invalid_trigger
         run: |
           sleep 300
           exit 1  # fail out if the cancellation above somehow failed.
