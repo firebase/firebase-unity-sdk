@@ -299,7 +299,7 @@ jobs:
           version: ${{ matrix.unity_version }}
           release_license: "true"
       - name: Prepare results summary artifact
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           if [ ! -f build-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json ]; then
@@ -310,7 +310,7 @@ jobs:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload build results artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         with:
           name: build_and_test_results-build-${{ steps.matrix_info.outputs.info }}
           path: build-results-${{ steps.matrix_info.outputs.info }}*
@@ -330,7 +330,7 @@ jobs:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload Desktop build logs artifact  # Mobile build logs are uploaded with integration tests artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
-        if: !contains('Android,iOS,tvOS', matrix.platform) && !cancelled()
+        if: ${{ !contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
         with:
           name: testapps-build-logs-${{ steps.matrix_info.outputs.info }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/build-logs
@@ -394,7 +394,7 @@ jobs:
           NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER: ${{needs.check_and_prepare.outputs.pr_number}}
           NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Summarize build results
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           cat build-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log
@@ -505,7 +505,7 @@ jobs:
           version: ${{ matrix.unity_version }}
           release_license: "true"
       - name: Prepare results summary artifact
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           if [ ! -f test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log.json ]; then
@@ -516,7 +516,7 @@ jobs:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload test results artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         with:
           name: build_and_test_results-${{ matrix.os }}-Playmode
           path: test-results-${{ steps.matrix_info.outputs.info }}*
@@ -535,7 +535,7 @@ jobs:
           NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER: ${{needs.check_and_prepare.outputs.pr_number}}
           NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Summarize test results
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           cat test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log
@@ -687,7 +687,7 @@ jobs:
           # Delete the temp keychain, if it exists.
           security delete-keychain tmp-keychain || true
       - name: Prepare results summary artifact
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           # If testapps do not exist, then it's a build error not test error. 
@@ -697,7 +697,7 @@ jobs:
         env:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload test results artifact
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         with:
           name: build_and_test_results-test-${{ steps.matrix_info.outputs.info }}
@@ -723,7 +723,7 @@ jobs:
           NEEDS_CHECK_AND_PREPARE_OUTPUTS_PR_NUMBER: ${{needs.check_and_prepare.outputs.pr_number}}
           NEEDS_CHECK_AND_PREPARE_OUTPUTS_GITHUB_REF: ${{needs.check_and_prepare.outputs.github_ref}}
       - name: Summarize test results
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           cat testapps/test-results-${STEPS_MATRIX_INFO_OUTPUTS_INFO}.log
@@ -738,7 +738,7 @@ jobs:
     name: "summarize-results"
     needs: [check_and_prepare, build_testapp, playmode_test, integration_test]
     runs-on: ubuntu-22.04
-    if: !cancelled()
+    if: ${{ !cancelled() }}
     permissions:
       contents: read
       issues: write
