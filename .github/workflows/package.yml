@@ -36,8 +36,15 @@ on:
         default: 'analytics,app_check,auth,crashlytics,database,firebaseai,firestore,functions,installations,messaging,remote_config,storage'
         required: true
         type: string
+    secrets:
+      WORKFLOW_TRIGGER_APP_ID:
+        required: true
+      WORKFLOW_TRIGGER_APP_PRIVATE_KEY:
+        required: true
 
-permissions: write-all
+permissions:
+  contents: write
+  pull-requests: write
 
 env:
   # Use SHA256 for hashing files.
@@ -102,13 +109,15 @@ jobs:
           STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_APIS: ${{ steps.check-input.outputs.package_apis }}
 
       - name: Check out base branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           fetch-depth: 0
           ref: ${{ inputs.working_branch }}
+          # Ignored since the GITHUB_TOKEN needs to be persisted for this workflow.
+          persist-credentials: true # zizmor: ignore[artipacked]
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
           python-version: 3.9
 
@@ -124,11 +133,12 @@ jobs:
         # 
         # This method is preferred over the "personal access token" solution, as the GitHub App's scope is limited to just
         # the firebase-cpp-sdk repository.
-        uses: tibdex/github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1
         id: generate-token
         with:
-          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+          private-key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          permission-pull-requests: write
 
       - name: Name new branch
         if: inputs.working_branch == '' && inputs.create_new_branch == '1'
@@ -155,7 +165,7 @@ jobs:
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
       - name: Fetch All in build_starter
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
         with:
           path: built_artifact
       
@@ -250,24 +260,24 @@ jobs:
           echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
 
       - name: Upload Build unitypackage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         with:
           name: firebase_unity_sdk.zip
           path: firebase_unity_sdk.zip
       
       - name: Package tgz
-        if: ${{ steps.check-input.outputs.package_for_checks }} == '1'
+        if: steps.check-input.outputs.package_for_checks == '1'
         run: |
           python scripts/build_scripts/build_package.py --zip_dir=built_artifact --output_upm=True --output=output_tgz
 
       - name: Listing output tgz
-        if: ${{ steps.check-input.outputs.package_for_checks }} == '1'
+        if: steps.check-input.outputs.package_for_checks == '1'
         run: |
           ls -Rl
         working-directory: output_tgz
 
       - name: compute SDK hash for tgz files
-        if: ${{ steps.check-input.outputs.package_for_checks }} == '1'
+        if: steps.check-input.outputs.package_for_checks == '1'
         shell: bash
         run: |
           tgz_files_list=$(find -type f -name '*.tgz')
@@ -278,14 +288,14 @@ jobs:
         working-directory: output_tgz
 
       - name: Upload Build tgz
-        if: ${{ steps.check-input.outputs.package_for_checks }} == '1'
-        uses: actions/upload-artifact@v4
+        if: steps.check-input.outputs.package_for_checks == '1'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         with:
           name: firebase_unity_sdk_tgz
           path: output_tgz
 
       - name: upload hash
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         with:
           name: firebase_unity_sdk_hash.txt
           path: firebase_unity_sdk_hash.txt
@@ -297,10 +307,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+      with:
+        persist-credentials: true # zizmor: ignore[artipacked]
 
     - name: Setup python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
       with:
         python-version: 3.9
     - name: Generate token for GitHub API
@@ -310,11 +322,12 @@ jobs:
       # 
       # This method is preferred over the "personal access token" solution, as the GitHub App's scope is limited to just
       # the firebase-cpp-sdk repository.
-      uses: tibdex/github-app-token@v1
+      uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1
       id: generate-token
       with:
-        app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-        private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+        app-id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+        private-key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+        permission-actions: write
     - name: Get branch name
       id: branch-name
       uses: tj-actions/branch-names@5250492686b253f06fa55861556d1027b067aeb5

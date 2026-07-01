@@ -31,7 +31,10 @@ on:
       test_pull_request:
         description: 'Optional: Pull request # to build and test? (With optional commit hash, separated by a colon. Specify the FULL hash.)'
 
-permissions: write-all
+permissions:
+  contents: read
+
+
 
 env:
   triggerLabelPrefix: "tests-requested: "
@@ -55,7 +58,7 @@ jobs:
     steps:
     ### Fail the workflow if the user does not have admin access to run the tests.
     - name: Check if user has permission to trigger tests
-      uses: lannonbr/repo-permission-check-action@2.0.0
+      uses: lannonbr/repo-permission-check-action@b23b656f0dfb810f0c5e224a264d621a92a6f271 # ratchet:lannonbr/repo-permission-check-action@2.0.0
       with:
         permission: "admin"
       env:
@@ -118,13 +121,14 @@ jobs:
         GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID: ${{ github.event.inputs.packaged_sdk_run_id }}
         GITHUB_EVENT_INPUTS_TEST_PULL_REQUEST: ${{ github.event.inputs.test_pull_request }}
         GITHUB_EVENT_INPUTS_USE_EXPANDED_MATRIX: ${{ github.event.inputs.use_expanded_matrix }}
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
       with:
         ref: ${{steps.set_outputs.outputs.github_ref}}
         fetch-depth: 0
         submodules: false
+        persist-credentials: true # zizmor: ignore[artipacked]
     - name: Setup python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
       with:
         python-version: ${{ env.pythonVersion }}
     - name: Install python deps
@@ -186,14 +190,14 @@ jobs:
     name: build-${{ matrix.unity_version }}-${{matrix.os}}-${{ matrix.platform }}-${{ matrix.ios_sdk }}
     runs-on: ${{matrix.os}}
     needs: check_and_prepare
-    if: ${{ needs.check_and_prepare.outputs.build_matrix != '' && !cancelled() }}
+    if: needs.check_and_prepare.outputs.build_matrix != '' && !cancelled()
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.build_matrix) }}
     env:
       xcodeVersion: "26.2"
     steps:
-      - uses: lukka/get-cmake@latest
+      - uses: lukka/get-cmake@80ed063af494e28dd56b85fb7a630f2f8f55ceed # ratchet:lukka/get-cmake@latest
         with:
           cmakeVersion: "~3.31.0"
       - id: matrix_info
@@ -206,9 +210,11 @@ jobs:
           MATRIX_OS: ${{matrix.os}}
           MATRIX_PLATFORM: ${{ matrix.platform }}
           MATRIX_IOS_SDK: ${{ matrix.ios_sdk }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Install python deps
@@ -229,7 +235,7 @@ jobs:
           password: ${{ secrets.UNITY_PASSWORD }}
           serial_ids: "${{ secrets.SERIAL_ID }},${{ secrets.SERIAL_ID_2 }}"
       - name: Workaround tvOS XCode 15 issue
-        if: ${{ contains(matrix.platform, 'tvOS') && contains(matrix.unity_version, '2020') }}
+        if: contains(matrix.platform, 'tvOS') && contains(matrix.unity_version, '2020')
         shell: bash
         run: |
           find /Applications/Unity/Hub/Editor -type f -name 'UnityViewControllerBase.h' -exec sed -i '' 's/#import <GameController\/GCController.h>/#import <GameController\/GCEventViewController.h>/g' {} \;
@@ -239,7 +245,7 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Setup Android keystore
-        if: ${{ contains('Android', matrix.platform) }}
+        if: contains('Android', matrix.platform)
         shell: bash
         run: |
           # The android directory might not exist, so make it
@@ -248,8 +254,8 @@ jobs:
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.TEST_SECRET }}" \
               --output ~/.android/debug.keystore "scripts/gha-encrypted/debug_keystore.gpg"
       - name: Fetch prebuilt packaged SDK from previous run
-        if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
-        uses: actions/download-artifact@v4
+        if: github.event.inputs.packaged_sdk_run_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
         with:
           name: 'firebase_unity_sdk.zip'
           github-token: ${{ github.token }}
@@ -303,79 +309,79 @@ jobs:
         env:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload build results artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
           name: build_and_test_results-build-${{ steps.matrix_info.outputs.info }}
           path: build-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Mobile integration tests artifact
-        uses: actions/upload-artifact@v4
-        if: ${{ contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
+        if: contains('Android,iOS,tvOS', matrix.platform) && !cancelled()
         with:
           name: testapps-${{ matrix.platform }}-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Mobile integration tests artifact
-        if: ${{ contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
+        if: contains('Android,iOS,tvOS', matrix.platform) && !cancelled()
         shell: bash
         run: rm -rf testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO} || true
         env:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload Desktop build logs artifact  # Mobile build logs are uploaded with integration tests artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         if: ${{ !contains('Android,iOS,tvOS', matrix.platform) && !cancelled() }}
         with:
           name: testapps-build-logs-${{ steps.matrix_info.outputs.info }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/build-logs
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Upload Linux integration tests artifact
-        uses: actions/upload-artifact@v4
-        if: ${{ contains(matrix.platform, 'Linux') && !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
+        if: contains(matrix.platform, 'Linux') && !cancelled()
         with:
           name: testapps-Linux-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/Linux
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Linux integration tests artifact
-        if: ${{ contains(matrix.platform, 'Linux') && !cancelled() }}
+        if: contains(matrix.platform, 'Linux') && !cancelled()
         shell: bash
         run: rm -rf testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO}/Linux || true
         env:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload macOS integration tests artifact
-        uses: actions/upload-artifact@v4
-        if: ${{ contains(matrix.platform, 'macOS') && !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
+        if: contains(matrix.platform, 'macOS') && !cancelled()
         with:
           name: testapps-macOS-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/macOS
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete macOS integration tests artifact
-        if: ${{ contains(matrix.platform, 'macOS') && !cancelled() }}
+        if: contains(matrix.platform, 'macOS') && !cancelled()
         shell: bash
         run: rm -rf testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO}/macOS || true
         env:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload Windows integration tests artifact
-        uses: actions/upload-artifact@v4
-        if: ${{ contains(matrix.platform, 'Windows') && !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
+        if: contains(matrix.platform, 'Windows') && !cancelled()
         with:
           name: testapps-Windows-${{ steps.matrix_info.outputs.artifact_suffix }}
           path: testapps-${{ steps.matrix_info.outputs.info }}/Windows
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Delete Windows integration tests artifact
-        if: ${{ contains(matrix.platform, 'Windows') && !cancelled() }}
+        if: contains(matrix.platform, 'Windows') && !cancelled()
         shell: bash
         run: rm -rf testapps-${STEPS_MATRIX_INFO_OUTPUTS_INFO}/Windows || true
         env:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Download log artifacts
-        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-        uses: actions/download-artifact@v4
+        if: needs.check_and_prepare.outputs.pr_number && failure() && !cancelled()
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
         with:
           path: test_results
           name: build_and_test_results-${{ matrix.platform }}-${{ matrix.ios_sdk }}
       - name: Update PR label and comment
-        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        if: needs.check_and_prepare.outputs.pr_number && failure() && !cancelled()
         shell: bash
         run: |
           python scripts/gha/it_workflow.py --stage progress \
@@ -403,7 +409,7 @@ jobs:
     name: test-${{ matrix.unity_version }}-${{matrix.os}}-Playmode
     runs-on: ${{matrix.os}}
     needs: check_and_prepare
-    if: ${{ needs.check_and_prepare.outputs.playmode_matrix != '' && !cancelled() }}
+    if: needs.check_and_prepare.outputs.playmode_matrix != '' && !cancelled()
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.check_and_prepare.outputs.playmode_matrix) }}
@@ -415,9 +421,11 @@ jobs:
         env:
           MATRIX_UNITY_VERSION: ${{ matrix.unity_version }}
           MATRIX_OS: ${{ matrix.os }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Install python deps
@@ -440,23 +448,23 @@ jobs:
         run: |
           python scripts/gha/restore_secrets.py --passphrase "${{ secrets.TEST_SECRET }}"
       - name: Fetch prebuilt packaged SDK from previous run
-        if: ${{ github.event.inputs.packaged_sdk_run_id != '' }}
-        uses: actions/download-artifact@v4
+        if: github.event.inputs.packaged_sdk_run_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
         with:
           name: 'firebase_unity_sdk.zip'
           github-token: ${{ github.token }}
           run-id: ${{ github.event.inputs.packaged_sdk_run_id }} 
       - name: Set up Node (22)
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # ratchet:actions/setup-node@v5
         with:
           node-version: 22
       - name: Setup java for Firestore emulator
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62 # ratchet:actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '21'
       - name: Setup Firestore Emulator
-        uses: nick-invision/retry@v2
+        uses: nick-invision/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # ratchet:nick-invision/retry@v2
         with:
           shell: bash
           timeout_minutes: 5
@@ -507,14 +515,14 @@ jobs:
         env:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload test results artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
           name: build_and_test_results-${{ matrix.os }}-Playmode
           path: test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Update PR label and comment
-        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        if: needs.check_and_prepare.outputs.pr_number && failure() && !cancelled()
         shell: bash
         run: |
           python scripts/gha/it_workflow.py --stage progress \
@@ -541,7 +549,7 @@ jobs:
   integration_test:
     name: test-${{ matrix.unity_version }}-${{matrix.build_os}}-${{ matrix.platform }}-${{ matrix.test_device }}-${{ matrix.test_os }}
     runs-on: ${{ matrix.test_os }}
-    if: ${{ needs.check_and_prepare.outputs.build_matrix != '' && needs.check_and_prepare.outputs.test_matrix != '' && !cancelled() }}
+    if: needs.check_and_prepare.outputs.build_matrix != '' && needs.check_and_prepare.outputs.test_matrix != '' && !cancelled()
     needs: [check_and_prepare, build_testapp]
     strategy:
       fail-fast: false
@@ -561,11 +569,12 @@ jobs:
           MATRIX_TEST_DEVICE: ${{ matrix.test_device }}
           MATRIX_TEST_OS: ${{ matrix.test_os }}
           MATRIX_IOS_SDK: ${{ matrix.ios_sdk }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Install python deps
@@ -576,31 +585,31 @@ jobs:
         if: runner.os == 'macOS'
         run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
       - name: Download Testapp artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
         with:
           path: testapps
           name: ${{ steps.matrix_info.outputs.artifact_path }}
       - name: Set up Node (22)
-        if: ${{ matrix.test_device == 'github_runner'  }}
-        uses: actions/setup-node@v5
+        if: matrix.test_device == 'github_runner'
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # ratchet:actions/setup-node@v5
         with:
           node-version: 22
       - name: Setup java for Firestore emulator
-        if: ${{ matrix.test_device == 'github_runner'  }}
-        uses: actions/setup-java@v3
+        if: matrix.test_device == 'github_runner'
+        uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62 # ratchet:actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '21'
       - name: Setup Firestore Emulator
-        if: ${{ matrix.test_device == 'github_runner'  }}
-        uses: nick-invision/retry@v2
+        if: matrix.test_device == 'github_runner'
+        uses: nick-invision/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # ratchet:nick-invision/retry@v2
         with:
           shell: bash
           timeout_minutes: 5
           max_attempts: 3
           command: npm install -g firebase-tools
       - name: Run Desktop integration tests
-        if: ${{ matrix.test_device == 'github_runner'  }}
+        if: matrix.test_device == 'github_runner'
         timeout-minutes: 30
         shell: bash
         run: |
@@ -611,8 +620,8 @@ jobs:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Run Mobile integration tests on real device via FTL
         id: ftl_test
-        if: ${{ matrix.device_type == 'real' }}
-        uses: FirebaseExtended/github-actions/firebase-test-lab@v1.4
+        if: matrix.device_type == 'real'
+        uses: FirebaseExtended/github-actions/firebase-test-lab@41c787c37157e4c5932b951e531c041efa5bb7a4 # ratchet:FirebaseExtended/github-actions/firebase-test-lab@v1.4
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CREDENTIALS }}
           testapp_dir: testapps
@@ -623,7 +632,7 @@ jobs:
           max_attempts: 3
           validator: ${GITHUB_WORKSPACE}/scripts/gha/read_ftl_test_result.py
       - name: Read FTL Test Result
-        if: ${{ matrix.device_type == 'real' && !cancelled() }}
+        if: matrix.device_type == 'real' && !cancelled()
         timeout-minutes: 60
         shell: bash
         run: |
@@ -633,11 +642,11 @@ jobs:
           STEPS_FTL_TEST_OUTPUTS_TEST_SUMMARY: ${{ steps.ftl_test.outputs.test_summary }}
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Print available devices
-        if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
+        if: matrix.device_type == 'virtual' && !cancelled()
         run: |
           xcrun xctrace list devices
       - name: Create keychain (macOS Simulator)
-        if: ${{ contains('iOS,tvOS', matrix.platform) && matrix.device_type == 'virtual'}}
+        if: contains('iOS,tvOS', matrix.platform) && matrix.device_type == 'virtual'
         shell: bash
         run: |
           echo "Creating temporary keychain"
@@ -657,16 +666,19 @@ jobs:
           security default-keychain -s tmp-keychain
       - name: Run Mobile integration tests on virtual device locally
         timeout-minutes: 120
-        if: ${{ matrix.device_type == 'virtual' && !cancelled() }}
+        if: matrix.device_type == 'virtual' && !cancelled()
         run: |
           python scripts/gha/test_simulator.py --testapp_dir testapps \
-            --tvos_device "${{ matrix.test_device }}" \
-            --ios_device "${{ matrix.test_device }}" \
-            --android_device "${{ matrix.test_device }}" \
-            --logfile_name ""${{ steps.matrix_info.outputs.info }}"" \
+            --tvos_device "$TEST_DEVICE" \
+            --ios_device "$TEST_DEVICE" \
+            --android_device "$TEST_DEVICE" \
+            --logfile_name "$LOGFILE_NAME" \
             --ci
+        env:
+          TEST_DEVICE: ${{ matrix.test_device }}
+          LOGFILE_NAME: ${{ steps.matrix_info.outputs.info }}
       - name: Delete keychain (macOS Simulator)
-        if: ${{ always() && contains('iOS,tvOS', matrix.platform) && matrix.device_type == 'virtual' }}
+        if: always() && contains('iOS,tvOS', matrix.platform) && matrix.device_type == 'virtual'
         shell: bash
         run: |
           # Remove the local keychain on Mac:
@@ -686,20 +698,20 @@ jobs:
           STEPS_MATRIX_INFO_OUTPUTS_INFO: ${{ steps.matrix_info.outputs.info }}
       - name: Upload test results artifact
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         with:
           name: build_and_test_results-test-${{ steps.matrix_info.outputs.info }}
           path: testapps/test-results-${{ steps.matrix_info.outputs.info }}*
           retention-days: ${{ env.artifactRetentionDays }}
       - name: Download log artifacts
-        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
-        uses: actions/download-artifact@v4
+        if: needs.check_and_prepare.outputs.pr_number && failure() && !cancelled()
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
         with:
           path: build_and_test_results
           name: build_and_test_results-${{ matrix.platform }}-${{ matrix.test_device }}
       - name: Update PR label and comment
         shell: bash
-        if: ${{ needs.check_and_prepare.outputs.pr_number && failure() && !cancelled() }}
+        if: needs.check_and_prepare.outputs.pr_number && failure() && !cancelled()
         run: |
           python scripts/gha/it_workflow.py --stage progress \
             --token ${{github.token}} \
@@ -727,18 +739,23 @@ jobs:
     needs: [check_and_prepare, build_testapp, playmode_test, integration_test]
     runs-on: ubuntu-22.04
     if: ${{ !cancelled() }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
           python-version: ${{ env.pythonVersion }}
       - name: Install python deps
         run: pip install -r scripts/gha/requirements.txt
       - name: Download log artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
         with:
           path: test_results
           pattern: build_and_test_results-*
@@ -746,7 +763,7 @@ jobs:
       # Upload the combined log artifacts so report_build_status.py can download and parse
       # the JSON results directly, which is much faster and more reliable than scraping the GitHub text logs.
       - name: Upload combined log artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         with:
           name: build_and_test_results
           path: test_results/*
@@ -754,13 +771,15 @@ jobs:
       # Use a different token to remove the "in-progress" label,
       # to allow the removal to trigger the "Check Labels" workflow.
       - name: Generate token for GitHub API
-        uses: tibdex/github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1
         id: generate-token
         with:
-          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+          private-key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          permission-pull-requests: write
+          permission-issues: write
       - name: Update PR label and comment
-        if: ${{ needs.check_and_prepare.outputs.pr_number }}
+        if: needs.check_and_prepare.outputs.pr_number
         run: |
           python scripts/gha/it_workflow.py --stage end \
             --token ${{github.token}} \
@@ -798,24 +817,26 @@ jobs:
     name: "attempt-retry"
     needs: [check_and_prepare, summarize_results]
     runs-on: ubuntu-22.04
-    if: ${{ failure() && needs.check_and_prepare.outputs.trigger == 'scheduled_trigger' }}
+    if: failure() && needs.check_and_prepare.outputs.trigger == 'scheduled_trigger'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           ref: ${{needs.check_and_prepare.outputs.github_ref}}
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
           python-version: ${{ env.pythonVersion }}
       - name: Install python deps
         run: pip install -r scripts/gha/requirements.txt
       # The default token can't run workflows, so get an alternate token.
       - name: Generate token for GitHub API
-        uses: tibdex/github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1
         id: generate-token
         with:
-          app_id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
-          private_key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+          private-key: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
+          permission-actions: write
       - name: Retry failed tests
         run: |
           echo "::warning ::Attempting to retry failed tests"
@@ -845,9 +866,11 @@ jobs:
       matrix:
         unity_version: ['2021', '2022']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Install python deps

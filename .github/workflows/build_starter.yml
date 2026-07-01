@@ -55,7 +55,10 @@ on:
         default: '1'
         required: true
 
-permissions: write-all
+permissions:
+  contents: read
+
+
 
 env:
   pythonVersion: '3.9'
@@ -63,6 +66,9 @@ env:
 jobs:
   check_and_prepare:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write
     outputs:
       platform: ${{ steps.set_outputs.outputs.platform }}
       release_label: ${{ steps.set_outputs.outputs.release_label }}
@@ -75,13 +81,14 @@ jobs:
       unity_branch: ${{ steps.set_outputs.outputs.unity_branch }}
       additional_cmake_flags: ${{ steps.set_outputs.outputs.additional_cmake_flags }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           ref: ${{ github.event.inputs.unity_branch }}
           fetch-depth: 0
           submodules: false
+          persist-credentials: true # zizmor: ignore[artipacked]
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
         with:
           python-version: ${{ env.pythonVersion }}
       - name: Install python deps
@@ -138,10 +145,10 @@ jobs:
           GITHUB_EVENT_ACTION: ${{ github.event.action }}
           GITHUB_EVENT_LABEL_NAME: ${{ github.event.label.name }}
       - name: Cancel workflow
-        if: ${{ steps.set_outputs.outputs.invalid_trigger }}
-        uses: andymckay/cancel-action@0.2
+        if: steps.set_outputs.outputs.invalid_trigger
+        uses: andymckay/cancel-action@8f8510d9dea52fcc8eb6ca10d6ce47fd5fc43cd8 # ratchet:andymckay/cancel-action@0.2
       - name: Wait for workflow cancellation
-        if: ${{ steps.set_outputs.outputs.invalid_trigger }} 
+        if: steps.set_outputs.outputs.invalid_trigger
         run: |
           sleep 300
           exit 1  # fail out if the cancellation above somehow failed.
@@ -173,13 +180,18 @@ jobs:
   update_versions:
     uses: ./.github/workflows/update_versions.yml
     needs: check_and_prepare
+    permissions:
+      contents: write
+      pull-requests: write
     if: (needs.check_and_prepare.outputs.release_version!='NoVersion')
     with:
       triggered_by_callable: true
       base_branch: ${{ needs.check_and_prepare.outputs.unity_branch }}
       package_version_number: ${{ needs.check_and_prepare.outputs.release_version }}
       cpp_release_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
-    secrets: inherit
+    secrets:
+      WORKFLOW_TRIGGER_APP_ID: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+      WORKFLOW_TRIGGER_APP_PRIVATE_KEY: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
 
   decide_build_branch:
     needs: [check_and_prepare,update_versions]
@@ -282,6 +294,9 @@ jobs:
     name: package ${{ needs.check_and_prepare.outputs.release_label }}
     needs: [check_and_prepare, build_android, build_ios, build_tvos, build_linux, build_macos, build_windows, decide_build_branch]
     uses: ./.github/workflows/package.yml
+    permissions:
+      contents: write
+      pull-requests: write
     if: (needs.check_and_prepare.outputs.should_trigger_package == 'true') && !cancelled() && !failure()
     with:
       release_label: ${{ needs.check_and_prepare.outputs.release_label }}
@@ -290,4 +305,6 @@ jobs:
       working_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
       platforms: ${{ needs.check_and_prepare.outputs.platform }}
       apis: ${{ needs.check_and_prepare.outputs.apis }}
-    secrets: inherit
+    secrets:
+      WORKFLOW_TRIGGER_APP_ID: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
+      WORKFLOW_TRIGGER_APP_PRIVATE_KEY: ${{ secrets.WORKFLOW_TRIGGER_APP_PRIVATE_KEY }}
