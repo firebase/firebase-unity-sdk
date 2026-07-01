@@ -174,6 +174,46 @@ namespace Firebase.Functions.Internal
     }
 
     /// <summary>
+    /// Deserializes a parsed JSON string from a Server-Sent Event (SSE) line
+    /// into a StreamResponse (either Message or Result) or throws a FunctionsException.
+    /// </summary>
+    internal static StreamResponse DeserializeStreamResponse(string jsonText)
+    {
+      var deserializedData = Json.Deserialize(jsonText);
+
+      if (deserializedData is Dictionary<string, object> dict)
+      {
+        if (dict.TryGetValue("error", out var errorValue) && errorValue is Dictionary<string, object> errorDict)
+        {
+          string message = "INTERNAL";
+          if (errorDict.TryGetValue("message", out var msg) && msg is string s) message = s;
+
+          FunctionsErrorCode code = FunctionsErrorCode.Internal;
+          if (errorDict.TryGetValue("status", out var statusStr) && statusStr is string status)
+          {
+            code = FunctionsErrorParser.MapStatusStringToEnum(status);
+          }
+
+          throw new FunctionsException(code, message);
+        }
+
+        if (dict.TryGetValue("message", out var messageValue))
+        {
+          return new StreamResponse.Message(Decode(messageValue));
+        }
+
+        if (dict.TryGetValue("result", out var resultValue))
+        {
+          return new StreamResponse.Result(Decode(resultValue));
+        }
+
+        throw new FunctionsException(FunctionsErrorCode.Internal, "Response is missing result or message field.");
+      }
+
+      throw new FunctionsException(FunctionsErrorCode.Internal, "Response is not a JSON object.");
+    }
+
+    /// <summary>
     /// Recursively decodes a deserialized JSON object back into regular C# types.
     /// Specifically unwraps `Int64Value` and `BytesValue` Protocol Buffer formats.
     /// </summary>

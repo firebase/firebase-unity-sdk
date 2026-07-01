@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+-   Changes
+    - Functions: Added support for Callable Functions Streaming via `StreamAsync`.
+
 ### 13.13.0
 - Changes
     - General: Update to Firebase C++ SDK version 13.9.0.
@@ -127,7 +131,6 @@ Release Notes
     - Analytics: Add support for Apple's StoreKit 2 transactions. Add new `LogAppleTransactionAsync` method
       that takes in the App Store transaction string and logs the transaction.
     - Firebase AI: Add support for limited-use App Check tokens.
-      
 
 ### 13.11.0
 -   Changes

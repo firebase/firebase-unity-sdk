@@ -15,11 +15,15 @@
  */
 
 using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Firebase.Functions.Internal;
 using Firebase.Internal;
-using System.Text;
 
 namespace Firebase.Functions
 {
@@ -100,7 +104,7 @@ namespace Firebase.Functions
       UnityEngine.Debug.Log("Request:\n" + request.Content);
 #endif
       // TODO pipe through cancellation tokens
-      var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+      using var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
       if (!response.IsSuccessStatusCode)
       {
         string errorBody = "";
@@ -118,6 +122,11 @@ namespace Firebase.Functions
         throw FunctionsErrorParser.ParseError(response, errorBody);
       }
 
+      if (response.Content == null)
+      {
+        throw new FunctionsException(FunctionsErrorCode.Internal, "Response content is null.");
+      }
+
       string result = await response.Content.ReadAsStringAsync();
 
 #if FIREBASE_LOG_REST_CALLS
@@ -125,6 +134,115 @@ namespace Firebase.Functions
 #endif
       var responseData = FunctionsSerializer.Deserialize(result);
       return new HttpsCallableResult(responseData);
+    }
+
+    /// <summary>
+    /// Calls the function and returns a stream of responses.
+    /// </summary>
+    /// <returns>An IAsyncEnumerable yielding StreamResponse objects.</returns>
+    public IAsyncEnumerable<StreamResponse> StreamAsync(CancellationToken cancellationToken = default)
+    {
+      return StreamAsync(null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Calls the function with data and returns a stream of responses.
+    /// </summary>
+    /// <param name="data">The data to pass to the function.</param>
+    /// <returns>An IAsyncEnumerable yielding StreamResponse objects.</returns>
+    public IAsyncEnumerable<StreamResponse> StreamAsync(object data, CancellationToken cancellationToken = default)
+    {
+      return InternalStreamAsync(data, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<StreamResponse> InternalStreamAsync(object data, CancellationToken originalToken, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+      using var cts = CancellationTokenSource.CreateLinkedTokenSource(originalToken, cancellationToken);
+      var linkedToken = cts.Token;
+
+      HttpRequestMessage request = new(HttpMethod.Post, _url);
+      bool limitedUseAppCheckTokens = _options != null && _options.LimitedUseAppCheckTokens;
+      await HttpHelpers.SetRequestHeaders(request, _firebaseFunctions.App, "Bearer", limitedUseAppCheckTokens);
+      request.Content = MakeFunctionsRequest(data);
+      request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+#if FIREBASE_LOG_REST_CALLS
+      UnityEngine.Debug.Log("Request:\n" + request.Content);
+#endif
+
+      // Use ResponseHeadersRead to avoid loading the whole stream at once.
+      using var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedToken);
+      if (!response.IsSuccessStatusCode)
+      {
+        string errorBody = "";
+        if (response.Content != null)
+        {
+          try
+          {
+            errorBody = await response.Content.ReadAsStringAsync();
+          }
+          catch (Exception e)
+          {
+            UnityEngine.Debug.LogWarning("Failed to read error response: " + e.Message);
+          }
+        }
+        throw FunctionsErrorParser.ParseError(response, errorBody);
+      }
+
+      if (response.Content == null)
+      {
+        throw new FunctionsException(FunctionsErrorCode.Internal, "Response content is null.");
+      }
+
+      using var stream = await response.Content.ReadAsStreamAsync();
+      using var reader = new StreamReader(stream);
+      using var registration = linkedToken.Register(() => response.Dispose());
+
+      StringBuilder currentEventData = new StringBuilder();
+
+      string line;
+      try
+      {
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+          linkedToken.ThrowIfCancellationRequested();
+
+          // An empty line indicates the end of an event
+          if (string.IsNullOrWhiteSpace(line))
+          {
+            if (currentEventData.Length > 0)
+            {
+              string jsonText = currentEventData.ToString();
+              currentEventData.Clear();
+
+#if FIREBASE_LOG_REST_CALLS
+              UnityEngine.Debug.Log("Streaming Response:\n" + jsonText);
+#endif
+              yield return FunctionsSerializer.DeserializeStreamResponse(jsonText);
+            }
+            continue;
+          }
+
+          // Skip comments
+          if (line.StartsWith(":"))
+          {
+            continue;
+          }
+
+          if (line.StartsWith("data: "))
+          {
+            currentEventData.Append(line.Substring(6));
+          }
+          else if (line.StartsWith("data:"))
+          {
+            currentEventData.Append(line.Substring(5));
+          }
+        }
+      }
+      catch (Exception) when (linkedToken.IsCancellationRequested)
+      {
+        linkedToken.ThrowIfCancellationRequested();
+      }
     }
   }
 }
