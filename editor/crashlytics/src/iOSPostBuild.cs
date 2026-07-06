@@ -118,7 +118,7 @@ fi
     [PostProcessBuild(100)]
     public static void OnPostprocessBuild(BuildTarget buildTarget, string buildPath) {
       if (buildTarget == BuildTarget.iOS || buildTarget == BuildTarget.tvOS) {
-        string projectPath = Path.Combine(buildPath, "Unity-iPhone.xcodeproj/project.pbxproj");
+        string projectPath = PBXProject.GetPBXProjectPath(buildPath);
         string plistPath = Path.Combine(buildPath, "Info.plist");
 
         IFirebaseConfigurationStorage configurationStorage = StorageProvider.ConfigurationStorage;
