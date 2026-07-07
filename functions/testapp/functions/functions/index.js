@@ -79,9 +79,11 @@ async function* generateText() {
   }
 };
 
-// A streaming callable function that streams the elements of `streamData`
-// ("hello", "world", "this", "is", "cool") chunk by chunk when the client accepts
-// streaming, and returns the joined string "hello world this is cool" as the final response.
+/**
+ * A streaming callable function that streams the elements of `streamData`
+ * ("hello", "world", "this", "is", "cool") chunk by chunk when the client accepts
+ * streaming, and returns the joined string "hello world this is cool" as the final response.
+ */
 exports.genStream = functionsV2.https.onCall(
   async (request, response) => {
     if (request.acceptsStreaming) {

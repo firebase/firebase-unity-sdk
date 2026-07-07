@@ -134,8 +134,9 @@ namespace Firebase.Functions.Internal
 
     /// <summary>
     /// Deserializes a parsed JSON string from the Cloud Functions callable protocol.
-    /// Unwraps the `{"data": ...}` or `{"result": ...}` payload and handles parsing
-    /// standard error formats into FunctionsException if present.
+    /// It first checks if the response contains an error, converting it into a
+    /// <see cref="FunctionsException"/>. Otherwise, it unwraps the `{"data": ...}`
+    /// or `{"result": ...}` payload.
     /// </summary>
     internal static object Deserialize(string data)
     {
@@ -175,8 +176,10 @@ namespace Firebase.Functions.Internal
     }
 
     /// <summary>
-    /// Deserializes a parsed JSON string from a Server-Sent Event (SSE) line
-    /// into a StreamResponse (either Message or Result) or throws a FunctionsException.
+    /// Deserializes a parsed JSON string from a Server-Sent Event (SSE) line.
+    /// It first checks if the response contains an error, converting it into a
+    /// <see cref="FunctionsException"/>. Otherwise, it converts it into a
+    /// <see cref="StreamResponse"/> (either Message or Result).
     /// </summary>
     internal static StreamResponse DeserializeStreamResponse(string jsonText)
     {
