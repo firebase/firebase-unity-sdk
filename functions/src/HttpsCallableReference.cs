@@ -201,47 +201,53 @@ namespace Firebase.Functions
       StringBuilder currentEventData = new StringBuilder();
 
       string line;
-      try
-      {
-        while ((line = await reader.ReadLineAsync()) != null)
-        {
-          linkedToken.ThrowIfCancellationRequested();
-
-          // An empty line indicates the end of an event
-          if (string.IsNullOrWhiteSpace(line))
-          {
-            if (currentEventData.Length > 0)
-            {
-              string jsonText = currentEventData.ToString();
-              currentEventData.Clear();
-
-#if FIREBASE_LOG_REST_CALLS
-              UnityEngine.Debug.Log("Streaming Response:\n" + jsonText);
-#endif
-              yield return FunctionsSerializer.DeserializeStreamResponse(jsonText);
-            }
-            continue;
-          }
-
-          // Skip comments
-          if (line.StartsWith(":"))
-          {
-            continue;
-          }
-
-          if (line.StartsWith("data: "))
-          {
-            currentEventData.Append(line.Substring(6));
-          }
-          else if (line.StartsWith("data:"))
-          {
-            currentEventData.Append(line.Substring(5));
-          }
-        }
-      }
-      catch (Exception) when (linkedToken.IsCancellationRequested)
+      while ((line = await ReadLineWithCancellationAsync(reader, linkedToken)) != null)
       {
         linkedToken.ThrowIfCancellationRequested();
+
+        // An empty line indicates the end of an event
+        if (string.IsNullOrWhiteSpace(line))
+        {
+          if (currentEventData.Length > 0)
+          {
+            string jsonText = currentEventData.ToString();
+            currentEventData.Clear();
+
+#if FIREBASE_LOG_REST_CALLS
+            UnityEngine.Debug.Log("Streaming Response:\n" + jsonText);
+#endif
+            yield return FunctionsSerializer.DeserializeStreamResponse(jsonText);
+          }
+          continue;
+        }
+
+        // Skip comments
+        if (line.StartsWith(":"))
+        {
+          continue;
+        }
+
+        if (line.StartsWith("data: "))
+        {
+          currentEventData.Append(line.Substring(6));
+        }
+        else if (line.StartsWith("data:"))
+        {
+          currentEventData.Append(line.Substring(5));
+        }
+      }
+    }
+
+    private static async Task<string> ReadLineWithCancellationAsync(StreamReader reader, CancellationToken token)
+    {
+      try
+      {
+        return await reader.ReadLineAsync();
+      }
+      catch (Exception) when (token.IsCancellationRequested)
+      {
+        token.ThrowIfCancellationRequested();
+        throw;
       }
     }
   }
