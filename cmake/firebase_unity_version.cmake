@@ -24,7 +24,7 @@ set(FIREBASE_SPM_VERSION "12.15.0"
     CACHE STRING "The version of the top-level Firebase Swift Package to use.")
 
 # https://github.com/googlesamples/unity-jar-resolver
-set(FIREBASE_UNITY_JAR_RESOLVER_VERSION "1.2.187"
+set(FIREBASE_UNITY_JAR_RESOLVER_VERSION "1.2.188"
    CACHE STRING
   "Version tag of Play Services Resolver to download and use (no trailing .0)"
 )
