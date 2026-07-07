@@ -143,6 +143,7 @@ namespace Firebase.Functions.Internal
 
       if (deserializedData is Dictionary<string, object> dict)
       {
+        // Check for an error object in the response to convert it into a FunctionsException.
         if (dict.TryGetValue("error", out var errorValue) && errorValue is Dictionary<string, object> errorDict)
         {
           string message = "INTERNAL";
@@ -183,6 +184,7 @@ namespace Firebase.Functions.Internal
 
       if (deserializedData is Dictionary<string, object> dict)
       {
+        // Check for an error object in the stream response to convert it into a FunctionsException.
         if (dict.TryGetValue("error", out var errorValue) && errorValue is Dictionary<string, object> errorDict)
         {
           string message = "INTERNAL";
