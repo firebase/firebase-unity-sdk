@@ -18,6 +18,7 @@ namespace Firebase.Crashlytics.Editor {
   using UnityEngine;
   using UnityEditor;
   using UnityEditor.Callbacks;
+  using UnityEditor.iOS.Xcode;
   using System;
   using System.Collections;
   using System.Collections.Generic;
