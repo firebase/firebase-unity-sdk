@@ -56,26 +56,6 @@ namespace Firebase.Sample.Auth {
       random = new System.Random();
     }
 
-    // Handle initialization of the necessary firebase modules:
-    protected override void InitializeFirebase() {
-      base.InitializeFirebase();
-
-      string emulatorHost = System.Environment.GetEnvironmentVariable("FIREBASE_AUTH_EMULATOR_HOST");
-      int emulatorPort = 9099;
-      string portStr = System.Environment.GetEnvironmentVariable("FIREBASE_AUTH_EMULATOR_PORT");
-      if (!string.IsNullOrEmpty(portStr)) {
-        int.TryParse(portStr, out emulatorPort);
-      }
-
-      if (!string.IsNullOrEmpty(emulatorHost)) {
-        DebugLog(string.Format("Configuring FirebaseAuth to use emulator at {0}:{1}", emulatorHost, emulatorPort));
-        auth.UseEmulator(emulatorHost, emulatorPort);
-        if (otherAuth != null) {
-          otherAuth.UseEmulator(emulatorHost, emulatorPort);
-        }
-      }
-    }
-
     // Passes along the update call to automated test runner.
     protected override void Update() {
       base.Update();
