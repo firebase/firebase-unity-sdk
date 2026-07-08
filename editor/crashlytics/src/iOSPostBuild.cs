@@ -24,7 +24,6 @@ namespace Firebase.Crashlytics.Editor {
   using System.IO;
   using System.Reflection;
   using System.Text;
-  using UnityEditor.iOS.Xcode;
 
   /// <summary>
   /// Container for reflection-based method calls to add a Run Script Build Phase for the generated
@@ -118,7 +117,7 @@ fi
     [PostProcessBuild(100)]
     public static void OnPostprocessBuild(BuildTarget buildTarget, string buildPath) {
       if (buildTarget == BuildTarget.iOS || buildTarget == BuildTarget.tvOS) {
-        string projectPath = PBXProject.GetPBXProjectPath(buildPath);
+        string projectPath = GetPBXProjectPath(buildPath);
         string plistPath = Path.Combine(buildPath, "Info.plist");
 
         IFirebaseConfigurationStorage configurationStorage = StorageProvider.ConfigurationStorage;
@@ -126,6 +125,12 @@ fi
         PrepareProject(projectPath, configurationStorage, buildTarget);
         AddCrashlyticsDevelopmentPlatformToPlist(plistPath);
       }
+    }
+
+    // Private class to reference PBXProject, otherwise errors can occur if iOS support
+    // is not installed.
+    private static string GetPBXProjectPath(string buildPath) {
+      return UnityEditor.iOS.Xcode.PBXProject.GetPBXProjectPath(buildPath);
     }
 
     private static void PrepareProject(string projectPath, IFirebaseConfigurationStorage configurationStorage,
