@@ -89,21 +89,14 @@ namespace Firebase.Sample.Auth {
     }
 
     // Handle initialization of the necessary firebase modules:
-    protected void InitializeFirebase() {
+    protected virtual void InitializeFirebase() {
       DebugLog("Setting up Firebase Auth");
       auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
 
-      string emulatorHost = System.Environment.GetEnvironmentVariable("FIREBASE_AUTH_EMULATOR_HOST");
-      int emulatorPort = 9099;
-      string portStr = System.Environment.GetEnvironmentVariable("FIREBASE_AUTH_EMULATOR_PORT");
-      if (!string.IsNullOrEmpty(portStr)) {
-        int.TryParse(portStr, out emulatorPort);
-      }
-
-      if (!string.IsNullOrEmpty(emulatorHost)) {
-        DebugLog(string.Format("Configuring FirebaseAuth to use emulator at {0}:{1}", emulatorHost, emulatorPort));
-        auth.UseEmulator(emulatorHost, emulatorPort);
-      }
+      // To use the Auth Emulator, uncomment the line below:
+      // auth.UseEmulator("localhost", 9099);
+      // Or from an Android emulator:
+      // auth.UseEmulator("10.0.2.2", 9099);
 
       auth.StateChanged += AuthStateChanged;
       auth.IdTokenChanged += IdTokenChanged;
@@ -115,9 +108,8 @@ namespace Firebase.Sample.Auth {
         try {
           otherAuth = Firebase.Auth.FirebaseAuth.GetAuth(Firebase.FirebaseApp.Create(
             otherAuthOptions, "Secondary"));
-          if (!string.IsNullOrEmpty(emulatorHost)) {
-            otherAuth.UseEmulator(emulatorHost, emulatorPort);
-          }
+          // To use the Auth Emulator with the secondary instance, uncomment the line below:
+          // otherAuth.UseEmulator("localhost", 9099);
           otherAuth.StateChanged += AuthStateChanged;
           otherAuth.IdTokenChanged += IdTokenChanged;
         } catch (Exception) {
