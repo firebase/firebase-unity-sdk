@@ -108,6 +108,8 @@ if (FIREBASE_INCLUDE_UNITY)
       ${FIREBASE_APP_CHECK_ANDROID_DEPS}
     ANDROID_SPEC
       "appcheck"
+    OVERRIDE_TEMPLATE
+      "${CMAKE_CURRENT_LIST_DIR}/cmake/dependencies.template"
   )
 endif()
 

@@ -23,6 +23,9 @@ set(FIREBASE_IOS_POD_VERSION "12.14.0"
 set(FIREBASE_SPM_VERSION "12.14.0"
     CACHE STRING "The version of the top-level Firebase Swift Package to use.")
 
+set(FIREBASE_RECAPTCHA_SPM_VERSION "18.9.1"
+    CACHE STRING "The version of the top-level Recaptcha Enterprise Package to use.")
+
 # https://github.com/googlesamples/unity-jar-resolver
 set(FIREBASE_UNITY_JAR_RESOLVER_VERSION "1.2.187"
    CACHE STRING

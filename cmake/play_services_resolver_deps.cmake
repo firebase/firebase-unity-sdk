@@ -42,10 +42,12 @@ set(DEFAULT_MIN_TARGET_SDK "15.0")
 #       group:name:version.
 #   ANDROID_SPEC: The name to use to link in the module's Android library.
 #   SKIP_INSTALL: Option that if set, skips the installation
+#   FIREBASE_SPM_DEPS: The Swift Package Manager dependencies to use.
+#   OVERRIDE_TEMPLATE: The path of the template file to use, instead of the default.
 function(generate_dependencies_xml module)
 
   set(options SKIP_INSTALL)
-  set(single ANDROID_SPEC)
+  set(single ANDROID_SPEC OVERRIDE_TEMPLATE)
   set(multi IOS_DEPS ANDROID_DEPS FIREBASE_SPM_DEPS)
   # Parse the arguments into GEN_DEPS_IOS_DEPS, etc.
   cmake_parse_arguments(GEN_DEPS "${options}" "${single}" "${multi}" ${ARGN})
@@ -106,10 +108,17 @@ function(generate_dependencies_xml module)
 
   set(OUT_FILE "${PROJECT_BINARY_DIR}/${module}Dependencies.xml")
 
-  configure_file(${DEPENDENCIES_TEMPLATE} ${OUT_FILE}
-    @ONLY
-    NEWLINE_STYLE CRLF
-  )
+  if (GEN_DEPS_OVERRIDE_TEMPLATE)
+    configure_file(${GEN_DEPS_OVERRIDE_TEMPLATE} ${OUT_FILE}
+      @ONLY
+      NEWLINE_STYLE CRLF
+    )
+  else()
+    configure_file(${DEPENDENCIES_TEMPLATE} ${OUT_FILE}
+      @ONLY
+      NEWLINE_STYLE CRLF
+    )
+  endif()
 
   if (NOT ${GEN_DEPS_SKIP_INSTALL})
     install(
