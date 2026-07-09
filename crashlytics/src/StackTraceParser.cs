@@ -29,7 +29,7 @@ namespace Firebase.Crashlytics {
   internal class StackTraceParser {
 
     // Matches e.g. "Method(string arg1, int arg2)" or "Method (string arg1, int arg2)"
-    private static readonly string FrameArgsRegex = @"\s?\(.*\)";
+    private static readonly string FrameArgsRegex = @"\s?\([^\)]*\)";
 
     // Matches e.g. "at Assets.Src.Gui.Menus.GameMenuController.ShowSkilltreeScreen (string arg1)"
     //      or e.g. "UnityEngine.Debug:Log(Object)"
@@ -39,8 +39,9 @@ namespace Firebase.Crashlytics {
     // Matches e.g.:
     //   "at Assets.Src.Gui.Menus.GameMenuController.ShowSkilltreeScreen () (at C:/Game_Project/Assets/Src/Gui/GameMenuController.cs:154)"
     //   "at SampleApp.Buttons.CrashlyticsButtons.CauseDivByZero () [0x00000] in /Some/Dir/Program.cs:567"
+    //   "at UnityEngine.EventSystems.ExecuteEvents.Execute[T] (...) [0x00000] in <00000000000000000000000000000000>:0"
     private static readonly string FrameRegexWithFileInfo =
-      FrameRegexWithoutFileInfo + @" .*[/|\\](?<file>.+):(?<line>\d+)";
+      FrameRegexWithoutFileInfo + @" (?:.*[/|\\]|.*(?:in|at) )(?<file>[^:]+):(?<line>\d+)";
 
     // Mono's hardcoded unknown file string (never localized)
     // See https://github.com/mono/mono/blob/b7a308f660de8174b64697a422abfc7315d07b8c/mcs/class/corlib/System.Diagnostics/StackFrame.cs#L146
@@ -58,9 +59,9 @@ namespace Firebase.Crashlytics {
       }
 
       foreach (var frameString in splitStackTrace) {
-        if (Regex.Matches(frameString, FrameRegexWithFileInfo).Count == 1) {
+        if (Regex.IsMatch(frameString, FrameRegexWithFileInfo)) {
           regex = FrameRegexWithFileInfo;
-        } else if (Regex.Matches(frameString, FrameRegexWithoutFileInfo).Count == 1) {
+        } else if (Regex.IsMatch(frameString, FrameRegexWithoutFileInfo)) {
           regex = FrameRegexWithoutFileInfo;
         } else {
           continue;
@@ -76,12 +77,11 @@ namespace Firebase.Crashlytics {
     }
 
     private static Dictionary<string, string> ParseFrameString(string regex, string frameString) {
-      var matches = Regex.Matches(frameString, regex);
-      if (matches.Count < 1) {
+      var match = Regex.Match(frameString, regex);
+      if (!match.Success) {
         return null;
       }
 
-      var match = matches[0];
       if (!match.Groups["class"].Success || !match.Groups["method"].Success) {
         return null;
       }
@@ -89,7 +89,7 @@ namespace Firebase.Crashlytics {
       string file = match.Groups["file"].Success ? match.Groups["file"].Value : match.Groups["class"].Value;
       string line = match.Groups["line"].Success ? match.Groups["line"].Value : "0";
 
-      if (file == MonoFilenameUnknownString) {
+      if (file == MonoFilenameUnknownString || (file.StartsWith("<") && file.EndsWith(">"))) {
         file = match.Groups["class"].Value;
         line = "0";
       }
