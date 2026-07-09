@@ -89,7 +89,7 @@ namespace Firebase.Sample.Auth {
     }
 
     // Handle initialization of the necessary firebase modules:
-    protected virtual void InitializeFirebase() {
+    protected void InitializeFirebase() {
       DebugLog("Setting up Firebase Auth");
       auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
 
