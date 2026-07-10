@@ -137,6 +137,11 @@ namespace Firebase.AI
     public FinishReason? FinishReason { get; }
 
     /// <summary>
+    /// A human-readable description of why the model stopped generating content, if it exists.
+    /// </summary>
+    public string FinishMessage { get; }
+
+    /// <summary>
     /// Cited works in the model’s response content, if it exists.
     /// </summary>
     public CitationMetadata? CitationMetadata { get; }
@@ -153,12 +158,13 @@ namespace Firebase.AI
 
     // Hidden constructor, users don't need to make this.
     private Candidate(ModelContent content, List<SafetyRating> safetyRatings,
-        FinishReason? finishReason, CitationMetadata? citationMetadata,
+        FinishReason? finishReason, string finishMessage, CitationMetadata? citationMetadata,
         GroundingMetadata? groundingMetadata, UrlContextMetadata? urlContextMetadata)
     {
       Content = content;
       _safetyRatings = safetyRatings ?? new List<SafetyRating>();
       FinishReason = finishReason;
+      FinishMessage = finishMessage;
       CitationMetadata = citationMetadata;
       GroundingMetadata = groundingMetadata;
       UrlContextMetadata = urlContextMetadata;
@@ -202,6 +208,7 @@ namespace Firebase.AI
         jsonDict.ParseObject("content", ModelContent.FromJson, defaultValue: new ModelContent("model")),
         jsonDict.ParseObjectList("safetyRatings", SafetyRating.FromJson),
         jsonDict.ParseNullableEnum("finishReason", ParseFinishReason),
+        jsonDict.ParseValue<string>("finishMessage"),
         jsonDict.ParseNullableObject("citationMetadata",
             (d) => Firebase.AI.CitationMetadata.FromJson(d, backend)),
         jsonDict.ParseNullableObject("groundingMetadata",
