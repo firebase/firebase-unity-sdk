@@ -109,6 +109,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+- Changes
+    - Crashlytics: Fix issues when parsing stripped stacktraces.
+    ([#1484](https://github.com/firebase/firebase-unity-sdk/issues/1484))
+
 ### 13.13.0
 - Changes
     - General: Update to Firebase C++ SDK version 13.9.0.
