@@ -92,6 +92,12 @@ namespace Firebase.Sample.Auth {
     protected void InitializeFirebase() {
       DebugLog("Setting up Firebase Auth");
       auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
+
+      // To use the Auth Emulator, uncomment the line below:
+      // auth.UseEmulator("localhost", 9099);
+      // Or from an Android emulator:
+      // auth.UseEmulator("10.0.2.2", 9099);
+
       auth.StateChanged += AuthStateChanged;
       auth.IdTokenChanged += IdTokenChanged;
       // Specify valid options to construct a secondary authentication object.
@@ -102,6 +108,8 @@ namespace Firebase.Sample.Auth {
         try {
           otherAuth = Firebase.Auth.FirebaseAuth.GetAuth(Firebase.FirebaseApp.Create(
             otherAuthOptions, "Secondary"));
+          // To use the Auth Emulator with the secondary instance, uncomment the line below:
+          // otherAuth.UseEmulator("localhost", 9099);
           otherAuth.StateChanged += AuthStateChanged;
           otherAuth.IdTokenChanged += IdTokenChanged;
         } catch (Exception) {

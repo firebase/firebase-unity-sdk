@@ -123,6 +123,7 @@ Release Notes
       in text-to-speech generation.
     - General: Fixed an issue with Firebase.App.Internal, Firebase.Functions, and Firebase.FirebaseAI 
       asmdefs that were causing build issues on unsupported platforms.
+    - Auth: Expose UseEmulator API to target a local Firebase Auth Emulator.
 
 ### 13.12.0
 -   Changes
