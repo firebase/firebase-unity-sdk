@@ -474,6 +474,20 @@ static CppInstanceManager<Auth> g_auth_instances;
   static void ReleaseReferenceInternal(firebase::auth::Auth* instance) {
     ::firebase::auth::g_auth_instances.ReleaseReference(instance);
   }
+
+  /// <summary>
+  ///   Configures the Auth SDK to use an emulated backend instead of
+  ///   the default remote backend.
+  /// </summary>
+  /// <param name="host">
+  ///   The host that the auth emulator is running on.
+  /// </param>
+  /// <param name="port">
+  ///   The port that the auth emulator is running on.
+  /// </param>
+  void UseEmulator(const char* host, int port) {
+    self->UseEmulator(host, port);
+  }
 }
 
 
