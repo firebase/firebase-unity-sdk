@@ -43,10 +43,6 @@ namespace Firebase.Crashlytics {
     private static readonly string FrameRegexWithFileInfo =
       FrameRegexWithoutFileInfo + @" (?:.*[/|\\]|.*(?:in|at) )(?<file>[^:]+):(?<line>\d+)";
 
-    // Mono's hardcoded unknown file string (never localized)
-    // See https://github.com/mono/mono/blob/b7a308f660de8174b64697a422abfc7315d07b8c/mcs/class/corlib/System.Diagnostics/StackFrame.cs#L146
-    private static readonly string MonoFilenameUnknownString = "<filename unknown>";
-
     private static readonly string[] StringDelimiters = new string[] { Environment.NewLine };
 
     public static Dictionary<string, string>[] ParseStackTraceString(string stackTrace) {
@@ -59,14 +55,6 @@ namespace Firebase.Crashlytics {
       }
 
       foreach (var frameString in splitStackTrace) {
-        if (Regex.IsMatch(frameString, FrameRegexWithFileInfo)) {
-          regex = FrameRegexWithFileInfo;
-        } else if (Regex.IsMatch(frameString, FrameRegexWithoutFileInfo)) {
-          regex = FrameRegexWithoutFileInfo;
-        } else {
-          continue;
-        }
-
         var parsedDict = ParseFrameString(regex, frameString);
         if (parsedDict != null) {
           result.Add(parsedDict);
@@ -76,8 +64,16 @@ namespace Firebase.Crashlytics {
       return result.ToArray();
     }
 
-    private static Dictionary<string, string> ParseFrameString(string regex, string frameString) {
-      var match = Regex.Match(frameString, regex);
+    private static Dictionary<string, string> ParseFrameString(string frameString) {
+      // First, check for file info.
+      var match = Regex.Match(frameString, FrameRegexWithFileInfo);
+
+      // If that failed, check without file info.
+      if (!match.Success) {
+        match = Regex.Match(frameString, FrameRegexWithoutFileInfo);
+      }
+
+      // If that also failed, this isn't a valid frame.
       if (!match.Success) {
         return null;
       }
@@ -89,7 +85,9 @@ namespace Firebase.Crashlytics {
       string file = match.Groups["file"].Success ? match.Groups["file"].Value : match.Groups["class"].Value;
       string line = match.Groups["line"].Success ? match.Groups["line"].Value : "0";
 
-      if (file == MonoFilenameUnknownString || (file.StartsWith("<") && file.EndsWith(">"))) {
+      // If the symbols are unknown or stripped, it will be formatted differently.
+      // See https://github.com/mono/mono/blob/b7a308f660de8174b64697a422abfc7315d07b8c/mcs/class/corlib/System.Diagnostics/StackFrame.cs#L146
+      if (file.StartsWith('<') && file.EndsWith('>')) {
         file = match.Groups["class"].Value;
         line = "0";
       }
