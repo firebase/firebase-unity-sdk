@@ -41,12 +41,15 @@ namespace Firebase.Crashlytics {
     //   "at SampleApp.Buttons.CrashlyticsButtons.CauseDivByZero () [0x00000] in /Some/Dir/Program.cs:567"
     //   "at UnityEngine.EventSystems.ExecuteEvents.Execute[T] (...) [0x00000] in <00000000000000000000000000000000>:0"
     private static readonly string FrameRegexWithFileInfo =
-      FrameRegexWithoutFileInfo + @" (?:.*[/|\\]|.*(?:in|at) )(?<file>[^:]+):(?<line>\d+)";
+      FrameRegexWithoutFileInfo + @" (?:[^:]*(?:[a-zA-Z]:)?[^:]*[/|\\]|[^:]*(?:in|at) )(?<file>[^:]+):(?<line>\d+)";
 
     private static readonly string[] StringDelimiters = new string[] { Environment.NewLine };
 
     public static Dictionary<string, string>[] ParseStackTraceString(string stackTrace) {
       var result = new List< Dictionary<string, string> >();
+      if (string.IsNullOrEmpty(stackTrace)) {
+        return result.ToArray();
+      }
       string[] splitStackTrace = stackTrace.Split(StringDelimiters, StringSplitOptions.None);
 
       if (splitStackTrace.Length < 1) {
