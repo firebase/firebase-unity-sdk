@@ -118,6 +118,7 @@ Release Notes
       in text-to-speech generation.
     - General: Fixed an issue with Firebase.App.Internal, Firebase.Functions, and Firebase.FirebaseAI 
       asmdefs that were causing build issues on unsupported platforms.
+    - General: Implement automated linker rules merging for UPM packages to prevent managed code stripping from removing reflection-accessed methods (like FirebaseAuth and FirebaseAppCheck).
 
 ### 13.12.0
 -   Changes
