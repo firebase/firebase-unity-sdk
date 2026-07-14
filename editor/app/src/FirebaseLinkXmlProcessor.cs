@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.UnityLinker;
@@ -28,35 +29,55 @@ namespace Firebase.Editor {
 
     public string GenerateAdditionalLinkXmlFile(BuildReport report, UnityLinkerBuildPipelineData data) {
       Debug.Log("FirebaseLinkXmlProcessor: Starting additional link.xml generation...");
-      var linkXmlContents = new List<string>();
-      var processedFiles = new HashSet<string>();
-      var processedContents = new HashSet<string>();
 
-      ScanDirectory(Path.GetFullPath("Packages"), true, linkXmlContents, processedFiles, processedContents);
-      ScanDirectory(Path.GetFullPath("Library/PackageCache"), true, linkXmlContents, processedFiles, processedContents);
-      ScanDirectory(Path.GetFullPath("Assets/Firebase"), false, linkXmlContents, processedFiles, processedContents);
+      // Initialize the merged XML document that will hold all linker rules.
+      var mergedLinkxmlDoc = new XmlDocument();
+      var root = mergedLinkxmlDoc.CreateElement("linker");
+      mergedLinkxmlDoc.AppendChild(root);
 
-      if (linkXmlContents.Count == 0) {
+      var filesToProcess = new HashSet<string>();
+
+      // Get all link.xml files from Firebase UPM packages.
+      foreach (var package in UnityEditor.PackageManager.PackageInfo.GetAllRegisteredPackages()) {
+        if (package.name.StartsWith("com.google.firebase.")) {
+          FindLinkXmlFiles(package.resolvedPath, filesToProcess);
+        }
+      }
+
+      // Get all link.xml files from Assets/Firebase.
+      string assetsFirebasePath = Path.GetFullPath("Assets/Firebase");
+      if (Directory.Exists(assetsFirebasePath)) {
+        FindLinkXmlFiles(assetsFirebasePath, filesToProcess);
+      }
+
+      if (filesToProcess.Count == 0) {
         Debug.Log("FirebaseLinkXmlProcessor: No additional link.xml files found.");
         return null;
       }
 
-      var assemblyElements = new List<string>();
-      foreach (var content in linkXmlContents) {
-        int startIndex = 0;
-        while (true) {
-          int assemblyStart = content.IndexOf("<assembly ", startIndex);
-          if (assemblyStart == -1) break;
-          int assemblyEnd = content.IndexOf("</assembly>", assemblyStart);
-          if (assemblyEnd == -1) break;
-          assemblyEnd += "</assembly>".Length;
-          string assemblyBlock = content.Substring(assemblyStart, assemblyEnd - assemblyStart);
-          assemblyElements.Add(assemblyBlock);
-          startIndex = assemblyEnd;
+      bool hasAssemblies = false;
+      foreach (var file in filesToProcess) {
+        try {
+          var doc = new XmlDocument();
+          doc.Load(file);
+          if (doc.DocumentElement != null) {
+            // Traverse the child elements under the root <linker> element of each link.xml.
+            // NOTE: We only support and extract `<assembly>` elements at this time. Root-level
+            // `<type>` or `<linker>` attributes other than assembly declarations are ignored.
+            foreach (XmlNode child in doc.DocumentElement.ChildNodes) {
+              if (child.Name == "assembly") {
+                XmlNode importedNode = mergedLinkxmlDoc.ImportNode(child, true);
+                root.AppendChild(importedNode);
+                hasAssemblies = true;
+              }
+            }
+          }
+        } catch (Exception e) {
+          Debug.LogWarning($"FirebaseLinkXmlProcessor: Failed to parse XML from {file}: {e.Message}");
         }
       }
 
-      if (assemblyElements.Count == 0) {
+      if (!hasAssemblies) {
         Debug.Log("FirebaseLinkXmlProcessor: No assembly blocks matched in found link.xml files.");
         return null;
       }
@@ -67,13 +88,7 @@ namespace Firebase.Editor {
         if (!Directory.Exists(directory)) {
           Directory.CreateDirectory(directory);
         }
-        using (var writer = new StreamWriter(tempLinkXmlPath)) {
-          writer.WriteLine("<linker>");
-          foreach (var block in assemblyElements) {
-            writer.WriteLine(block);
-          }
-          writer.WriteLine("</linker>");
-        }
+        mergedLinkxmlDoc.Save(tempLinkXmlPath);
         return tempLinkXmlPath;
       } catch (Exception e) {
         Debug.LogWarning($"FirebaseLinkXmlProcessor: Failed to write merged link.xml to {tempLinkXmlPath}: {e.Message}");
@@ -81,28 +96,14 @@ namespace Firebase.Editor {
       return null;
     }
 
-    private void ScanDirectory(string rootDir, bool filterFirebase, List<string> linkXmlContents, HashSet<string> processedFiles, HashSet<string> processedContents) {
-      if (!Directory.Exists(rootDir)) return;
-
-      string[] searchDirs = filterFirebase 
-        ? Directory.GetDirectories(rootDir, "com.google.firebase.*") 
-        : new string[] { rootDir };
-
-      foreach (var dir in searchDirs) {
+    private void FindLinkXmlFiles(string dir, HashSet<string> files) {
+      if (!Directory.Exists(dir)) return;
+      try {
         foreach (var file in Directory.GetFiles(dir, "*link.xml", SearchOption.AllDirectories)) {
-          string fullPath = Path.GetFullPath(file);
-          if (!processedFiles.Add(fullPath)) continue;
-
-          try {
-            string content = File.ReadAllText(fullPath);
-            if (processedContents.Add(content)) {
-              Debug.Log($"FirebaseLinkXmlProcessor: Merging link.xml: {fullPath}");
-              linkXmlContents.Add(content);
-            }
-          } catch (Exception e) {
-            Debug.LogWarning($"FirebaseLinkXmlProcessor: Failed to read {fullPath}: {e.Message}");
-          }
+          files.Add(Path.GetFullPath(file));
         }
+      } catch (Exception e) {
+        Debug.LogWarning($"FirebaseLinkXmlProcessor: Failed to scan directory {dir}: {e.Message}");
       }
     }
   }
