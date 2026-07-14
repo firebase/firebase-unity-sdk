@@ -128,7 +128,7 @@ fi
       }
     }
 
-    // Private class to reference PBXProject, otherwise errors can occur if iOS support
+    // Private method to reference PBXProject, otherwise errors can occur if iOS support
     // is not installed.
     private static string GetPBXProjectPath(string buildPath) {
       return UnityEditor.iOS.Xcode.PBXProject.GetPBXProjectPath(buildPath);
