@@ -71,6 +71,22 @@ namespace Firebase.Sample.Functions {
       yield return new TestCase("explicitErrorTest", "explicitErrorTest", null, null,
         FunctionsErrorCode.OutOfRange);
 
+      // Stream tests
+      {
+        var expected = new List<ExpectedStreamResponse> {
+          new ExpectedStreamResponse { IsResult = false, Data = "hello" },
+          new ExpectedStreamResponse { IsResult = false, Data = "world" },
+          new ExpectedStreamResponse { IsResult = false, Data = "this" },
+          new ExpectedStreamResponse { IsResult = false, Data = "is" },
+          new ExpectedStreamResponse { IsResult = false, Data = "cool" },
+          new ExpectedStreamResponse { IsResult = true, Data = "hello world this is cool" }
+        };
+        yield return new StreamingTestCase("streamTest", "genStream", null, expected);
+      }
+
+      yield return new StreamingTestCaseWithError("streamNonexistentFunction", "nonexistentFunction", null, FunctionsErrorCode.NotFound);
+      yield return new StreamingTestCaseWithError("streamErrorFunction", "genStreamError", null, FunctionsErrorCode.Internal);
+
       // Test calling via Url
       string projectId = FirebaseApp.DefaultInstance.Options.ProjectId;
       yield return new TestCaseWithURL("scalarTest via Url",

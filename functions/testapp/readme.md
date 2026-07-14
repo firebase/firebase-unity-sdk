@@ -18,9 +18,8 @@ inside the Unity Editor.
 - Install the [Firebase CLI](https://firebase.google.com/docs/cli/).
 - Deploy the provided functions.
   ```bash
-  # Move to the `Assets/Firebase/Sample/Functions/.functions` subdirectory of
-  # the sample.
-  cd Assets/Firebase/Sample/Functions/.functions
+  # Move to the `functions` subdirectory of the sample (outside of the Assets folder).
+  cd functions
 
   # Install all of the dependencies of the cloud functions
   cd functions

@@ -109,6 +109,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+-   Changes
+    - Functions: Added support for Callable Functions Streaming via `StreamAsync`.
+    - General: Implement automated linker rules merging for UPM packages to prevent managed code stripping from removing reflection-accessed methods (like FirebaseAuth and FirebaseAppCheck).
+
 ### 13.13.0
 - Changes
     - General: Update to Firebase C++ SDK version 13.9.0.
@@ -118,7 +123,8 @@ Release Notes
       in text-to-speech generation.
     - General: Fixed an issue with Firebase.App.Internal, Firebase.Functions, and Firebase.FirebaseAI 
       asmdefs that were causing build issues on unsupported platforms.
-    - General: Implement automated linker rules merging for UPM packages to prevent managed code stripping from removing reflection-accessed methods (like FirebaseAuth and FirebaseAppCheck).
+    - Auth: Expose UseEmulator API to target a local Firebase Auth Emulator.
+
 
 ### 13.12.0
 -   Changes
@@ -128,7 +134,6 @@ Release Notes
     - Analytics: Add support for Apple's StoreKit 2 transactions. Add new `LogAppleTransactionAsync` method
       that takes in the App Store transaction string and logs the transaction.
     - Firebase AI: Add support for limited-use App Check tokens.
-      
 
 ### 13.11.0
 -   Changes

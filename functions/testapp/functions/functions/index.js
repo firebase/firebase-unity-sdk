@@ -12,7 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
+const functionsV2 = require("firebase-functions/v2");
+
+// Adds two numbers to each other.
+exports.addNumbers = functions.https.onCall((data) => {
+  // Numbers passed from the client.
+  const firstNumber = data.firstNumber;
+  const secondNumber = data.secondNumber;
+
+  // Checking that attributes are present and are numbers.
+  if (!Number.isFinite(firstNumber) || !Number.isFinite(secondNumber)) {
+    // Throwing an HttpsError so that the client gets the error details.
+    throw new functions.https.HttpsError('invalid-argument', 'The function ' +
+        'must be called with two arguments "firstNumber" and "secondNumber" ' +
+        'which must both be numbers.');
+  }
+
+  // returning result.
+  return {
+    firstNumber: firstNumber,
+    secondNumber: secondNumber,
+    operator: '+',
+    operationResult: firstNumber + secondNumber,
+  };
+});
 
 // Creates a function that consumes limited-use App Check tokens
 exports.addtwowithlimiteduse = functions.runWith({
@@ -41,3 +65,39 @@ exports.addtwowithlimiteduse = functions.runWith({
     operationResult: Number(firstNumber) + Number(secondNumber),
   };
 });
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+const streamData = ["hello", "world", "this", "is", "cool"];
+
+async function* generateText() {
+  for (const chunk of streamData) {
+    yield chunk;
+    await sleep(100);
+  }
+};
+
+/**
+ * A streaming callable function that streams the elements of `streamData`
+ * ("hello", "world", "this", "is", "cool") chunk by chunk when the client accepts
+ * streaming, and returns the joined string "hello world this is cool" as the final response.
+ */
+exports.genStream = functionsV2.https.onCall(
+  async (request, response) => {
+    if (request.acceptsStreaming) {
+      for await (const chunk of generateText()) {
+        response.sendChunk(chunk);
+      }
+    }
+    return streamData.join(" ");
+  }
+);
+
+exports.genStreamError = functionsV2.https.onCall(
+  async (request, response) => {
+    throw Error("BOOM");
+  }
+);
+
