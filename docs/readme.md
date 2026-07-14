@@ -111,6 +111,7 @@ Release Notes
 -------------
 ### Upcoming Release
 -   Changes
+    - General (iOS): Fix issues with enabling new Swift Xcode Project type.
     - Functions: Added support for Callable Functions Streaming via `StreamAsync`.
 
 ### 13.13.0
