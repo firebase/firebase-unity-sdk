@@ -38,6 +38,7 @@ set(firebase_app_editor_src
     src/DocRef.resx
     src/Link.Designer.cs
     src/Link.resx
+    src/FirebaseLinkXmlProcessor.cs
 )
 
 set(firebase_app_editor_reference

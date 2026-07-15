@@ -115,6 +115,7 @@ Release Notes
     - Crashlytics: Fix issues when parsing stripped stacktraces.
       ([#1484](https://github.com/firebase/firebase-unity-sdk/issues/1484))
     - Functions: Added support for Callable Functions Streaming via `StreamAsync`.
+    - General: Implement automated linker rules merging for UPM packages to prevent managed code stripping from removing reflection-accessed methods (like FirebaseAuth and FirebaseAppCheck).
 
 ### 13.13.0
 - Changes
@@ -126,6 +127,7 @@ Release Notes
     - General: Fixed an issue with Firebase.App.Internal, Firebase.Functions, and Firebase.FirebaseAI 
       asmdefs that were causing build issues on unsupported platforms.
     - Auth: Expose UseEmulator API to target a local Firebase Auth Emulator.
+
 
 ### 13.12.0
 -   Changes
