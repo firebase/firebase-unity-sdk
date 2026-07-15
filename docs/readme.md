@@ -109,7 +109,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
+### 13.14.0
 -   Changes
     - General (iOS): Fix issues with enabling new Swift Xcode Project type.
     - Crashlytics: Fix issues when parsing stripped stacktraces.

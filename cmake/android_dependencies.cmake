@@ -25,19 +25,19 @@ set(FIREBASE_ANALYTICS_ANDROID_DEPS
 )
 
 set(FIREBASE_APP_CHECK_ANDROID_DEPS
-    "com.google.firebase:firebase-appcheck:19.2.0"
-    "com.google.firebase:firebase-appcheck-debug:19.2.0"
-    "com.google.firebase:firebase-appcheck-playintegrity:19.2.0"
+    "com.google.firebase:firebase-appcheck:19.3.0"
+    "com.google.firebase:firebase-appcheck-debug:19.3.0"
+    "com.google.firebase:firebase-appcheck-playintegrity:19.3.0"
     "com.google.firebase:firebase-analytics:23.2.0"
 )
 
 set(FIREBASE_AUTH_ANDROID_DEPS
-    "com.google.firebase:firebase-auth:24.1.0"
+    "com.google.firebase:firebase-auth:24.2.0"
     "com.google.firebase:firebase-analytics:23.2.0"
 )
 
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
-    "com.google.firebase:firebase-crashlytics-ndk:20.0.6"
+    "com.google.firebase:firebase-crashlytics-ndk:20.1.0"
     "com.google.firebase:firebase-analytics:23.2.0"
 )
 
@@ -48,7 +48,7 @@ set(FIREBASE_DATABASE_ANDROID_DEPS
 )
 
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
-    "com.google.firebase:firebase-firestore:26.4.0"
+    "com.google.firebase:firebase-firestore:26.4.1"
     "com.google.firebase:firebase-analytics:23.2.0"
 )
 
@@ -58,13 +58,13 @@ set(FIREBASE_FUNCTIONS_ANDROID_DEPS
 )
 
 set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-installations:19.1.1"
+    "com.google.firebase:firebase-installations:19.1.2"
     "com.google.firebase:firebase-analytics:23.2.0"
 )
 
 # iid is needed by messaging to avoid a conflict with functions
 set(FIREBASE_MESSAGING_ANDROID_DEPS
-    "com.google.firebase:firebase-messaging:25.1.0"
+    "com.google.firebase:firebase-messaging:25.1.1"
     "com.google.firebase:firebase-analytics:23.2.0"
     "com.google.firebase:firebase-iid:21.1.0"
     "com.google.flatbuffers:flatbuffers-java:1.12.0"
