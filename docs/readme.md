@@ -111,8 +111,9 @@ Release Notes
 -------------
 ### Upcoming Release
 -   Changes
+    - General (iOS): Fix issues with enabling new Swift Xcode Project type.
     - Crashlytics: Fix issues when parsing stripped stacktraces.
-    ([#1484](https://github.com/firebase/firebase-unity-sdk/issues/1484))
+      ([#1484](https://github.com/firebase/firebase-unity-sdk/issues/1484))
     - Functions: Added support for Callable Functions Streaming via `StreamAsync`.
 
 ### 13.13.0
