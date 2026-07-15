@@ -29,7 +29,7 @@ namespace Firebase.Crashlytics {
   internal class StackTraceParser {
 
     // Matches e.g. "Method(string arg1, int arg2)" or "Method (string arg1, int arg2)"
-    private static readonly string FrameArgsRegex = @"\s?\(.*\)";
+    private static readonly string FrameArgsRegex = @"\s?\([^\)]*\)";
 
     // Matches e.g. "at Assets.Src.Gui.Menus.GameMenuController.ShowSkilltreeScreen (string arg1)"
     //      or e.g. "UnityEngine.Debug:Log(Object)"
@@ -39,18 +39,17 @@ namespace Firebase.Crashlytics {
     // Matches e.g.:
     //   "at Assets.Src.Gui.Menus.GameMenuController.ShowSkilltreeScreen () (at C:/Game_Project/Assets/Src/Gui/GameMenuController.cs:154)"
     //   "at SampleApp.Buttons.CrashlyticsButtons.CauseDivByZero () [0x00000] in /Some/Dir/Program.cs:567"
+    //   "at UnityEngine.EventSystems.ExecuteEvents.Execute[T] (...) [0x00000] in <00000000000000000000000000000000>:0"
     private static readonly string FrameRegexWithFileInfo =
-      FrameRegexWithoutFileInfo + @" .*[/|\\](?<file>.+):(?<line>\d+)";
-
-    // Mono's hardcoded unknown file string (never localized)
-    // See https://github.com/mono/mono/blob/b7a308f660de8174b64697a422abfc7315d07b8c/mcs/class/corlib/System.Diagnostics/StackFrame.cs#L146
-    private static readonly string MonoFilenameUnknownString = "<filename unknown>";
+      FrameRegexWithoutFileInfo + @" (?:[^:]*(?:[a-zA-Z]:)?[^:]*[/|\\]|[^:]*(?:in|at) )(?<file>[^:]+):(?<line>\d+)";
 
     private static readonly string[] StringDelimiters = new string[] { Environment.NewLine };
 
     public static Dictionary<string, string>[] ParseStackTraceString(string stackTrace) {
-      string regex = null;
       var result = new List< Dictionary<string, string> >();
+      if (string.IsNullOrEmpty(stackTrace)) {
+        return result.ToArray();
+      }
       string[] splitStackTrace = stackTrace.Split(StringDelimiters, StringSplitOptions.None);
 
       if (splitStackTrace.Length < 1) {
@@ -58,15 +57,7 @@ namespace Firebase.Crashlytics {
       }
 
       foreach (var frameString in splitStackTrace) {
-        if (Regex.Matches(frameString, FrameRegexWithFileInfo).Count == 1) {
-          regex = FrameRegexWithFileInfo;
-        } else if (Regex.Matches(frameString, FrameRegexWithoutFileInfo).Count == 1) {
-          regex = FrameRegexWithoutFileInfo;
-        } else {
-          continue;
-        }
-
-        var parsedDict = ParseFrameString(regex, frameString);
+        var parsedDict = ParseFrameString(frameString);
         if (parsedDict != null) {
           result.Add(parsedDict);
         }
@@ -75,13 +66,20 @@ namespace Firebase.Crashlytics {
       return result.ToArray();
     }
 
-    private static Dictionary<string, string> ParseFrameString(string regex, string frameString) {
-      var matches = Regex.Matches(frameString, regex);
-      if (matches.Count < 1) {
+    private static Dictionary<string, string> ParseFrameString(string frameString) {
+      // First, check for file info.
+      var match = Regex.Match(frameString, FrameRegexWithFileInfo);
+
+      // If that failed, check without file info.
+      if (!match.Success) {
+        match = Regex.Match(frameString, FrameRegexWithoutFileInfo);
+      }
+
+      // If that also failed, this isn't a valid frame.
+      if (!match.Success) {
         return null;
       }
 
-      var match = matches[0];
       if (!match.Groups["class"].Success || !match.Groups["method"].Success) {
         return null;
       }
@@ -89,7 +87,9 @@ namespace Firebase.Crashlytics {
       string file = match.Groups["file"].Success ? match.Groups["file"].Value : match.Groups["class"].Value;
       string line = match.Groups["line"].Success ? match.Groups["line"].Value : "0";
 
-      if (file == MonoFilenameUnknownString) {
+      // If the symbols are unknown or stripped, it will be formatted differently.
+      // See https://github.com/mono/mono/blob/b7a308f660de8174b64697a422abfc7315d07b8c/mcs/class/corlib/System.Diagnostics/StackFrame.cs#L146
+      if (file.StartsWith("<") && file.EndsWith(">")) {
         file = match.Groups["class"].Value;
         line = "0";
       }
