@@ -24,12 +24,15 @@ using UnityEditor.UnityLinker;
 using UnityEngine;
 
 namespace Firebase.Editor {
+  /// <summary>
+  /// Automatically collects and merges link.xml files from registered Firebase UPM packages
+  /// and Assets/Firebase during builds. It extracts assembly preservation declarations into
+  /// a temporary XML file passed to UnityLinker to prevent required code from being stripped.
+  /// </summary>
   public class FirebaseLinkXmlProcessor : IUnityLinkerProcessor {
     public int callbackOrder { get { return 0; } }
 
     public string GenerateAdditionalLinkXmlFile(BuildReport report, UnityLinkerBuildPipelineData data) {
-      Debug.Log("FirebaseLinkXmlProcessor: Starting additional link.xml generation...");
-
       // Initialize the merged XML document that will hold all linker rules.
       var mergedLinkxmlDoc = new XmlDocument();
       var root = mergedLinkxmlDoc.CreateElement("linker");
@@ -51,7 +54,6 @@ namespace Firebase.Editor {
       }
 
       if (filesToProcess.Count == 0) {
-        Debug.Log("FirebaseLinkXmlProcessor: No additional link.xml files found.");
         return null;
       }
 
@@ -78,7 +80,7 @@ namespace Firebase.Editor {
       }
 
       if (!hasAssemblies) {
-        Debug.Log("FirebaseLinkXmlProcessor: No assembly blocks matched in found link.xml files.");
+        Debug.LogWarning("FirebaseLinkXmlProcessor: No assembly blocks matched in found link.xml files.");
         return null;
       }
 
