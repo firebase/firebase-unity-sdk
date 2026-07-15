@@ -109,10 +109,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming
-- Changes
+### Upcoming Release
+-   Changes
     - Crashlytics: Fix issues when parsing stripped stacktraces.
     ([#1484](https://github.com/firebase/firebase-unity-sdk/issues/1484))
+    - Functions: Added support for Callable Functions Streaming via `StreamAsync`.
 
 ### 13.13.0
 - Changes
@@ -133,7 +134,6 @@ Release Notes
     - Analytics: Add support for Apple's StoreKit 2 transactions. Add new `LogAppleTransactionAsync` method
       that takes in the App Store transaction string and logs the transaction.
     - Firebase AI: Add support for limited-use App Check tokens.
-      
 
 ### 13.11.0
 -   Changes

@@ -134,8 +134,9 @@ namespace Firebase.Functions.Internal
 
     /// <summary>
     /// Deserializes a parsed JSON string from the Cloud Functions callable protocol.
-    /// Unwraps the `{"data": ...}` or `{"result": ...}` payload and handles parsing
-    /// standard error formats into FunctionsException if present.
+    /// It first checks if the response contains an error, converting it into a
+    /// <see cref="FunctionsException"/>. Otherwise, it unwraps the `{"data": ...}`
+    /// or `{"result": ...}` payload.
     /// </summary>
     internal static object Deserialize(string data)
     {
@@ -143,6 +144,7 @@ namespace Firebase.Functions.Internal
 
       if (deserializedData is Dictionary<string, object> dict)
       {
+        // Check for an error object in the response to convert it into a FunctionsException.
         if (dict.TryGetValue("error", out var errorValue) && errorValue is Dictionary<string, object> errorDict)
         {
           string message = "INTERNAL";
@@ -171,6 +173,49 @@ namespace Firebase.Functions.Internal
       }
 
       throw new FunctionsException(FunctionsErrorCode.Internal, "INTERNAL");
+    }
+
+    /// <summary>
+    /// Deserializes a parsed JSON string from a Server-Sent Event (SSE) line.
+    /// It first checks if the response contains an error, converting it into a
+    /// <see cref="FunctionsException"/>. Otherwise, it converts it into a
+    /// <see cref="StreamResponse"/> (either Message or Result).
+    /// </summary>
+    internal static StreamResponse DeserializeStreamResponse(string jsonText)
+    {
+      var deserializedData = Json.Deserialize(jsonText);
+
+      if (deserializedData is Dictionary<string, object> dict)
+      {
+        // Check for an error object in the stream response to convert it into a FunctionsException.
+        if (dict.TryGetValue("error", out var errorValue) && errorValue is Dictionary<string, object> errorDict)
+        {
+          string message = "INTERNAL";
+          if (errorDict.TryGetValue("message", out var msg) && msg is string s) message = s;
+
+          FunctionsErrorCode code = FunctionsErrorCode.Internal;
+          if (errorDict.TryGetValue("status", out var statusStr) && statusStr is string status)
+          {
+            code = FunctionsErrorParser.MapStatusStringToEnum(status);
+          }
+
+          throw new FunctionsException(code, message);
+        }
+
+        if (dict.TryGetValue("message", out var messageValue))
+        {
+          return new StreamResponse.Message(Decode(messageValue));
+        }
+
+        if (dict.TryGetValue("result", out var resultValue))
+        {
+          return new StreamResponse.Result(Decode(resultValue));
+        }
+
+        throw new FunctionsException(FunctionsErrorCode.Internal, "Response is missing result or message field.");
+      }
+
+      throw new FunctionsException(FunctionsErrorCode.Internal, "Response is not a JSON object.");
     }
 
     /// <summary>
