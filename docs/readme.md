@@ -109,8 +109,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
+### 13.14.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 13.10.0.
+    - General (Android): Update to Firebase Android BoM version 34.16.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.16.0.
     - General (iOS): Fix issues with enabling new Swift Xcode Project type.
     - Crashlytics: Fix issues when parsing stripped stacktraces.
       ([#1484](https://github.com/firebase/firebase-unity-sdk/issues/1484))
