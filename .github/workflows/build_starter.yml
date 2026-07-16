@@ -202,7 +202,7 @@ jobs:
     steps:
       - id: decide_branch
         run: |
-          if [[ "${NEEDS_CHECK_AND_PREPARE_OUTPUTS_RELEASE_VERSION}" == "'NoVersion'" ]]; then
+          if [[ "${NEEDS_CHECK_AND_PREPARE_OUTPUTS_RELEASE_VERSION}" == "NoVersion" ]]; then
             # Triggered by callable
             echo "branch=${NEEDS_CHECK_AND_PREPARE_OUTPUTS_UNITY_BRANCH}" >> $GITHUB_OUTPUT
           else
