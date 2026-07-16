@@ -266,18 +266,15 @@ jobs:
           path: firebase_unity_sdk.zip
       
       - name: Package tgz
-        if: steps.check-input.outputs.package_for_checks == '1'
         run: |
           python scripts/build_scripts/build_package.py --zip_dir=built_artifact --output_upm=True --output=output_tgz
 
       - name: Listing output tgz
-        if: steps.check-input.outputs.package_for_checks == '1'
         run: |
           ls -Rl
         working-directory: output_tgz
 
       - name: compute SDK hash for tgz files
-        if: steps.check-input.outputs.package_for_checks == '1'
         shell: bash
         run: |
           tgz_files_list=$(find -type f -name '*.tgz')
@@ -288,7 +285,6 @@ jobs:
         working-directory: output_tgz
 
       - name: Upload Build tgz
-        if: steps.check-input.outputs.package_for_checks == '1'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
         with:
           name: firebase_unity_sdk_tgz
