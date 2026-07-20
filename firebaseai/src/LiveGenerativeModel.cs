@@ -76,7 +76,8 @@ namespace Firebase.AI
 
     private string GetURL()
     {
-      if (_backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI)
+      if (_backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI ||
+          _backend.Provider == FirebaseAI.Backend.InternalProvider.AgentPlatform)
       {
         return "wss://firebasevertexai.googleapis.com/ws" +
                "/google.firebase.vertexai.v1beta.LlmBidiService/BidiGenerateContent" +
@@ -97,7 +98,8 @@ namespace Firebase.AI
 
     private string GetModelName()
     {
-      if (_backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI)
+      if (_backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI ||
+          _backend.Provider == FirebaseAI.Backend.InternalProvider.AgentPlatform)
       {
         return $"projects/{_firebaseApp.Options.ProjectId}/locations/{_backend.Location}" +
                $"/publishers/google/models/{_modelName}";

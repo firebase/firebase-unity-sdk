@@ -421,6 +421,7 @@ namespace Firebase.AI
               $"models/{_modelName}";
           break;
         case FirebaseAI.Backend.InternalProvider.VertexAI:
+        case FirebaseAI.Backend.InternalProvider.AgentPlatform:
           jsonDict = new()
           {
             // Convert the Contents into a list of Json dictionaries

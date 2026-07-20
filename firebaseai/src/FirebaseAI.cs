@@ -37,7 +37,8 @@ namespace Firebase.AI
       internal enum InternalProvider
       {
         GoogleAI,
-        VertexAI
+        VertexAI,
+        AgentPlatform,
       }
 
       /// <summary>
@@ -68,9 +69,9 @@ namespace Firebase.AI
       /// <summary>
       /// The Vertex AI backend service configuration.
       /// </summary>
-      /// <param name="location">The region identifier, defaulting to `us-central1`; see [Vertex AI
-      ///     regions](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations#available-regions)
-      ///     for a list of supported regions.</param>
+      /// <param name="location">The region identifier, defaulting to `us-central1`</param>
+      /// @deprecated Use AgentPlatform instead. Note that the default location changes to 'global'
+      [Obsolete("Use AgentPlatform instead. Note that the default location changes to 'global'")]
       public static Backend VertexAI(string location = "us-central1")
       {
         if (string.IsNullOrWhiteSpace(location) || location.Contains("/"))
@@ -80,6 +81,21 @@ namespace Firebase.AI
         }
 
         return new Backend(InternalProvider.VertexAI, location);
+      }
+
+      /// <summary>
+      /// The Agent Platform backend service configuration.
+      /// </summary>
+      /// <param name="location">The region identifier, defaulting to `global`</param>
+      public static Backend AgentPlatform(string location = "global")
+      {
+        if (string.IsNullOrWhiteSpace(location) || location.Contains("/"))
+        {
+          throw new ArgumentException(
+              $"The location argument must be non-empty, and not contain special characters like '/'");
+        }
+
+        return new Backend(InternalProvider.AgentPlatform, location);
       }
 
       public override readonly string ToString()
