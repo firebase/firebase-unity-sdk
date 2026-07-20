@@ -48,7 +48,7 @@ namespace Firebase.AI
       internal InternalProvider Provider { get; }
       /// <summary>
       /// Intended for internal use only.
-      /// The region identifier used by the Vertex AI backend.
+      /// The region identifier used by the Vertex AI and Agent Platform backends.
       /// </summary>
       internal string Location { get; }
 
