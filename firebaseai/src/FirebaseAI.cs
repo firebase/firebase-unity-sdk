@@ -48,7 +48,7 @@ namespace Firebase.AI
       internal InternalProvider Provider { get; }
       /// <summary>
       /// Intended for internal use only.
-      /// The region identifier used by the Vertex AI and Agent Platform backends.
+      /// The region identifier used by the Vertex AI and Gemini Enterprise Agent Platform backends.
       /// </summary>
       internal string Location { get; }
 
@@ -87,7 +87,7 @@ namespace Firebase.AI
       }
 
       /// <summary>
-      /// The Agent Platform backend service configuration.
+      /// The Gemini Enterprise Agent Platform backend service configuration.
       /// </summary>
       /// <param name="location">The region identifier, defaulting to `global`</param>
       public static Backend AgentPlatform(string location = "global")
