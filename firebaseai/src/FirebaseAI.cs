@@ -70,8 +70,11 @@ namespace Firebase.AI
       /// The Vertex AI backend service configuration.
       /// </summary>
       /// <param name="location">The region identifier, defaulting to `us-central1`</param>
-      /// @deprecated Use AgentPlatform instead. Note that the default location changes to 'global'
-      [Obsolete("Use AgentPlatform instead. Note that the default location changes to 'global'")]
+      /// <remarks>
+      /// Deprecated: Use AgentPlatform instead. Note that the default location changes to 'global'.
+      /// </remarks>
+      /// @deprecated Use AgentPlatform instead. Note that the default location changes to 'global'.
+      [Obsolete("Use AgentPlatform instead. Note that the default location changes to 'global'.")]
       public static Backend VertexAI(string location = "us-central1")
       {
         if (string.IsNullOrWhiteSpace(location) || location.Contains("/"))
