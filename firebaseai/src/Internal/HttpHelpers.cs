@@ -30,7 +30,8 @@ namespace Firebase.AI.Internal
     internal static string GetURL(FirebaseApp firebaseApp,
         FirebaseAI.Backend backend, string modelName)
     {
-      if (backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI)
+      if (backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI ||
+          backend.Provider == FirebaseAI.Backend.InternalProvider.AgentPlatform)
       {
         return "https://firebasevertexai.googleapis.com/v1beta" +
             "/projects/" + firebaseApp.Options.ProjectId +
@@ -54,7 +55,8 @@ namespace Firebase.AI.Internal
     {
       var projectUrl = "https://firebasevertexai.googleapis.com/v1beta" +
           $"/projects/{firebaseApp.Options.ProjectId}";
-      if (backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI)
+      if (backend.Provider == FirebaseAI.Backend.InternalProvider.VertexAI ||
+          backend.Provider == FirebaseAI.Backend.InternalProvider.AgentPlatform)
       {
         return $"{projectUrl}/locations/{backend.Location}/templates/{templateId}";
       }

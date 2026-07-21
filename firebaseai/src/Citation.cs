@@ -55,6 +55,7 @@ namespace Firebase.AI
       {
         FirebaseAI.Backend.InternalProvider.GoogleAI => "citationSources",
         FirebaseAI.Backend.InternalProvider.VertexAI => "citations",
+        FirebaseAI.Backend.InternalProvider.AgentPlatform => "citations",
         _ => throw new ArgumentOutOfRangeException(nameof(backend), backend,
                            "Unsupported or unhandled backend provider encountered.")
       };

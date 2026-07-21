@@ -109,6 +109,12 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Add the AgentPlatform backend, and deprecate the VertexAI one,
+      to reflect the renaming of Vertex AI to Gemini Enterprise Agent Platform.
+      Note that the default location is different between the two.
+
 ### 13.14.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.10.0.
