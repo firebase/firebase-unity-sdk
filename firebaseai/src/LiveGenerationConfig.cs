@@ -25,6 +25,10 @@ namespace Firebase.AI
   ///
   /// Note: Multi-speaker configurations are not supported by the Live API (e.g.,
   /// <see cref="LiveGenerationConfig"/>).
+  ///
+  /// > Warning: This API
+  /// is in Public Preview, which means that the feature is not subject to any SLA
+  /// or deprecation policy and could change in backwards-incompatible ways.
   /// </summary>
   public readonly struct SpeechConfig
   {
@@ -96,6 +100,10 @@ namespace Firebase.AI
 
   /// <summary>
   /// Configuration for a multi-speaker audio generation setup.
+  ///
+  /// > Warning: This API
+  /// is in Public Preview, which means that the feature is not subject to any SLA
+  /// or deprecation policy and could change in backwards-incompatible ways.
   /// </summary>
   public readonly struct MultiSpeakerVoiceConfig
   {
@@ -131,6 +139,10 @@ namespace Firebase.AI
 
   /// <summary>
   /// Configures a participating speaker within a multi-speaker setup.
+  ///
+  /// > Warning: This API
+  /// is in Public Preview, which means that the feature is not subject to any SLA
+  /// or deprecation policy and could change in backwards-incompatible ways.
   /// </summary>
   public readonly struct SpeakerVoiceConfig
   {
@@ -184,6 +196,10 @@ namespace Firebase.AI
 
   /// <summary>
   /// A struct used to configure speech transcription settings.
+  ///
+  /// > Warning: This API
+  /// is in Public Preview, which means that the feature is not subject to any SLA
+  /// or deprecation policy and could change in backwards-incompatible ways.
   /// </summary>
   public readonly struct AudioTranscriptionConfig
   {
@@ -200,6 +216,10 @@ namespace Firebase.AI
 
   /// <summary>
   /// Configures the sliding window context compression mechanism.
+  ///
+  /// > Warning: This API
+  /// is in Public Preview, which means that the feature is not subject to any SLA
+  /// or deprecation policy and could change in backwards-incompatible ways.
   /// </summary>
   public readonly struct SlidingWindow
   {
@@ -227,6 +247,10 @@ namespace Firebase.AI
 
   /// <summary>
   /// Enables context window compression to manage the model's context window.
+  ///
+  /// > Warning: This API
+  /// is in Public Preview, which means that the feature is not subject to any SLA
+  /// or deprecation policy and could change in backwards-incompatible ways.
   /// </summary>
   public readonly struct ContextWindowCompressionConfig
   {
@@ -262,6 +286,10 @@ namespace Firebase.AI
 
   /// <summary>
   /// A struct defining model parameters to be used when generating live session content.
+  ///
+  /// > Warning: This API
+  /// is in Public Preview, which means that the feature is not subject to any SLA
+  /// or deprecation policy and could change in backwards-incompatible ways.
   /// </summary>
   public readonly struct LiveGenerationConfig
   {
@@ -417,6 +445,10 @@ namespace Firebase.AI
 
   /// <summary>
   /// Configuration for the session resumption mechanism.
+  ///
+  /// > Warning: This API
+  /// is in Public Preview, which means that the feature is not subject to any SLA
+  /// or deprecation policy and could change in backwards-incompatible ways.
   /// </summary>
   public class SessionResumptionConfig
   {
