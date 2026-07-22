@@ -207,6 +207,10 @@ namespace Firebase.AI
     /// 
     /// - Note: Refer to [Gemini models](https://firebase.google.com/docs/vertex-ai/gemini-models) for
     /// guidance on choosing an appropriate model for your use case.
+    ///
+    /// > Warning: This API
+    /// is in Public Preview, which means that the feature is not subject to any SLA
+    /// or deprecation policy and could change in backwards-incompatible ways.
     /// </summary>
     /// <param name="modelName">The name of the model to use; see
     ///     [available model names

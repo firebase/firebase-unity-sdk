@@ -34,7 +34,7 @@ namespace Firebase.AI
   /// for more details about the low-latency, two-way interactions that use text,
   /// audio, and video input, with audio and text output.
   ///
-  /// > Warning: For Firebase AI, Live Model
+  /// > Warning: This API
   /// is in Public Preview, which means that the feature is not subject to any SLA
   /// or deprecation policy and could change in backwards-incompatible ways.
   /// </summary>
