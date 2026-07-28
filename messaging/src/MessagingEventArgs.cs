@@ -32,5 +32,23 @@ namespace Firebase.Messaging {
     public string Token { get; set; }
   }
 
+  /// Argument for the RegistrationReceived event containing the installation ID string.
+  public sealed class RegistrationReceivedEventArgs : System.EventArgs {
+    public RegistrationReceivedEventArgs(string installationId) {
+      this.InstallationId = installationId;
+    }
+    /// The Firebase Installation ID (FID) used for sending messages to this app instance.
+    public string InstallationId { get; set; }
+  }
+
+  /// Argument for the UnregistrationReceived event containing the installation ID string.
+  public sealed class UnregistrationReceivedEventArgs : System.EventArgs {
+    public UnregistrationReceivedEventArgs(string installationId) {
+      this.InstallationId = installationId;
+    }
+    /// The Firebase Installation ID (FID) that was unregistered.
+    public string InstallationId { get; set; }
+  }
+
 }  // namespace Firebase.Messaging
 

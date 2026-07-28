@@ -33,6 +33,7 @@ namespace Firebase.Sample.Messaging {
     };
 
     private string registrationToken;
+    private string registrationId;
     private FirebaseMessage lastReceivedMessage;
 
     // Don't subscribe to a topic, since it might confuse the tests.
@@ -76,6 +77,8 @@ namespace Firebase.Sample.Messaging {
         // TODO(varconst): a more involved test to check that resubscribing works
         MakeTest(TestGetTokenAsync),
         MakeTest(TestDeleteTokenAsync),
+        MakeTest(TestRegisterAsync),
+        MakeTest(TestUnregisterAsync),
       };
 
       string[] customTests = {
@@ -91,6 +94,8 @@ namespace Firebase.Sample.Messaging {
         // TODO(varconst): a more involved test to check that resubscribing works
         "TestGetTokenAsync",
         "TestDeleteTokenAsync",
+        "TestRegisterAsync",
+        "TestUnregisterAsync",
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -118,6 +123,12 @@ namespace Firebase.Sample.Messaging {
     public override void OnTokenReceived(object sender, TokenReceivedEventArgs token) {
       base.OnTokenReceived(sender, token);
       registrationToken = token.Token;
+    }
+
+    public override void OnRegistrationReceived(object sender, RegistrationReceivedEventArgs e) {
+      base.OnRegistrationReceived(sender, e);
+      registrationId = e.InstallationId;
+      registrationToken = e.InstallationId;
     }
 
     // Starts the given coroutine and returns a task which reflects the ultimate result of the
@@ -226,6 +237,32 @@ namespace Firebase.Sample.Messaging {
     IEnumerator TestDeleteTokenAsync(TaskCompletionSource<string> tcs) {
       FirebaseMessaging.DeleteTokenAsync().ContinueWithOnMainThread(task => {
         tcs.SetResult("DeleteTokenAsync completed");
+      });
+      yield break;
+    }
+
+    // Test RegisterAsync
+    IEnumerator TestRegisterAsync(TaskCompletionSource<string> tcs) {
+      FirebaseMessaging.RegisterAsync().ContinueWithOnMainThread(task => {
+        if (task.IsFaulted) {
+          tcs.TrySetException(task.Exception);
+        } else {
+          tcs.SetResult("RegisterAsync completed");
+          DebugLog("RegisterAsync completed");
+        }
+      });
+      yield break;
+    }
+
+    // Test UnregisterAsync
+    IEnumerator TestUnregisterAsync(TaskCompletionSource<string> tcs) {
+      FirebaseMessaging.UnregisterAsync().ContinueWithOnMainThread(task => {
+        if (task.IsFaulted) {
+          tcs.TrySetException(task.Exception);
+        } else {
+          tcs.SetResult("UnregisterAsync completed");
+          DebugLog("UnregisterAsync completed");
+        }
       });
       yield break;
     }

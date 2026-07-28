@@ -75,6 +75,12 @@ public:
   // delegates *must* be called using the stdcall calling convention rather
   // than whatever the compiler defines.
   typedef void (SWIGSTDCALL *TokenReceivedCallback)(char* token);
+  // Function which is used to reference a C# delegate which is called from
+  // OnRegistrationReceived() callback in this class.
+  typedef void (SWIGSTDCALL *RegistrationReceivedCallback)(char* installation_id);
+  // Function which is used to reference a C# delegate which is called from
+  // OnUnregistrationReceived() callback in this class.
+  typedef void (SWIGSTDCALL *UnregistrationReceivedCallback)(char* installation_id);
 
   ListenerImpl() {}
   virtual ~ListenerImpl() {}
@@ -97,24 +103,48 @@ public:
     SendPendingEvents();
   }
 
+  // Receives registration from the messaging module and forwards it to the
+  // callback queue which will eventually result in a call to
+  // RegistrationReceived on the main thread.
+  virtual void OnRegistrationReceived(const char* installation_id) {
+    QueueItem(&registrations_, std::string(installation_id));
+    firebase::LogDebug("queued registration %s", installation_id);
+    SendPendingEvents();
+  }
+
+  // Receives unregistration from the messaging module and forwards it to the
+  // callback queue which will eventually result in a call to
+  // UnregistrationReceived on the main thread.
+  virtual void OnUnregistrationReceived(const char* installation_id) {
+    QueueItem(&unregistrations_, std::string(installation_id));
+    firebase::LogDebug("queued unregistration %s", installation_id);
+    SendPendingEvents();
+  }
+
   // Send any pending events on the currently allocated listener.
   static void SendPendingEvents() {
     MutexLock lock(g_mutex);
     if (g_listener) g_listener->SendQueuedEventsIfEnabled();
   }
 
-  // Configures methods that call C# delegates when OnMessageReceived() and
-  // OnTokenReceived() methods of the listener are called.
-  // When callbacks are specified a listener is created, if both arguments
+  // Configures methods that call C# delegates when OnMessageReceived(),
+  // OnTokenReceived(), OnRegistrationReceived(), and OnUnregistrationReceived()
+  // methods of the listener are called.
+  // When callbacks are specified a listener is created, if all arguments
   // are null the listener is destroyed.
   static void SetCallbacks(MessageReceivedCallback messageCallback,
-                           TokenReceivedCallback tokenCallback) {
+                           TokenReceivedCallback tokenCallback,
+                           RegistrationReceivedCallback registrationCallback,
+                           UnregistrationReceivedCallback unregistrationCallback) {
     MutexLock lock(g_mutex);
-    ListenerImpl *new_listener = (messageCallback && tokenCallback) ?
+    ListenerImpl *new_listener = (messageCallback || tokenCallback ||
+                                  registrationCallback || unregistrationCallback) ?
         new ListenerImpl : nullptr;
     Listener *previous_listener = SetListener(new_listener);
     g_message_received_callback = messageCallback;
     g_token_received_callback = tokenCallback;
+    g_registration_received_callback = registrationCallback;
+    g_unregistration_received_callback = unregistrationCallback;
     if (previous_listener) delete previous_listener;
     g_listener = new_listener;
   }
@@ -122,13 +152,18 @@ public:
   // Enables / disables listener callbacks.  When a callback is disabled,
   // events are queued in the ListenerImpl.
   static void SetCallbacksEnabled(bool message_callback_enabled,
-                                  bool token_callback_enabled) {
+                                  bool token_callback_enabled,
+                                  bool registration_callback_enabled,
+                                  bool unregistration_callback_enabled) {
     g_message_callback_enabled = message_callback_enabled;
     g_token_callback_enabled = token_callback_enabled;
+    g_registration_callback_enabled = registration_callback_enabled;
+    g_unregistration_callback_enabled = unregistration_callback_enabled;
   }
 
  private:
-  // Send any queued events (messages, tokens) if the queues are enabled.
+  // Send any queued events (messages, tokens, registrations, unregistrations)
+  // if the queues are enabled.
   void SendQueuedEventsIfEnabled() {
     MutexLock lock(g_mutex);
     if (g_message_callback_enabled) {
@@ -151,6 +186,26 @@ public:
         tokens_.pop();
       }
     }
+    if (g_registration_callback_enabled) {
+      while (registrations_.size()) {
+        const std::string &installation_id = registrations_.front();
+        firebase::LogDebug("sending registration %s", installation_id.c_str());
+        firebase::callback::AddCallback(
+            new firebase::callback::CallbackString(
+                installation_id.c_str(), RegistrationReceived));
+        registrations_.pop();
+      }
+    }
+    if (g_unregistration_callback_enabled) {
+      while (unregistrations_.size()) {
+        const std::string &installation_id = unregistrations_.front();
+        firebase::LogDebug("sending unregistration %s", installation_id.c_str());
+        firebase::callback::AddCallback(
+            new firebase::callback::CallbackString(
+                installation_id.c_str(), UnregistrationReceived));
+        unregistrations_.pop();
+      }
+    }
   }
 
   // Push an item into the queue and discard the oldest item if the queue
@@ -170,7 +225,13 @@ public:
   // Cache of tokens that are sent to the C# proxy class when a token
   // event handler is set.
   std::queue<std::string> tokens_;
-  // Maximum number of items to queue in the messages and tokens queues.
+  // Cache of registration IDs that are sent to the C# proxy class when a
+  // registration event handler is set.
+  std::queue<std::string> registrations_;
+  // Cache of unregistration IDs that are sent to the C# proxy class when an
+  // unregistration event handler is set.
+  std::queue<std::string> unregistrations_;
+  // Maximum number of items to queue in the event queues.
   static const size_t kMaxQueueSize = 32;
 
   // Wrapper that calls g_message_received_callback converting from the compiler
@@ -208,6 +269,20 @@ public:
     }
   }
 
+  // Wrapper that calls g_message_token_callback converting from the compiler
+  // defined calling convention (e.g cdecl) to SWIGSTCALL.
+  static void RegistrationReceived(const char* installation_id) {
+    if (g_registration_received_callback) {
+      g_registration_received_callback(SWIG_csharp_string_callback(installation_id));
+    }
+  }
+
+  static void UnregistrationReceived(const char* installation_id) {
+    if (g_unregistration_received_callback) {
+      g_unregistration_received_callback(SWIG_csharp_string_callback(installation_id));
+    }
+  }
+
   // Mutex which controls access to queues and callback pointers in this class.
   static Mutex g_mutex;
   // Currently allocated listener.
@@ -215,9 +290,13 @@ public:
   // Functions initialized
   static MessageReceivedCallback g_message_received_callback;
   static TokenReceivedCallback g_token_received_callback;
-  // Set to false if messages / tokens should be queued.
+  static RegistrationReceivedCallback g_registration_received_callback;
+  static UnregistrationReceivedCallback g_unregistration_received_callback;
+  // Set to false if events should be queued.
   static bool g_message_callback_enabled;
   static bool g_token_callback_enabled;
+  static bool g_registration_callback_enabled;
+  static bool g_unregistration_callback_enabled;
 };
 
 Mutex ListenerImpl::g_mutex;
@@ -226,23 +305,36 @@ ListenerImpl::MessageReceivedCallback
     ListenerImpl::g_message_received_callback = nullptr;
 ListenerImpl::TokenReceivedCallback
     ListenerImpl::g_token_received_callback = nullptr;
+ListenerImpl::RegistrationReceivedCallback
+    ListenerImpl::g_registration_received_callback = nullptr;
+ListenerImpl::UnregistrationReceivedCallback
+    ListenerImpl::g_unregistration_received_callback = nullptr;
 bool ListenerImpl::g_message_callback_enabled = false;
 bool ListenerImpl::g_token_callback_enabled = false;
+bool ListenerImpl::g_registration_callback_enabled = false;
+bool ListenerImpl::g_unregistration_callback_enabled = false;
 
 // Sets callbacks on ListenerImpl via ListenerImpl::SetCallbacks.
 // This is in the firebase::messaging to simplify calling this method from C#.
 void SetListenerCallbacks(
     ListenerImpl::MessageReceivedCallback message_callback,
-    ListenerImpl::TokenReceivedCallback token_callback) {
-  ListenerImpl::SetCallbacks(message_callback, token_callback);
+    ListenerImpl::TokenReceivedCallback token_callback,
+    ListenerImpl::RegistrationReceivedCallback registration_callback,
+    ListenerImpl::UnregistrationReceivedCallback unregistration_callback) {
+  ListenerImpl::SetCallbacks(message_callback, token_callback,
+                             registration_callback, unregistration_callback);
 }
 
 // Enables / disables listener callbacks on ListenerImpl.  When a callback
 // is disabled, events are queued in the ListenerImpl.
 void SetListenerCallbacksEnabled(bool message_callback_enabled,
-                                 bool token_callback_enabled) {
+                                 bool token_callback_enabled,
+                                 bool registration_callback_enabled,
+                                 bool unregistration_callback_enabled) {
   ListenerImpl::SetCallbacksEnabled(message_callback_enabled,
-                                    token_callback_enabled);
+                                    token_callback_enabled,
+                                    registration_callback_enabled,
+                                    unregistration_callback_enabled);
 }
 
 // Send any events queued in the listener.
@@ -265,6 +357,8 @@ void SendPendingEvents() {
     internal delegate bool MessageReceivedDelegate(System.IntPtr message);
     // Delegate called from ListenerImpl::TokenReceivedCallback().
     internal delegate void TokenReceivedDelegate(string token);
+    internal delegate void RegistrationReceivedDelegate(string installationId);
+    internal delegate void UnregistrationReceivedDelegate(string installationId);
 
     // Create delegate instances that are connected to a C/C++ compatible
     // methods.
@@ -272,6 +366,10 @@ void SendPendingEvents() {
         new MessageReceivedDelegate(MessageReceivedDelegateMethod);
     private TokenReceivedDelegate tokenReceivedDelegate =
         new TokenReceivedDelegate(TokenReceivedDelegateMethod);
+    private RegistrationReceivedDelegate registrationReceivedDelegate =
+        new RegistrationReceivedDelegate(RegistrationReceivedDelegateMethod);
+    private UnregistrationReceivedDelegate unregistrationReceivedDelegate =
+        new UnregistrationReceivedDelegate(UnregistrationReceivedDelegateMethod);
     // Hold a reference to the default app until this object is finalized.
     private FirebaseApp app = Firebase.FirebaseApp.DefaultInstance;
 
@@ -307,7 +405,9 @@ void SendPendingEvents() {
     // Setup callbacks from ListenerImpl C++ class to this object.
     private Listener() {
       FirebaseMessagingInternal.SetListenerCallbacks(messageReceivedDelegate,
-                                                     tokenReceivedDelegate);
+                                                     tokenReceivedDelegate,
+                                                     registrationReceivedDelegate,
+                                                     unregistrationReceivedDelegate);
     }
 
     ~Listener() { Dispose(); }
@@ -317,7 +417,7 @@ void SendPendingEvents() {
       lock (typeof(Listener)) {
         if (listener == this) {
           System.Diagnostics.Debug.Assert(app != null);
-          FirebaseMessagingInternal.SetListenerCallbacks(null, null);
+          FirebaseMessagingInternal.SetListenerCallbacks(null, null, null, null);
           listener = null;
           app = null;
         }
@@ -358,6 +458,26 @@ void SendPendingEvents() {
           }
         });
     }
+
+    [MonoPInvokeCallback(typeof(RegistrationReceivedDelegate))]
+    private static void RegistrationReceivedDelegateMethod(string installationId) {
+      ExceptionAggregator.Wrap(() => {
+          var handler = FirebaseMessagingInternal.RegistrationReceivedInternal;
+          if (handler != null) {
+            handler(null, new Firebase.Messaging.RegistrationReceivedEventArgs(installationId));
+          }
+        });
+    }
+
+    [MonoPInvokeCallback(typeof(UnregistrationReceivedDelegate))]
+    private static void UnregistrationReceivedDelegateMethod(string installationId) {
+      ExceptionAggregator.Wrap(() => {
+          var handler = FirebaseMessagingInternal.UnregistrationReceivedInternal;
+          if (handler != null) {
+            handler(null, new Firebase.Messaging.UnregistrationReceivedEventArgs(installationId));
+          }
+        });
+    }
   }
 
   // Backing store for messaging events.
@@ -365,6 +485,10 @@ void SendPendingEvents() {
     MessageReceivedInternal;
   internal static event System.EventHandler<TokenReceivedEventArgs>
     TokenReceivedInternal;
+  internal static event System.EventHandler<RegistrationReceivedEventArgs>
+    RegistrationReceivedInternal;
+  internal static event System.EventHandler<UnregistrationReceivedEventArgs>
+    UnregistrationReceivedInternal;
 
   // Create the listener if messaging events are set and pump the message queue
   // of an existing listener, otherwise destroy it.
@@ -372,14 +496,17 @@ void SendPendingEvents() {
     lock (typeof(Listener)) {
       bool messageReceivedSet = MessageReceivedInternal != null;
       bool tokenReceivedSet = TokenReceivedInternal != null;
-      if (messageReceivedSet || tokenReceivedSet) {
+      bool registrationReceivedSet = RegistrationReceivedInternal != null;
+      bool unregistrationReceivedSet = UnregistrationReceivedInternal != null;
+      bool anySet = messageReceivedSet || tokenReceivedSet || registrationReceivedSet || unregistrationReceivedSet;
+      if (anySet) {
         Listener.Create();
       } else {
         Listener.Destroy();
       }
       FirebaseMessagingInternal.SetListenerCallbacksEnabled(
-          messageReceivedSet, tokenReceivedSet);
-      if (messageReceivedSet || tokenReceivedSet) {
+          messageReceivedSet, tokenReceivedSet, registrationReceivedSet, unregistrationReceivedSet);
+      if (anySet) {
         FirebaseMessagingInternal.SendPendingEvents();
       }
     }
@@ -445,6 +572,54 @@ void SendPendingEvents() {
   }
 #endif  // DOXYGEN
 
+  // NOTE: RegistrationReceivedEventArgs is defined in
+  // firebase/messaging/client/unity/src/MessagingEventArgs.cs.
+#if DOXYGEN
+  /// Called on the client when a registration installation ID arrives or changes.
+  public static event System.EventHandler<RegistrationReceivedEventArgs>
+      RegistrationReceived;
+#else
+  public static event System.EventHandler<RegistrationReceivedEventArgs>
+      RegistrationReceived {
+    add {
+      lock (typeof(Listener)) {
+        RegistrationReceivedInternal += value;
+        CreateOrDestroyListener();
+      }
+    }
+    remove {
+      lock (typeof(Listener)) {
+        RegistrationReceivedInternal -= value;
+        CreateOrDestroyListener();
+      }
+    }
+  }
+#endif  // DOXYGEN
+
+  // NOTE: UnregistrationReceivedEventArgs is defined in
+  // firebase/messaging/client/unity/src/MessagingEventArgs.cs.
+#if DOXYGEN
+  /// Called on the client when an unregistration confirmation arrives.
+  public static event System.EventHandler<UnregistrationReceivedEventArgs>
+      UnregistrationReceived;
+#else
+  public static event System.EventHandler<UnregistrationReceivedEventArgs>
+      UnregistrationReceived {
+    add {
+      lock (typeof(Listener)) {
+        UnregistrationReceivedInternal += value;
+        CreateOrDestroyListener();
+      }
+    }
+    remove {
+      lock (typeof(Listener)) {
+        UnregistrationReceivedInternal -= value;
+        CreateOrDestroyListener();
+      }
+    }
+  }
+#endif  // DOXYGEN
+
 %}  // End of code added to the C# module file
 
 // Rename the generated classes to *Internal
@@ -474,6 +649,12 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(
 SWIG_MAP_CFUNC_TO_CSDELEGATE(
     firebase::messaging::ListenerImpl::TokenReceivedCallback,
     Firebase.Messaging.FirebaseMessagingInternal.Listener.TokenReceivedDelegate)
+SWIG_MAP_CFUNC_TO_CSDELEGATE(
+    firebase::messaging::ListenerImpl::RegistrationReceivedCallback,
+    Firebase.Messaging.FirebaseMessagingInternal.Listener.RegistrationReceivedDelegate)
+SWIG_MAP_CFUNC_TO_CSDELEGATE(
+    firebase::messaging::ListenerImpl::UnregistrationReceivedCallback,
+    Firebase.Messaging.FirebaseMessagingInternal.Listener.UnregistrationReceivedDelegate)
 
 // Declare the functions we added to the C++ module that we want to generate C# for
 namespace firebase {
@@ -481,10 +662,14 @@ namespace messaging {
 %csmethodmodifiers SetListenerCallbacks "private";
 void SetListenerCallbacks(
     firebase::messaging::ListenerImpl::MessageReceivedCallback messageCallback,
-    firebase::messaging::ListenerImpl::TokenReceivedCallback tokenCallback);
+    firebase::messaging::ListenerImpl::TokenReceivedCallback tokenCallback,
+    firebase::messaging::ListenerImpl::RegistrationReceivedCallback registrationCallback,
+    firebase::messaging::ListenerImpl::UnregistrationReceivedCallback unregistrationCallback);
 %csmethodmodifiers SetListenerCallbacksEnabled "private";
 void SetListenerCallbacksEnabled(bool message_callback_enabled,
-                                 bool token_callback_enabled);
+                                 bool token_callback_enabled,
+                                 bool registration_callback_enabled,
+                                 bool unregistration_callback_enabled);
 %csmethodmodifiers SendPendingEvents "private";
 void SendPendingEvents();
 
