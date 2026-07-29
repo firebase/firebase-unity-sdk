@@ -143,22 +143,20 @@ namespace Firebase.Sample.Messaging {
     }
 
     // Guarantee that the registration token is set, before running other tests.
-    Task TestGetRegistrationToken() {
+    async Task TestGetRegistrationToken() {
+      // Generally, the app will receive a token shortly after starting, so wait
+      // a couple of seconds.
+      await Task.Delay(2000);
+
       // The registration token might already be set, if gotten via OnTokenReceived
       if (!string.IsNullOrEmpty(registrationToken)) {
         DebugLog("Already have a registration token, skipping GetTokenAsync call");
-        return Task.CompletedTask;
+        return;
       }
 
       // Otherwise, call GetTokenAsync, to fetch one. This can happen if the app
       // already had a token from a previous run, and thus didn't need a new token.
-      return Firebase.Messaging.FirebaseMessaging.GetTokenAsync().ContinueWithOnMainThread(t => {
-        if (t.IsFaulted) {
-          throw t.Exception;
-        }
-
-        registrationToken = t.Result;
-      });
+      registrationToken = await Firebase.Messaging.FirebaseMessaging.GetTokenAsync();
     }
 
     // If the registration token is missing, throw an exception.
@@ -227,6 +225,14 @@ namespace Firebase.Sample.Messaging {
 
     // Test GetTokenAsync
     IEnumerator TestGetTokenAsync(TaskCompletionSource<string> tcs) {
+      if (!string.IsNullOrEmpty(registrationId)) {
+        // The newer method is enabled, which means GetToken will not work,
+        // so exit early.
+        DebugLog("Newer registration is enabled, exit early.");
+        tcs.SetResult(null);
+        yield return null;
+      }
+
       FirebaseMessaging.GetTokenAsync().ContinueWithOnMainThread(task => {
         tcs.SetResult(task.Result);
         DebugLog("GetToken:"+task.Result);
@@ -243,6 +249,14 @@ namespace Firebase.Sample.Messaging {
 
     // Test RegisterAsync
     IEnumerator TestRegisterAsync(TaskCompletionSource<string> tcs) {
+      // This will only work if the newer method is enabled, which
+      // we can check if the registrationId is set to verify.
+      if (string.IsNullOrEmpty(registrationId)) {
+        DebugLog("Newer registration is not enabled, exit early.");
+        tcs.SetResult(null);
+        yield return null;
+      }
+
       FirebaseMessaging.RegisterAsync().ContinueWithOnMainThread(task => {
         if (task.IsFaulted) {
           tcs.TrySetException(task.Exception);
@@ -256,6 +270,14 @@ namespace Firebase.Sample.Messaging {
 
     // Test UnregisterAsync
     IEnumerator TestUnregisterAsync(TaskCompletionSource<string> tcs) {
+      // This will only work if the newer method is enabled, which
+      // we can check if the registrationId is set to verify.
+      if (string.IsNullOrEmpty(registrationId)) {
+        DebugLog("Newer registration is not enabled, exit early.");
+        tcs.SetResult(null);
+        yield return null;
+      }
+
       FirebaseMessaging.UnregisterAsync().ContinueWithOnMainThread(task => {
         if (task.IsFaulted) {
           tcs.TrySetException(task.Exception);
