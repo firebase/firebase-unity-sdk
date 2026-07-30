@@ -17,8 +17,8 @@ const { onCall, HttpsError } = require("firebase-functions/https");
 // Adds two numbers to each other.
 exports.addNumbers = onCall((request) => {
   // Numbers passed from the client.
-  const firstNumber = request.data.firstNumber;
-  const secondNumber = request.data.secondNumber;
+  const firstNumber = request.data?.firstNumber;
+  const secondNumber = request.data?.secondNumber;
 
   // Checking that attributes are present and are numbers.
   if (!Number.isFinite(firstNumber) || !Number.isFinite(secondNumber)) {
@@ -50,8 +50,8 @@ exports.addtwowithlimiteduse = onCall({
         'The function must be called from an App Check verified app.');
   }
 
-  const firstNumber = request.data.firstNumber;
-  const secondNumber = request.data.secondNumber;
+  const firstNumber = request.data?.firstNumber;
+  const secondNumber = request.data?.secondNumber;
 
   if (firstNumber === undefined || secondNumber === undefined) {
      throw new HttpsError('invalid-argument', 'The function must be called with "firstNumber" and "secondNumber".');
