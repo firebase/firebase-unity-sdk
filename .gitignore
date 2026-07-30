@@ -37,3 +37,6 @@ ndk_zip
 
 # Downloaded EDM4U
 unity_jar_resolver/
+
+# Node.js dependencies
+node_modules/
