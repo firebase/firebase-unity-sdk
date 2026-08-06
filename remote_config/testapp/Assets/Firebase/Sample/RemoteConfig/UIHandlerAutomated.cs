@@ -15,6 +15,8 @@ namespace Firebase.Sample.RemoteConfig {
       // non-static.
       Func<Task>[] tests = {
         TestSetConfigSettings,
+        TestSetCustomSignals,
+        TestSetCustomSignalsValidation,
         TestDisplayData,
         TestDisplayAllKeys,
 // Skip the Realtime RC test on desktop as it is not yet supported.
@@ -159,6 +161,46 @@ namespace Firebase.Sample.RemoteConfig {
         AssertEq("Unexpected value for config_test_bool", true,
           FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_bool").BooleanValue);
       });
+    }
+
+    Task TestSetCustomSignals() {
+      var signals = new System.Collections.Generic.Dictionary<string, object> {
+        { "test_string", "alpha" },
+        { "test_int", 42 },
+        { "test_double", 3.14 },
+        { "test_null", null }
+      };
+      return FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(signals)
+          .ContinueWithOnMainThread(task => {
+            if (task.IsFaulted) {
+              throw new Exception("SetCustomSignalsAsync failed: " + task.Exception);
+            }
+            DebugLog("TestSetCustomSignals passed!");
+          });
+    }
+
+    Task TestSetCustomSignalsValidation() {
+      // Null dictionary check
+      try {
+        FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(null);
+        throw new Exception("Expected ArgumentNullException for null customSignals");
+      } catch (ArgumentNullException) {
+        // Expected
+      }
+
+      // Invalid value type check
+      try {
+        var invalidSignals = new System.Collections.Generic.Dictionary<string, object> {
+          { "bad_key", new System.DateTime() }
+        };
+        FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(invalidSignals);
+        throw new Exception("Expected ArgumentException for invalid value type");
+      } catch (ArgumentException) {
+        // Expected
+      }
+
+      DebugLog("TestSetCustomSignalsValidation passed!");
+      return Task.FromResult(true);
     }
   }
 }

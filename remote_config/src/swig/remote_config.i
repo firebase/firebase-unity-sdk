@@ -37,6 +37,7 @@
 #include <vector>
 #include "app/src/callback.h"
 #include "app/src/cpp_instance_manager.h"
+#include "app/src/log.h"
 #include "remote_config/src/include/firebase/remote_config.h"
 
 namespace firebase {
@@ -135,6 +136,7 @@ void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUp
 %ignore firebase::remote_config::RemoteConfig::GetInstance;
 
 %ignore firebase::remote_config::RemoteConfig::SetDefaults;
+%ignore firebase::remote_config::RemoteConfig::SetCustomSignals;
 // Ignore the various Get<Types>, as GetValue is used instead.
 %ignore firebase::remote_config::RemoteConfig::GetBoolean;
 %ignore firebase::remote_config::RemoteConfig::GetLong;
@@ -279,6 +281,22 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
         self->SetDefaults(default_array, default_count);
     delete[] default_array;
     return future_result;
+  }
+
+  Future<void> SetCustomSignalsInternal(
+      std::vector<std::string> keys,
+      std::vector<firebase::Variant> values) {
+    if (keys.size() != values.size()) {
+      firebase::LogError(
+          "SetCustomSignalsInternal given different list sizes (%zu, %zu)",
+          keys.size(), values.size());
+      return firebase::Future<void>();
+    }
+    std::map<std::string, firebase::Variant> custom_signals;
+    for (size_t i = 0; i < keys.size(); ++i) {
+      custom_signals[keys[i]] = values[i];
+    }
+    return self->SetCustomSignals(custom_signals);
   }
 }
 
