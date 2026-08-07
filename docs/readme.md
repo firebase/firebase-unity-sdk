@@ -109,6 +109,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Firebase AI: Added `AudioAsFloat` property to `GenerateContentResponse` to seamlessly decode `audio/pcm` and `audio/l16` byte arrays into normalized float arrays.
+    - Firebase AI: Allowed `LiveSessionResponse` to use `audio/l16` MIME type returned by some text-to-speech models instead of being filtered out.
+
 ### 13.15.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.11.0.

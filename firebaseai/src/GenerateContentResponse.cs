@@ -95,6 +95,32 @@ namespace Firebase.AI
       }
     }
 
+    /// <summary>
+    /// The response's content that was audio, if it exists.
+    /// </summary>
+    public IReadOnlyList<byte[]> Audio
+    {
+      get
+      {
+        return Candidates.FirstOrDefault().Content.Parts
+            .OfType<ModelContent.InlineDataPart>()
+            .Where(part => part.MimeType != null && (part.MimeType.StartsWith("audio/pcm") || part.MimeType.StartsWith("audio/l16")))
+            .Select(part => part.Data)
+            .ToList();
+      }
+    }
+
+    /// <summary>
+    /// The response's content that was audio, if it exists, converted into floats.
+    /// </summary>
+    public IReadOnlyList<float[]> AudioAsFloat
+    {
+      get
+      {
+        return Audio?.Select(AudioHelpers.ConvertPcmBytesToFloat).ToArray();
+      }
+    }
+
     // Hidden constructor, users don't need to make this.
     private GenerateContentResponse(List<Candidate> candidates, PromptFeedback? promptFeedback,
         UsageMetadata? usageMetadata)
