@@ -111,11 +111,18 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
+    - Messaging: Added new Registration methods using Installation Ids.
+      Deprecated old Token based methods.
+
+### 13.15.0
+-   Changes
+    - General: Update to Firebase C++ SDK version 13.11.0.
+    - General (Android): Update to Firebase Android BoM version 34.17.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.17.0.
     - Firebase AI: Add the AgentPlatform backend, and deprecate the VertexAI one,
       to reflect the renaming of Vertex AI to Gemini Enterprise Agent Platform.
       Note that the default location is different between the two.
-    - Messaging: Added new Registration methods using Installation Ids.
-      Deprecated old Token based methods.
+    - Realtime Database  (Desktop): Fixed an intermittent use-after-free crash (`ACCESS_VIOLATION`) when detaching a listener while a WebSocket listen response is pending.
 
 ### 13.14.0
 -   Changes
