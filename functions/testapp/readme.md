@@ -35,6 +35,24 @@ inside the Unity Editor.
   firebase --project=YOUR_PROJECT_ID deploy --only functions
   ```
 
+## Running with the Firebase Emulator Suite
+
+You can test the Cloud Functions locally using the Firebase Local Emulator Suite:
+
+1. Start the Functions emulator from the `functions/testapp/functions` directory:
+   ```bash
+   firebase emulators:start --only functions
+   ```
+2. In `Assets/Firebase/Sample/Functions/UIHandler.cs`, uncomment the `UseFunctionsEmulator` calls to point to the local emulator:
+   * For Unity Editor / Desktop builds:
+     ```csharp
+     functions.UseFunctionsEmulator("http://localhost:5005");
+     ```
+   * For Android builds (running on an emulator):
+     ```csharp
+     functions.UseFunctionsEmulator("http://10.0.2.2:5005");
+     ```
+
 ## Running the Sample inside the Editor
 
   - Download the

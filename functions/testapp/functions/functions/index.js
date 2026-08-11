@@ -12,19 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const functions = require("firebase-functions/v1");
-const functionsV2 = require("firebase-functions/v2");
+const { onCall, HttpsError } = require("firebase-functions/https");
 
 // Adds two numbers to each other.
-exports.addNumbers = functions.https.onCall((data) => {
+exports.addNumbers = onCall((request) => {
   // Numbers passed from the client.
-  const firstNumber = data.firstNumber;
-  const secondNumber = data.secondNumber;
+  const firstNumber = request.data?.firstNumber;
+  const secondNumber = request.data?.secondNumber;
 
   // Checking that attributes are present and are numbers.
   if (!Number.isFinite(firstNumber) || !Number.isFinite(secondNumber)) {
     // Throwing an HttpsError so that the client gets the error details.
-    throw new functions.https.HttpsError('invalid-argument', 'The function ' +
+    throw new HttpsError('invalid-argument', 'The function ' +
         'must be called with two arguments "firstNumber" and "secondNumber" ' +
         'which must both be numbers.');
   }
@@ -39,23 +38,23 @@ exports.addNumbers = functions.https.onCall((data) => {
 });
 
 // Creates a function that consumes limited-use App Check tokens
-exports.addtwowithlimiteduse = functions.runWith({
+exports.addtwowithlimiteduse = onCall({
   enforceAppCheck: true,
   consumeAppCheckToken: true,
-  maxInstances: 10 // Setting maxInstances the V1 way
-}).https.onCall((data, context) => {
-  // context.app will be defined if a valid App Check token was provided
-  if (context.app === undefined) {
-    throw new functions.https.HttpsError(
+  maxInstances: 10
+}, (request) => {
+  // request.app will be defined if a valid App Check token was provided
+  if (request.app === undefined) {
+    throw new HttpsError(
         'failed-precondition',
         'The function must be called from an App Check verified app.');
   }
 
-  const firstNumber = data.firstNumber;
-  const secondNumber = data.secondNumber;
+  const firstNumber = request.data?.firstNumber;
+  const secondNumber = request.data?.secondNumber;
 
   if (firstNumber === undefined || secondNumber === undefined) {
-     throw new functions.https.HttpsError('invalid-argument', 'The function must be called with "firstNumber" and "secondNumber".');
+     throw new HttpsError('invalid-argument', 'The function must be called with "firstNumber" and "secondNumber".');
   }
 
   return {
@@ -84,7 +83,7 @@ async function* generateText() {
  * ("hello", "world", "this", "is", "cool") chunk by chunk when the client accepts
  * streaming, and returns the joined string "hello world this is cool" as the final response.
  */
-exports.genStream = functionsV2.https.onCall(
+exports.genStream = onCall(
   async (request, response) => {
     if (request.acceptsStreaming) {
       for await (const chunk of generateText()) {
@@ -95,7 +94,7 @@ exports.genStream = functionsV2.https.onCall(
   }
 );
 
-exports.genStreamError = functionsV2.https.onCall(
+exports.genStreamError = onCall(
   async (request, response) => {
     throw Error("BOOM");
   }
