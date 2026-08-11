@@ -26,6 +26,55 @@ namespace Firebase.Messaging {
 /// to client applications running on target devices.
 public static class FirebaseMessaging {
 
+  /// Enable or disable registration during initialization of Firebase Cloud
+  /// Messaging.
+  ///
+  /// The installation ID returned is what identifies the user to Firebase, so
+  /// disabling this avoids creating any new identity and automatically sending
+  /// it to Firebase, unless consent has been granted.
+  ///
+  /// If this setting is enabled, it triggers the registration refresh
+  /// immediately. This setting is persisted across app restarts and overrides
+  /// the setting "firebase_messaging_auto_init_enabled" specified in your
+  /// Android manifest (on Android) or Info.plist (on iOS and tvOS).
+  ///
+  /// <p>By default, registration during initialization is enabled.
+  ///
+  /// The registration happens before you can programmatically disable it, so
+  /// if you need to change the default, (for example, because you want to
+  /// prompt the user before FCM generates/refreshes a registration on app
+  /// startup), add to your application’s manifest:
+  ///
+  /// @if NOT_DOXYGEN
+  ///   <meta-data android:name="firebase_messaging_auto_init_enabled"
+  ///   android:value="false" />
+  /// @else
+  /// @code
+  ///   &lt;meta-data android:name="firebase_messaging_auto_init_enabled"
+  ///   android:value="false" /&gt;
+  /// @endcode
+  /// @endif
+  ///
+  /// or on iOS or tvOS to your Info.plist:
+  ///
+  /// @if NOT_DOXYGEN
+  ///   <key>FirebaseMessagingAutoInitEnabled</key>
+  ///   <false/>
+  /// @else
+  /// @code
+  ///   &lt;key&gt;FirebaseMessagingAutoInitEnabled&lt;/key&gt;
+  ///   &lt;false/&gt;
+  /// @endcode
+  /// @endif
+  public static bool RegistrationOnInitEnabled {
+    get {
+      return FirebaseMessagingInternal.IsRegistrationOnInitEnabled();
+    }
+    set {
+      FirebaseMessagingInternal.SetRegistrationOnInitEnabled(value);
+    }
+  }
+
   /// Enable or disable token registration during initialization of Firebase
   /// Cloud Messaging.
   ///
@@ -66,6 +115,7 @@ public static class FirebaseMessaging {
   ///   &lt;false/&gt;
   /// @endcode
   /// @endif
+  [System.Obsolete("Use RegistrationOnInitEnabled instead.")]
   public static bool TokenRegistrationOnInitEnabled {
     get {
       return FirebaseMessagingInternal.IsTokenRegistrationOnInitEnabled();
@@ -99,11 +149,39 @@ public static class FirebaseMessaging {
     }
   }
 
+  /// @brief Registers the current Firebase app instance with the Firebase Cloud
+  /// Messaging (FCM) backend to receive messages.
+  ///
+  /// This creates a Firebase Installations ID (FID), if one does not exist, and
+  /// sends information about the application and the device where it's running to
+  /// the Firebase backend.
+  ///
+  /// Upon completion, RegistrationReceived will be triggered with the current
+  /// FID. Calling this function when already registered will still invoke the
+  /// RegistrationReceived callback with the existing FID.
+  ///
+  /// @return A task that completes when the registration is completed.
+  public static System.Threading.Tasks.Task RegisterAsync() {
+    return FirebaseMessagingInternal.RegisterAsync();
+  }
+
+  /// @brief Unregisters the current app instance with FCM.
+  ///
+  /// Note that this does not delete the Firebase Installations ID that may have
+  /// been created during registration. See Installations.Delete() for
+  /// deleting that.
+  ///
+  /// @return A task that completes when the unregistration is completed.
+  public static System.Threading.Tasks.Task UnregisterAsync() {
+    return FirebaseMessagingInternal.UnregisterAsync();
+  }
+
   /// @brief This creates a Firebase Installations ID, if one does not exist, and
   /// sends information about the application and the device where it's running to
   /// the Firebase backend.
   ///
   /// @return A task with the token.
+  [System.Obsolete("Use RegisterAsync() instead.")]
   public static System.Threading.Tasks.Task<string> GetTokenAsync() {
     return FirebaseMessagingInternal.GetTokenAsync();
   }
@@ -115,6 +193,7 @@ public static class FirebaseMessaging {
   /// deleting that.
   ///
   /// @return A task that completes when the token is deleted.
+  [System.Obsolete("Use UnregisterAsync() instead.")]
   public static System.Threading.Tasks.Task DeleteTokenAsync() {
     return FirebaseMessagingInternal.DeleteTokenAsync();
   }
@@ -135,14 +214,44 @@ public static class FirebaseMessaging {
 
 #if DOXYGEN
   /// Called on the client when a registration token message arrives.
+  [System.Obsolete("Use RegistrationReceived instead.")]
   public static event System.EventHandler<TokenReceivedEventArgs> TokenReceived;
 #else
+  [System.Obsolete("Use RegistrationReceived instead.")]
   public static event System.EventHandler<TokenReceivedEventArgs> TokenReceived {
     add {
       FirebaseMessagingInternal.TokenReceived += value;
     }
     remove {
       FirebaseMessagingInternal.TokenReceived -= value;
+    }
+  }
+#endif
+
+#if DOXYGEN
+  /// Called on the client when a registration installation ID arrives or changes.
+  public static event System.EventHandler<RegistrationReceivedEventArgs> RegistrationReceived;
+#else
+  public static event System.EventHandler<RegistrationReceivedEventArgs> RegistrationReceived {
+    add {
+      FirebaseMessagingInternal.RegistrationReceived += value;
+    }
+    remove {
+      FirebaseMessagingInternal.RegistrationReceived -= value;
+    }
+  }
+#endif
+
+#if DOXYGEN
+  /// Called on the client when an unregistration confirmation arrives.
+  public static event System.EventHandler<UnregistrationReceivedEventArgs> UnregistrationReceived;
+#else
+  public static event System.EventHandler<UnregistrationReceivedEventArgs> UnregistrationReceived {
+    add {
+      FirebaseMessagingInternal.UnregistrationReceived += value;
+    }
+    remove {
+      FirebaseMessagingInternal.UnregistrationReceived -= value;
     }
   }
 #endif
