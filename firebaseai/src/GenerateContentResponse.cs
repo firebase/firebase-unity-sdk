@@ -102,7 +102,8 @@ namespace Firebase.AI
     {
       get
       {
-        return Candidates.FirstOrDefault().Content.Parts
+        var parts = Candidates.FirstOrDefault()?.Content?.Parts ?? Enumerable.Empty<ModelContent.Part>();
+        return parts
             .OfType<ModelContent.InlineDataPart>()
             .Where(part => part.MimeType != null && (part.MimeType.StartsWith("audio/pcm") || part.MimeType.StartsWith("audio/l16")))
             .Select(part => part.Data)
@@ -117,7 +118,7 @@ namespace Firebase.AI
     {
       get
       {
-        return Audio?.Select(AudioHelpers.ConvertPcmBytesToFloat).ToArray();
+        return Audio.Select(AudioHelpers.ConvertPcmBytesToFloat).ToArray();
       }
     }
 

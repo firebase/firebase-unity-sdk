@@ -69,7 +69,8 @@ namespace Firebase.AI
       {
         if (Message is LiveSessionContent content)
         {
-          return content.Content?.Parts
+          var parts = content.Content?.Parts ?? Enumerable.Empty<ModelContent.Part>();
+          return parts
               .OfType<ModelContent.InlineDataPart>()
               .Where(part => part.MimeType != null && (part.MimeType.StartsWith("audio/pcm") || part.MimeType.StartsWith("audio/l16")))
               .Select(part => part.Data.ToArray())
