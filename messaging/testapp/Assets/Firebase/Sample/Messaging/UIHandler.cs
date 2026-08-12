@@ -84,6 +84,8 @@ namespace Firebase.Sample.Messaging {
     void InitializeFirebase() {
       Firebase.Messaging.FirebaseMessaging.MessageReceived += OnMessageReceived;
       Firebase.Messaging.FirebaseMessaging.TokenReceived += OnTokenReceived;
+      Firebase.Messaging.FirebaseMessaging.RegistrationReceived += OnRegistrationReceived;
+      Firebase.Messaging.FirebaseMessaging.UnregistrationReceived += OnUnregistrationReceived;
       DebugLog("Firebase Messaging Initialized");
 
       // This will display the prompt to request permission to receive
@@ -133,10 +135,24 @@ namespace Firebase.Sample.Messaging {
       DebugLog("Received Registration Token: " + token.Token);
     }
 
+    public virtual void OnRegistrationReceived(object sender, Firebase.Messaging.RegistrationReceivedEventArgs e) {
+      DebugLog("Received Registration ID: " + e.InstallationId);
+    }
+
+    public virtual void OnUnregistrationReceived(object sender, Firebase.Messaging.UnregistrationReceivedEventArgs e) {
+      DebugLog("Received Unregistration ID: " + e.InstallationId);
+    }
+
     public void ToggleTokenOnInit() {
       bool newValue = !Firebase.Messaging.FirebaseMessaging.TokenRegistrationOnInitEnabled;
       Firebase.Messaging.FirebaseMessaging.TokenRegistrationOnInitEnabled = newValue;
       DebugLog("Set TokenRegistrationOnInitEnabled to " + newValue);
+    }
+
+    public void ToggleRegistrationOnInit() {
+      bool newValue = !Firebase.Messaging.FirebaseMessaging.RegistrationOnInitEnabled;
+      Firebase.Messaging.FirebaseMessaging.RegistrationOnInitEnabled = newValue;
+      DebugLog("Set RegistrationOnInitEnabled to " + newValue);
     }
 
     // Exit if escape (or back, on mobile) is pressed.
@@ -150,6 +166,8 @@ namespace Firebase.Sample.Messaging {
     public void OnDestroy() {
       Firebase.Messaging.FirebaseMessaging.MessageReceived -= OnMessageReceived;
       Firebase.Messaging.FirebaseMessaging.TokenReceived -= OnTokenReceived;
+      Firebase.Messaging.FirebaseMessaging.RegistrationReceived -= OnRegistrationReceived;
+      Firebase.Messaging.FirebaseMessaging.UnregistrationReceived -= OnUnregistrationReceived;
     }
 
     // Output text to the debug log text field, as well as the console.
@@ -200,8 +218,27 @@ namespace Firebase.Sample.Messaging {
           );
           DebugLog("Unsubscribed from " + topic);
         }
+        if (GUILayout.Button("Toggle Registration On Init")) {
+          ToggleRegistrationOnInit();
+        }
         if (GUILayout.Button("Toggle Token On Init")) {
           ToggleTokenOnInit();
+        }
+        if (GUILayout.Button("Register")) {
+          Firebase.Messaging.FirebaseMessaging.RegisterAsync().ContinueWithOnMainThread(
+            task => {
+              LogTaskCompletion(task, "RegisterAsync");
+            }
+          );
+          DebugLog("RegisterAsync called");
+        }
+        if (GUILayout.Button("Unregister")) {
+          Firebase.Messaging.FirebaseMessaging.UnregisterAsync().ContinueWithOnMainThread(
+            task => {
+              LogTaskCompletion(task, "UnregisterAsync");
+            }
+          );
+          DebugLog("UnregisterAsync called");
         }
         if (GUILayout.Button("GetToken")) {
           String token = "";

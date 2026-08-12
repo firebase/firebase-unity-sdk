@@ -109,6 +109,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Messaging: Added new Registration methods using Installation Ids.
+      Deprecated old Token based methods.
+
 ### 13.15.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.11.0.
