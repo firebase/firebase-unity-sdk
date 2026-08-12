@@ -270,9 +270,12 @@ namespace Firebase.RemoteConfig {
       if (customSignals == null) {
         throw new System.ArgumentNullException(nameof(customSignals));
       }
-      StringList signalKeys = new StringList();
-      VariantList signalValues = new VariantList();
+      using StringList signalKeys = new StringList();
+      using VariantList signalValues = new VariantList();
       foreach (KeyValuePair<string, object> pair in customSignals) {
+        if (pair.Key == null) {
+          throw new System.ArgumentException("Key cannot be null", nameof(customSignals));
+        }
         signalKeys.Add(pair.Key);
         signalValues.Add(Variant.FromObject(pair.Value));
       }

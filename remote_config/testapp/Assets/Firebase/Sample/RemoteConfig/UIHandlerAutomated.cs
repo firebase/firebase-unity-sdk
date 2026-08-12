@@ -171,7 +171,8 @@ namespace Firebase.Sample.RemoteConfig {
       await FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(signals);
 
       // After setting the Custom Signal, fetch to get the signal data
-      await FetchDataAsync();
+      await FirebaseRemoteConfig.DefaultInstance.FetchAsync(TimeSpan.Zero);
+      await FirebaseRemoteConfig.DefaultInstance.ActivateAsync();
 
       // Because of caching, this isn't the most reliable test, so just print out the value.
       DebugLog("Check custom value: " +
