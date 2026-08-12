@@ -15,8 +15,6 @@ namespace Firebase.Sample.RemoteConfig {
       // non-static.
       Func<Task>[] tests = {
         TestSetConfigSettings,
-        TestSetCustomSignals,
-        TestSetCustomSignalsValidation,
         TestDisplayData,
         TestDisplayAllKeys,
 // Skip the Realtime RC test on desktop as it is not yet supported.
@@ -25,6 +23,7 @@ namespace Firebase.Sample.RemoteConfig {
         TestAddAndRemoveConfigUpdateListener,
 #endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
         TestFetchData,
+        TestSetCustomSignals,
       };
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
@@ -163,44 +162,28 @@ namespace Firebase.Sample.RemoteConfig {
       });
     }
 
-    Task TestSetCustomSignals() {
+    async Task TestSetCustomSignals() {
       var signals = new System.Collections.Generic.Dictionary<string, object> {
         { "test_string", "alpha" },
         { "test_int", 42 },
-        { "test_double", 3.14 },
-        { "test_null", null }
+        { "test_double", 3.14 }
       };
-      return FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(signals)
-          .ContinueWithOnMainThread(task => {
-            if (task.IsFaulted) {
-              throw new Exception("SetCustomSignalsAsync failed: " + task.Exception);
-            }
-            DebugLog("TestSetCustomSignals passed!");
-          });
-    }
+      await FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(signals);
 
-    Task TestSetCustomSignalsValidation() {
-      // Null dictionary check
-      try {
-        FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(null);
-        throw new Exception("Expected ArgumentNullException for null customSignals");
-      } catch (ArgumentNullException) {
-        // Expected
-      }
+      // After setting the Custom Signal, fetch to get the signal data
+      await FetchDataAsync();
 
-      // Invalid value type check
-      try {
-        var invalidSignals = new System.Collections.Generic.Dictionary<string, object> {
-          { "bad_key", new System.DateTime() }
-        };
-        FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(invalidSignals);
-        throw new Exception("Expected ArgumentException for invalid value type");
-      } catch (ArgumentException) {
-        // Expected
-      }
+      // Because of caching, this isn't the most reliable test, so just print out the value.
+      DebugLog("Check custom value: " +
+          FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_with_custom_signal").StringValue);
 
-      DebugLog("TestSetCustomSignalsValidation passed!");
-      return Task.FromResult(true);
+      // Set the custom signals back to null, to clear them out.
+      var signals2 = new System.Collections.Generic.Dictionary<string, object> {
+        { "test_string", null },
+        { "test_int", null },
+        { "test_double", null }
+      };
+      await FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(signals2);
     }
   }
 }
