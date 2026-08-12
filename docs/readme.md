@@ -113,6 +113,7 @@ Release Notes
 -   Changes
     - Messaging: Added new Registration methods using Installation Ids.
       Deprecated old Token based methods.
+    - Remote Config: Add support for setting Custom Signals.
 
 ### 13.15.0
 -   Changes
