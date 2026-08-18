@@ -116,6 +116,7 @@ Release Notes
       [migrate your apps to use Gemini Image models (the "Nano Banana" models)](https://firebase.google.com/docs/ai-logic/imagen-models-migration).
     - Messaging: Added new Registration methods using Installation Ids.
       Deprecated old Token based methods.
+    - Remote Config: Add support for setting Custom Signals.
 
 ### 13.15.0
 -   Changes

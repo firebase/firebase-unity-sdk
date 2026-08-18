@@ -23,6 +23,7 @@ namespace Firebase.Sample.RemoteConfig {
         TestAddAndRemoveConfigUpdateListener,
 #endif  // !(UNITY_IOS || UNITY_TVOS || UNITY_ANDROID) || UNITY_EDITOR
         TestFetchData,
+        TestSetCustomSignals,
       };
       testRunner = AutomatedTestRunner.CreateTestRunner(
         testsToRun: tests,
@@ -159,6 +160,31 @@ namespace Firebase.Sample.RemoteConfig {
         AssertEq("Unexpected value for config_test_bool", true,
           FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_bool").BooleanValue);
       });
+    }
+
+    async Task TestSetCustomSignals() {
+      var signals = new System.Collections.Generic.Dictionary<string, object> {
+        { "test_string", "alpha" },
+        { "test_int", 42 },
+        { "test_double", 3.14 }
+      };
+      await FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(signals);
+
+      // After setting the Custom Signal, fetch to get the signal data
+      await FirebaseRemoteConfig.DefaultInstance.FetchAsync(TimeSpan.Zero);
+      await FirebaseRemoteConfig.DefaultInstance.ActivateAsync();
+
+      // Because of caching, this isn't the most reliable test, so just print out the value.
+      DebugLog("Check custom value: " +
+          FirebaseRemoteConfig.DefaultInstance.GetValue("config_test_with_custom_signal").StringValue);
+
+      // Set the custom signals back to null, to clear them out.
+      var signals2 = new System.Collections.Generic.Dictionary<string, object> {
+        { "test_string", null },
+        { "test_int", null },
+        { "test_double", null }
+      };
+      await FirebaseRemoteConfig.DefaultInstance.SetCustomSignalsAsync(signals2);
     }
   }
 }

@@ -252,6 +252,36 @@ namespace Firebase.RemoteConfig {
           RemoteConfigUtil.ConvertDictionaryToMap(defaults));
     }
 
+    /// @brief Sets the custom signals values based on the input dictionary.
+    ///
+    /// @note This upserts the custom signals, i.e., inserts a new signal if none exists
+    /// or updates the signal if it does.
+    ///
+    /// @param customSignals IDictionary of string keys to object values, representing the
+    /// set of custom signals to apply. Supported value types are string, long (and integer types),
+    /// double (and float types), or null to remove a signal.
+    /// If the same key is specified multiple times, the value associated with the last
+    /// duplicate key is applied.
+    ///
+    /// @return A Task which can be used to determine when the operation is
+    /// complete.
+    public Task SetCustomSignalsAsync(IDictionary<string, object> customSignals) {
+      ThrowIfNull();
+      if (customSignals == null) {
+        throw new System.ArgumentNullException(nameof(customSignals));
+      }
+      using StringList signalKeys = new StringList();
+      using VariantList signalValues = new VariantList();
+      foreach (KeyValuePair<string, object> pair in customSignals) {
+        if (pair.Key == null) {
+          throw new System.ArgumentException("Key cannot be null", nameof(customSignals));
+        }
+        signalKeys.Add(pair.Key);
+        signalValues.Add(Variant.FromObject(pair.Value));
+      }
+      return remoteConfigInternal.SetCustomSignalsInternalAsync(signalKeys, signalValues);
+    }
+
     /// @brief Asynchronously changes the settings for this Remote Config
     /// instance.
     ///
