@@ -108,7 +108,6 @@ namespace Firebase.RemoteConfig {
     }
 
     void OnAppDisposed(object sender, System.EventArgs eventArgs) {
-      LogUtil.LogMessage(Firebase.LogLevel.Warning, "FirebaseRemoteConfig.OnAppDisposed()");
       Dispose();
     }
 

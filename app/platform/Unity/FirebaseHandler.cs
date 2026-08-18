@@ -65,6 +65,7 @@ internal sealed class FirebaseHandler {
     if (UnityEngine.Application.isEditor) {
       IsPlayMode = FirebaseEditorDispatcher.EditorIsPlaying;
       FirebaseEditorDispatcher.ListenToPlayState();
+      FirebaseEditorDispatcher.ListenToCleanupEvents();
     } else {
       // If we aren't in the editor, we can assume that we are in play mode, and
       // that is not going to change.

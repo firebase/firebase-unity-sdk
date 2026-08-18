@@ -74,6 +74,8 @@ static void CallConfigUpdate(ConfigUpdate cu, RemoteConfigError error, const cha
 // Called by C# to register a RemoteConfig instance for config updates,
 // provided via the callback method provided.
 void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUpdateListener on_config_updated) {
+  if (!rc || !rc->app()) return;
+
   // If given a method, save it, and add a new listener for Config Updates.
   if (on_config_updated) {
     if (!g_config_updated) {
@@ -92,9 +94,11 @@ void SetConfigUpdateCallback(RemoteConfig* rc, firebase::remote_config::ConfigUp
     g_registered_listeners[rc->app()] = registration;
   } else {
     // Remove the listener, and cleanup the callback if no more remain.
-    ConfigUpdateListenerRegistration registration = g_registered_listeners[rc->app()];
-    g_registered_listeners.erase(rc->app());
-    registration.Remove();
+    auto it = g_registered_listeners.find(rc->app());
+    if (it != g_registered_listeners.end()) {
+      it->second.Remove();
+      g_registered_listeners.erase(it);
+    }
 
     if (g_registered_listeners.empty()) {
       g_config_updated = nullptr;
@@ -250,6 +254,7 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
 
   static void ReleaseReferenceInternal(
       firebase::remote_config::RemoteConfig* rc) {
+    ::firebase::remote_config::SetConfigUpdateCallback(rc, nullptr);
     ::firebase::remote_config::g_rc_instances.ReleaseReference(rc);
   }
 
