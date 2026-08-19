@@ -49,13 +49,13 @@ namespace Firebase.RemoteConfig {
     public event EventHandler<ConfigUpdateEventArgs> OnConfigUpdateListener {
       add {
         ThrowIfNull();
+        ConfigUpdateListenerImpl += value;
+
         // If this is the first listener, hook into C++.
         if (ConfigUpdateListenerImpl == null ||
             ConfigUpdateListenerImpl.GetInvocationList().Length == 0) {
           RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, configUpdateDelegate);
         }
-
-        ConfigUpdateListenerImpl += value;
       }
       remove {
         ThrowIfNull();
