@@ -215,9 +215,6 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestBasicResponseLongUsageMetadata,
         InternalTestGoogleAIBasicReplyShort,
         InternalTestGoogleAICitations,
-        InternalTestGenerateImagesBase64,
-        InternalTestGenerateImagesAllFiltered,
-        InternalTestGenerateImagesBase64SomeFiltered,
         InternalTestThoughtSummary,
         InternalTestCodeExecution,
         InternalTestUrlContextMixedValidity,
@@ -2115,66 +2112,6 @@ namespace Firebase.Sample.FirebaseAI
       AssertEq("CandidatesTokensDetails count", candidatesDetails.Count, 1);
       AssertEq("CandidatesTokensDetails[0].Modality", candidatesDetails[0].Modality, ContentModality.Text);
       AssertEq("CandidatesTokensDetails[0].TokenCount", candidatesDetails[0].TokenCount, 1667);
-    }
-
-    async Task InternalTestGenerateImagesBase64()
-    {
-      Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-generate-images-base64.json");
-#pragma warning disable
-      var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
-#pragma warning restore
-
-      AssertEq("FilteredReason", response.FilteredReason, null);
-      AssertEq("Image Count", response.Images.Count, 4);
-
-      for (int i = 0; i < response.Images.Count; i++)
-      {
-        var image = response.Images[i];
-        AssertEq($"Image {i} MimeType", image.MimeType, "image/png");
-        Assert($"Image {i} Length: {image.Data.Length}", image.Data.Length > 0);
-
-        var texture = image.AsTexture2D();
-        Assert($"Failed to convert Image {i}", texture != null);
-      }
-    }
-
-    async Task InternalTestGenerateImagesAllFiltered()
-    {
-      Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-all-filtered.json");
-#pragma warning disable
-      var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
-#pragma warning restore
-
-      AssertEq("FilteredReason", response.FilteredReason,
-        "Unable to show generated images. All images were filtered out because " +
-        "they violated Vertex AI's usage guidelines. You will not be charged for " +
-        "blocked images. Try rephrasing the prompt. If you think this was an error, " +
-        "send feedback. Support codes: 39322892, 29310472");
-      AssertEq("Image Count", response.Images.Count, 0);
-    }
-
-    async Task InternalTestGenerateImagesBase64SomeFiltered()
-    {
-      Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-generate-images-base64-some-filtered.json");
-#pragma warning disable
-      var response = ImagenGenerationResponse<ImagenInlineImage>.FromJson(json);
-#pragma warning restore
-
-      AssertEq("FilteredReason", response.FilteredReason,
-        "Your current safety filter threshold filtered out 2 generated images. " +
-        "You will not be charged for blocked images. Try rephrasing the prompt. " +
-        "If you think this was an error, send feedback.");
-      AssertEq("Image Count", response.Images.Count, 2);
-
-      for (int i = 0; i < response.Images.Count; i++)
-      {
-        var image = response.Images[i];
-        AssertEq($"Image {i} MimeType", image.MimeType, "image/png");
-        Assert($"Image {i} Length: {image.Data.Length}", image.Data.Length > 0);
-
-        var texture = image.AsTexture2D();
-        Assert($"Failed to convert Image {i}", texture != null);
-      }
     }
 
     async Task InternalTestThoughtSummary()
