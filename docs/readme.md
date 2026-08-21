@@ -111,12 +111,12 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
-    - Firebase AI: Removed deprecated Imagen methods and types due to Imagen
-      models being shut down in August 2026. As a replacement, you can
-      [migrate your apps to use Gemini Image models (the "Nano Banana" models)](https://firebase.google.com/docs/ai-logic/imagen-models-migration).
     - General (Editor): Fixed a deadlock / hang during domain reload and editor quitting
       by gracefully disposing Firebase apps and terminating native listeners on the main thread
       ([#1485](https://github.com/firebase/firebase-unity-sdk/issues/1485)).
+    - Firebase AI: Removed deprecated Imagen methods and types due to Imagen
+      models being shut down in August 2026. As a replacement, you can
+      [migrate your apps to use Gemini Image models (the "Nano Banana" models)](https://firebase.google.com/docs/ai-logic/imagen-models-migration).
     - Messaging: Added new Registration methods using Installation Ids.
       Deprecated old Token based methods.
     - Remote Config: Add support for setting Custom Signals.
