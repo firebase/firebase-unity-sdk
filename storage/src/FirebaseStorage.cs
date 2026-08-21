@@ -93,7 +93,6 @@ namespace Firebase.Storage {
     /// </summary>
     ~FirebaseStorage() {
       Dispose();
-      Logger.LogMessage(LogLevel.Debug, String.Format("Finalized {0}", instanceKey));
     }
 
     // Remove the reference to this instance from storageByInstanceKey and dispose the proxy.
@@ -111,7 +110,6 @@ namespace Firebase.Storage {
     }
 
     void OnAppDisposed(object sender, System.EventArgs eventArgs) {
-      Firebase.Platform.FirebaseLogger.LogMessage(Firebase.Platform.PlatformLogLevel.Warning, "FirebaseStorage.OnAppDisposed()");
       Dispose();
     }
 

@@ -34,6 +34,9 @@ namespace Firebase.Platform {
 
     // Gets the current log level of FirebaseApp.
     PlatformLogLevel GetLogLevel();
+
+    // Triggers disposing of all Firebase Apps.
+    void DisposeAllApps();
   }
 
   // Stub implementation of the above interface, used by FirebaseHandler until
@@ -55,5 +58,7 @@ namespace Firebase.Platform {
     public PlatformLogLevel GetLogLevel() {
       return PlatformLogLevel.Debug;
     }
+
+    public void DisposeAllApps() { }
   }
 }
