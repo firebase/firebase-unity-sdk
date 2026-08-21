@@ -256,10 +256,10 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
 
   static void ReleaseReferenceInternal(
       firebase::remote_config::RemoteConfig* rc) {
-    if (::firebase::remote_config::g_rc_instances.ReleaseReference(rc) == 0) {
-      // If there are no remaining references, also remove the callback.
-      ::firebase::remote_config::SetConfigUpdateCallback(rc, nullptr);
-    }
+    ::firebase::remote_config::g_rc_instances.ReleaseReference(
+        rc, [](firebase::remote_config::RemoteConfig* r) {
+          ::firebase::remote_config::SetConfigUpdateCallback(r, nullptr);
+        });
   }
 
   firebase::remote_config::ConfigValueInternal GetValueInternal(const char* key) {
