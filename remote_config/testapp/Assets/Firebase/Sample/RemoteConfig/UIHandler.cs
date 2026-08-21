@@ -192,7 +192,23 @@ namespace Firebase.Sample.RemoteConfig {
       }
     }
 
-
+    public Task SetCustomSignalsAsync() {
+      DebugLog("Setting custom signals...");
+      var customSignals = new System.Collections.Generic.Dictionary<string, object> {
+        { "item_id", "sword_123" },
+        { "player_level", 42 },
+        { "item_rating", 4.5 }
+      };
+      return Firebase.RemoteConfig.FirebaseRemoteConfig.DefaultInstance
+          .SetCustomSignalsAsync(customSignals)
+          .ContinueWithOnMainThread(task => {
+            if (task.IsFaulted) {
+              DebugLog("Failed to set custom signals: " + task.Exception);
+            } else {
+              DebugLog("Custom signals set successfully!");
+            }
+          });
+    }
 
     // Output text to the debug log text field, as well as the console.
     public void DebugLog(string s) {
@@ -233,6 +249,9 @@ namespace Firebase.Sample.RemoteConfig {
         }
         if (GUILayout.Button("Display All Keys")) {
           DisplayAllKeys();
+        }
+        if (GUILayout.Button("Set Custom Signals")) {
+          SetCustomSignalsAsync();
         }
         if (GUILayout.Button("Fetch Remote Data")) {
           FetchDataAsync();

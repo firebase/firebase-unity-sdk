@@ -235,37 +235,6 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// Initializes an `ImagenModel` with the given parameters.
-    ///
-    /// - Important: Only Imagen 3 models (named `imagen-3.0-*`) are supported.
-    /// </summary>
-    /// <param name="modelName">The name of the Imagen 3 model to use, for example `"imagen-3.0-generate-002"`;
-    ///     see [model versions](https://firebase.google.com/docs/vertex-ai/models) for a list of
-    ///     supported Imagen 3 models.</param>
-    /// <param name="generationConfig">Configuration options for generating images with Imagen.</param>
-    /// <param name="safetySettings">Settings describing what types of potentially harmful content your model
-    ///     should allow.</param>
-    /// <param name="requestOptions">Configuration parameters for sending requests to the backend.</param>
-    /// <returns>The initialized `ImagenModel` instance.</returns>
-    /// <remarks>
-    /// All Imagen models are deprecated and will shut down as early as June 2026.
-    /// As a replacement, you can [migrate your apps to use Gemini Image models
-    /// (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
-    /// </remarks>
-    /// @deprecated All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
-    [Obsolete("All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the \"Nano Banana\" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)")]
-    public ImagenModel GetImagenModel(
-        string modelName,
-        ImagenGenerationConfig? generationConfig = null,
-        ImagenSafetySettings? safetySettings = null,
-        RequestOptions? requestOptions = null)
-    {
-      return new ImagenModel(_firebaseApp, _backend, modelName,
-          generationConfig, safetySettings, requestOptions,
-          _useLimitedUseAppCheckTokens);
-    }
-
-    /// <summary>
     /// Initializes a `TemplateGenerativeModel` with the given parameters.
     /// </summary>
     /// <param name="requestOptions">Configuration parameters for sending requests to the backend.</param>
@@ -274,25 +243,6 @@ namespace Firebase.AI
         RequestOptions? requestOptions = null)
     {
       return new TemplateGenerativeModel(_firebaseApp, _backend, requestOptions,
-          _useLimitedUseAppCheckTokens);
-    }
-
-    /// <summary>
-    /// Initializes a `TemplateImagenModel` with the given parameters.
-    /// </summary>
-    /// <param name="requestOptions">Configuration parameters for sending requests to the backend.</param>
-    /// <returns>The initialized `TemplateImagenModel` instance.</returns>
-    /// <remarks>
-    /// All Imagen models are deprecated and will shut down as early as June 2026.
-    /// As a replacement, you can [migrate your apps to use Gemini Image models
-    /// (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
-    /// </remarks>
-    /// @deprecated All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the "Nano Banana" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)
-    [Obsolete("All Imagen models are deprecated and will shut down as early as June 2026. As a replacement, you can [migrate your apps to use Gemini Image models (the \"Nano Banana\" models).](https://firebase.google.com/docs/ai-logic/imagen-models-migration)")]
-    public TemplateImagenModel GetTemplateImagenModel(
-        RequestOptions? requestOptions = null)
-    {
-      return new TemplateImagenModel(_firebaseApp, _backend, requestOptions,
           _useLimitedUseAppCheckTokens);
     }
   }
