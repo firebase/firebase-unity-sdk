@@ -69,9 +69,10 @@ namespace Firebase.AI
       {
         if (Message is LiveSessionContent content)
         {
-          return content.Content?.Parts
+          var parts = content.Content?.Parts ?? Enumerable.Empty<ModelContent.Part>();
+          return parts
               .OfType<ModelContent.InlineDataPart>()
-              .Where(part => part.MimeType.StartsWith("audio/pcm"))
+              .Where(part => part.MimeType != null && part.MimeType.StartsWith("audio/"))
               .Select(part => part.Data.ToArray())
               .ToList();
         }
@@ -86,25 +87,8 @@ namespace Firebase.AI
     {
       get
       {
-        return Audio?.Select(ConvertBytesToFloat).ToArray();
+        return Audio?.Select(AudioHelpers.ConvertPcmBytesToFloat).ToArray();
       }
-    }
-
-    // Helper function to convert a byte array representing a 16-bit encoded
-    // Audio snippit into a float array, which Unity's built in libraries supports.
-    private float[] ConvertBytesToFloat(byte[] byteArray)
-    {
-      // Assumes 16 bit encoding, which would be two bytes per sample.
-      int sampleCount = byteArray.Length / 2;
-      float[] floatArray = new float[sampleCount];
-
-      for (int i = 0; i < sampleCount; i++)
-      {
-        float sample = (short)(byteArray[i * 2] | (byteArray[i * 2 + 1] << 8)) / 32768f;
-        floatArray[i] = Math.Clamp(sample, -1f, 1f); // Ensure values are within the valid range
-      }
-
-      return floatArray;
     }
 
     private LiveSessionResponse(ILiveSessionMessage liveSessionMessage)
