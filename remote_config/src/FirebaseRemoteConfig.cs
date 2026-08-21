@@ -49,8 +49,7 @@ namespace Firebase.RemoteConfig {
     public event EventHandler<ConfigUpdateEventArgs> OnConfigUpdateListener {
       add {
         ThrowIfNull();
-        bool isFirst = ConfigUpdateListenerImpl == null ||
-            ConfigUpdateListenerImpl.GetInvocationList().Length == 0;
+        bool isFirst = ConfigUpdateListenerImpl == null;
         ConfigUpdateListenerImpl += value;
 
         // If this is the first listener, hook into C++.
@@ -63,8 +62,7 @@ namespace Firebase.RemoteConfig {
         ConfigUpdateListenerImpl -= value;
 
         // If that was the last listener, remove the C++ hooks.
-        if (ConfigUpdateListenerImpl == null ||
-            ConfigUpdateListenerImpl.GetInvocationList().Length == 0) {
+        if (ConfigUpdateListenerImpl == null) {
           RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, null);
         }
       }
