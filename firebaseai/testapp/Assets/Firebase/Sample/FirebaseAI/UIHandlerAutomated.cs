@@ -1170,7 +1170,8 @@ namespace Firebase.Sample.FirebaseAI
 
       public override string ToString()
       {
-        return $"{name} {age} {Alive} {Percent} {eye_color} [{string.Join(", ", Children.Select(t => $"({t})"))}]";
+        string childrenStr = Children != null ? string.Join(", ", Children.Select(t => $"({t})")) : "";
+        return $"{name} {age} {Alive} {Percent} {eye_color} [{childrenStr}]";
       }
     }
 
