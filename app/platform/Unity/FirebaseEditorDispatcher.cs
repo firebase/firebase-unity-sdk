@@ -190,9 +190,51 @@ internal sealed class FirebaseEditorDispatcher {
     }
   }
 
+  // Adds or Removes the OnCleanupEvent action to assemblyReloadEvents.beforeAssemblyReload
+  // and editorApplication.quitting events. This is used to cleanup Firebase apps when
+  // the Unity editor triggers those events.
+  public static void ListenToCleanupEvents(bool start = true) {
+    // 1. Hook AssemblyReloadEvents.beforeAssemblyReload (for domain reloads)
+    Type assemblyReloadEvents = Type.GetType("UnityEditor.AssemblyReloadEvents, UnityEditor");
+    if (assemblyReloadEvents != null) {
+      var beforeReloadEvent = assemblyReloadEvents.GetEvent("beforeAssemblyReload");
+      if (beforeReloadEvent != null) {
+        Action onBeforeReload = OnCleanupEvent;
+        Delegate toAdd = Delegate.CreateDelegate(beforeReloadEvent.EventHandlerType, onBeforeReload.Method);
+        if (start) {
+          beforeReloadEvent.AddEventHandler(null, toAdd);
+        } else {
+          beforeReloadEvent.RemoveEventHandler(null, toAdd);
+        }
+      }
+    }
+    // 2. Hook EditorApplication.quitting (for editor shutdown)
+    Type editorApplication = EditorApplicationType;
+    if (editorApplication != null) {
+      var quittingEvent = editorApplication.GetEvent("quitting");
+      if (quittingEvent != null) {
+        Action onQuitting = OnCleanupEvent;
+        Delegate toAdd = Delegate.CreateDelegate(quittingEvent.EventHandlerType, onQuitting.Method);
+        if (start) {
+          quittingEvent.AddEventHandler(null, toAdd);
+        } else {
+          quittingEvent.RemoveEventHandler(null, toAdd);
+        }
+      }
+    }
+  }
+
+  private static void OnCleanupEvent() {
+    // Gracefully dispose all apps and native instances on the main thread.
+    FirebaseHandler.AppUtils.DisposeAllApps();
+    FirebaseHandler.Terminate();
+  }
+  
+
   // Note: This should not assume that it is only run in the Unity Editor.
   public static void Terminate(bool isPlayMode) {
     ListenToPlayState(false);
+    ListenToCleanupEvents(false);
     if (!isPlayMode) {
       FirebaseEditorDispatcher.StopEditorUpdate();
     }

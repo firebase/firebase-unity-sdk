@@ -1314,10 +1314,17 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
     }
 
     // Raise AppDisposed event once when FirebaseApp is disposed.
+#if SWIG_VERSION >= 0x040000
+    // Only raise events if disposing, not during finalization.
+    if (disposing) {
+#endif
     if (AppDisposed != null) {
       AppDisposed(this, System.EventArgs.Empty);
       AppDisposed = null;
     }
+#if SWIG_VERSION >= 0x040000
+    }
+#endif
 
     RemoveReference();
   }

@@ -53,5 +53,9 @@ namespace Firebase.Platform {
       }
       return LogUtil.ConvertLogLevel(currentLevel);
     }
+
+    public void DisposeAllApps() {
+      FirebaseApp.DisposeAllApps();
+    }
   }
 }

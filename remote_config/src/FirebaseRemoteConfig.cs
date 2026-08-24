@@ -49,21 +49,20 @@ namespace Firebase.RemoteConfig {
     public event EventHandler<ConfigUpdateEventArgs> OnConfigUpdateListener {
       add {
         ThrowIfNull();
+        bool isFirst = ConfigUpdateListenerImpl == null;
+        ConfigUpdateListenerImpl += value;
+
         // If this is the first listener, hook into C++.
-        if (ConfigUpdateListenerImpl == null ||
-            ConfigUpdateListenerImpl.GetInvocationList().Length == 0) {
+        if (isFirst) {
           RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, configUpdateDelegate);
         }
-
-        ConfigUpdateListenerImpl += value;
       }
       remove {
         ThrowIfNull();
         ConfigUpdateListenerImpl -= value;
 
         // If that was the last listener, remove the C++ hooks.
-        if (ConfigUpdateListenerImpl == null ||
-            ConfigUpdateListenerImpl.GetInvocationList().Length == 0) {
+        if (ConfigUpdateListenerImpl == null) {
           RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, null);
         }
       }
@@ -108,7 +107,6 @@ namespace Firebase.RemoteConfig {
     }
 
     void OnAppDisposed(object sender, System.EventArgs eventArgs) {
-      LogUtil.LogMessage(Firebase.LogLevel.Warning, "FirebaseRemoteConfig.OnAppDisposed()");
       Dispose();
     }
 
