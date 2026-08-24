@@ -1163,7 +1163,7 @@ namespace Firebase.Sample.FirebaseAI
       [SchemaInfo(Optional = true)]
       public char BloodType;
 
-      [SchemaInfo(Nullable = true)]
+      [SchemaInfo(Nullable = true, Optional = true)]
       public SampleRecord[] Children;
 
       public Dictionary<int, string> Dummy;
