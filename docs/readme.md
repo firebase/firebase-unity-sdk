@@ -114,6 +114,8 @@ Release Notes
     - Firebase AI: Removed deprecated Imagen methods and types due to Imagen
       models being shut down in August 2026. As a replacement, you can
       [migrate your apps to use Gemini Image models (the "Nano Banana" models)](https://firebase.google.com/docs/ai-logic/imagen-models-migration).
+    - Firebase AI: Added `AudioAsFloat` property to `GenerateContentResponse` to seamlessly decode `audio/` byte arrays into normalized float arrays.
+    - Firebase AI: Allowed `LiveSessionResponse` to use any `audio/` MIME type returned by text-to-speech models.
     - Messaging: Added new Registration methods using Installation Ids.
       Deprecated old Token based methods.
     - Remote Config: Add support for setting Custom Signals.
