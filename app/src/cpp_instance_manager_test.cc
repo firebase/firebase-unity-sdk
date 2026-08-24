@@ -98,4 +98,28 @@ TEST(CppInstanceManagerTest, AddAndReleaseTwice) {
   }
 }
 
+TEST(CppInstanceManagerTest, ReleaseWithCleanup) {
+  CppInstanceManager<std::string> manager;
+  bool cleanup_called = false;
+
+  std::string* instance = new std::string("A");
+
+  EXPECT_EQ(manager.AddReference(instance), 1);
+  EXPECT_EQ(manager.AddReference(instance), 2);
+
+  EXPECT_EQ(manager.ReleaseReference(instance,
+                                     [&cleanup_called](std::string*) {
+                                       cleanup_called = true;
+                                     }),
+            1);
+  EXPECT_FALSE(cleanup_called);
+
+  EXPECT_EQ(manager.ReleaseReference(instance,
+                                     [&cleanup_called](std::string*) {
+                                       cleanup_called = true;
+                                     }),
+            0);
+  EXPECT_TRUE(cleanup_called);
+}
+
 }  // namespace firebase

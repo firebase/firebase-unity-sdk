@@ -101,15 +101,18 @@ class CppInstanceManager {
   }
 
   /// @brief Decrease reference count by 1. Delete the instance when the count
-  /// drops to 0.
+  /// drops to 0. An optional cleanup function is called before deletion.
   /// @return Reference count after decrement. Return -1 if instance not found.
-  int ReleaseReference(InstanceClass* instance) {
+  int ReleaseReference(
+      InstanceClass* instance,
+      const std::function<void(InstanceClass*)>& cleanup = nullptr) {
     if (!instance) return -1;
     MutexLock lock(manager_mutex_);
     auto it = container_.find(instance);
     if (it != container_.end()) {
       int count = (--it->second);
       if (count == 0) {
+        if (cleanup) cleanup(it->first);
         delete it->first;
         container_.erase(it);
       }
