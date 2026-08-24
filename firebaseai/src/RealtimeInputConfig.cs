@@ -188,11 +188,31 @@ namespace Firebase.AI
 
     private ActivityDetectionConfig(Sensitivity? start, Sensitivity? end, int? prefix, int? silence, bool? disabled)
     {
+      if (prefix < 0)
+      {
+        throw new System.ArgumentOutOfRangeException(nameof(prefix), "Prefix padding must be non-negative.");
+      }
+      if (silence < 0)
+      {
+        throw new System.ArgumentOutOfRangeException(nameof(silence), "Silence duration must be non-negative.");
+      }
+
       _startSensitivity = start;
       _endSensitivity = end;
       _prefixPaddingMS = prefix;
       _silenceDurationMS = silence;
       _disabled = disabled;
+    }
+
+    private static int? ConvertTimeSpanToMs(TimeSpan? timeSpan, string paramName)
+    {
+      if (!timeSpan.HasValue) return null;
+      double ms = timeSpan.Value.TotalMilliseconds;
+      if (ms < 0 || ms > int.MaxValue)
+      {
+        throw new System.ArgumentOutOfRangeException(paramName, $"{paramName} must be between 0 and {int.MaxValue} milliseconds.");
+      }
+      return (int)ms;
     }
 
     /// <summary>
@@ -224,8 +244,8 @@ namespace Firebase.AI
       : this(
           startSensitivity,
           endSensitivity,
-          prefixPadding.HasValue ? (int?)prefixPadding.Value.TotalMilliseconds : null,
-          silenceDuration.HasValue ? (int?)silenceDuration.Value.TotalMilliseconds : null,
+          ConvertTimeSpanToMs(prefixPadding, nameof(prefixPadding)),
+          ConvertTimeSpanToMs(silenceDuration, nameof(silenceDuration)),
           null) { }
 
     /// <summary>
@@ -243,8 +263,8 @@ namespace Firebase.AI
       : this(
           startSensitivity,
           endSensitivity,
-          (int?)prefixPadding.TotalMilliseconds,
-          silenceDuration.HasValue ? (int?)silenceDuration.Value.TotalMilliseconds : null,
+          ConvertTimeSpanToMs(prefixPadding, nameof(prefixPadding)),
+          ConvertTimeSpanToMs(silenceDuration, nameof(silenceDuration)),
           null) { }
 
     /// <summary>

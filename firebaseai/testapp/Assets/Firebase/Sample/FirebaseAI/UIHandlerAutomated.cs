@@ -2240,6 +2240,45 @@ namespace Firebase.Sample.FirebaseAI
       AssertEq("timeSpanJson.prefixPaddingMs", timeSpanJson["prefixPaddingMs"], 2000);
       AssertEq("timeSpanJson.silenceDurationMs", timeSpanJson["silenceDurationMs"], 750);
 
+      // 5. Validation tests (negative durations & overflow)
+      bool caughtNegativePrefix = false;
+      try {
+        new ActivityDetectionConfig(prefixPaddingMS: -100);
+      } catch (ArgumentOutOfRangeException) {
+        caughtNegativePrefix = true;
+      }
+      Assert("Should throw on negative prefixPaddingMS", caughtNegativePrefix);
+
+      bool caughtNegativeSilence = false;
+      try {
+        new ActivityDetectionConfig(silenceDurationMS: -500);
+      } catch (ArgumentOutOfRangeException) {
+        caughtNegativeSilence = true;
+      }
+      Assert("Should throw on negative silenceDurationMS", caughtNegativeSilence);
+
+      bool caughtNegativeTimeSpan = false;
+      try {
+        new ActivityDetectionConfig(
+          startSensitivity: ActivityDetectionConfig.Sensitivity.Low,
+          endSensitivity: ActivityDetectionConfig.Sensitivity.High,
+          prefixPadding: TimeSpan.FromSeconds(-1));
+      } catch (ArgumentOutOfRangeException) {
+        caughtNegativeTimeSpan = true;
+      }
+      Assert("Should throw on negative prefix TimeSpan", caughtNegativeTimeSpan);
+
+      bool caughtOverflowTimeSpan = false;
+      try {
+        new ActivityDetectionConfig(
+          startSensitivity: ActivityDetectionConfig.Sensitivity.Low,
+          endSensitivity: ActivityDetectionConfig.Sensitivity.High,
+          prefixPadding: TimeSpan.FromDays(100));
+      } catch (ArgumentOutOfRangeException) {
+        caughtOverflowTimeSpan = true;
+      }
+      Assert("Should throw on overflowing prefix TimeSpan", caughtOverflowTimeSpan);
+
       return Task.CompletedTask;
     }
   }

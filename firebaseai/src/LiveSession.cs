@@ -245,6 +245,8 @@ namespace Firebase.AI
     }
 
 
+    private static readonly Dictionary<string, object> EmptyRealtimeData = new();
+
     /// <summary>
     /// Manually marks the start of user activity, using the realtime API.
     ///
@@ -260,7 +262,7 @@ namespace Firebase.AI
     public async Task SendStartActivityRealtimeAsync(
         CancellationToken cancellationToken = default)
     {
-      await InternalSendRealtimeInputAsync("activityStart", new Dictionary<string, object>(), cancellationToken);
+      await InternalSendRealtimeInputAsync("activityStart", EmptyRealtimeData, cancellationToken);
     }
 
     /// <summary>
@@ -276,7 +278,7 @@ namespace Firebase.AI
     public async Task SendStopActivityRealtimeAsync(
         CancellationToken cancellationToken = default)
     {
-      await InternalSendRealtimeInputAsync("activityEnd", new Dictionary<string, object>(), cancellationToken);
+      await InternalSendRealtimeInputAsync("activityEnd", EmptyRealtimeData, cancellationToken);
     }
 
     private async Task InternalSendRealtimeInputAsync(
