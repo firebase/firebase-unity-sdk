@@ -219,6 +219,7 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestCodeExecution,
         InternalTestUrlContextMixedValidity,
         InternalTestUsageMetadataWithCaching,
+        InternalTestRealtimeInputConfigSerialization,
       };
 
       // Create the set of tests, combining the above lists.
@@ -2173,6 +2174,112 @@ namespace Firebase.Sample.FirebaseAI
       AssertEq("UrlMetadata[2] status", urlMetadata[2].RetrievalStatus, UrlMetadata.UrlRetrievalStatus.Error);
 
       ValidateUsageMetadata(response.UsageMetadata, 116, 446, 179, 177, 918);
+    }
+
+    Task InternalTestRealtimeInputConfigSerialization()
+    {
+      // 1. Empty RealtimeInputConfig
+      var emptyConfig = new RealtimeInputConfig();
+      var emptyJson = emptyConfig.ToJson();
+      Assert("emptyJson should have no keys", emptyJson.Count == 0);
+      Assert("emptyConfig.AutomaticActivityDetection should be null", emptyConfig.AutomaticActivityDetection == null);
+      Assert("emptyConfig.Handling should be null", emptyConfig.Handling == null);
+      Assert("emptyConfig.Coverage should be null", emptyConfig.Coverage == null);
+
+      // 2. Disabled ActivityDetectionConfig
+      var disabledConfig = ActivityDetectionConfig.Disabled();
+      var disabledJson = disabledConfig.ToJson();
+      Assert("disabledJson missing disabled", disabledJson.ContainsKey("disabled"));
+      AssertEq("disabledJson.disabled", disabledJson["disabled"], true);
+      Assert("disabledJson shouldn't have startOfSpeechSensitivity", !disabledJson.ContainsKey("startOfSpeechSensitivity"));
+      Assert("disabledJson shouldn't have endOfSpeechSensitivity", !disabledJson.ContainsKey("endOfSpeechSensitivity"));
+      AssertEq("disabledConfig.IsDisabled", disabledConfig.IsDisabled, (bool?)true);
+
+      // 3. Full RealtimeInputConfig with milliseconds
+      var detectionConfigMs = new ActivityDetectionConfig(
+        startSensitivity: ActivityDetectionConfig.Sensitivity.Low,
+        endSensitivity: ActivityDetectionConfig.Sensitivity.High,
+        prefixPaddingMS: 500,
+        silenceDurationMS: 1000);
+
+      AssertEq("detectionConfigMs.StartSensitivity", detectionConfigMs.StartSensitivity, (ActivityDetectionConfig.Sensitivity?)ActivityDetectionConfig.Sensitivity.Low);
+      AssertEq("detectionConfigMs.EndSensitivity", detectionConfigMs.EndSensitivity, (ActivityDetectionConfig.Sensitivity?)ActivityDetectionConfig.Sensitivity.High);
+      AssertEq("detectionConfigMs.PrefixPaddingMS", detectionConfigMs.PrefixPaddingMS, (int?)500);
+      AssertEq("detectionConfigMs.SilenceDurationMS", detectionConfigMs.SilenceDurationMS, (int?)1000);
+      AssertEq("detectionConfigMs.PrefixPadding", detectionConfigMs.PrefixPadding, (TimeSpan?)TimeSpan.FromMilliseconds(500));
+      AssertEq("detectionConfigMs.SilenceDuration", detectionConfigMs.SilenceDuration, (TimeSpan?)TimeSpan.FromMilliseconds(1000));
+
+      var fullConfig = new RealtimeInputConfig(
+        automaticActivityDetection: detectionConfigMs,
+        activityHandling: RealtimeInputConfig.ActivityHandling.Interrupt,
+        turnCoverage: RealtimeInputConfig.TurnCoverage.AudioActivityAndAllVideo);
+
+      var fullJson = fullConfig.ToJson();
+      Assert("fullJson missing automaticActivityDetection", fullJson.ContainsKey("automaticActivityDetection"));
+      var detectionJson = fullJson["automaticActivityDetection"] as Dictionary<string, object>;
+      Assert("detectionJson is null", detectionJson != null);
+      AssertEq("startOfSpeechSensitivity", detectionJson["startOfSpeechSensitivity"], "START_SENSITIVITY_LOW");
+      AssertEq("endOfSpeechSensitivity", detectionJson["endOfSpeechSensitivity"], "END_SENSITIVITY_HIGH");
+      AssertEq("prefixPaddingMs", detectionJson["prefixPaddingMs"], 500);
+      AssertEq("silenceDurationMs", detectionJson["silenceDurationMs"], 1000);
+      Assert("detectionJson shouldn't have disabled", !detectionJson.ContainsKey("disabled"));
+
+      AssertEq("activityHandling", fullJson["activityHandling"], "START_OF_ACTIVITY_INTERRUPTS");
+      AssertEq("turnCoverage", fullJson["turnCoverage"], "TURN_INCLUDES_AUDIO_ACTIVITY_AND_ALL_VIDEO");
+
+      // 4. TimeSpan constructor overload test
+      var detectionConfigTimeSpan = new ActivityDetectionConfig(
+        startSensitivity: ActivityDetectionConfig.Sensitivity.High,
+        endSensitivity: ActivityDetectionConfig.Sensitivity.Low,
+        prefixPadding: TimeSpan.FromSeconds(2),
+        silenceDuration: TimeSpan.FromMilliseconds(750));
+
+      AssertEq("detectionConfigTimeSpan.PrefixPaddingMS", detectionConfigTimeSpan.PrefixPaddingMS, (int?)2000);
+      AssertEq("detectionConfigTimeSpan.SilenceDurationMS", detectionConfigTimeSpan.SilenceDurationMS, (int?)750);
+      var timeSpanJson = detectionConfigTimeSpan.ToJson();
+      AssertEq("timeSpanJson.prefixPaddingMs", timeSpanJson["prefixPaddingMs"], 2000);
+      AssertEq("timeSpanJson.silenceDurationMs", timeSpanJson["silenceDurationMs"], 750);
+
+      // 5. Validation tests (negative durations & overflow)
+      bool caughtNegativePrefix = false;
+      try {
+        new ActivityDetectionConfig(prefixPaddingMS: -100);
+      } catch (ArgumentOutOfRangeException) {
+        caughtNegativePrefix = true;
+      }
+      Assert("Should throw on negative prefixPaddingMS", caughtNegativePrefix);
+
+      bool caughtNegativeSilence = false;
+      try {
+        new ActivityDetectionConfig(silenceDurationMS: -500);
+      } catch (ArgumentOutOfRangeException) {
+        caughtNegativeSilence = true;
+      }
+      Assert("Should throw on negative silenceDurationMS", caughtNegativeSilence);
+
+      bool caughtNegativeTimeSpan = false;
+      try {
+        new ActivityDetectionConfig(
+          startSensitivity: ActivityDetectionConfig.Sensitivity.Low,
+          endSensitivity: ActivityDetectionConfig.Sensitivity.High,
+          prefixPadding: TimeSpan.FromSeconds(-1));
+      } catch (ArgumentOutOfRangeException) {
+        caughtNegativeTimeSpan = true;
+      }
+      Assert("Should throw on negative prefix TimeSpan", caughtNegativeTimeSpan);
+
+      bool caughtOverflowTimeSpan = false;
+      try {
+        new ActivityDetectionConfig(
+          startSensitivity: ActivityDetectionConfig.Sensitivity.Low,
+          endSensitivity: ActivityDetectionConfig.Sensitivity.High,
+          prefixPadding: TimeSpan.FromDays(100));
+      } catch (ArgumentOutOfRangeException) {
+        caughtOverflowTimeSpan = true;
+      }
+      Assert("Should throw on overflowing prefix TimeSpan", caughtOverflowTimeSpan);
+
+      return Task.CompletedTask;
     }
   }
 }

@@ -1987,6 +1987,7 @@
         "Firebase/Editor/FirebaseMessaging_version-13.15.0_manifest.txt": "e1ec60de4be04480b25e9393d6194086",
         "Firebase/Editor/FirebaseRemoteConfig_version-13.15.0_manifest.txt": "8f292aea6cb24d289fb97969abbf9b0a",
         "Firebase/Editor/FirebaseStorage_version-13.15.0_manifest.txt": "d162e387d12546dc8c92cdf213699790",
+        "Firebase/FirebaseAI/RealtimeInputConfig.cs": "bcd68044e7ee4b66a45958844f10993b",
         "Firebase/Plugins/x86_64/FirebaseCppApp-13_15_0.bundle": "0bd89cd190da4887beae88ec8f7f0bc5",
         "Firebase/Plugins/x86_64/FirebaseCppApp-13_15_0.dll": "d42c1cb82e62441292b8ab1407825397",
         "Firebase/Plugins/x86_64/FirebaseCppApp-13_15_0.so": "e8d093f887364376854ebc44f7ed92d2",
