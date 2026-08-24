@@ -1164,14 +1164,15 @@ namespace Firebase.Sample.FirebaseAI
       [SchemaInfo(Optional = true)]
       public char BloodType;
 
-      [SchemaInfo(Nullable = true)]
+      [SchemaInfo(Nullable = true, Optional = true)]
       public SampleRecord[] Children;
 
       public Dictionary<int, string> Dummy;
 
       public override string ToString()
       {
-        return $"{name} {age} {Alive} {Percent} {eye_color} [{string.Join(", ", Children.Select(t => $"({t})"))}]";
+        string childrenStr = Children != null ? string.Join(", ", Children.Select(t => $"({t})")) : "";
+        return $"{name} {age} {Alive} {Percent} {eye_color} [{childrenStr}]";
       }
     }
 
