@@ -304,10 +304,12 @@ namespace Firebase.AI
     private readonly AudioTranscriptionConfig? _inputAudioTranscription;
     private readonly AudioTranscriptionConfig? _outputAudioTranscription;
     private readonly ContextWindowCompressionConfig? _contextWindowCompression;
+    private readonly RealtimeInputConfig? _realtimeInputConfig;
 
     internal readonly AudioTranscriptionConfig? InputAudioTranscription => _inputAudioTranscription;
     internal readonly AudioTranscriptionConfig? OutputAudioTranscription => _outputAudioTranscription;
     internal readonly ContextWindowCompressionConfig? ContextWindowCompression => _contextWindowCompression;
+    internal readonly RealtimeInputConfig? RealtimeInputConfig => _realtimeInputConfig;
 
     /// <summary>
     /// Creates a new `LiveGenerationConfig` value.
@@ -392,6 +394,7 @@ namespace Firebase.AI
     /// be included as part of the response. See the
     /// [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
     /// for more details.</param>
+    /// <param name="realtimeInputConfig">Configures model input behavior in the Live API (e.g. voice activity detection).</param>
     public LiveGenerationConfig(
         SpeechConfig? speechConfig = null,
         IEnumerable<ResponseModality> responseModalities = null,
@@ -403,7 +406,8 @@ namespace Firebase.AI
         float? frequencyPenalty = null,
         AudioTranscriptionConfig? inputAudioTranscription = null,
         AudioTranscriptionConfig? outputAudioTranscription = null,
-        ContextWindowCompressionConfig? contextWindowCompression = null)
+        ContextWindowCompressionConfig? contextWindowCompression = null,
+        RealtimeInputConfig? realtimeInputConfig = null)
     {
       _speechConfig = speechConfig;
       _responseModalities = responseModalities != null ?
@@ -417,6 +421,7 @@ namespace Firebase.AI
       _inputAudioTranscription = inputAudioTranscription;
       _outputAudioTranscription = outputAudioTranscription;
       _contextWindowCompression = contextWindowCompression;
+      _realtimeInputConfig = realtimeInputConfig;
     }
 
     /// <summary>

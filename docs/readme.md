@@ -111,6 +111,8 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
+    - Firebase AI: Add support for RealtimeInputConfig in the Live API, enabling configuration of Voice Activity Detection (VAD), activity handling (interruption behavior), and turn coverage.
+    - Firebase AI: Added manual activity demarcation methods (SendStartActivityRealtimeAsync, SendStopActivityRealtimeAsync) and updated realtime input streaming to support audio, video, and text payloads.
     - Firebase AI: Removed deprecated Imagen methods and types due to Imagen
       models being shut down in August 2026. As a replacement, you can
       [migrate your apps to use Gemini Image models (the "Nano Banana" models)](https://firebase.google.com/docs/ai-logic/imagen-models-migration).

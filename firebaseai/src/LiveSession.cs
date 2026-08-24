@@ -244,6 +244,41 @@ namespace Firebase.AI
           (video as ModelContent.Part).ToJson()["inlineData"], cancellationToken);
     }
 
+
+    /// <summary>
+    /// Manually marks the start of user activity, using the realtime API.
+    ///
+    /// The start of user activity is effectively the start of a user's turn, but depending on the configuration defined
+    /// in <see cref="RealtimeInputConfig"/>, it may not be interpreted as an interruption. An example of
+    /// the start of user activity could be the user speaking (not silence).
+    ///
+    /// Should be followed with a call to <see cref="SendStopActivityRealtimeAsync(CancellationToken)"/>; after all the data
+    /// has been sent for the user's turn.
+    ///
+    /// Only required when automatic activity detection is disabled via `ActivityDetectionConfig.Disabled()`.
+    /// </summary>
+    public async Task SendStartActivityRealtimeAsync(
+        CancellationToken cancellationToken = default)
+    {
+      await InternalSendRealtimeInputAsync("activityStart", new Dictionary<string, object>(), cancellationToken);
+    }
+
+    /// <summary>
+    /// Manually marks the end of user activity, using the realtime API.
+    ///
+    /// The end of user activity is effectively the end of a user's turn, and signals that the model can start
+    /// sending responses.
+    ///
+    /// Should follow after a previous call to <see cref="SendStartActivityRealtimeAsync(CancellationToken)"/>.
+    ///
+    /// Only required when automatic activity detection is disabled via `ActivityDetectionConfig.Disabled()`.
+    /// </summary>
+    public async Task SendStopActivityRealtimeAsync(
+        CancellationToken cancellationToken = default)
+    {
+      await InternalSendRealtimeInputAsync("activityEnd", new Dictionary<string, object>(), cancellationToken);
+    }
+
     private async Task InternalSendRealtimeInputAsync(
         string key, object data, CancellationToken cancellationToken)
     {
