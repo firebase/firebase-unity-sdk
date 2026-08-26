@@ -102,7 +102,7 @@ namespace Firebase.AI
     {
       get
       {
-        var parts = Candidates.FirstOrDefault().Content.Parts ?? Enumerable.Empty<ModelContent.Part>();
+        var parts = Candidates.FirstOrDefault().Content.Parts;
         return parts
             .OfType<ModelContent.InlineDataPart>()
             .Where(part => part.MimeType != null && part.MimeType.StartsWith("audio/"))
