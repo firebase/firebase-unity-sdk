@@ -31,6 +31,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Firebase.Analytics")]
 [assembly: InternalsVisibleTo("Firebase.App")]
+[assembly: InternalsVisibleTo("Firebase.App.Internal")]
 [assembly: InternalsVisibleTo("Firebase.AppCheck")]
 [assembly: InternalsVisibleTo("Firebase.Auth")]
 [assembly: InternalsVisibleTo("Firebase.Crashlytics")]

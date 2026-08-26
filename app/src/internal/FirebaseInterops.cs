@@ -149,6 +149,26 @@ namespace Firebase.Internal
       return _sdkVersionFetcher.Value;
     }
 
+    private static string _appVersion = null;
+
+    // Gets the application version from PlatformInformation.
+    internal static string GetApplicationVersion()
+    {
+      if (_appVersion == null)
+      {
+        try
+        {
+          _appVersion = Firebase.Platform.PlatformInformation.AppVersion;
+        }
+        catch (Exception e)
+        {
+          LogError($"Error accessing AppVersion: {e}");
+          _appVersion = "";
+        }
+      }
+      return _appVersion ?? "";
+    }
+
     // Cache the various types and methods needed for AppCheck token retrieval.
     private static void InitializeAppCheckReflection()
     {
