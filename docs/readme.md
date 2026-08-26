@@ -124,6 +124,9 @@ Release Notes
     - Messaging: Added new Registration methods using Installation Ids.
       Deprecated old Token based methods.
     - Remote Config: Add support for setting Custom Signals.
+    - Functions / Firebase AI: Fixed a `UnityException` thrown when invoking Cloud Functions
+      or connecting to Live Generative Models from background threads
+      ([#1506](https://github.com/firebase/firebase-unity-sdk/issues/1506)).
 
 ### 13.15.0
 -   Changes

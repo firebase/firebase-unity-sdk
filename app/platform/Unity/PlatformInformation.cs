@@ -77,6 +77,21 @@ internal static class PlatformInformation {
         return runtimeVersion;
       }
   }
+
+  private static string appVersion;
+
+  // Get the application version.
+  // This should be called from the main thread after FirebaseHandler is initialized.
+  internal static string AppVersion {
+      get {
+        if (appVersion == null) {
+          appVersion = FirebaseHandler.RunOnMainThread(() => {
+              return UnityEngine.Application.version;
+          });
+        }
+        return appVersion;
+      }
+  }
 }
 
 }  // namespace Firebase

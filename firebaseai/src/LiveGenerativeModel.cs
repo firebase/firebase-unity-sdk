@@ -128,7 +128,7 @@ namespace Firebase.AI
       if (Firebase.Internal.FirebaseInterops.GetIsDataCollectionDefaultEnabled(_firebaseApp))
       {
         clientWebSocket.Options.SetRequestHeader("X-Firebase-AppId", _firebaseApp.Options.AppId);
-        clientWebSocket.Options.SetRequestHeader("X-Firebase-AppVersion", UnityEngine.Application.version);
+        clientWebSocket.Options.SetRequestHeader("X-Firebase-AppVersion", Firebase.Internal.FirebaseInterops.GetApplicationVersion());
       }
       // Add additional Firebase tokens to the header.
       await Firebase.Internal.FirebaseInterops.AddFirebaseTokensAsync(clientWebSocket, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);

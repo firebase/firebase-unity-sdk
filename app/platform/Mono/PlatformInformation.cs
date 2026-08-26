@@ -80,6 +80,13 @@ internal static class PlatformInformation {
       return "unknown";
     }
   }
+
+  // Get the application version.
+  internal static string AppVersion {
+    get {
+      return "";
+    }
+  }
 }
 
 }  // namespace Firebase.Platform

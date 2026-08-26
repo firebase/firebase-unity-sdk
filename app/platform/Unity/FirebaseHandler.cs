@@ -187,6 +187,9 @@ internal sealed class FirebaseHandler {
         }
 
         firebaseHandler = new FirebaseHandler();
+
+        // Warm the Application.version cache on the main thread.
+        _ = PlatformInformation.AppVersion;
       }
     });
   }

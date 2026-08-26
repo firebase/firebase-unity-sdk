@@ -31,6 +31,10 @@ internal static class PlatformInformation {
   internal static float RealtimeSinceStartup {
     get { return 0.0f; }
   }
+
+  internal static string AppVersion {
+    get { return ""; }
+  }
 }
 
 }  // namespace Firebase
