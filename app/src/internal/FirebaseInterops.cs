@@ -149,6 +149,25 @@ namespace Firebase.Internal
       return _sdkVersionFetcher.Value;
     }
 
+    private static readonly Lazy<string> _appVersionFetcher = new(() =>
+    {
+      try
+      {
+        return Firebase.Platform.PlatformInformation.AppVersion ?? "";
+      }
+      catch (Exception e)
+      {
+        LogError($"Error accessing AppVersion: {e}");
+        return "";
+      }
+    });
+
+    // Gets the application version from PlatformInformation.
+    internal static string GetApplicationVersion()
+    {
+      return _appVersionFetcher.Value;
+    }
+
     // Cache the various types and methods needed for AppCheck token retrieval.
     private static void InitializeAppCheckReflection()
     {
