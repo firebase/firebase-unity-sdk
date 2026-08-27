@@ -121,15 +121,15 @@ set(FIRESTORE_SOURCE_DIR ${PROJECT_BINARY_DIR}/bin/external/src/firestore)
 if(IOS)
   target_include_directories(firebase_firestore_swig
     PUBLIC
-      # The Firestore core on iOS comes via the FirebaseFirestore CocoaPod, and
+      # The Firestore core on iOS comes via the FirebaseFirestore Swift Package, and
       # public headers should come from there.
-      ${FIREBASE_POD_DIR}/Pods/FirebaseFirestore/Firestore/core/include
-      ${FIREBASE_POD_DIR}/Pods/FirebaseFirestore/Firestore/Protos/nanopb
+      ${FIREBASE_SPM_CHECKOUTS_DIR}/firebase-ios-sdk/Firestore/core/include
+      ${FIREBASE_SPM_CHECKOUTS_DIR}/firebase-ios-sdk/Firestore/Protos/nanopb
     PRIVATE
       # Additionally, the core C++ API is not declared publicly within the
-      # FirebaseFirestore pod, so depend on headers available in the source
+      # FirebaseFirestore package, so depend on headers available in the source
       # distribution.
-      ${FIREBASE_POD_DIR}/Pods/FirebaseFirestore
+      ${FIREBASE_SPM_CHECKOUTS_DIR}/firebase-ios-sdk
   )
 else()
   # Desktop and Android get their public headers from the CMake build in
