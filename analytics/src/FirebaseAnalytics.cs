@@ -58,7 +58,10 @@ public static partial class FirebaseAnalytics {
   ///   hashed according to the instructions at 
   ///   https://firebase.google.com/docs/tutorials/ads-ios-on-device-measurement/step-3.
   public static void InitiateOnDeviceConversionMeasurementWithHashedEmailAddress(byte[] hashedEmailAddress) {
-    FirebaseAnalyticsInternal.InitiateOnDeviceConversionMeasurementWithHashedEmailAddress(new CharVector(hashedEmailAddress));
+    using (CharVector charVector = new CharVector(hashedEmailAddress)) {
+      FirebaseAnalyticsInternal.InitiateOnDeviceConversionMeasurementWithHashedEmailAddress(charVector);
+      global::System.GC.KeepAlive(charVector);
+    }
   }
 
   /// Initiates on-device conversion measurement given a sha256-hashed phone number in E.164 
@@ -69,7 +72,10 @@ public static partial class FirebaseAnalytics {
   ///   according to the instructions at 
   ///   https://firebase.google.com/docs/tutorials/ads-ios-on-device-measurement/step-3.
   public static void InitiateOnDeviceConversionMeasurementWithHashedPhoneNumber(byte[] hashedPhoneNumber) {
-    FirebaseAnalyticsInternal.InitiateOnDeviceConversionMeasurementWithHashedPhoneNumber(new CharVector(hashedPhoneNumber));
+    using (CharVector charVector = new CharVector(hashedPhoneNumber)) {
+      FirebaseAnalyticsInternal.InitiateOnDeviceConversionMeasurementWithHashedPhoneNumber(charVector);
+      global::System.GC.KeepAlive(charVector);
+    }
   }
 
   /// Initiates on-device conversion measurement given a phone number in E.164
@@ -231,15 +237,18 @@ public static partial class FirebaseAnalytics {
   ///
   /// @param[in] parameters An enumerable list of `Parameter` instances.
   public static void LogEvent(string name, IEnumerable<Parameter> parameters) {
-    StringList parameterNames = new StringList();
-    VariantList parameterValues = new VariantList();
-    if (parameters != null) {
-      foreach (Parameter p in parameters) {
-        parameterNames.Add(p.Name);
-        parameterValues.Add(Firebase.Variant.FromObject(p.Value));
+    using (StringList parameterNames = new StringList())
+    using (VariantList parameterValues = new VariantList()) {
+      if (parameters != null) {
+        foreach (Parameter p in parameters) {
+          parameterNames.Add(p.Name);
+          parameterValues.Add(Firebase.Variant.FromObject(p.Value));
+        }
       }
+      FirebaseAnalyticsInternal.LogEvent(name, parameterNames, parameterValues);
+      global::System.GC.KeepAlive(parameterNames);
+      global::System.GC.KeepAlive(parameterValues);
     }
-    FirebaseAnalyticsInternal.LogEvent(name, parameterNames, parameterValues);
   }
 
   /// @brief Adds parameters that will be set on every event logged from the SDK.
@@ -269,15 +278,18 @@ public static partial class FirebaseAnalytics {
   ///
   /// @param[in] parameters An enumerable list of `Parameter` instances.
   public static void SetDefaultEventParameters(IEnumerable<Parameter> parameters){
-    StringList parameterNames = new StringList();
-    VariantList parameterValues = new VariantList();
-    if (parameters != null) {
-      foreach (Parameter p in parameters) {
-        parameterNames.Add(p.Name);
-        parameterValues.Add(Firebase.Variant.FromObject(p.Value));
+    using (StringList parameterNames = new StringList())
+    using (VariantList parameterValues = new VariantList()) {
+      if (parameters != null) {
+        foreach (Parameter p in parameters) {
+          parameterNames.Add(p.Name);
+          parameterValues.Add(Firebase.Variant.FromObject(p.Value));
+        }
       }
+      FirebaseAnalyticsInternal.SetDefaultEventParameters(parameterNames, parameterValues);
+      global::System.GC.KeepAlive(parameterNames);
+      global::System.GC.KeepAlive(parameterValues);
     }
-    FirebaseAnalyticsInternal.SetDefaultEventParameters(parameterNames, parameterValues);
   }
 
   /// Clears all analytics data for this app from the device and resets the app
@@ -303,11 +315,15 @@ public static partial class FirebaseAnalytics {
   /// persisted across app sessions. By default consent types are set to
   /// "granted".
   public static void SetConsent(System.Collections.Generic.IDictionary< ConsentType, ConsentStatus > consentSettings) {
-    IntIntMap consentSettingsMap = new IntIntMap();
-    foreach (var kv in consentSettings) {
-      consentSettingsMap[(int)kv.Key] = (int)kv.Value;
+    using (IntIntMap consentSettingsMap = new IntIntMap()) {
+      if (consentSettings != null) {
+        foreach (var kv in consentSettings) {
+          consentSettingsMap[(int)kv.Key] = (int)kv.Value;
+        }
+      }
+      FirebaseAnalyticsInternal.SetConsentWithInts(consentSettingsMap);
+      global::System.GC.KeepAlive(consentSettingsMap);
     }
-    FirebaseAnalyticsInternal.SetConsentWithInts(consentSettingsMap);
   }
 
   /// @brief Sets the duration of inactivity that terminates the current session.
