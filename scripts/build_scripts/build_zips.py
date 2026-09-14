@@ -727,7 +727,8 @@ def make_ios_multi_arch_build(cmake_args):
       # static library, so it is skipped when both are built together. Building the
       # simulator on its own has nothing to collide with, and arm64 is the only
       # simulator slice that runs on Apple Silicon now that Xcode 26 dropped Rosetta.
-      if device == "simulator" and arch == "arm64" and len(g_target_devices) > 1:
+      if (device == "simulator" and arch == "arm64"
+          and "device" in g_target_devices and "simulator" in g_target_devices):
         continue
       target_architectures.append(arch)
       # Run the configure step sequentially, since they can clobber the shared Cocoapod cache
