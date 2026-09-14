@@ -718,9 +718,16 @@ def make_ios_multi_arch_build(cmake_args):
   current_folder = os.getcwd()
   threads = []
   for device in g_target_devices:
-    for arch in IOS_CONFIG_DICT[device]["architecture"]:
-      # Skip arm64 simulator build to avoid collision with arm64 device build in fat static library
-      if device == "simulator" and arch == "arm64":
+    device_architectures = IOS_CONFIG_DICT[device]["architecture"]
+    if FLAGS.architecture:
+      device_architectures = [a for a in g_target_architectures
+                              if a in device_architectures]
+    for arch in device_architectures:
+      # An arm64 simulator slice collides with the arm64 device slice inside a fat
+      # static library, so it is skipped when both are built together. Building the
+      # simulator on its own has nothing to collide with, and arm64 is the only
+      # simulator slice that runs on Apple Silicon now that Xcode 26 dropped Rosetta.
+      if device == "simulator" and arch == "arm64" and len(g_target_devices) > 1:
         continue
       target_architectures.append(arch)
       # Run the configure step sequentially, since they can clobber the shared Cocoapod cache
