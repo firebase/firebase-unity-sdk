@@ -58,6 +58,9 @@ public static partial class FirebaseAnalytics {
   ///   hashed according to the instructions at 
   ///   https://firebase.google.com/docs/tutorials/ads-ios-on-device-measurement/step-3.
   public static void InitiateOnDeviceConversionMeasurementWithHashedEmailAddress(byte[] hashedEmailAddress) {
+    if (hashedEmailAddress == null) {
+      throw new System.ArgumentNullException(nameof(hashedEmailAddress));
+    }
     using (CharVector charVector = new CharVector(hashedEmailAddress)) {
       FirebaseAnalyticsInternal.InitiateOnDeviceConversionMeasurementWithHashedEmailAddress(charVector);
       global::System.GC.KeepAlive(charVector);
@@ -72,6 +75,9 @@ public static partial class FirebaseAnalytics {
   ///   according to the instructions at 
   ///   https://firebase.google.com/docs/tutorials/ads-ios-on-device-measurement/step-3.
   public static void InitiateOnDeviceConversionMeasurementWithHashedPhoneNumber(byte[] hashedPhoneNumber) {
+    if (hashedPhoneNumber == null) {
+      throw new System.ArgumentNullException(nameof(hashedPhoneNumber));
+    }
     using (CharVector charVector = new CharVector(hashedPhoneNumber)) {
       FirebaseAnalyticsInternal.InitiateOnDeviceConversionMeasurementWithHashedPhoneNumber(charVector);
       global::System.GC.KeepAlive(charVector);
@@ -315,11 +321,12 @@ public static partial class FirebaseAnalytics {
   /// persisted across app sessions. By default consent types are set to
   /// "granted".
   public static void SetConsent(System.Collections.Generic.IDictionary< ConsentType, ConsentStatus > consentSettings) {
+    if (consentSettings == null) {
+      throw new System.ArgumentNullException(nameof(consentSettings));
+    }
     using (IntIntMap consentSettingsMap = new IntIntMap()) {
-      if (consentSettings != null) {
-        foreach (var kv in consentSettings) {
-          consentSettingsMap[(int)kv.Key] = (int)kv.Value;
-        }
+      foreach (var kv in consentSettings) {
+        consentSettingsMap[(int)kv.Key] = (int)kv.Value;
       }
       FirebaseAnalyticsInternal.SetConsentWithInts(consentSettingsMap);
       global::System.GC.KeepAlive(consentSettingsMap);
