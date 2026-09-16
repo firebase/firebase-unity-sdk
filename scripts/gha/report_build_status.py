@@ -408,8 +408,8 @@ def main(argv):
 
     with progress.bar.Bar('Reading jobs...', max=2) as bar:
 
-      # Only get runs created after the start date
-      created_filter = ">=" + str(start_date)
+      # Only get runs created within the date range
+      created_filter = f"{str(start_date)}..{str(end_date)}"
 
       all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.build_workflow, _BRANCH, _WORKFLOW_SCHEDULED, _LIMIT, created_filter)
       bar.next()
