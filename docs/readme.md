@@ -109,13 +109,17 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
+### 13.17.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 13.13.0.
+    - General (Android): Update to Firebase Android BoM version 34.19.0.
+    - General (iOS): Update to Firebase Apple SDK version 12.19.0.
+    - General: Update to EDM4U version 1.2.189.
     - Analytics: Fixed a `SIGABRT` (`std::bad_alloc`) crash under IL2CPP on iOS by ensuring ephemeral native containers are kept alive and deterministically disposed during `LogEvent` and related calls ([#1515](https://github.com/firebase/firebase-unity-sdk/issues/1515)).
 
 ### 13.16.0
 -   Changes
-    - General: Update to Firebase C++ SDK version 13.11.0.
+    - General: Update to Firebase C++ SDK version 13.12.0.
     - General (Android): Update to Firebase Android BoM version 34.18.0.
     - General (iOS): Update to Firebase Cocoapods version 12.18.0.
     - Firebase AI: Add support for RealtimeInputConfig in the Live API, enabling configuration of Voice Activity Detection (VAD), activity handling (interruption behavior), and turn coverage.
