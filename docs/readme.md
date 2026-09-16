@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+-   Changes
+    - Analytics: Fixed a `SIGABRT` (`std::bad_alloc`) crash under IL2CPP on iOS by ensuring ephemeral native containers are kept alive and deterministically disposed during `LogEvent` and related calls ([#1515](https://github.com/firebase/firebase-unity-sdk/issues/1515)).
+
 ### 13.16.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.11.0.
