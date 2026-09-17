@@ -209,34 +209,40 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
   /// dictionary into that map.
   internal static StringStringMap ConvertDictionaryToMap(
       System.Collections.Generic.IDictionary<string, object> oldMap) {
-    StringStringMap newMap = new StringStringMap();
-
-    foreach (System.Collections.Generic.KeyValuePair<string, object>
-             pair in oldMap) {
-      if (pair.Value is string) {
-        newMap[pair.Key] = pair.Value as string;
-      } else if (pair.Value is System.Collections.Generic.IEnumerable<byte>) {
-        // For lists of bytes, match the UTF8 conversion used by the base
-        // implementation.
-        var list =
-            new System.Collections.Generic.List<byte>(
-                pair.Value as System.Collections.Generic.IEnumerable<byte>);
-        newMap[pair.Key] = System.Text.Encoding.UTF8.GetString(list.ToArray());
-      } else if (pair.Value is System.Collections.IEnumerable) {
-        // For other collections, just try to convert the inner values.
-        var list = pair.Value as System.Collections.IEnumerable;
-        var stringBuilder = new System.Text.StringBuilder();
-        foreach (object obj in list) {
-          stringBuilder.Append(System.Convert.ToString(obj, System.Globalization.CultureInfo.InvariantCulture));
-        }
-        newMap[pair.Key] = stringBuilder.ToString();
-      } else {
-        // For everything else, go straight to a string.
-        newMap[pair.Key] = System.Convert.ToString(pair.Value, System.Globalization.CultureInfo.InvariantCulture);
-      }
+    if (oldMap == null) {
+      throw new System.ArgumentNullException(nameof(oldMap));
     }
-
-    return newMap;
+    StringStringMap newMap = new StringStringMap();
+    try {
+      foreach (System.Collections.Generic.KeyValuePair<string, object>
+               pair in oldMap) {
+        if (pair.Value is string) {
+          newMap[pair.Key] = pair.Value as string;
+        } else if (pair.Value is System.Collections.Generic.IEnumerable<byte>) {
+          // For lists of bytes, match the UTF8 conversion used by the base
+          // implementation.
+          var list =
+              new System.Collections.Generic.List<byte>(
+                  pair.Value as System.Collections.Generic.IEnumerable<byte>);
+          newMap[pair.Key] = System.Text.Encoding.UTF8.GetString(list.ToArray());
+        } else if (pair.Value is System.Collections.IEnumerable) {
+          // For other collections, just try to convert the inner values.
+          var list = pair.Value as System.Collections.IEnumerable;
+          var stringBuilder = new System.Text.StringBuilder();
+          foreach (object obj in list) {
+            stringBuilder.Append(System.Convert.ToString(obj, System.Globalization.CultureInfo.InvariantCulture));
+          }
+          newMap[pair.Key] = stringBuilder.ToString();
+        } else {
+          // For everything else, go straight to a string.
+          newMap[pair.Key] = System.Convert.ToString(pair.Value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+      }
+      return newMap;
+    } catch {
+      newMap.Dispose();
+      throw;
+    }
   }
 %}
 
@@ -271,7 +277,7 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
   }
 
   Future<void> SetDefaultsInternal(
-      std::map<std::string, std::string> default_dict) {
+      const std::map<std::string, std::string>& default_dict) {
     size_t default_count = default_dict.size();
 
     firebase::remote_config::ConfigKeyValue* default_array =
@@ -291,8 +297,8 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
   }
 
   Future<void> SetCustomSignalsInternal(
-      std::vector<std::string> keys,
-      std::vector<firebase::Variant> values) {
+      const std::vector<std::string>& keys,
+      const std::vector<firebase::Variant>& values) {
     if (keys.size() != values.size()) {
       firebase::LogError(
           "SetCustomSignalsInternal given different list sizes (%zu, %zu)",
