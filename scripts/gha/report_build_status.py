@@ -408,7 +408,10 @@ def main(argv):
 
     with progress.bar.Bar('Reading jobs...', max=2) as bar:
 
-      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.build_workflow, _BRANCH, _WORKFLOW_SCHEDULED, _LIMIT)
+      # Only get runs created within the date range
+      created_filter = f"{str(start_date)}..{str(end_date)}"
+
+      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.build_workflow, _BRANCH, _WORKFLOW_SCHEDULED, _LIMIT, created_filter)
       bar.next()
       packaging_runs = {}
       packaging_run_ids = set()
@@ -424,7 +427,7 @@ def main(argv):
         packaging_runs[day] = run
         packaging_run_ids.add(str(run['id']))
 
-      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.test_workflow, _BRANCH, _WORKFLOW_DISPATCHED, _LIMIT)
+      all_runs = firebase_github.list_workflow_runs(FLAGS.token, FLAGS.test_workflow, _BRANCH, _WORKFLOW_DISPATCHED, _LIMIT, created_filter)
       bar.next()
       package_tests_all = []
       for run in reversed(all_runs):
