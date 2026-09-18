@@ -89,13 +89,11 @@ BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(
 TEST_DEVICES = {
   "android_min": {"platform": ANDROID, "type": "real",
                   "device": [
-                    "model=SH-01L,version=28",  # AQUOS sense2 SH-01L
-                    "model=gts8wifi,version=34",  # Galaxy Tab S8
+                    "model=oriole,version=33",  # Pixel 6
                   ]},
   "android_target": {"platform": ANDROID, "type": "real",
                      "device": [
-                       "model=SH-01L,version=28",  # AQUOS sense2 SH-01L
-                       "model=gts8wifi,version=34",  # Galaxy Tab S8
+                       "model=oriole,version=33",  # Pixel 6
                      ]},
   "android_latest": {"platform": ANDROID, "type": "real",
                      "device": [
