@@ -170,7 +170,9 @@ namespace Firebase.RemoteConfig {
     public async System.Threading.Tasks.Task<ConfigInfo> EnsureInitializedAsync() {
       ThrowIfNull();
       using (ConfigInfoInternal configInfoInternal = await remoteConfigInternal.EnsureInitializedAsync()) {
-        return new ConfigInfo(configInfoInternal);
+        ConfigInfo configInfo = new ConfigInfo(configInfoInternal);
+        global::System.GC.KeepAlive(configInfoInternal);
+        return configInfo;
       }
     }
 
@@ -312,7 +314,9 @@ namespace Firebase.RemoteConfig {
       get {
         ThrowIfNull();
         using (ConfigSettingsInternal settingsInternal = remoteConfigInternal.GetConfigSettings()) {
-          return ConfigSettings.FromInternal(settingsInternal);
+          ConfigSettings settings = ConfigSettings.FromInternal(settingsInternal);
+          global::System.GC.KeepAlive(settingsInternal);
+          return settings;
         }
       }
     }
@@ -374,7 +378,9 @@ namespace Firebase.RemoteConfig {
       get {
         ThrowIfNull();
         using (ConfigInfoInternal infoInternal = remoteConfigInternal.GetInfo()) {
-          return new ConfigInfo(infoInternal);
+          ConfigInfo info = new ConfigInfo(infoInternal);
+          global::System.GC.KeepAlive(infoInternal);
+          return info;
         }
       }
     }

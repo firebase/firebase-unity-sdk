@@ -216,6 +216,9 @@ void SetConfigUpdateCallback(firebase::remote_config::RemoteConfig* rc,
     try {
       foreach (System.Collections.Generic.KeyValuePair<string, object>
                pair in oldMap) {
+        if (pair.Key == null) {
+          throw new System.ArgumentException("Key cannot be null", nameof(oldMap));
+        }
         if (pair.Value is string) {
           newMap[pair.Key] = pair.Value as string;
         } else if (pair.Value is System.Collections.Generic.IEnumerable<byte>) {
