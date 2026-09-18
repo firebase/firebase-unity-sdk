@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+-   Changes
+    - Remote Config: Ensure ephemeral native containers are deterministically disposed and kept alive across P/Invoke calls in `SetDefaultsAsync`, `SetCustomSignalsAsync`, and settings/info accessors.
+
 ### 13.17.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.13.0.
