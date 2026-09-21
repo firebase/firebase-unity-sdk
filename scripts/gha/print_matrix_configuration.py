@@ -89,11 +89,11 @@ BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(
 TEST_DEVICES = {
   "android_min": {"platform": ANDROID, "type": "real",
                   "device": [
-                    "model=blueline,version=28", # Pixel 3
+                    "model=oriole,version=33",  # Pixel 6
                   ]},
   "android_target": {"platform": ANDROID, "type": "real",
                      "device": [
-                       "model=blueline,version=28", # Pixel 3
+                       "model=oriole,version=33",  # Pixel 6
                      ]},
   "android_latest": {"platform": ANDROID, "type": "real",
                      "device": [
