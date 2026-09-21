@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+-   Changes
+    - Auth: **Breaking Change** Standardized `Firebase.Auth.UserMetadata.CreationTimestamp` and `Firebase.Auth.UserMetadata.LastSignInTimestamp` to return `System.DateTime` (UTC) instead of `ulong` Unix epoch milliseconds, matching other Firebase Unity SDK timestamp properties.
+
 ### 13.17.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.13.0.
