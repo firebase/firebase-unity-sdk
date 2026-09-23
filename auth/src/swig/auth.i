@@ -973,9 +973,7 @@ static CppInstanceManager<Auth> g_auth_instances;
 %rename(UserName) firebase::auth::AdditionalUserInfo::user_name;
 %rename(UpdatedCredential) firebase::auth::AdditionalUserInfo::updated_credential;
 // UserMetadata
-%csmethodmodifiers firebase::auth::UserMetadata::creation_timestamp "internal";
 %rename(CreationTimestampInternal) firebase::auth::UserMetadata::creation_timestamp;
-%csmethodmodifiers firebase::auth::UserMetadata::last_sign_in_timestamp "internal";
 %rename(LastSignInTimestampInternal) firebase::auth::UserMetadata::last_sign_in_timestamp;
 
 // AuthResult
