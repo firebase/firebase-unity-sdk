@@ -182,16 +182,16 @@ namespace Firebase.Sample.Auth {
           ") is not DateTimeKind.Utc."));
         return false;
       }
-      if (creationTimestamp <= unixEpochUtc) {
+      if (creationTimestamp <= unixEpochUtc || creationTimestamp > DateTime.UtcNow.AddDays(1)) {
         tcs.TrySetException(new Exception(
           "CurrentUser.Metadata.CreationTimestamp (" + creationTimestamp +
-          ") is not after Unix epoch."));
+          ") is not a valid timestamp (must be after Unix epoch and not in the far future)."));
         return false;
       }
-      if (lastSignInTimestamp < creationTimestamp) {
+      if (lastSignInTimestamp < creationTimestamp || lastSignInTimestamp > DateTime.UtcNow.AddDays(1)) {
         tcs.TrySetException(new Exception(
           "CurrentUser.Metadata.LastSignInTimestamp (" + lastSignInTimestamp +
-          ") is earlier than CreationTimestamp (" + creationTimestamp + ")."));
+          ") is not a valid timestamp (must be >= CreationTimestamp and not in the far future)."));
         return false;
       }
       return true;
