@@ -51,7 +51,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppApp.a"
+            "Plugins/iOS/Firebase/libFirebaseCppApp.xcframework"
           ]
         },
         {
@@ -61,7 +61,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppApp.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppApp.xcframework"
           ]
         },
         {
@@ -245,7 +245,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.a"
+            "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.xcframework"
           ]
         },
         {
@@ -255,7 +255,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppCrashlytics.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppCrashlytics.xcframework"
           ]
         },
         {

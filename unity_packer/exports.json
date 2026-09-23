@@ -51,7 +51,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppApp.a"
+            "Plugins/iOS/Firebase/libFirebaseCppApp.xcframework"
           ]
         },
         {
@@ -61,7 +61,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppApp.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppApp.xcframework"
           ]
         },
         {
@@ -251,7 +251,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAnalytics.a"
+            "Plugins/iOS/Firebase/libFirebaseCppAnalytics.xcframework"
           ]
         },
         {
@@ -261,7 +261,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppAnalytics.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppAnalytics.xcframework"
           ]
         },
         {
@@ -382,7 +382,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAuth.a"
+            "Plugins/iOS/Firebase/libFirebaseCppAuth.xcframework"
           ]
         },
         {
@@ -392,7 +392,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppAuth.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppAuth.xcframework"
           ]
         },
         {
@@ -512,7 +512,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.a"
+            "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.xcframework"
           ]
         },
         {
@@ -522,7 +522,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppCrashlytics.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppCrashlytics.xcframework"
           ]
         },
         {
@@ -640,7 +640,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppRemoteConfig.a"
+            "Plugins/iOS/Firebase/libFirebaseCppRemoteConfig.xcframework"
           ]
         },
         {
@@ -650,7 +650,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppRemoteConfig.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppRemoteConfig.xcframework"
           ]
         },
         {
@@ -770,7 +770,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppMessaging.a"
+            "Plugins/iOS/Firebase/libFirebaseCppMessaging.xcframework"
           ]
         },
         {
@@ -780,7 +780,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppMessaging.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppMessaging.xcframework"
           ]
         },
         {
@@ -933,7 +933,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppDatabase.a"
+            "Plugins/iOS/Firebase/libFirebaseCppDatabase.xcframework"
           ]
         },
         {
@@ -943,7 +943,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppDatabase.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppDatabase.xcframework"
           ]
         },
         {
@@ -1152,7 +1152,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppStorage.a"
+            "Plugins/iOS/Firebase/libFirebaseCppStorage.xcframework"
           ]
         },
         {
@@ -1162,7 +1162,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppStorage.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppStorage.xcframework"
           ]
         },
         {
@@ -1300,7 +1300,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppInstallations.a"
+            "Plugins/iOS/Firebase/libFirebaseCppInstallations.xcframework"
           ]
         },
         {
@@ -1310,7 +1310,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppInstallations.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppInstallations.xcframework"
           ]
         },
         {
@@ -1428,7 +1428,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppPerformance.a"
+            "Plugins/iOS/Firebase/libFirebaseCppPerformance.xcframework"
           ]
         },
         {
@@ -1438,7 +1438,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppPerformance.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppPerformance.xcframework"
           ]
         },
         {
@@ -1554,7 +1554,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppFirestore.a"
+            "Plugins/iOS/Firebase/libFirebaseCppFirestore.xcframework"
           ]
         },
         {
@@ -1564,7 +1564,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppFirestore.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppFirestore.xcframework"
           ]
         },
         {
@@ -1683,7 +1683,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppTestlab.a"
+            "Plugins/iOS/Firebase/libFirebaseCppTestlab.xcframework"
           ]
         },
         {
@@ -1693,7 +1693,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppTestlab.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppTestlab.xcframework"
           ]
         },
         {
@@ -1808,7 +1808,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAppCheck.a"
+            "Plugins/iOS/Firebase/libFirebaseCppAppCheck.xcframework"
           ]
         },
         {
@@ -1818,7 +1818,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppAppCheck.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppAppCheck.xcframework"
           ]
         },
         {
