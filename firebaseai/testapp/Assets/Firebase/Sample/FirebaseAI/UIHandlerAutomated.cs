@@ -1952,9 +1952,6 @@ namespace Firebase.Sample.FirebaseAI
       CountTokensResponse response = CountTokensResponse.FromJson(json);
 
       AssertEq("TotalTokens", response.TotalTokens, 1837);
-#pragma warning disable CS0618
-      AssertEq("TotalBillableCharacters", response.TotalBillableCharacters, 117);
-#pragma warning restore CS0618
       List<ModalityTokenCount> details = response.PromptTokensDetails.ToList();
       AssertEq("PromptTokensDetails.Count", details.Count, 2);
       AssertEq("PromptTokensDetails[0].Modality", details[0].Modality, ContentModality.Image);
