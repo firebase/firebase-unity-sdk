@@ -27,7 +27,7 @@ endif()
 if(NOT DEFINED CMAKE_OSX_ARCHITECTURES OR "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
   set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
 endif()
-set(CMAKE_XCODE_EFFECTIVE_PLATFORMS "-appletvos;-tvsimulator")
+set(CMAKE_XCODE_EFFECTIVE_PLATFORMS "-appletvos;-appletvsimulator")
 set(IOS_PLATFORM_LOCATION "AppleTvOS.platform;AppleTvSimulator.platform")
 
 set(PLATFORM_INT "${PLATFORM}")
