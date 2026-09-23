@@ -523,6 +523,7 @@ def configure_ios_or_tvos_target(device_config, device, arch, cmake_args):
 
     Args:
       device_config: Dictionary entry from IOS_CONFIG_DICT or TVOS_CONFIG_DICT.
+      device: Building for device or simulator.
       arch: The architecture to build for.
       cmake_args: Additional cmake arguments to use.
 
@@ -539,9 +540,10 @@ def configure_ios_or_tvos_target(device_config, device, arch, cmake_args):
   if "toolchain_platform" in device_config:
     build_args.append("-DPLATFORM=" + device_config["toolchain_platform"])
 
-  if not os.path.exists(arch):
-    os.makedirs(arch)
-  build_dir = os.path.join(os.getcwd(), arch)
+  subdir = device[:3] + "-" + arch
+  if not os.path.exists(subdir):
+    os.makedirs(subdir)
+  build_dir = os.path.join(os.getcwd(), subdir)
   subprocess.call(build_args, cwd=build_dir)
   return build_dir
 
@@ -558,7 +560,7 @@ def make_ios_or_tvos_target(build_dir):
 
 def make_ios_or_tvos_multi_arch_build(cmake_args):
   """Make iOS or tvOS build for different architectures, and then combine
-    them together into fat libraries and a single zip file.
+    them together into xcframeworks and a single zip file.
 
     Args:
       cmake_args: cmake arguments used to build each architecture.
@@ -567,7 +569,6 @@ def make_ios_or_tvos_multi_arch_build(cmake_args):
   config_dict = TVOS_CONFIG_DICT if is_tvos_build() else IOS_CONFIG_DICT
   platform_name = "tvOS" if is_tvos_build() else "iOS"
   current_folder = os.getcwd()
-  target_architectures = []
 
   # build multiple architectures
   threads = []
@@ -578,16 +579,8 @@ def make_ios_or_tvos_multi_arch_build(cmake_args):
       device_architectures = [a for a in g_target_architectures
                               if a in device_architectures]
     for arch in device_architectures:
-      # An arm64 simulator slice collides with the arm64 device slice inside a fat
-      # static library, so it is skipped when both are built together. Building the
-      # simulator on its own has nothing to collide with, and arm64 is the only
-      # simulator slice that runs on Apple Silicon now that Xcode 26 dropped Rosetta.
-      if (device == "simulator" and arch == "arm64"
-          and "device" in g_target_devices and "simulator" in g_target_devices):
-        continue
-      target_architectures.append(arch)
       # Run the configure step sequentially, since they can clobber the shared Cocoapod cache
-      build_dir = configure_ios_or_tvos_target(device_config, arch, cmake_args)
+      build_dir = configure_ios_or_tvos_target(device_config, device, arch, cmake_args)
       # Run the builds in parallel
       t = threading.Thread(target=make_ios_or_tvos_target, args=(build_dir,))
       t.start()
@@ -597,48 +590,91 @@ def make_ios_or_tvos_multi_arch_build(cmake_args):
   for t in threads:
     t.join()
 
-  # Merge the different zip files together, using lipo on the library files
+  # Merge the different zip files together, first using lipo to merge
+  # the architectures by target device, then using xcodebuild to merge
+  # those into xcframeworks.
   zip_base_name = ""
   library_list = []
   base_temp_dir = tempfile.mkdtemp()
+  device_temp_dir_list = []
   zip_pattern = f"*-{platform_name}.zip"
-  for arch in target_architectures:
-    # find *.zip in subfolder architecture
-    arch_zip_path = glob.glob(os.path.join(arch, zip_pattern))
-    if not arch_zip_path:
-      logging.error("No %s generated for architecture %s", zip_pattern, arch)
-      return
-    if not zip_base_name:
-      # first architecture, so extract to the final temp folder. The following
-      # library files will merge to the ones in this folder.
-      zip_base_name = arch_zip_path[0]
-      with zipfile.ZipFile(zip_base_name) as zip_file:
-        zip_file.extractall(base_temp_dir)
-      library_list.extend(glob.glob(os.path.join(
-          base_temp_dir, "**", "*.a"), recursive=True))
-    else:
-      temporary_dir = tempfile.mkdtemp()
-      # from the second zip, we only need to extract *.a files to operate the merge.
-      with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
-        for file in zip_file.namelist():
-          if file.endswith('.a'):
-            zip_file.extract(file, temporary_dir)
+  for device in g_target_devices:
+    device_temp_dir = None
+    device_library_list = []
 
-      for library_file in library_list:
-        library_name = os.path.basename(library_file)
-        matching_files = glob.glob(os.path.join(
-            temporary_dir, "Plugins", platform_name, "Firebase", library_name))
-        if matching_files:
-          merge_args = [
-              "lipo",
-              library_file,
-              matching_files[0],
-              "-create",
-              "-output",
-              library_file,
-          ]
-          subprocess.call(merge_args)
-          logging.info("merging %s to %s", matching_files[0], library_name)
+    device_architectures = config_dict[device]["architecture"]
+    if FLAGS.architecture:
+      device_architectures = [a for a in g_target_architectures
+                              if a in device_architectures]
+    for arch in device_architectures:
+      subfolder = device[:3] + "-" + arch
+      # find *.zip in subfolder architecture
+      arch_zip_path = glob.glob(os.path.join(subfolder, zip_pattern))
+      if not arch_zip_path:
+        logging.error("No %s generated for device %s, architecture %s",
+                      zip_pattern, device, arch)
+        return
+      if not zip_base_name:
+        # first architecture, so extract all non-.a files to the final temp folder.
+        # The xcframework files will eventually be added to the ones in this folder.
+        zip_base_name = arch_zip_path[0]
+        with zipfile.ZipFile(zip_base_name) as zip_file:
+          for file in zip_file.namelist():
+            if not file.endswith('.a'):
+              zip_file.extract(file, base_temp_dir)
+            if file.endswith('.a'):
+              library_list.append(os.path.join(base_temp_dir, file))
+      if not device_temp_dir:
+        # First architecture for this device type, so extract all .a files.
+        # The other .a files will be merged into these.
+        device_temp_dir = tempfile.mkdtemp()
+        with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
+          for file in zip_file.namelist():
+            if file.endswith('.a'):
+              zip_file.extract(file, device_temp_dir)
+              device_library_list.append(os.path.join(device_temp_dir, file))
+      else:
+        temporary_dir = tempfile.mkdtemp()
+        # from the second zip, we only need to extract *.a files to operate the merge.
+        with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
+          for file in zip_file.namelist():
+            if file.endswith('.a'):
+              zip_file.extract(file, temporary_dir)
+
+        for library_file in device_library_list:
+          library_name = os.path.basename(library_file)
+          matching_files = glob.glob(os.path.join(
+              temporary_dir, "Plugins", platform_name, "Firebase", library_name))
+          if matching_files:
+            merge_args = [
+                "lipo",
+                library_file,
+                matching_files[0],
+                "-create",
+                "-output",
+                library_file,
+            ]
+            subprocess.call(merge_args)
+            logging.info("merging %s to %s", matching_files[0], library_name)
+    # Done with the architectures, so save the libraries to be merged into xcframeworks
+    if device_temp_dir:
+      device_temp_dir_list.append(device_temp_dir)
+
+  # Done with the devices, so create the xcframeworks
+  for library_file in library_list:
+    library_name = os.path.basename(library_file)
+    xcframework_args = ["xcodebuild", "-create-xcframework"]
+    # Get the .a files for each device type
+    for device_temp_dir in device_temp_dir_list:
+      matching_files = glob.glob(os.path.join(
+          device_temp_dir, "Plugins", platform_name, "Firebase", library_name))
+      if matching_files:
+        xcframework_args.append("-library")
+        xcframework_args.append(matching_files[0])
+    xcframework_args.append("-output")
+    xcframework_args.append(library_file[:-1] + "xcframework")
+    subprocess.call(xcframework_args)
+    logging.info("creating xcframework for %s", library_name[:-2])
 
   # archive the temp folder to the final firebase_unity-<version>-<platform>.zip
   final_zip_path = os.path.join(current_folder, os.path.basename(zip_base_name))
@@ -648,7 +684,7 @@ def make_ios_or_tvos_multi_arch_build(cmake_args):
         fullpath = os.path.join(current_root, filename)
         zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
   logging.info("Generated Darwin (%s) multi-arch (%s) zip %s",
-               platform_name, ",".join(target_architectures), final_zip_path)
+               platform_name, ",".join(g_target_architectures), final_zip_path)
 
 def gen_documentation_zip():
   """If the flag was enabled, builds the zip file containing source files to document.
