@@ -161,6 +161,42 @@ namespace Firebase.Sample.Auth {
       displayName = AutoTestDisplayName;
     }
 
+    // Confirms that the user's Metadata contains valid UTC System.DateTime timestamps.
+    bool ConfirmUserMetadata<T>(TaskCompletionSource<T> tcs, Firebase.Auth.FirebaseUser user) {
+      if (user.Metadata == null) {
+        tcs.TrySetException(new Exception("CurrentUser.Metadata is null when expected."));
+        return false;
+      }
+      DateTime unixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+      DateTime creationTimestamp = user.Metadata.CreationTimestamp;
+      DateTime lastSignInTimestamp = user.Metadata.LastSignInTimestamp;
+      if (creationTimestamp.Kind != DateTimeKind.Utc) {
+        tcs.TrySetException(new Exception(
+          "CurrentUser.Metadata.CreationTimestamp.Kind (" + creationTimestamp.Kind +
+          ") is not DateTimeKind.Utc."));
+        return false;
+      }
+      if (lastSignInTimestamp.Kind != DateTimeKind.Utc) {
+        tcs.TrySetException(new Exception(
+          "CurrentUser.Metadata.LastSignInTimestamp.Kind (" + lastSignInTimestamp.Kind +
+          ") is not DateTimeKind.Utc."));
+        return false;
+      }
+      if (creationTimestamp <= unixEpochUtc || creationTimestamp > DateTime.UtcNow.AddDays(1)) {
+        tcs.TrySetException(new Exception(
+          "CurrentUser.Metadata.CreationTimestamp (" + creationTimestamp +
+          ") is not a valid timestamp (must be after Unix epoch and not in the far future)."));
+        return false;
+      }
+      if (lastSignInTimestamp < creationTimestamp || lastSignInTimestamp > DateTime.UtcNow.AddDays(1)) {
+        tcs.TrySetException(new Exception(
+          "CurrentUser.Metadata.LastSignInTimestamp (" + lastSignInTimestamp +
+          ") is not a valid timestamp (must be >= CreationTimestamp and not in the far future)."));
+        return false;
+      }
+      return true;
+    }
+
     // Confirms that the current user is set as an anonymous user.
     // If a problem is found, an exception is set on the given Task, and false is returned.
     bool ConfirmAnonymousCurrentUser<T>(TaskCompletionSource<T> tcs) {
@@ -170,6 +206,8 @@ namespace Firebase.Sample.Auth {
       } else if (!auth.CurrentUser.IsAnonymous) {
         tcs.TrySetException(new Exception(
           "SignIn Anonymously set a non-anonymous User on the Auth instance"));
+      } else if (!ConfirmUserMetadata(tcs, auth.CurrentUser)) {
+        return false;
       } else {
         // Everything is good.
         return true;
@@ -190,6 +228,8 @@ namespace Firebase.Sample.Auth {
         tcs.TrySetException(new Exception("CurrentUser display name (" +
           auth.CurrentUser.DisplayName + ") does not match expected (" + AutoTestDisplayName + ")"));
 #endif
+      } else if (!ConfirmUserMetadata(tcs, auth.CurrentUser)) {
+        return false;
       } else {
         // Everything is good.
         return true;
