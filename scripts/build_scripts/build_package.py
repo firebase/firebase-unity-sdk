@@ -105,33 +105,14 @@ def get_last_version():
 
 
 def find_pack_script():
-  """Get the pack script either from intermediate build folder or download from unity-jar-resolver.
+  """Get the pack script from scripts/build_scripts.
 
     Returns:
       path of the pack script. None if not found.
   """
-  built_folder_ext = "_unity"
-  built_folder_postion = os.path.join(
-      "external", "src", "google_unity_jar_resolver")
-  built_folder = None
-  resolver_root_folder = "unity-jar-resolver"
-  for folder in os.listdir("."):
-    if (folder.endswith(built_folder_ext) and
-       os.path.exists(os.path.join(folder, built_folder_postion))):
-      built_folder = folder
-      break
-
-  if built_folder != None:
-    resolver_root_folder = os.path.join(built_folder, built_folder_postion)
-  elif not os.path.exists(resolver_root_folder):
-    git_clone_script = ["git", "clone",
-                        "--depth", "1",
-                        "https://github.com/googlesamples/unity-jar-resolver.git"]
-    subprocess.call(git_clone_script)
-
-  if resolver_root_folder != None:
-    script_path = os.path.join(
-        resolver_root_folder, "source", "ExportUnityPackage", "export_unity_package.py")
+  script_path = os.path.join(
+      "scripts", "build_scripts", "export_unity_package.py")
+  if os.path.exists(script_path):
     return script_path
   return None
 
@@ -162,8 +143,7 @@ def main(argv):
 
   packer_script_path = find_pack_script()
   if packer_script_path == None:
-    raise app.UsageError(
-        'Cannot find pack script. Please build the project first.')
+    raise app.UsageError('Cannot find pack script.')
 
   packer_script_path = os.path.join(os.getcwd(), packer_script_path)
   guids_file_path = os.path.join(os.getcwd(), FLAGS.script_folder,

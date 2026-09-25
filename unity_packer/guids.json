@@ -2178,7 +2178,10 @@
         "Plugins/tvOS/Firebase/libFirebaseCppStorage.xcframework": "2c10e197a3a7424daaedee2c62d822de",
         "Plugins/tvOS/Firebase/libFirebaseCppStorage.xcframework/Info.plist": "141691f6a6bf484096efd2969cabaff9",
         "Plugins/tvOS/Firebase/libFirebaseCppStorage.xcframework/tvos-arm64/libFirebaseCppStorage.a": "6ba2c511538343588da67ecd037acdd5",
-        "Plugins/tvOS/Firebase/libFirebaseCppStorage.xcframework/tvos-arm64_x86_64-simulator/libFirebaseCppStorage.a": "a962edeadd7d404f909b476722083b79"
+        "Plugins/tvOS/Firebase/libFirebaseCppStorage.xcframework/tvos-arm64_x86_64-simulator/libFirebaseCppStorage.a": "a962edeadd7d404f909b476722083b79",
+        "com.google.firebase.analytics/Plugins/iOS/Firebase/libFirebaseCppAnalytics.xcframework": "73fd30e0eb5e4234b9b215b9dcaaa5a2",
+        "com.google.firebase.analytics/Plugins/iOS/Firebase/libFirebaseCppAnalytics.xcframework/ios-arm64": "72893a56940949a5955c5cc95b46bd22",
+        "com.google.firebase.analytics/Plugins/iOS/Firebase/libFirebaseCppAnalytics.xcframework/ios-arm64_x86_64-simulator": "6ce258bbf035434d97b0d316f08803c6"
     },
     "13.2.0": {
         "Firebase/Editor/FirebaseAI_version-13.2.0_manifest.txt": "724160d3ae0141bc88936d552a217965",
