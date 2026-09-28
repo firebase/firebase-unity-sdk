@@ -54,7 +54,7 @@ namespace Firebase.AI
       string citationKey = backend switch
       {
         FirebaseAI.Backend.InternalProvider.GoogleAI => "citationSources",
-        FirebaseAI.Backend.InternalProvider.AgentPlatform => "citations",
+        FirebaseAI.Backend.InternalProvider.Enterprise => "citations",
         _ => throw new ArgumentOutOfRangeException(nameof(backend), backend,
                            "Unsupported or unhandled backend provider encountered.")
       };
