@@ -135,9 +135,9 @@ namespace Firebase.Editor {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Minimum Target Android SDK needs to be set to level 14 or above.
+        ///   Looks up a localized string similar to Minimum Target Android SDK needs to be set to level 24 or above.
         ///
-        ///Change the Android SDK version to at least &quot;API level 14&quot; in:
+        ///Change the Android SDK version to at least &quot;API level 24&quot; in:
         ///Build Settings -&gt; Player Settings -&gt; Other Settings -&gt; Identification -&gt; Minimum API Level
         ///.
         /// </summary>

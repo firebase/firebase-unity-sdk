@@ -111,6 +111,7 @@ Release Notes
 -------------
 ### Upcoming Release
 -   Changes
+    - General (Android): **Breaking Change** Updated minSdkVersion to 24.
     - Auth: **Breaking Change** Standardized `Firebase.Auth.UserMetadata.CreationTimestamp` and `Firebase.Auth.UserMetadata.LastSignInTimestamp` to return `System.DateTime` (UTC) instead of `ulong` Unix epoch milliseconds, matching other Firebase Unity SDK timestamp properties.
     - Firebase AI: Remove the deprecated fields: `Backend.VertexAI`, `CountTokensResponse.TotalBillableCharacters`, and `LiveSession.SendMediaChunksAsync`.
     - Remote Config: Ensure ephemeral native containers are deterministically disposed and kept alive across P/Invoke calls in `SetDefaultsAsync`, `SetCustomSignalsAsync`, and settings/info accessors.

@@ -29,7 +29,7 @@ using UnityEngine;
 [InitializeOnLoad]
 internal class AndroidSettingsChecker : AssetPostprocessor {
     static bool checkedVersion = false;
-    const int MinSupportedAndroidApiLevel = 14;
+    const int MinSupportedAndroidApiLevel = 24;
 
     static AndroidSettingsChecker() {
         if (EditorUserBuildSettings.activeBuildTarget ==
@@ -38,7 +38,7 @@ internal class AndroidSettingsChecker : AssetPostprocessor {
         }
     }
 
-    // Check the minimum android sdk and ensure its >=14.
+    // Check the minimum android sdk and ensure its >=24.
     private static void CheckMinimumAndroidVersion() {
         if (!checkedVersion) {
             checkedVersion = true;

@@ -299,9 +299,9 @@ To resolve this issue follow the instructions at {2}</value>
     <value>Incorrect Minimum Android Version.</value>
   </data>
   <data name="AndroidSdkVersionMismatch" xml:space="preserve">
-    <value>Minimum Target Android SDK needs to be set to level 14 or above.
+    <value>Minimum Target Android SDK needs to be set to level 24 or above.
 
-Change the Android SDK version to at least "API level 14" in:
+Change the Android SDK version to at least "API level 24" in:
 Build Settings -&gt; Player Settings -&gt; Other Settings -&gt; Identification -&gt; Minimum API Level
 </value>
   </data>
