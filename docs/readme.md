@@ -111,6 +111,7 @@ Release Notes
 -------------
 ### Upcoming Release
 -   Changes
+    - General (iOS): Change library format to .xcframework, add support for arm64 simuators.
     - Auth: **Breaking Change** Standardized `Firebase.Auth.UserMetadata.CreationTimestamp` and `Firebase.Auth.UserMetadata.LastSignInTimestamp` to return `System.DateTime` (UTC) instead of `ulong` Unix epoch milliseconds, matching other Firebase Unity SDK timestamp properties.
     - Firebase AI: Deprecate `Backend.AgentPlatform` in favor of `Backend.Enterprise` to reflect the renaming of the Agent Platform Gemini API to the Gemini Enterprise API.
     - Firebase AI: Remove the deprecated fields: `Backend.VertexAI`, `CountTokensResponse.TotalBillableCharacters`, and `LiveSession.SendMediaChunksAsync`.
