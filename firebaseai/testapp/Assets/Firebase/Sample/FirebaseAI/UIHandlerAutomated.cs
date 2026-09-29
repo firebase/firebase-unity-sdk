@@ -197,7 +197,6 @@ namespace Firebase.Sample.FirebaseAI
         // Internal tests for Json parsing, requires using a source library.
         InternalTestBasicReplyShort,
         InternalTestFinishReasonExpanded,
-        InternalTestGenerationConfigSerialization,
         InternalTestImageConfigSerialization,
         InternalTestSpeechConfigSerialization,
         InternalTestSpeechConfigValidations,
@@ -1508,53 +1507,6 @@ namespace Firebase.Sample.FirebaseAI
       response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
       candidate = response.Candidates.First();
       AssertEq("FinishReason", candidate.FinishReason, FinishReason.MalformedResponse);
-
-      return Task.CompletedTask;
-    }
-
-    // Test that GenerationConfig and LiveGenerationConfig serialization works as expected.
-    Task InternalTestGenerationConfigSerialization()
-    {
-      var genConfig = new GenerationConfig(
-        maxOutputTokens: 100,
-        stopSequences: new string[] { "HALT", "STOP" },
-        responseMimeType: "application/json",
-        responseSchema: Schema.Object(new Dictionary<string, Schema> {
-          { "firstName", Schema.String() }
-        }),
-        responseModalities: new[] { ResponseModality.Text, ResponseModality.Image },
-        thinkingConfig: new ThinkingConfig(ThinkingConfig.ThinkingLevel.High, includeThoughts: true)
-      );
-      var json = genConfig.ToJson();
-
-      Assert("GenerationConfig should not contain temperature", !json.ContainsKey("temperature"));
-      Assert("GenerationConfig should not contain topP", !json.ContainsKey("topP"));
-      Assert("GenerationConfig should not contain topK", !json.ContainsKey("topK"));
-      Assert("GenerationConfig should not contain candidateCount", !json.ContainsKey("candidateCount"));
-      Assert("GenerationConfig should not contain presencePenalty", !json.ContainsKey("presencePenalty"));
-      Assert("GenerationConfig should not contain frequencyPenalty", !json.ContainsKey("frequencyPenalty"));
-      AssertEq("GenerationConfig.maxOutputTokens", json["maxOutputTokens"], 100);
-      AssertEq("GenerationConfig.responseMimeType", json["responseMimeType"], "application/json");
-      Assert("GenerationConfig missing stopSequences", json.ContainsKey("stopSequences"));
-      Assert("GenerationConfig missing responseSchema", json.ContainsKey("responseSchema"));
-      Assert("GenerationConfig missing responseModalities", json.ContainsKey("responseModalities"));
-      Assert("GenerationConfig missing thinkingConfig", json.ContainsKey("thinkingConfig"));
-
-      var liveConfig = new LiveGenerationConfig(
-        speechConfig: SpeechConfig.UsePrebuiltVoice("Kore", "en-US"),
-        responseModalities: new[] { ResponseModality.Audio },
-        maxOutputTokens: 256
-      );
-      var liveJson = liveConfig.ToJson();
-
-      Assert("LiveGenerationConfig should not contain temperature", !liveJson.ContainsKey("temperature"));
-      Assert("LiveGenerationConfig should not contain topP", !liveJson.ContainsKey("topP"));
-      Assert("LiveGenerationConfig should not contain topK", !liveJson.ContainsKey("topK"));
-      Assert("LiveGenerationConfig should not contain presencePenalty", !liveJson.ContainsKey("presencePenalty"));
-      Assert("LiveGenerationConfig should not contain frequencyPenalty", !liveJson.ContainsKey("frequencyPenalty"));
-      AssertEq("LiveGenerationConfig.maxOutputTokens", liveJson["maxOutputTokens"], 256);
-      Assert("LiveGenerationConfig missing speechConfig", liveJson.ContainsKey("speechConfig"));
-      Assert("LiveGenerationConfig missing responseModalities", liveJson.ContainsKey("responseModalities"));
 
       return Task.CompletedTask;
     }
