@@ -326,7 +326,9 @@ namespace Firebase.AI
     /// <param name="responseModalities">A list of response types to receive from the model.
     /// Note: Currently only supports being provided one type, despite being a list.</param>
     /// 
-    /// <param name="temperature">Controls the randomness of the language model's output. Higher values (for
+    /// <param name="temperature">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    ///
+    /// Controls the randomness of the language model's output. Higher values (for
     /// example, 1.0) make the text more random and creative, while lower values (for example,
     /// 0.1) make it more focused and deterministic.
     ///
@@ -338,7 +340,9 @@ namespace Firebase.AI
     /// > [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
     /// > for more details.</param>
     /// 
-    /// <param name="topP">Controls diversity of generated text. Higher values (e.g., 0.9) produce more diverse
+    /// <param name="topP">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    ///
+    /// Controls diversity of generated text. Higher values (e.g., 0.9) produce more diverse
     /// text, while lower values (e.g., 0.5) make the output more focused.
     ///
     /// The supported range is 0.0 to 1.0.
@@ -347,7 +351,9 @@ namespace Firebase.AI
     /// [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
     /// for more details.</param>
     /// 
-    /// <param name="topK">Limits the number of highest probability words the model considers when generating
+    /// <param name="topK">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    ///
+    /// Limits the number of highest probability words the model considers when generating
     /// text. For example, a topK of 40 means only the 40 most likely words are considered for the
     /// next token. A higher value increases diversity, while a lower value makes the output more
     /// deterministic.
@@ -362,7 +368,9 @@ namespace Firebase.AI
     /// See the configure model parameters [documentation](https://firebase.google.com/docs/vertex-ai/model-parameters?platform=ios#max-output-tokens)
     /// for more details.</param>
     /// 
-    /// <param name="presencePenalty">Controls the likelihood of repeating the same words or phrases already
+    /// <param name="presencePenalty">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    ///
+    /// Controls the likelihood of repeating the same words or phrases already
     /// generated in the text. Higher values increase the penalty of repetition, resulting in more
     /// diverse output.
     ///
@@ -375,7 +383,9 @@ namespace Firebase.AI
     /// > [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
     /// > for more details.</param>
     /// 
-    /// <param name="frequencyPenalty">Controls the likelihood of repeating words or phrases, with the penalty
+    /// <param name="frequencyPenalty">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    ///
+    /// Controls the likelihood of repeating words or phrases, with the penalty
     /// increasing for each repetition. Higher values increase the penalty of repetition,
     /// resulting in more diverse output.
     ///
