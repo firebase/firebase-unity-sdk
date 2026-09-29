@@ -175,27 +175,6 @@ namespace Firebase.AI
     }
 
     /// <summary>
-    /// Send realtime input to the server.
-    /// </summary>
-    /// <param name="mediaChunks">A list of media chunks to send.</param>
-    /// <param name="cancellationToken">A token to cancel the send operation.</param>
-    /// <remarks>
-    /// Use SendAudioRealtimeAsync, SendVideoRealtimeAsync, or SendTextRealtimeAsync instead.
-    /// </remarks>
-    /// @deprecated Use SendAudioRealtimeAsync, SendVideoRealtimeAsync, or SendTextRealtimeAsync instead.
-    [Obsolete("Use SendAudioRealtimeAsync, SendVideoRealtimeAsync, or SendTextRealtimeAsync instead.")]
-    public async Task SendMediaChunksAsync(
-        List<ModelContent.InlineDataPart> mediaChunks,
-        CancellationToken cancellationToken = default)
-    {
-      if (mediaChunks == null) return;
-
-      await InternalSendRealtimeInputAsync("mediaChunks",
-          mediaChunks.Select(mc => (mc as ModelContent.Part).ToJson()["inlineData"]).ToList(),
-          cancellationToken);
-    }
-
-    /// <summary>
     /// Sends text data to the server in realtime.
     ///
     /// Check https://ai.google.dev/api/live#bidigeneratecontentrealtimeinput for

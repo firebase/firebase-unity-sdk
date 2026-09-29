@@ -37,8 +37,7 @@ namespace Firebase.AI
       internal enum InternalProvider
       {
         GoogleAI,
-        VertexAI,
-        AgentPlatform,
+        Enterprise,
       }
 
       /// <summary>
@@ -48,7 +47,7 @@ namespace Firebase.AI
       internal InternalProvider Provider { get; }
       /// <summary>
       /// Intended for internal use only.
-      /// The region identifier used by the Vertex AI and Gemini Enterprise Agent Platform backends.
+      /// The region identifier used by the Gemini Enterprise API backend.
       /// </summary>
       internal string Location { get; }
 
@@ -67,15 +66,13 @@ namespace Firebase.AI
       }
 
       /// <summary>
-      /// The Vertex AI backend service configuration.
+      /// The Gemini Enterprise backend service configuration.
+      /// 
+      /// Note: The Gemini Enterprise API was formerly known as Vertex AI,
+      /// and, briefly, the Agent Platform Gemini API.
       /// </summary>
-      /// <param name="location">The region identifier, defaulting to `us-central1`</param>
-      /// <remarks>
-      /// Deprecated: Use AgentPlatform instead. Note that the default location changes to 'global'.
-      /// </remarks>
-      /// @deprecated Use AgentPlatform instead. Note that the default location changes to 'global'.
-      [Obsolete("Use AgentPlatform instead. Note that the default location changes to 'global'.")]
-      public static Backend VertexAI(string location = "us-central1")
+      /// <param name="location">The region identifier, defaulting to `global`</param>
+      public static Backend Enterprise(string location = "global")
       {
         if (string.IsNullOrWhiteSpace(location) || location.Contains("/"))
         {
@@ -83,13 +80,18 @@ namespace Firebase.AI
               $"The location argument must be non-empty, and not contain special characters like '/'");
         }
 
-        return new Backend(InternalProvider.VertexAI, location);
+        return new Backend(InternalProvider.Enterprise, location);
       }
 
       /// <summary>
-      /// The Gemini Enterprise Agent Platform backend service configuration.
+      /// The Gemini Enterprise backend service configuration.
       /// </summary>
       /// <param name="location">The region identifier, defaulting to `global`</param>
+      /// <remarks>
+      /// Deprecated: Renamed to Enterprise(string location)
+      /// </remarks>
+      /// @deprecated Renamed to Enterprise(string location)
+      [Obsolete("Renamed to Enterprise(string location)")]
       public static Backend AgentPlatform(string location = "global")
       {
         if (string.IsNullOrWhiteSpace(location) || location.Contains("/"))
@@ -98,7 +100,7 @@ namespace Firebase.AI
               $"The location argument must be non-empty, and not contain special characters like '/'");
         }
 
-        return new Backend(InternalProvider.AgentPlatform, location);
+        return new Backend(InternalProvider.Enterprise, location);
       }
 
       public override readonly string ToString()
