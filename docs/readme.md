@@ -114,6 +114,7 @@ Release Notes
     - General: **Breaking Change** Updated the minimum supported Unity version to Unity 2022 LTS (2022.3).
     - Auth: **Breaking Change** Standardized `Firebase.Auth.UserMetadata.CreationTimestamp` and `Firebase.Auth.UserMetadata.LastSignInTimestamp` to return `System.DateTime` (UTC) instead of `ulong` Unix epoch milliseconds, matching other Firebase Unity SDK timestamp properties.
     - Firebase AI: Deprecate `Backend.AgentPlatform` in favor of `Backend.Enterprise` to reflect the renaming of the Agent Platform Gemini API to the Gemini Enterprise API.
+    - Firebase AI: Deprecated model tuning parameters (`temperature`, `topP`, `topK`, `candidateCount`, `presencePenalty`, and `frequencyPenalty`) in `GenerationConfig` and `LiveGenerationConfig` as they are unsupported in Gemini 3.x and later models.
     - Firebase AI: Remove the deprecated fields: `Backend.VertexAI`, `CountTokensResponse.TotalBillableCharacters`, and `LiveSession.SendMediaChunksAsync`.
     - Remote Config: Ensure ephemeral native containers are deterministically disposed and kept alive across P/Invoke calls in `SetDefaultsAsync`, `SetCustomSignalsAsync`, and settings/info accessors.
 
