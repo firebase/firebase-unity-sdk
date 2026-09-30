@@ -53,7 +53,7 @@ namespace Firebase.AI
     /// for more details.
     /// </summary>
     /// 
-    /// <param name="temperature">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    /// <param name="temperature">Deprecated: Not supported in Gemini 3.x and later models. The model will ignore this parameter if it's included in a request. Omit this parameter and let the model manage sampling automatically.
     ///
     /// Controls the randomness of the language model's output. Higher values (for
     /// example, 1.0) make the text more random and creative, while lower values (for example,
@@ -67,7 +67,7 @@ namespace Firebase.AI
     /// > [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
     /// > for more details.</param>
     /// 
-    /// <param name="topP">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    /// <param name="topP">Deprecated: Not supported in Gemini 3.x and later models. The model will ignore this parameter if it's included in a request. Omit this parameter and let the model manage sampling automatically.
     ///
     /// Controls diversity of generated text. Higher values (e.g., 0.9) produce more diverse
     /// text, while lower values (e.g., 0.5) make the output more focused.
@@ -78,7 +78,7 @@ namespace Firebase.AI
     /// [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
     /// for more details.</param>
     /// 
-    /// <param name="topK">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    /// <param name="topK">Deprecated: Not supported in Gemini 3.x and later models. The model will ignore this parameter if it's included in a request. Omit this parameter and let the model manage sampling automatically.
     ///
     /// Limits the number of highest probability words the model considers when generating
     /// text. For example, a topK of 40 means only the 40 most likely words are considered for the
@@ -91,7 +91,7 @@ namespace Firebase.AI
     /// [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
     /// for more details.</param>
     /// 
-    /// <param name="candidateCount">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    /// <param name="candidateCount">Deprecated: Not supported in Gemini 3.x and later models. The model will ignore this parameter if it's included in a request. Make parallel requests instead.
     ///
     /// The number of response variations to return; defaults to 1 if not set.
     /// Support for multiple candidates depends on the model; see the
@@ -102,7 +102,7 @@ namespace Firebase.AI
     /// See the configure model parameters [documentation](https://firebase.google.com/docs/vertex-ai/model-parameters?platform=ios#max-output-tokens)
     /// for more details.</param>
     /// 
-    /// <param name="presencePenalty">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    /// <param name="presencePenalty">Deprecated: Not supported in Gemini 3.x and later models. Requests that include this parameter will fail with a 400 error. Omit this parameter.
     ///
     /// Controls the likelihood of repeating the same words or phrases already
     /// generated in the text. Higher values increase the penalty of repetition, resulting in more
@@ -117,7 +117,7 @@ namespace Firebase.AI
     /// > [Cloud documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference#generationconfig)
     /// > for more details.</param>
     /// 
-    /// <param name="frequencyPenalty">Deprecated: This parameter is unsupported in Gemini 3.x and later models.
+    /// <param name="frequencyPenalty">Deprecated: Not supported in Gemini 3.x and later models. Requests that include this parameter will fail with a 400 error. Omit this parameter.
     ///
     /// Controls the likelihood of repeating words or phrases, with the penalty
     /// increasing for each repetition. Higher values increase the penalty of repetition,
