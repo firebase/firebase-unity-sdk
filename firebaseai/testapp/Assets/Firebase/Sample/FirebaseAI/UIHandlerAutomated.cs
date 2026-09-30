@@ -472,10 +472,6 @@ namespace Firebase.Sample.FirebaseAI
       // long as the call works we are generally happy.
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
         generationConfig: new GenerationConfig(
-          temperature: 0.4f,
-          topP: 0.4f,
-          topK: 30,
-          // Intentionally skipping candidateCount, tested elsewhere.
           maxOutputTokens: 100,
           stopSequences: new string[] { "HALT" }
         ),
@@ -863,7 +859,7 @@ namespace Firebase.Sample.FirebaseAI
     {
       // Include some additional settings, since they are used in the call.
       var model = GetFirebaseAI(backend).GetGenerativeModel(TestModelName,
-        generationConfig: new GenerationConfig(temperature: 0.8f),
+        generationConfig: new GenerationConfig(maxOutputTokens: 100),
         systemInstruction: ModelContent.Text("This is a test SystemInstruction")
       );
 
