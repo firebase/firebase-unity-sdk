@@ -608,9 +608,8 @@ def make_ios_or_tvos_multi_arch_build(cmake_args):
         # find *.zip in subfolder architecture
         arch_zip_path = glob.glob(os.path.join(subfolder, zip_pattern))
         if not arch_zip_path:
-          logging.error("No %s generated for device %s, architecture %s",
-                        zip_pattern, device, arch)
-          return
+          raise RuntimeError(
+              f"No {zip_pattern} generated for device {device}, architecture {arch}")
         if not zip_base_name:
           # first architecture, so extract all non-.a files to the final temp folder.
           # The xcframework files will eventually be added to the ones in this folder.
