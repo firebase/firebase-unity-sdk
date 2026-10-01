@@ -1614,7 +1614,8 @@ class Asset(object):
 
     # Copy the asset to the output folder.
     output_asset_filename = os.path.join(output_asset_dir, "asset")
-    copy_and_set_rwx(self.filename_absolute, output_asset_filename)
+    if not os.path.isdir(self.filename_absolute):
+      copy_and_set_rwx(self.filename_absolute, output_asset_filename)
 
     # Create the "asset.meta" file.
     output_asset_metadata_filename = (output_asset_filename +
@@ -1929,7 +1930,23 @@ class AssetConfiguration(ConfigurationBlock):
         assets_dir = os.path.normpath(assets_dir)
         for path in glob.glob(os.path.join(assets_dir, wildcard_path)):
           if os.path.isdir(path):
-            for current_root, _, files in os.walk(path):
+            if path.endswith(".xcframework"):
+              relative_path = os.path.relpath(path, assets_dir)
+              found_assets.append(relative_path)
+              matching_files.add(relative_path)
+              assets_dir_by_matching_file[relative_path] = assets_dir
+              if for_upm:
+                continue
+            for current_root, dirs, files in os.walk(path):
+              for d in list(dirs):
+                if d.endswith(".xcframework"):
+                  xc_path = os.path.join(current_root, d)
+                  relative_path = os.path.relpath(xc_path, assets_dir)
+                  found_assets.append(relative_path)
+                  matching_files.add(relative_path)
+                  assets_dir_by_matching_file[relative_path] = assets_dir
+                  if for_upm:
+                    dirs.remove(d)
               for filename in files:
                 if not AssetConfiguration._is_metadata_file(filename):
                   relative_path = os.path.relpath(os.path.join(
@@ -1957,7 +1974,10 @@ class AssetConfiguration(ConfigurationBlock):
       assets_dir = assets_dir_by_matching_file[filename]
       asset_metadata_filename = os.path.join(
           assets_dir, filename + ASSET_METADATA_FILE_EXTENSION)
-      asset_metadata = copy.deepcopy(importer_metadata)
+      if ".xcframework/" in posix_path(filename):
+        asset_metadata = copy.deepcopy(DEFAULT_IMPORTER_METADATA_TEMPLATE)
+      else:
+        asset_metadata = copy.deepcopy(importer_metadata)
       if os.path.exists(asset_metadata_filename):
         existing_asset_metadata = collections.OrderedDict()
         with open(asset_metadata_filename, "rt", encoding='utf-8') as (
@@ -2413,7 +2433,8 @@ class PackageConfiguration(ConfigurationBlock):
       manifest_file.write(
           "%s\n" % "\n".join([posix_path(os.path.join(ASSETS_DIRECTORY,
                                                       asset.filename))
-                              for asset in Asset.sorted_by_filename(assets)]))
+                              for asset in Asset.sorted_by_filename(assets)
+                              if ".xcframework/" not in posix_path(asset.filename)]))
     # Retrieve a template manifest asset if it exists.
     manifest_asset = [asset for asset in assets
                       if asset.filename == manifest_filename]
