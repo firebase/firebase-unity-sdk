@@ -52,8 +52,33 @@ public sealed class FirebaseAppCheck {
     new AppCheckUtil.TokenChangedDelegate(TokenChangedMethod);
 
   // Make the constructor private, since users aren't meant to make it.
-  private FirebaseAppCheck(AppCheckInternal internalObject) {
+  private FirebaseAppCheck(AppCheckInternal internalObject, FirebaseApp app) {
     appCheckInternal = internalObject;
+    appName = app.Name;
+    // The C++ AppCheck object is deleted along with its App, so drop this
+    // wrapper from the cache when the App is disposed. Otherwise, re-creating an App with
+    // the same name in the same domain (e.g. Enter Play Mode with domain reload disabled,
+    // or calling FirebaseApp.Dispose()) would return a wrapper around a deleted object.
+    app.AppDisposed += OnAppDisposed;
+  }
+
+  // The name of the FirebaseApp this instance is associated with.
+  private readonly string appName;
+
+  private void OnAppDisposed(object sender, System.EventArgs eventArgs) {
+    lock (appCheckMap) {
+      FirebaseAppCheck cached;
+      if (appCheckMap.TryGetValue(appName, out cached) && cached == this) {
+        appCheckMap.Remove(appName);
+      }
+    }
+    lock (providerMap) {
+      // Providers are created per App, so the old one must not be reused either.
+      providerMap.Remove(appName);
+    }
+    TokenChangedImpl = null;
+    // Do not dispose: the C++ object is owned by (and deleted with) the App.
+    appCheckInternal = null;
   }
 
   private void ThrowIfNull() {
@@ -75,10 +100,12 @@ public sealed class FirebaseAppCheck {
   /// FirebaseApp instance.
   public static FirebaseAppCheck GetInstance(FirebaseApp app) {
     FirebaseAppCheck result;
-    if (!appCheckMap.TryGetValue(app.Name, out result)) {
-      AppCheckInternal internalObject = AppCheckInternal.GetInstance(app);
-      result = new FirebaseAppCheck(internalObject);
-      appCheckMap[app.Name] = result;
+    lock (appCheckMap) {
+      if (!appCheckMap.TryGetValue(app.Name, out result)) {
+        AppCheckInternal internalObject = AppCheckInternal.GetInstance(app);
+        result = new FirebaseAppCheck(internalObject, app);
+        appCheckMap[app.Name] = result;
+      }
     }
     return result;
   }
@@ -100,7 +127,9 @@ public sealed class FirebaseAppCheck {
     // Clear out the Providers that were previously made. When future calls to
     // GetToken fails to find a provider in the map, it will use the new factory
     // to create a new provider.
-    providerMap.Clear();
+    lock (providerMap) {
+      providerMap.Clear();
+    }
 
     // Register the callback for C++ SDK to use that will reach this factory.
     if (factory == null) {
@@ -197,15 +226,17 @@ public sealed class FirebaseAppCheck {
       return;
     }
     IAppCheckProvider provider;
-    if (!providerMap.TryGetValue(app.Name, out provider)) {
-      provider = appCheckFactory.CreateProvider(app);
-      if (provider == null) {
-        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-          (int)AppCheckError.InvalidConfiguration,
-          "Failed to create IAppCheckProvider for App: " + appName);
-        return;
+    lock (providerMap) {
+      if (!providerMap.TryGetValue(app.Name, out provider)) {
+        provider = appCheckFactory.CreateProvider(app);
+        if (provider == null) {
+          AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+            (int)AppCheckError.InvalidConfiguration,
+            "Failed to create IAppCheckProvider for App: " + appName);
+          return;
+        }
+        providerMap[app.Name] = provider;
       }
-      providerMap[app.Name] = provider;
     }
     provider.GetTokenAsync().ContinueWith(task => {
       if (task.IsFaulted) {
@@ -236,15 +267,17 @@ public sealed class FirebaseAppCheck {
       return;
     }
     IAppCheckProvider provider;
-    if (!providerMap.TryGetValue(app.Name, out provider)) {
-      provider = appCheckFactory.CreateProvider(app);
-      if (provider == null) {
-        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-          (int)AppCheckError.InvalidConfiguration,
-          "Failed to create IAppCheckProvider for App: " + appName);
-        return;
+    lock (providerMap) {
+      if (!providerMap.TryGetValue(app.Name, out provider)) {
+        provider = appCheckFactory.CreateProvider(app);
+        if (provider == null) {
+          AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+            (int)AppCheckError.InvalidConfiguration,
+            "Failed to create IAppCheckProvider for App: " + appName);
+          return;
+        }
+        providerMap[app.Name] = provider;
       }
-      providerMap[app.Name] = provider;
     }
 
     provider.GetLimitedUseTokenAsync().ContinueWith(task => {
@@ -266,7 +299,10 @@ public sealed class FirebaseAppCheck {
     AppCheckToken token = AppCheckToken.FromAppCheckTokenInternal(tokenInternal);
 
     FirebaseAppCheck appCheck;
-    if (appCheckMap.TryGetValue(appName, out appCheck)) {
+    lock (appCheckMap) {
+      appCheckMap.TryGetValue(appName, out appCheck);
+    }
+    if (appCheck != null) {
       appCheck.OnTokenChanged(token);
     }
   }

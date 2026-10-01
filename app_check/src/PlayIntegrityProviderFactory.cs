@@ -72,14 +72,31 @@ public sealed class PlayIntegrityProviderFactory : IAppCheckProviderFactory {
   */
   public IAppCheckProvider CreateProvider(FirebaseApp app) {
     BuiltInProviderWrapper provider;
-    if (providerMap.TryGetValue(app.Name, out provider)) {
-      return provider;
-    }
+    BuiltInProviderWrapper created = null;
+    lock (providerMap) {
+      if (providerMap.TryGetValue(app.Name, out provider)) {
+        return provider;
+      }
 
-    ThrowIfNull();
-    AppCheckProviderInternal providerInternal = factoryInternal.CreateProvider(app);
-    provider = new BuiltInProviderWrapper(providerInternal);
-    providerMap[app.Name] = provider;
+      ThrowIfNull();
+      AppCheckProviderInternal providerInternal = factoryInternal.CreateProvider(app);
+      provider = new BuiltInProviderWrapper(providerInternal);
+      providerMap[app.Name] = provider;
+      created = provider;
+    }
+    // The C++ provider is bound to this App, so forget it when the App is disposed. Otherwise
+    // an App re-created with the same name in the same domain (e.g. Enter Play Mode with domain
+    // reload disabled, or an explicit FirebaseApp.Dispose()) would reuse a provider that
+    // references the deleted App, and crash on the next token request.
+    string appName = app.Name;
+    app.AppDisposed += (sender, eventArgs) => {
+      lock (providerMap) {
+        BuiltInProviderWrapper cached;
+        if (providerMap.TryGetValue(appName, out cached) && cached == created) {
+          providerMap.Remove(appName);
+        }
+      }
+    };
     return provider;
   }
 }
