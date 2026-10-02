@@ -23,6 +23,15 @@ using System.Threading.Tasks;
 namespace Firebase.Internal
 {
   // Contains internal helper methods for interacting with other Firebase libraries.
+  //
+  // The static state here is reflection metadata (Types / MethodInfos / PropertyInfos) that is
+  // valid for the lifetime of the scripting domain, and it is populated by the static
+  // constructor. Opt out of Unity's automatic statics cleanup (Unity 6.6+), which cannot be
+  // combined with a static constructor and would otherwise leave the caches null after the
+  // first play session when domain reload is disabled.
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   internal static class FirebaseInterops
   {
     // The cached fields for FirebaseApp reflection.
