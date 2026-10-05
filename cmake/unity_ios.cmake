@@ -22,7 +22,11 @@ set(CMAKE_SYSTEM_NAME "iOS")
 if(NOT DEFINED CMAKE_OSX_SYSROOT)
   set(CMAKE_OSX_SYSROOT "iphoneos")
 endif()
-set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
+# Only a default: build_zips.py passes an explicit -DCMAKE_OSX_ARCHITECTURES,
+# and an unconditional CACHE set here silently discards it.
+if(NOT DEFINED CMAKE_OSX_ARCHITECTURES OR "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
+  set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
+endif()
 set(CMAKE_XCODE_EFFECTIVE_PLATFORMS "-iphoneos;-iphonesimulator")
 set(IOS_PLATFORM_LOCATION "iPhoneOS.platform;iPhoneSimulator.platform")
 

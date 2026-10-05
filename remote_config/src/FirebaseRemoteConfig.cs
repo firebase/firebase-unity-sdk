@@ -169,8 +169,11 @@ namespace Firebase.RemoteConfig {
     /// @returns A Task contains ConfigInfo.
     public async System.Threading.Tasks.Task<ConfigInfo> EnsureInitializedAsync() {
       ThrowIfNull();
-      ConfigInfoInternal configInfoInternal = await remoteConfigInternal.EnsureInitializedAsync();
-      return new ConfigInfo(configInfoInternal);
+      using (ConfigInfoInternal configInfoInternal = await remoteConfigInternal.EnsureInitializedAsync()) {
+        ConfigInfo configInfo = new ConfigInfo(configInfoInternal);
+        global::System.GC.KeepAlive(configInfoInternal);
+        return configInfo;
+      }
     }
 
     /// @brief Asynchronously activates the most recently fetched configs,
@@ -246,8 +249,14 @@ namespace Firebase.RemoteConfig {
     /// complete.
     public Task SetDefaultsAsync(IDictionary<string, object> defaults) {
       ThrowIfNull();
-      return remoteConfigInternal.SetDefaultsInternalAsync(
-          RemoteConfigUtil.ConvertDictionaryToMap(defaults));
+      if (defaults == null) {
+        throw new System.ArgumentNullException(nameof(defaults));
+      }
+      using (StringStringMap defaultsMap = RemoteConfigUtil.ConvertDictionaryToMap(defaults)) {
+        Task task = remoteConfigInternal.SetDefaultsInternalAsync(defaultsMap);
+        global::System.GC.KeepAlive(defaultsMap);
+        return task;
+      }
     }
 
     /// @brief Sets the custom signals values based on the input dictionary.
@@ -268,16 +277,20 @@ namespace Firebase.RemoteConfig {
       if (customSignals == null) {
         throw new System.ArgumentNullException(nameof(customSignals));
       }
-      using StringList signalKeys = new StringList();
-      using VariantList signalValues = new VariantList();
-      foreach (KeyValuePair<string, object> pair in customSignals) {
-        if (pair.Key == null) {
-          throw new System.ArgumentException("Key cannot be null", nameof(customSignals));
+      using (StringList signalKeys = new StringList())
+      using (VariantList signalValues = new VariantList()) {
+        foreach (KeyValuePair<string, object> pair in customSignals) {
+          if (pair.Key == null) {
+            throw new System.ArgumentException("Key cannot be null", nameof(customSignals));
+          }
+          signalKeys.Add(pair.Key);
+          signalValues.Add(Variant.FromObject(pair.Value));
         }
-        signalKeys.Add(pair.Key);
-        signalValues.Add(Variant.FromObject(pair.Value));
+        Task task = remoteConfigInternal.SetCustomSignalsInternalAsync(signalKeys, signalValues);
+        global::System.GC.KeepAlive(signalKeys);
+        global::System.GC.KeepAlive(signalValues);
+        return task;
       }
-      return remoteConfigInternal.SetCustomSignalsInternalAsync(signalKeys, signalValues);
     }
 
     /// @brief Asynchronously changes the settings for this Remote Config
@@ -289,14 +302,22 @@ namespace Firebase.RemoteConfig {
     /// complete.
     public Task SetConfigSettingsAsync(ConfigSettings settings) {
       ThrowIfNull();
-      return remoteConfigInternal.SetConfigSettingsAsync(ConfigSettings.ToInternal(settings));
+      using (ConfigSettingsInternal settingsInternal = ConfigSettings.ToInternal(settings)) {
+        Task task = remoteConfigInternal.SetConfigSettingsAsync(settingsInternal);
+        global::System.GC.KeepAlive(settingsInternal);
+        return task;
+      }
     }
 
     /// @brief Gets the current settings of the RemoteConfig object.
     public ConfigSettings ConfigSettings {
       get {
         ThrowIfNull();
-        return ConfigSettings.FromInternal(remoteConfigInternal.GetConfigSettings());
+        using (ConfigSettingsInternal settingsInternal = remoteConfigInternal.GetConfigSettings()) {
+          ConfigSettings settings = ConfigSettings.FromInternal(settingsInternal);
+          global::System.GC.KeepAlive(settingsInternal);
+          return settings;
+        }
       }
     }
 
@@ -356,7 +377,11 @@ namespace Firebase.RemoteConfig {
     public ConfigInfo Info {
       get {
         ThrowIfNull();
-        return new ConfigInfo(remoteConfigInternal.GetInfo());
+        using (ConfigInfoInternal infoInternal = remoteConfigInternal.GetInfo()) {
+          ConfigInfo info = new ConfigInfo(infoInternal);
+          global::System.GC.KeepAlive(infoInternal);
+          return info;
+        }
       }
     }
 

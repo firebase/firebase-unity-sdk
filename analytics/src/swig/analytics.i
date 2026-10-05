@@ -59,8 +59,8 @@ namespace analytics {
 
 // Internal version of LogEvent that takes in two vectors of known types,
 // and converts them into C++ Parameters to pass into the public LogEvent instead.
-void LogEvent(const char* name, std::vector<std::string> parameter_names,
-              std::vector<firebase::Variant> parameter_values) {
+void LogEvent(const char* name, const std::vector<std::string>& parameter_names,
+              const std::vector<firebase::Variant>& parameter_values) {
   if (parameter_names.size() != parameter_values.size()) {
     firebase::LogError("LogEvent for %s given different list sizes (%d, %d)",
                        name, parameter_names.size(), parameter_values.size());
@@ -82,8 +82,8 @@ void LogEvent(const char* name, std::vector<std::string> parameter_names,
 // Internal version of SetDefaultEventParameters that takes in two vectors
 // of known types and converts them into C++ parameters to pass them along to
 // the public SetDefaultEventParameters
-void SetDefaultEventParameters(std::vector<std::string> parameter_names,
-              std::vector<firebase::Variant> parameter_values) {
+void SetDefaultEventParameters(const std::vector<std::string>& parameter_names,
+              const std::vector<firebase::Variant>& parameter_values) {
   if (parameter_names.size() != parameter_values.size()) {
     firebase::LogError(
         "SetDefaultEventParameters given different list sizes (%d, %d)",
@@ -150,10 +150,10 @@ void SetConsentWithInts(const std::map<int, int>& settings) {
 // to expose to C#.
 namespace firebase {
 namespace analytics {
-void LogEvent(const char* name, std::vector<std::string> parameter_names,
-              std::vector<firebase::Variant> parameter_values);
-void SetDefaultEventParameters(std::vector<std::string> parameter_names,
-              std::vector<firebase::Variant> parameter_values);
+void LogEvent(const char* name, const std::vector<std::string>& parameter_names,
+              const std::vector<firebase::Variant>& parameter_values);
+void SetDefaultEventParameters(const std::vector<std::string>& parameter_names,
+              const std::vector<firebase::Variant>& parameter_values);
 void SetConsentWithInts(const std::map<int, int>& settings);
 }  // namespace analytics
 }  // namespace firebase

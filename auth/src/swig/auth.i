@@ -973,8 +973,8 @@ static CppInstanceManager<Auth> g_auth_instances;
 %rename(UserName) firebase::auth::AdditionalUserInfo::user_name;
 %rename(UpdatedCredential) firebase::auth::AdditionalUserInfo::updated_credential;
 // UserMetadata
-%rename(CreationTimestamp) firebase::auth::UserMetadata::creation_timestamp;
-%rename(LastSignInTimestamp) firebase::auth::UserMetadata::last_sign_in_timestamp;
+%rename(CreationTimestampInternal) firebase::auth::UserMetadata::creation_timestamp;
+%rename(LastSignInTimestampInternal) firebase::auth::UserMetadata::last_sign_in_timestamp;
 
 // AuthResult
 %rename(AdditionalUserInfoInternal) firebase::auth::AuthResult::additional_user_info;
@@ -1188,6 +1188,25 @@ SWIG_MAP_CFUNC_TO_CSDELEGATE(::firebase::auth::AuthStateChangedDelegateFunc,
       Profile {
     get {
       return ProfileInternal.ToStringVariantMap();
+    }
+  }
+%}
+
+%typemap(cscode) firebase::auth::UserMetadata %{
+  private static readonly System.DateTime UnixEpochUtc =
+      new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
+
+  /// The Firebase user creation UTC timestamp.
+  public System.DateTime CreationTimestamp {
+    get {
+      return UnixEpochUtc.AddMilliseconds(CreationTimestampInternal);
+    }
+  }
+
+  /// The last sign in UTC timestamp.
+  public System.DateTime LastSignInTimestamp {
+    get {
+      return UnixEpochUtc.AddMilliseconds(LastSignInTimestampInternal);
     }
   }
 %}

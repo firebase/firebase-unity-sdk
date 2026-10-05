@@ -56,7 +56,7 @@ Please follow [Firebase C++ SDK Prerequisites](https://github.com/firebase/fireb
 
 ### Install Unity
 
-- [Unity](https://unity.com/download), version 2019 or newer
+- [Unity](https://unity.com/download), version 2022 LTS or newer
 
 While installing through UnityHub, when you decide which version to install, it will pop up a dialog to select necessary support modules. Please check the boxes based on your dev machine OS and dev platform. For most common case while dev on macOS, we should select Android + Android SDK & NDK Tool, iOS Build Support and Mac Build Support (IL2CPP)
 

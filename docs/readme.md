@@ -109,8 +109,29 @@ Support
 
 Release Notes
 -------------
-### Upcoming
+### Upcoming Release
 -   Changes
+    - General: **Breaking Change** Updated the minimum supported Unity version to Unity 2022 LTS (2022.3).
+    - General (iOS): Change library format to .xcframework, add support for arm64 simulators.
+    - Auth: **Breaking Change** Standardized `Firebase.Auth.UserMetadata.CreationTimestamp` and `Firebase.Auth.UserMetadata.LastSignInTimestamp` to return `System.DateTime` (UTC) instead of `ulong` Unix epoch milliseconds, matching other Firebase Unity SDK timestamp properties.
+    - Firebase AI: Deprecate `Backend.AgentPlatform` in favor of `Backend.Enterprise` to reflect the renaming of the Agent Platform Gemini API to the Gemini Enterprise API.
+    - Firebase AI: Deprecated model tuning parameters (`temperature`, `topP`, `topK`, `candidateCount`, `presencePenalty`, and `frequencyPenalty`) in `GenerationConfig` and `LiveGenerationConfig` as they are unsupported in Gemini 3.x and later models.
+    - Firebase AI: Remove the deprecated fields: `Backend.VertexAI`, `CountTokensResponse.TotalBillableCharacters`, and `LiveSession.SendMediaChunksAsync`.
+    - Remote Config: Ensure ephemeral native containers are deterministically disposed and kept alive across P/Invoke calls in `SetDefaultsAsync`, `SetCustomSignalsAsync`, and settings/info accessors.
+
+### 13.17.0
+-   Changes
+    - General: Update to Firebase C++ SDK version 13.13.0.
+    - General (Android): Update to Firebase Android BoM version 34.19.0.
+    - General (iOS): Update to Firebase Apple SDK version 12.19.0.
+    - General: Update to EDM4U version 1.2.189.
+    - Analytics: Fixed a `SIGABRT` (`std::bad_alloc`) crash under IL2CPP on iOS by ensuring ephemeral native containers are kept alive and deterministically disposed during `LogEvent` and related calls ([#1515](https://github.com/firebase/firebase-unity-sdk/issues/1515)).
+
+### 13.16.0
+-   Changes
+    - General: Update to Firebase C++ SDK version 13.12.0.
+    - General (Android): Update to Firebase Android BoM version 34.18.0.
+    - General (iOS): Update to Firebase Cocoapods version 12.18.0.
     - Firebase AI: Add support for RealtimeInputConfig in the Live API, enabling configuration of Voice Activity Detection (VAD), activity handling (interruption behavior), and turn coverage.
     - Firebase AI: Added manual activity demarcation methods (SendStartActivityRealtimeAsync, SendStopActivityRealtimeAsync) and updated realtime input streaming to support audio, video, and text payloads.
     - General (Editor): Fixed a deadlock / hang during domain reload and editor quitting

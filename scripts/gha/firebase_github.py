@@ -283,7 +283,7 @@ def list_pull_requests(token, state, head, base):
       keep_going = (len(response.json()) == per_page)
   return results
 
-def list_workflow_runs(token, workflow_id, branch=None, event=None, limit=200):
+def list_workflow_runs(token, workflow_id, branch=None, event=None, limit=200, created=None):
   """https://docs.github.com/en/rest/actions/workflow-runs?list-workflow-runs-for-a-required-workflow"""
   url = f'{GITHUB_API_URL}/actions/workflows/{workflow_id}/runs'
   headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {token}'}
@@ -295,6 +295,7 @@ def list_workflow_runs(token, workflow_id, branch=None, event=None, limit=200):
     params = {'per_page': per_page, 'page': page}
     if branch: params.update({'branch': branch})
     if event: params.update({'event': event})
+    if created: params.update({'created': created})
     page = page + 1
     keep_going = False
     with requests_retry_session().get(url, headers=headers, params=params,

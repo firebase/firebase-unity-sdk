@@ -62,7 +62,7 @@ LINUX_RUNNER = "ubuntu-22.04"
 PARAMETERS = {
   "integration_tests": {
     "matrix": {
-      "unity_versions": ["2021"],
+      "unity_versions": ["2022"],
       "build_os": [""],
       "platforms": [WINDOWS, MACOS, LINUX, ANDROID, IOS, TVOS, PLAYMODE],
       "mobile_devices": ["android_target", "ios_target", "simulator_target", "tvos_simulator"],
@@ -74,7 +74,7 @@ PARAMETERS = {
 
       EXPANDED_KEY: {
         "build_os": [MACOS_RUNNER,WINDOWS_RUNNER],
-        "unity_versions": ["2021"],
+        "unity_versions": ["2022"],
         "mobile_test_on": ["real", "virtual"],
       }
     },
@@ -89,11 +89,11 @@ BUILD_CONFIGS = ["Unity Version(s)", "Build OS(s)", "Platform(s)", "Test Device(
 TEST_DEVICES = {
   "android_min": {"platform": ANDROID, "type": "real",
                   "device": [
-                    "model=blueline,version=28", # Pixel 3
+                    "model=oriole,version=33",  # Pixel 6
                   ]},
   "android_target": {"platform": ANDROID, "type": "real",
                      "device": [
-                       "model=blueline,version=28", # Pixel 3
+                       "model=oriole,version=33",  # Pixel 6
                      ]},
   "android_latest": {"platform": ANDROID, "type": "real",
                      "device": [

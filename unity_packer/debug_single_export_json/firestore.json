@@ -51,7 +51,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppApp.a"
+            "Plugins/iOS/Firebase/libFirebaseCppApp.xcframework"
           ]
         },
         {
@@ -61,7 +61,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppApp.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppApp.xcframework"
           ]
         },
         {
@@ -185,7 +185,7 @@
       "export_upm": 1,
       "upm_package_config": {
         "manifest": {
-          "unity": "2020.1",
+          "unity": "2022.1",
           "dependencies": {
             "com.google.external-dependency-manager": "1.2.186"
           }
@@ -245,7 +245,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppFirestore.a"
+            "Plugins/iOS/Firebase/libFirebaseCppFirestore.xcframework"
           ]
         },
         {
@@ -255,7 +255,7 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppFirestore.a"
+            "Plugins/tvOS/Firebase/libFirebaseCppFirestore.xcframework"
           ]
         },
         {
@@ -332,7 +332,7 @@
       "export_upm": 1,
       "upm_package_config": {
         "manifest": {
-          "unity": "2020.1"
+          "unity": "2022.1"
         }
       }
     }
