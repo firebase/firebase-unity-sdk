@@ -63,7 +63,7 @@ namespace Firebase.Sample.FirebaseAI
     private enum Backend
     {
       GoogleAI,
-      Enterprise,
+      AgentPlatform,
     }
     // Set of status codes that are retryable.
     private readonly HashSet<HttpStatusCode> RetryableCodes = new HashSet<HttpStatusCode> { HttpStatusCode.TooManyRequests, HttpStatusCode.ServiceUnavailable, HttpStatusCode.GatewayTimeout };
@@ -205,7 +205,7 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestFinishReasonSafetyNoContent,
         InternalTestUnknownEnumSafetyRatings,
         InternalTestFunctionCallWithArguments,
-        InternalTestEnterpriseGrounding,
+        InternalTestAgentPlatformGrounding,
         InternalTestGoogleAIGrounding,
         InternalTestGoogleAIGroundingEmptyChunks,
         InternalTestMapsGrounding,
@@ -319,7 +319,7 @@ namespace Firebase.Sample.FirebaseAI
       return backend switch
       {
         Backend.GoogleAI => FirebaseAI.GetInstance(FirebaseAI.Backend.GoogleAI(), useLimitedUseAppCheckTokens),
-        Backend.Enterprise => FirebaseAI.GetInstance(FirebaseAI.Backend.Enterprise(location), useLimitedUseAppCheckTokens),
+        Backend.AgentPlatform => FirebaseAI.GetInstance(FirebaseAI.Backend.AgentPlatform(location), useLimitedUseAppCheckTokens),
         _ => throw new ArgumentOutOfRangeException(nameof(backend), backend,
                 "Unhandled Backend type"),
       };
@@ -350,17 +350,17 @@ namespace Firebase.Sample.FirebaseAI
       Assert("GoogleAI: Instances with different limited use settings should be different.", googleAi1 != googleAi2);
       Assert("GoogleAI: Instances with the same limited use settings should be the same.", googleAi1 == googleAi3);
 
-      // Test within Enterprise
-      var enterprise1 = GetFirebaseAI(Backend.Enterprise, useLimitedUseAppCheckTokens: false);
-      var enterprise2 = GetFirebaseAI(Backend.Enterprise, useLimitedUseAppCheckTokens: true);
-      var enterprise3 = GetFirebaseAI(Backend.Enterprise, useLimitedUseAppCheckTokens: false);
+      // Test within AgentPlatform
+      var agentPlatform1 = GetFirebaseAI(Backend.AgentPlatform, useLimitedUseAppCheckTokens: false);
+      var agentPlatform2 = GetFirebaseAI(Backend.AgentPlatform, useLimitedUseAppCheckTokens: true);
+      var agentPlatform3 = GetFirebaseAI(Backend.AgentPlatform, useLimitedUseAppCheckTokens: false);
 
-      Assert("Enterprise: Instances with different limited use settings should be different.", enterprise1 != enterprise2);
-      Assert("Enterprise: Instances with the same limited use settings should be the same.", enterprise1 == enterprise3);
+      Assert("AgentPlatform: Instances with different limited use settings should be different.", agentPlatform1 != agentPlatform2);
+      Assert("AgentPlatform: Instances with the same limited use settings should be the same.", agentPlatform1 == agentPlatform3);
 
       // Test cross-backend isolation
-      Assert("Instances of GoogleAI and Enterprise with the same settings should be different.", googleAi1 != enterprise1);
-      Assert("Instances of GoogleAI and Enterprise with different settings should be different.", googleAi2 != enterprise2);
+      Assert("Instances of GoogleAI and AgentPlatform with the same settings should be different.", googleAi1 != agentPlatform1);
+      Assert("Instances of GoogleAI and AgentPlatform with different settings should be different.", googleAi2 != agentPlatform2);
 
       return Task.CompletedTask;
     }
@@ -1257,8 +1257,8 @@ namespace Firebase.Sample.FirebaseAI
     // Test providing a file from a GCS bucket (Firebase Storage) to the model.
     async Task TestReadFile()
     {
-      // GCS is currently only supported with Enterprise.
-      var model = CreateGenerativeModel(Backend.Enterprise);
+      // GCS is currently only supported with AgentPlatform.
+      var model = CreateGenerativeModel(Backend.AgentPlatform);
 
       GenerateContentResponse response = await model.GenerateContentAsync(new ModelContent[] {
         ModelContent.Text("I am testing File input. Can you describe the content in the attached file?"),
@@ -1275,8 +1275,8 @@ namespace Firebase.Sample.FirebaseAI
     // Should pass if Auth is included or not. To turn Auth on, define INCLUDE_FIREBASE_AUTH at the top of the file.
     async Task TestReadSecureFile()
     {
-      // GCS is currently only supported with Enterprise.
-      var model = CreateGenerativeModel(Backend.Enterprise);
+      // GCS is currently only supported with AgentPlatform.
+      var model = CreateGenerativeModel(Backend.AgentPlatform);
 
 #if INCLUDE_FIREBASE_AUTH
       var authResult = await FirebaseAuth.DefaultInstance.SignInAnonymouslyAsync();
@@ -1454,7 +1454,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestBasicReplyShort()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-basic-reply-short.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       ValidateTextPart(response, "Mountain View, California");
 
@@ -1490,7 +1490,7 @@ namespace Firebase.Sample.FirebaseAI
         }]
       }";
       Dictionary<string, object> json = (Dictionary<string, object>)Json.Deserialize(jsonStr);
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       Assert("Response missing candidates.", response.Candidates.Any());
       Candidate candidate = response.Candidates.First();
@@ -1504,7 +1504,7 @@ namespace Firebase.Sample.FirebaseAI
         }]
       }";
       json = (Dictionary<string, object>)Json.Deserialize(jsonStr);
-      response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
       candidate = response.Candidates.First();
       AssertEq("FinishReason", candidate.FinishReason, FinishReason.MalformedResponse);
 
@@ -1645,7 +1645,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestCitations()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-citations.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       ValidateTextPart(response, "Some information cited from an external source");
 
@@ -1677,7 +1677,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestBlockedSafetyWithMessage()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-prompt-blocked-safety-with-message.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       Assert("Candidates", !response.Candidates.Any());
       Assert("Response.Text", string.IsNullOrEmpty(response.Text));
@@ -1708,7 +1708,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestFinishReasonSafetyNoContent()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-failure-finish-reason-safety-no-content.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
       var candidate = response.Candidates.First();
@@ -1746,7 +1746,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestUnknownEnumSafetyRatings()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-unknown-enum-safety-ratings.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
       var candidate = response.Candidates.First();
@@ -1780,7 +1780,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestFunctionCallWithArguments()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-function-call-with-arguments.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
       var candidate = response.Candidates.First();
@@ -1796,13 +1796,13 @@ namespace Firebase.Sample.FirebaseAI
       AssertEq("FunctionCall args[x] wrong value", fcPart.Args["x"], 4L);
     }
 
-    // Test that parsing an Enterprise response with GroundingMetadata works.
+    // Test that parsing an Agent Platform response with GroundingMetadata works.
     // https://github.com/FirebaseExtended/vertexai-sdk-test-data/blob/main/mock-responses/vertexai/unary-success-google-search-grounding.json
-    async Task InternalTestEnterpriseGrounding()
+    async Task InternalTestAgentPlatformGrounding()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-google-search-grounding.json");
 
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       Assert("Response missing candidates.", response.Candidates.Any());
       var candidate = response.Candidates.First();
@@ -1890,7 +1890,7 @@ namespace Firebase.Sample.FirebaseAI
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-google-maps-grounding.json");
 
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       Assert("Response missing candidates.", response.Candidates.Any());
       var candidate = response.Candidates.First();
@@ -1960,7 +1960,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestBasicResponseLongUsageMetadata()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-basic-response-long-usage-metadata.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       AssertEq("Response Text", response.Text, "Here is a description of the image:\\n\\n");
 
@@ -1985,7 +1985,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestUsageMetadataWithCaching()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-cached-content-usage-metadata.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       AssertEq("PromptTokenCount", response.UsageMetadata?.PromptTokenCount, 200);
       AssertEq("CandidatesTokenCount", response.UsageMetadata?.CandidatesTokenCount, 50);
@@ -2112,7 +2112,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestThoughtSummary()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-thinking-reply-thought-summary.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       AssertEq("Response text", response.Text, "Mountain View");
 
@@ -2128,7 +2128,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestCodeExecution()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-code-execution.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       AssertEq("Candidate count", response.Candidates.Count(), 1);
       var candidate = response.Candidates.First();
@@ -2154,7 +2154,7 @@ namespace Firebase.Sample.FirebaseAI
     async Task InternalTestUrlContextMixedValidity()
     {
       Dictionary<string, object> json = await GetVertexJsonTestData("unary-success-url-context-mixed-validity.json");
-      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.Enterprise);
+      GenerateContentResponse response = GenerateContentResponse.FromJson(json, FirebaseAI.Backend.InternalProvider.AgentPlatform);
 
       Assert("Candidate should have UrlContextMetadata", response.Candidates.First().UrlContextMetadata.HasValue);
       var urlContextMetadata = response.Candidates.First().UrlContextMetadata.Value;

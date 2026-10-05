@@ -76,11 +76,11 @@ namespace Firebase.Sample.FirebaseAI {
     public string ModelName = "gemini-3.1-flash-lite";
 
     private int backendSelection = 0;
-    private string[] backendChoices = new string[] { "Google AI Backend", "Gemini Enterprise Backend" };
+    private string[] backendChoices = new string[] { "Google AI Backend", "Agent Platform Backend" };
     private GenerativeModel GetModel() {
       var backend = backendSelection == 0
           ? FirebaseAI.Backend.GoogleAI()
-          : FirebaseAI.Backend.Enterprise();
+          : FirebaseAI.Backend.AgentPlatform();
 
       return FirebaseAI.GetInstance(backend, useLimitedUseAppCheckTokens: true).GetGenerativeModel(ModelName);
     }

@@ -37,7 +37,7 @@ namespace Firebase.AI
       internal enum InternalProvider
       {
         GoogleAI,
-        Enterprise,
+        AgentPlatform,
       }
 
       /// <summary>
@@ -47,7 +47,7 @@ namespace Firebase.AI
       internal InternalProvider Provider { get; }
       /// <summary>
       /// Intended for internal use only.
-      /// The region identifier used by the Gemini Enterprise API backend.
+      /// The region identifier used by the Vertex AI and Gemini Enterprise Agent Platform backends.
       /// </summary>
       internal string Location { get; }
 
@@ -66,32 +66,9 @@ namespace Firebase.AI
       }
 
       /// <summary>
-      /// The Gemini Enterprise backend service configuration.
-      /// 
-      /// Note: The Gemini Enterprise API was formerly known as Vertex AI,
-      /// and, briefly, the Agent Platform Gemini API.
+      /// The Gemini Enterprise Agent Platform backend service configuration.
       /// </summary>
       /// <param name="location">The region identifier, defaulting to `global`</param>
-      public static Backend Enterprise(string location = "global")
-      {
-        if (string.IsNullOrWhiteSpace(location) || location.Contains("/"))
-        {
-          throw new ArgumentException(
-              $"The location argument must be non-empty, and not contain special characters like '/'");
-        }
-
-        return new Backend(InternalProvider.Enterprise, location);
-      }
-
-      /// <summary>
-      /// The Gemini Enterprise backend service configuration.
-      /// </summary>
-      /// <param name="location">The region identifier, defaulting to `global`</param>
-      /// <remarks>
-      /// Deprecated: Renamed to Enterprise(string location)
-      /// </remarks>
-      /// @deprecated Renamed to Enterprise(string location)
-      [Obsolete("Renamed to Enterprise(string location)")]
       public static Backend AgentPlatform(string location = "global")
       {
         if (string.IsNullOrWhiteSpace(location) || location.Contains("/"))
@@ -100,7 +77,7 @@ namespace Firebase.AI
               $"The location argument must be non-empty, and not contain special characters like '/'");
         }
 
-        return new Backend(InternalProvider.Enterprise, location);
+        return new Backend(InternalProvider.AgentPlatform, location);
       }
 
       public override readonly string ToString()
