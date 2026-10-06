@@ -101,23 +101,23 @@ if(IOS)
     APPEND_STRING PROPERTY
     COMPILE_FLAGS "-fobjc-arc")
 
-  setup_pod_headers(
+  setup_spm_headers(
     firebase_crashlytics
-    POD_NAMES
+    MODULES
       FirebaseCrashlytics
   )
   # The Crashlytics cocoapod can use a unique path that does not match the pattern used by
   # other Firebase cocoapods, so add the path explicitly here.
   target_include_directories(firebase_crashlytics
     PUBLIC
-      ${FIREBASE_POD_DIR}/Pods/FirebaseCrashlytics/Crashlytics/Crashlytics/Public/FirebaseCrashlytics
+      ${FIREBASE_SPM_CHECKOUTS_DIR}/firebase-ios-sdk/Crashlytics/Crashlytics/Public/FirebaseCrashlytics
   )
 
   # Crashlytics pods use 'iOS' dir instead of 'Frameworks' dir
-  symlink_pod_headers(firebase_crashlytics Crashlytics CrashlyticsiOS
-    FRAMEWORK_DIR_NAME iOS
-  )
-  symlink_pod_headers(firebase_crashlytics Fabric FabriciOS
-    FRAMEWORK_DIR_NAME iOS
-  )
+  #symlink_spm_headers(firebase_crashlytics Crashlytics CrashlyticsiOS
+  #  FRAMEWORK_DIR_NAME iOS
+  #)
+  #symlink_spm_headers(firebase_crashlytics Fabric FabriciOS
+  #  FRAMEWORK_DIR_NAME iOS
+  #)
 endif()
