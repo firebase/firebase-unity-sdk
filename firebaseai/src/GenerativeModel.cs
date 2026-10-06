@@ -420,7 +420,7 @@ namespace Firebase.AI
           ((Dictionary<string, object>)jsonDict["generateContentRequest"])["model"] =
               $"models/{_modelName}";
           break;
-        case FirebaseAI.Backend.InternalProvider.Enterprise:
+        case FirebaseAI.Backend.InternalProvider.AgentPlatform:
           jsonDict = new()
           {
             // Convert the Contents into a list of Json dictionaries
