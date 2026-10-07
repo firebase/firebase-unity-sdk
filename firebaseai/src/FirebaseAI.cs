@@ -140,12 +140,14 @@ namespace Firebase.AI
 
       // FirebaseAI instances are keyed by a combination of the app name and backend.
       string key = $"{app.Name}::{resolvedBackend}::{useLimitedUseAppCheckTokens}";
-      if (_instances.ContainsKey(key))
-      {
-        return _instances[key];
-      }
-
-      return _instances.GetOrAdd(key, _ => new FirebaseAI(app, resolvedBackend, useLimitedUseAppCheckTokens));
+      // An App with the same name may have been disposed and re-created (e.g. Enter Play Mode
+      // with domain reload disabled, or an explicit FirebaseApp.Dispose()). Only reuse a cached
+      // instance if it is bound to this exact App object.
+      return _instances.AddOrUpdate(key,
+          _ => new FirebaseAI(app, resolvedBackend, useLimitedUseAppCheckTokens),
+          (_, existing) => ReferenceEquals(existing._firebaseApp, app)
+              ? existing
+              : new FirebaseAI(app, resolvedBackend, useLimitedUseAppCheckTokens));
     }
 
     /// <summary>

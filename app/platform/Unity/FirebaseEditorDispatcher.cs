@@ -157,6 +157,21 @@ internal sealed class FirebaseEditorDispatcher {
   // Function to subscribe with when using newer (2017+) versions of Unity, as
   // they take in a UnityEditor defined enum parameter.
   private static void PlayModeStateChangedWithArg<T>(T t) {
+    // When "Enter Play Mode Options" disables domain reload (Fast Enter Play Mode, the default
+    // for new projects in Unity 6.6 and the only mode in Unity 7), beforeAssemblyReload does not
+    // fire between play sessions, so FirebaseApps, product instances and their listeners (often
+    // owned by MonoBehaviours that were destroyed when play mode exited) would carry over into
+    // the next play session. Run the same cleanup a domain reload would trigger just before
+    // entering play mode, so every play session starts from a fresh Firebase state.
+    // When domain reload is enabled this only moves the existing cleanup slightly earlier
+    // within the same transition (ExitingEditMode is raised just before the reload), and the
+    // beforeAssemblyReload handler is unsubscribed by Terminate() so it does not run twice.
+    if (t?.ToString() == "ExitingEditMode" && FirebaseHandler.DefaultInstance != null) {
+      // OnCleanupEvent -> FirebaseHandler.Terminate() unsubscribes this listener; it is
+      // re-registered when the FirebaseHandler is next created.
+      OnCleanupEvent();
+      return;
+    }
     PlayModeStateChanged();
   }
 
