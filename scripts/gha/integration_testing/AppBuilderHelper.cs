@@ -185,9 +185,9 @@ public sealed class AppBuilderHelper {
     }
     else if (buildTarget == "OSXUniversal") {
 #if UNITY_2017_3_OR_NEWER
-      build = () => StandaloneBuild(BuildTarget.StandaloneOSX, MACOS_SUBDIR, APP_NAME);
+      build = () => StandaloneBuild(BuildTarget.StandaloneOSX, MACOS_SUBDIR, APP_NAME + ".app");
 #else
-      build = () => StandaloneBuild(BuildTarget.StandaloneOSXUniversal, MACOS_SUBDIR, APP_NAME);
+      build = () => StandaloneBuild(BuildTarget.StandaloneOSXUniversal, MACOS_SUBDIR, APP_NAME + ".app");
 #endif
     }
     else if (string.IsNullOrEmpty(buildTarget)) {
@@ -299,7 +299,7 @@ public sealed class AppBuilderHelper {
 
     // Note that .NET 3.5 only has the two-argument version of Path.Combine.
     // The 3 arg, 4 arg, and array versions are in 4.0.
-    string path = Path.Combine(Path.Combine(outputDir, subdirectory), fileName);
+    string path = Path.Combine(Path.Combine(outputDir, subdirectory), fileName).Replace('\\', '/');
     BuildPlayerOptions playerOptions = GetBuildOptions(target, path);
 
 #if EDM4U_IS_ENABLED
