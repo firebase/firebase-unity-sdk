@@ -41,11 +41,12 @@ permissions:
 jobs:
   build_android:
     name: build-android-unity${{ inputs.unity_version }}-CPP${{ inputs.firebase_cpp_sdk_version }}
-    runs-on: macos-15
+    runs-on: macos-26
     strategy:
       fail-fast: false
     env:
       CCACHE_DIR: ${{ github.workspace }}/ccache_dir
+      xcodeVersion: "26.4"
   
     steps:
       - uses: lukka/get-cmake@80ed063af494e28dd56b85fb7a630f2f8f55ceed # ratchet:lukka/get-cmake@latest
@@ -78,18 +79,18 @@ jobs:
         id: cache_ndk
         uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # ratchet:actions/cache@v3
         with:
-          path: /tmp/android-ndk-r21e
-          key: android-ndk-${{ matrix.os }}-r21e
+          path: /tmp/android-ndk-r23b
+          key: android-ndk-${{ matrix.os }}-r23b
 
       - name: Check cached NDK
         shell: bash
         if: steps.cache_ndk.outputs.cache-hit != 'true'
         run: |
           # If the NDK failed to download from the cache, but there is a
-          # /tmp/android-ndk-r21e directory, it's incomplete, so remove it.
-          if [[ -d "/tmp/android-ndk-r21e" ]]; then
+          # /tmp/android-ndk-r23b directory, it's incomplete, so remove it.
+          if [[ -d "/tmp/android-ndk-r23b" ]]; then
             echo "Removing incomplete download of NDK"
-            rm -rf /tmp/android-ndk-r21e
+            rm -rf /tmp/android-ndk-r23b
           fi
 
       - name: Install prerequisites
@@ -100,8 +101,8 @@ jobs:
           python scripts/gha/install_prereqs_desktop.py
           build_scripts/android/install_prereqs.sh
           cd ..
-          echo "NDK_ROOT=/tmp/android-ndk-r21e" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=/tmp/android-ndk-r21e" >> $GITHUB_ENV
+          echo "NDK_ROOT=/tmp/android-ndk-r23b" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=/tmp/android-ndk-r23b" >> $GITHUB_ENV
           brew install swig
       
       - name: Force Java 11

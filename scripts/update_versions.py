@@ -45,6 +45,14 @@ def get_latest_repo_tag(repo_url):
   return tags[0].name
 
 def get_ios_pod_version_from_cpp():
+  spm_path = os.path.join(os.getcwd(), "..", "firebase-cpp-sdk", "ios_spm", "Package.swift")
+  if os.path.exists(spm_path):
+    with open(spm_path, "r") as f:
+      for line in f:
+        if "firebase-ios-sdk.git" in line:
+          match = re.search(r'exact:\s*"([^"]+)"', line)
+          if match:
+            return match.group(1)
   pod_path = os.path.join(os.getcwd(), "..", "firebase-cpp-sdk", "ios_pod", "Podfile")
   if not os.path.exists(pod_path):
     return None

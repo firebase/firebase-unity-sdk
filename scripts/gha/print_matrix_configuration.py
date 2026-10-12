@@ -56,7 +56,7 @@ PLAYMODE = "Playmode"
 
 # GitHub Runner
 WINDOWS_RUNNER = "windows-2022"
-MACOS_RUNNER = "macos-15"
+MACOS_RUNNER = "macos-26"
 LINUX_RUNNER = "ubuntu-22.04"
 
 PARAMETERS = {
@@ -124,8 +124,8 @@ TEST_DEVICES = {
                    "model=iphone14pro,version=16.6",
                    "model=iphone11pro,version=16.6",
                  ]},
-  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 16 Pro Max", "version": "26.2"},
-  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "26.2"},
+  "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 17 Pro Max", "version": "26.4.1"},
+  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "26.4.1"},
 }
 
 

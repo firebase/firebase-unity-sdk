@@ -16,7 +16,7 @@
 
 # Higher CMake version needed for improvments in UseSwig.cmake and string join
 cmake_minimum_required(VERSION 3.22)
-set (CMAKE_CXX_STANDARD 14)
+set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED YES) # Don't fall back to an earlier version.
 
 # Turn on virtual folders for visual studio
