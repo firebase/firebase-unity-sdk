@@ -109,7 +109,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
+### 14.0.0
 -   Changes
     - General: **Breaking Change** Updated the minimum supported Unity version to Unity 2022 LTS (2022.3).
     - General (iOS, tvOS, Desktop): iOS, tvOS, and macOS SDKs are now built using Xcode 26.4.
