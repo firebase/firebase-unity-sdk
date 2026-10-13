@@ -9,7 +9,7 @@ inside the Unity Editor.
 ## Requirements
 
 * [Unity](http://unity3d.com/) The quickstart project requires 2022.3 LTS or higher.
-* [Xcode](https://developer.apple.com/xcode/) 26.2 or higher
+* [Xcode](https://developer.apple.com/xcode/) 26.4 or higher
   (when developing for iOS).
 * [Android SDK](https://developer.android.com/studio/index.html#downloads)
   (when developing for Android).
