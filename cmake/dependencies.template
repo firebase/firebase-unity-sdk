@@ -6,8 +6,6 @@ Firebase@MODULE_NAME@ iOS and Android Dependencies.
 <dependencies>
   <remoteSwiftPackage url="https://github.com/firebase/firebase-ios-sdk.git" version="@FIREBASE_SPM_VERSION@">@FIREBASE_SPM_PACKAGES@
   </remoteSwiftPackage>
-  <iosPods>@IOS_PODS@
-  </iosPods>
   <androidPackages>@ANDROID_PACKAGES@
     <androidPackage spec="@ANDROID_SPEC@">
       <repositories>

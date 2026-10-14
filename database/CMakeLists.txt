@@ -95,8 +95,6 @@ if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Database
     FIREBASE_SPM_DEPS
       "FirebaseDatabase|Firebase/Database"
-    IOS_DEPS
-      "Firebase/Database"
     ANDROID_DEPS
       ${FIREBASE_DATABASE_ANDROID_DEPS}
     ANDROID_SPEC

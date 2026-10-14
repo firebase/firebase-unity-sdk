@@ -193,8 +193,6 @@ if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Firestore
     FIREBASE_SPM_DEPS
       "FirebaseFirestore|Firebase/Firestore"
-    IOS_DEPS
-      "Firebase/Firestore"
     ANDROID_DEPS
       ${FIREBASE_FIRESTORE_ANDROID_DEPS}
     ANDROID_SPEC

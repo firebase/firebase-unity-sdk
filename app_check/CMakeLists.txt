@@ -101,8 +101,6 @@ if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(AppCheck
     FIREBASE_SPM_DEPS
       "FirebaseAppCheck|Firebase/AppCheck"
-    IOS_DEPS
-      "Firebase/AppCheck"
     ANDROID_DEPS
       ${FIREBASE_APP_CHECK_ANDROID_DEPS}
     ANDROID_SPEC

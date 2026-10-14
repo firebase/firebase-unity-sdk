@@ -123,8 +123,6 @@ if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Crashlytics
     FIREBASE_SPM_DEPS
       "FirebaseCrashlytics|Firebase/Crashlytics"
-    IOS_DEPS
-      "Firebase/Crashlytics"
     ANDROID_DEPS
       ${FIREBASE_CRASHLYTICS_ANDROID_DEPS}
     ANDROID_SPEC

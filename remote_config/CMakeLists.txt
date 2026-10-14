@@ -83,8 +83,6 @@ if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(RemoteConfig
     FIREBASE_SPM_DEPS
       "FirebaseRemoteConfig|Firebase/RemoteConfig"
-    IOS_DEPS
-      "Firebase/RemoteConfig"
     ANDROID_DEPS
       ${FIREBASE_REMOTE_CONFIG_ANDROID_DEPS}
     ANDROID_SPEC

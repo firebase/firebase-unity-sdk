@@ -84,8 +84,6 @@ if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(Messaging
     FIREBASE_SPM_DEPS
       "FirebaseMessaging|Firebase/Messaging"
-    IOS_DEPS
-      "Firebase/Messaging"
     ANDROID_DEPS
       ${FIREBASE_MESSAGING_ANDROID_DEPS}
     ANDROID_SPEC

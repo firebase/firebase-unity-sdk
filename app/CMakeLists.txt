@@ -130,8 +130,6 @@ if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(App
     FIREBASE_SPM_DEPS
       "FirebaseCore|Firebase/Core"
-    IOS_DEPS
-      "Firebase/Core"
     ANDROID_DEPS
       ${FIREBASE_APP_ANDROID_DEPS}
     ANDROID_SPEC
