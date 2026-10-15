@@ -194,9 +194,6 @@ def update_unity_version(unity_sdk_version):
       if "FIREBASE_UNITY_SDK_VERSION" in line:
         newline = "set(FIREBASE_UNITY_SDK_VERSION \"" + unity_sdk_version + "\""
         replacement = replacement + newline + "\n"
-      elif podversion and "FIREBASE_IOS_POD_VERSION" in line:
-        newline = "set(FIREBASE_IOS_POD_VERSION \"" + podversion + "\""
-        replacement = replacement + newline + "\n"
       elif podversion and "FIREBASE_SPM_VERSION" in line:
         # Reuse the Cocoapod version number, as they are typically the same
         newline = "set(FIREBASE_SPM_VERSION \"" + podversion + "\""

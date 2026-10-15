@@ -109,11 +109,16 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
+### 14.0.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 14.0.0.
+    - General (Android): Update to Firebase Android BoM version 35.0.0.
+    - General (iOS): Update to Firebase Apple SDK version 13.0.1.
     - General: **Breaking Change** Updated the minimum supported Unity version to Unity 2022 LTS (2022.3).
     - General (iOS, tvOS, Desktop): iOS, tvOS, and macOS SDKs are now built using Xcode 26.4.
     - General (iOS): Change library format to .xcframework, add support for arm64 simulators.
+    - General (iOS): Builds now require using Swift Packages for the Firebase iOS dependencies, instead of Cocoapods.
+    - General (Android): **Breaking Change** Updated minSdkVersion to 24.
     - Auth: **Breaking Change** Standardized `Firebase.Auth.UserMetadata.CreationTimestamp` and `Firebase.Auth.UserMetadata.LastSignInTimestamp` to return `System.DateTime` (UTC) instead of `ulong` Unix epoch milliseconds, matching other Firebase Unity SDK timestamp properties.
     - Firebase AI: Deprecated model tuning parameters (`temperature`, `topP`, `topK`, `candidateCount`, `presencePenalty`, and `frequencyPenalty`) in `GenerationConfig` and `LiveGenerationConfig` as they are unsupported in Gemini 3.x and later models.
     - Firebase AI: Remove the deprecated fields: `Backend.VertexAI`, `CountTokensResponse.TotalBillableCharacters`, and `LiveSession.SendMediaChunksAsync`.

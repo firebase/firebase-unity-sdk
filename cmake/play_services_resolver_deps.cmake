@@ -62,12 +62,6 @@ function(generate_dependencies_xml module)
       string(CONCAT FIREBASE_SPM_PACKAGES ${FIREBASE_SPM_PACKAGES}
           "\r\n${INDENT}<swiftPackage name=\"${PACKAGE_NAME}\"")
 
-      list(LENGTH DEP_LIST SPM_DEP_LENGTH)
-      if (${SPM_DEP_LENGTH} GREATER 1)
-        list(GET DEP_LIST 1 PACKAGE_POD_IGNORE)
-        string(CONCAT FIREBASE_SPM_PACKAGES ${FIREBASE_SPM_PACKAGES} " replacesPod=\"${PACKAGE_POD_IGNORE}\"") 
-      endif()
-
       string(CONCAT FIREBASE_SPM_PACKAGES ${FIREBASE_SPM_PACKAGES} "/>")
 
     endforeach(SPM_DEP)
@@ -80,7 +74,7 @@ function(generate_dependencies_xml module)
     if (${DEP_LIST_LENGTH} GREATER 1)
       list(GET DEP_LIST 1 DEP_VERSION)
     else()
-      set(DEP_VERSION "${FIREBASE_IOS_POD_VERSION}")
+      set(DEP_VERSION "${FIREBASE_SPM_VERSION}")
     endif()
     if (${DEP_LIST_LENGTH} GREATER 2)
       list(GET DEP_LIST 2 TARGET_SDK)
@@ -125,7 +119,6 @@ endfunction()
 function(test_generate_xml)
 
   set(FIREBASE_SPM_VERSION "1.2.3")
-  set(FIREBASE_IOS_POD_VERSION "1.2.3")
   set(FIREBASE_UNITY_SDK_VERSION "4.5.6")
   set(DEFAULT_MIN_TARGET_SDK "7.8")
 
