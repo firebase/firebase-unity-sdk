@@ -201,7 +201,7 @@ def main(argv):
       device_name = FLAGS.ios_name
       device_os = FLAGS.ios_version
 
-    device_id, device_os = _create_and_boot_simulator("iOS", device_name, device_os)
+    device_id = _create_and_boot_simulator("iOS", device_name, device_os)
     if not device_id:
       logging.error("simulator created fail")
       return 21
@@ -241,7 +241,7 @@ def main(argv):
       device_name = FLAGS.tvos_name
       device_os = FLAGS.tvos_version
 
-    device_id, device_os = _create_and_boot_simulator("tvOS", device_name, device_os)
+    device_id = _create_and_boot_simulator("tvOS", device_name, device_os)
     if not device_id:
       logging.error("simulator created fail")
       return 21
@@ -392,12 +392,7 @@ def _shutdown_simulator():
 
 
 def _create_and_boot_simulator(apple_platform, device_name, device_os):
-  """Create a simulator locally. Will wait until this simulator booted.
-
-  Returns:
-    A (device_id, device_os) tuple. device_os is the version actually used,
-    which may differ from the requested one if a fallback was needed.
-  """
+  """Create a simulator locally. Will wait until this simulator booted."""
   _shutdown_simulator()
   command = "xcrun xctrace list devices 2>&1 | grep \"%s Simulator (%s)\" | awk -F'[()]' '{print $4}'" % (device_name, device_os)
   logging.info("Get test simulator: %s", command)
@@ -442,7 +437,7 @@ def _create_and_boot_simulator(apple_platform, device_name, device_os):
   args = ["xcrun", "simctl", "bootstatus", device_id]
   logging.info("Wait for simulator to boot: %s", " ".join(args))
   subprocess.run(args=args, check=True)
-  return device_id, device_os
+  return device_id
 
 
 def _delete_simulator(device_id):
