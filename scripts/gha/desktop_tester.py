@@ -133,9 +133,14 @@ class Test(object):
           self.logs = f.read()
         test_running = "All tests finished" not in self.logs
     open_process.kill()
-    if platform.system() == 'Linux':
-      # Linux seems to have a problem printing out too much information, so truncate it
-      logging.info("Test result: %s (Log might be truncated)", self.logs[:64000])
+    # Writing very large log blobs to the CI stdout pipe can fail (EAGAIN) when
+    # another process (e.g. the Firestore emulator) shares the pipe, which
+    # silently drops output and makes Python exit with code 120. Keep the
+    # inline dump bounded; the full per-testapp log is still on disk.
+    max_log_len = 64000
+    if self.logs and len(self.logs) > max_log_len:
+      logging.info("Test result: %s (Log truncated to %d chars; full log at %s)",
+                   self.logs[:max_log_len], max_log_len, log_path)
     else:
       logging.info("Test result: %s", self.logs)
     logging.info("Finished running %s", self.testapp_path)

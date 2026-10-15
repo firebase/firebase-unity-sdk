@@ -125,7 +125,7 @@ TEST_DEVICES = {
                    "model=iphone11pro,version=16.6",
                  ]},
   "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 17 Pro Max", "version": "26.4.1"},
-  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "26.4.1"},
+  "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "26.4"},
 }
 
 
