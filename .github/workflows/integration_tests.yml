@@ -473,7 +473,9 @@ jobs:
       - name: Run Playmode (in editor mode) integration tests
         shell: bash
         run: |
-          firebase emulators:start --only firestore &
+          # Redirect emulator output to a file so it does not share (and put
+          # into non-blocking mode) the stdout pipe used by the test scripts.
+          firebase emulators:start --only firestore > firestore-emulator.log 2>&1 &
           if [[ -n "${GITHUB_EVENT_INPUTS_PACKAGED_SDK_RUN_ID}" ]]; then
             unzip -q firebase_unity_sdk.zip -d ~/Downloads/
           else
@@ -613,7 +615,10 @@ jobs:
         timeout-minutes: 30
         shell: bash
         run: |
-          firebase emulators:start --only firestore &
+          # Redirect emulator output to a file: Node puts the shared stdout pipe
+          # into non-blocking mode, which makes large Python log writes fail
+          # with EAGAIN and the tester exit with code 120.
+          firebase emulators:start --only firestore > firestore-emulator.log 2>&1 &
           python scripts/gha/desktop_tester.py --testapp_dir testapps \
             --logfile_name "${STEPS_MATRIX_INFO_OUTPUTS_INFO}"
         env:
