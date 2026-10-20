@@ -201,7 +201,7 @@ def main(argv):
       device_name = FLAGS.ios_name
       device_os = FLAGS.ios_version
 
-    device_id = _create_and_boot_simulator("iOS", device_name, device_os)
+    device_id, device_os = _create_and_boot_simulator("iOS", device_name, device_os)
     if not device_id:
       logging.error("simulator created fail")
       return 21
@@ -241,7 +241,7 @@ def main(argv):
       device_name = FLAGS.tvos_name
       device_os = FLAGS.tvos_version
 
-    device_id = _create_and_boot_simulator("tvOS", device_name, device_os)
+    device_id, device_os = _create_and_boot_simulator("tvOS", device_name, device_os)
     if not device_id:
       logging.error("simulator created fail")
       return 21
@@ -392,9 +392,14 @@ def _shutdown_simulator():
 
 
 def _create_and_boot_simulator(apple_platform, device_name, device_os):
-  """Create a simulator locally. Will wait until this simulator booted."""
+  """Create a simulator locally. Will wait until this simulator booted.
+
+  Returns:
+    A (device_id, device_os) tuple. device_os is the version actually used,
+    which may differ from the requested one if a fallback was needed.
+  """
   _shutdown_simulator()
-  command = "xcrun xctrace list devices 2>&1 | grep \"%s Simulator (%s)\" | awk -F'[()]' '{print $4}'" % (device_name, device_os)
+  command = "xcrun xctrace list devices 2>&1 | grep -E \"^%s( Simulator)? \\(%s\\) \\([0-9A-F-]+\\)$\" | awk -F'[()]' '{print $4}'" % (device_name, device_os)
   logging.info("Get test simulator: %s", command)
   result = subprocess.Popen(command, universal_newlines=True, shell=True, stdout=subprocess.PIPE)
   device_id = result.stdout.readline().strip()
@@ -425,7 +430,7 @@ def _create_and_boot_simulator(apple_platform, device_name, device_os):
     logging.info("Download simulator: %s", " ".join(args))
     subprocess.run(args=args, check=False)
     
-    args = ["xcrun", "simctl", "create", "test_simulator", device_name, "%s%s" % (apple_platform, device_os)]
+    args = ["xcrun", "simctl", "create", device_name, device_name, "%s%s" % (apple_platform, device_os)]
     logging.info("Create test simulator: %s", " ".join(args))
     result = subprocess.run(args=args, capture_output=True, text=True, check=True)
     device_id = result.stdout.strip()
@@ -437,7 +442,7 @@ def _create_and_boot_simulator(apple_platform, device_name, device_os):
   args = ["xcrun", "simctl", "bootstatus", device_id]
   logging.info("Wait for simulator to boot: %s", " ".join(args))
   subprocess.run(args=args, check=True)
-  return device_id
+  return device_id, device_os
 
 
 def _delete_simulator(device_id):
