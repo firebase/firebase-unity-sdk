@@ -143,7 +143,8 @@ namespace Firebase.Sample.Analytics {
       // say the test passed if it finished with or without the expected exception.
       Action<Task<DependencyStatus>> taskHandler = t => {
         // We are allowed to have InvalidOperationException being thrown.
-        if (t.IsFaulted && !(t.Exception.InnerException is System.InvalidOperationException)) {
+        if (t.IsFaulted &&
+            !(t.Exception.Flatten().InnerException is System.InvalidOperationException)) {
           throw t.Exception;
         }
       };

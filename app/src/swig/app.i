@@ -1123,6 +1123,9 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
       CheckAndFixDependenciesAsync() {
     return System.Threading.Tasks.TaskExtensions.Unwrap(
         Firebase.FirebaseApp.CheckDependenciesAsync().ContinueWith(checkTask => {
+          if (checkTask.IsFaulted || checkTask.IsCanceled) {
+            return checkTask;
+          }
           // Peek at the status and see if we need to try to fix dependencies.
           Firebase.DependencyStatus status = checkTask.Result;
           if (status != Firebase.DependencyStatus.Available) {
