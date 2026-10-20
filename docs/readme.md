@@ -109,6 +109,10 @@ Support
 
 Release Notes
 -------------
+### Upcoming Changes
+-   Changes
+    - Firebase AI: Added `SpeechMetadata` and the `TextPart.SpeechMetadata` property to specify the speaker and vocal style (such as `"cheerful"`) for a piece of text when generating speech.
+
 ### 14.0.0
 -   Changes
     - General: Update to Firebase C++ SDK version 14.0.0.
