@@ -96,18 +96,6 @@ namespace Firebase.Sample.Functions {
 
     protected override void Start() {
       InitializeAppCheck();
-      // Set the list of tests to run, note this is done at Start since they are
-      // non-static.
-      var testCases = AllTests().ToArray();
-      var tests = from t in testCases select MakeFunc(t);
-      var names = from t in testCases select t.Name;
-
-      testRunner = AutomatedTestRunner.CreateTestRunner(
-        testsToRun: tests.ToArray(),
-        logFunc: DebugLog,
-        testNames: names.ToArray()
-      );
-
       UIEnabled = false;
 
       base.Start();
@@ -120,6 +108,18 @@ namespace Firebase.Sample.Functions {
     }
 
     protected override void InitializeFirebase() {
+      // Set the list of tests to run after CheckAndFixDependenciesAsync has
+      // finished, since AllTests() accesses FirebaseApp.DefaultInstance.
+      var testCases = AllTests().ToArray();
+      var tests = from t in testCases select MakeFunc(t);
+      var names = from t in testCases select t.Name;
+
+      testRunner = AutomatedTestRunner.CreateTestRunner(
+        testsToRun: tests.ToArray(),
+        logFunc: DebugLog,
+        testNames: names.ToArray()
+      );
+
       // One of the automated tests requires Auth, so we want to sign in before running it.
       firebaseAuth = Firebase.Auth.FirebaseAuth.DefaultInstance;
       firebaseAuth.SignInAnonymouslyAsync().ContinueWithOnMainThread(
