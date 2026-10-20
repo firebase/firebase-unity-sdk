@@ -337,7 +337,7 @@ def list_jobs_for_workflow_run(token, run_id, attempt=None, limit=200):
     page = page + 1
     keep_going = False
     with requests_retry_session().get(url, headers=headers, params=params,
-                      stream=True, timeout=TIMEOUT) as response:
+                      stream=True, timeout=TIMEOUT_LONG) as response:
       logging.info("list_jobs_for_workflow_run: %s page %d, response: %s",
                    url, params['page'], response)
       if 'jobs' not in response.json():
@@ -356,7 +356,7 @@ def download_job_logs(token, job_id):
   """https://docs.github.com/en/rest/actions/workflow-jobs#download-job-logs-for-a-workflow-run"""
   url = f'{GITHUB_API_URL}/actions/jobs/{job_id}/logs'
   headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {token}'}
-  with requests_retry_session().get(url, headers=headers, stream=True, timeout=TIMEOUT) as response:
+  with requests_retry_session().get(url, headers=headers, stream=True, timeout=TIMEOUT_LONG) as response:
     logging.info("download_job_logs: %s response: %s", url, response)
     return response.content.decode('utf-8')
 
@@ -365,7 +365,7 @@ def rerun_failed_jobs_for_workflow_run(token, run_id):
   """https://docs.github.com/en/rest/actions/workflow-runs#re-run-failed-jobs-from-a-workflow-run"""
   url = f'{GITHUB_API_URL}/actions/runs/{run_id}/rerun-failed-jobs'
   headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {token}'}
-  with requests.post(url, headers=headers,
-                    stream=True, timeout=TIMEOUT) as response:
+  with requests_retry_session().post(url, headers=headers,
+                    stream=True, timeout=TIMEOUT_LONG) as response:
     logging.info("rerun_failed_jobs_for_workflow_run: %s response: %s", url, response)
     return True if response.status_code == 201 else False
