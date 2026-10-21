@@ -17,10 +17,14 @@ namespace Firebase.AI.Internal
       int pcmOffset = 0;
       int pcmLength = byteArray.Length;
 
-      if (TryGetWavDataChunk(byteArray, out int dataOffset, out int dataLength))
+      if (TryGetWavDataChunk(byteArray, out bool isWav, out int dataOffset, out int dataLength))
       {
         pcmOffset = dataOffset;
         pcmLength = dataLength;
+      }
+      else if (isWav)
+      {
+        return Array.Empty<float>();
       }
 
       // Assumes 16 bit encoding, which would be two bytes per sample.
@@ -40,8 +44,9 @@ namespace Firebase.AI.Internal
     // Attempts to parse a RIFF WAVE container to find the "data" subchunk's
     // starting byte offset and byte length, stripping both the leading header
     // and any trailing metadata chunks.
-    private static bool TryGetWavDataChunk(byte[] byteArray, out int dataOffset, out int dataLength)
+    private static bool TryGetWavDataChunk(byte[] byteArray, out bool isWav, out int dataOffset, out int dataLength)
     {
+      isWav = false;
       dataOffset = 0;
       dataLength = 0;
 
@@ -59,6 +64,9 @@ namespace Firebase.AI.Internal
       {
         return false;
       }
+
+      // This is a WAV file, but we may still return false if it is corrupted in some way.
+      isWav = true;
 
       int offset = 12;
       while (offset + 8 <= byteArray.Length)
