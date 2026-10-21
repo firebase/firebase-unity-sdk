@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using Google.MiniJSON;
 
 namespace Firebase.Storage {
   /// <summary>
@@ -29,15 +31,33 @@ namespace Firebase.Storage {
   ///   <see cref="MetadataChange"/>.
   /// </summary>
   public class StorageMetadata {
-    // TODO(smiles): Move to app?
-    // Other instances of this constant:
-    // * Firebase.Platform.Security.ServiceAccountCredential.UnixEpoch
-    // * Firebase.Database.Internal.Logging.DefaultLogger.BuildLogMessage() - contains a copy.
     private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0,
                                                               DateTimeKind.Utc);
 
-    // Storage reference this metadata was retrieved from.
-    private readonly StorageReference storageReference;
+    private string _bucket = "";
+    private string _generation = "";
+    private string _metadataGeneration = "";
+    private string _name = "";
+    private string _path = "";
+    private long _sizeBytes = 0;
+    private DateTime _creationTimeMillis = UnixEpoch;
+    private DateTime _updatedTimeMillis = UnixEpoch;
+    private string _md5Hash = "";
+    private string _cacheControl = "";
+    private string _contentDisposition = "";
+    private string _contentEncoding = "";
+    private string _contentLanguage = "";
+    private string _contentType = "";
+    private Dictionary<string, string> _customMetadata = new Dictionary<string, string>();
+    private string _downloadTokens = "";
+    private readonly StorageReference _storageReference;
+
+    private bool _hasCacheControl;
+    private bool _hasContentDisposition;
+    private bool _hasContentEncoding;
+    private bool _hasContentLanguage;
+    private bool _hasContentType;
+    private bool _hasCustomMetadata;
 
     /// <summary>
     ///   Creates a
@@ -46,18 +66,59 @@ namespace Firebase.Storage {
     ///   <see cref="StorageReference" />
     /// </summary>
     public StorageMetadata() {
-      storageReference = null;
-      Internal = new MetadataInternal(FirebaseStorage.DefaultInstance);
+      _storageReference = null;
     }
 
-    internal StorageMetadata(StorageReference reference, MetadataInternal metadata) {
-      storageReference = reference;
-      Internal = metadata;
+    internal StorageMetadata(StorageReference reference) {
+      _storageReference = reference;
+      if (reference != null) {
+        _bucket = reference.Bucket ?? "";
+        _path = (reference.Path ?? "").TrimStart('/');
+        _name = reference.Name ?? "";
+      }
     }
 
-    internal StorageMetadata(StorageMetadata metadataToCopy) {
-      storageReference = metadataToCopy.storageReference;
-      Internal = metadataToCopy.Internal.Copy();
+    internal StorageMetadata(StorageMetadata metadataToCopy)
+        : this(metadataToCopy != null ? metadataToCopy._storageReference : null, metadataToCopy) {
+    }
+
+    internal StorageMetadata(StorageReference reference, StorageMetadata metadataToCopy) {
+      _storageReference = reference ?? (metadataToCopy != null ? metadataToCopy._storageReference : null);
+      if (metadataToCopy != null) {
+        _bucket = metadataToCopy._bucket ?? "";
+        _generation = metadataToCopy._generation ?? "";
+        _metadataGeneration = metadataToCopy._metadataGeneration ?? "";
+        _name = metadataToCopy._name ?? "";
+        _path = metadataToCopy._path ?? "";
+        _sizeBytes = metadataToCopy._sizeBytes;
+        _creationTimeMillis = metadataToCopy._creationTimeMillis;
+        _updatedTimeMillis = metadataToCopy._updatedTimeMillis;
+        _md5Hash = metadataToCopy._md5Hash ?? "";
+        _cacheControl = metadataToCopy._cacheControl ?? "";
+        _contentDisposition = metadataToCopy._contentDisposition ?? "";
+        _contentEncoding = metadataToCopy._contentEncoding ?? "";
+        _contentLanguage = metadataToCopy._contentLanguage ?? "";
+        _contentType = metadataToCopy._contentType ?? "";
+        _customMetadata = metadataToCopy._customMetadata != null
+            ? new Dictionary<string, string>(metadataToCopy._customMetadata)
+            : new Dictionary<string, string>();
+        _downloadTokens = metadataToCopy._downloadTokens ?? "";
+        _hasCacheControl = metadataToCopy._hasCacheControl;
+        _hasContentDisposition = metadataToCopy._hasContentDisposition;
+        _hasContentEncoding = metadataToCopy._hasContentEncoding;
+        _hasContentLanguage = metadataToCopy._hasContentLanguage;
+        _hasContentType = metadataToCopy._hasContentType;
+        _hasCustomMetadata = metadataToCopy._hasCustomMetadata;
+      }
+      if (_storageReference != null) {
+        if (string.IsNullOrEmpty(_bucket)) _bucket = _storageReference.Bucket ?? "";
+        if (string.IsNullOrEmpty(_path)) _path = (_storageReference.Path ?? "").TrimStart('/');
+        if (string.IsNullOrEmpty(_name)) _name = _storageReference.Name ?? "";
+      }
+    }
+
+    internal StorageMetadata(StorageReference reference, MetadataChange change)
+        : this(reference, MetadataChange.Build(change)) {
     }
 
     /// <returns>
@@ -66,14 +127,15 @@ namespace Firebase.Storage {
     ///   .
     /// </returns>
     public string ContentType {
-      get { return Internal.ContentType; }
+      get { return _contentType; }
     }
 
     /// <returns>the keys for custom metadata.</returns>
     public IEnumerable<string> CustomMetadataKeys {
       get {
-          var customMetadata = Internal.CustomMetadata;
-          return customMetadata != null ? customMetadata.Keys : new List<string>();
+        return _customMetadata != null
+            ? (IEnumerable<string>)new List<string>(_customMetadata.Keys)
+            : new List<string>();
       }
     }
 
@@ -82,33 +144,33 @@ namespace Firebase.Storage {
     ///   <see cref="StorageReference" />
     ///   object
     /// </returns>
-    public string Path { get { return Internal.Path; } }
+    public string Path { get { return _path; } }
 
     /// <returns>
     ///   a simple name of the
     ///   <see cref="StorageReference" />
     ///   object
     /// </returns>
-    public string Name { get { return Internal.Name; } }
+    public string Name { get { return _name; } }
 
     /// <returns>
     ///   the owning Google Cloud Storage bucket for the
     ///   <see cref="StorageReference" />
     /// </returns>
-    public string Bucket { get { return Internal.Bucket; } }
+    public string Bucket { get { return _bucket; } }
 
     /// <returns>
     ///   a version String indicating what version of the
     ///   <see cref="StorageReference" />
     /// </returns>
-    public string Generation { get { return Internal.Generation.ToString(); } }
+    public string Generation { get { return _generation; } }
 
     /// <returns>
     ///   a version String indicating the version of this
     ///   <see cref="StorageMetadata" />
     /// </returns>
     public string MetadataGeneration {
-      get { return Internal.MetadataGeneration.ToString(); }
+      get { return _metadataGeneration; }
     }
 
     /// <returns>
@@ -117,7 +179,7 @@ namespace Firebase.Storage {
     ///   was created.
     /// </returns>
     public DateTime CreationTimeMillis {
-      get { return UnixEpoch.AddMilliseconds(Internal.CreationTime); }
+      get { return _creationTimeMillis; }
     }
 
     /// <returns>
@@ -126,7 +188,7 @@ namespace Firebase.Storage {
     ///   was last updated.
     /// </returns>
     public DateTime UpdatedTimeMillis {
-      get { return UnixEpoch.AddMilliseconds(Internal.UpdatedTime); }
+      get { return _updatedTimeMillis; }
     }
 
     /// <returns>
@@ -134,45 +196,45 @@ namespace Firebase.Storage {
     ///   <see cref="StorageReference" />
     ///   object
     /// </returns>
-    public long SizeBytes { get { return Internal.SizeBytes; } }
+    public long SizeBytes { get { return _sizeBytes; } }
 
     /// <returns>
     ///   the MD5Hash of the
     ///   <see cref="StorageReference" />
     ///   object
     /// </returns>
-    public string Md5Hash { get { return Internal.Md5Hash; } }
+    public string Md5Hash { get { return _md5Hash; } }
 
     /// <returns>
     ///   the Cache Control setting of the
     ///   <see cref="StorageReference" />
     /// </returns>
-    public string CacheControl { get { return Internal.CacheControl; } }
+    public string CacheControl { get { return _cacheControl; } }
 
     /// <returns>
     ///   the content disposition of the
     ///   <see cref="StorageReference" />
     /// </returns>
-    public string ContentDisposition { get { return Internal.ContentDisposition; } }
+    public string ContentDisposition { get { return _contentDisposition; } }
 
     /// <returns>
     ///   the content encoding for the
     ///   <see cref="StorageReference" />
     /// </returns>
-    public string ContentEncoding { get { return Internal.ContentEncoding; } }
+    public string ContentEncoding { get { return _contentEncoding; } }
 
     /// <returns>
     ///   the content language for the
     ///   <see cref="StorageReference" />
     /// </returns>
-    public string ContentLanguage { get { return Internal.ContentLanguage; } }
+    public string ContentLanguage { get { return _contentLanguage; } }
 
     /// <returns>
     ///   the associated
     ///   <see cref="StorageReference" />
     ///   for which this metadata belongs to.
     /// </returns>
-    public StorageReference Reference { get { return storageReference; } }
+    public StorageReference Reference { get { return _storageReference; } }
 
     /// <summary>
     ///   Returns custom metadata for a
@@ -181,13 +243,248 @@ namespace Firebase.Storage {
     /// <param name="key">The key for which the metadata should be returned</param>
     /// <returns>the metadata stored in the object the given key.</returns>
     public string GetCustomMetadata(string key) {
-      var customMetadata = Internal.CustomMetadata;
-      string metadataValue = null;
-      if (customMetadata == null ||
-          !customMetadata.TryGetValue(key, out metadataValue)) {
-          return null;
+      if (_customMetadata == null || key == null) {
+        return null;
+      }
+      string metadataValue;
+      if (!_customMetadata.TryGetValue(key, out metadataValue)) {
+        return null;
       }
       return metadataValue;
+    }
+
+    internal string DownloadTokens {
+      get { return _downloadTokens; }
+    }
+
+    internal string GetFirstDownloadToken() {
+      if (string.IsNullOrEmpty(_downloadTokens)) {
+        return null;
+      }
+      string[] tokens = _downloadTokens.Split(',');
+      for (int i = 0; i < tokens.Length; ++i) {
+        if (!string.IsNullOrEmpty(tokens[i])) {
+          return tokens[i];
+        }
+      }
+      return null;
+    }
+
+    internal void SetCacheControl(string value) {
+      _cacheControl = value ?? "";
+      _hasCacheControl = true;
+    }
+
+    internal void SetContentDisposition(string value) {
+      _contentDisposition = value ?? "";
+      _hasContentDisposition = true;
+    }
+
+    internal void SetContentEncoding(string value) {
+      _contentEncoding = value ?? "";
+      _hasContentEncoding = true;
+    }
+
+    internal void SetContentLanguage(string value) {
+      _contentLanguage = value ?? "";
+      _hasContentLanguage = true;
+    }
+
+    internal void SetContentType(string value) {
+      _contentType = value ?? "";
+      _hasContentType = true;
+    }
+
+    internal void SetCustomMetadata(IDictionary<string, string> customMetadata) {
+      _customMetadata = new Dictionary<string, string>();
+      if (customMetadata != null) {
+        foreach (var kv in customMetadata) {
+          if (kv.Key != null) {
+            _customMetadata[kv.Key] = kv.Value ?? "";
+          }
+        }
+      }
+      _hasCustomMetadata = true;
+    }
+
+    internal IDictionary<string, string> GetCustomMetadataCopy() {
+      return _customMetadata != null
+          ? new Dictionary<string, string>(_customMetadata)
+          : new Dictionary<string, string>();
+    }
+
+    /// <summary>
+    /// Build StorageMetadata from a MetadataChange.
+    /// </summary>
+    /// <param name="metadataChange">Metadata change to construct a StorageMetadata from.</param>
+    /// <returns>StorageMetadata if the specified instance is not null, null otherwise.</returns>
+    internal static StorageMetadata BuildMetadata(MetadataChange metadataChange) {
+      return MetadataChange.Build(metadataChange);
+    }
+
+    internal static StorageMetadata FromJson(string json, StorageReference reference = null) {
+      if (string.IsNullOrEmpty(json)) {
+        return new StorageMetadata(reference);
+      }
+      var dict = Json.Deserialize(json) as Dictionary<string, object>;
+      if (dict == null) {
+        throw new StorageException(
+            StorageException.ErrorUnknown, 0,
+            "The server did not return a valid JSON response. Contact Firebase support if this issue persists.");
+      }
+      return FromJsonDict(dict, reference);
+    }
+
+    internal static StorageMetadata FromJsonDict(Dictionary<string, object> dict,
+                                                 StorageReference reference = null) {
+      var metadata = new StorageMetadata(reference);
+      if (dict == null) {
+        return metadata;
+      }
+
+      if (dict.TryGetValue("bucket", out var bucketObj) && bucketObj != null) {
+        metadata._bucket = Convert.ToString(bucketObj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("generation", out var generationObj) && generationObj != null) {
+        metadata._generation = Convert.ToString(generationObj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("metageneration", out var metaGenerationObj) && metaGenerationObj != null) {
+        metadata._metadataGeneration =
+            Convert.ToString(metaGenerationObj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("name", out var nameObj) && nameObj != null) {
+        string rawPath = Convert.ToString(nameObj, CultureInfo.InvariantCulture) ?? "";
+        metadata._path = rawPath;
+        string trimmed = rawPath.TrimEnd('/');
+        int lastSlash = trimmed.LastIndexOf('/');
+        metadata._name = lastSlash >= 0 ? trimmed.Substring(lastSlash + 1) : trimmed;
+      }
+
+      if (dict.TryGetValue("size", out var sizeObj) && sizeObj != null) {
+        if (sizeObj is long l) {
+          metadata._sizeBytes = l;
+        } else if (sizeObj is int i) {
+          metadata._sizeBytes = i;
+        } else if (sizeObj is double d) {
+          metadata._sizeBytes = (long)d;
+        } else {
+          string sizeStr = Convert.ToString(sizeObj, CultureInfo.InvariantCulture);
+          if (long.TryParse(sizeStr, NumberStyles.Integer, CultureInfo.InvariantCulture,
+                            out var parsedSize)) {
+            metadata._sizeBytes = parsedSize;
+          }
+        }
+      }
+
+      if (dict.TryGetValue("timeCreated", out var timeCreatedObj) && timeCreatedObj != null) {
+        string timeCreatedStr = Convert.ToString(timeCreatedObj, CultureInfo.InvariantCulture);
+        if (!string.IsNullOrEmpty(timeCreatedStr) &&
+            DateTimeOffset.TryParse(
+                timeCreatedStr, CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var createdDto)) {
+          metadata._creationTimeMillis = createdDto.UtcDateTime;
+        }
+      }
+
+      if (dict.TryGetValue("updated", out var updatedObj) && updatedObj != null) {
+        string updatedStr = Convert.ToString(updatedObj, CultureInfo.InvariantCulture);
+        if (!string.IsNullOrEmpty(updatedStr) &&
+            DateTimeOffset.TryParse(
+                updatedStr, CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var updatedDto)) {
+          metadata._updatedTimeMillis = updatedDto.UtcDateTime;
+        }
+      }
+
+      if (dict.TryGetValue("md5Hash", out var md5Obj) && md5Obj != null) {
+        metadata._md5Hash = Convert.ToString(md5Obj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("cacheControl", out var cacheControlObj) && cacheControlObj != null) {
+        metadata._cacheControl =
+            Convert.ToString(cacheControlObj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("contentDisposition", out var contentDispositionObj) &&
+          contentDispositionObj != null) {
+        metadata._contentDisposition =
+            Convert.ToString(contentDispositionObj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("contentEncoding", out var contentEncodingObj) &&
+          contentEncodingObj != null) {
+        metadata._contentEncoding =
+            Convert.ToString(contentEncodingObj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("contentLanguage", out var contentLanguageObj) &&
+          contentLanguageObj != null) {
+        metadata._contentLanguage =
+            Convert.ToString(contentLanguageObj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("contentType", out var contentTypeObj) && contentTypeObj != null) {
+        metadata._contentType =
+            Convert.ToString(contentTypeObj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("downloadTokens", out var downloadTokensObj) &&
+          downloadTokensObj != null) {
+        metadata._downloadTokens =
+            Convert.ToString(downloadTokensObj, CultureInfo.InvariantCulture) ?? "";
+      }
+
+      if (dict.TryGetValue("metadata", out var customMetaObj) &&
+          customMetaObj is IDictionary<string, object> customMetaDict) {
+        metadata._customMetadata = new Dictionary<string, string>();
+        foreach (var kv in customMetaDict) {
+          if (kv.Key != null) {
+            metadata._customMetadata[kv.Key] = kv.Value != null
+                ? Convert.ToString(kv.Value, CultureInfo.InvariantCulture) ?? ""
+                : "";
+          }
+        }
+      }
+
+      return metadata;
+    }
+
+    internal Dictionary<string, object> ToJsonDict() {
+      var dict = new Dictionary<string, object>();
+      if (_hasCacheControl || !string.IsNullOrEmpty(_cacheControl)) {
+        dict["cacheControl"] = _cacheControl ?? "";
+      }
+      if (_hasContentDisposition || !string.IsNullOrEmpty(_contentDisposition)) {
+        dict["contentDisposition"] = _contentDisposition ?? "";
+      }
+      if (_hasContentEncoding || !string.IsNullOrEmpty(_contentEncoding)) {
+        dict["contentEncoding"] = _contentEncoding ?? "";
+      }
+      if (_hasContentLanguage || !string.IsNullOrEmpty(_contentLanguage)) {
+        dict["contentLanguage"] = _contentLanguage ?? "";
+      }
+      if (_hasContentType || !string.IsNullOrEmpty(_contentType)) {
+        dict["contentType"] = _contentType ?? "";
+      }
+      if (_hasCustomMetadata || (_customMetadata != null && _customMetadata.Count > 0)) {
+        var customMetaDict = new Dictionary<string, object>();
+        if (_customMetadata != null) {
+          foreach (var kv in _customMetadata) {
+            customMetaDict[kv.Key] = kv.Value;
+          }
+        }
+        dict["metadata"] = customMetaDict;
+      }
+      return dict;
+    }
+
+    internal string ToJson() {
+      return Json.Serialize(ToJsonDict());
     }
 
     /// <summary>
@@ -210,7 +507,7 @@ namespace Firebase.Storage {
         {"ContentDisposition", ContentDisposition},
         {"ContentEncoding", ContentEncoding},
         {"ContentLanguage", ContentLanguage},
-        {"Reference", Reference.Path},
+        {"Reference", Reference != null ? Reference.Path : ""},
       };
       var metadataKeys = new List<string>(CustomMetadataKeys);
       for (int i = 0; i < metadataKeys.Count; ++i) {
@@ -222,29 +519,6 @@ namespace Firebase.Storage {
         fieldAndValueStrings.Add(String.Format("{0}={1}", kv.Key, kv.Value));
       }
       return String.Join(", ", fieldAndValueStrings.ToArray());
-    }
-
-    /// <summary>
-    /// C# proxy to firebase::storage::Metadata.
-    /// </summary>
-    internal MetadataInternal Internal { get; private set; }
-
-    /// <summary>
-    /// Get MetadataInternal from the specified StorageMetata.
-    /// </summary>
-    /// <param name="metadata">Metadata to query.</param>
-    /// <returns>MetadataInternal if the specified instance is not null, null otherwise.</returns>
-    internal static MetadataInternal GetMetadataInternal(StorageMetadata metadata) {
-      return metadata != null ? metadata.Internal : null;
-    }
-
-    /// <summary>
-    /// Build MetadataInternal from a MetadataChange.
-    /// </summary>
-    /// <param name="metadataChange">Metadata change to construct a MetadataInternal from.</param>
-    /// <returns>MetadataInternal if the specified instance is not null, null otherwise.</returns>
-    internal static MetadataInternal BuildMetadataInternal(MetadataChange metadataChange) {
-      return GetMetadataInternal(MetadataChange.Build(metadataChange));
     }
   }
 }

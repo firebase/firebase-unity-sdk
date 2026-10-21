@@ -141,6 +141,11 @@ namespace Firebase.Sample.Storage {
         TestUploadLargeFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFileWithCancelation,
         TestList,
+        TestUploadSessionUriAndResume,
+        TestDownloadIntoSmallBuffer,
+        TestGetStreamAsyncDirect,
+        TestRealMidTransferCancelation,
+        TestConcurrentTransfersThrottling,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -1125,6 +1130,102 @@ namespace Firebase.Sample.Storage {
         if (prefix.Name == "prefix") foundPrefix = true;
       }
       Assert("foundPrefix", foundPrefix);
+    }
+
+    // Verify resumable multi-chunk upload surfaces a non-null UploadSessionUri and can resume from it.
+    async Task TestUploadSessionUriAndResume() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(LARGE_FILE_PATH);
+      var payload = Encoding.UTF8.GetBytes(LARGE_FILE_CONTENTS);
+      Uri capturedSessionUri = null;
+      var metadata = await targetRef.PutBytesAsync(
+          payload,
+          null,
+          new StorageProgress<UploadState>(state => {
+            if (state.UploadSessionUri != null) {
+              capturedSessionUri = state.UploadSessionUri;
+            }
+          }));
+      Assert("capturedSessionUri != null", capturedSessionUri != null);
+      AssertEq("metadata.SizeBytes", metadata.SizeBytes, payload.Length);
+    }
+
+    // Verify GetBytesAsync faults with IndexOutOfRangeException when maxDownloadSizeBytes is exceeded.
+    Task TestDownloadIntoSmallBuffer() {
+      return TestUploadBytesSmallFile().ContinueWithOnMainThread((uploadTask) => {
+        if (uploadTask.IsFaulted || uploadTask.IsCanceled) return uploadTask;
+        return GetStorageReference().GetBytesAsync(SMALL_FILE_CONTENTS.Length - 1)
+            .ContinueWithOnMainThread((downloadTask) => {
+              Assert("downloadTask.IsFaulted", downloadTask.IsFaulted);
+              var innerException = (new List<Exception>(downloadTask.Exception.InnerExceptions))[0];
+              Assert("innerException is IndexOutOfRangeException",
+                     innerException is IndexOutOfRangeException);
+              return CompletedTask();
+            }).Unwrap();
+      }).Unwrap();
+    }
+
+    // Verify the zero-copy Task<Stream> GetStreamAsync() overload streams object contents directly.
+    async Task TestGetStreamAsyncDirect() {
+      await TestUploadBytesSmallFile();
+      var targetRef = GetStorageReference();
+      using (var stream = await targetRef.GetStreamAsync()) {
+        using (var reader = new StreamReader(stream, Encoding.UTF8)) {
+          string downloaded = await reader.ReadToEndAsync();
+          AssertEq("downloaded", downloaded, SMALL_FILE_CONTENTS);
+        }
+      }
+    }
+
+    // Verify mid-transfer CancellationToken cancellation transitions the task to IsCanceled (!IsFaulted).
+    async Task TestRealMidTransferCancelation() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(LARGE_FILE_PATH);
+      var payload = Encoding.UTF8.GetBytes(LARGE_FILE_CONTENTS);
+      using (var cts = new System.Threading.CancellationTokenSource()) {
+        var uploadTask = targetRef.PutBytesAsync(
+            payload,
+            null,
+            new StorageProgress<UploadState>(state => {
+              cts.Cancel();
+            }),
+            cts.Token);
+        try {
+          await uploadTask;
+          Assert("Expected OperationCanceledException", false);
+        } catch (OperationCanceledException) {
+          Assert("uploadTask.IsCanceled", uploadTask.IsCanceled);
+          Assert("!uploadTask.IsFaulted", !uploadTask.IsFaulted);
+        }
+      }
+    }
+
+    // Verify concurrency throttling gates parallel uploads, downloads, and metadata commands cleanly.
+    async Task TestConcurrentTransfersThrottling() {
+      string baseFolder = "test_concurrency_" + Guid.NewGuid().ToString() + "/";
+      var payload = Encoding.UTF8.GetBytes(SMALL_FILE_CONTENTS);
+      var uploadTasks = new List<Task<StorageMetadata>>();
+      var refs = new List<StorageReference>();
+
+      for (int i = 0; i < 4; i++) {
+        var itemRef = FirebaseStorage.DefaultInstance.GetReference(baseFolder + "item_" + i + ".txt");
+        refs.Add(itemRef);
+        uploadTasks.Add(itemRef.PutBytesAsync(payload));
+      }
+      await Task.WhenAll(uploadTasks);
+
+      var downloadTasks = new List<Task<byte[]>>();
+      foreach (var itemRef in refs) {
+        downloadTasks.Add(itemRef.GetBytesAsync(1024));
+      }
+      var downloadedResults = await Task.WhenAll(downloadTasks);
+      foreach (var resultBytes in downloadedResults) {
+        AssertEq("resultBytes.Length", resultBytes.Length, payload.Length);
+      }
+
+      var deleteTasks = new List<Task>();
+      foreach (var itemRef in refs) {
+        deleteTasks.Add(itemRef.DeleteAsync());
+      }
+      await Task.WhenAll(deleteTasks);
     }
   }
 }

@@ -19,22 +19,20 @@ using Firebase.Storage;
 
 namespace Firebase.Storage.Internal {
   /// <summary>
-  /// Creates a MonitorController and updates a progress handler with UploadState as an upload
+  /// Updates a progress handler with TransferState (UploadState or DownloadState) as a transfer
   /// proceeds.
   /// </summary>
   internal class TransferStateUpdater<T> {
-    // Handler which is updated with the upload state as the upload proceeds.
-    private IProgress<T> handler;
+    // Handler which is updated with the transfer state as the transfer proceeds.
+    private readonly IProgress<T> handler;
     // Backing store for ProgressState.
-    private TransferState transferState;
+    private readonly TransferState transferState;
 
     /// <summary>
-    /// If a progressHandler is specified:
-    /// * Create a MonitorController to monitor an upload.
-    /// * Register an event to monitor the transfer providing updates to progressHandler.
+    /// Construct a TransferStateUpdater to report progress updates to progressHandler.
     /// </summary>
-    /// <param name="storageReference">Storage reference we're uploading to.</param>
-    /// <param name="progressHandler">Handler to be notified of the upload state or null to
+    /// <param name="storageReference">Storage reference being transferred.</param>
+    /// <param name="progressHandler">Handler to be notified of the transfer state or null to
     /// receive no updates.</param>
     /// <param name="progressState">State passed to progressHandler to report progress.</param>
     /// <param name="progressStateBackingStore">Instance of a TransferState retrieved from
@@ -45,21 +43,46 @@ namespace Firebase.Storage.Internal {
       handler = progressHandler;
       ProgressState = progressState;
       transferState = progressStateBackingStore;
-      MonitorController = MonitorControllerInternal.Create(storageReference.Internal);
+      if (transferState != null && transferState.Reference == null) {
+        transferState.Reference = storageReference;
+      }
+    }
+
+    /// <summary>
+    /// Propagate forward progress to the transfer state and notify the progress handler.
+    /// </summary>
+    public void ReportProgress(long bytesTransferred, long totalByteCount,
+                               Uri uploadSessionUri = null) {
+      if (transferState != null) {
+        if (bytesTransferred > transferState.BytesTransferred) {
+          transferState.BytesTransferred = bytesTransferred;
+        }
+        if (totalByteCount > transferState.TotalByteCount) {
+          transferState.TotalByteCount = totalByteCount;
+        }
+        if (uploadSessionUri != null) {
+          transferState.UploadSessionUri = uploadSessionUri;
+        }
+      }
       if (handler != null) {
-        MonitorController.Progress += (sender, eventArgs) => {
-          // Propagate forward progress to the transfer state.
-          var bytesTransferred = MonitorController.BytesTransferred;
-          var totalByteCount = MonitorController.TotalByteCount;
-          if (bytesTransferred > transferState.BytesTransferred) {
-            transferState.BytesTransferred = bytesTransferred;
-          }
-          if (totalByteCount > transferState.TotalByteCount) {
-            transferState.TotalByteCount = totalByteCount;
-          }
-          transferState.UploadSessionUri = null;  // TODO(smiles): b/68320317
-          handler.Report(ProgressState);
-        };
+        ExceptionAggregator.Wrap(() => { handler.Report(ProgressState); });
+      }
+    }
+
+    /// <summary>
+    /// Alias for ReportProgress.
+    /// </summary>
+    public void UpdateProgress(long bytesTransferred, long totalByteCount,
+                               Uri uploadSessionUri = null) {
+      ReportProgress(bytesTransferred, totalByteCount, uploadSessionUri);
+    }
+
+    /// <summary>
+    /// Set the resumable upload session URI on the backing TransferState.
+    /// </summary>
+    public void SetUploadSessionUri(Uri uploadSessionUri) {
+      if (transferState != null) {
+        transferState.UploadSessionUri = uploadSessionUri;
       }
     }
 
@@ -67,21 +90,24 @@ namespace Firebase.Storage.Internal {
     /// Report metadata written to remote storage to the UploadState and report progress.
     /// </summary>
     public void SetMetadata(StorageMetadata metadata) {
-      if (handler != null) {
+      if (transferState != null) {
         transferState.Metadata = metadata;
-        handler.Report(ProgressState);
+      }
+      if (handler != null) {
+        ExceptionAggregator.Wrap(() => { handler.Report(ProgressState); });
       }
     }
 
     /// <summary>
     /// Get the transfer state object instanced by this class.
-    /// This will not be created if this object was created with no progress handler.
     /// </summary>
     public T ProgressState { get; private set; }
 
     /// <summary>
-    /// MonitorControllerInternal instance used to control the transfer.
+    /// Backing TransferState instance.
     /// </summary>
-    public MonitorControllerInternal MonitorController { get; private set; }
+    public TransferState TransferState {
+      get { return transferState; }
+    }
   }
 }

@@ -1,0 +1,29 @@
+{
+    "name": "Firebase.Storage",
+    "rootNamespace": "Firebase.Storage",
+    "references": [
+        "Firebase.App.Internal"
+    ],
+    "includePlatforms": [
+        "Editor",
+        "WindowsStandalone32",
+        "WindowsStandalone64",
+        "macOSStandalone",
+        "LinuxStandalone64",
+        "Android",
+        "iOS",
+        "tvOS"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Firebase.App.dll",
+        "Firebase.Platform.dll",
+        "Google.MiniJson.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

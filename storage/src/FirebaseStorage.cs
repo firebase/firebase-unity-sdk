@@ -15,8 +15,9 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Reflection;
+using Firebase.Internal;
 using Firebase.Storage.Internal;
 
 namespace Firebase.Storage {
@@ -46,16 +47,16 @@ namespace Firebase.Storage {
   ///   configuration file downloaded from the web.
   /// </remarks>
   public sealed class FirebaseStorage {
-    // Dictionary of FirebaseStorage instances indexed by a key FirebaseStorageInternal.InstanceKey.
-    private static readonly Dictionary<string, FirebaseStorage> storageByInstanceKey =
-        new Dictionary<string, FirebaseStorage>();
+    // Thread-safe dictionary of FirebaseStorage instances indexed by "{app.Name}/{url}".
+    private static readonly ConcurrentDictionary<string, FirebaseStorage> storageByInstanceKey =
+        new ConcurrentDictionary<string, FirebaseStorage>();
 
-    // Proxy for the C++ firebase::storage::Storage object.
-    private FirebaseStorageInternal storageInternal;
-    // Proxy for the C++ firebase::app:App object.
+    // The FirebaseApp instance associated with this FirebaseStorage instance.
     private readonly FirebaseApp firebaseApp;
     // Key of this instance within storageByInstanceKey.
-    private string instanceKey;
+    private readonly string instanceKey;
+    // Tracks whether the associated FirebaseApp has been disposed.
+    private bool _disposed;
 
     // Logger for this module.
     private static readonly ModuleLogger logger = new ModuleLogger { Tag = "Cloud Storage" };
@@ -63,66 +64,45 @@ namespace Firebase.Storage {
     /// <summary>
     /// Construct an instance associated with the specified app and bucket.
     /// </summary>
-    /// <param name="storage">C# proxy for firebase::storage::Storage.</param>
-    /// <param name="app">App the C# proxy storageInternal was created from.</param>
-    private FirebaseStorage(FirebaseStorageInternal storage, FirebaseApp app) {
+    /// <param name="app">App this FirebaseStorage instance is associated with.</param>
+    /// <param name="bucket">Cloud Storage bucket name.</param>
+    /// <param name="key">Instance cache key.</param>
+    private FirebaseStorage(FirebaseApp app, string bucket, string key) {
       firebaseApp = app;
-      firebaseApp.AppDisposed += OnAppDisposed;
-      storageInternal = storage;
-      Logger = new ModuleLogger(parentLogger: logger) {
-        Tag = String.Format("{0} {1}:", logger.Tag, storageInternal.Url),
-        // TODO(smiles): Remove when FirebaseApp logger is changed to ModuleLogger.
-        Level = FirebaseApp.LogLevel
-      };
-      // As we know there is only one reference to the C++ firebase::storage::Storage object here
-      // we'll let the proxy object take ownership so the C++ object can be deleted when the
-      // proxy's Dispose() method is executed.
-      storageInternal.SetSwigCMemOwn(true);
-      instanceKey = storageInternal.InstanceKey;
-
-      Logger.LogMessage(LogLevel.Debug, String.Format("Created {0}", instanceKey));
+      Bucket = bucket ?? string.Empty;
+      instanceKey = key;
+      FirebaseInterops.SubscribeAppDisposed(firebaseApp, OnAppDisposed);
+      logger.LogMessage(LogLevel.Debug, String.Format("Created {0}", instanceKey));
     }
 
-    // Dispose of this object.
-    private static void DisposeObject(object objectToDispose) {
-      ((FirebaseStorage)objectToDispose).Dispose();
-    }
-
-    /// <summary>
-    /// Remove the reference to this object from the storageByInstanceKey dictionary.
-    /// </summary>
-    ~FirebaseStorage() {
+    private void OnAppDisposed(object sender, EventArgs eventArgs) {
       Dispose();
     }
 
-    // Remove the reference to this instance from storageByInstanceKey and dispose the proxy.
+    // Remove the reference to this instance from storageByInstanceKey and unsubscribe from AppDisposed.
     private void Dispose() {
-      System.GC.SuppressFinalize(this);
-      lock (storageByInstanceKey) {
-        if (storageInternal != null &&
-            FirebaseStorageInternal.getCPtr(storageInternal).Handle != IntPtr.Zero) {
-          firebaseApp.AppDisposed -= OnAppDisposed;
-          storageByInstanceKey.Remove(instanceKey);
-          storageInternal.Dispose();
-          storageInternal = null;
-        }
+      if (_disposed) {
+        return;
       }
-    }
-
-    void OnAppDisposed(object sender, System.EventArgs eventArgs) {
-      Dispose();
-    }
-
-    // Throw a NullReferenceException if this proxy references a deleted object.
-    private void ThrowIfNull() {
-      if (storageInternal == null ||
-          FirebaseStorageInternal.getCPtr(storageInternal).Handle == System.IntPtr.Zero) {
-        throw new System.NullReferenceException();
+      _disposed = true;
+      FirebaseInterops.UnsubscribeAppDisposed(firebaseApp, OnAppDisposed);
+      if (storageByInstanceKey.TryGetValue(instanceKey, out FirebaseStorage cached) &&
+          ReferenceEquals(cached, this)) {
+        storageByInstanceKey.TryRemove(instanceKey, out _);
       }
     }
 
     // Logger for this instance.
-    internal ModuleLogger Logger { get; private set; }
+    internal ModuleLogger Logger => logger;
+
+    // Cloud Storage bucket name associated with this instance.
+    internal string Bucket { get; }
+
+    // Configured storage emulator host, if any.
+    internal string EmulatorHost { get; private set; }
+
+    // Configured storage emulator port, if any.
+    internal int EmulatorPort { get; private set; }
 
     private static FieldInfo pathFieldInfo;
     private static FieldInfo cachedToString;
@@ -144,7 +124,7 @@ namespace Firebase.Storage {
         pathFieldInfo = typeof(Uri).GetField("path",
                       BindingFlags.Instance | BindingFlags.NonPublic);
         if (pathFieldInfo == null) {
-          FirebaseStorage.DefaultInstance.Logger.LogMessage(LogLevel.Debug, String.Format(
+          logger.LogMessage(LogLevel.Debug, String.Format(
               "{0}: Unable to reflect Uri field to fix slashes.  Storage operations will only work on"
               + " the root path of your storage bucket", uri.ToString()));
           return uri;
@@ -156,7 +136,7 @@ namespace Firebase.Storage {
         cachedToString = typeof(Uri).GetField("cachedToString",
                   BindingFlags.Instance | BindingFlags.NonPublic);
         if (cachedToString == null) {
-          FirebaseStorage.DefaultInstance.Logger.LogMessage(LogLevel.Debug, String.Format(
+          logger.LogMessage(LogLevel.Debug, String.Format(
               "{0}: Unable to reflect Uri field cachedToString.  Storage operations may only work on"
               + " the root path of your storage bucket", uri.ToString()));
           // Continue to try to fix PathAndQuery if we can, since that controls uploads/download operations.
@@ -181,14 +161,14 @@ namespace Firebase.Storage {
         if (cachedToString != null) {
           cachedToString.SetValue(uri, formattedUrl);
         }
-      } catch (FieldAccessException ) {
-        FirebaseStorage.DefaultInstance.Logger.LogMessage(LogLevel.Debug, String.Format(
+      } catch (FieldAccessException) {
+        logger.LogMessage(LogLevel.Debug, String.Format(
             "{0}: FieldAccessException reflecting to fix canonicalization", uri.ToString()));
-      } catch (TargetException ) {
-        FirebaseStorage.DefaultInstance.Logger.LogMessage(LogLevel.Debug, String.Format(
+      } catch (TargetException) {
+        logger.LogMessage(LogLevel.Debug, String.Format(
             "{0}: TargetException reflecting to fix canonicalization", uri.ToString()));
-      } catch (ArgumentException ) {
-        FirebaseStorage.DefaultInstance.Logger.LogMessage(LogLevel.Debug, String.Format(
+      } catch (ArgumentException) {
+        logger.LogMessage(LogLevel.Debug, String.Format(
             "{0}: ArgumentException reflecting to fix canonicalization", uri.ToString()));
       }
       GC.KeepAlive(paq); // Just in case, don't optimize me away.
@@ -207,54 +187,25 @@ namespace Firebase.Storage {
     ///   <see cref="FirebaseStorage" />
     ///   instance.
     /// </value>
-    public static FirebaseStorage DefaultInstance {
-      get { return GetInstance(FirebaseApp.DefaultInstance); }
-    }
+    public static FirebaseStorage DefaultInstance => GetInstance(FirebaseApp.DefaultInstance);
 
     /// <summary>Returns the maximum time to retry a download if a failure occurs.</summary>
     /// <value>
     ///   maximum time which defaults to 10 minutes (600,000 milliseconds).
     /// </value>
-    public TimeSpan MaxDownloadRetryTime {
-      get {
-        ThrowIfNull();
-        return TimeSpan.FromSeconds(storageInternal.MaxDownloadRetryTime);
-      }
-      set {
-        ThrowIfNull();
-        storageInternal.MaxDownloadRetryTime = value.TotalSeconds;
-      }
-    }
+    public TimeSpan MaxDownloadRetryTime { get; set; } = TimeSpan.FromMinutes(10.0);
 
     /// <summary>Returns the maximum time to retry an upload if a failure occurs.</summary>
     /// <returns>
     ///   the maximum time which defaults to 10 minutes (600,000 milliseconds).
     /// </returns>
-    public TimeSpan MaxUploadRetryTime {
-      get {
-        ThrowIfNull();
-        return TimeSpan.FromSeconds(storageInternal.MaxUploadRetryTime);
-      }
-      set {
-        ThrowIfNull();
-        storageInternal.MaxUploadRetryTime = value.TotalSeconds;
-      }
-    }
+    public TimeSpan MaxUploadRetryTime { get; set; } = TimeSpan.FromMinutes(10.0);
 
     /// <summary>
     ///   Sets the maximum time to retry operations other than upload and download if a
     ///   failure occurs.
     /// </summary>
-    public TimeSpan MaxOperationRetryTime {
-      get {
-        ThrowIfNull();
-        return TimeSpan.FromSeconds(storageInternal.MaxOperationRetryTime);
-      }
-      set {
-        ThrowIfNull();
-        storageInternal.MaxOperationRetryTime = value.TotalSeconds;
-      }
-    }
+    public TimeSpan MaxOperationRetryTime { get; set; } = TimeSpan.FromMinutes(2.0);
 
     /// <summary>
     ///   Configures the Storage SDK to use an emulated backend instead of
@@ -268,7 +219,10 @@ namespace Firebase.Storage {
     ///   The port that the storage emulator is running on.
     /// </param>
     public void UseEmulator(string host, int port) {
-      storageInternal.UseEmulator(host, port);
+      Preconditions.CheckNotEmpty(host, "host cannot be null or empty");
+      Preconditions.CheckArgument(port > 0, "port must be greater than 0");
+      EmulatorHost = host;
+      EmulatorPort = port;
     }
 
     /// <summary>
@@ -283,8 +237,7 @@ namespace Firebase.Storage {
     /// </returns>
     public StorageReference RootReference {
       get {
-        ThrowIfNull();
-        return new StorageReference(this, storageInternal.GetReference());
+        return new StorageReference(this, new StoragePath(this, Bucket, string.Empty));
       }
     }
 
@@ -296,11 +249,8 @@ namespace Firebase.Storage {
     ///   </see>
     /// </summary>
     public LogLevel LogLevel {
-      get { return logger.Level; }
-      set {
-        logger.Level = value;
-        if (FirebaseApp.LogLevel > value) FirebaseApp.LogLevel = value;
-      }
+      get => logger.Level;
+      set => logger.Level = value;
     }
 
     /// <summary>
@@ -310,7 +260,42 @@ namespace Firebase.Storage {
     ///   <see cref="FirebaseStorage" />
     ///   instance.
     /// </summary>
-    public FirebaseApp App { get { return firebaseApp; } }
+    public FirebaseApp App => firebaseApp;
+
+    /// <summary>
+    ///   Returns the
+    ///   <see cref="FirebaseStorage" />
+    ///   , initialized with a custom
+    ///   <see cref="Firebase.FirebaseApp" />
+    /// </summary>
+    /// <param name="app">
+    ///   The custom
+    ///   <see cref="Firebase.FirebaseApp" />
+    ///   used for initialization.
+    /// </param>
+    /// <returns>
+    ///   a
+    ///   <see cref="FirebaseStorage" />
+    ///   instance.
+    /// </returns>
+    public static FirebaseStorage GetInstance(FirebaseApp app) => GetInstance(app, null);
+
+    /// <summary>
+    ///   Returns the
+    ///   <see cref="FirebaseStorage" />
+    ///   , initialized with the default <see cref="Firebase.FirebaseApp" />
+    ///   and a custom Storage Bucket
+    /// </summary>
+    /// <param name="url">
+    ///   The gs:// url to your Cloud Storage Bucket.
+    /// </param>
+    /// <returns>
+    ///   a
+    ///   <see cref="FirebaseStorage" />
+    ///   instance.
+    /// </returns>
+    public static FirebaseStorage GetInstance(string url) =>
+        GetInstance(FirebaseApp.DefaultInstance, url);
 
     /// <summary>
     ///   Returns the
@@ -331,112 +316,34 @@ namespace Firebase.Storage {
     ///   <see cref="FirebaseStorage" />
     ///   instance.
     /// </returns>
-    public static FirebaseStorage GetInstance(FirebaseApp app, string url = null) {
-      return GetInstanceInternal(app,
-                                 !String.IsNullOrEmpty(url) ? url :
-                                 !String.IsNullOrEmpty(app.Options.StorageBucket) ?
-                                 String.Format("gs://{0}", app.Options.StorageBucket) : null);
-    }
+    public static FirebaseStorage GetInstance(FirebaseApp app, string url) {
+      Preconditions.CheckNotNull(app, "app");
 
-    /// <summary>
-    ///   Returns the
-    ///   <see cref="FirebaseStorage" />
-    ///   , initialized with the default <see cref="Firebase.FirebaseApp" />
-    ///   and a custom Storage Bucket
-    /// </summary>
-    /// <param name="url">
-    ///   The gs:// url to your Cloud Storage Bucket.
-    /// </param>
-    /// <returns>
-    ///   a
-    ///   <see cref="FirebaseStorage" />
-    ///   instance.
-    /// </returns>
-    public static FirebaseStorage GetInstance(string url) {
-      return GetInstance(FirebaseApp.DefaultInstance, url);
-    }
-
-    /// <summary>
-    /// Find a previously created FirebaseStorage by FirebaseStorageInternal.InstanceKey.
-    /// </summary>
-    /// <param name="instanceKey">Key to search for.</param>
-    /// <returns>Storage instance if successful, null otherwise.</returns>
-    private static FirebaseStorage FindByKey(string instanceKey) {
-      lock (storageByInstanceKey) {
-        FirebaseStorage storage = null;
-        if (storageByInstanceKey.TryGetValue(instanceKey, out storage)) {
-          if (storage != null) return storage;
-          storageByInstanceKey.Remove(instanceKey);
+      string resolvedUrl = url;
+      if (string.IsNullOrEmpty(resolvedUrl)) {
+        string defaultBucket = app.Options?.StorageBucket;
+        if (!string.IsNullOrEmpty(defaultBucket)) {
+          resolvedUrl = defaultBucket.IndexOf("://", StringComparison.Ordinal) >= 0
+              ? defaultBucket
+              : "gs://" + defaultBucket;
         }
       }
-      return null;
-    }
 
-    /// <summary>
-    /// Get or create an instance from the specified all and bucket URL.
-    /// </summary>
-    /// <remarks>
-    /// Even though the C++ layer will return only one instance for each app / bucket tuple, this
-    /// method prevents creation of multiple FirebaseStorageInternal proxy objects that each point
-    /// at the same underlying C++ object such that for each app / bucket tuple we'll always have
-    /// the unique set of FirebaseStorage --> FirebaseStorageInternal --> firebase::storage::Storage
-    /// objects.
-    /// </remarks>
-    /// <param name="app">App the storage instance is associated with.</param>
-    /// <param name="bucketUrl">URL of the storage bucket associated with the instance.</param>
-    /// <returns>FirebaseStorage instance that is unique for the app / bucketUrl tuple.</returns>
-    private static FirebaseStorage GetInstanceInternal(FirebaseApp app, string bucketUrl) {
-      app = app ?? FirebaseApp.DefaultInstance;
-      InitResult initResult;
-      FirebaseStorageInternal storageInternal = null;
-      try {
-        storageInternal =
-            FirebaseStorageInternal.GetInstanceInternal(app, bucketUrl, out initResult);
-      } catch (ApplicationException exception) {
-        // The original C# implementation threw an ArgumentException when failing to create a
-        // storage instance so mirror the behavior here.
-        throw new ArgumentException(exception.Message);
+      string bucket = string.Empty;
+      if (!string.IsNullOrEmpty(resolvedUrl)) {
+        StoragePath parsedPath = StorageUriParser.UriToComponents(
+            null, resolvedUrl, logger, allowObjectPath: false);
+        bucket = parsedPath.Bucket;
+        resolvedUrl = "gs://" + bucket;
       }
-      if (initResult != InitResult.Success) {
-        // The original C# implementation threw an ArgumentException when failing to create a
-        // storage instance so mirror the behavior here.
-        // TODO(b/77966715): Better way to communicate url parse error to C#
-        // After introducing InitResult, Storage::GetInstance() in C++ no longer trigger exception
-        // through assert.  However, InitResult may not be success due to various reason, ex.
-        // invalid url or fail to create Java/Object-C object. Throw ArgumentException
-        // for all scenario for now but need to have better way to handle different error in the
-        // future.
-        throw new ArgumentException(String.Format(
-          "Unable to initialize FirebaseStorage for bucket URL '{0}'", bucketUrl ?? ""));
-      } else if (storageInternal == null) {
-        logger.LogMessage(LogLevel.Error,
-                          String.Format("Unable to create FirebaseStorage for bucket " +
-                                        "URL '{0}'", bucketUrl ?? ""));
-        return null;
-      }
-      FirebaseStorage storage = null;
-      lock (storageByInstanceKey) {
-        var storageInternalInstanceKey = storageInternal.InstanceKey;
-        storage = FindByKey(storageInternalInstanceKey);
-        if (storage != null) return storage;
-        storage = new FirebaseStorage(storageInternal, app);
-        storageByInstanceKey[storageInternalInstanceKey] = storage;
-      }
-      return storage;
-    }
 
-    /// <summary>
-    /// Throw an ArgumentException if the StorageReference is invalid.
-    /// </summary>
-    /// <param name="reference">Reference to validate.</param>
-    /// <param name="message">Message used to construct the exception if reference is
-    /// invalid.</param>
-    /// <returns>reference</returns>
-    /// <throws>ArgumentException if reference is invalid.</param>
-    private StorageReferenceInternal ValidateStorageReferenceInternal(
-        StorageReferenceInternal reference, string message) {
-      if (reference == null || !reference.IsValid) throw new ArgumentException(message);
-      return reference;
+      string key = $"{app.Name}/{resolvedUrl ?? ""}";
+      return storageByInstanceKey.AddOrUpdate(
+          key,
+          k => new FirebaseStorage(app, bucket, k),
+          (k, existing) => (ReferenceEquals(existing.firebaseApp, app) && !existing._disposed)
+              ? existing
+              : new FirebaseStorage(app, bucket, k));
     }
 
     /// <summary>
@@ -444,8 +351,7 @@ namespace Firebase.Storage {
     ///   created with default parameters.
     /// </summary>
     public string Url() {
-      ThrowIfNull();
-      return storageInternal.Url;
+      return string.IsNullOrEmpty(Bucket) ? string.Empty : $"gs://{Bucket}";
     }
 
     /// <summary>
@@ -467,18 +373,17 @@ namespace Firebase.Storage {
     ///   .
     /// </param>
     public StorageReference GetReferenceFromUrl(string fullUrl) {
-      try {
-        ThrowIfNull();
-        return new StorageReference(
-          this, ValidateStorageReferenceInternal(
-            storageInternal.GetReferenceFromUrl(fullUrl),
-            String.Format("URL {0} does not match the storage URL {1}", fullUrl,
-                          storageInternal.Url)));
-      } catch (ApplicationException exception) {
-        // The original C# implementation threw an ArgumentException when failing to create a
-        // storage instance so mirror the behavior here.
-        throw new ArgumentException(exception.Message);
+      StoragePath path = StorageUriParser.UriToComponents(
+          this, fullUrl, logger, allowObjectPath: true);
+      if (path == null) {
+        throw new ArgumentException($"Invalid storage URL: {fullUrl}", nameof(fullUrl));
       }
+      if (!string.IsNullOrEmpty(Bucket) &&
+          !string.Equals(path.Bucket, Bucket, StringComparison.Ordinal)) {
+        throw new ArgumentException(
+            $"Provided URL {fullUrl} is for bucket {path.Bucket}, expected {Bucket}");
+      }
+      return new StorageReference(this, path);
     }
 
     /// <summary>
@@ -496,18 +401,10 @@ namespace Firebase.Storage {
     ///   at the given child path.
     /// </returns>
     public StorageReference GetReference(string location) {
-      try {
-        ThrowIfNull();
-        return new StorageReference(
-          this, ValidateStorageReferenceInternal(
-            storageInternal.GetReference(location),
-            String.Format("Path {0} is invalid for storage URL {1}", location,
-                          storageInternal.Url)));
-      } catch (ApplicationException exception) {
-        // The original C# implementation threw an ArgumentException when failing to create a
-        // storage instance so mirror the behavior here.
-        throw new ArgumentException(exception.Message);
+      if (string.IsNullOrEmpty(location)) {
+        return RootReference;
       }
+      return RootReference.Child(location);
     }
   }
 }
