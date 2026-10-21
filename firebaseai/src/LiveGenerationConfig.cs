@@ -195,6 +195,46 @@ namespace Firebase.AI
   }
 
   /// <summary>
+  /// Structured speech metadata associated with a `ModelContent.TextPart`.
+  ///
+  /// Used to guide speech generation for a specific piece of text, such as identifying which speaker
+  /// says it and the vocal style they should use.
+  /// </summary>
+  public readonly struct SpeechMetadata
+  {
+    /// <summary>
+    /// Identifies which speaker is speaking this turn. When using a
+    /// `MultiSpeakerVoiceConfig`, this should match the `SpeakerVoiceConfig.Speaker` of one of the
+    /// configured speakers.
+    /// </summary>
+    public readonly string Speaker { get; }
+
+    /// <summary>
+    /// A natural language description of the vocal style (such as "cheerful").
+    /// </summary>
+    public readonly string Style { get; }
+
+    /// <summary>
+    /// Create a new `SpeechMetadata` object.
+    /// </summary>
+    /// <param name="speaker">Identifies which speaker is speaking this turn.</param>
+    /// <param name="style">A natural language description of the vocal style.</param>
+    public SpeechMetadata(string speaker = null, string style = null)
+    {
+      Speaker = speaker;
+      Style = style;
+    }
+
+    internal Dictionary<string, object> ToJson()
+    {
+      Dictionary<string, object> dict = new();
+      dict.AddIfHasValue("speaker", Speaker);
+      dict.AddIfHasValue("style", Style);
+      return dict;
+    }
+  }
+
+  /// <summary>
   /// A struct used to configure speech transcription settings.
   ///
   /// > Warning: This API
