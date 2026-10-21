@@ -1,0 +1,170 @@
+# Workflow to build the Firebase SDK with Mono (.NET) and run automated desktop
+# integration testapps without requiring Unity Editor.
+name: Mono desktop integration tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      apis:
+        description: 'CSV of APIs to build and test'
+        default: 'analytics,app_check,auth,crashlytics,database,firebaseai,firestore,functions,installations,messaging,remote_config,storage'
+        required: true
+        type: string
+      firebase_cpp_sdk_version:
+        description: 'Firebase C++ SDK version to build against (branch, tag, or SHA)'
+        default: ''
+        required: false
+        type: string
+      unity_branch:
+        description: 'firebase-unity-sdk branch to build against (empty means current branch)'
+        default: ''
+        required: false
+        type: string
+      timeout_seconds:
+        description: 'Per-product testapp timeout in seconds'
+        default: '300'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  pythonVersion: '3.9'
+  artifactRetentionDays: 5
+
+jobs:
+  mono_desktop_test:
+    name: mono-linux-desktop-tests
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    steps:
+      - uses: lukka/get-cmake@80ed063af494e28dd56b85fb7a630f2f8f55ceed # ratchet:lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.31.0"
+
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          submodules: true
+          ref: ${{ inputs.unity_branch }}
+          fetch-depth: 0
+          persist-credentials: true # zizmor: ignore[artipacked]
+
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          repository: firebase/firebase-cpp-sdk
+          path: firebase-cpp-sdk
+          submodules: true
+          ref: ${{ inputs.firebase_cpp_sdk_version }}
+          fetch-depth: 0
+          persist-credentials: true # zizmor: ignore[artipacked]
+
+      - name: Setup python
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
+        with:
+          python-version: ${{ env.pythonVersion }}
+
+      - name: Install prerequisites
+        shell: bash
+        run: |
+          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
+          cd firebase-cpp-sdk
+          python scripts/gha/install_prereqs_desktop.py
+          cd ..
+
+      - name: Install python deps and Mono runtime
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+          sudo apt-get update
+          sudo apt-get install -y openssl mono-devel
+
+      - name: Setup Swig Env
+        shell: bash
+        run: |
+          echo "$(swig -swiglib)" >> $GITHUB_PATH
+          swig -swiglib
+          echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
+
+      - name: Restore integration test secrets
+        shell: bash
+        env:
+          TEST_SECRET: ${{ secrets.TEST_SECRET }}
+        run: |
+          if [[ -n "${TEST_SECRET}" ]]; then
+            python scripts/gha/restore_secrets.py --passphrase "${TEST_SECRET}"
+          else
+            echo "::warning ::TEST_SECRET is not set; testapps will run with fallback placeholder credentials."
+          fi
+
+      - name: Build Mono SDK and Automated TestApps (Linux)
+        timeout-minutes: 90
+        shell: bash
+        run: |
+          mkdir -p mono_build
+          cd mono_build
+          cmake .. \
+            -DFIREBASE_INCLUDE_MONO=ON \
+            -DFIREBASE_INCLUDE_UNITY=OFF \
+            -DFIREBASE_CPP_SDK_DIR="${FIREBASE_CPP_SDK_DIR}" \
+            -DFIREBASE_GITHUB_ACTION_BUILD=ON \
+            -DOPENSSL_USE_STATIC_LIBS=TRUE
+          LIBRARY_PATH="$(pwd)" make -j$(nproc)
+
+      - name: Set up Node (22)
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # ratchet:actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Setup Java for Firestore Emulator
+        uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62 # ratchet:actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Firestore Emulator
+        uses: nick-invision/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # ratchet:nick-invision/retry@v2
+        with:
+          shell: bash
+          timeout_minutes: 5
+          max_attempts: 3
+          command: npm install -g firebase-tools
+
+      - name: Run Mono Desktop Integration Tests
+        timeout-minutes: 60
+        shell: bash
+        env:
+          INPUTS_APIS: ${{ inputs.apis }}
+          INPUTS_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+        run: |
+          firebase emulators:start --only firestore > firestore-emulator.log 2>&1 &
+          CLEAN_APIS=$(echo "${INPUTS_APIS}" | tr -d "'" | tr -d "\"")
+          python scripts/gha/mono_desktop_tester.py \
+            --mono_build_dir mono_build \
+            --apis "${CLEAN_APIS}" \
+            --timeout_seconds "${INPUTS_TIMEOUT_SECONDS}"
+
+      - name: Upload Mono test results artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
+        with:
+          name: mono-desktop-test-results
+          path: |
+            mono_build/test-results-mono-desktop*
+            mono_build/samples/mono_app/bin/**/*.log
+            firestore-emulator.log
+          retention-days: ${{ env.artifactRetentionDays }}
+
+      - name: Summarize test results
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          if [ -f mono_build/test-results-mono-desktop.log ]; then
+            cat mono_build/test-results-mono-desktop.log
+          fi
+          if [[ "${JOB_STATUS}" != "success" ]]; then
+            exit 1
+          fi

@@ -179,9 +179,17 @@ namespace UnityEngine {
   }
 
   public static class MonoBehaviourRunner {
+    private sealed class CoroutineState {
+      public readonly Stack<IEnumerator> Stack = new Stack<IEnumerator>();
+      public float WaitUntilTime;
+      public CoroutineState(IEnumerator root) {
+        Stack.Push(root);
+      }
+    }
+
     public static readonly List<MonoBehaviour> Behaviours = new List<MonoBehaviour>();
     private static readonly HashSet<MonoBehaviour> Initialized = new HashSet<MonoBehaviour>();
-    private static readonly List<IEnumerator> Coroutines = new List<IEnumerator>();
+    private static readonly List<CoroutineState> Coroutines = new List<CoroutineState>();
 
     public static void Register(MonoBehaviour mb) {
       if (mb != null && !Behaviours.Contains(mb)) {
@@ -208,12 +216,36 @@ namespace UnityEngine {
     }
 
     public static void StartCoroutine(IEnumerator r) {
-      if (r != null) Coroutines.Add(r);
+      if (r != null) Coroutines.Add(new CoroutineState(r));
     }
 
     public static void StepCoroutines() {
       for (int i = Coroutines.Count - 1; i >= 0; i--) {
-        if (!Coroutines[i].MoveNext()) {
+        var state = Coroutines[i];
+        if (Time.time < state.WaitUntilTime) {
+          continue;
+        }
+        while (state.Stack.Count > 0) {
+          var current = state.Stack.Peek();
+          if (!current.MoveNext()) {
+            state.Stack.Pop();
+            continue;
+          }
+          var yielded = current.Current;
+          if (yielded is WaitForSeconds wfs) {
+            state.WaitUntilTime = Time.time + wfs.Seconds;
+            break;
+          } else if (yielded is Coroutine c && c.Routine != null) {
+            state.Stack.Push(c.Routine);
+            continue;
+          } else if (yielded is IEnumerator nested) {
+            state.Stack.Push(nested);
+            continue;
+          } else {
+            break;
+          }
+        }
+        if (state.Stack.Count == 0) {
           Coroutines.RemoveAt(i);
         }
       }
@@ -267,7 +299,8 @@ namespace UnityEngine {
     public static event LogCallback logMessageReceived;
     public static bool HasQuit { get; set; }
     public static RuntimePlatform platform => RuntimePlatform.LinuxPlayer;
-    public static string persistentDataPath { get; } = Path.Combine(Path.GetTempPath(), "firebase_mono_testapp");
+    public static string persistentDataPath { get; } = Path.Combine(
+        Path.GetTempPath(), "firebase_mono_testapp_" + Process.GetCurrentProcess().Id);
     public static string temporaryCachePath => persistentDataPath;
     public static string dataPath { get; } = Directory.GetCurrentDirectory();
     public static string streamingAssetsPath { get; } = Directory.GetCurrentDirectory();
@@ -585,19 +618,21 @@ namespace Firebase.Sample {
 
       UnityEngine.MonoBehaviourRunner.InitializePending();
 
-      float testTimeoutSec = 5.0f;
-      if (float.TryParse(Environment.GetEnvironmentVariable("MONO_TEST_TIMEOUT_SECONDS"), out float customTimeout)) {
-        testTimeoutSec = customTimeout;
-      }
+      bool hasCustomTimeout = float.TryParse(
+          Environment.GetEnvironmentVariable("MONO_TEST_TIMEOUT_SECONDS"),
+          out float customTimeout);
       int maxTests = 0;
       int.TryParse(Environment.GetEnvironmentVariable("MONO_TEST_MAX_TESTS"), out maxTests);
-      double maxTotalSec = 30.0;
+      double maxTotalSec = 300.0;
       if (double.TryParse(Environment.GetEnvironmentVariable("MONO_TEST_MAX_TOTAL_SECONDS"), out double customTotal)) {
         maxTotalSec = customTotal;
       }
 
       FieldInfo runnerField = handlerType.GetField(
           "testRunner",
+          BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+      FieldInfo tlmField = typeof(AutomatedTestRunner).GetField(
+          "testLabManager",
           BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
       bool configuredRunner = false;
@@ -611,7 +646,9 @@ namespace Firebase.Sample {
           var runner = runnerField.GetValue(handler) as AutomatedTestRunner;
           if (runner != null) {
             if (!configuredRunner) {
-              runner.TestTimeoutSeconds = testTimeoutSec;
+              if (hasCustomTimeout) {
+                runner.TestTimeoutSeconds = customTimeout;
+              }
               if (maxTests > 0) {
                 var testsField = typeof(AutomatedTestRunner).GetField(
                     "tests", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -624,6 +661,8 @@ namespace Firebase.Sample {
               configuredRunner = true;
             }
             if (runner.Finished) {
+              var tlm = tlmField?.GetValue(runner) as Firebase.TestLab.TestLabManager;
+              tlm?.NotifyHarnessTestIsComplete();
               break;
             }
           }
