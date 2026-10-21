@@ -16,7 +16,9 @@
 
 namespace Firebase.Crashlytics {
   using System;
+#if UNITY
   using UnityEngine;
+#endif
 
   /// <summary>
   /// Automatically collects metadata and serializes to JSON in a space-efficient way.
@@ -25,6 +27,7 @@ namespace Firebase.Crashlytics {
     public static string METADATA_KEY = "com.crashlytics.metadata.unity";
 
     public static string GenerateMetadataJSON() {
+#if UNITY
       try {
         Metadata metadata = new Metadata();
         return JsonUtility.ToJson(metadata);
@@ -33,6 +36,9 @@ namespace Firebase.Crashlytics {
             "Failed to generate Unity-specific metadata for Crashlytics due to: " + e.ToString());
         return "";
       }
+#else
+      return "";
+#endif
     }
   }
 }

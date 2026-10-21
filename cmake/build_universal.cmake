@@ -64,6 +64,13 @@ function(build_uni TARGET_LINK_LIB_NAMES PROJECT_LIST_HEADER_VARIABLE)
       # trying to treat the bundle as a directory instead of a file.
       # Only override suffix produces a single file bundle.
       set_target_properties(firebase_app_uni PROPERTIES SUFFIX ".bundle")
+    elseif(UNIX AND FIREBASE_INCLUDE_MONO)
+      add_custom_command(TARGET firebase_app_uni POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E create_symlink
+        "${FIREBASE_APP_UNI_VERSIONED}.so"
+        "lib${FIREBASE_APP_UNI_VERSIONED}.so"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+        COMMENT "Create lib${FIREBASE_APP_UNI_VERSIONED}.so symlink for Mono P/Invoke")
     endif()
   endif()
 

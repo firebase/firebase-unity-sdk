@@ -21,7 +21,9 @@ namespace Firebase.Crashlytics
   using System.Diagnostics;
   using System.Collections.Generic;
   using System.Linq;
+#if UNITY
   using UnityEngine;
+#endif
 
   
   [StructLayout(LayoutKind.Sequential)]
@@ -71,7 +73,11 @@ namespace Firebase.Crashlytics
     #endregion
 
     public IOSImpl() {
+#if UNITY
       CLUSetDevelopmentPlatform("Unity", Application.unityVersion);
+#else
+      CLUSetDevelopmentPlatform("Mono", "");
+#endif
       CLUSetInternalKeyValue(MetadataBuilder.METADATA_KEY, MetadataBuilder.GenerateMetadataJSON());
     }
 

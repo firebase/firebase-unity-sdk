@@ -126,6 +126,29 @@ unity_pack_folder(
   PACK_PATH "Firebase/FirebaseApp/Internal"
 )
 
+if (FIREBASE_INCLUDE_MONO)
+  mono_add_library(firebase_app_internal_cs
+    MODULE
+      Firebase.App.Internal
+    SOURCES
+      src/internal/AssemblyInfo.cs
+      src/internal/FirebaseInterops.cs
+      src/internal/HttpHelpers.cs
+    SYSTEM_REFERENCES
+      System.Net.Http
+    REFERENCES
+      ${firebase_platform_task_lib}
+      firebase_app_cs
+      firebase_platform_cs
+      firebase_taskextension_cs
+  )
+  unity_pack_cs(firebase_app_internal_cs)
+  set_property(TARGET firebase_app_internal_cs
+    PROPERTY FOLDER
+    "Firebase ${FIREBASE_PLATFORM_NAME}"
+  )
+endif()
+
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(App
     FIREBASE_SPM_DEPS

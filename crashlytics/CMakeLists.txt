@@ -16,11 +16,6 @@
 
 include(build_shared)
 
-# Only for unity builds
-if(NOT FIREBASE_INCLUDE_UNITY)
-  return()
-endif()
-
 add_subdirectory(src/cpp)
 
 # Firebase Crashlytics Swig input files

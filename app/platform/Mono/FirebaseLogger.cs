@@ -25,6 +25,7 @@ internal class FirebaseLogger {
                                   string message) {
     PlatformLogLevel currentLevel = FirebaseHandler.AppUtils.GetLogLevel();
     if (logLevel < currentLevel) return;
+    System.Console.WriteLine(message);
     System.Diagnostics.Debug.WriteLine(message);
   }
 }

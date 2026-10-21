@@ -626,6 +626,7 @@ namespace Firebase.AI
       // Check for the commonly used attribute Range, for Min and Max
       float? min = null;
       float? max = null;
+#if UNITY
       var rangeAttr = memberInfo == null ?
           type.GetCustomAttribute<UnityEngine.RangeAttribute>() :
           memberInfo.GetCustomAttribute<UnityEngine.RangeAttribute>();
@@ -634,6 +635,7 @@ namespace Firebase.AI
         min = rangeAttr.min;
         max = rangeAttr.max;
       }
+#endif
 
       if (type.IsPrimitive)
       {

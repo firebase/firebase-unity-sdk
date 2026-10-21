@@ -350,7 +350,11 @@ namespace Firebase.AI
       }
       catch (Exception e)
       {
+#if UNITY
         UnityEngine.Debug.LogError("Failed to properly parse GoingAwayNotice: " + e);
+#else
+        LogUtil.LogMessage(LogLevel.Error, "Failed to properly parse GoingAwayNotice: " + e);
+#endif
       }
 
       return new LiveSessionGoingAway(

@@ -16,7 +16,9 @@
 
 // Always link the Crashlytics assembly, since it tends to be stripped,
 // and a valid use case doesn't require the user to use the class directly.
+#if UNITY
 [assembly: UnityEngine.Scripting.AlwaysLinkAssembly]
+#endif
 
 namespace Firebase.Crashlytics {
   using System;
@@ -25,7 +27,9 @@ namespace Firebase.Crashlytics {
   /// <summary>
   /// Firebase Crashlytics API
   /// </summary>
+#if UNITY
   [UnityEngine.Scripting.Preserve]
+#endif
   public static class Crashlytics {
 
     /// <summary>
@@ -55,7 +59,9 @@ namespace Firebase.Crashlytics {
     /// <summary>
     /// Initialize crash reporting for C# and Unity runtime.
     /// </summary>
+#if UNITY
     [UnityEngine.Scripting.Preserve]
+#endif
     private static void Initialize() {
       // Initialization is tricky. There are 2 possibilities:
       //
@@ -131,7 +137,9 @@ namespace Firebase.Crashlytics {
     /// the internal getters. This allows us to lazily initialize the instances
     /// we need while retaining interdependence between Impl and FirebaseApp.
     /// </summary>
+#if UNITY
     [UnityEngine.Scripting.Preserve]
+#endif
     internal static class PlatformAccessor {
         private static ExceptionHandler _exceptionHandler;
         private static Impl _impl;
@@ -153,7 +161,9 @@ namespace Firebase.Crashlytics {
         /// <summary>
         /// Return a singleton instance of an ExceptionHandler via lazy initialization
         /// </summary>
+#if UNITY
         [UnityEngine.Scripting.Preserve]
+#endif
         internal static ExceptionHandler ExceptionHandler {
             get {
                 return _exceptionHandler;
@@ -181,7 +191,9 @@ namespace Firebase.Crashlytics {
         /// Return the singleton instance as defined in FirebaseApp. This will perform
         /// platform initialization on Crashlytics if it has not already happened.
         /// </summary>
+#if UNITY
        [UnityEngine.Scripting.Preserve]
+#endif
         internal static FirebaseApp App {
             get {
                 return _app;

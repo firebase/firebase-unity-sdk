@@ -32,3 +32,24 @@ unity_pack_documentation_sources(firebaseai
   DOCUMENTATION_SOURCES
     ${firebase_firebaseai_doc_src}
 )
+
+if (FIREBASE_INCLUDE_MONO)
+  file(GLOB_RECURSE firebase_firebaseai_src "src/*.cs")
+  mono_add_library(firebase_firebaseai_cs
+    MODULE
+      Firebase.FirebaseAI
+    SOURCES
+      ${firebase_firebaseai_src}
+    SYSTEM_REFERENCES
+      System.Net.Http
+    REFERENCES
+      ${FIREBASE_PLATFORM_REF}
+      firebase_app_internal_cs
+      google_minijson_cs
+  )
+  unity_pack_cs(firebase_firebaseai_cs)
+  set_property(TARGET firebase_firebaseai_cs
+    PROPERTY FOLDER
+    "Firebase ${FIREBASE_PLATFORM_NAME}"
+  )
+endif()

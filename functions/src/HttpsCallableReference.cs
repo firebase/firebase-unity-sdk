@@ -116,7 +116,11 @@ namespace Firebase.Functions
           }
           catch (Exception e)
           {
+#if UNITY
             UnityEngine.Debug.LogWarning("Failed to read error response: " + e.Message);
+#else
+            LogUtil.LogMessage(LogLevel.Warning, "Failed to read error response: " + e.Message);
+#endif
           }
         }
         throw FunctionsErrorParser.ParseError(response, errorBody);
@@ -183,7 +187,11 @@ namespace Firebase.Functions
           }
           catch (Exception e)
           {
+#if UNITY
             UnityEngine.Debug.LogWarning("Failed to read error response: " + e.Message);
+#else
+            LogUtil.LogMessage(LogLevel.Warning, "Failed to read error response: " + e.Message);
+#endif
           }
         }
         throw FunctionsErrorParser.ParseError(response, errorBody);

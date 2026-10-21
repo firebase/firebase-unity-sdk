@@ -45,7 +45,11 @@ internal sealed class FirebaseHandler {
   private FirebaseHandler() {
     RunUpdateThread = true;
     UpdateThread = new Thread(new ThreadStart(this.ThreadUpdater));
+    UpdateThread.IsBackground = true;
     UpdateThread.Start();
+    while (ThreadDispatcher == null) {
+      Thread.Sleep(1);
+    }
   }
 
   // Simple update loop that occasionally polls.
@@ -65,7 +69,11 @@ internal sealed class FirebaseHandler {
   // as this instance of FirebaseHandler, and returns the result.
   // Note that the "MainThread" is the thread that is created by the FirebaseHandler.
   public static TResult RunOnMainThread<TResult>(System.Func<TResult> f) {
-    return firebaseHandler.ThreadDispatcher.Run(f);
+    if (firebaseHandler != null && firebaseHandler.ThreadDispatcher != null) {
+      return firebaseHandler.ThreadDispatcher.Run(f);
+    } else {
+      return f();
+    }
   }
 
   // Queue the function provided and execute on the same thread as this instance of
@@ -75,7 +83,11 @@ internal sealed class FirebaseHandler {
   // with CreatePartialOnMainThread. Otherwise, it will run the given function
   // on the calling thread.
   public static Task<TResult> RunOnMainThreadAsync<TResult>(System.Func<TResult> f) {
-    return firebaseHandler.ThreadDispatcher.RunAsync(f);
+    if (firebaseHandler != null && firebaseHandler.ThreadDispatcher != null) {
+      return firebaseHandler.ThreadDispatcher.RunAsync(f);
+    } else {
+      return Dispatcher.RunAsyncNow(f);
+    }
   }
 
   // Returns whether the current thread is the main thread.
@@ -83,7 +95,11 @@ internal sealed class FirebaseHandler {
   // with CreatePartialOnMainThread.
   // Note that the "MainThread" is the thread that is created by the FirebaseHandler.
   internal bool IsMainThread() {
-    return ThreadDispatcher.ManagesThisThread();
+    if (ThreadDispatcher != null) {
+      return ThreadDispatcher.ManagesThisThread();
+    } else {
+      return false;
+    }
   }
 
   // Passed to the ApplicationFocusChanged event.

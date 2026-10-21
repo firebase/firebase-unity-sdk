@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#if UNITY
 namespace Firebase.Crashlytics {
   using System;
   using UnityEngine;
@@ -101,3 +102,4 @@ namespace Firebase.Crashlytics {
     }
   }
 }
+#endif

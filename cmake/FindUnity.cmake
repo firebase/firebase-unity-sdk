@@ -20,30 +20,30 @@ if (FIREBASE_GENERATE_SWIG_ONLY)
   return()
 endif()
 
-if (NOT EXISTS "${UNITY_ROOT_DIR}")
-  # Make our best attempt to find the latest unity installed on the system.
-  # Note that Unity <=2018 include mono 2.x which causes compilation errors.
-  # Minimum supported version of mono is 3.5.
-  if (EXISTS "$ENV{UNITY_ROOT_DIR}")
-    set(UNITY_ROOT_DIR "$ENV{UNITY_ROOT_DIR}")
-    message(STATUS "Detected Unity version from env-var 'UNITY_ROOT_DIR': ${UNITY_ROOT_DIR}")
-  else()
-    if(CMAKE_HOST_WIN32)
-        set(editordir "C:/Program Files/Unity/Hub/Editor")
-    elseif(CMAKE_HOST_APPLE)
-        set(editordir "/Applications/Unity/Hub/Editor")
-    elseif(CMAKE_HOST_UNIX) # Linux
-        set(editordir "$ENV{HOME}/Unity/Hub/Editor")
-    endif()
-    file(GLOB unity_versions RELATIVE ${editordir} ${editordir}/*)
-    list(SORT unity_versions ORDER DESCENDING)
-    list(GET unity_versions 0 latest_unity_version)
-    set(UNITY_ROOT_DIR ${editordir}/${latest_unity_version})
-    message(STATUS "Auto detected latest Unity version: ${UNITY_ROOT_DIR}")
-  endif()
-endif()
-
 if(FIREBASE_INCLUDE_UNITY)
+  if (NOT EXISTS "${UNITY_ROOT_DIR}")
+    # Make our best attempt to find the latest unity installed on the system.
+    # Note that Unity <=2018 include mono 2.x which causes compilation errors.
+    # Minimum supported version of mono is 3.5.
+    if (EXISTS "$ENV{UNITY_ROOT_DIR}")
+      set(UNITY_ROOT_DIR "$ENV{UNITY_ROOT_DIR}")
+      message(STATUS "Detected Unity version from env-var 'UNITY_ROOT_DIR': ${UNITY_ROOT_DIR}")
+    else()
+      if(CMAKE_HOST_WIN32)
+          set(editordir "C:/Program Files/Unity/Hub/Editor")
+      elseif(CMAKE_HOST_APPLE)
+          set(editordir "/Applications/Unity/Hub/Editor")
+      elseif(CMAKE_HOST_UNIX) # Linux
+          set(editordir "$ENV{HOME}/Unity/Hub/Editor")
+      endif()
+      file(GLOB unity_versions RELATIVE ${editordir} ${editordir}/*)
+      list(SORT unity_versions ORDER DESCENDING)
+      list(GET unity_versions 0 latest_unity_version)
+      set(UNITY_ROOT_DIR ${editordir}/${latest_unity_version})
+      message(STATUS "Auto detected latest Unity version: ${UNITY_ROOT_DIR}")
+    endif()
+  endif()
+
   message(STATUS "Using Unity root directory: ${UNITY_ROOT_DIR}")
   set(UNITY_PATH_HUB_HINT "${UNITY_ROOT_DIR}")
   # Platform specific directories to search for various dlls and tools.

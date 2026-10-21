@@ -60,7 +60,7 @@ define_property(TARGET
 #
 macro(mono_add_external_library name projpath)
 
-  set(single OUTPUT_NAME XBUILD_EXE)
+  set(single OUTPUT_NAME OUTPUT_EXT XBUILD_EXE)
   set(multi SOURCES REFERENCES)
 
   # Parse the arguments into UNITY_MONO_SOURCES and UNITY_MONO_DEPENDS.
@@ -77,12 +77,18 @@ macro(mono_add_external_library name projpath)
     set(DLL_NAME ${UNITY_MONO_OUTPUT_NAME})
   endif()
 
+  if("${UNITY_MONO_OUTPUT_EXT}" STREQUAL "")
+    set(OUTPUT_EXT ".dll")
+  else()
+    set(OUTPUT_EXT "${UNITY_MONO_OUTPUT_EXT}")
+  endif()
+
   set(outdir ${CMAKE_CURRENT_BINARY_DIR}/bin/${DLL_NAME})
   set(objdir ${CMAKE_CURRENT_BINARY_DIR}/obj/${DLL_NAME})
 
   add_custom_target(${name} ALL
     DEPENDS
-      ${outdir}/${DLL_NAME}.dll
+      ${outdir}/${DLL_NAME}${OUTPUT_EXT}
     SOURCES
       ${projpath}
       "${UNITY_MONO_SOURCES}"
@@ -101,8 +107,10 @@ macro(mono_add_external_library name projpath)
   endif()
 
   set(CSHARP_BUILD_EXE "${UNITY_CSHARP_BUILD_EXE}")
-  if(MSVC)
+  set(CSHARP_BUILD_ARGS "")
+  if(MSVC OR NOT FIREBASE_INCLUDE_UNITY)
     set(CSHARP_BUILD_EXE "${MONO_CSHARP_BUILD_EXE}")
+    set(CSHARP_BUILD_ARGS ${MONO_CSHARP_BUILD_ARGS})
   endif()
 
   set(file_deps "")
@@ -115,6 +123,7 @@ macro(mono_add_external_library name projpath)
   add_custom_command(
     COMMAND
       ${CSHARP_BUILD_EXE}
+      ${CSHARP_BUILD_ARGS}
       /p:AllowUnsafeBlocks=true
       /p:Configuration=Release
       /p:OutDir="${outdir}/"
@@ -127,16 +136,17 @@ macro(mono_add_external_library name projpath)
       ${absprojpath}
     DEPENDS
       ${projpath}
+      ${UNITY_MONO_SOURCES}
       ${file_deps}
     OUTPUT
-      ${outdir}/${DLL_NAME}.dll
+      ${outdir}/${DLL_NAME}${OUTPUT_EXT}
     COMMENT
-      "Building csproj for ${DLL_NAME}.dll with ${CSHARP_BUILD_EXE}"
+      "Building csproj for ${DLL_NAME}${OUTPUT_EXT} with ${CSHARP_BUILD_EXE}"
   )
 
   set_target_properties(${name} PROPERTIES
     LIBRARY_OUTPUT_NAME
-      ${DLL_NAME}.dll
+      ${DLL_NAME}${OUTPUT_EXT}
   )
 
   set_target_properties(${name} PROPERTIES
@@ -374,9 +384,17 @@ macro(mono_add_internal name output_type)
   unset(VAR_DEFINES)
   unset(VAR_OUTPUT_TYPE)
 
+  if ("${output_type}" STREQUAL "Exe")
+    set(internal_output_ext ".exe")
+  else()
+    set(internal_output_ext ".dll")
+  endif()
+
   mono_add_external_library(${name} ${MONO_PROJ_FILE}
     OUTPUT_NAME
       ${UNITY_MONO_ASSEMBLY_NAME}
+    OUTPUT_EXT
+      ${internal_output_ext}
     SOURCES
       ${UNITY_MONO_SOURCES}
     XBUILD_EXE

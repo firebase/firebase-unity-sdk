@@ -4,3 +4,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Firebase.Functions")]
 [assembly: InternalsVisibleTo("Firebase.FirebaseAI")]
 [assembly: InternalsVisibleTo("Firebase.FirebaseAI.TestApp")]
+[assembly: InternalsVisibleTo("MonoFirebaseAITestApp")]

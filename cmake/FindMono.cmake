@@ -45,9 +45,33 @@ find_program(MONO_EXE mono
 find_program(MONO_CSHARP_BUILD_EXE
   NAMES
     msbuild
-    xbuild
   ${FIND_MONO_OPTIONS}
 )
+
+if(NOT MONO_CSHARP_BUILD_EXE)
+  find_program(DOTNET_EXE
+    NAMES
+      dotnet
+    PATHS
+      "$ENV{HOME}/.local/bin"
+      "$ENV{HOME}/.dotnet"
+    ${FIND_MONO_OPTIONS}
+  )
+  if(DOTNET_EXE)
+    set(MONO_CSHARP_BUILD_EXE "${DOTNET_EXE}" CACHE FILEPATH "Location of the C# build tool." FORCE)
+    set(MONO_CSHARP_BUILD_ARGS "msbuild" CACHE STRING "Extra arguments for C# build tool." FORCE)
+    if(CMAKE_HOST_UNIX AND EXISTS "/usr/lib/mono/4.5")
+      list(APPEND MONO_CSHARP_BUILD_ARGS "/p:FrameworkPathOverride=/usr/lib/mono/4.5/")
+      set(MONO_CSHARP_BUILD_ARGS "${MONO_CSHARP_BUILD_ARGS}" CACHE STRING "Extra arguments for C# build tool." FORCE)
+    endif()
+  else()
+    find_program(MONO_CSHARP_BUILD_EXE
+      NAMES
+        xbuild
+      ${FIND_MONO_OPTIONS}
+    )
+  endif()
+endif()
 
 if(CMAKE_HOST_WIN32 AND
    NOT MONO_DISABLE_VISUAL_STUDIO_FALLBACK AND

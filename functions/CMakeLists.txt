@@ -32,3 +32,24 @@ unity_pack_documentation_sources(firebasefunctions
   DOCUMENTATION_SOURCES
     ${firebase_functions_doc_src}
 )
+
+if (FIREBASE_INCLUDE_MONO)
+  file(GLOB_RECURSE firebase_functions_src "src/*.cs")
+  mono_add_library(firebase_functions_cs
+    MODULE
+      Firebase.Functions
+    SOURCES
+      ${firebase_functions_src}
+    SYSTEM_REFERENCES
+      System.Net.Http
+    REFERENCES
+      ${FIREBASE_PLATFORM_REF}
+      firebase_app_internal_cs
+      google_minijson_cs
+  )
+  unity_pack_cs(firebase_functions_cs)
+  set_property(TARGET firebase_functions_cs
+    PROPERTY FOLDER
+    "Firebase ${FIREBASE_PLATFORM_NAME}"
+  )
+endif()
