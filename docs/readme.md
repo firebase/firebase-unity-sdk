@@ -109,8 +109,11 @@ Support
 
 Release Notes
 -------------
-### Upcoming Changes
+### 14.1.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 14.1.0.
+    - General (Android): Update to Firebase Android BoM version 35.1.0.
+    - General (iOS): Update to Firebase Apple SDK version 13.1.1.
     - [Firestore] Security Update: Removed compromised eMudhra intermediate CA
       root certificates from embedded trust store.
       ([#16930](https://github.com/firebase/firebase-ios-sdk/pull/16930))
