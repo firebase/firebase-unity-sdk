@@ -109,6 +109,14 @@ Support
 
 Release Notes
 -------------
+### 13.17.1
+-   Changes
+    - General: Update to Firebase C++ SDK version 13.13.1.
+    - General (iOS): Update to Firebase Apple SDK version 12.19.3.
+    - Firestore **Security Update:** Removed root certificates associated with
+      compromised eMudhra intermediate CAs from the embedded trust store.
+      ([#16930](//github.com/firebase/firebase-ios-sdk/issues/16930)).
+
 ### 13.17.0
 -   Changes
     - General: Update to Firebase C++ SDK version 13.13.0.
