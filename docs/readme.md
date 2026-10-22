@@ -109,11 +109,14 @@ Support
 
 Release Notes
 -------------
-### Upcoming Changes
+### 14.1.0
 -   Changes
-    - [Firestore] Security Update: Removed compromised eMudhra intermediate CA
-      root certificates from embedded trust store.
-      ([#16930](https://github.com/firebase/firebase-ios-sdk/pull/16930))
+    - General: Update to Firebase C++ SDK version 14.1.0.
+    - General (Android): Update to Firebase Android BoM version 35.1.0.
+    - General (iOS): Update to Firebase Apple SDK version 13.1.1.
+    - Firestore **Security Update:** Removed root certificates associated with
+      compromised eMudhra intermediate CAs from the embedded trust store.
+      ([#16930](//github.com/firebase/firebase-ios-sdk/issues/16930)).
     - Firebase AI: Added `SpeechMetadata` and the `TextPart.SpeechMetadata` property to specify the speaker and vocal style (such as `"cheerful"`) for a piece of text when generating speech.
 
 ### 14.0.0
