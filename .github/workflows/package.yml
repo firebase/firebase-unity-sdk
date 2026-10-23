@@ -109,7 +109,7 @@ jobs:
           STEPS_CHECK_INPUT_OUTPUTS_PACKAGE_APIS: ${{ steps.check-input.outputs.package_apis }}
 
       - name: Check out base branch
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ inputs.working_branch }}
@@ -117,7 +117,7 @@ jobs:
           persist-credentials: true # zizmor: ignore[artipacked]
 
       - name: Setup Python
-        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # ratchet:actions/setup-python@v7
         with:
           python-version: 3.9
 
@@ -133,7 +133,7 @@ jobs:
         # 
         # This method is preferred over the "personal access token" solution, as the GitHub App's scope is limited to just
         # the firebase-cpp-sdk repository.
-        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # ratchet:actions/create-github-app-token@v3
         id: generate-token
         with:
           app-id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}
@@ -165,7 +165,7 @@ jobs:
 
       # If called by build_start.xml, ignore name search, just grab all artifact exists
       - name: Fetch All in build_starter
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # ratchet:actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # ratchet:actions/download-artifact@v8
         with:
           path: built_artifact
       
@@ -260,7 +260,7 @@ jobs:
           echo "::warning ::$(cat firebase_unity_sdk_hash.txt)"
 
       - name: Upload Build unitypackage
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # ratchet:actions/upload-artifact@v7
         with:
           name: firebase_unity_sdk.zip
           path: firebase_unity_sdk.zip
@@ -285,13 +285,13 @@ jobs:
         working-directory: output_tgz
 
       - name: Upload Build tgz
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # ratchet:actions/upload-artifact@v7
         with:
           name: firebase_unity_sdk_tgz
           path: output_tgz
 
       - name: upload hash
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # ratchet:actions/upload-artifact@v7
         with:
           name: firebase_unity_sdk_hash.txt
           path: firebase_unity_sdk_hash.txt
@@ -303,12 +303,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repo
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
       with:
         persist-credentials: true # zizmor: ignore[artipacked]
 
     - name: Setup python
-      uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # ratchet:actions/setup-python@v7
       with:
         python-version: 3.9
     - name: Generate token for GitHub API
@@ -318,7 +318,7 @@ jobs:
       # 
       # This method is preferred over the "personal access token" solution, as the GitHub App's scope is limited to just
       # the firebase-cpp-sdk repository.
-      uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # ratchet:actions/create-github-app-token@v1
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # ratchet:actions/create-github-app-token@v3
       id: generate-token
       with:
         app-id: ${{ secrets.WORKFLOW_TRIGGER_APP_ID }}

@@ -43,7 +43,7 @@ runs:
         fi
     - name: Return Unity license
       if: steps.configs.outputs.release_license
-      uses: nick-invision/retry@v2
+      uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # ratchet:nick-fields/retry@v4
       with:
         timeout_minutes: 5
         max_attempts: 2
