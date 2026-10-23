@@ -91,7 +91,7 @@ jobs:
 
       - name: Install OpenSSL (Windows)
         run: |
-          choco install openssl -r
+          choco install openssl -r --version 3.6.2
 
       - id: unity_setup
         uses: ./gha/unity
@@ -127,7 +127,7 @@ jobs:
         run: |
           # TODO add handling cmake_extras
           CLEAN_APIS=$(echo ${INPUTS_APIS} | tr -d "'" | tr -d "\"")
-          python scripts/build_scripts/build_zips.py --gha --platform=windows --unity_root="$UNITY_ROOT_DIR" --swig_dir="$SWIG_DIR" --apis=${CLEAN_APIS}
+          python scripts/build_scripts/build_zips.py --gha --platform=windows --use_boringssl=true --unity_root="$UNITY_ROOT_DIR" --swig_dir="$SWIG_DIR" --apis=${CLEAN_APIS}
         env:
           INPUTS_APIS: ${{ inputs.apis }}
 
