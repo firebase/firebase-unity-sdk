@@ -53,7 +53,7 @@ jobs:
         with:
           cmakeVersion: "~3.31.0"
       - name: Checkout Unity Repo
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
         with:
           submodules: true
           ref: ${{ inputs.unity_branch }}
@@ -61,7 +61,7 @@ jobs:
           persist-credentials: true # zizmor: ignore[artipacked]
           
       - name: Checkout CPP Repo
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
         with:
           repository: firebase/firebase-cpp-sdk
           path: firebase-cpp-sdk
@@ -71,7 +71,7 @@ jobs:
           persist-credentials: true # zizmor: ignore[artipacked]
 
       - name: Setup python
-        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # ratchet:actions/setup-python@v4
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # ratchet:actions/setup-python@v7
         with:
           python-version: '3.9'
 
@@ -120,7 +120,7 @@ jobs:
           fi
 
       - name: Upload Build
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # ratchet:actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # ratchet:actions/upload-artifact@v7
         with:
           name: ios_unity
           path: ios_unity/*.zip
