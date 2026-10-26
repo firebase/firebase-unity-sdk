@@ -48,7 +48,6 @@ namespace Firebase.Storage.Internal {
     private readonly Stream _stream;
     private readonly bool _ownsStream;
     private readonly StorageMetadata _metadata;
-    private readonly IProgress<UploadState> _progressHandler;
     private readonly StorageTask _storageTask;
     private readonly UploadState _uploadState;
     private readonly TransferStateUpdater<UploadState> _transferStateUpdater;
@@ -70,7 +69,6 @@ namespace Firebase.Storage.Internal {
       _stream = Preconditions.CheckNotNull(stream, nameof(stream));
       _ownsStream = ownsStream;
       _metadata = metadata;
-      _progressHandler = progressHandler;
       _path = path;
       _sessionUri = previousSessionUri;
       _storageTask = new StorageTask(cancelToken);
@@ -194,6 +192,8 @@ namespace Firebase.Storage.Internal {
       }
       if (filePath.StartsWith("file://", StringComparison.OrdinalIgnoreCase)) {
         try {
+          // Uri.LocalPath is already unescaped; do not unescape again or literal '%' sequences
+          // in filenames will be corrupted.
           return new Uri(filePath).LocalPath;
         } catch (UriFormatException) {
           return filePath.Substring("file://".Length);
@@ -249,12 +249,13 @@ namespace Firebase.Storage.Internal {
             app,
             maxUploadRetryTime,
             Stopwatch.StartNew()).ConfigureAwait(false);
-        if (queryResult.IsFinal && !string.IsNullOrEmpty(queryResult.ResponseBody)) {
-          StorageMetadata completedMetadata = StorageMetadata.FromJson(
-              queryResult.ResponseBody,
-              _reference);
-          _uploadState.State.Metadata = completedMetadata;
-          ReportProgress();
+        if (queryResult.IsFinal) {
+          StorageMetadata completedMetadata = await ResolveFinalizedMetadataAsync(
+              queryResult.ResponseBody).ConfigureAwait(false);
+          _uploadState.State.BytesTransferred = queryResult.ServerOffset > 0
+              ? queryResult.ServerOffset
+              : Math.Max(completedMetadata?.SizeBytes ?? 0, _uploadState.TotalByteCount);
+          _transferStateUpdater.SetMetadata(completedMetadata);
           _storageTask.MarkCompleted();
           return completedMetadata;
         }
@@ -385,21 +386,32 @@ namespace Firebase.Storage.Internal {
                   app,
                   maxUploadRetryTime,
                   retryStopwatch).ConfigureAwait(false);
-              if (queryAfterPause.IsFinal && !string.IsNullOrEmpty(queryAfterPause.ResponseBody)) {
+              if (queryAfterPause.IsFinal) {
                 bytesUploaded = chunkStartOffset + bytesInChunk;
                 _uploadState.State.BytesTransferred = bytesUploaded;
-                StorageMetadata completedMetadata = StorageMetadata.FromJson(
-                    queryAfterPause.ResponseBody,
-                    _reference);
-                _uploadState.State.Metadata = completedMetadata;
-                ReportProgress();
+                StorageMetadata completedMetadata = await ResolveFinalizedMetadataAsync(
+                    queryAfterPause.ResponseBody).ConfigureAwait(false);
+                _transferStateUpdater.SetMetadata(completedMetadata);
                 _storageTask.MarkCompleted();
                 return completedMetadata;
               }
               offsetWithinBuffer = await SynchronizeBufferOrStreamAsync(
                   chunkStartOffset,
                   bytesInChunk,
+                  hasLookahead,
                   queryAfterPause.ServerOffset).ConfigureAwait(false);
+              _uploadState.State.BytesTransferred = queryAfterPause.ServerOffset;
+              ReportProgress();
+              if (offsetWithinBuffer < 0) {
+                bytesUploaded = queryAfterPause.ServerOffset;
+                hasLookahead = false;
+                reachedEof = false;
+                break;
+              }
+              if (offsetWithinBuffer == bytesInChunk && !isFinalChunk) {
+                bytesUploaded = queryAfterPause.ServerOffset;
+                break;
+              }
               continue;
             }
 
@@ -417,9 +429,8 @@ namespace Firebase.Storage.Internal {
 
                   if (isFinalChunk ||
                       string.Equals(uploadStatus, "final", StringComparison.OrdinalIgnoreCase)) {
-                    StorageMetadata finalMetadata = StorageMetadata.FromJson(
-                        responseBody,
-                        _reference);
+                    StorageMetadata finalMetadata = await ResolveFinalizedMetadataAsync(
+                        responseBody).ConfigureAwait(false);
                     _transferStateUpdater.SetMetadata(finalMetadata);
                     _storageTask.MarkCompleted();
                     return finalMetadata;
@@ -465,14 +476,12 @@ namespace Firebase.Storage.Internal {
                 app,
                 maxUploadRetryTime,
                 retryStopwatch).ConfigureAwait(false);
-            if (recoveryResult.IsFinal && !string.IsNullOrEmpty(recoveryResult.ResponseBody)) {
+            if (recoveryResult.IsFinal) {
               bytesUploaded = chunkStartOffset + bytesInChunk;
               _uploadState.State.BytesTransferred = bytesUploaded;
-              StorageMetadata completedMetadata = StorageMetadata.FromJson(
-                  recoveryResult.ResponseBody,
-                  _reference);
-              _uploadState.State.Metadata = completedMetadata;
-              ReportProgress();
+              StorageMetadata completedMetadata = await ResolveFinalizedMetadataAsync(
+                  recoveryResult.ResponseBody).ConfigureAwait(false);
+              _transferStateUpdater.SetMetadata(completedMetadata);
               _storageTask.MarkCompleted();
               return completedMetadata;
             }
@@ -480,9 +489,20 @@ namespace Firebase.Storage.Internal {
             offsetWithinBuffer = await SynchronizeBufferOrStreamAsync(
                 chunkStartOffset,
                 bytesInChunk,
+                hasLookahead,
                 recoveryResult.ServerOffset).ConfigureAwait(false);
             _uploadState.State.BytesTransferred = recoveryResult.ServerOffset;
             ReportProgress();
+            if (offsetWithinBuffer < 0) {
+              bytesUploaded = recoveryResult.ServerOffset;
+              hasLookahead = false;
+              reachedEof = false;
+              break;
+            }
+            if (offsetWithinBuffer == bytesInChunk && !isFinalChunk) {
+              bytesUploaded = recoveryResult.ServerOffset;
+              break;
+            }
           }
         } finally {
           ArrayPool<byte>.Shared.Return(rentedBuffer);
@@ -623,23 +643,41 @@ namespace Firebase.Storage.Internal {
       }
     }
 
+    private async Task<StorageMetadata> ResolveFinalizedMetadataAsync(string responseBody) {
+      if (!string.IsNullOrEmpty(responseBody)) {
+        return StorageMetadata.FromJson(responseBody, _reference);
+      }
+      return await StorageHttpClient.GetMetadataAsync(
+          _reference,
+          _path,
+          _storageTask.CancellationToken).ConfigureAwait(false);
+    }
+
     private async Task<int> SynchronizeBufferOrStreamAsync(
         long chunkStartOffset,
         int bytesInChunk,
+        bool hasLookahead,
         long serverOffset) {
       if (serverOffset >= chunkStartOffset && serverOffset <= chunkStartOffset + bytesInChunk) {
         return (int)(serverOffset - chunkStartOffset);
       }
       if (_stream.CanSeek) {
         _stream.Seek(serverOffset, SeekOrigin.Begin);
-        return bytesInChunk;
+        return -1;
       }
-      if (serverOffset > chunkStartOffset + bytesInChunk) {
-        await AdvanceStreamToOffsetAsync(
-            chunkStartOffset + bytesInChunk,
+      long currentStreamOffset = chunkStartOffset + bytesInChunk + (hasLookahead ? 1 : 0);
+      if (serverOffset >= currentStreamOffset) {
+        long reachedOffset = await AdvanceStreamToOffsetAsync(
+            currentStreamOffset,
             serverOffset,
             _storageTask.CancellationToken).ConfigureAwait(false);
-        return bytesInChunk;
+        if (reachedOffset < serverOffset) {
+          throw new StorageException(
+              StorageException.ErrorUnknown,
+              0,
+              "Upload stream ended before reaching the server-reported offset.");
+        }
+        return -1;
       }
       throw new StorageException(
           StorageException.ErrorUnknown,

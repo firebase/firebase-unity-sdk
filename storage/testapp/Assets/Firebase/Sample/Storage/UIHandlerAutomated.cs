@@ -142,6 +142,7 @@ namespace Firebase.Sample.Storage {
         TestUploadLargeFileAndDownloadToFileWithCancelation,
         TestList,
         TestUploadSessionUriAndResume,
+        TestUploadPartialSessionResume,
         TestDownloadIntoSmallBuffer,
         TestGetStreamAsyncDirect,
         TestRealMidTransferCancelation,
@@ -1147,6 +1148,110 @@ namespace Firebase.Sample.Storage {
           }));
       Assert("capturedSessionUri != null", capturedSessionUri != null);
       AssertEq("metadata.SizeBytes", metadata.SizeBytes, payload.Length);
+
+      var resumedMetadata = await targetRef.PutBytesAsync(
+          payload,
+          null,
+          null,
+          default,
+          capturedSessionUri);
+      Assert("resumedMetadata != null", resumedMetadata != null);
+      AssertEq("resumedMetadata.SizeBytes", resumedMetadata.SizeBytes, payload.Length);
+    }
+
+    // Non-seekable read-only stream over a byte array that throws an IOException once
+    // failAfterBytes have been read. Used to simulate an upload interrupted mid-transfer.
+    private sealed class FaultingNonSeekableStream : Stream {
+      private readonly byte[] data;
+      private readonly long failAfterBytes;
+      private long position;
+
+      public FaultingNonSeekableStream(byte[] data, long failAfterBytes = -1) {
+        this.data = data;
+        this.failAfterBytes = failAfterBytes;
+      }
+
+      public override bool CanRead => true;
+      public override bool CanSeek => false;
+      public override bool CanWrite => false;
+      public override long Length => throw new NotSupportedException();
+      public override long Position {
+        get => position;
+        set => throw new NotSupportedException();
+      }
+      public override void Flush() { }
+      public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+      public override void SetLength(long value) => throw new NotSupportedException();
+      public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+      public override int Read(byte[] buffer, int offset, int count) {
+        if (failAfterBytes >= 0 && position >= failAfterBytes) {
+          throw new IOException("Simulated upload stream failure.");
+        }
+        int available = (int)Math.Min(count, data.Length - position);
+        if (failAfterBytes >= 0) {
+          available = (int)Math.Min(available, failAfterBytes - position);
+        }
+        if (available <= 0) return 0;
+        Array.Copy(data, position, buffer, offset, available);
+        position += available;
+        return available;
+      }
+    }
+
+    // Interrupt a multi-chunk upload after the first chunk is committed (without canceling the
+    // session), then resume from the captured UploadSessionUri using a non-seekable stream and
+    // verify the final object matches the original payload byte-for-byte.
+    async Task TestUploadPartialSessionResume() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(LARGE_FILE_PATH);
+      var payload = Encoding.UTF8.GetBytes(LARGE_FILE_CONTENTS);
+      // The first chunk is 256 KB; fail while reading the second chunk.
+      long failAfter = 256 * 1024 + 4096;
+      Assert("payload larger than first chunk", payload.Length > failAfter);
+
+      Uri capturedSessionUri = null;
+      long lastBytesTransferred = 0;
+      bool faulted = false;
+      try {
+        await targetRef.PutStreamAsync(
+            new FaultingNonSeekableStream(payload, failAfter),
+            null,
+            new StorageProgress<UploadState>(state => {
+              if (state.UploadSessionUri != null) {
+                capturedSessionUri = state.UploadSessionUri;
+              }
+              lastBytesTransferred = Math.Max(lastBytesTransferred, state.BytesTransferred);
+            }));
+      } catch (IOException) {
+        faulted = true;
+      }
+      Assert("interrupted upload faulted", faulted);
+      Assert("capturedSessionUri != null", capturedSessionUri != null);
+      Assert("first chunk committed before fault", lastBytesTransferred >= 256 * 1024);
+
+      long firstResumedProgress = -1;
+      var resumedMetadata = await targetRef.PutStreamAsync(
+          new FaultingNonSeekableStream(payload),
+          null,
+          new StorageProgress<UploadState>(state => {
+            if (firstResumedProgress < 0 && state.BytesTransferred > 0) {
+              firstResumedProgress = state.BytesTransferred;
+            }
+          }),
+          default,
+          capturedSessionUri);
+      Assert("resumedMetadata != null", resumedMetadata != null);
+      AssertEq("resumedMetadata.SizeBytes", resumedMetadata.SizeBytes, payload.Length);
+      Assert("resume started from server offset",
+             firstResumedProgress >= 256 * 1024);
+
+      var downloaded = await targetRef.GetBytesAsync(0);
+      AssertEq("downloaded.Length", downloaded.Length, payload.Length);
+      for (int i = 0; i < payload.Length; ++i) {
+        if (downloaded[i] != payload[i]) {
+          Assert(String.Format("downloaded[{0}] matches payload", i), false);
+        }
+      }
     }
 
     // Verify GetBytesAsync faults with IndexOutOfRangeException when maxDownloadSizeBytes is exceeded.

@@ -64,8 +64,19 @@ namespace Firebase.Storage.Internal {
           transferState.UploadSessionUri = uploadSessionUri;
         }
       }
-      if (handler != null) {
-        ExceptionAggregator.Wrap(() => { handler.Report(ProgressState); });
+      InvokeProgressHandler();
+    }
+
+    private void InvokeProgressHandler() {
+      if (handler == null) {
+        return;
+      }
+      try {
+        handler.Report(ProgressState);
+      } catch (Exception ex) {
+        // Progress handlers run on the transfer's worker thread; never let a user callback
+        // exception abort the transfer, just log it.
+        ExceptionAggregator.LogException(ex);
       }
     }
 
@@ -93,9 +104,7 @@ namespace Firebase.Storage.Internal {
       if (transferState != null) {
         transferState.Metadata = metadata;
       }
-      if (handler != null) {
-        ExceptionAggregator.Wrap(() => { handler.Report(ProgressState); });
-      }
+      InvokeProgressHandler();
     }
 
     /// <summary>

@@ -346,7 +346,8 @@ namespace Firebase.Storage.Internal {
       }
 
       string objectUrl = GetObjectUrl(reference, path);
-      return new Uri($"{objectUrl}?alt=media&token={Uri.EscapeDataString(token)}");
+      return FirebaseStorage.ConstructFormattedUri(
+          $"{objectUrl}?alt=media&token={Uri.EscapeDataString(token)}");
     }
   }
 }

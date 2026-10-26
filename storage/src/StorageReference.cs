@@ -33,6 +33,8 @@ namespace Firebase.Storage {
     private readonly FirebaseStorage firebaseStorage;
     // Normalized bucket and object path for this reference.
     private readonly StoragePath path;
+    // Lazily initialized logger for this reference.
+    private ModuleLogger logger;
 
     /// <summary>
     /// Construct a StorageReference associated with the specified FirebaseStorage and StoragePath.
@@ -40,15 +42,21 @@ namespace Firebase.Storage {
     internal StorageReference(FirebaseStorage storage, StoragePath storagePath) {
       firebaseStorage = Preconditions.CheckNotNull(storage, nameof(storage));
       path = Preconditions.CheckNotNull(storagePath, nameof(storagePath));
-      Logger = new ModuleLogger(parentLogger: firebaseStorage.Logger) {
-        Tag = String.Format("StorageReference {0}", ToString())
-      };
     }
 
     /// <summary>
     /// Logger for this reference.
     /// </summary>
-    internal ModuleLogger Logger { get; private set; }
+    internal ModuleLogger Logger {
+      get {
+        if (logger == null) {
+          logger = new ModuleLogger(parentLogger: firebaseStorage.Logger) {
+            Tag = String.Format("StorageReference {0}", ToString())
+          };
+        }
+        return logger;
+      }
+    }
 
     /// <summary>
     /// Internal StoragePath backing this reference.

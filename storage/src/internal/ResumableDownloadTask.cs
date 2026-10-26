@@ -43,7 +43,6 @@ namespace Firebase.Storage.Internal {
 
     private readonly StorageReference _reference;
     private readonly StoragePath _path;
-    private readonly IProgress<DownloadState> _progressHandler;
     private readonly StorageTask _storageTask;
     private readonly DownloadState _downloadState;
     private readonly TransferStateUpdater<DownloadState> _transferStateUpdater;
@@ -56,7 +55,6 @@ namespace Firebase.Storage.Internal {
         CancellationToken cancelToken,
         StoragePath path = null) {
       _reference = Preconditions.CheckNotNull(reference, nameof(reference));
-      _progressHandler = progressHandler;
       _path = path;
       _storageTask = new StorageTask(cancelToken);
       _downloadState = new DownloadState(reference, -1);
@@ -142,6 +140,8 @@ namespace Firebase.Storage.Internal {
 
     internal async Task RunGetFileAsync(string destinationFilePath) {
       string localPath = ResolveLocalFilePath(destinationFilePath);
+      bool fileExistedBefore = !string.IsNullOrEmpty(localPath) && File.Exists(localPath);
+      bool completedSuccessfully = false;
       try {
         await StorageTaskScheduler.RunDownloadAsync(
             async () => {
@@ -165,6 +165,7 @@ namespace Firebase.Storage.Internal {
                       fileStream.SetLength(0);
                     }).ConfigureAwait(false);
                 await fileStream.FlushAsync(_storageTask.CancellationToken).ConfigureAwait(false);
+                completedSuccessfully = true;
               }
             },
             _storageTask.CancellationToken).ConfigureAwait(false);
@@ -175,6 +176,14 @@ namespace Firebase.Storage.Internal {
         _storageTask.MarkFaulted();
         throw;
       } finally {
+        if (!completedSuccessfully && !fileExistedBefore && !string.IsNullOrEmpty(localPath)) {
+          try {
+            if (File.Exists(localPath)) {
+              File.Delete(localPath);
+            }
+          } catch (Exception) {
+          }
+        }
         _storageTask.Dispose();
       }
     }
@@ -543,8 +552,9 @@ namespace Firebase.Storage.Internal {
       }
       if (filePath.StartsWith("file://", StringComparison.OrdinalIgnoreCase)) {
         try {
-          var uri = new Uri(filePath);
-          return Uri.UnescapeDataString(uri.LocalPath);
+          // Uri.LocalPath is already unescaped; do not unescape again or literal '%' sequences
+          // in filenames will be corrupted.
+          return new Uri(filePath).LocalPath;
         } catch (UriFormatException) {
           return filePath.Substring("file://".Length);
         }
@@ -730,11 +740,51 @@ namespace Firebase.Storage.Internal {
             !string.IsNullOrEmpty(newETag) &&
             !string.Equals(_expectedETag, newETag, StringComparison.Ordinal)) {
           response.Dispose();
-          throw new IOException("Remote object ETag changed during streaming download.");
+          throw new StorageException(
+              StorageException.ErrorUnknown,
+              (int)HttpStatusCode.PreconditionFailed,
+              "Remote object ETag changed during streaming download.");
+        }
+
+        Stream newStream = null;
+        try {
+          newStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+          if (_bytesReadTotal > 0 && response.StatusCode == HttpStatusCode.OK) {
+            // The server ignored the Range header and restarted from byte 0, so drain the bytes
+            // that have already been handed to the caller before resuming.
+            byte[] skipBuffer = ArrayPool<byte>.Shared.Rent(BufferSize);
+            try {
+              long remaining = _bytesReadTotal;
+              while (remaining > 0) {
+                int toRead = (int)Math.Min(remaining, skipBuffer.Length);
+                int skipped = await newStream.ReadAsync(
+                    skipBuffer,
+                    0,
+                    toRead,
+                    cancellationToken).ConfigureAwait(false);
+                if (skipped <= 0) {
+                  break;
+                }
+                remaining -= skipped;
+              }
+              if (remaining > 0) {
+                throw new StorageException(
+                    StorageException.ErrorUnknown,
+                    (int)response.StatusCode,
+                    "Server returned fewer bytes than already consumed while resuming download.");
+              }
+            } finally {
+              ArrayPool<byte>.Shared.Return(skipBuffer);
+            }
+          }
+        } catch (Exception) {
+          newStream?.Dispose();
+          response.Dispose();
+          throw;
         }
 
         _currentResponse = response;
-        _currentStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        _currentStream = newStream;
       }
 
       public override long Seek(long offset, SeekOrigin origin) {

@@ -214,63 +214,9 @@
       "name": "FirebaseStorage.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android"
-          ],
-          "cpu": "AnyCPU",
+          "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Plugins/Firebase.Storage.dll",
-            "Firebase/Plugins/Firebase.Storage.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/iOS/Firebase.Storage.dll",
-            "Firebase/Plugins/iOS/Firebase.Storage.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppStorage.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppStorage.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android",
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Google.Sharpen.dll",
-            "Firebase/Plugins/Google.Sharpen.pdb"
+            "Firebase/FirebaseStorage/*"
           ]
         },
         {
@@ -278,23 +224,6 @@
           "paths": [
             "Firebase/Editor/StorageDependencies.xml",
             "Firebase/m2repository/com/google/firebase/firebase-storage-unity/"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone"
-          ],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppStorage*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/FirebaseStorage*_manifest.txt"
           ]
         },
         {

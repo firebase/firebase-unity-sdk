@@ -317,6 +317,7 @@ namespace Firebase.Storage {
     ///   instance.
     /// </returns>
     public static FirebaseStorage GetInstance(FirebaseApp app, string url) {
+      app = app ?? FirebaseApp.DefaultInstance;
       Preconditions.CheckNotNull(app, "app");
 
       string resolvedUrl = url;
