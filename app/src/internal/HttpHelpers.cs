@@ -117,12 +117,15 @@ namespace Firebase.Internal
 
     // Sends an HTTP request created by requestFactory with non-blocking exponential backoff and jitter,
     // bounded by maxRetryTime. Treats offline/network exceptions as retryable with flat 1s polling.
+    // If attemptTimeout is positive, each individual attempt is abandoned (and retried) after that
+    // duration so a stalled connection cannot hang the operation past maxRetryTime.
     internal static async Task<HttpResponseMessage> SendWithExponentialBackoffAsync(
         HttpClient client,
         Func<Task<HttpRequestMessage>> requestFactory,
         TimeSpan maxRetryTime,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        TimeSpan attemptTimeout = default)
     {
       var stopwatch = Stopwatch.StartNew();
       int currentSleepMs = InitialBackoffMs;
@@ -135,11 +138,20 @@ namespace Firebase.Internal
         bool networkUnavailable = false;
         lastNetworkException = null;
 
+        CancellationTokenSource attemptCts = null;
+        CancellationToken attemptToken = cancellationToken;
+        if (attemptTimeout > TimeSpan.Zero)
+        {
+          attemptCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+          attemptCts.CancelAfter(attemptTimeout);
+          attemptToken = attemptCts.Token;
+        }
+
         try
         {
           using (var request = await requestFactory().ConfigureAwait(false))
           {
-            response = await client.SendAsync(request, completionOption, cancellationToken)
+            response = await client.SendAsync(request, completionOption, attemptToken)
                 .ConfigureAwait(false);
           }
         }
@@ -152,8 +164,15 @@ namespace Firebase.Internal
                                    ex is SocketException ||
                                    ex is OperationCanceledException)
         {
-          lastNetworkException = ex;
+          lastNetworkException = ex is OperationCanceledException
+              ? new HttpRequestException(
+                    $"Request timed out after {attemptTimeout.TotalSeconds:F0}s.", ex)
+              : ex;
           networkUnavailable = true;
+        }
+        finally
+        {
+          attemptCts?.Dispose();
         }
 
         if (response != null)

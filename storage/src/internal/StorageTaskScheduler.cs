@@ -112,13 +112,5 @@ namespace Firebase.Storage.Internal {
         _commandSemaphore.Release();
       }
     }
-
-    internal static Task AcquireDownloadSlotAsync(CancellationToken cancellationToken = default) {
-      return _downloadSemaphore.WaitAsync(cancellationToken);
-    }
-
-    internal static void ReleaseDownloadSlot() {
-      _downloadSemaphore.Release();
-    }
   }
 }

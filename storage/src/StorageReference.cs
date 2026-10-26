@@ -362,9 +362,7 @@ namespace Firebase.Storage {
     ///   A byte array will be allocated large enough to hold the entire file in memory.
     ///   Therefore, using this method will impact memory usage of your process. If you are
     ///   downloading many large files,
-    ///   <see>
-    ///     <cref>GetStream(StreamDownloadTask.StreamProcessor)</cref>
-    ///   </see>
+    ///   <see cref="GetStreamAsync(Action{Stream}, IProgress{DownloadState}, CancellationToken)" />
     ///   may be a better option.
     /// </summary>
     /// <param name="maxDownloadSizeBytes">
@@ -390,9 +388,7 @@ namespace Firebase.Storage {
     ///   A byte array will be allocated large enough to hold the entire file in memory.
     ///   Therefore, using this method will impact memory usage of your process. If you are
     ///   downloading many large files,
-    ///   <see>
-    ///     <cref>GetStream(StreamDownloadTask.StreamProcessor)</cref>
-    ///   </see>
+    ///   <see cref="GetStreamAsync(Action{Stream}, IProgress{DownloadState}, CancellationToken)" />
     ///   may be a better option.
     /// </summary>
     /// <param name="maxDownloadSizeBytes">
@@ -455,8 +451,11 @@ namespace Firebase.Storage {
     ///   via a
     ///   <see cref="Stream" />
     ///   .
-    ///   The resulting InputStream should be not be accessed on the main thread
-    ///   because calling into it may block the calling thread.
+    ///   The returned stream is a live, forward-only network stream: <c>CanSeek</c> is false,
+    ///   <c>Length</c> is -1 if the object size is unknown, and <c>Read</c> may throw
+    ///   <see cref="StorageException" /> if the download cannot be completed. It should not be
+    ///   read on the main thread because calling into it may block, and it should be disposed
+    ///   when no longer needed to release the underlying connection.
     /// </summary>
     /// <returns>
     ///   A <see cref="Task"/>

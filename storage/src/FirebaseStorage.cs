@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Reflection;
 using Firebase.Internal;
 using Firebase.Storage.Internal;
 
@@ -71,7 +70,7 @@ namespace Firebase.Storage {
       firebaseApp = app;
       Bucket = bucket ?? string.Empty;
       instanceKey = key;
-      FirebaseInterops.SubscribeAppDisposed(firebaseApp, OnAppDisposed);
+      firebaseApp.AppDisposed += OnAppDisposed;
       logger.LogMessage(LogLevel.Debug, String.Format("Created {0}", instanceKey));
     }
 
@@ -85,7 +84,7 @@ namespace Firebase.Storage {
         return;
       }
       _disposed = true;
-      FirebaseInterops.UnsubscribeAppDisposed(firebaseApp, OnAppDisposed);
+      firebaseApp.AppDisposed -= OnAppDisposed;
       if (storageByInstanceKey.TryGetValue(instanceKey, out FirebaseStorage cached) &&
           ReferenceEquals(cached, this)) {
         storageByInstanceKey.TryRemove(instanceKey, out _);
@@ -103,77 +102,6 @@ namespace Firebase.Storage {
 
     // Configured storage emulator port, if any.
     internal int EmulatorPort { get; private set; }
-
-    private static FieldInfo pathFieldInfo;
-    private static FieldInfo cachedToString;
-
-    // HACK:  This hack is specific to firebase storage, and fixes an issue where
-    // System.Uri decodes "%2F" into slashes, (against the RFC spec) and ignores
-    // the "dontFormat" flag.  (Because it has been deprecated.)
-    // This hack relies on the fact that paths in Firebase Storage do not have
-    // slashes after the object indicator "/o/<path to object>", so it's safe to
-    // convert all slashes past the "/o/" back into "%2F"s.
-    // The input should be a completely escaped/formatted URL, because it will
-    // still be returned via Uri.ToString() and Uri.OriginalString().
-    internal static Uri ConstructFormattedUri(string formattedUrl) {
-      Uri uri = new Uri(formattedUrl);
-      string paq = uri.PathAndQuery;  // ensure that "path" has been calculated.
-
-      // Set up reflection fields and cache them for additional calls.
-      if (pathFieldInfo == null) {
-        pathFieldInfo = typeof(Uri).GetField("path",
-                      BindingFlags.Instance | BindingFlags.NonPublic);
-        if (pathFieldInfo == null) {
-          logger.LogMessage(LogLevel.Debug, String.Format(
-              "{0}: Unable to reflect Uri field to fix slashes.  Storage operations will only work on"
-              + " the root path of your storage bucket", uri.ToString()));
-          return uri;
-        }
-      }
-      if (cachedToString == null) {
-        // cachedToString is not required, but will fix instances of ToString in addition to the
-        // regular fix to PathAndQuery.  This is important for returning a proper DownloadUrl.
-        cachedToString = typeof(Uri).GetField("cachedToString",
-                  BindingFlags.Instance | BindingFlags.NonPublic);
-        if (cachedToString == null) {
-          logger.LogMessage(LogLevel.Debug, String.Format(
-              "{0}: Unable to reflect Uri field cachedToString.  Storage operations may only work on"
-              + " the root path of your storage bucket", uri.ToString()));
-          // Continue to try to fix PathAndQuery if we can, since that controls uploads/download operations.
-        }
-      }
-
-      try {
-        string path = (string) pathFieldInfo.GetValue(uri);
-        if (path == null) {
-          return uri;
-        }
-        int index = path.LastIndexOf("/o/");
-        if (index == -1) {
-          return uri;
-        }
-        if (index + 3 == path.Length) {
-          return uri;
-        }
-        string fixedSuffix = path.Substring(index + 3).Replace("/", "%2F");
-        path = path.Substring(0, index + 3) + fixedSuffix;
-        pathFieldInfo.SetValue(uri, path);
-        if (cachedToString != null) {
-          cachedToString.SetValue(uri, formattedUrl);
-        }
-      } catch (FieldAccessException) {
-        logger.LogMessage(LogLevel.Debug, String.Format(
-            "{0}: FieldAccessException reflecting to fix canonicalization", uri.ToString()));
-      } catch (TargetException) {
-        logger.LogMessage(LogLevel.Debug, String.Format(
-            "{0}: TargetException reflecting to fix canonicalization", uri.ToString()));
-      } catch (ArgumentException) {
-        logger.LogMessage(LogLevel.Debug, String.Format(
-            "{0}: ArgumentException reflecting to fix canonicalization", uri.ToString()));
-      }
-      GC.KeepAlive(paq); // Just in case, don't optimize me away.
-      return uri;
-    }
 
     /// <summary>
     ///   Returns the
@@ -265,24 +193,6 @@ namespace Firebase.Storage {
     /// <summary>
     ///   Returns the
     ///   <see cref="FirebaseStorage" />
-    ///   , initialized with a custom
-    ///   <see cref="Firebase.FirebaseApp" />
-    /// </summary>
-    /// <param name="app">
-    ///   The custom
-    ///   <see cref="Firebase.FirebaseApp" />
-    ///   used for initialization.
-    /// </param>
-    /// <returns>
-    ///   a
-    ///   <see cref="FirebaseStorage" />
-    ///   instance.
-    /// </returns>
-    public static FirebaseStorage GetInstance(FirebaseApp app) => GetInstance(app, null);
-
-    /// <summary>
-    ///   Returns the
-    ///   <see cref="FirebaseStorage" />
     ///   , initialized with the default <see cref="Firebase.FirebaseApp" />
     ///   and a custom Storage Bucket
     /// </summary>
@@ -316,7 +226,7 @@ namespace Firebase.Storage {
     ///   <see cref="FirebaseStorage" />
     ///   instance.
     /// </returns>
-    public static FirebaseStorage GetInstance(FirebaseApp app, string url) {
+    public static FirebaseStorage GetInstance(FirebaseApp app, string url = null) {
       app = app ?? FirebaseApp.DefaultInstance;
       Preconditions.CheckNotNull(app, "app");
 

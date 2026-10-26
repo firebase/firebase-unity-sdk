@@ -15,6 +15,9 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Firebase.Platform;
 using Firebase.Storage;
 
 namespace Firebase.Storage.Internal {
@@ -67,16 +70,52 @@ namespace Firebase.Storage.Internal {
       InvokeProgressHandler();
     }
 
+    // Non-zero while a progress report is queued on the main thread but not yet delivered.
+    // Reports arriving in the meantime are coalesced into that pending delivery, matching the
+    // behaviour of the previous native implementation (one callback per main-thread poll).
+    private int pendingReport;
+    private Task lastReportTask = Task.FromResult(true);
+    private readonly object reportLock = new object();
+
     private void InvokeProgressHandler() {
       if (handler == null) {
         return;
       }
-      try {
-        handler.Report(ProgressState);
-      } catch (Exception ex) {
-        // Progress handlers run on the transfer's worker thread; never let a user callback
-        // exception abort the transfer, just log it.
-        ExceptionAggregator.LogException(ex);
+      if (Interlocked.Exchange(ref pendingReport, 1) != 0) {
+        return;
+      }
+      // Deliver on the Unity main thread so handlers may touch UnityEngine objects, as they
+      // could with the previous implementation.
+      lock (reportLock) {
+        lastReportTask = FirebaseHandler.RunOnMainThreadAsync(() => {
+          Interlocked.Exchange(ref pendingReport, 0);
+          try {
+            handler.Report(ProgressState);
+          } catch (Exception ex) {
+            // Never let a user callback exception abort the transfer; just log it.
+            ExceptionAggregator.LogException(ex);
+          }
+          ExceptionAggregator.LogException(ExceptionAggregator.GetAndClearPendingExceptions());
+          return true;
+        });
+      }
+    }
+
+    /// <summary>
+    /// Wait for any pending main-thread progress report to finish executing before completing
+    /// the transfer task, ensuring callers observe all progress updates emitted prior to task
+    /// completion.
+    /// </summary>
+    public Task FlushAsync() {
+      if (handler == null) {
+        return Task.FromResult(true);
+      }
+      if (FirebaseHandler.DefaultInstance != null &&
+          FirebaseHandler.DefaultInstance.IsMainThread()) {
+        return Task.FromResult(true);
+      }
+      lock (reportLock) {
+        return lastReportTask ?? Task.FromResult(true);
       }
     }
 

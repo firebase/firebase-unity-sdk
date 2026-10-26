@@ -123,6 +123,38 @@ Release Notes
     - Firebase AI: Deprecated model tuning parameters (`temperature`, `topP`, `topK`, `candidateCount`, `presencePenalty`, and `frequencyPenalty`) in `GenerationConfig` and `LiveGenerationConfig` as they are unsupported in Gemini 3.x and later models.
     - Firebase AI: Remove the deprecated fields: `Backend.VertexAI`, `CountTokensResponse.TotalBillableCharacters`, and `LiveSession.SendMediaChunksAsync`.
     - Remote Config: Ensure ephemeral native containers are deterministically disposed and kept alive across P/Invoke calls in `SetDefaultsAsync`, `SetCustomSignalsAsync`, and settings/info accessors.
+    - Storage: Rewrote the Cloud Storage SDK in pure C# on top of the Firebase Storage REST
+      API. Removes the dependency on the internal C++ implementation and the native
+      `FirebaseCppStorage` libraries, Android `firebase-storage-unity` AAR and iOS
+      `FirebaseStorage` pod. `Firebase.Storage` now ships as source under
+      `Assets/Firebase/FirebaseStorage` instead of a prebuilt `Firebase.Storage.dll`.
+    - Storage: Uploads now use the Google Cloud Storage resumable upload protocol with adaptive
+      chunking, and `UploadState.UploadSessionUri` is populated so interrupted uploads can be
+      resumed via the `previousSessionUri` parameter of `PutBytesAsync`, `PutFileAsync` and
+      `PutStreamAsync`. Uploads that are canceled via a `CancellationToken` cancel the server
+      session and cannot be resumed.
+    - Storage: Downloads resume with HTTP `Range` requests and verify the object `ETag`;
+      `GetFileAsync` now writes to a temporary file and moves it into place only on success.
+    - Storage: Requests that make no progress for 60 seconds are now retried, bounded by
+      `MaxUploadRetryTime`, `MaxDownloadRetryTime` and `MaxOperationRetryTime`.
+    - Storage: Custom metadata entries and standard metadata fields can now be removed by
+      setting them to `null` in a `MetadataChange`.
+    - Storage: Object-level operations (`GetBytesAsync`, `GetMetadataAsync`, `DeleteAsync`, ...)
+      on a root reference or an instance without a configured bucket now fail with a
+      `StorageException` instead of sending a request to the bucket endpoint.
+    - Storage: **Behavior Change** `StorageReference.GetStreamAsync()` now returns a live,
+      forward-only network stream rather than a fully buffered `MemoryStream`. `CanSeek` is
+      `false`, `Length` may be `-1` when the size is unknown, and `Read` can throw
+      `StorageException`. Dispose the stream when finished to release the connection.
+    - Storage: **Behavior Change** Task continuations may run on a background thread. Use
+      `ContinueWithOnMainThread` (or `await` from a Unity context) when touching Unity objects.
+      `IProgress<UploadState>` / `IProgress<DownloadState>` callbacks continue to be delivered
+      on the Unity main thread.
+    - Storage: **Behavior Change** Exceptions thrown by a user-supplied `Stream` during
+      `PutStreamAsync` now fault the returned task instead of being raised on an internal
+      thread.
+    - Storage: The Storage emulator is reached over plain `http://`; Android apps targeting the
+      emulator must allow cleartext traffic to the emulator host.
 
 ### 13.17.0
 -   Changes

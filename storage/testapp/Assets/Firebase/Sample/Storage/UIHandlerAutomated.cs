@@ -147,6 +147,11 @@ namespace Firebase.Sample.Storage {
         TestGetStreamAsyncDirect,
         TestRealMidTransferCancelation,
         TestConcurrentTransfersThrottling,
+        TestRootReferenceRejected,
+        TestDeleteCustomMetadataAndClearStandardFields,
+        TestUndisposedGetStreamAsyncDoesNotStarveDownloads,
+        TestUploadSeekableStreamFromNonZeroPosition,
+        TestGetFileAsyncPreservesExistingFileOnFailure,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -1331,6 +1336,127 @@ namespace Firebase.Sample.Storage {
         deleteTasks.Add(itemRef.DeleteAsync());
       }
       await Task.WhenAll(deleteTasks);
+    }
+
+    // Verify that operations targeting the bucket root (empty object path) fail fast with
+    // StorageException rather than issuing malformed HTTP requests to ".../o?name=".
+    async Task TestRootReferenceRejected() {
+      var root = FirebaseStorage.DefaultInstance.RootReference;
+      Func<Func<Task>, string, Task> assertRootRejected = async (op, label) => {
+        bool caughtStorageException = false;
+        try {
+          await op();
+        } catch (StorageException ex) {
+          caughtStorageException = true;
+          AssertEq(label + " ErrorCode", ex.ErrorCode, StorageException.ErrorUnknown);
+        }
+        Assert(label + " threw StorageException", caughtStorageException);
+      };
+
+      await assertRootRejected(() => root.GetBytesAsync(1024), "Root.GetBytesAsync");
+      await assertRootRejected(() => root.GetMetadataAsync(), "Root.GetMetadataAsync");
+      await assertRootRejected(() => root.GetDownloadUrlAsync(), "Root.GetDownloadUrlAsync");
+      await assertRootRejected(() => root.DeleteAsync(), "Root.DeleteAsync");
+      await assertRootRejected(() => root.PutBytesAsync(new byte[] { 1, 2, 3 }), "Root.PutBytesAsync");
+      await assertRootRejected(() => root.GetStreamAsync(), "Root.GetStreamAsync");
+    }
+
+    // Verify that passing null for standard metadata fields or custom metadata keys in
+    // UpdateMetadataAsync serializes JSON null and clears/deletes those fields on the server.
+    async Task TestDeleteCustomMetadataAndClearStandardFields() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(METADATA_TEST_FILE_PATH);
+      var payload = Encoding.UTF8.GetBytes(SMALL_FILE_CONTENTS);
+      var initialChange = new MetadataChange {
+        CacheControl = "no-cache",
+        ContentLanguage = "en",
+        CustomMetadata = new Dictionary<string, string> {
+          { "keep_key", "keep_val" },
+          { "delete_key", "delete_val" }
+        }
+      };
+      var uploaded = await targetRef.PutBytesAsync(payload, initialChange);
+      AssertEq("initial CacheControl", uploaded.CacheControl, "no-cache");
+      AssertEq("initial ContentLanguage", uploaded.ContentLanguage, "en");
+      AssertEq("initial keep_key", uploaded.GetCustomMetadata("keep_key"), "keep_val");
+      AssertEq("initial delete_key", uploaded.GetCustomMetadata("delete_key"), "delete_val");
+
+      var clearChange = new MetadataChange {
+        CacheControl = null,
+        ContentLanguage = null,
+        CustomMetadata = new Dictionary<string, string> {
+          { "delete_key", null }
+        }
+      };
+      var updated = await targetRef.UpdateMetadataAsync(clearChange);
+      AssertEq("cleared CacheControl", updated.CacheControl, "");
+      AssertEq("cleared ContentLanguage", updated.ContentLanguage, "");
+      AssertEq("preserved keep_key", updated.GetCustomMetadata("keep_key"), "keep_val");
+      Assert("deleted delete_key is null", updated.GetCustomMetadata("delete_key") == null);
+    }
+
+    // Verify that opening more than MaxConcurrentDownloads (3) streams via GetStreamAsync()
+    // without disposing them does not starve subsequent downloads.
+    async Task TestUndisposedGetStreamAsyncDoesNotStarveDownloads() {
+      await TestUploadBytesSmallFile();
+      var targetRef = GetStorageReference();
+      var leakedStreams = new List<Stream>();
+      try {
+        for (int i = 0; i < 4; i++) {
+          leakedStreams.Add(await targetRef.GetStreamAsync());
+        }
+        var downloaded = await targetRef.GetBytesAsync(1024);
+        AssertEq("downloaded.Length", downloaded.Length, SMALL_FILE_CONTENTS.Length);
+      } finally {
+        foreach (var s in leakedStreams) {
+          s.Dispose();
+        }
+      }
+    }
+
+    // Verify PutStreamAsync from a seekable stream with a non-zero initial Position uploads only
+    // the remaining slice starting at stream.Position.
+    async Task TestUploadSeekableStreamFromNonZeroPosition() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(SMALL_FILE_PATH);
+      byte[] prefix = Encoding.UTF8.GetBytes("0123456789ABCDEF");
+      byte[] body = Encoding.UTF8.GetBytes(SMALL_FILE_CONTENTS);
+      byte[] combined = new byte[prefix.Length + body.Length];
+      Buffer.BlockCopy(prefix, 0, combined, 0, prefix.Length);
+      Buffer.BlockCopy(body, 0, combined, prefix.Length, body.Length);
+
+      using (var ms = new MemoryStream(combined, writable: false)) {
+        ms.Position = prefix.Length;
+        var metadata = await targetRef.PutStreamAsync(ms);
+        AssertEq("metadata.SizeBytes", metadata.SizeBytes, body.Length);
+      }
+
+      var downloaded = await targetRef.GetBytesAsync(1024);
+      AssertEq("downloaded", Encoding.UTF8.GetString(downloaded), SMALL_FILE_CONTENTS);
+    }
+
+    // Verify GetFileAsync downloads to a temporary file first and does not clobber a pre-existing
+    // destination file if the download fails.
+    async Task TestGetFileAsyncPreservesExistingFileOnFailure() {
+      string tempFile = Path.Combine(Path.GetTempPath(), "fb_storage_preserve_" + Guid.NewGuid().ToString("N") + ".txt");
+      const string originalContent = "original pre-existing file content";
+      try {
+        File.WriteAllText(tempFile, originalContent);
+        var missingRef = FirebaseStorage.DefaultInstance.GetReference(NON_EXISTANT_FILE_PATH);
+        bool faulted = false;
+        try {
+          await missingRef.GetFileAsync(tempFile);
+        } catch (StorageException) {
+          faulted = true;
+        }
+        Assert("missingRef.GetFileAsync faulted", faulted);
+        Assert("pre-existing destination file still exists", File.Exists(tempFile));
+        AssertEq("pre-existing destination file contents preserved",
+                 File.ReadAllText(tempFile), originalContent);
+        Assert("temp .fbdownload file cleaned up", !File.Exists(tempFile + ".fbdownload"));
+      } finally {
+        if (File.Exists(tempFile)) {
+          File.Delete(tempFile);
+        }
+      }
     }
   }
 }

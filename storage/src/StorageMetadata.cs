@@ -94,11 +94,13 @@ namespace Firebase.Storage {
         _creationTimeMillis = metadataToCopy._creationTimeMillis;
         _updatedTimeMillis = metadataToCopy._updatedTimeMillis;
         _md5Hash = metadataToCopy._md5Hash ?? "";
-        _cacheControl = metadataToCopy._cacheControl ?? "";
-        _contentDisposition = metadataToCopy._contentDisposition ?? "";
-        _contentEncoding = metadataToCopy._contentEncoding ?? "";
-        _contentLanguage = metadataToCopy._contentLanguage ?? "";
-        _contentType = metadataToCopy._contentType ?? "";
+        // Null is preserved for the user-settable fields: a MetadataChange that sets a field to
+        // null requests that the server clear it.
+        _cacheControl = metadataToCopy._cacheControl;
+        _contentDisposition = metadataToCopy._contentDisposition;
+        _contentEncoding = metadataToCopy._contentEncoding;
+        _contentLanguage = metadataToCopy._contentLanguage;
+        _contentType = metadataToCopy._contentType;
         _customMetadata = metadataToCopy._customMetadata != null
             ? new Dictionary<string, string>(metadataToCopy._customMetadata)
             : new Dictionary<string, string>();
@@ -270,37 +272,40 @@ namespace Firebase.Storage {
       return null;
     }
 
+    // Setting any of the following to null requests that the server clear the field; the value
+    // is serialized as JSON null by ToJsonDict().
     internal void SetCacheControl(string value) {
-      _cacheControl = value ?? "";
+      _cacheControl = value;
       _hasCacheControl = true;
     }
 
     internal void SetContentDisposition(string value) {
-      _contentDisposition = value ?? "";
+      _contentDisposition = value;
       _hasContentDisposition = true;
     }
 
     internal void SetContentEncoding(string value) {
-      _contentEncoding = value ?? "";
+      _contentEncoding = value;
       _hasContentEncoding = true;
     }
 
     internal void SetContentLanguage(string value) {
-      _contentLanguage = value ?? "";
+      _contentLanguage = value;
       _hasContentLanguage = true;
     }
 
     internal void SetContentType(string value) {
-      _contentType = value ?? "";
+      _contentType = value;
       _hasContentType = true;
     }
 
+    // A null value for a key requests that the server delete that custom metadata entry.
     internal void SetCustomMetadata(IDictionary<string, string> customMetadata) {
       _customMetadata = new Dictionary<string, string>();
       if (customMetadata != null) {
         foreach (var kv in customMetadata) {
           if (kv.Key != null) {
-            _customMetadata[kv.Key] = kv.Value ?? "";
+            _customMetadata[kv.Key] = kv.Value;
           }
         }
       }
@@ -456,20 +461,22 @@ namespace Firebase.Storage {
 
     internal Dictionary<string, object> ToJsonDict() {
       var dict = new Dictionary<string, object>();
+      // Explicitly-set fields are always emitted, including null, which the REST API treats
+      // as "clear this field" (JSON merge-patch semantics).
       if (_hasCacheControl || !string.IsNullOrEmpty(_cacheControl)) {
-        dict["cacheControl"] = _cacheControl ?? "";
+        dict["cacheControl"] = _cacheControl;
       }
       if (_hasContentDisposition || !string.IsNullOrEmpty(_contentDisposition)) {
-        dict["contentDisposition"] = _contentDisposition ?? "";
+        dict["contentDisposition"] = _contentDisposition;
       }
       if (_hasContentEncoding || !string.IsNullOrEmpty(_contentEncoding)) {
-        dict["contentEncoding"] = _contentEncoding ?? "";
+        dict["contentEncoding"] = _contentEncoding;
       }
       if (_hasContentLanguage || !string.IsNullOrEmpty(_contentLanguage)) {
-        dict["contentLanguage"] = _contentLanguage ?? "";
+        dict["contentLanguage"] = _contentLanguage;
       }
       if (_hasContentType || !string.IsNullOrEmpty(_contentType)) {
-        dict["contentType"] = _contentType ?? "";
+        dict["contentType"] = _contentType;
       }
       if (_hasCustomMetadata || (_customMetadata != null && _customMetadata.Count > 0)) {
         var customMetaDict = new Dictionary<string, object>();
