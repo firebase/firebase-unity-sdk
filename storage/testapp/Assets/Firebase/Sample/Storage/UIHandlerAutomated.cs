@@ -557,7 +557,7 @@ namespace Firebase.Sample.Storage {
       expectedStorageReference = GetStorageReference();
       return uploadFunc().ContinueWithOnMainThread(task => {
         return taskValidationDelegate(task);
-      });
+      }).Unwrap();
     }
 
     // Upload large file and ensure returned metadata is valid after upload.

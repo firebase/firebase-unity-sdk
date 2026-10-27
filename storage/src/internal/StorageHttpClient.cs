@@ -44,11 +44,20 @@ namespace Firebase.Storage.Internal {
     }
 
     private static HttpClient CreateDefaultHttpClient() {
+      try {
+        if (System.Net.ServicePointManager.DefaultConnectionLimit < MaxConnectionsPerServer) {
+          System.Net.ServicePointManager.DefaultConnectionLimit = MaxConnectionsPerServer;
+        }
+      } catch (Exception) {
+        // Ignore on runtimes where ServicePointManager is unsupported.
+      }
       var handler = new HttpClientHandler();
       try {
         handler.MaxConnectionsPerServer = MaxConnectionsPerServer;
-      } catch (PlatformNotSupportedException) {
-        // Some runtimes don't allow this to be configured; fall back to the default.
+      } catch (Exception) {
+        // MonoWebRequestHandler (Windows Mono / iOS IL2CPP) throws NotImplementedException;
+        // other runtimes may throw PlatformNotSupportedException. ServicePointManager fallback
+        // above covers MonoWebRequestHandler.
       }
       // Per-attempt stall detection is handled by StallWatchdog / SendWithExponentialBackoffAsync
       // so the client-wide timeout is disabled.
