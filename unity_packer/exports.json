@@ -1128,13 +1128,6 @@
         },
         {
           "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/StorageDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-storage-unity/"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
           "sections": [
             "samples"
           ],
@@ -1153,11 +1146,8 @@
           ]
         }
       ],
-      "exclude_paths": [
-        "Firebase/Sample/Auth/.*"
-      ],
       "includes": [
-        "FirebaseAuth.unitypackage",
+        "FirebaseApp.unitypackage",
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",

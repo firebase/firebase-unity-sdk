@@ -151,6 +151,12 @@
           ]
         },
         {
+          "importer": "DefaultImporter",
+          "paths": [
+            "Firebase/FirebaseApp/Internal/"
+          ]
+        },
+        {
           "labels": [
             "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
           ],
@@ -187,7 +193,7 @@
         "manifest": {
           "unity": "2022.1",
           "dependencies": {
-            "com.google.external-dependency-manager": "1.2.186"
+            "com.google.external-dependency-manager": "1.2.190"
           }
         }
       }
@@ -221,13 +227,6 @@
         },
         {
           "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/StorageDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-storage-unity/"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
           "sections": [
             "samples"
           ],
@@ -246,11 +245,8 @@
           ]
         }
       ],
-      "exclude_paths": [
-        "Firebase/Sample/Auth/.*"
-      ],
       "includes": [
-        "FirebaseAuth.unitypackage",
+        "FirebaseApp.unitypackage",
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
