@@ -158,6 +158,11 @@ namespace Firebase.AI
       /// </summary>
       public string Text { get; }
 
+      /// <summary>
+      /// Optional metadata used to guide speech generation, such as speaker and vocal style.
+      /// </summary>
+      public SpeechMetadata? SpeechMetadata { get; }
+
       private readonly bool? _isThought;
       public bool IsThought { get { return _isThought ?? false; } }
 
@@ -167,9 +172,11 @@ namespace Firebase.AI
       /// Creates a `TextPart` with the given text.
       /// </summary>
       /// <param name="text">The text value to use.</param>
-      public TextPart(string text)
+      /// <param name="speechMetadata">Optional SpeechMetadata used to guide speech generation.</param>
+      public TextPart(string text, SpeechMetadata? speechMetadata = null)
       {
         Text = text;
+        SpeechMetadata = speechMetadata;
         _isThought = null;
         _thoughtSignature = null;
       }
@@ -180,6 +187,7 @@ namespace Firebase.AI
       internal TextPart(string text, bool? isThought, string thoughtSignature)
       {
         Text = text;
+        SpeechMetadata = null;
         _isThought = isThought;
         _thoughtSignature = thoughtSignature;
       }
@@ -187,9 +195,10 @@ namespace Firebase.AI
       Dictionary<string, object> Part.ToJson()
       {
         var jsonDict = new Dictionary<string, object>() {
-        { "text", Text }
-      };
+          { "text", Text }
+        };
 
+        jsonDict.AddIfHasValue("speechMetadata", SpeechMetadata?.ToJson());
         jsonDict.AddIfHasValue("thought", _isThought);
         jsonDict.AddIfHasValue("thoughtSignature", _thoughtSignature);
         return jsonDict;

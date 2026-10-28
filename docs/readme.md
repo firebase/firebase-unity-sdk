@@ -109,20 +109,8 @@ Support
 
 Release Notes
 -------------
-### 14.0.0
+### Upcoming Changes
 -   Changes
-    - General: Update to Firebase C++ SDK version 14.0.0.
-    - General (Android): Update to Firebase Android BoM version 35.0.0.
-    - General (iOS): Update to Firebase Apple SDK version 13.0.1.
-    - General: **Breaking Change** Updated the minimum supported Unity version to Unity 2022 LTS (2022.3).
-    - General (iOS, tvOS, Desktop): iOS, tvOS, and macOS SDKs are now built using Xcode 26.4.
-    - General (iOS): Change library format to .xcframework, add support for arm64 simulators.
-    - General (iOS): Builds now require using Swift Packages for the Firebase iOS dependencies, instead of Cocoapods.
-    - General (Android): **Breaking Change** Updated minSdkVersion to 24.
-    - Auth: **Breaking Change** Standardized `Firebase.Auth.UserMetadata.CreationTimestamp` and `Firebase.Auth.UserMetadata.LastSignInTimestamp` to return `System.DateTime` (UTC) instead of `ulong` Unix epoch milliseconds, matching other Firebase Unity SDK timestamp properties.
-    - Firebase AI: Deprecated model tuning parameters (`temperature`, `topP`, `topK`, `candidateCount`, `presencePenalty`, and `frequencyPenalty`) in `GenerationConfig` and `LiveGenerationConfig` as they are unsupported in Gemini 3.x and later models.
-    - Firebase AI: Remove the deprecated fields: `Backend.VertexAI`, `CountTokensResponse.TotalBillableCharacters`, and `LiveSession.SendMediaChunksAsync`.
-    - Remote Config: Ensure ephemeral native containers are deterministically disposed and kept alive across P/Invoke calls in `SetDefaultsAsync`, `SetCustomSignalsAsync`, and settings/info accessors.
     - Storage: Rewrote the Cloud Storage SDK in pure C# on top of the Firebase Storage REST
       API. Removes the dependency on the internal C++ implementation and the native
       `FirebaseCppStorage` libraries, Android `firebase-storage-unity` AAR and iOS
@@ -155,6 +143,39 @@ Release Notes
       thread.
     - Storage: The Storage emulator is reached over plain `http://`; Android apps targeting the
       emulator must allow cleartext traffic to the emulator host.
+
+### 14.1.0
+-   Changes
+    - General: Update to Firebase C++ SDK version 14.1.0.
+    - General (Android): Update to Firebase Android BoM version 35.1.0.
+    - General (iOS): Update to Firebase Apple SDK version 13.1.1.
+    - Firestore **Security Update:** Removed root certificates associated with
+      compromised eMudhra intermediate CAs from the embedded trust store.
+      ([#16930](//github.com/firebase/firebase-ios-sdk/issues/16930)).
+    - Firebase AI: Added `SpeechMetadata` and the `TextPart.SpeechMetadata` property to specify the speaker and vocal style (such as `"cheerful"`) for a piece of text when generating speech.
+
+### 14.0.0
+-   Changes
+    - General: Update to Firebase C++ SDK version 14.0.0.
+    - General (Android): Update to Firebase Android BoM version 35.0.0.
+    - General (iOS): Update to Firebase Apple SDK version 13.0.1.
+    - General: **Breaking Change** Updated the minimum supported Unity version to Unity 2022 LTS (2022.3).
+    - General (iOS, tvOS, Desktop): iOS, tvOS, and macOS SDKs are now built using Xcode 26.4.
+    - General (iOS): Change library format to .xcframework, add support for arm64 simulators.
+    - General (iOS): Builds now require using Swift Packages for the Firebase iOS dependencies, instead of Cocoapods.
+    - General (Android): **Breaking Change** Updated minSdkVersion to 24.
+    - Auth: **Breaking Change** Standardized `Firebase.Auth.UserMetadata.CreationTimestamp` and `Firebase.Auth.UserMetadata.LastSignInTimestamp` to return `System.DateTime` (UTC) instead of `ulong` Unix epoch milliseconds, matching other Firebase Unity SDK timestamp properties.
+    - Firebase AI: Deprecated model tuning parameters (`temperature`, `topP`, `topK`, `candidateCount`, `presencePenalty`, and `frequencyPenalty`) in `GenerationConfig` and `LiveGenerationConfig` as they are unsupported in Gemini 3.x and later models.
+    - Firebase AI: Remove the deprecated fields: `Backend.VertexAI`, `CountTokensResponse.TotalBillableCharacters`, and `LiveSession.SendMediaChunksAsync`.
+    - Remote Config: Ensure ephemeral native containers are deterministically disposed and kept alive across P/Invoke calls in `SetDefaultsAsync`, `SetCustomSignalsAsync`, and settings/info accessors.
+
+### 13.17.1
+-   Changes
+    - General: Update to Firebase C++ SDK version 13.13.1.
+    - General (iOS): Update to Firebase Apple SDK version 12.19.3.
+    - [Firestore] Security Update: Removed compromised eMudhra intermediate CA
+      root certificates from embedded trust store.
+      ([#16930](https://github.com/firebase/firebase-ios-sdk/pull/16930))
 
 ### 13.17.0
 -   Changes
