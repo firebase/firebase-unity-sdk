@@ -16,7 +16,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
@@ -30,6 +32,18 @@ namespace Firebase.Storage.Internal {
   /// </summary>
   internal static class StorageHttpClient {
     private static readonly HttpMethod PatchMethod = new HttpMethod("PATCH");
+
+    private const int InitialBackoffMs = 1000;
+    private const int MaxBackoffMs = 30000;
+    private const int MaxJitterMs = 250;
+    private static readonly Random _jitterRandom = new Random();
+    private static readonly object _jitterLock = new object();
+
+    private static int GetRandomJitterMs() {
+      lock (_jitterLock) {
+        return _jitterRandom.Next(MaxJitterMs);
+      }
+    }
 
     // Upper bound on simultaneous connections to the Storage host. The scheduler allows up to
     // 2 uploads + 3 downloads + 5 commands in flight, so this must exceed 10 or commands queue
@@ -64,6 +78,135 @@ namespace Firebase.Storage.Internal {
       return new HttpClient(handler) {
         Timeout = Timeout.InfiniteTimeSpan
       };
+    }
+
+    // Sets the standard Firebase Storage REST headers on an HttpRequestMessage.
+    // Note: Firebase Storage backend rejects 'x-goog-api-client' (b/74440917) and requires
+    // 'X-Firebase-Storage-Version' instead.
+    internal static async Task SetStorageRequestHeaders(
+        HttpRequestMessage request,
+        FirebaseApp firebaseApp,
+        bool limitedUseAppCheckTokens = false) {
+      string version = FirebaseInterops.GetVersionInfoSdkVersion();
+      request.Headers.TryAddWithoutValidation("X-Firebase-Storage-Version", $"Unity/{version}");
+      if (firebaseApp != null) {
+        string appId = firebaseApp.Options?.AppId;
+        if (!string.IsNullOrEmpty(appId)) {
+          request.Headers.TryAddWithoutValidation("x-firebase-gmpid", appId);
+        }
+        if (FirebaseInterops.GetIsDataCollectionDefaultEnabled(firebaseApp)) {
+          if (!string.IsNullOrEmpty(appId)) {
+            request.Headers.TryAddWithoutValidation("X-Firebase-AppId", appId);
+          }
+          string appVersion = FirebaseInterops.GetApplicationVersion();
+          if (!string.IsNullOrEmpty(appVersion)) {
+            request.Headers.TryAddWithoutValidation("X-Firebase-AppVersion", appVersion);
+          }
+        }
+        await FirebaseInterops.AddFirebaseTokensAsync(
+            request, firebaseApp, "Firebase", limitedUseAppCheckTokens).ConfigureAwait(false);
+      }
+    }
+
+    // Returns true if the HTTP status code represents a transient / retryable server or rate-limit error.
+    internal static bool IsRetryableStatusCode(HttpStatusCode statusCode) {
+      int code = (int)statusCode;
+      return (code >= 500 && code < 600) ||
+             statusCode == HttpStatusCode.RequestTimeout ||
+             code == 429;
+    }
+
+    // Safely reads the response body as a string, returning an empty string on failure or null content.
+    internal static async Task<string> ReadResponseContentSafeAsync(HttpResponseMessage response) {
+      if (response?.Content == null) {
+        return string.Empty;
+      }
+      try {
+        return await response.Content.ReadAsStringAsync().ConfigureAwait(false) ?? string.Empty;
+      } catch (Exception) {
+        return string.Empty;
+      }
+    }
+
+    // Sends an HTTP request created by requestFactory with non-blocking exponential backoff and jitter,
+    // bounded by maxRetryTime. Treats offline/network exceptions as retryable with flat 1s polling.
+    // If attemptTimeout is positive, each individual attempt is abandoned (and retried) after that
+    // duration so a stalled connection cannot hang the operation past maxRetryTime.
+    internal static async Task<HttpResponseMessage> SendWithExponentialBackoffAsync(
+        HttpClient client,
+        Func<Task<HttpRequestMessage>> requestFactory,
+        TimeSpan maxRetryTime,
+        HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
+        CancellationToken cancellationToken = default,
+        TimeSpan attemptTimeout = default) {
+      var stopwatch = Stopwatch.StartNew();
+      int currentSleepMs = InitialBackoffMs;
+      Exception lastNetworkException = null;
+
+      while (true) {
+        cancellationToken.ThrowIfCancellationRequested();
+        HttpResponseMessage response = null;
+        bool networkUnavailable = false;
+        lastNetworkException = null;
+
+        CancellationTokenSource attemptCts = null;
+        CancellationToken attemptToken = cancellationToken;
+        if (attemptTimeout > TimeSpan.Zero) {
+          attemptCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+          attemptCts.CancelAfter(attemptTimeout);
+          attemptToken = attemptCts.Token;
+        }
+
+        try {
+          using (var request = await requestFactory().ConfigureAwait(false)) {
+            response = await client.SendAsync(request, completionOption, attemptToken)
+                .ConfigureAwait(false);
+          }
+        } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+          throw;
+        } catch (Exception ex) when (ex is HttpRequestException ||
+                                     ex is IOException ||
+                                     ex is SocketException ||
+                                     ex is OperationCanceledException) {
+          lastNetworkException = ex is OperationCanceledException
+              ? new HttpRequestException(
+                    $"Request timed out after {attemptTimeout.TotalSeconds:F0}s.", ex)
+              : ex;
+          networkUnavailable = true;
+        } finally {
+          attemptCts?.Dispose();
+        }
+
+        if (response != null) {
+          int code = (int)response.StatusCode;
+          // 2xx or 308 (GCS Resume Incomplete) are successful responses.
+          if ((code >= 200 && code < 300) || code == 308) {
+            return response;
+          }
+
+          if (!IsRetryableStatusCode(response.StatusCode)) {
+            return response;
+          }
+        }
+
+        int delayMs = currentSleepMs + GetRandomJitterMs();
+        if (stopwatch.Elapsed + TimeSpan.FromMilliseconds(delayMs) > maxRetryTime) {
+          if (response != null) {
+            return response;
+          }
+          throw lastNetworkException ??
+              new HttpRequestException("Network request timed out after retry deadline.");
+        }
+
+        response?.Dispose();
+        await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
+
+        if (networkUnavailable) {
+          currentSleepMs = InitialBackoffMs;
+        } else if (currentSleepMs < MaxBackoffMs) {
+          currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
+        }
+      }
     }
 
     internal static StoragePath GetStoragePath(StorageReference reference, StoragePath path = null) {
@@ -162,14 +305,14 @@ namespace Firebase.Storage.Internal {
       HttpResponseMessage response = null;
       try {
         try {
-          response = await HttpHelpers.SendWithExponentialBackoffAsync(
+          response = await SendWithExponentialBackoffAsync(
               Client,
               async () => {
                 var request = new HttpRequestMessage(method, url);
                 if (contentFactory != null) {
                   request.Content = contentFactory();
                 }
-                await HttpHelpers.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+                await SetStorageRequestHeaders(request, app).ConfigureAwait(false);
                 return request;
               },
               maxRetryTime,
@@ -191,12 +334,12 @@ namespace Firebase.Storage.Internal {
         int statusCode = (int)response.StatusCode;
         logger.LogMessage(LogLevel.Debug, $"{method.Method} {url} -> {statusCode}");
         if (!response.IsSuccessStatusCode) {
-          string errorBody = await HttpHelpers.ReadResponseContentSafeAsync(response)
+          string errorBody = await ReadResponseContentSafeAsync(response)
               .ConfigureAwait(false);
           throw StorageException.CreateFromHttpResponse(statusCode, errorBody);
         }
         return readBody
-            ? await HttpHelpers.ReadResponseContentSafeAsync(response).ConfigureAwait(false)
+            ? await ReadResponseContentSafeAsync(response).ConfigureAwait(false)
             : null;
       } finally {
         response?.Dispose();

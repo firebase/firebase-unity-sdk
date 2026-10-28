@@ -71,9 +71,37 @@ namespace Firebase.AI.Internal
 
     // Helper function to throw an exception if the Http Response indicates failure.
     // Useful as EnsureSuccessStatusCode can leave out relevant information.
-    internal static Task ValidateHttpResponse(HttpResponseMessage response)
+    internal static async Task ValidateHttpResponse(HttpResponseMessage response)
     {
-      return Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
+      if (response.IsSuccessStatusCode)
+      {
+        return;
+      }
+
+      // Status code indicates failure, try to read the content for more details
+      string errorContent = "No error content available.";
+      if (response.Content != null)
+      {
+        try
+        {
+          errorContent = await response.Content.ReadAsStringAsync();
+        }
+        catch (Exception readEx)
+        {
+          // Handle being unable to read the content
+          errorContent = $"Failed to read error content: {readEx.Message}";
+        }
+      }
+
+      // Construct the exception with as much information as possible.
+      var ex = new HttpRequestException(
+        $"HTTP request failed with status code: {(int)response.StatusCode} ({response.ReasonPhrase}).\n" +
+        $"Error Content: {errorContent}",
+        null
+      );
+      ex.Data["StatusCode"] = response.StatusCode;
+
+      throw ex;
     }
   }
 }

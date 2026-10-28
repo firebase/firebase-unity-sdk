@@ -16,8 +16,8 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Reflection;
 using System.Net.Http;
-using Firebase.Internal;
 
 namespace Firebase.Functions {
   /// <summary>
@@ -46,8 +46,17 @@ namespace Firebase.Functions {
     private readonly FirebaseApp _firebaseApp;
     private string _emulator_origin;
     private string _region;
+    private EventInfo _appDisposedEvent;
+    private MethodInfo _appDisposedMethod;
+    private Delegate _onAppDisposedHandler;
 
     private readonly HttpClient _httpClient;
+
+    private static void LogError(string message) {
+#if FUNCTIONS_DEBUG_LOGGING
+      UnityEngine.Debug.LogError(message);
+#endif
+    }
 
     // Key of this instance within _instances
     private string _instanceKey;
@@ -64,7 +73,31 @@ namespace Firebase.Functions {
       _httpClient = new HttpClient();
       _httpClient.Timeout = TimeSpan.FromSeconds(70);
 
-      FirebaseInterops.SubscribeAppDisposed(_firebaseApp, OnAppDisposed);
+      try {
+        var appType = _firebaseApp.GetType();
+        _appDisposedEvent = appType.GetEvent("AppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+        if (_appDisposedEvent != null) {
+          _appDisposedMethod = this.GetType().GetMethod("OnAppDisposed", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+          _onAppDisposedHandler = Delegate.CreateDelegate(_appDisposedEvent.EventHandlerType, this, _appDisposedMethod);
+
+          var addMethod = _appDisposedEvent.GetAddMethod(true);
+
+          if (addMethod != null) {
+            addMethod.Invoke(_firebaseApp, new object[] { _onAppDisposedHandler });
+          }
+          else {
+            LogError("Found the event, but couldn't find its hidden 'add' method.");
+          }
+        }
+        else {
+          LogError("AppDisposed event not found via reflection.");
+        }
+      }
+      catch (System.Exception ex) {
+        LogError($"Failed to attach to AppDisposed via reflection: {ex.Message}");
+      }
     }
 
     /// <summary>
@@ -83,7 +116,10 @@ namespace Firebase.Functions {
       System.GC.SuppressFinalize(this);
 
       _instances.TryRemove(_instanceKey, out _);
-      FirebaseInterops.UnsubscribeAppDisposed(_firebaseApp, OnAppDisposed);
+      if (_appDisposedEvent != null && _onAppDisposedHandler != null) {
+        var removeMethod = _appDisposedEvent.GetRemoveMethod(true);
+        removeMethod?.Invoke(_firebaseApp, new object[] { _onAppDisposedHandler });
+      }
       _httpClient.Dispose();
     }
 

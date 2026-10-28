@@ -36,7 +36,6 @@ namespace Firebase.Internal
   {
     // The cached fields for FirebaseApp reflection.
     private static PropertyInfo _dataCollectionProperty = null;
-    private static EventInfo _appDisposedEvent = null;
 
     // The various App Check types needed to retrieve the token, cached via reflection on startup.
     private static Type _appCheckType;
@@ -83,9 +82,6 @@ namespace Firebase.Internal
         _dataCollectionProperty = typeof(FirebaseApp).GetProperty(
             "IsDataCollectionDefaultEnabled",
             BindingFlags.Instance | BindingFlags.NonPublic);
-        _appDisposedEvent = typeof(FirebaseApp).GetEvent(
-            "AppDisposed",
-            BindingFlags.Instance | BindingFlags.NonPublic);
         if (_dataCollectionProperty == null)
         {
           LogError("Could not find FirebaseApp.IsDataCollectionDefaultEnabled property via reflection.");
@@ -120,42 +116,6 @@ namespace Firebase.Internal
       {
         LogError($"Error accessing 'IsDataCollectionDefaultEnabled': {e}");
         return false;
-      }
-    }
-
-    // Subscribes a handler to the internal FirebaseApp.AppDisposed event.
-    internal static void SubscribeAppDisposed(FirebaseApp firebaseApp, EventHandler handler)
-    {
-      if (firebaseApp == null || handler == null || _appDisposedEvent == null)
-      {
-        return;
-      }
-
-      try
-      {
-        _appDisposedEvent.GetAddMethod(nonPublic: true)?.Invoke(firebaseApp, new object[] { handler });
-      }
-      catch (Exception e)
-      {
-        LogError($"Error subscribing to 'AppDisposed': {e}");
-      }
-    }
-
-    // Unsubscribes a handler from the internal FirebaseApp.AppDisposed event.
-    internal static void UnsubscribeAppDisposed(FirebaseApp firebaseApp, EventHandler handler)
-    {
-      if (firebaseApp == null || handler == null || _appDisposedEvent == null)
-      {
-        return;
-      }
-
-      try
-      {
-        _appDisposedEvent.GetRemoveMethod(nonPublic: true)?.Invoke(firebaseApp, new object[] { handler });
-      }
-      catch (Exception e)
-      {
-        LogError($"Error unsubscribing from 'AppDisposed': {e}");
       }
     }
 

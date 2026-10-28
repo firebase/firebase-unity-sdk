@@ -26,7 +26,6 @@ using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Firebase.Internal;
 
 namespace Firebase.Storage.Internal {
   /// <summary>
@@ -407,8 +406,8 @@ namespace Firebase.Storage.Internal {
                 _storageTask.MarkCompleted();
                 return;
               }
-            } else if (!HttpHelpers.IsRetryableStatusCode(response.StatusCode)) {
-              string errorBody = await HttpHelpers.ReadResponseContentSafeAsync(response)
+            } else if (!StorageHttpClient.IsRetryableStatusCode(response.StatusCode)) {
+              string errorBody = await StorageHttpClient.ReadResponseContentSafeAsync(response)
                   .ConfigureAwait(false);
               throw StorageException.CreateFromHttpResponse(statusCode, errorBody);
             }
@@ -496,7 +495,7 @@ namespace Firebase.Storage.Internal {
       HttpResponseMessage initialResponse = null;
       try {
         try {
-          initialResponse = await HttpHelpers.SendWithExponentialBackoffAsync(
+          initialResponse = await StorageHttpClient.SendWithExponentialBackoffAsync(
               StorageHttpClient.Client,
               () => CreateMediaRequestAsync(app, 0),
               maxDownloadRetryTime,
@@ -518,7 +517,7 @@ namespace Firebase.Storage.Internal {
         }
 
         if (!initialResponse.IsSuccessStatusCode) {
-          string errorBody = await HttpHelpers.ReadResponseContentSafeAsync(initialResponse)
+          string errorBody = await StorageHttpClient.ReadResponseContentSafeAsync(initialResponse)
               .ConfigureAwait(false);
           int statusCode = (int)initialResponse.StatusCode;
           initialResponse.Dispose();
@@ -563,7 +562,7 @@ namespace Firebase.Storage.Internal {
       string objectUrl = StorageHttpClient.GetObjectUrl(_reference, _path);
       string mediaUrl = $"{objectUrl}?alt=media";
       var request = new HttpRequestMessage(HttpMethod.Get, mediaUrl);
-      await HttpHelpers.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+      await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
       if (resumeOffset > 0) {
         request.Headers.Range = new RangeHeaderValue(resumeOffset, null);
       }
@@ -808,11 +807,11 @@ namespace Firebase.Storage.Internal {
         }
 
         if (!response.IsSuccessStatusCode) {
-          string errorBody = await HttpHelpers.ReadResponseContentSafeAsync(response)
+          string errorBody = await StorageHttpClient.ReadResponseContentSafeAsync(response)
               .ConfigureAwait(false);
           int statusCode = (int)response.StatusCode;
           response.Dispose();
-          if (HttpHelpers.IsRetryableStatusCode((HttpStatusCode)statusCode)) {
+          if (StorageHttpClient.IsRetryableStatusCode((HttpStatusCode)statusCode)) {
             throw new IOException($"Transient HTTP status {statusCode} while reconnecting stream.");
           }
           throw StorageException.CreateFromHttpResponse(statusCode, errorBody);

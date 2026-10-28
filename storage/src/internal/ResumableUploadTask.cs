@@ -26,7 +26,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Firebase.Internal;
 
 namespace Firebase.Storage.Internal {
   /// <summary>
@@ -356,7 +355,7 @@ namespace Firebase.Storage.Internal {
             try {
               watchdog = new StallWatchdog(chunkToken);
               using (var request = new HttpRequestMessage(HttpMethod.Post, _sessionUri)) {
-                await HttpHelpers.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+                await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
                 request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
                 request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", uploadCommand);
                 request.Headers.TryAddWithoutValidation(
@@ -449,7 +448,7 @@ namespace Firebase.Storage.Internal {
                 _logger.LogMessage(LogLevel.Verbose,
                     $"Upload {uploadCommand} offset={uploadOffset} bytes={bytesToSend} -> {statusCode}");
                 if ((statusCode >= 200 && statusCode < 300) || statusCode == 308) {
-                  string responseBody = await HttpHelpers.ReadResponseContentSafeAsync(response)
+                  string responseBody = await StorageHttpClient.ReadResponseContentSafeAsync(response)
                       .ConfigureAwait(false);
                   string uploadStatus = GetHeaderFirstValue(response, "X-Goog-Upload-Status");
 
@@ -473,8 +472,8 @@ namespace Firebase.Storage.Internal {
                   break;
                 }
 
-                if (!HttpHelpers.IsRetryableStatusCode(response.StatusCode)) {
-                  string errorBody = await HttpHelpers.ReadResponseContentSafeAsync(response)
+                if (!StorageHttpClient.IsRetryableStatusCode(response.StatusCode)) {
+                  string errorBody = await StorageHttpClient.ReadResponseContentSafeAsync(response)
                       .ConfigureAwait(false);
                   throw StorageException.CreateFromHttpResponse(statusCode, errorBody);
                 }
@@ -564,11 +563,11 @@ namespace Firebase.Storage.Internal {
       HttpResponseMessage response = null;
       try {
         try {
-          response = await HttpHelpers.SendWithExponentialBackoffAsync(
+          response = await StorageHttpClient.SendWithExponentialBackoffAsync(
               StorageHttpClient.Client,
               async () => {
                 var request = new HttpRequestMessage(HttpMethod.Post, startUrl);
-                await HttpHelpers.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+                await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
                 request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
                 request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", "start");
                 request.Headers.TryAddWithoutValidation(
@@ -597,7 +596,7 @@ namespace Firebase.Storage.Internal {
           throw wrapped;
         }
 
-        string body = await HttpHelpers.ReadResponseContentSafeAsync(response).ConfigureAwait(false);
+        string body = await StorageHttpClient.ReadResponseContentSafeAsync(response).ConfigureAwait(false);
         int statusCode = (int)response.StatusCode;
         if (!((statusCode >= 200 && statusCode < 300) || statusCode == 308)) {
           throw StorageException.CreateFromHttpResponse(statusCode, body);
@@ -635,11 +634,11 @@ namespace Firebase.Storage.Internal {
       HttpResponseMessage response = null;
       try {
         try {
-          response = await HttpHelpers.SendWithExponentialBackoffAsync(
+          response = await StorageHttpClient.SendWithExponentialBackoffAsync(
               StorageHttpClient.Client,
               async () => {
                 var request = new HttpRequestMessage(HttpMethod.Post, _sessionUri);
-                await HttpHelpers.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+                await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
                 request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
                 request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", "query");
                 request.Content = new ByteArrayContent(Array.Empty<byte>());
@@ -660,7 +659,7 @@ namespace Firebase.Storage.Internal {
           throw wrapped;
         }
 
-        string body = await HttpHelpers.ReadResponseContentSafeAsync(response).ConfigureAwait(false);
+        string body = await StorageHttpClient.ReadResponseContentSafeAsync(response).ConfigureAwait(false);
         int statusCode = (int)response.StatusCode;
         if (!((statusCode >= 200 && statusCode < 300) || statusCode == 308)) {
           throw StorageException.CreateFromHttpResponse(statusCode, body);
@@ -771,7 +770,7 @@ namespace Firebase.Storage.Internal {
       _ = Task.Run(async () => {
         try {
           using (var request = new HttpRequestMessage(HttpMethod.Post, sessionUri)) {
-            await HttpHelpers.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+            await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
             request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
             request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", "cancel");
             request.Content = new ByteArrayContent(Array.Empty<byte>());

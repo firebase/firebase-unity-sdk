@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using Firebase.Internal;
 using Firebase.Storage.Internal;
 
 namespace Firebase.Storage {
