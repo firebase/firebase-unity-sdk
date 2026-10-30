@@ -26,6 +26,7 @@ set(firebase_app_editor_src
     src/XcodeProjectPatcher.cs
     src/ChooserDialog.cs
     src/Measurement.cs
+    src/MacOSEditorAnalytics.cs
     src/PythonExecutor.cs
     src/CategoryLogger.cs
     src/Utility.cs

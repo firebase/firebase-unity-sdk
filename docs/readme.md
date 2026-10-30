@@ -109,6 +109,15 @@ Support
 
 Release Notes
 -------------
+### Upcoming
+-   Changes
+    - Analytics (macOS): The macOS standalone player now sends Analytics
+      through the embedded Firebase Apple SDK instead of desktop stubs. This
+      requires an Apple app (`GoogleService-Info.plist`) in your project. In
+      the macOS Editor it stays off by default; turn it on with
+      `Window > Firebase > Analytics > Send macOS Editor Events to DebugView`
+      (Editor events are only sent to DebugView).
+
 ### 14.1.0
 -   Changes
     - General: Update to Firebase C++ SDK version 14.1.0.

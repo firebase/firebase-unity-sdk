@@ -28,6 +28,8 @@ set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "Set debug library postfix")
 option(FIREBASE_INCLUDE_UNITY "Build unity libraries" ON)
 option(FIREBASE_INCLUDE_MONO "Build mono libraries" OFF)
 option(FIREBASE_UNI_LIBRARY "Link all firebase libraries into one shared object" ON)
+option(FIREBASE_UNITY_MACOS_EMBED_APPLE_ANALYTICS
+       "Embed the Firebase Apple SDK in the macOS desktop library so Analytics uses it instead of stubs." ON)
 
 # Different options to enable/disable each library being included during
 # configuration.

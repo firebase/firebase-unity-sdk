@@ -172,9 +172,10 @@ namespace Firebase.Editor {
       // file.
 
       // If the project is set to build for Android, the google-services.json file
-      // is preferred.  If it is set to build for iOS+, the GoogleServices-Info.plist
-      // file is preferred.  When set to standalone desktop, it tries to match the
-      // current bundleid, and if it can't, it takes any plist/json file it can find.
+      // is preferred.  If it is set to build for iOS+ or macOS, the
+      // GoogleServices-Info.plist file is preferred.  When set to standalone desktop,
+      // it tries to match the current bundleid, and if it can't, it takes any
+      // plist/json file it can find.
 
       bool foundAtLeastOneFile = googleServicesFile != null || googleServiceInfoFile != null;
 
@@ -199,26 +200,28 @@ namespace Firebase.Editor {
 
       if (foundAtLeastOneFile) {
         // Regenerate google-services-desktop file.
-        switch (EditorUserBuildSettings.selectedBuildTargetGroup) {
-          case BuildTargetGroup.iOS:
-          case BuildTargetGroup.tvOS:
-            // If we're on iOS+, generate the desktop file from the plist, if possible.
-            if (googleServiceInfoFile != null) {
-              CreateDesktopJsonFromPlist(googleServiceInfoFile);
-            } else if (googleServicesFile != null) {
-              CreateDesktopJsonFromJson(googleServicesFile);
-            }
-            break;
-          case BuildTargetGroup.Android:
-          case BuildTargetGroup.Standalone:
-          default:
-            // Anywhere else, favor the Android json.
-            if (googleServicesFile != null) {
-              CreateDesktopJsonFromJson(googleServicesFile);
-            } else if (googleServiceInfoFile != null) {
-              CreateDesktopJsonFromPlist(googleServiceInfoFile);
-            }
-            break;
+        var buildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+        // iOS+ needs the plist. So do macOS players: they embed the Firebase
+        // Apple SDK for Analytics, which requires an Apple app ID.
+        bool preferPlist =
+            buildTargetGroup == BuildTargetGroup.iOS ||
+            buildTargetGroup == BuildTargetGroup.tvOS ||
+            (buildTargetGroup == BuildTargetGroup.Standalone &&
+             EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSX);
+        if (preferPlist) {
+          // Generate the desktop file from the plist, if possible.
+          if (googleServiceInfoFile != null) {
+            CreateDesktopJsonFromPlist(googleServiceInfoFile);
+          } else if (googleServicesFile != null) {
+            CreateDesktopJsonFromJson(googleServicesFile);
+          }
+        } else {
+          // Anywhere else, favor the Android json.
+          if (googleServicesFile != null) {
+            CreateDesktopJsonFromJson(googleServicesFile);
+          } else if (googleServiceInfoFile != null) {
+            CreateDesktopJsonFromPlist(googleServiceInfoFile);
+          }
         }
       } else {
         Debug.LogWarning(DocRef.CouldNotFindPlistOrJson);

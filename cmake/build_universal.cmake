@@ -78,6 +78,17 @@ function(build_uni TARGET_LINK_LIB_NAMES PROJECT_LIST_HEADER_VARIABLE)
     ${FIREBASE_SYSTEM_DEPS}
   )
 
+  # macOS desktop (Editor + standalone player): embed the Firebase Apple SDK
+  # so Analytics forwards to it instead of the desktop stubs. The helper comes
+  # from the C++ SDK (cmake/firebase_apple_desktop_sdk.cmake); it hides the
+  # SDK's symbols in the bundle, de-duplicates nanopb with Firestore and checks
+  # for duplicate symbols before linking.
+  if(APPLE AND NOT FIREBASE_IOS_BUILD AND FIREBASE_UNITY_MACOS_EMBED_APPLE_ANALYTICS
+     AND "firebase_analytics" IN_LIST TARGET_LINK_LIB_NAMES
+     AND COMMAND firebase_cpp_link_apple_analytics_sdk)
+    firebase_cpp_link_apple_analytics_sdk(firebase_app_uni)
+  endif()
+
   if(ANDROID)
     target_link_options(firebase_app_uni
       PRIVATE
