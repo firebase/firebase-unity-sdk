@@ -15,7 +15,7 @@
  */
 
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Firebase.Storage.Internal;
 
 namespace Firebase.Storage {
@@ -45,15 +45,18 @@ namespace Firebase.Storage {
   ///   configuration file downloaded from the web.
   /// </remarks>
   public sealed class FirebaseStorage {
-    // Thread-safe dictionary of FirebaseStorage instances indexed by "{app.Name}/{url}".
-    private static readonly ConcurrentDictionary<string, FirebaseStorage> storageByInstanceKey =
-        new ConcurrentDictionary<string, FirebaseStorage>();
+    // FirebaseStorage instances indexed by "{app.Name}/{url}". All access must hold the
+    // storageByInstanceKey lock so that GetInstance and Dispose are atomic with respect to
+    // each other.
+    private static readonly Dictionary<string, FirebaseStorage> storageByInstanceKey =
+        new Dictionary<string, FirebaseStorage>();
 
     // The FirebaseApp instance associated with this FirebaseStorage instance.
     private readonly FirebaseApp firebaseApp;
     // Key of this instance within storageByInstanceKey.
     private readonly string instanceKey;
-    // Tracks whether the associated FirebaseApp has been disposed.
+    // Tracks whether the associated FirebaseApp has been disposed. Guarded by
+    // storageByInstanceKey.
     private bool _disposed;
 
     // Logger for this module.
@@ -79,15 +82,17 @@ namespace Firebase.Storage {
 
     // Remove the reference to this instance from storageByInstanceKey and unsubscribe from AppDisposed.
     private void Dispose() {
-      if (_disposed) {
-        return;
+      lock (storageByInstanceKey) {
+        if (_disposed) {
+          return;
+        }
+        _disposed = true;
+        if (storageByInstanceKey.TryGetValue(instanceKey, out FirebaseStorage cached) &&
+            ReferenceEquals(cached, this)) {
+          storageByInstanceKey.Remove(instanceKey);
+        }
       }
-      _disposed = true;
       firebaseApp.AppDisposed -= OnAppDisposed;
-      if (storageByInstanceKey.TryGetValue(instanceKey, out FirebaseStorage cached) &&
-          ReferenceEquals(cached, this)) {
-        storageByInstanceKey.TryRemove(instanceKey, out _);
-      }
     }
 
     // Logger for this instance.
@@ -248,12 +253,15 @@ namespace Firebase.Storage {
       }
 
       string key = $"{app.Name}/{resolvedUrl ?? ""}";
-      return storageByInstanceKey.AddOrUpdate(
-          key,
-          k => new FirebaseStorage(app, bucket, k),
-          (k, existing) => (ReferenceEquals(existing.firebaseApp, app) && !existing._disposed)
-              ? existing
-              : new FirebaseStorage(app, bucket, k));
+      lock (storageByInstanceKey) {
+        if (storageByInstanceKey.TryGetValue(key, out FirebaseStorage existing) &&
+            ReferenceEquals(existing.firebaseApp, app) && !existing._disposed) {
+          return existing;
+        }
+        var storage = new FirebaseStorage(app, bucket, key);
+        storageByInstanceKey[key] = storage;
+        return storage;
+      }
     }
 
     /// <summary>
