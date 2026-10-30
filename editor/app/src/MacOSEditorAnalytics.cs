@@ -21,27 +21,36 @@ using UnityEngine;
 namespace Firebase.Editor {
 
 /// <summary>
-/// Controls whether Firebase Analytics in the macOS Unity Editor forwards to
-/// the Firebase Apple SDK embedded in the FirebaseCppApp bundle.
+/// Controls how Firebase Analytics behaves in the macOS Unity Editor, where it
+/// forwards to the Firebase Apple SDK embedded in the FirebaseCppApp bundle.
 /// </summary>
 /// <remarks>
-/// The native layer disables the Apple SDK inside the Editor by default:
-/// the Editor process reports the Editor's bundle ID and shares one
-/// NSUserDefaults / measurement store across every Unity project on the
-/// machine. When enabled here, events are sent in debug mode so they only
-/// show up in the Firebase console's DebugView. Standalone macOS players are
-/// unaffected and always use the Apple SDK.
+/// Analytics is on by default in the Editor, in debug mode: events go through
+/// the Apple SDK and appear in the Firebase console's DebugView, and Firebase
+/// excludes them from production reports and the BigQuery export. Turn debug
+/// mode off to send Editor events as regular traffic, or turn Analytics off
+/// in the Editor entirely. Standalone macOS players are unaffected.
 ///
-/// The setting is per machine (EditorPrefs) and is passed to the native layer
-/// through the FIREBASE_ANALYTICS_APPLE_SDK environment variable, which it
-/// reads when Analytics initializes (i.e. when entering play mode). A value
-/// set outside of Unity (e.g. by CI) takes precedence.
+/// Editor caveats: the Editor process is the app as far as macOS is concerned,
+/// so the native layer sets the bundle ID from the Firebase config, and the
+/// Apple SDK's local storage (including the app instance ID) is shared by
+/// every Unity project on the machine.
+///
+/// The settings are per machine (EditorPrefs) and are passed to the native
+/// layer through the FIREBASE_ANALYTICS_APPLE_SDK environment variable when
+/// entering play mode. Enabling / disabling applies the next time you enter
+/// play mode; the Apple SDK reads debug mode once per Editor process, so that
+/// change needs an Editor restart. A value set outside of Unity (e.g. by CI)
+/// takes precedence.
 /// </remarks>
 [InitializeOnLoad]
 internal static class MacOSEditorAnalytics {
-  private const string MenuPath =
-      "Window/Firebase/Analytics/Send macOS Editor Events to DebugView";
-  private const string PrefKey = "Firebase.Analytics.MacOSEditorAppleSdk";
+  private const string EnabledMenuPath =
+      "Window/Firebase/Analytics/macOS Editor: Analytics Enabled";
+  private const string DebugMenuPath =
+      "Window/Firebase/Analytics/macOS Editor: Debug Mode (DebugView)";
+  private const string EnabledPrefKey = "Firebase.Analytics.MacOSEditor.Enabled";
+  private const string DebugPrefKey = "Firebase.Analytics.MacOSEditor.DebugMode";
   // Must match kBackendModeEnvironmentVariable in the C++ SDK
   // (analytics/src/analytics_desktop_apple.h).
   internal const string EnvironmentVariable = "FIREBASE_ANALYTICS_APPLE_SDK";
@@ -53,13 +62,23 @@ internal static class MacOSEditorAnalytics {
     Apply();
   }
 
-  /// <summary>
-  /// Whether Analytics in the macOS Editor sends events to DebugView.
-  /// </summary>
+  /// <summary>Whether Analytics is enabled in the macOS Editor.</summary>
   internal static bool Enabled {
-    get { return EditorPrefs.GetBool(PrefKey, false); }
+    get { return EditorPrefs.GetBool(EnabledPrefKey, true); }
     set {
-      EditorPrefs.SetBool(PrefKey, value);
+      EditorPrefs.SetBool(EnabledPrefKey, value);
+      Apply();
+    }
+  }
+
+  /// <summary>
+  /// Whether Editor events are sent in debug mode (DebugView only, excluded
+  /// from production reports).
+  /// </summary>
+  internal static bool DebugMode {
+    get { return EditorPrefs.GetBool(DebugPrefKey, true); }
+    set {
+      EditorPrefs.SetBool(DebugPrefKey, value);
       Apply();
     }
   }
@@ -78,37 +97,55 @@ internal static class MacOSEditorAnalytics {
 
   private static void Apply() {
     if (!IsMacOSEditor || IsSetExternally) return;
-    if (Enabled) {
-      Environment.SetEnvironmentVariable(EnvironmentVariable, "debug");
-      Environment.SetEnvironmentVariable(OwnerVariable, "1");
-    } else {
-      Environment.SetEnvironmentVariable(EnvironmentVariable, null);
-      Environment.SetEnvironmentVariable(OwnerVariable, null);
-    }
+    string mode = !Enabled ? "disabled" : (DebugMode ? "debug" : "enabled");
+    Environment.SetEnvironmentVariable(EnvironmentVariable, mode);
+    Environment.SetEnvironmentVariable(OwnerVariable, "1");
   }
 
-  [MenuItem(MenuPath, false, 1100)]
-  private static void Toggle() {
-    if (IsSetExternally) {
-      Debug.LogWarning(String.Format(
-          "Firebase Analytics: {0} is set outside of Unity ({1}); the menu " +
-          "setting is ignored until it is unset.", EnvironmentVariable,
-          Environment.GetEnvironmentVariable(EnvironmentVariable)));
-      return;
-    }
+  private static bool WarnIfSetExternally() {
+    if (!IsSetExternally) return false;
+    Debug.LogWarning(String.Format(
+        "Firebase Analytics: {0} is set outside of Unity ({1}); the menu " +
+        "setting is ignored until it is unset.", EnvironmentVariable,
+        Environment.GetEnvironmentVariable(EnvironmentVariable)));
+    return true;
+  }
+
+  private const string PlayModeNote =
+      " This applies the next time you enter play mode.";
+  private const string RestartNote =
+      " Restart the Editor for the change to take effect.";
+
+  [MenuItem(EnabledMenuPath, false, 1100)]
+  private static void ToggleEnabled() {
+    if (WarnIfSetExternally()) return;
     Enabled = !Enabled;
-    Debug.Log(Enabled ?
-        "Firebase Analytics: macOS Editor events will be sent to DebugView " +
-        "from the next time you enter play mode. Switching Firebase projects " +
-        "requires restarting the Editor." :
-        "Firebase Analytics: macOS Editor events are disabled from the next " +
-        "time you enter play mode.");
+    Debug.Log((Enabled ?
+        "Firebase Analytics: enabled in the macOS Editor." :
+        "Firebase Analytics: disabled in the macOS Editor.") + PlayModeNote);
   }
 
-  [MenuItem(MenuPath, true)]
-  private static bool ToggleValidate() {
-    Menu.SetChecked(MenuPath, Enabled);
+  [MenuItem(EnabledMenuPath, true)]
+  private static bool ToggleEnabledValidate() {
+    Menu.SetChecked(EnabledMenuPath, Enabled);
     return IsMacOSEditor;
+  }
+
+  [MenuItem(DebugMenuPath, false, 1101)]
+  private static void ToggleDebugMode() {
+    if (WarnIfSetExternally()) return;
+    DebugMode = !DebugMode;
+    Debug.Log((DebugMode ?
+        "Firebase Analytics: macOS Editor events are sent in debug mode " +
+        "(DebugView only)." :
+        "Firebase Analytics: macOS Editor events are sent as regular " +
+        "traffic and count toward production reports.") + RestartNote);
+  }
+
+  [MenuItem(DebugMenuPath, true)]
+  private static bool ToggleDebugModeValidate() {
+    Menu.SetChecked(DebugMenuPath, DebugMode);
+    return IsMacOSEditor && Enabled;
   }
 }
 

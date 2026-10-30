@@ -111,12 +111,13 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
-    - Analytics (macOS): The macOS standalone player now sends Analytics
-      through the embedded Firebase Apple SDK instead of desktop stubs. This
-      requires an Apple app (`GoogleService-Info.plist`) in your project. In
-      the macOS Editor it stays off by default; turn it on with
-      `Window > Firebase > Analytics > Send macOS Editor Events to DebugView`
-      (Editor events are only sent to DebugView).
+    - Analytics (macOS): The macOS Editor and standalone player now send
+      Analytics through the embedded Firebase Apple SDK instead of desktop
+      stubs. This requires an Apple app (`GoogleService-Info.plist`) in your
+      project. In the Editor, events are sent in debug mode by default
+      (visible in DebugView, excluded from production reports). Use
+      `Window > Firebase > Analytics` to switch the Editor to regular traffic
+      or turn it off.
 
 ### 14.1.0
 -   Changes
