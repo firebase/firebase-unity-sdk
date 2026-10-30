@@ -61,7 +61,7 @@ namespace Firebase.Storage.Internal {
       _reference = Preconditions.CheckNotNull(reference, nameof(reference));
       _path = path;
       _logger = reference.Logger;
-      _storageTask = new StorageTask(cancelToken);
+      _storageTask = new StorageTask(cancelToken, reference.Storage?.DisposeToken ?? default);
       _downloadState = new DownloadState(reference, -1);
       _transferStateUpdater = new TransferStateUpdater<DownloadState>(
           reference,
@@ -147,9 +147,10 @@ namespace Firebase.Storage.Internal {
 
     internal async Task RunGetFileAsync(string destinationFilePath) {
       string localPath = ResolveLocalFilePath(destinationFilePath);
-      // Download into a sibling temp file and atomically move it into place on success so a
-      // failed or cancelled download never leaves a truncated file at the destination.
-      string tempPath = localPath + ".fbdownload";
+      // Download into a uniquely named sibling temp file and move it into place on success so a
+      // failed or cancelled download never leaves a truncated file at the destination, and two
+      // concurrent downloads to the same destination cannot clobber each other's partial data.
+      string tempPath = $"{localPath}.{Guid.NewGuid():N}.fbdownload";
       try {
         StorageHttpClient.EnsureObjectReference(_reference, _path, "GetFile");
         await StorageTaskScheduler.RunDownloadAsync(
@@ -475,9 +476,7 @@ namespace Firebase.Storage.Internal {
           _logger.LogMessage(LogLevel.Debug,
               $"Retrying download at offset {resumeOffset} in {delayMs} ms.");
           await Task.Delay(delayMs, _storageTask.CancellationToken).ConfigureAwait(false);
-          if (networkUnavailable) {
-            currentSleepMs = InitialBackoffMs;
-          } else if (currentSleepMs < MaxBackoffMs) {
+          if (currentSleepMs < MaxBackoffMs) {
             currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
           }
         }

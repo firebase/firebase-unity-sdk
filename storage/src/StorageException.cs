@@ -130,6 +130,21 @@ namespace Firebase.Storage {
       }
     }
 
+    // HTTP 404 is returned for a missing object, bucket or project alike; disambiguate using the
+    // server's error message (e.g. "Not Found.  Could not access bucket \"x\"") so that
+    // ErrorBucketNotFound / ErrorProjectNotFound are reachable, falling back to ErrorObjectNotFound.
+    internal static int RefineNotFoundErrorCode(string serverErrorMessage) {
+      if (!string.IsNullOrEmpty(serverErrorMessage)) {
+        if (serverErrorMessage.IndexOf("bucket", StringComparison.OrdinalIgnoreCase) >= 0) {
+          return ErrorBucketNotFound;
+        }
+        if (serverErrorMessage.IndexOf("project", StringComparison.OrdinalIgnoreCase) >= 0) {
+          return ErrorProjectNotFound;
+        }
+      }
+      return ErrorObjectNotFound;
+    }
+
     internal static StorageException CreateFromHttpResponse(
         int httpStatusCode, string responseBody, Exception innerException = null) {
       int errorCode = GetErrorCodeFromHttpStatusCode(httpStatusCode);
@@ -159,6 +174,10 @@ namespace Firebase.Storage {
         if (string.IsNullOrEmpty(serverErrorMessage)) {
           serverErrorMessage = responseBody;
         }
+      }
+
+      if (httpStatusCode == 404) {
+        errorCode = RefineNotFoundErrorCode(serverErrorMessage);
       }
 
       if (string.IsNullOrEmpty(serverErrorMessage)) {

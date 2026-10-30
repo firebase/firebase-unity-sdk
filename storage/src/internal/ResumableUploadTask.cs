@@ -75,7 +75,7 @@ namespace Firebase.Storage.Internal {
       _sessionUri = previousSessionUri;
       _streamBaseOffset = stream.CanSeek ? stream.Position : 0;
       _logger = reference.Logger;
-      _storageTask = new StorageTask(cancelToken);
+      _storageTask = new StorageTask(cancelToken, reference.Storage?.DisposeToken ?? default);
       _uploadState = new UploadState(reference, totalByteCount, previousSessionUri);
       _transferStateUpdater = new TransferStateUpdater<UploadState>(
           reference,
@@ -500,9 +500,7 @@ namespace Firebase.Storage.Internal {
             _logger.LogMessage(LogLevel.Debug,
                 $"Retrying upload chunk at offset {uploadOffset} in {delayMs} ms.");
             await Task.Delay(delayMs, _storageTask.CancellationToken).ConfigureAwait(false);
-            if (networkError) {
-              currentSleepMs = InitialBackoffMs;
-            } else if (currentSleepMs < MaxBackoffMs) {
+            if (currentSleepMs < MaxBackoffMs) {
               currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
             }
 

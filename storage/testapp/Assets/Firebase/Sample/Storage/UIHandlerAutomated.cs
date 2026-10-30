@@ -152,6 +152,7 @@ namespace Firebase.Sample.Storage {
         TestUndisposedGetStreamAsyncDoesNotStarveDownloads,
         TestUploadSeekableStreamFromNonZeroPosition,
         TestGetFileAsyncPreservesExistingFileOnFailure,
+        TestUploadMultiChunkAdaptiveAndDownload,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -1136,6 +1137,47 @@ namespace Firebase.Sample.Storage {
         if (prefix.Name == "prefix") foundPrefix = true;
       }
       Assert("foundPrefix", foundPrefix);
+    }
+
+    // Upload a 4 MiB pseudo-random payload so the adaptive chunker grows through several chunk
+    // sizes (256 KiB -> 512 KiB -> 1 MiB -> 2 MiB) rather than the two 256 KiB chunks the 512 KiB
+    // "large" file produces, then download it and compare byte-for-byte. Progress must be
+    // monotonic and finish at the payload length.
+    async Task TestUploadMultiChunkAdaptiveAndDownload() {
+      const int payloadSize = 4 * 1024 * 1024;
+      var payload = new byte[payloadSize];
+      new System.Random(0x5EED).NextBytes(payload);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(
+          "this_is_a/test_path/to_a/multi_chunk_binary_file.bin");
+
+      long lastReported = -1;
+      bool monotonic = true;
+      var metadata = await targetRef.PutBytesAsync(
+          payload,
+          null,
+          new StorageProgress<UploadState>(state => {
+            if (state.BytesTransferred < lastReported) {
+              monotonic = false;
+            }
+            lastReported = state.BytesTransferred;
+          }));
+      Assert("upload progress monotonic", monotonic);
+      AssertEq("final reported BytesTransferred", lastReported, (long)payloadSize);
+      AssertEq("metadata.SizeBytes", metadata.SizeBytes, (long)payloadSize);
+
+      byte[] downloaded = await targetRef.GetBytesAsync(0);
+      AssertEq("downloaded.Length", downloaded.Length, payloadSize);
+      bool identical = true;
+      for (int i = 0; i < payloadSize; i++) {
+        if (downloaded[i] != payload[i]) {
+          identical = false;
+          DebugLog(String.Format("Mismatch at byte {0}: expected {1}, got {2}",
+                                 i, payload[i], downloaded[i]));
+          break;
+        }
+      }
+      Assert("downloaded bytes identical", identical);
+      await targetRef.DeleteAsync();
     }
 
     // Verify resumable multi-chunk upload surfaces a non-null UploadSessionUri and can resume from it.

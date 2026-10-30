@@ -129,7 +129,9 @@ namespace Firebase.Storage.Internal {
     }
 
     // Sends an HTTP request created by requestFactory with non-blocking exponential backoff and jitter,
-    // bounded by maxRetryTime. Treats offline/network exceptions as retryable with flat 1s polling.
+    // bounded by maxRetryTime. Transport failures (offline, reset, timeout) and retryable HTTP
+    // statuses both back off exponentially (1s .. 30s) so an unreachable or flapping host is not
+    // polled every second for the whole retry window.
     // If attemptTimeout is positive, each individual attempt is abandoned (and retried) after that
     // duration so a stalled connection cannot hang the operation past maxRetryTime.
     internal static async Task<HttpResponseMessage> SendWithExponentialBackoffAsync(
@@ -146,7 +148,6 @@ namespace Firebase.Storage.Internal {
       while (true) {
         cancellationToken.ThrowIfCancellationRequested();
         HttpResponseMessage response = null;
-        bool networkUnavailable = false;
         lastNetworkException = null;
 
         CancellationTokenSource attemptCts = null;
@@ -172,7 +173,6 @@ namespace Firebase.Storage.Internal {
               ? new HttpRequestException(
                     $"Request timed out after {attemptTimeout.TotalSeconds:F0}s.", ex)
               : ex;
-          networkUnavailable = true;
         } finally {
           attemptCts?.Dispose();
         }
@@ -201,9 +201,7 @@ namespace Firebase.Storage.Internal {
         response?.Dispose();
         await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
 
-        if (networkUnavailable) {
-          currentSleepMs = InitialBackoffMs;
-        } else if (currentSleepMs < MaxBackoffMs) {
+        if (currentSleepMs < MaxBackoffMs) {
           currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
         }
       }

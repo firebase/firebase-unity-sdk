@@ -40,19 +40,28 @@ namespace Firebase.Storage.Internal {
     private readonly CancellationToken _userToken;
     private readonly CancellationTokenSource _masterCts;
     private readonly CancellationTokenRegistration _userTokenRegistration;
+    private readonly CancellationTokenRegistration _ownerTokenRegistration;
     private CancellationTokenSource _chunkCts;
     private TaskCompletionSource<bool> _pauseGate;
     private InternalState _state = InternalState.Queued;
     private bool _disposed;
 
-    internal StorageTask(CancellationToken userCancellationToken = default) {
+    /// <param name="userCancellationToken">Token supplied by the caller of the public API.</param>
+    /// <param name="ownerCancellationToken">
+    /// Token owned by the <see cref="FirebaseStorage" /> instance; cancelled when the instance or
+    /// its <see cref="FirebaseApp" /> is disposed so in-flight transfers are aborted.
+    /// </param>
+    internal StorageTask(CancellationToken userCancellationToken = default,
+                         CancellationToken ownerCancellationToken = default) {
       _userToken = userCancellationToken;
-      _masterCts = userCancellationToken.CanBeCanceled
-          ? CancellationTokenSource.CreateLinkedTokenSource(userCancellationToken)
-          : new CancellationTokenSource();
+      _masterCts = CancellationTokenSource.CreateLinkedTokenSource(
+          userCancellationToken, ownerCancellationToken);
 
       if (userCancellationToken.CanBeCanceled) {
         _userTokenRegistration = userCancellationToken.Register(OnExternalCancelRequested);
+      }
+      if (ownerCancellationToken.CanBeCanceled) {
+        _ownerTokenRegistration = ownerCancellationToken.Register(OnExternalCancelRequested);
       }
     }
 
@@ -335,6 +344,7 @@ namespace Firebase.Storage.Internal {
         _disposed = true;
       }
       _userTokenRegistration.Dispose();
+      _ownerTokenRegistration.Dispose();
       try {
         _chunkCts?.Dispose();
       } catch (ObjectDisposedException) {
