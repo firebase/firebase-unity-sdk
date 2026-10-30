@@ -500,7 +500,10 @@ namespace Firebase.Storage.Internal {
             _logger.LogMessage(LogLevel.Debug,
                 $"Retrying upload chunk at offset {uploadOffset} in {delayMs} ms.");
             await Task.Delay(delayMs, _storageTask.CancellationToken).ConfigureAwait(false);
-            if (currentSleepMs < MaxBackoffMs) {
+            if (networkError) {
+              // Flat 1s re-poll on transport failures (see StorageHttpClient.SendWithExponentialBackoffAsync).
+              currentSleepMs = InitialBackoffMs;
+            } else if (currentSleepMs < MaxBackoffMs) {
               currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
             }
 

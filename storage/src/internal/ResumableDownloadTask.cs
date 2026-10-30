@@ -476,7 +476,10 @@ namespace Firebase.Storage.Internal {
           _logger.LogMessage(LogLevel.Debug,
               $"Retrying download at offset {resumeOffset} in {delayMs} ms.");
           await Task.Delay(delayMs, _storageTask.CancellationToken).ConfigureAwait(false);
-          if (currentSleepMs < MaxBackoffMs) {
+          if (networkUnavailable) {
+            // Flat 1s re-poll on transport failures (see StorageHttpClient.SendWithExponentialBackoffAsync).
+            currentSleepMs = InitialBackoffMs;
+          } else if (currentSleepMs < MaxBackoffMs) {
             currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
           }
         }
