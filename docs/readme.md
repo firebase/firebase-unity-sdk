@@ -114,10 +114,10 @@ Release Notes
     - Analytics (macOS): The macOS Editor and standalone player now send
       Analytics through the embedded Firebase Apple SDK instead of desktop
       stubs. This requires an Apple app (`GoogleService-Info.plist`) in your
-      project. In the Editor, events are sent in debug mode by default
-      (visible in DebugView, excluded from production reports). Use
-      `Window > Firebase > Analytics` to switch the Editor to regular traffic
-      or turn it off.
+      project. In the Editor, events report the Unity Editor's bundle ID and
+      the Editor's local Analytics storage is shared across projects. Use
+      `Window > Firebase > Analytics` to turn on debug mode (DebugView) or turn
+      Editor Analytics off.
 
 ### 14.1.0
 -   Changes

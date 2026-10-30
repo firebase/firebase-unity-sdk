@@ -25,16 +25,14 @@ namespace Firebase.Editor {
 /// forwards to the Firebase Apple SDK embedded in the FirebaseCppApp bundle.
 /// </summary>
 /// <remarks>
-/// Analytics is on by default in the Editor, in debug mode: events go through
-/// the Apple SDK and appear in the Firebase console's DebugView, and Firebase
-/// excludes them from production reports and the BigQuery export. Turn debug
-/// mode off to send Editor events as regular traffic, or turn Analytics off
-/// in the Editor entirely. Standalone macOS players are unaffected.
+/// Analytics is on by default in the Editor and behaves like a standalone
+/// player; debug mode is off unless the developer turns it on. Nothing is
+/// passed to the native layer until one of these settings is changed.
 ///
-/// Editor caveats: the Editor process is the app as far as macOS is concerned,
-/// so the native layer sets the bundle ID from the Firebase config, and the
-/// Apple SDK's local storage (including the app instance ID) is shared by
-/// every Unity project on the machine.
+/// Editor caveats (inherent to the Firebase Apple SDK running inside the
+/// Editor process): events report the Unity Editor's bundle ID and app
+/// version, and the Apple SDK's local storage (including the app instance ID)
+/// is shared by every Unity project on the machine.
 ///
 /// The settings are per machine (EditorPrefs) and are passed to the native
 /// layer through the FIREBASE_ANALYTICS_APPLE_SDK environment variable when
@@ -73,10 +71,10 @@ internal static class MacOSEditorAnalytics {
 
   /// <summary>
   /// Whether Editor events are sent in debug mode (DebugView only, excluded
-  /// from production reports).
+  /// from production reports). Off by default.
   /// </summary>
   internal static bool DebugMode {
-    get { return EditorPrefs.GetBool(DebugPrefKey, true); }
+    get { return EditorPrefs.GetBool(DebugPrefKey, false); }
     set {
       EditorPrefs.SetBool(DebugPrefKey, value);
       Apply();
@@ -97,6 +95,12 @@ internal static class MacOSEditorAnalytics {
 
   private static void Apply() {
     if (!IsMacOSEditor || IsSetExternally) return;
+    if (!EditorPrefs.HasKey(EnabledPrefKey) && !EditorPrefs.HasKey(DebugPrefKey)) {
+      // Untouched defaults: leave the native layer on its own defaults.
+      return;
+    }
+    // "enabled" (rather than unset) also clears a debug flag persisted by an
+    // earlier debug-mode session.
     string mode = !Enabled ? "disabled" : (DebugMode ? "debug" : "enabled");
     Environment.SetEnvironmentVariable(EnvironmentVariable, mode);
     Environment.SetEnvironmentVariable(OwnerVariable, "1");
