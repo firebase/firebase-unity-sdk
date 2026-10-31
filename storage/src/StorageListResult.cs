@@ -15,32 +15,93 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using Firebase.Storage.Internal;
+using Google.MiniJSON;
 
 namespace Firebase.Storage {
   /// <summary>
   /// Represents the result of a List operation.
   /// </summary>
   public sealed class StorageListResult {
-    private readonly StorageListResultInternal internalResult;
     private readonly List<StorageReference> prefixes;
     private readonly List<StorageReference> items;
+    private readonly string nextPageToken;
 
-    internal StorageListResult(FirebaseStorage storage, StorageListResultInternal internalResult) {
-      this.internalResult = internalResult;
+    internal StorageListResult(IEnumerable<StorageReference> prefixes,
+                               IEnumerable<StorageReference> items,
+                               string nextPageToken) {
+      this.prefixes = prefixes != null
+          ? new List<StorageReference>(prefixes)
+          : new List<StorageReference>();
+      this.items = items != null
+          ? new List<StorageReference>(items)
+          : new List<StorageReference>();
+      this.nextPageToken = nextPageToken ?? string.Empty;
+    }
 
-      var prefixesCount = internalResult.prefixes_count();
-      prefixes = new List<StorageReference>((int)prefixesCount);
-      for (uint i = 0; i < prefixesCount; i++) {
-        prefixes.Add(new StorageReference(storage, internalResult.prefixes_get(i)));
+    internal static StorageListResult FromJson(string json, FirebaseStorage storage, string bucket) {
+      if (string.IsNullOrEmpty(json)) {
+        return new StorageListResult(null, null, string.Empty);
+      }
+      var dict = Json.Deserialize(json) as Dictionary<string, object>;
+      if (dict == null) {
+        throw new StorageException(
+            StorageException.ErrorUnknown, 0,
+            "The server did not return a valid JSON response. Contact Firebase support if this issue persists.");
+      }
+      return FromJsonDict(dict, storage, bucket);
+    }
+
+    internal static StorageListResult FromJsonDict(Dictionary<string, object> dict,
+                                                   FirebaseStorage storage,
+                                                   string bucket) {
+      var parsedPrefixes = new List<StorageReference>();
+      var parsedItems = new List<StorageReference>();
+      string parsedNextPageToken = string.Empty;
+
+      if (dict != null) {
+        if (dict.TryGetValue("prefixes", out var prefixesObj) && prefixesObj is IList prefixesList) {
+          foreach (var prefixEntry in prefixesList) {
+            if (prefixEntry == null) continue;
+            string prefixStr = Convert.ToString(prefixEntry, CultureInfo.InvariantCulture);
+            if (!string.IsNullOrEmpty(prefixStr)) {
+              parsedPrefixes.Add(
+                  new StorageReference(storage, new StoragePath(storage, bucket, prefixStr)));
+            }
+          }
+        }
+
+        if (dict.TryGetValue("items", out var itemsObj) && itemsObj is IList itemsList) {
+          foreach (var itemEntry in itemsList) {
+            if (itemEntry == null) continue;
+            if (itemEntry is string itemStr) {
+              if (!string.IsNullOrEmpty(itemStr)) {
+                parsedItems.Add(
+                    new StorageReference(storage, new StoragePath(storage, bucket, itemStr)));
+              }
+            } else if (itemEntry is IDictionary<string, object> itemDict) {
+              if (itemDict.TryGetValue("name", out var nameObj) && nameObj != null) {
+                string itemName = Convert.ToString(nameObj, CultureInfo.InvariantCulture);
+                if (!string.IsNullOrEmpty(itemName)) {
+                  parsedItems.Add(
+                      new StorageReference(storage, new StoragePath(storage, bucket, itemName)));
+                }
+              }
+            }
+          }
+        }
+
+        if (dict.TryGetValue("nextPageToken", out var nextPageTokenObj) &&
+            nextPageTokenObj != null) {
+          parsedNextPageToken =
+              Convert.ToString(nextPageTokenObj, CultureInfo.InvariantCulture) ?? string.Empty;
+        }
       }
 
-      var itemsCount = internalResult.items_count();
-      items = new List<StorageReference>((int)itemsCount);
-      for (uint i = 0; i < itemsCount; i++) {
-        items.Add(new StorageReference(storage, internalResult.items_get(i)));
-      }
+      return new StorageListResult(parsedPrefixes, parsedItems, parsedNextPageToken);
     }
 
     /// <summary>
@@ -56,6 +117,8 @@ namespace Firebase.Storage {
     /// <summary>
     /// Gets a page token that can be used to resume the List operation, or an empty string if there are no more results.
     /// </summary>
-    public string NextPageToken { get { return internalResult.next_page_token(); } }
+    public string NextPageToken { get { return nextPageToken; } }
+
+    internal string PageToken { get { return nextPageToken; } }
   }
 }

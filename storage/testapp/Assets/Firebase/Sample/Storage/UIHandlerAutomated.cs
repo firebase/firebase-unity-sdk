@@ -141,6 +141,22 @@ namespace Firebase.Sample.Storage {
         TestUploadLargeFileAndDownloadToFile,
         TestUploadLargeFileAndDownloadToFileWithCancelation,
         TestList,
+        TestUploadSessionUriAndResume,
+        TestUploadPartialSessionResume,
+        TestDownloadIntoSmallBuffer,
+        TestGetStreamAsyncDirect,
+        TestRealMidTransferCancelation,
+        TestConcurrentTransfersThrottling,
+        TestRootReferenceRejected,
+        TestDeleteCustomMetadataAndClearStandardFields,
+        TestUndisposedGetStreamAsyncDoesNotStarveDownloads,
+        TestUploadSeekableStreamFromNonZeroPosition,
+        TestGetFileAsyncPreservesExistingFileOnFailure,
+        TestUploadMultiChunkAdaptiveAndDownload,
+        TestControllerPauseResumeUpload,
+        TestControllerPauseResumeDownload,
+        TestControllerCancelUpload,
+        TestControllerPauseBeforeStart,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -546,7 +562,7 @@ namespace Firebase.Sample.Storage {
       expectedStorageReference = GetStorageReference();
       return uploadFunc().ContinueWithOnMainThread(task => {
         return taskValidationDelegate(task);
-      });
+      }).Unwrap();
     }
 
     // Upload large file and ensure returned metadata is valid after upload.
@@ -1125,6 +1141,564 @@ namespace Firebase.Sample.Storage {
         if (prefix.Name == "prefix") foundPrefix = true;
       }
       Assert("foundPrefix", foundPrefix);
+    }
+
+    // Upload a 4 MiB pseudo-random payload so the adaptive chunker grows through several chunk
+    // sizes (256 KiB -> 512 KiB -> 1 MiB -> 2 MiB) rather than the two 256 KiB chunks the 512 KiB
+    // "large" file produces, then download it and compare byte-for-byte. Progress must be
+    // monotonic and finish at the payload length.
+    async Task TestUploadMultiChunkAdaptiveAndDownload() {
+      const int payloadSize = 4 * 1024 * 1024;
+      var payload = new byte[payloadSize];
+      new System.Random(0x5EED).NextBytes(payload);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(
+          "this_is_a/test_path/to_a/multi_chunk_binary_file.bin");
+
+      long lastReported = -1;
+      bool monotonic = true;
+      var metadata = await targetRef.PutBytesAsync(
+          payload,
+          null,
+          new StorageProgress<UploadState>(state => {
+            if (state.BytesTransferred < lastReported) {
+              monotonic = false;
+            }
+            lastReported = state.BytesTransferred;
+          }));
+      Assert("upload progress monotonic", monotonic);
+      AssertEq("final reported BytesTransferred", lastReported, (long)payloadSize);
+      AssertEq("metadata.SizeBytes", metadata.SizeBytes, (long)payloadSize);
+
+      byte[] downloaded = await targetRef.GetBytesAsync(0);
+      AssertEq("downloaded.Length", downloaded.Length, payloadSize);
+      bool identical = true;
+      for (int i = 0; i < payloadSize; i++) {
+        if (downloaded[i] != payload[i]) {
+          identical = false;
+          DebugLog(String.Format("Mismatch at byte {0}: expected {1}, got {2}",
+                                 i, payload[i], downloaded[i]));
+          break;
+        }
+      }
+      Assert("downloaded bytes identical", identical);
+      await targetRef.DeleteAsync();
+    }
+
+    // Payload large enough that a transfer on a real device or CI runner reliably spans several
+    // seconds, giving the pause/cancel tests a window to act mid-transfer.
+    private const int CONTROLLER_TEST_PAYLOAD_SIZE = 8 * 1024 * 1024;
+
+    private byte[] MakeControllerTestPayload(int seed) {
+      var payload = new byte[CONTROLLER_TEST_PAYLOAD_SIZE];
+      new System.Random(seed).NextBytes(payload);
+      return payload;
+    }
+
+    private bool BytesIdentical(byte[] expected, byte[] actual) {
+      if (expected.Length != actual.Length) {
+        DebugLog(String.Format("Length mismatch: expected {0}, got {1}", expected.Length, actual.Length));
+        return false;
+      }
+      for (int i = 0; i < expected.Length; i++) {
+        if (expected[i] != actual[i]) {
+          DebugLog(String.Format("Mismatch at byte {0}: expected {1}, got {2}", i, expected[i], actual[i]));
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Pause an upload from its first mid-transfer progress callback, verify it stays parked with
+    // no further progress, resume it, and verify the object round-trips byte-for-byte.
+    async Task TestControllerPauseResumeUpload() {
+      var payload = MakeControllerTestPayload(0xC0FFEE);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(
+          "this_is_a/test_path/to_a/controller_pause_upload.bin");
+      var controller = new StorageController();
+      long bytesAtPause = -1;
+      long lastReported = -1;
+      var progress = new StorageProgress<UploadState>(state => {
+        lastReported = state.BytesTransferred;
+        if (bytesAtPause < 0 && state.BytesTransferred > 0 &&
+            state.BytesTransferred < payload.Length && controller.Pause()) {
+          bytesAtPause = state.BytesTransferred;
+        }
+      });
+
+      Assert("controller.IsInProgress before start", !controller.IsInProgress);
+      var uploadTask = targetRef.PutBytesAsync(payload, null, progress, default, null, controller);
+      Assert("controller.Reference", controller.Reference != null &&
+             controller.Reference.Path == targetRef.Path);
+
+      var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+      while (bytesAtPause < 0 && !uploadTask.IsCompleted && DateTime.UtcNow < deadline) {
+        await Task.Delay(50);
+      }
+      // Let any chunk that was in flight when Pause() was called finish aborting.
+      await Task.Delay(3000);
+      if (uploadTask.IsCompleted) {
+        DebugLog("WARNING: Upload finished before it could be paused; pause path not exercised.");
+      } else {
+        Assert("bytesAtPause >= 0", bytesAtPause >= 0);
+        Assert("controller.IsPaused", controller.IsPaused);
+        Assert("controller.IsInProgress while paused", controller.IsInProgress);
+        long bytesWhilePaused = lastReported;
+        await Task.Delay(2000);
+        Assert("upload still pending while paused", !uploadTask.IsCompleted);
+        AssertEq("no progress while paused", lastReported, bytesWhilePaused);
+        Assert("Pause() while paused returns false", !controller.Pause());
+        Assert("controller.Resume()", controller.Resume());
+        Assert("Resume() while running returns false", !controller.Resume());
+      }
+
+      var metadata = await uploadTask;
+      AssertEq("metadata.SizeBytes", metadata.SizeBytes, (long)payload.Length);
+      AssertEq("final BytesTransferred", lastReported, (long)payload.Length);
+      Assert("!controller.IsPaused after completion", !controller.IsPaused);
+      Assert("!controller.IsInProgress after completion", !controller.IsInProgress);
+      Assert("Pause() after completion returns false", !controller.Pause());
+
+      byte[] downloaded = await targetRef.GetBytesAsync(0);
+      Assert("downloaded bytes identical", BytesIdentical(payload, downloaded));
+      await targetRef.DeleteAsync();
+    }
+
+    // Pause a download mid-stream, verify it stays parked, resume it (which issues a Range
+    // request from the last byte written) and verify the bytes are identical.
+    async Task TestControllerPauseResumeDownload() {
+      var payload = MakeControllerTestPayload(0xD0C5);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(
+          "this_is_a/test_path/to_a/controller_pause_download.bin");
+      await targetRef.PutBytesAsync(payload);
+
+      var controller = new StorageController();
+      long bytesAtPause = -1;
+      long lastReported = -1;
+      var progress = new StorageProgress<DownloadState>(state => {
+        lastReported = state.BytesTransferred;
+        if (bytesAtPause < 0 && state.BytesTransferred > 0 &&
+            state.BytesTransferred < payload.Length && controller.Pause()) {
+          bytesAtPause = state.BytesTransferred;
+        }
+      });
+
+      var downloadTask = targetRef.GetBytesAsync(0, progress, default, controller);
+      var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+      while (bytesAtPause < 0 && !downloadTask.IsCompleted && DateTime.UtcNow < deadline) {
+        await Task.Delay(50);
+      }
+      await Task.Delay(3000);
+      if (downloadTask.IsCompleted) {
+        DebugLog("WARNING: Download finished before it could be paused; pause path not exercised.");
+      } else {
+        Assert("bytesAtPause >= 0", bytesAtPause >= 0);
+        Assert("controller.IsPaused", controller.IsPaused);
+        long bytesWhilePaused = lastReported;
+        await Task.Delay(2000);
+        Assert("download still pending while paused", !downloadTask.IsCompleted);
+        AssertEq("no progress while paused", lastReported, bytesWhilePaused);
+        Assert("controller.Resume()", controller.Resume());
+      }
+
+      byte[] downloaded = await downloadTask;
+      Assert("!controller.IsPaused after completion", !controller.IsPaused);
+      Assert("downloaded bytes identical", BytesIdentical(payload, downloaded));
+      await targetRef.DeleteAsync();
+    }
+
+    // Cancel an upload through the controller (no CancellationToken involved) and verify the
+    // task ends Canceled, exactly as it would with a CancellationToken.
+    async Task TestControllerCancelUpload() {
+      var payload = MakeControllerTestPayload(0xCA7CE1);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(
+          "this_is_a/test_path/to_a/controller_cancel_upload.bin");
+      var controller = new StorageController();
+      bool cancelRequested = false;
+      var uploadTask = targetRef.PutBytesAsync(
+          payload,
+          null,
+          new StorageProgress<UploadState>(state => {
+            if (!cancelRequested && state.BytesTransferred > 0) {
+              cancelRequested = controller.Cancel();
+            }
+          }),
+          default,
+          null,
+          controller);
+      try {
+        await uploadTask;
+        DebugLog("WARNING: Upload finished before it could be canceled; cancel path not exercised.");
+        await targetRef.DeleteAsync();
+      } catch (OperationCanceledException) {
+        Assert("uploadTask.IsCanceled", uploadTask.IsCanceled);
+        Assert("!uploadTask.IsFaulted", !uploadTask.IsFaulted);
+        Assert("controller.IsCanceled", controller.IsCanceled);
+        Assert("!controller.IsInProgress after cancel", !controller.IsInProgress);
+        Assert("Cancel() after cancel returns false", !controller.Cancel());
+        Assert("Resume() after cancel returns false", !controller.Resume());
+      }
+    }
+
+    // Pause() before the controller is attached must start the transfer parked; the task stays
+    // pending until Resume() is called. Also verifies a controller can be reused once its
+    // previous transfer has finished, and cannot be shared by two live transfers.
+    async Task TestControllerPauseBeforeStart() {
+      var payload = Encoding.UTF8.GetBytes(SMALL_FILE_CONTENTS);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(SMALL_FILE_PATH);
+      var controller = new StorageController();
+      Assert("Pause() before start", controller.Pause());
+      Assert("IsPaused before start", controller.IsPaused);
+
+      int progressCallbacks = 0;
+      var uploadTask = targetRef.PutBytesAsync(
+          payload, null, new StorageProgress<UploadState>(_ => progressCallbacks++), default, null,
+          controller);
+      await Task.Delay(2000);
+      Assert("upload still pending while paused from start", !uploadTask.IsCompleted);
+      AssertEq("no progress while paused from start", progressCallbacks, 0);
+      Assert("controller.IsPaused", controller.IsPaused);
+      Assert("controller.Resume()", controller.Resume());
+      var metadata = await uploadTask;
+      AssertEq("metadata.SizeBytes", metadata.SizeBytes, (long)payload.Length);
+
+      // Reuse the same controller for a second transfer now that the first has finished.
+      byte[] downloaded = await targetRef.GetBytesAsync(0, null, default, controller);
+      AssertEq("downloaded.Length", downloaded.Length, payload.Length);
+
+      // A controller still attached to a live transfer cannot be handed to a second one.
+      var busyController = new StorageController();
+      busyController.Pause();
+      var parked = targetRef.GetBytesAsync(0, null, default, busyController);
+      bool threw = false;
+      try {
+        targetRef.GetBytesAsync(0, null, default, busyController);
+      } catch (InvalidOperationException) {
+        threw = true;
+      }
+      Assert("second attach throws InvalidOperationException", threw);
+      busyController.Resume();
+      await parked;
+    }
+
+    // Verify resumable multi-chunk upload surfaces a non-null UploadSessionUri and can resume from it.
+    async Task TestUploadSessionUriAndResume() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(LARGE_FILE_PATH);
+      var payload = Encoding.UTF8.GetBytes(LARGE_FILE_CONTENTS);
+      Uri capturedSessionUri = null;
+      var metadata = await targetRef.PutBytesAsync(
+          payload,
+          null,
+          new StorageProgress<UploadState>(state => {
+            if (state.UploadSessionUri != null) {
+              capturedSessionUri = state.UploadSessionUri;
+            }
+          }));
+      Assert("capturedSessionUri != null", capturedSessionUri != null);
+      AssertEq("metadata.SizeBytes", metadata.SizeBytes, payload.Length);
+
+      var resumedMetadata = await targetRef.PutBytesAsync(
+          payload,
+          null,
+          null,
+          default,
+          capturedSessionUri);
+      Assert("resumedMetadata != null", resumedMetadata != null);
+      AssertEq("resumedMetadata.SizeBytes", resumedMetadata.SizeBytes, payload.Length);
+    }
+
+    // Non-seekable read-only stream over a byte array that throws an IOException once
+    // failAfterBytes have been read. Used to simulate an upload interrupted mid-transfer.
+    private sealed class FaultingNonSeekableStream : Stream {
+      private readonly byte[] data;
+      private readonly long failAfterBytes;
+      private long position;
+
+      public FaultingNonSeekableStream(byte[] data, long failAfterBytes = -1) {
+        this.data = data;
+        this.failAfterBytes = failAfterBytes;
+      }
+
+      public override bool CanRead => true;
+      public override bool CanSeek => false;
+      public override bool CanWrite => false;
+      public override long Length => throw new NotSupportedException();
+      public override long Position {
+        get => position;
+        set => throw new NotSupportedException();
+      }
+      public override void Flush() { }
+      public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+      public override void SetLength(long value) => throw new NotSupportedException();
+      public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+      public override int Read(byte[] buffer, int offset, int count) {
+        if (failAfterBytes >= 0 && position >= failAfterBytes) {
+          throw new IOException("Simulated upload stream failure.");
+        }
+        int available = (int)Math.Min(count, data.Length - position);
+        if (failAfterBytes >= 0) {
+          available = (int)Math.Min(available, failAfterBytes - position);
+        }
+        if (available <= 0) return 0;
+        Array.Copy(data, position, buffer, offset, available);
+        position += available;
+        return available;
+      }
+    }
+
+    // Interrupt a multi-chunk upload after the first chunk is committed (without canceling the
+    // session), then resume from the captured UploadSessionUri using a non-seekable stream and
+    // verify the final object matches the original payload byte-for-byte.
+    async Task TestUploadPartialSessionResume() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(LARGE_FILE_PATH);
+      var payload = Encoding.UTF8.GetBytes(LARGE_FILE_CONTENTS);
+      // The first chunk is 256 KB; fail while reading the second chunk.
+      long failAfter = 256 * 1024 + 4096;
+      Assert("payload larger than first chunk", payload.Length > failAfter);
+
+      Uri capturedSessionUri = null;
+      long lastBytesTransferred = 0;
+      bool faulted = false;
+      try {
+        await targetRef.PutStreamAsync(
+            new FaultingNonSeekableStream(payload, failAfter),
+            null,
+            new StorageProgress<UploadState>(state => {
+              if (state.UploadSessionUri != null) {
+                capturedSessionUri = state.UploadSessionUri;
+              }
+              lastBytesTransferred = Math.Max(lastBytesTransferred, state.BytesTransferred);
+            }));
+      } catch (IOException) {
+        faulted = true;
+      }
+      Assert("interrupted upload faulted", faulted);
+      Assert("capturedSessionUri != null", capturedSessionUri != null);
+      Assert("first chunk committed before fault", lastBytesTransferred >= 256 * 1024);
+
+      long firstResumedProgress = -1;
+      var resumedMetadata = await targetRef.PutStreamAsync(
+          new FaultingNonSeekableStream(payload),
+          null,
+          new StorageProgress<UploadState>(state => {
+            if (firstResumedProgress < 0 && state.BytesTransferred > 0) {
+              firstResumedProgress = state.BytesTransferred;
+            }
+          }),
+          default,
+          capturedSessionUri);
+      Assert("resumedMetadata != null", resumedMetadata != null);
+      AssertEq("resumedMetadata.SizeBytes", resumedMetadata.SizeBytes, payload.Length);
+      Assert("resume started from server offset",
+             firstResumedProgress >= 256 * 1024);
+
+      var downloaded = await targetRef.GetBytesAsync(0);
+      AssertEq("downloaded.Length", downloaded.Length, payload.Length);
+      for (int i = 0; i < payload.Length; ++i) {
+        if (downloaded[i] != payload[i]) {
+          Assert(String.Format("downloaded[{0}] matches payload", i), false);
+        }
+      }
+    }
+
+    // Verify GetBytesAsync faults with IndexOutOfRangeException when maxDownloadSizeBytes is exceeded.
+    Task TestDownloadIntoSmallBuffer() {
+      return TestUploadBytesSmallFile().ContinueWithOnMainThread((uploadTask) => {
+        if (uploadTask.IsFaulted || uploadTask.IsCanceled) return uploadTask;
+        return GetStorageReference().GetBytesAsync(SMALL_FILE_CONTENTS.Length - 1)
+            .ContinueWithOnMainThread((downloadTask) => {
+              Assert("downloadTask.IsFaulted", downloadTask.IsFaulted);
+              var innerException = (new List<Exception>(downloadTask.Exception.InnerExceptions))[0];
+              Assert("innerException is IndexOutOfRangeException",
+                     innerException is IndexOutOfRangeException);
+              return CompletedTask();
+            }).Unwrap();
+      }).Unwrap();
+    }
+
+    // Verify the zero-copy Task<Stream> GetStreamAsync() overload streams object contents directly.
+    async Task TestGetStreamAsyncDirect() {
+      await TestUploadBytesSmallFile();
+      var targetRef = GetStorageReference();
+      using (var stream = await targetRef.GetStreamAsync()) {
+        using (var reader = new StreamReader(stream, Encoding.UTF8)) {
+          string downloaded = await reader.ReadToEndAsync();
+          AssertEq("downloaded", downloaded, SMALL_FILE_CONTENTS);
+        }
+      }
+    }
+
+    // Verify mid-transfer CancellationToken cancellation transitions the task to IsCanceled (!IsFaulted).
+    async Task TestRealMidTransferCancelation() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(LARGE_FILE_PATH);
+      var payload = Encoding.UTF8.GetBytes(LARGE_FILE_CONTENTS);
+      using (var cts = new System.Threading.CancellationTokenSource()) {
+        var uploadTask = targetRef.PutBytesAsync(
+            payload,
+            null,
+            new StorageProgress<UploadState>(state => {
+              cts.Cancel();
+            }),
+            cts.Token);
+        try {
+          await uploadTask;
+          Assert("Expected OperationCanceledException", false);
+        } catch (OperationCanceledException) {
+          Assert("uploadTask.IsCanceled", uploadTask.IsCanceled);
+          Assert("!uploadTask.IsFaulted", !uploadTask.IsFaulted);
+        }
+      }
+    }
+
+    // Verify concurrency throttling gates parallel uploads, downloads, and metadata commands cleanly.
+    async Task TestConcurrentTransfersThrottling() {
+      string baseFolder = "test_concurrency_" + Guid.NewGuid().ToString() + "/";
+      var payload = Encoding.UTF8.GetBytes(SMALL_FILE_CONTENTS);
+      var uploadTasks = new List<Task<StorageMetadata>>();
+      var refs = new List<StorageReference>();
+
+      for (int i = 0; i < 4; i++) {
+        var itemRef = FirebaseStorage.DefaultInstance.GetReference(baseFolder + "item_" + i + ".txt");
+        refs.Add(itemRef);
+        uploadTasks.Add(itemRef.PutBytesAsync(payload));
+      }
+      await Task.WhenAll(uploadTasks);
+
+      var downloadTasks = new List<Task<byte[]>>();
+      foreach (var itemRef in refs) {
+        downloadTasks.Add(itemRef.GetBytesAsync(1024));
+      }
+      var downloadedResults = await Task.WhenAll(downloadTasks);
+      foreach (var resultBytes in downloadedResults) {
+        AssertEq("resultBytes.Length", resultBytes.Length, payload.Length);
+      }
+
+      var deleteTasks = new List<Task>();
+      foreach (var itemRef in refs) {
+        deleteTasks.Add(itemRef.DeleteAsync());
+      }
+      await Task.WhenAll(deleteTasks);
+    }
+
+    // Verify that operations targeting the bucket root (empty object path) fail fast with
+    // StorageException rather than issuing malformed HTTP requests to ".../o?name=".
+    async Task TestRootReferenceRejected() {
+      var root = FirebaseStorage.DefaultInstance.RootReference;
+      Func<Func<Task>, string, Task> assertRootRejected = async (op, label) => {
+        bool caughtStorageException = false;
+        try {
+          await op();
+        } catch (StorageException ex) {
+          caughtStorageException = true;
+          AssertEq(label + " ErrorCode", ex.ErrorCode, StorageException.ErrorUnknown);
+        }
+        Assert(label + " threw StorageException", caughtStorageException);
+      };
+
+      await assertRootRejected(() => root.GetBytesAsync(1024), "Root.GetBytesAsync");
+      await assertRootRejected(() => root.GetMetadataAsync(), "Root.GetMetadataAsync");
+      await assertRootRejected(() => root.GetDownloadUrlAsync(), "Root.GetDownloadUrlAsync");
+      await assertRootRejected(() => root.DeleteAsync(), "Root.DeleteAsync");
+      await assertRootRejected(() => root.PutBytesAsync(new byte[] { 1, 2, 3 }), "Root.PutBytesAsync");
+      await assertRootRejected(() => root.GetStreamAsync(), "Root.GetStreamAsync");
+    }
+
+    // Verify that passing null for standard metadata fields or custom metadata keys in
+    // UpdateMetadataAsync serializes JSON null and clears/deletes those fields on the server.
+    async Task TestDeleteCustomMetadataAndClearStandardFields() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(METADATA_TEST_FILE_PATH);
+      var payload = Encoding.UTF8.GetBytes(SMALL_FILE_CONTENTS);
+      var initialChange = new MetadataChange {
+        CacheControl = "no-cache",
+        ContentLanguage = "en",
+        CustomMetadata = new Dictionary<string, string> {
+          { "keep_key", "keep_val" },
+          { "delete_key", "delete_val" }
+        }
+      };
+      var uploaded = await targetRef.PutBytesAsync(payload, initialChange);
+      AssertEq("initial CacheControl", uploaded.CacheControl, "no-cache");
+      AssertEq("initial ContentLanguage", uploaded.ContentLanguage, "en");
+      AssertEq("initial keep_key", uploaded.GetCustomMetadata("keep_key"), "keep_val");
+      AssertEq("initial delete_key", uploaded.GetCustomMetadata("delete_key"), "delete_val");
+
+      var clearChange = new MetadataChange {
+        CacheControl = null,
+        ContentLanguage = null,
+        CustomMetadata = new Dictionary<string, string> {
+          { "delete_key", null }
+        }
+      };
+      var updated = await targetRef.UpdateMetadataAsync(clearChange);
+      AssertEq("cleared CacheControl", updated.CacheControl, "");
+      AssertEq("cleared ContentLanguage", updated.ContentLanguage, "");
+      AssertEq("preserved keep_key", updated.GetCustomMetadata("keep_key"), "keep_val");
+      Assert("deleted delete_key is null", updated.GetCustomMetadata("delete_key") == null);
+    }
+
+    // Verify that opening more than MaxConcurrentDownloads (3) streams via GetStreamAsync()
+    // without disposing them does not starve subsequent downloads.
+    async Task TestUndisposedGetStreamAsyncDoesNotStarveDownloads() {
+      await TestUploadBytesSmallFile();
+      var targetRef = GetStorageReference();
+      var leakedStreams = new List<Stream>();
+      try {
+        for (int i = 0; i < 4; i++) {
+          leakedStreams.Add(await targetRef.GetStreamAsync());
+        }
+        var downloaded = await targetRef.GetBytesAsync(1024);
+        AssertEq("downloaded.Length", downloaded.Length, SMALL_FILE_CONTENTS.Length);
+      } finally {
+        foreach (var s in leakedStreams) {
+          s.Dispose();
+        }
+      }
+    }
+
+    // Verify PutStreamAsync from a seekable stream with a non-zero initial Position uploads only
+    // the remaining slice starting at stream.Position.
+    async Task TestUploadSeekableStreamFromNonZeroPosition() {
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(SMALL_FILE_PATH);
+      byte[] prefix = Encoding.UTF8.GetBytes("0123456789ABCDEF");
+      byte[] body = Encoding.UTF8.GetBytes(SMALL_FILE_CONTENTS);
+      byte[] combined = new byte[prefix.Length + body.Length];
+      Buffer.BlockCopy(prefix, 0, combined, 0, prefix.Length);
+      Buffer.BlockCopy(body, 0, combined, prefix.Length, body.Length);
+
+      using (var ms = new MemoryStream(combined, writable: false)) {
+        ms.Position = prefix.Length;
+        var metadata = await targetRef.PutStreamAsync(ms);
+        AssertEq("metadata.SizeBytes", metadata.SizeBytes, body.Length);
+      }
+
+      var downloaded = await targetRef.GetBytesAsync(1024);
+      AssertEq("downloaded", Encoding.UTF8.GetString(downloaded), SMALL_FILE_CONTENTS);
+    }
+
+    // Verify GetFileAsync downloads to a temporary file first and does not clobber a pre-existing
+    // destination file if the download fails.
+    async Task TestGetFileAsyncPreservesExistingFileOnFailure() {
+      string tempFile = Path.Combine(Path.GetTempPath(), "fb_storage_preserve_" + Guid.NewGuid().ToString("N") + ".txt");
+      const string originalContent = "original pre-existing file content";
+      try {
+        File.WriteAllText(tempFile, originalContent);
+        var missingRef = FirebaseStorage.DefaultInstance.GetReference(NON_EXISTANT_FILE_PATH);
+        bool faulted = false;
+        try {
+          await missingRef.GetFileAsync(tempFile);
+        } catch (StorageException) {
+          faulted = true;
+        }
+        Assert("missingRef.GetFileAsync faulted", faulted);
+        Assert("pre-existing destination file still exists", File.Exists(tempFile));
+        AssertEq("pre-existing destination file contents preserved",
+                 File.ReadAllText(tempFile), originalContent);
+        Assert("temp .fbdownload file cleaned up", !File.Exists(tempFile + ".fbdownload"));
+      } finally {
+        if (File.Exists(tempFile)) {
+          File.Delete(tempFile);
+        }
+      }
     }
   }
 }

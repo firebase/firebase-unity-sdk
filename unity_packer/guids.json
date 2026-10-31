@@ -2548,7 +2548,14 @@
         "Firebase/m2repository/com/google/firebase/firebase-messaging-unity/14.0.0/firebase-messaging-unity-14.0.0.pom": "406b5a80d9e746a98b9aaa039a8b3ae1",
         "Firebase/m2repository/com/google/firebase/firebase-messaging-unity/14.0.0/firebase-messaging-unity-14.0.0.srcaar": "c018c0d2e26f4e5a90fb4d60cd541cac",
         "Firebase/m2repository/com/google/firebase/firebase-storage-unity/14.0.0/firebase-storage-unity-14.0.0.pom": "026a365084a04486bf2d05ba85fa56d2",
-        "Firebase/m2repository/com/google/firebase/firebase-storage-unity/14.0.0/firebase-storage-unity-14.0.0.srcaar": "17e0ff7c9ed74df39182fc68282736ac"
+        "Firebase/m2repository/com/google/firebase/firebase-storage-unity/14.0.0/firebase-storage-unity-14.0.0.srcaar": "17e0ff7c9ed74df39182fc68282736ac",
+        "com.google.firebase.app/Firebase/FirebaseApp": "2b5721de31ef4d3bba28b8d057038461",
+        "com.google.firebase.app/Firebase/FirebaseApp/Internal": "0df87b0e109c41529def372daf96a0ff",
+        "com.google.firebase.app/Firebase/m2repository/com/google/firebase/firebase-app-unity/14.0.0": "72c2e32d08f54ea593a8ca98463e78ae",
+        "com.google.firebase.app/Plugins/tvOS": "0d74dbcbe0bd499aa68e8e15d68effcf",
+        "com.google.firebase.app/Plugins/tvOS/Firebase": "7b6f57da853e46ebb40931ce0a4397c5",
+        "com.google.firebase.storage/Firebase/FirebaseStorage": "21804d6c5c104039b9673aca72d7e1d6",
+        "com.google.firebase.storage/Firebase/FirebaseStorage/internal": "18d7f1a62dee4dffa13527084622c158"
     },
     "14.1.0": {
         "Firebase/Editor/FirebaseAI_version-14.1.0_manifest.txt": "dfc7ac2f878142ff8c86a7ae1838a0b0",
@@ -2587,7 +2594,8 @@
         "Firebase/m2repository/com/google/firebase/firebase-messaging-unity/14.1.0/firebase-messaging-unity-14.1.0.pom": "f689d2b547ea4f9b856f48bb393f1535",
         "Firebase/m2repository/com/google/firebase/firebase-messaging-unity/14.1.0/firebase-messaging-unity-14.1.0.srcaar": "d52a1e2215ba4fa2841924d85ac35539",
         "Firebase/m2repository/com/google/firebase/firebase-storage-unity/14.1.0/firebase-storage-unity-14.1.0.pom": "f529f8cfa6004d3a954faac50f8ba4a7",
-        "Firebase/m2repository/com/google/firebase/firebase-storage-unity/14.1.0/firebase-storage-unity-14.1.0.srcaar": "0d1610ac7a9d41ea96fa9904e0bfa05a"
+        "Firebase/m2repository/com/google/firebase/firebase-storage-unity/14.1.0/firebase-storage-unity-14.1.0.srcaar": "0d1610ac7a9d41ea96fa9904e0bfa05a",
+        "com.google.firebase.app/Firebase/m2repository/com/google/firebase/firebase-app-unity/14.1.0": "44e363d4ce094d05ad2693b3df70d792"
     },
     "3.0.0": {
         "Firebase/Editor/FirebaseAnalytics_v3.0.0_manifest.txt": "13c9ba8e35174de78ad7ca9a48cba9f0",

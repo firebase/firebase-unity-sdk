@@ -65,7 +65,7 @@ namespace Firebase.Storage {
     /// </summary>
     public string ContentLanguage {
       get { return metadata.ContentLanguage; }
-      set { metadata.Internal.ContentLanguage = value; }
+      set { metadata.SetContentLanguage(value); }
     }
 
     /// <summary>
@@ -74,7 +74,7 @@ namespace Firebase.Storage {
     /// </summary>
     public string ContentEncoding {
       get { return metadata.ContentEncoding; }
-      set { metadata.Internal.ContentEncoding = value; }
+      set { metadata.SetContentEncoding(value); }
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ namespace Firebase.Storage {
     /// </summary>
     public string ContentDisposition {
       get { return metadata.ContentDisposition; }
-      set { metadata.Internal.ContentDisposition = value; }
+      set { metadata.SetContentDisposition(value); }
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ namespace Firebase.Storage {
     /// </summary>
     public string CacheControl {
       get { return metadata.CacheControl; }
-      set { metadata.Internal.CacheControl = value; }
+      set { metadata.SetCacheControl(value); }
     }
 
     /// <summary>
@@ -107,17 +107,8 @@ namespace Firebase.Storage {
     ///           }
     /// </summary>
     public IDictionary<string, string> CustomMetadata {
-     set {
-       var metadataMap = new StringStringMap();
-       foreach (var kv in value) metadataMap[kv.Key] = kv.Value;
-       metadata.Internal.CustomMetadata = metadataMap;
-     }
-
-     get {
-       var metadataMap = new Dictionary<string, string>();
-       foreach (var kv in metadata.Internal.CustomMetadata) metadataMap[kv.Key] = kv.Value;
-       return metadataMap;
-     }
+      set { metadata.SetCustomMetadata(value); }
+      get { return metadata.GetCustomMetadataCopy(); }
     }
 
     /// <summary>Sets custom metadata</summary>
@@ -135,7 +126,7 @@ namespace Firebase.Storage {
     /// </summary>
     public string ContentType {
       get { return metadata.ContentType; }
-      set { metadata.Internal.ContentType = value; }
+      set { metadata.SetContentType(value); }
     }
   }
 }

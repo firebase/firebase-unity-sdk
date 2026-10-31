@@ -16,10 +16,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
+using System.Globalization;
 using System.Net;
-using Firebase.Storage.Internal;
+using Google.MiniJSON;
 
 namespace Firebase.Storage {
   /// <summary>
@@ -28,6 +27,7 @@ namespace Firebase.Storage {
   /// </summary>
   [Serializable]
   public sealed class StorageException : Exception {
+    internal const int ErrorNone = 0;
     /// <returns>An unknown error has occurred. See the inner exception or
     /// <see cref="StorageException.HttpResultCode" /> for more information.
     /// </returns>
@@ -43,8 +43,10 @@ namespace Firebase.Storage {
     public const int ErrorQuotaExceeded = -13013;
     /// <returns>The given signin credentials are not valid.</returns>
     public const int ErrorNotAuthenticated = -13020;
+    internal const int ErrorUnauthenticated = ErrorNotAuthenticated;
     /// <returns>The given signin credentials are not allowed to perform this operation.</returns>
     public const int ErrorNotAuthorized = -13021;
+    internal const int ErrorUnauthorized = ErrorNotAuthorized;
     /// <returns>The retry timeout was exceeded.  Check your network connection
     /// or increase the value of one of <see cref="FirebaseStorage.MaxDownloadRetryTime" />
     /// <see cref="FirebaseStorage.MaxUploadRetryTime" />
@@ -53,43 +55,42 @@ namespace Firebase.Storage {
     public const int ErrorRetryLimitExceeded = -13030;
     /// <returns>There was an error validating the operation due to a checksum failure.</returns>
     public const int ErrorInvalidChecksum = -13031;
+    internal const int ErrorNonMatchingChecksum = ErrorInvalidChecksum;
     /// <returns>The operation was canceled from the client.</returns>
     public const int ErrorCanceled = -13040;
+    internal const int ErrorCancelled = ErrorCanceled;
 
-    // Maps C++ error codes to StorageException errors and HTTP status code (where appropriate).
-    // NOTE: The C++ implementation does not forward HTTP status codes to the user visible API.
-    // Since the Mono implementation exposes HTTP status codes in StorageException, the following
-    // table adds the HTTP status code for each error where appropriate.
-    private static readonly Dictionary<ErrorInternal, Tuple<int, HttpStatusCode>>
+    // Maps legacy C++ error codes (firebase::storage::Error) to StorageException errors and HTTP status code.
+    private static readonly Dictionary<int, Tuple<int, HttpStatusCode>>
       errorToStorageErrorAndHttpStatusCode =
-        new Dictionary<ErrorInternal, Tuple<int, HttpStatusCode>>() {
-      { ErrorInternal.ErrorObjectNotFound,
+        new Dictionary<int, Tuple<int, HttpStatusCode>>() {
+      { 2, // ErrorObjectNotFound
         new Tuple<int, HttpStatusCode>(StorageException.ErrorObjectNotFound,
                                        HttpStatusCode.NotFound) },
-      { ErrorInternal.ErrorBucketNotFound,
+      { 3, // ErrorBucketNotFound
         new Tuple<int, HttpStatusCode>(StorageException.ErrorBucketNotFound,
                                        HttpStatusCode.NotFound) },
-      { ErrorInternal.ErrorProjectNotFound,
+      { 4, // ErrorProjectNotFound
         new Tuple<int, HttpStatusCode>(StorageException.ErrorProjectNotFound,
                                        HttpStatusCode.NotFound) },
-      { ErrorInternal.ErrorQuotaExceeded,
-        new Tuple<int, HttpStatusCode>(StorageException.ErrorProjectNotFound,
+      { 5, // ErrorQuotaExceeded
+        new Tuple<int, HttpStatusCode>(StorageException.ErrorQuotaExceeded,
                                        HttpStatusCode.ServiceUnavailable) },
-      { ErrorInternal.ErrorUnauthenticated,
+      { 6, // ErrorUnauthenticated
         new Tuple<int, HttpStatusCode>(StorageException.ErrorNotAuthenticated,
                                        HttpStatusCode.Unauthorized) },
-      { ErrorInternal.ErrorUnauthorized,
+      { 7, // ErrorUnauthorized
         new Tuple<int, HttpStatusCode>(StorageException.ErrorNotAuthorized,
                                        HttpStatusCode.Unauthorized) },
-      { ErrorInternal.ErrorRetryLimitExceeded,
+      { 8, // ErrorRetryLimitExceeded
         new Tuple<int, HttpStatusCode>(StorageException.ErrorRetryLimitExceeded,
                                        HttpStatusCode.Conflict) },
-      { ErrorInternal.ErrorNonMatchingChecksum,
+      { 9, // ErrorNonMatchingChecksum
         new Tuple<int, HttpStatusCode>(StorageException.ErrorInvalidChecksum,
                                        HttpStatusCode.Conflict) },
-      { ErrorInternal.ErrorDownloadSizeExceeded,
+      { 10, // ErrorDownloadSizeExceeded
         new Tuple<int, HttpStatusCode>(StorageException.ErrorUnknown, 0) },
-      { ErrorInternal.ErrorCancelled,
+      { 11, // ErrorCancelled
         new Tuple<int, HttpStatusCode>(StorageException.ErrorCanceled, 0) },
     };
 
@@ -97,11 +98,93 @@ namespace Firebase.Storage {
     private static readonly Tuple<int, HttpStatusCode> unknownError =
       new Tuple<int, HttpStatusCode>(StorageException.ErrorUnknown, HttpStatusCode.Ambiguous);
 
-    internal StorageException(int errorCode, int httpResultCode, string errorMessage)
+    internal StorageException(int errorCode, int httpResultCode, string errorMessage,
+                              Exception innerException = null)
       : base(String.IsNullOrEmpty(errorMessage) ?
-             GetErrorMessageForCode(errorCode) : errorMessage) {
+             GetErrorMessageForCode(errorCode) : errorMessage,
+             innerException) {
       ErrorCode = errorCode;
       HttpResultCode = httpResultCode;
+    }
+
+    internal static int GetErrorCodeFromHttpStatusCode(int httpStatusCode) {
+      if (httpStatusCode == 0 || (httpStatusCode >= 200 && httpStatusCode < 300) ||
+          httpStatusCode == 308) {
+        return ErrorNone;
+      }
+      switch (httpStatusCode) {
+        case 401:
+          return ErrorUnauthenticated;
+        case 403:
+          return ErrorUnauthorized;
+        case 404:
+          return ErrorObjectNotFound;
+        case 402:
+        case 429:
+          return ErrorQuotaExceeded;
+        case -2:
+        case 408:
+          return ErrorRetryLimitExceeded;
+        default:
+          return ErrorUnknown;
+      }
+    }
+
+    // HTTP 404 is returned for a missing object, bucket or project alike; disambiguate using the
+    // server's error message (e.g. "Not Found.  Could not access bucket \"x\"") so that
+    // ErrorBucketNotFound / ErrorProjectNotFound are reachable, falling back to ErrorObjectNotFound.
+    internal static int RefineNotFoundErrorCode(string serverErrorMessage) {
+      if (!string.IsNullOrEmpty(serverErrorMessage)) {
+        if (serverErrorMessage.IndexOf("bucket", StringComparison.OrdinalIgnoreCase) >= 0) {
+          return ErrorBucketNotFound;
+        }
+        if (serverErrorMessage.IndexOf("project", StringComparison.OrdinalIgnoreCase) >= 0) {
+          return ErrorProjectNotFound;
+        }
+      }
+      return ErrorObjectNotFound;
+    }
+
+    internal static StorageException CreateFromHttpResponse(
+        int httpStatusCode, string responseBody, Exception innerException = null) {
+      int errorCode = GetErrorCodeFromHttpStatusCode(httpStatusCode);
+      if (errorCode == ErrorNone) {
+        errorCode = ErrorUnknown;
+      }
+
+      string serverErrorMessage = null;
+      if (!string.IsNullOrEmpty(responseBody)) {
+        try {
+          var dict = Json.Deserialize(responseBody) as Dictionary<string, object>;
+          if (dict != null && dict.TryGetValue("error", out var errorObj) && errorObj != null) {
+            if (errorObj is IDictionary<string, object> errorDict) {
+              if (errorDict.TryGetValue("message", out var msgObj) && msgObj != null) {
+                string msgStr = Convert.ToString(msgObj, CultureInfo.InvariantCulture);
+                if (!string.IsNullOrEmpty(msgStr)) {
+                  serverErrorMessage = msgStr;
+                }
+              }
+            } else if (errorObj is string errorStr && !string.IsNullOrEmpty(errorStr)) {
+              serverErrorMessage = errorStr;
+            }
+          }
+        } catch (Exception) {
+          // Fall back to responseBody or default error message below.
+        }
+        if (string.IsNullOrEmpty(serverErrorMessage)) {
+          serverErrorMessage = responseBody;
+        }
+      }
+
+      if (httpStatusCode == 404) {
+        errorCode = RefineNotFoundErrorCode(serverErrorMessage);
+      }
+
+      if (string.IsNullOrEmpty(serverErrorMessage)) {
+        serverErrorMessage = GetErrorMessageForCode(errorCode);
+      }
+
+      return new StorageException(errorCode, httpStatusCode, serverErrorMessage, innerException);
     }
 
     /// <summary>
@@ -112,18 +195,35 @@ namespace Firebase.Storage {
     /// so that Task.Exception can be passed to the method without casting at the call site.</param>
     /// <returns>StorageException instance wrapper.</returns>
     internal static StorageException CreateFromException(Exception exception) {
+      if (exception == null) {
+        return new StorageException(ErrorUnknown, (int)HttpStatusCode.Ambiguous, null);
+      }
+      if (exception is StorageException directStorageException) {
+        return directStorageException;
+      }
+      if (exception is OperationCanceledException) {
+        return new StorageException(ErrorCanceled, 0, GetErrorMessageForCode(ErrorCanceled),
+                                    exception);
+      }
+
       Tuple<int, HttpStatusCode> errorAndStatusCode;
-      AggregateException aggregateException = (AggregateException)exception;
-      FirebaseException firebaseException = null;
+      FirebaseException firebaseException = exception as FirebaseException;
       string errorMessage = null;
-      foreach (var innerException in aggregateException.InnerExceptions) {
+      if (exception is AggregateException aggregateException) {
+        foreach (var innerException in aggregateException.InnerExceptions) {
           var storageException = innerException as StorageException;
-          firebaseException = innerException as FirebaseException;
           if (storageException != null) {
             return storageException;
-          } else if (firebaseException != null) {
+          }
+          if (innerException is OperationCanceledException) {
+            return new StorageException(ErrorCanceled, 0, GetErrorMessageForCode(ErrorCanceled),
+                                        innerException);
+          }
+          firebaseException = innerException as FirebaseException;
+          if (firebaseException != null) {
             break;
           }
+        }
       }
       // Try to convert the exception to a StorageException.
       if (firebaseException == null) {
@@ -132,12 +232,13 @@ namespace Firebase.Storage {
       } else {
         errorMessage = firebaseException.Message;
         if (!errorToStorageErrorAndHttpStatusCode.TryGetValue(
-              (ErrorInternal)firebaseException.ErrorCode, out errorAndStatusCode)) {
+              firebaseException.ErrorCode, out errorAndStatusCode)) {
           errorAndStatusCode = unknownError;
         }
       }
       int httpStatusCodeInt = (int)errorAndStatusCode.Item2;
-      return new StorageException(errorAndStatusCode.Item1, httpStatusCodeInt, errorMessage);
+      return new StorageException(errorAndStatusCode.Item1, httpStatusCodeInt, errorMessage,
+                                  exception);
     }
 
     /// <returns>
@@ -157,8 +258,6 @@ namespace Firebase.Storage {
       get { return ErrorCode == ErrorRetryLimitExceeded; }
     }
 
-    // TODO(smiles): Since we have error strings baked into the C++ library, determine whether this
-    // can be removed.
     internal static string GetErrorMessageForCode(int errorCode) {
       switch (errorCode) {
         case ErrorUnknown: {

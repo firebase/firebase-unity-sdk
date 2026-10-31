@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,18 @@ namespace Firebase.Storage {
     /// <param name="reference">Storage reference associated with this transfer.</param>
     /// <param name="totalByteCount">Total number of bytes to transfer or -1 if the size of the
     /// upload is unknown.</param>
-   internal UploadState(StorageReference reference, long totalByteCount) {
-     State = new TransferState(reference) { TotalByteCount = totalByteCount };
+    /// <param name="uploadSessionUri">Optional resumable upload session URI.</param>
+    /// <param name="bytesTransferred">Bytes transferred so far.</param>
+    /// <param name="metadata">Metadata associated with the upload.</param>
+    internal UploadState(StorageReference reference, long totalByteCount,
+                         Uri uploadSessionUri = null, long bytesTransferred = 0,
+                         StorageMetadata metadata = null) {
+      State = new TransferState(reference) {
+        TotalByteCount = totalByteCount,
+        BytesTransferred = bytesTransferred,
+        UploadSessionUri = uploadSessionUri,
+        Metadata = metadata
+      };
     }
 
     /// <summary>

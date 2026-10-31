@@ -109,6 +109,18 @@ Support
 
 Release Notes
 -------------
+### Upcoming Changes
+-   Changes
+    - Storage: Rewrote the internal implementation in C#, removing the dependency on the C++
+      and native platform Storage libraries.
+    - Storage: Populated `UploadState.UploadSessionUri` on all platforms so interrupted uploads
+      can be resumed via the `previousSessionUri` parameter of `PutBytesAsync`, `PutFileAsync`,
+      and `PutStreamAsync`.
+    - Storage: Added `StorageController`, which can be passed to the upload and download methods
+      on `StorageReference` to pause, resume or cancel a transfer in progress.
+    - Storage: **Behavior Change** `StorageReference.GetStreamAsync()` now returns a live,
+      forward-only network stream instead of a buffered `MemoryStream` (`CanSeek` is `false`).
+
 ### 14.1.0
 -   Changes
     - General: Update to Firebase C++ SDK version 14.1.0.
