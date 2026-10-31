@@ -398,10 +398,7 @@ namespace Firebase.Storage.Internal {
                 lastException = watchdog?.AsStallException(oce) ?? (Exception)oce;
                 networkError = true;
               }
-            } catch (Exception ex) when (ex is HttpRequestException ||
-                                         ex is IOException ||
-                                         ex is SocketException ||
-                                         ex is ObjectDisposedException) {
+            } catch (Exception ex) when (StorageHttpClient.IsTransportException(ex)) {
               if (_storageTask.IsCanceled) {
                 _storageTask.ThrowIfCanceled();
               }

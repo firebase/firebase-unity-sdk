@@ -167,10 +167,7 @@ namespace Firebase.Storage.Internal {
           }
         } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
           throw;
-        } catch (Exception ex) when (ex is HttpRequestException ||
-                                     ex is IOException ||
-                                     ex is SocketException ||
-                                     ex is OperationCanceledException) {
+        } catch (Exception ex) when (IsTransportException(ex)) {
           lastNetworkException = ex is OperationCanceledException
               ? new HttpRequestException(
                     $"Request timed out after {attemptTimeout.TotalSeconds:F0}s.", ex)
@@ -268,6 +265,40 @@ namespace Firebase.Storage.Internal {
     }
 
     /// <summary>
+    /// True if <paramref name="ex" /> is a transport-level failure that a retry loop should absorb:
+    /// connection reset/refused, DNS failure, stalled or aborted request, or the HTTP stack tearing
+    /// down a stream. Mono's <c>MonoWebRequestHandler</c> (Windows Mono, iOS/Android IL2CPP) reports
+    /// an aborted read as <see cref="WebException" />, sometimes wrapped in an
+    /// <see cref="AggregateException" />, rather than the <see cref="OperationCanceledException" /> /
+    /// <see cref="IOException" /> that SocketsHttpHandler raises, so those are classified here too.
+    /// </summary>
+    internal static bool IsTransportException(Exception ex) {
+      switch (ex) {
+        case null:
+          return false;
+        case HttpRequestException _:
+        case IOException _:
+        case SocketException _:
+        case WebException _:
+        case ObjectDisposedException _:
+        case OperationCanceledException _:
+          return true;
+        case AggregateException agg:
+          if (agg.InnerExceptions.Count == 0) {
+            return false;
+          }
+          foreach (Exception inner in agg.InnerExceptions) {
+            if (!IsTransportException(inner)) {
+              return false;
+            }
+          }
+          return true;
+        default:
+          return false;
+      }
+    }
+
+    /// <summary>
     /// Converts a transport-level failure raised by a retry loop into a
     /// <see cref="StorageException" /> with <see cref="StorageException.ErrorRetryLimitExceeded" />.
     /// Returns null for exceptions that are not network related so the caller can rethrow them
@@ -277,8 +308,7 @@ namespace Firebase.Storage.Internal {
       if (ex is StorageException) {
         return null;
       }
-      if (ex is HttpRequestException || ex is IOException || ex is SocketException ||
-          ex is OperationCanceledException) {
+      if (IsTransportException(ex)) {
         return new StorageException(
             StorageException.ErrorRetryLimitExceeded,
             0,

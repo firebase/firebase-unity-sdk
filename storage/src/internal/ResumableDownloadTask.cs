@@ -443,10 +443,7 @@ namespace Firebase.Storage.Internal {
               lastNetworkException = watchdog?.AsStallException(oce) ?? (Exception)oce;
               networkUnavailable = true;
             }
-          } catch (Exception ex) when (ex is HttpRequestException ||
-                                       ex is IOException ||
-                                       ex is SocketException ||
-                                       ex is ObjectDisposedException) {
+          } catch (Exception ex) when (StorageHttpClient.IsTransportException(ex)) {
             if (_storageTask.IsCanceled) {
               _storageTask.ThrowIfCanceled();
             }
@@ -781,9 +778,8 @@ namespace Firebase.Storage.Internal {
                                                   cancellationToken.IsCancellationRequested) {
             _owner._storageTask.ThrowIfCanceled(cancellationToken);
             throw;
-          } catch (Exception ex) when (ex is IOException ||
-                                       ex is HttpRequestException ||
-                                       ex is SocketException) {
+          } catch (Exception ex) when (!(ex is OperationCanceledException) &&
+                                       StorageHttpClient.IsTransportException(ex)) {
             if (_owner._storageTask.IsCanceled || cancellationToken.IsCancellationRequested) {
               _owner._storageTask.ThrowIfCanceled(cancellationToken);
             }
