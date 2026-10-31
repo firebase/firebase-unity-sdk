@@ -116,6 +116,8 @@ Release Notes
     - Storage: Populated `UploadState.UploadSessionUri` on all platforms so interrupted uploads
       can be resumed via the `previousSessionUri` parameter of `PutBytesAsync`, `PutFileAsync`,
       and `PutStreamAsync`.
+    - Storage: Added `StorageController`, which can be passed to the upload and download methods
+      on `StorageReference` to pause, resume or cancel a transfer in progress.
     - Storage: **Behavior Change** `StorageReference.GetStreamAsync()` now returns a live,
       forward-only network stream instead of a buffered `MemoryStream` (`CanSeek` is `false`).
 

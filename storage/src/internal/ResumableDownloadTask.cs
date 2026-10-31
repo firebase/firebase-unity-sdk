@@ -57,11 +57,20 @@ namespace Firebase.Storage.Internal {
         StorageReference reference,
         IProgress<DownloadState> progressHandler,
         CancellationToken cancelToken,
-        StoragePath path = null) {
+        StoragePath path = null,
+        StorageController controller = null) {
       _reference = Preconditions.CheckNotNull(reference, nameof(reference));
       _path = path;
       _logger = reference.Logger;
       _storageTask = new StorageTask(cancelToken, reference.Storage?.DisposeToken ?? default);
+      if (controller != null) {
+        try {
+          controller.Attach(_storageTask, reference);
+        } catch {
+          _storageTask.Dispose();
+          throw;
+        }
+      }
       _downloadState = new DownloadState(reference, -1);
       _transferStateUpdater = new TransferStateUpdater<DownloadState>(
           reference,
@@ -75,9 +84,11 @@ namespace Firebase.Storage.Internal {
         long maxDownloadSizeBytes,
         IProgress<DownloadState> progressHandler = null,
         CancellationToken cancelToken = default,
-        StoragePath path = null) {
+        StoragePath path = null,
+        StorageController controller = null) {
       Preconditions.CheckNotNull(reference, nameof(reference));
-      var downloadTask = new ResumableDownloadTask(reference, progressHandler, cancelToken, path);
+      var downloadTask = new ResumableDownloadTask(
+          reference, progressHandler, cancelToken, path, controller);
       return downloadTask.RunGetBytesAsync(maxDownloadSizeBytes);
     }
 
@@ -86,12 +97,14 @@ namespace Firebase.Storage.Internal {
         string destinationFilePath,
         IProgress<DownloadState> progressHandler = null,
         CancellationToken cancelToken = default,
-        StoragePath path = null) {
+        StoragePath path = null,
+        StorageController controller = null) {
       Preconditions.CheckNotNull(reference, nameof(reference));
       Preconditions.CheckArgument(
           !string.IsNullOrEmpty(destinationFilePath),
           "destinationFilePath cannot be null or empty");
-      var downloadTask = new ResumableDownloadTask(reference, progressHandler, cancelToken, path);
+      var downloadTask = new ResumableDownloadTask(
+          reference, progressHandler, cancelToken, path, controller);
       return downloadTask.RunGetFileAsync(destinationFilePath);
     }
 
@@ -100,10 +113,12 @@ namespace Firebase.Storage.Internal {
         Action<Stream> streamProcessor,
         IProgress<DownloadState> progressHandler = null,
         CancellationToken cancelToken = default,
-        StoragePath path = null) {
+        StoragePath path = null,
+        StorageController controller = null) {
       Preconditions.CheckNotNull(reference, nameof(reference));
       Preconditions.CheckNotNull(streamProcessor, nameof(streamProcessor));
-      var downloadTask = new ResumableDownloadTask(reference, progressHandler, cancelToken, path);
+      var downloadTask = new ResumableDownloadTask(
+          reference, progressHandler, cancelToken, path, controller);
       return downloadTask.RunGetStreamProcessorAsync(streamProcessor);
     }
 

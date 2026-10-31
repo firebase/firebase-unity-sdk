@@ -66,7 +66,8 @@ namespace Firebase.Storage.Internal {
         IProgress<UploadState> progressHandler,
         CancellationToken cancelToken,
         Uri previousSessionUri = null,
-        StoragePath path = null) {
+        StoragePath path = null,
+        StorageController controller = null) {
       _reference = Preconditions.CheckNotNull(reference, nameof(reference));
       _stream = Preconditions.CheckNotNull(stream, nameof(stream));
       _ownsStream = ownsStream;
@@ -76,6 +77,14 @@ namespace Firebase.Storage.Internal {
       _streamBaseOffset = stream.CanSeek ? stream.Position : 0;
       _logger = reference.Logger;
       _storageTask = new StorageTask(cancelToken, reference.Storage?.DisposeToken ?? default);
+      if (controller != null) {
+        try {
+          controller.Attach(_storageTask, reference);
+        } catch {
+          _storageTask.Dispose();
+          throw;
+        }
+      }
       _uploadState = new UploadState(reference, totalByteCount, previousSessionUri);
       _transferStateUpdater = new TransferStateUpdater<UploadState>(
           reference,
@@ -91,7 +100,8 @@ namespace Firebase.Storage.Internal {
         IProgress<UploadState> progressHandler = null,
         CancellationToken cancelToken = default,
         Uri previousSessionUri = null,
-        StoragePath path = null) {
+        StoragePath path = null,
+        StorageController controller = null) {
       Preconditions.CheckNotNull(reference, nameof(reference));
       Preconditions.CheckArgument(bytes != null, "bytes cannot be null");
 
@@ -106,7 +116,8 @@ namespace Firebase.Storage.Internal {
           progressHandler,
           cancelToken,
           previousSessionUri,
-          path);
+          path,
+          controller);
       return uploadTask.RunAsync();
     }
 
@@ -117,7 +128,8 @@ namespace Firebase.Storage.Internal {
         IProgress<UploadState> progressHandler = null,
         CancellationToken cancelToken = default,
         Uri previousSessionUri = null,
-        StoragePath path = null) {
+        StoragePath path = null,
+        StorageController controller = null) {
       Preconditions.CheckNotNull(reference, nameof(reference));
       Preconditions.CheckArgument(stream != null, "stream cannot be null");
 
@@ -133,7 +145,8 @@ namespace Firebase.Storage.Internal {
           progressHandler,
           cancelToken,
           previousSessionUri,
-          path);
+          path,
+          controller);
       return uploadTask.RunAsync();
     }
 
@@ -144,7 +157,8 @@ namespace Firebase.Storage.Internal {
         IProgress<UploadState> progressHandler = null,
         CancellationToken cancelToken = default,
         Uri previousSessionUri = null,
-        StoragePath path = null) {
+        StoragePath path = null,
+        StorageController controller = null) {
       Preconditions.CheckNotNull(reference, nameof(reference));
       Preconditions.CheckArgument(filePath != null, "filePath cannot be null");
 
@@ -186,7 +200,8 @@ namespace Firebase.Storage.Internal {
           progressHandler,
           cancelToken,
           previousSessionUri,
-          path);
+          path,
+          controller);
       return uploadTask.RunAsync();
     }
 

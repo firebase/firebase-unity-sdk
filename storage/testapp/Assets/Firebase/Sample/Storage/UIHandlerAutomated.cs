@@ -153,6 +153,10 @@ namespace Firebase.Sample.Storage {
         TestUploadSeekableStreamFromNonZeroPosition,
         TestGetFileAsyncPreservesExistingFileOnFailure,
         TestUploadMultiChunkAdaptiveAndDownload,
+        TestControllerPauseResumeUpload,
+        TestControllerPauseResumeDownload,
+        TestControllerCancelUpload,
+        TestControllerPauseBeforeStart,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -1178,6 +1182,202 @@ namespace Firebase.Sample.Storage {
       }
       Assert("downloaded bytes identical", identical);
       await targetRef.DeleteAsync();
+    }
+
+    // Payload large enough that a transfer on a real device or CI runner reliably spans several
+    // seconds, giving the pause/cancel tests a window to act mid-transfer.
+    private const int CONTROLLER_TEST_PAYLOAD_SIZE = 8 * 1024 * 1024;
+
+    private byte[] MakeControllerTestPayload(int seed) {
+      var payload = new byte[CONTROLLER_TEST_PAYLOAD_SIZE];
+      new System.Random(seed).NextBytes(payload);
+      return payload;
+    }
+
+    private bool BytesIdentical(byte[] expected, byte[] actual) {
+      if (expected.Length != actual.Length) {
+        DebugLog(String.Format("Length mismatch: expected {0}, got {1}", expected.Length, actual.Length));
+        return false;
+      }
+      for (int i = 0; i < expected.Length; i++) {
+        if (expected[i] != actual[i]) {
+          DebugLog(String.Format("Mismatch at byte {0}: expected {1}, got {2}", i, expected[i], actual[i]));
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Pause an upload from its first mid-transfer progress callback, verify it stays parked with
+    // no further progress, resume it, and verify the object round-trips byte-for-byte.
+    async Task TestControllerPauseResumeUpload() {
+      var payload = MakeControllerTestPayload(0xC0FFEE);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(
+          "this_is_a/test_path/to_a/controller_pause_upload.bin");
+      var controller = new StorageController();
+      long bytesAtPause = -1;
+      long lastReported = -1;
+      var progress = new StorageProgress<UploadState>(state => {
+        lastReported = state.BytesTransferred;
+        if (bytesAtPause < 0 && state.BytesTransferred > 0 &&
+            state.BytesTransferred < payload.Length && controller.Pause()) {
+          bytesAtPause = state.BytesTransferred;
+        }
+      });
+
+      Assert("controller.IsInProgress before start", !controller.IsInProgress);
+      var uploadTask = targetRef.PutBytesAsync(payload, null, progress, default, null, controller);
+      Assert("controller.Reference", controller.Reference != null &&
+             controller.Reference.Path == targetRef.Path);
+
+      var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+      while (bytesAtPause < 0 && !uploadTask.IsCompleted && DateTime.UtcNow < deadline) {
+        await Task.Delay(50);
+      }
+      // Let any chunk that was in flight when Pause() was called finish aborting.
+      await Task.Delay(3000);
+      if (uploadTask.IsCompleted) {
+        DebugLog("WARNING: Upload finished before it could be paused; pause path not exercised.");
+      } else {
+        Assert("bytesAtPause >= 0", bytesAtPause >= 0);
+        Assert("controller.IsPaused", controller.IsPaused);
+        Assert("controller.IsInProgress while paused", controller.IsInProgress);
+        long bytesWhilePaused = lastReported;
+        await Task.Delay(2000);
+        Assert("upload still pending while paused", !uploadTask.IsCompleted);
+        AssertEq("no progress while paused", lastReported, bytesWhilePaused);
+        Assert("Pause() while paused returns false", !controller.Pause());
+        Assert("controller.Resume()", controller.Resume());
+        Assert("Resume() while running returns false", !controller.Resume());
+      }
+
+      var metadata = await uploadTask;
+      AssertEq("metadata.SizeBytes", metadata.SizeBytes, (long)payload.Length);
+      AssertEq("final BytesTransferred", lastReported, (long)payload.Length);
+      Assert("!controller.IsPaused after completion", !controller.IsPaused);
+      Assert("!controller.IsInProgress after completion", !controller.IsInProgress);
+      Assert("Pause() after completion returns false", !controller.Pause());
+
+      byte[] downloaded = await targetRef.GetBytesAsync(0);
+      Assert("downloaded bytes identical", BytesIdentical(payload, downloaded));
+      await targetRef.DeleteAsync();
+    }
+
+    // Pause a download mid-stream, verify it stays parked, resume it (which issues a Range
+    // request from the last byte written) and verify the bytes are identical.
+    async Task TestControllerPauseResumeDownload() {
+      var payload = MakeControllerTestPayload(0xD0C5);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(
+          "this_is_a/test_path/to_a/controller_pause_download.bin");
+      await targetRef.PutBytesAsync(payload);
+
+      var controller = new StorageController();
+      long bytesAtPause = -1;
+      long lastReported = -1;
+      var progress = new StorageProgress<DownloadState>(state => {
+        lastReported = state.BytesTransferred;
+        if (bytesAtPause < 0 && state.BytesTransferred > 0 &&
+            state.BytesTransferred < payload.Length && controller.Pause()) {
+          bytesAtPause = state.BytesTransferred;
+        }
+      });
+
+      var downloadTask = targetRef.GetBytesAsync(0, progress, default, controller);
+      var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+      while (bytesAtPause < 0 && !downloadTask.IsCompleted && DateTime.UtcNow < deadline) {
+        await Task.Delay(50);
+      }
+      await Task.Delay(3000);
+      if (downloadTask.IsCompleted) {
+        DebugLog("WARNING: Download finished before it could be paused; pause path not exercised.");
+      } else {
+        Assert("bytesAtPause >= 0", bytesAtPause >= 0);
+        Assert("controller.IsPaused", controller.IsPaused);
+        long bytesWhilePaused = lastReported;
+        await Task.Delay(2000);
+        Assert("download still pending while paused", !downloadTask.IsCompleted);
+        AssertEq("no progress while paused", lastReported, bytesWhilePaused);
+        Assert("controller.Resume()", controller.Resume());
+      }
+
+      byte[] downloaded = await downloadTask;
+      Assert("!controller.IsPaused after completion", !controller.IsPaused);
+      Assert("downloaded bytes identical", BytesIdentical(payload, downloaded));
+      await targetRef.DeleteAsync();
+    }
+
+    // Cancel an upload through the controller (no CancellationToken involved) and verify the
+    // task ends Canceled, exactly as it would with a CancellationToken.
+    async Task TestControllerCancelUpload() {
+      var payload = MakeControllerTestPayload(0xCA7CE1);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(
+          "this_is_a/test_path/to_a/controller_cancel_upload.bin");
+      var controller = new StorageController();
+      bool cancelRequested = false;
+      var uploadTask = targetRef.PutBytesAsync(
+          payload,
+          null,
+          new StorageProgress<UploadState>(state => {
+            if (!cancelRequested && state.BytesTransferred > 0) {
+              cancelRequested = controller.Cancel();
+            }
+          }),
+          default,
+          null,
+          controller);
+      try {
+        await uploadTask;
+        DebugLog("WARNING: Upload finished before it could be canceled; cancel path not exercised.");
+        await targetRef.DeleteAsync();
+      } catch (OperationCanceledException) {
+        Assert("uploadTask.IsCanceled", uploadTask.IsCanceled);
+        Assert("!uploadTask.IsFaulted", !uploadTask.IsFaulted);
+        Assert("controller.IsCanceled", controller.IsCanceled);
+        Assert("!controller.IsInProgress after cancel", !controller.IsInProgress);
+        Assert("Cancel() after cancel returns false", !controller.Cancel());
+        Assert("Resume() after cancel returns false", !controller.Resume());
+      }
+    }
+
+    // Pause() before the controller is attached must start the transfer parked; the task stays
+    // pending until Resume() is called. Also verifies a controller can be reused once its
+    // previous transfer has finished, and cannot be shared by two live transfers.
+    async Task TestControllerPauseBeforeStart() {
+      var payload = Encoding.UTF8.GetBytes(SMALL_FILE_CONTENTS);
+      var targetRef = FirebaseStorage.DefaultInstance.GetReference(SMALL_FILE_PATH);
+      var controller = new StorageController();
+      Assert("Pause() before start", controller.Pause());
+      Assert("IsPaused before start", controller.IsPaused);
+
+      int progressCallbacks = 0;
+      var uploadTask = targetRef.PutBytesAsync(
+          payload, null, new StorageProgress<UploadState>(_ => progressCallbacks++), default, null,
+          controller);
+      await Task.Delay(2000);
+      Assert("upload still pending while paused from start", !uploadTask.IsCompleted);
+      AssertEq("no progress while paused from start", progressCallbacks, 0);
+      Assert("controller.IsPaused", controller.IsPaused);
+      Assert("controller.Resume()", controller.Resume());
+      var metadata = await uploadTask;
+      AssertEq("metadata.SizeBytes", metadata.SizeBytes, (long)payload.Length);
+
+      // Reuse the same controller for a second transfer now that the first has finished.
+      byte[] downloaded = await targetRef.GetBytesAsync(0, null, default, controller);
+      AssertEq("downloaded.Length", downloaded.Length, payload.Length);
+
+      // A controller still attached to a live transfer cannot be handed to a second one.
+      var busyController = new StorageController();
+      busyController.Pause();
+      var parked = targetRef.GetBytesAsync(0, null, default, busyController);
+      bool threw = false;
+      try {
+        targetRef.GetBytesAsync(0, null, default, busyController);
+      } catch (InvalidOperationException) {
+        threw = true;
+      }
+      Assert("second attach throws InvalidOperationException", threw);
+      busyController.Resume();
+      await parked;
     }
 
     // Verify resumable multi-chunk upload surfaces a non-null UploadSessionUri and can resume from it.

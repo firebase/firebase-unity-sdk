@@ -179,6 +179,8 @@ namespace Firebase.Storage {
     /// <param name="previousSessionUri">A Uri previously obtained by
     ///  <see cref="UploadState.UploadSessionUri"/> that can be used to resume
     ///  a previously interrupted upload.</param>
+    /// <param name="controller">An optional <see cref="StorageController"/> that can be
+    ///  used to pause, resume or cancel the operation while it is in progress.</param>
     /// <returns>
     ///   A <see cref="Task"/>
     ///   which can be used to monitor the upload.
@@ -188,9 +190,11 @@ namespace Firebase.Storage {
         MetadataChange customMetadata = null,
         IProgress<UploadState> progressHandler = null,
         CancellationToken cancelToken = default(CancellationToken),
-        Uri previousSessionUri = null) {
+        Uri previousSessionUri = null,
+        StorageController controller = null) {
       return ResumableUploadTask.PutBytesAsync(
-          this, bytes, customMetadata, progressHandler, cancelToken, previousSessionUri, path);
+          this, bytes, customMetadata, progressHandler, cancelToken, previousSessionUri, path,
+          controller);
     }
 
     /// <summary>
@@ -218,6 +222,8 @@ namespace Firebase.Storage {
     /// <param name="previousSessionUri">A Uri previously obtained by
     ///  <see cref="UploadState.UploadSessionUri"/> that can be used to resume
     ///  a previously interrupted upload.</param>
+    /// <param name="controller">An optional <see cref="StorageController"/> that can be
+    ///  used to pause, resume or cancel the operation while it is in progress.</param>
     /// <returns>
     ///   A <see cref="Task"/>
     ///   which can be used to monitor the upload.
@@ -227,9 +233,11 @@ namespace Firebase.Storage {
         MetadataChange customMetadata = null,
         IProgress<UploadState> progressHandler = null,
         CancellationToken cancelToken = default(CancellationToken),
-        Uri previousSessionUri = null) {
+        Uri previousSessionUri = null,
+        StorageController controller = null) {
       return ResumableUploadTask.PutFileAsync(
-          this, filePath, customMetadata, progressHandler, cancelToken, previousSessionUri, path);
+          this, filePath, customMetadata, progressHandler, cancelToken, previousSessionUri, path,
+          controller);
     }
 
     /// <summary>
@@ -258,6 +266,8 @@ namespace Firebase.Storage {
     /// <param name="previousSessionUri">A Uri previously obtained by
     ///  <see cref="UploadState.UploadSessionUri"/> that can be used to resume
     ///  a previously interrupted upload.</param>
+    /// <param name="controller">An optional <see cref="StorageController"/> that can be
+    ///  used to pause, resume or cancel the operation while it is in progress.</param>
     /// <returns>
     ///   A <see cref="Task"/>
     ///   which can be used to monitor the upload.
@@ -267,9 +277,11 @@ namespace Firebase.Storage {
         MetadataChange customMetadata = null,
         IProgress<UploadState> progressHandler = null,
         CancellationToken cancelToken = default(CancellationToken),
-        Uri previousSessionUri = null) {
+        Uri previousSessionUri = null,
+        StorageController controller = null) {
       return ResumableUploadTask.PutStreamAsync(
-          this, stream, customMetadata, progressHandler, cancelToken, previousSessionUri, path);
+          this, stream, customMetadata, progressHandler, cancelToken, previousSessionUri, path,
+          controller);
     }
 
     /// <summary>
@@ -362,7 +374,7 @@ namespace Firebase.Storage {
     ///   A byte array will be allocated large enough to hold the entire file in memory.
     ///   Therefore, using this method will impact memory usage of your process. If you are
     ///   downloading many large files,
-    ///   <see cref="GetStreamAsync(Action{Stream}, IProgress{DownloadState}, CancellationToken)" />
+    ///   <see cref="GetStreamAsync(Action{Stream}, IProgress{DownloadState}, CancellationToken, StorageController)" />
     ///   may be a better option.
     /// </summary>
     /// <param name="maxDownloadSizeBytes">
@@ -388,7 +400,7 @@ namespace Firebase.Storage {
     ///   A byte array will be allocated large enough to hold the entire file in memory.
     ///   Therefore, using this method will impact memory usage of your process. If you are
     ///   downloading many large files,
-    ///   <see cref="GetStreamAsync(Action{Stream}, IProgress{DownloadState}, CancellationToken)" />
+    ///   <see cref="GetStreamAsync(Action{Stream}, IProgress{DownloadState}, CancellationToken, StorageController)" />
     ///   may be a better option.
     /// </summary>
     /// <param name="maxDownloadSizeBytes">
@@ -406,15 +418,18 @@ namespace Firebase.Storage {
     /// <param name="cancelToken">A CancellationToken to control the operation
     ///  and possibly later cancel it.  This value may be CancellationToken.None
     ///  to indicate no value.</param>
+    /// <param name="controller">An optional <see cref="StorageController"/> that can be
+    ///  used to pause, resume or cancel the operation while it is in progress.</param>
     /// <returns>
     ///   A <see cref="Task"/>
     ///   which can be used to monitor the operation and obtain the result.
     /// </returns>
     public Task<byte[]> GetBytesAsync(long maxDownloadSizeBytes,
                                       IProgress<DownloadState> progressHandler,
-                                      CancellationToken cancelToken = default(CancellationToken)) {
+                                      CancellationToken cancelToken = default(CancellationToken),
+                                      StorageController controller = null) {
       return ResumableDownloadTask.GetBytesAsync(
-          this, maxDownloadSizeBytes, progressHandler, cancelToken, path);
+          this, maxDownloadSizeBytes, progressHandler, cancelToken, path, controller);
     }
 
     /// <summary>
@@ -434,15 +449,18 @@ namespace Firebase.Storage {
     /// <param name="cancelToken">A CancellationToken to control the operation
     ///  and possibly later cancel it.  This value may be CancellationToken.None
     ///  to indicate no value.</param>
+    /// <param name="controller">An optional <see cref="StorageController"/> that can be
+    ///  used to pause, resume or cancel the operation while it is in progress.</param>
     /// <returns>
     ///   A <see cref="Task"/>
     ///   which can be used to monitor the operation and obtain the result.
     /// </returns>
     public Task GetFileAsync(string destinationFilePath,
                              IProgress<DownloadState> progressHandler = null,
-                             CancellationToken cancelToken = default(CancellationToken)) {
+                             CancellationToken cancelToken = default(CancellationToken),
+                             StorageController controller = null) {
       return ResumableDownloadTask.GetFileAsync(
-          this, destinationFilePath, progressHandler, cancelToken, path);
+          this, destinationFilePath, progressHandler, cancelToken, path, controller);
     }
 
     /// <summary>
@@ -490,15 +508,18 @@ namespace Firebase.Storage {
     /// <param name="cancelToken">A CancellationToken to control the operation
     ///  and possibly later cancel it.  This value may be CancellationToken.None
     ///  to indicate no value.</param>
+    /// <param name="controller">An optional <see cref="StorageController"/> that can be
+    ///  used to pause, resume or cancel the operation while it is in progress.</param>
     /// <returns>
     ///   A <see cref="Task"/>
     ///   which can be used to monitor the operation and obtain the result.
     /// </returns>
     public Task GetStreamAsync(Action<Stream> streamProcessor,
                                IProgress<DownloadState> progressHandler = null,
-                               CancellationToken cancelToken = default(CancellationToken)) {
+                               CancellationToken cancelToken = default(CancellationToken),
+                               StorageController controller = null) {
       return ResumableDownloadTask.GetStreamAsync(
-          this, streamProcessor, progressHandler, cancelToken, path);
+          this, streamProcessor, progressHandler, cancelToken, path, controller);
     }
 
     /// <summary>
