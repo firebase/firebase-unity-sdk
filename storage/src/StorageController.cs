@@ -50,7 +50,7 @@ namespace Firebase.Storage {
     private readonly object _lock = new object();
     private StorageTask _task;
     private StorageReference _reference;
-    // Requests recorded while no unfinished transfer is attached; applied by Attach().
+    // Requests recorded before a transfer is attached; applied by Attach().
     private bool _pauseRequested;
     private bool _cancelRequested;
 
@@ -79,7 +79,7 @@ namespace Firebase.Storage {
       get {
         StorageTask task;
         lock (_lock) {
-          if (_task == null || _pauseRequested) {
+          if (_task == null) {
             return _pauseRequested;
           }
           task = _task;
@@ -96,7 +96,7 @@ namespace Firebase.Storage {
       get {
         StorageTask task;
         lock (_lock) {
-          if (_task == null || _cancelRequested) {
+          if (_task == null) {
             return _cancelRequested;
           }
           task = _task;
@@ -130,7 +130,7 @@ namespace Firebase.Storage {
     public bool Pause() {
       StorageTask task;
       lock (_lock) {
-        if (IsDetachedLocked()) {
+        if (_task == null) {
           if (_cancelRequested || _pauseRequested) {
             return false;
           }
@@ -149,7 +149,7 @@ namespace Firebase.Storage {
     public bool Resume() {
       StorageTask task;
       lock (_lock) {
-        if (IsDetachedLocked()) {
+        if (_task == null) {
           bool wasPaused = _pauseRequested;
           _pauseRequested = false;
           return wasPaused;
@@ -168,7 +168,7 @@ namespace Firebase.Storage {
     public bool Cancel() {
       StorageTask task;
       lock (_lock) {
-        if (IsDetachedLocked()) {
+        if (_task == null) {
           if (_cancelRequested) {
             return false;
           }
@@ -179,12 +179,6 @@ namespace Firebase.Storage {
         task = _task;
       }
       return task.Cancel();
-    }
-
-    // True when no transfer is attached, or the attached transfer has already finished; requests
-    // made in this state are recorded and applied to the next transfer. Caller must hold _lock.
-    private bool IsDetachedLocked() {
-      return _task == null || _task.IsCompleted;
     }
 
     // Associates this controller with a transfer. Any Pause()/Cancel() recorded before the
