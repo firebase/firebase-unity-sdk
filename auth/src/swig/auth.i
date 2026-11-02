@@ -85,9 +85,6 @@ namespace auth {
 %ignore User::GetToken;
 %ignore User::GetTokenThreadSafe;
 %ignore User::GetTokenLastResult;
-%ignore User::GetIdTokenResult;
-%ignore User::GetIdTokenResultThreadSafe;
-%ignore User::GetIdTokenResultLastResult;
 %ignore User::provider_data;
 %ignore User::is_email_verified;
 %ignore User::is_anonymous;
@@ -971,8 +968,16 @@ static CppInstanceManager<Auth> g_auth_instances;
   "internal sealed class";
 %rename(IdTokenResultInternal) firebase::auth::IdTokenResult;
 %rename(ClaimsInternal) firebase::auth::IdTokenResult::claims;
+%ignore firebase::auth::IdTokenResult::IdTokenResult;
 %ignore firebase::auth::IdTokenResult::operator==;
 %ignore firebase::auth::IdTokenResult::operator!=;
+%immutable firebase::auth::IdTokenResult::token;
+%immutable firebase::auth::IdTokenResult::claims;
+%immutable firebase::auth::IdTokenResult::auth_timestamp;
+%immutable firebase::auth::IdTokenResult::issued_at_timestamp;
+%immutable firebase::auth::IdTokenResult::expiration_timestamp;
+%immutable firebase::auth::IdTokenResult::sign_in_provider;
+%immutable firebase::auth::IdTokenResult::sign_in_second_factor;
 
 
 // Make snake_case properties CamelCase.

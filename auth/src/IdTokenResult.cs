@@ -16,40 +16,113 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Firebase.Auth {
 
 /// <summary>
 /// Result of a <see cref="FirebaseUser.GetIdTokenResultAsync"/> call, containing
-/// the token string, timestamps, and claims.
+/// the ID token string, UTC timestamps, sign-in metadata, and decoded claims.
 /// </summary>
 public struct IdTokenResult {
-  /// <summary>The JSON Web Token (JWT) string.</summary>
-  public string Token { get; internal set; }
-
-  /// <summary>
-  /// Claims map decoded from the token payload, including custom and standard
-  /// claims.
-  /// </summary>
-  public IDictionary<string, object> Claims { get; internal set; }
-
-  /// <summary>Authentication timestamp.</summary>
-  public DateTime AuthTimestamp { get; internal set; }
-
-  /// <summary>Issued-at timestamp.</summary>
-  public DateTime IssuedAtTimestamp { get; internal set; }
-
-  /// <summary>Expiration timestamp.</summary>
-  public DateTime ExpirationTimestamp { get; internal set; }
-
-  /// <summary>The sign-in provider through which the token was obtained.</summary>
-  public string SignInProvider { get; internal set; }
-
-  /// <summary>The sign-in second factor through which the token was obtained.</summary>
-  public string SignInSecondFactor { get; internal set; }
-
   internal static readonly DateTime UnixEpochUtc =
       new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+  private static readonly ulong MaxUnixSeconds =
+      (ulong)((DateTime.MaxValue.Ticks - UnixEpochUtc.Ticks) / TimeSpan.TicksPerSecond);
+
+  private static readonly IDictionary<string, object> EmptyClaims =
+      new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
+
+  private string token;
+  private IDictionary<string, object> claims;
+  private DateTime authTimestamp;
+  private DateTime issuedAtTimestamp;
+  private DateTime expirationTimestamp;
+  private string signInProvider;
+  private string signInSecondFactor;
+
+  /// <summary>The Firebase Auth ID token JSON Web Token (JWT) string.</summary>
+  public string Token {
+    get { return token ?? string.Empty; }
+    internal set { token = value; }
+  }
+
+  /// <summary>
+  /// The entire payload claims of the ID token, including standard reserved
+  /// claims and custom claims. Nested JSON objects are represented as
+  /// <see cref="IDictionary{TKey, TValue}"/> with <see cref="string"/> keys.
+  /// </summary>
+  public IDictionary<string, object> Claims {
+    get { return claims ?? EmptyClaims; }
+    internal set { claims = value; }
+  }
+
+  /// <summary>
+  /// The UTC time (<see cref="DateTimeKind.Utc"/>) at which the user most
+  /// recently authenticated.
+  /// </summary>
+  public DateTime AuthTimestamp {
+    get {
+      return authTimestamp.Ticks == 0 && authTimestamp.Kind == DateTimeKind.Unspecified
+          ? UnixEpochUtc
+          : authTimestamp;
+    }
+    internal set { authTimestamp = value; }
+  }
+
+  /// <summary>
+  /// The UTC time (<see cref="DateTimeKind.Utc"/>) at which this ID token was
+  /// issued by the server.
+  /// </summary>
+  public DateTime IssuedAtTimestamp {
+    get {
+      return issuedAtTimestamp.Ticks == 0 && issuedAtTimestamp.Kind == DateTimeKind.Unspecified
+          ? UnixEpochUtc
+          : issuedAtTimestamp;
+    }
+    internal set { issuedAtTimestamp = value; }
+  }
+
+  /// <summary>
+  /// The UTC time (<see cref="DateTimeKind.Utc"/>) at which this ID token
+  /// expires.
+  /// </summary>
+  public DateTime ExpirationTimestamp {
+    get {
+      return expirationTimestamp.Ticks == 0 && expirationTimestamp.Kind == DateTimeKind.Unspecified
+          ? UnixEpochUtc
+          : expirationTimestamp;
+    }
+    internal set { expirationTimestamp = value; }
+  }
+
+  /// <summary>
+  /// The sign-in provider through which the ID token was obtained (for example,
+  /// <c>"anonymous"</c>, <c>"password"</c>, or <c>"custom"</c>), or
+  /// <see cref="string.Empty"/> if unavailable.
+  /// </summary>
+  public string SignInProvider {
+    get { return signInProvider ?? string.Empty; }
+    internal set { signInProvider = value; }
+  }
+
+  /// <summary>
+  /// The second factor identifier used to sign in (for example,
+  /// <c>"phone"</c>), or <see cref="string.Empty"/> if multi-factor
+  /// authentication was not used.
+  /// </summary>
+  public string SignInSecondFactor {
+    get { return signInSecondFactor ?? string.Empty; }
+    internal set { signInSecondFactor = value; }
+  }
+
+  private static DateTime UnixSecondsToUtcDateTime(ulong seconds) {
+    if (seconds > MaxUnixSeconds) {
+      return UnixEpochUtc;
+    }
+    return UnixEpochUtc.AddTicks((long)seconds * TimeSpan.TicksPerSecond);
+  }
 
   // Construct an IdTokenResult from the SWIG-generated internal wrapper.
   internal static IdTokenResult FromIdTokenResultInternal(
@@ -66,24 +139,24 @@ public struct IdTokenResult {
       };
     }
 
-    IDictionary<string, object> claims;
+    IDictionary<string, object> convertedClaims;
     using (VariantVariantMap claimsMap = resultInternal.ClaimsInternal) {
-      claims = claimsMap != null
+      convertedClaims = claimsMap != null
           ? claimsMap.ToStringVariantMap(VariantExtension.KeyOptions.UseStringKeys)
           : new Dictionary<string, object>();
     }
 
     IdTokenResult result = new IdTokenResult {
       Token = resultInternal.token ?? string.Empty,
-      Claims = claims,
-      AuthTimestamp =
-          UnixEpochUtc.AddSeconds((double)resultInternal.auth_timestamp),
+      Claims = convertedClaims,
+      AuthTimestamp = UnixSecondsToUtcDateTime(resultInternal.auth_timestamp),
       IssuedAtTimestamp =
-          UnixEpochUtc.AddSeconds((double)resultInternal.issued_at_timestamp),
+          UnixSecondsToUtcDateTime(resultInternal.issued_at_timestamp),
       ExpirationTimestamp =
-          UnixEpochUtc.AddSeconds((double)resultInternal.expiration_timestamp),
+          UnixSecondsToUtcDateTime(resultInternal.expiration_timestamp),
       SignInProvider = resultInternal.sign_in_provider ?? string.Empty,
-      SignInSecondFactor = resultInternal.sign_in_second_factor ?? string.Empty,
+      SignInSecondFactor =
+          resultInternal.sign_in_second_factor ?? string.Empty,
     };
     GC.KeepAlive(resultInternal);
     return result;

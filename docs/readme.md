@@ -109,11 +109,10 @@ Support
 
 Release Notes
 -------------
-### Upcoming Changes
+### Upcoming Release
 -   Changes
     - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
-      to retrieve decoded ID token claims and metadata across Desktop, Android,
-      and iOS.
+      to retrieve decoded ID token claims and metadata.
 
 ### 14.1.0
 -   Changes

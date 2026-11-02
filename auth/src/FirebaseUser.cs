@@ -162,9 +162,12 @@ public sealed class FirebaseUser : UserInfoInterface {
   /// user.
   /// </returns>
   public async Task<IdTokenResult> GetIdTokenResultAsync(bool forceRefresh) {
-    FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
+    Task<IdTokenResultInternal> internalTask;
+    using (FirebaseUserInternal userInternal = GetValidFirebaseUserInternal()) {
+      internalTask = userInternal.GetIdTokenResultInternalAsync(forceRefresh);
+    }
     using (IdTokenResultInternal resultInternal =
-        await userInternal.GetIdTokenResultInternalAsync(forceRefresh)) {
+        await internalTask.ConfigureAwait(false)) {
       return IdTokenResult.FromIdTokenResultInternal(resultInternal);
     }
   }
