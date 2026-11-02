@@ -140,7 +140,7 @@ public struct IdTokenResult {
     }
 
     IDictionary<string, object> convertedClaims;
-    using (VariantVariantMap claimsMap = resultInternal.ClaimsInternal) {
+    using (VariantVariantMap claimsMap = resultInternal.claims) {
       convertedClaims = claimsMap != null
           ? claimsMap.ToStringVariantMap(VariantExtension.KeyOptions.UseStringKeys)
           : new Dictionary<string, object>();
