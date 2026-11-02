@@ -120,23 +120,6 @@ namespace Firebase.Storage.Internal {
     }
 
     /// <summary>
-    /// Alias for ReportProgress.
-    /// </summary>
-    public void UpdateProgress(long bytesTransferred, long totalByteCount,
-                               Uri uploadSessionUri = null) {
-      ReportProgress(bytesTransferred, totalByteCount, uploadSessionUri);
-    }
-
-    /// <summary>
-    /// Set the resumable upload session URI on the backing TransferState.
-    /// </summary>
-    public void SetUploadSessionUri(Uri uploadSessionUri) {
-      if (transferState != null) {
-        transferState.UploadSessionUri = uploadSessionUri;
-      }
-    }
-
-    /// <summary>
     /// Report metadata written to remote storage to the UploadState and report progress.
     /// </summary>
     public void SetMetadata(StorageMetadata metadata) {
@@ -150,12 +133,5 @@ namespace Firebase.Storage.Internal {
     /// Get the transfer state object instanced by this class.
     /// </summary>
     public T ProgressState { get; private set; }
-
-    /// <summary>
-    /// Backing TransferState instance.
-    /// </summary>
-    public TransferState TransferState {
-      get { return transferState; }
-    }
   }
 }

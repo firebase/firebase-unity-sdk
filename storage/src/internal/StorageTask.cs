@@ -39,6 +39,9 @@ namespace Firebase.Storage.Internal {
     private readonly object _stateLock = new object();
     private readonly CancellationToken _userToken;
     private readonly CancellationTokenSource _masterCts;
+    // Cached so the token stays queryable after _masterCts is disposed (CancellationTokenSource.Token
+    // throws ObjectDisposedException; a CancellationToken value does not).
+    private readonly CancellationToken _masterToken;
     private readonly CancellationTokenRegistration _userTokenRegistration;
     private readonly CancellationTokenRegistration _ownerTokenRegistration;
     private CancellationTokenSource _chunkCts;
@@ -56,6 +59,7 @@ namespace Firebase.Storage.Internal {
       _userToken = userCancellationToken;
       _masterCts = CancellationTokenSource.CreateLinkedTokenSource(
           userCancellationToken, ownerCancellationToken);
+      _masterToken = _masterCts.Token;
 
       if (userCancellationToken.CanBeCanceled) {
         _userTokenRegistration = userCancellationToken.Register(OnExternalCancelRequested);
@@ -94,7 +98,7 @@ namespace Firebase.Storage.Internal {
         lock (_stateLock) {
           return _state == InternalState.Canceling ||
                  _state == InternalState.Canceled ||
-                 _masterCts.IsCancellationRequested;
+                 _masterToken.IsCancellationRequested;
         }
       }
     }
@@ -109,7 +113,7 @@ namespace Firebase.Storage.Internal {
       }
     }
 
-    internal CancellationToken CancellationToken => _masterCts.Token;
+    internal CancellationToken CancellationToken => _masterToken;
 
     internal CancellationToken UserCancellationToken => _userToken;
 
@@ -228,7 +232,7 @@ namespace Firebase.Storage.Internal {
       while (true) {
         Task waitTask = null;
         lock (_stateLock) {
-          if (_masterCts.IsCancellationRequested ||
+          if (_masterToken.IsCancellationRequested ||
               token.IsCancellationRequested ||
               _state == InternalState.Canceling ||
               _state == InternalState.Canceled) {
@@ -252,7 +256,7 @@ namespace Firebase.Storage.Internal {
         }
 
         using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-            _masterCts.Token, token)) {
+            _masterToken, token)) {
           var tcs = new TaskCompletionSource<bool>(
               TaskCreationOptions.RunContinuationsAsynchronously);
           using (linkedCts.Token.Register(() => tcs.TrySetCanceled())) {
@@ -281,7 +285,7 @@ namespace Firebase.Storage.Internal {
           _chunkCts?.Dispose();
         } catch (ObjectDisposedException) {
         }
-        _chunkCts = CancellationTokenSource.CreateLinkedTokenSource(_masterCts.Token);
+        _chunkCts = CancellationTokenSource.CreateLinkedTokenSource(_masterToken);
         if (_state == InternalState.Pausing ||
             _state == InternalState.Paused ||
             _state == InternalState.Canceling ||
@@ -319,10 +323,10 @@ namespace Firebase.Storage.Internal {
         MarkCanceled();
         throw new OperationCanceledException(token);
       }
-      if (_masterCts.IsCancellationRequested || IsCanceled) {
+      if (_masterToken.IsCancellationRequested || IsCanceled) {
         MarkCanceled();
         throw new OperationCanceledException(
-            _userToken.CanBeCanceled ? _userToken : _masterCts.Token);
+            _userToken.CanBeCanceled ? _userToken : _masterToken);
       }
     }
 
@@ -333,7 +337,7 @@ namespace Firebase.Storage.Internal {
       if (token.IsCancellationRequested) {
         throw new OperationCanceledException(token);
       }
-      throw new OperationCanceledException(_masterCts.Token);
+      throw new OperationCanceledException(_masterToken);
     }
 
     public void Dispose() {

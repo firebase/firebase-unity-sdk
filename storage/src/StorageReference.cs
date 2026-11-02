@@ -59,11 +59,6 @@ namespace Firebase.Storage {
     }
 
     /// <summary>
-    /// Internal StoragePath backing this reference.
-    /// </summary>
-    internal StoragePath InternalPath => path;
-
-    /// <summary>
     ///   Returns a new instance of
     ///   <see cref="StorageReference" />
     ///   pointing to the parent location or null
@@ -312,23 +307,6 @@ namespace Firebase.Storage {
       return StorageHttpClient.ListAsync(this, path, maxResults, pageToken);
     }
 
-    internal async Task<StorageListResult> ListAllAsync() {
-      var prefixes = new List<StorageReference>();
-      var items = new List<StorageReference>();
-      string pageToken = null;
-      do {
-        StorageListResult page = await ListAsync(1000, pageToken).ConfigureAwait(false);
-        if (page?.Prefixes != null) {
-          prefixes.AddRange(page.Prefixes);
-        }
-        if (page?.Items != null) {
-          items.AddRange(page.Items);
-        }
-        pageToken = page?.NextPageToken;
-      } while (!string.IsNullOrEmpty(pageToken));
-      return new StorageListResult(prefixes, items, string.Empty);
-    }
-
     /// <summary>
     ///   Retrieves a long lived download URL with a revokable token.
     /// </summary>
@@ -383,7 +361,7 @@ namespace Firebase.Storage {
     ///   occurring. If the download exceeds this limit, the task will
     ///   fail and an
     ///   <see cref="System.IndexOutOfRangeException" />
-    ///   will be returned.
+    ///   will be returned. A value of zero or less disables the limit.
     /// </param>
     /// <returns>
     ///   A <see cref="Task"/>
@@ -409,7 +387,7 @@ namespace Firebase.Storage {
     ///   occurring. If the download exceeds this limit, the task will
     ///   fail and an
     ///   <see cref="System.IndexOutOfRangeException" />
-    ///   will be returned.
+    ///   will be returned. A value of zero or less disables the limit.
     /// </param>
     /// <param name="progressHandler">
     ///  usually an instance of <see cref="StorageProgress"/> that will

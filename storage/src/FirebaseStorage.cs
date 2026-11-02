@@ -62,8 +62,9 @@ namespace Firebase.Storage {
     // storageByInstanceKey.
     private bool _disposed;
 
-    // Logger for this module.
-    private static readonly ModuleLogger logger = new ModuleLogger { Tag = "Cloud Storage" };
+    // Logger for this module; parent of every instance's Logger.
+    private static readonly ModuleLogger moduleLogger =
+        new ModuleLogger { Tag = "Cloud Storage" };
 
     /// <summary>
     /// Construct an instance associated with the specified app and bucket.
@@ -75,6 +76,9 @@ namespace Firebase.Storage {
       firebaseApp = app;
       Bucket = bucket ?? string.Empty;
       instanceKey = key;
+      Logger = new ModuleLogger(parentLogger: moduleLogger) {
+        Tag = $"{moduleLogger.Tag} {Url()}:",
+      };
     }
 
     private void OnAppDisposed(object sender, EventArgs eventArgs) {
@@ -106,8 +110,8 @@ namespace Firebase.Storage {
     // Cancelled when this instance (or its FirebaseApp) is disposed.
     internal CancellationToken DisposeToken => disposeCts.Token;
 
-    // Logger for this instance.
-    internal ModuleLogger Logger => logger;
+    // Logger for this instance; messages are prefixed with the instance URL.
+    internal ModuleLogger Logger { get; }
 
     // Cloud Storage bucket name associated with this instance.
     internal string Bucket { get; }
@@ -192,8 +196,8 @@ namespace Firebase.Storage {
     ///   </see>
     /// </summary>
     public LogLevel LogLevel {
-      get => logger.Level;
-      set => logger.Level = value;
+      get => Logger.Level;
+      set => Logger.Level = value;
     }
 
     /// <summary>
@@ -258,7 +262,7 @@ namespace Firebase.Storage {
       string bucket = string.Empty;
       if (!string.IsNullOrEmpty(resolvedUrl)) {
         StoragePath parsedPath = StorageUriParser.UriToComponents(
-            null, resolvedUrl, logger, allowObjectPath: false);
+            null, resolvedUrl, moduleLogger, allowObjectPath: false);
         bucket = parsedPath.Bucket;
         resolvedUrl = "gs://" + bucket;
       }
@@ -288,7 +292,7 @@ namespace Firebase.Storage {
       if (!ReferenceEquals(winner, created)) {
         app.AppDisposed -= created.OnAppDisposed;
       } else {
-        logger.LogMessage(LogLevel.Debug, String.Format("Created {0}", key));
+        created.Logger.LogMessage(LogLevel.Debug, String.Format("Created {0}", key));
       }
       return winner;
     }
@@ -321,7 +325,7 @@ namespace Firebase.Storage {
     /// </param>
     public StorageReference GetReferenceFromUrl(string fullUrl) {
       StoragePath path = StorageUriParser.UriToComponents(
-          this, fullUrl, logger, allowObjectPath: true);
+          this, fullUrl, Logger, allowObjectPath: true);
       if (path == null) {
         throw new ArgumentException($"Invalid storage URL: {fullUrl}", nameof(fullUrl));
       }

@@ -33,9 +33,12 @@ namespace Firebase.Storage.Internal {
     /// <param name="storage">The <see cref="FirebaseStorage" /> instance.</param>
     /// <param name="uri">The URI string to parse (gs://, http://, or https://).</param>
     /// <param name="logger">Optional logger for error diagnostics.</param>
-    /// <param name="allowObjectPath">If false, throws <see cref="ArgumentException" /> when the URI contains a non-empty object path.</param>
+    /// <param name="allowObjectPath">If false, throws <see cref="ArgumentException" /> when the
+    /// URI contains a non-empty object path.</param>
     /// <returns>The parsed <see cref="StoragePath" />.</returns>
-    /// <exception cref="ArgumentException">Thrown when the URI is null, empty, malformed, has an invalid scheme, has an empty bucket, or contains an object path when <paramref name="allowObjectPath" /> is false.</exception>
+    /// <exception cref="ArgumentException">Thrown when the URI is null, empty, malformed, has an
+    /// invalid scheme, has an empty bucket, or contains an object path when
+    /// <paramref name="allowObjectPath" /> is false.</exception>
     public static StoragePath UriToComponents(FirebaseStorage storage, string uri,
                                               ModuleLogger logger = null,
                                               bool allowObjectPath = true) {

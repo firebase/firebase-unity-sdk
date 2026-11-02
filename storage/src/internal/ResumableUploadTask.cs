@@ -20,9 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -54,8 +52,8 @@ namespace Firebase.Storage.Internal {
     private readonly long _streamBaseOffset;
     private readonly ModuleLogger _logger;
     private Uri _sessionUri;
-
-    internal StorageTask TaskController => _storageTask;
+    // Scheduler slot held while ExecuteUploadAsync runs; yielded while parked at the pause gate.
+    private StorageTaskScheduler.Slot _slot;
 
     internal ResumableUploadTask(
         StorageReference reference,
@@ -225,7 +223,10 @@ namespace Firebase.Storage.Internal {
       try {
         StorageHttpClient.EnsureObjectReference(_reference, _path, "Upload");
         return await StorageTaskScheduler.RunUploadAsync(
-            ExecuteUploadAsync,
+            slot => {
+              _slot = slot;
+              return ExecuteUploadAsync();
+            },
             _storageTask.CancellationToken).ConfigureAwait(false);
       } catch (OperationCanceledException) {
         _storageTask.MarkCanceled();
@@ -246,6 +247,12 @@ namespace Firebase.Storage.Internal {
       }
     }
 
+    private Task WaitIfPausedAsync() {
+      return _slot != null
+          ? _slot.WaitIfPausedAsync(_storageTask, _storageTask.CancellationToken)
+          : _storageTask.WaitIfPausedAsync(_storageTask.CancellationToken);
+    }
+
     private async Task<StorageMetadata> ExecuteUploadAsync() {
       _storageTask.ThrowIfCanceled();
       _storageTask.TransitionToInProgress();
@@ -257,7 +264,7 @@ namespace Firebase.Storage.Internal {
       long bytesUploaded = 0;
       bool needServerQuery = _sessionUri != null;
 
-      await _storageTask.WaitIfPausedAsync(_storageTask.CancellationToken).ConfigureAwait(false);
+      await WaitIfPausedAsync().ConfigureAwait(false);
 
       if (_sessionUri == null) {
         _sessionUri = await StartSessionAsync(app, maxUploadRetryTime).ConfigureAwait(false);
@@ -297,7 +304,7 @@ namespace Firebase.Storage.Internal {
       bool reachedEof = false;
 
       while (true) {
-        await _storageTask.WaitIfPausedAsync(_storageTask.CancellationToken).ConfigureAwait(false);
+        await WaitIfPausedAsync().ConfigureAwait(false);
         _storageTask.ThrowIfCanceled();
 
         byte[] rentedBuffer = ArrayPool<byte>.Shared.Rent(currentChunkSize);
@@ -305,7 +312,7 @@ namespace Firebase.Storage.Internal {
           int bytesInChunk = 0;
           long chunkStartOffset = bytesUploaded;
 
-          if (hasLookahead && bytesInChunk < currentChunkSize) {
+          if (hasLookahead) {
             rentedBuffer[0] = lookaheadByte[0];
             bytesInChunk = 1;
             hasLookahead = false;
@@ -344,14 +351,16 @@ namespace Firebase.Storage.Internal {
 
           bool isFinalChunk = reachedEof && !hasLookahead;
 
-          // Upload the current chunk with retry, pause/resume, and server offset recovery.
-          var retryStopwatch = Stopwatch.StartNew();
+          // Upload the current chunk with retry, pause/resume, and server offset recovery. The
+          // retry budget measures time spent failing, not wall-clock time: the stopwatch is only
+          // started by the first failure of this chunk and is reset after a pause, so a slow but
+          // healthy chunk (or a long pause) never exhausts MaxUploadRetryTime on its own.
+          var retryStopwatch = new Stopwatch();
           int currentSleepMs = InitialBackoffMs;
           int offsetWithinBuffer = 0;
 
           while (true) {
-            await _storageTask.WaitIfPausedAsync(_storageTask.CancellationToken)
-                .ConfigureAwait(false);
+            await WaitIfPausedAsync().ConfigureAwait(false);
             _storageTask.ThrowIfCanceled();
 
             int bytesToSend = bytesInChunk - offsetWithinBuffer;
@@ -419,8 +428,10 @@ namespace Firebase.Storage.Internal {
 
             if (pausedMidChunk) {
               response?.Dispose();
-              await _storageTask.WaitIfPausedAsync(_storageTask.CancellationToken)
-                  .ConfigureAwait(false);
+              await WaitIfPausedAsync().ConfigureAwait(false);
+              // Resumed: start with a fresh retry budget and backoff.
+              retryStopwatch.Reset();
+              currentSleepMs = InitialBackoffMs;
               var queryAfterPause = await QuerySessionWithRetryAsync(
                   app,
                   maxUploadRetryTime,
@@ -497,6 +508,9 @@ namespace Firebase.Storage.Internal {
             // Transient failure: reset chunk size to PreferredChunkSize (256 KB) for future chunks,
             // sleep with exponential backoff + jitter, and query the server offset.
             currentChunkSize = PreferredChunkSize;
+            if (!retryStopwatch.IsRunning) {
+              retryStopwatch.Start();
+            }
             int delayMs = currentSleepMs + GetRandomJitterMs();
             if (retryStopwatch.Elapsed + TimeSpan.FromMilliseconds(delayMs) > maxUploadRetryTime) {
               _logger.LogMessage(LogLevel.Error,

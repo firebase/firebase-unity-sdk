@@ -50,12 +50,13 @@ namespace Firebase.Storage {
       if (dict == null) {
         throw new StorageException(
             StorageException.ErrorUnknown, 0,
-            "The server did not return a valid JSON response. Contact Firebase support if this issue persists.");
+            "The server did not return a valid JSON response. Contact Firebase support if this " +
+            "issue persists.");
       }
       return FromJsonDict(dict, storage, bucket);
     }
 
-    internal static StorageListResult FromJsonDict(Dictionary<string, object> dict,
+    private static StorageListResult FromJsonDict(Dictionary<string, object> dict,
                                                    FirebaseStorage storage,
                                                    string bucket) {
       var parsedPrefixes = new List<StorageReference>();
@@ -115,10 +116,9 @@ namespace Firebase.Storage {
     public IReadOnlyList<StorageReference> Items { get { return items; } }
 
     /// <summary>
-    /// Gets a page token that can be used to resume the List operation, or an empty string if there are no more results.
+    /// Gets a page token that can be used to resume the List operation, or an empty string if
+    /// there are no more results.
     /// </summary>
     public string NextPageToken { get { return nextPageToken; } }
-
-    internal string PageToken { get { return nextPageToken; } }
   }
 }

@@ -157,6 +157,7 @@ namespace Firebase.Sample.Storage {
         TestControllerPauseResumeDownload,
         TestControllerCancelUpload,
         TestControllerPauseBeforeStart,
+        TestPausedTransfersDoNotBlockOthers,
       };
 
       testRunner = AutomatedTestRunner.CreateTestRunner(
@@ -1380,6 +1381,49 @@ namespace Firebase.Sample.Storage {
       await parked;
     }
 
+    // A paused transfer must hand its scheduler slot back: with only two concurrent upload slots
+    // (and three download slots), parking two uploads and three downloads must not stop an
+    // unrelated upload and download from completing.
+    async Task TestPausedTransfersDoNotBlockOthers() {
+      var payload = Encoding.UTF8.GetBytes(SMALL_FILE_CONTENTS);
+      var parkedRef = FirebaseStorage.DefaultInstance.GetReference(SMALL_FILE_PATH);
+      await parkedRef.PutBytesAsync(payload);
+
+      var controllers = new List<StorageController>();
+      var parkedTasks = new List<Task>();
+      for (int i = 0; i < 2; ++i) {
+        var controller = new StorageController();
+        controller.Pause();
+        controllers.Add(controller);
+        parkedTasks.Add(parkedRef.PutBytesAsync(payload, null, null, default, null, controller));
+      }
+      for (int i = 0; i < 3; ++i) {
+        var controller = new StorageController();
+        controller.Pause();
+        controllers.Add(controller);
+        parkedTasks.Add(parkedRef.GetBytesAsync(0, null, default, controller));
+      }
+      // Give the parked transfers time to be scheduled and reach their pause gates.
+      await Task.Delay(1000);
+      Assert("parked transfers still pending", parkedTasks.TrueForAll(t => !t.IsCompleted));
+
+      var activeRef = FirebaseStorage.DefaultInstance.GetReference(SMALL_FILE_PATH + ".active");
+      var activeUpload = activeRef.PutBytesAsync(payload);
+      var activeDownload = parkedRef.GetBytesAsync(0);
+      var timeout = Task.Delay(30000);
+      Task finished = await Task.WhenAny(Task.WhenAll(activeUpload, activeDownload), timeout);
+      Assert("upload/download completed while 2 uploads + 3 downloads are paused",
+             finished != timeout);
+      AssertEq("activeUpload.Result.SizeBytes", (await activeUpload).SizeBytes, (long)payload.Length);
+      AssertEq("activeDownload.Result.Length", (await activeDownload).Length, payload.Length);
+
+      foreach (var controller in controllers) {
+        Assert("controller.Resume()", controller.Resume());
+      }
+      await Task.WhenAll(parkedTasks);
+      await activeRef.DeleteAsync();
+    }
+
     // Verify resumable multi-chunk upload surfaces a non-null UploadSessionUri and can resume from it.
     async Task TestUploadSessionUriAndResume() {
       var targetRef = FirebaseStorage.DefaultInstance.GetReference(LARGE_FILE_PATH);
@@ -1693,7 +1737,10 @@ namespace Firebase.Sample.Storage {
         Assert("pre-existing destination file still exists", File.Exists(tempFile));
         AssertEq("pre-existing destination file contents preserved",
                  File.ReadAllText(tempFile), originalContent);
-        Assert("temp .fbdownload file cleaned up", !File.Exists(tempFile + ".fbdownload"));
+        // The download is staged in "<destination>.<guid>.fbdownload"; make sure it was removed.
+        string[] leftoverTempFiles = Directory.GetFiles(
+            Path.GetDirectoryName(tempFile), Path.GetFileName(tempFile) + ".*.fbdownload");
+        AssertEq("temp .fbdownload files cleaned up", leftoverTempFiles.Length, 0);
       } finally {
         if (File.Exists(tempFile)) {
           File.Delete(tempFile);

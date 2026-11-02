@@ -119,10 +119,6 @@ namespace Firebase.Storage {
       }
     }
 
-    internal StorageMetadata(StorageReference reference, MetadataChange change)
-        : this(reference, MetadataChange.Build(change)) {
-    }
-
     /// <returns>
     ///   the content type of the
     ///   <see cref="StorageReference" />
@@ -255,10 +251,6 @@ namespace Firebase.Storage {
       return metadataValue;
     }
 
-    internal string DownloadTokens {
-      get { return _downloadTokens; }
-    }
-
     internal string GetFirstDownloadToken() {
       if (string.IsNullOrEmpty(_downloadTokens)) {
         return null;
@@ -318,15 +310,6 @@ namespace Firebase.Storage {
           : new Dictionary<string, string>();
     }
 
-    /// <summary>
-    /// Build StorageMetadata from a MetadataChange.
-    /// </summary>
-    /// <param name="metadataChange">Metadata change to construct a StorageMetadata from.</param>
-    /// <returns>StorageMetadata if the specified instance is not null, null otherwise.</returns>
-    internal static StorageMetadata BuildMetadata(MetadataChange metadataChange) {
-      return MetadataChange.Build(metadataChange);
-    }
-
     internal static StorageMetadata FromJson(string json, StorageReference reference = null) {
       if (string.IsNullOrEmpty(json)) {
         return new StorageMetadata(reference);
@@ -335,12 +318,13 @@ namespace Firebase.Storage {
       if (dict == null) {
         throw new StorageException(
             StorageException.ErrorUnknown, 0,
-            "The server did not return a valid JSON response. Contact Firebase support if this issue persists.");
+            "The server did not return a valid JSON response. Contact Firebase support if this " +
+            "issue persists.");
       }
       return FromJsonDict(dict, reference);
     }
 
-    internal static StorageMetadata FromJsonDict(Dictionary<string, object> dict,
+    private static StorageMetadata FromJsonDict(Dictionary<string, object> dict,
                                                  StorageReference reference = null) {
       var metadata = new StorageMetadata(reference);
       if (dict == null) {

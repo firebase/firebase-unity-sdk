@@ -50,11 +50,10 @@ namespace Firebase.Storage.Internal {
     // behind long transfers (Mono's default per-host limit is 2).
     private const int MaxConnectionsPerServer = 16;
 
-    private static HttpClient _httpClient = CreateDefaultHttpClient();
+    private static readonly HttpClient _httpClient = CreateDefaultHttpClient();
 
     internal static HttpClient Client {
       get { return _httpClient; }
-      set { _httpClient = value ?? CreateDefaultHttpClient(); }
     }
 
     private static HttpClient CreateDefaultHttpClient() {
@@ -175,6 +174,13 @@ namespace Firebase.Storage.Internal {
           networkUnavailable = true;
         } finally {
           attemptCts?.Dispose();
+        }
+
+        // On Mono a cancelled request can surface as a WebException rather than an
+        // OperationCanceledException; make sure cancellation always wins over the retry budget.
+        if (cancellationToken.IsCancellationRequested) {
+          response?.Dispose();
+          cancellationToken.ThrowIfCancellationRequested();
         }
 
         if (response != null) {
@@ -381,12 +387,6 @@ namespace Firebase.Storage.Internal {
 
     internal static Task<StorageMetadata> GetMetadataAsync(
         StorageReference reference,
-        CancellationToken cancellationToken = default) {
-      return GetMetadataAsync(reference, null, cancellationToken);
-    }
-
-    internal static Task<StorageMetadata> GetMetadataAsync(
-        StorageReference reference,
         StoragePath path,
         CancellationToken cancellationToken = default) {
       Preconditions.CheckNotNull(reference, nameof(reference));
@@ -405,26 +405,12 @@ namespace Firebase.Storage.Internal {
 
     internal static Task<StorageMetadata> UpdateMetadataAsync(
         StorageReference reference,
-        MetadataChange metadataChange,
-        CancellationToken cancellationToken = default) {
-      Preconditions.CheckNotNull(metadataChange, nameof(metadataChange));
-      return UpdateMetadataAsync(reference, null, MetadataChange.Build(metadataChange), cancellationToken);
-    }
-
-    internal static Task<StorageMetadata> UpdateMetadataAsync(
-        StorageReference reference,
-        StorageMetadata metadata,
-        CancellationToken cancellationToken = default) {
-      return UpdateMetadataAsync(reference, null, metadata, cancellationToken);
-    }
-
-    internal static Task<StorageMetadata> UpdateMetadataAsync(
-        StorageReference reference,
         StoragePath path,
         MetadataChange metadataChange,
         CancellationToken cancellationToken = default) {
       Preconditions.CheckNotNull(metadataChange, nameof(metadataChange));
-      return UpdateMetadataAsync(reference, path, MetadataChange.Build(metadataChange), cancellationToken);
+      return UpdateMetadataAsync(
+          reference, path, MetadataChange.Build(metadataChange), cancellationToken);
     }
 
     internal static Task<StorageMetadata> UpdateMetadataAsync(
@@ -450,12 +436,6 @@ namespace Firebase.Storage.Internal {
 
     internal static Task DeleteAsync(
         StorageReference reference,
-        CancellationToken cancellationToken = default) {
-      return DeleteAsync(reference, null, cancellationToken);
-    }
-
-    internal static Task DeleteAsync(
-        StorageReference reference,
         StoragePath path,
         CancellationToken cancellationToken = default) {
       Preconditions.CheckNotNull(reference, nameof(reference));
@@ -469,14 +449,6 @@ namespace Firebase.Storage.Internal {
             readBody: false,
             cancellationToken).ConfigureAwait(false);
       }, cancellationToken);
-    }
-
-    internal static Task<StorageListResult> ListAsync(
-        StorageReference reference,
-        int maxResults = 1000,
-        string pageToken = null,
-        CancellationToken cancellationToken = default) {
-      return ListAsync(reference, null, maxResults, pageToken, cancellationToken);
     }
 
     internal static Task<StorageListResult> ListAsync(
@@ -521,12 +493,6 @@ namespace Firebase.Storage.Internal {
         string bucket = path != null ? path.Bucket : reference.Bucket;
         return StorageListResult.FromJson(body, storage, bucket);
       }, cancellationToken);
-    }
-
-    internal static Task<Uri> GetDownloadUrlAsync(
-        StorageReference reference,
-        CancellationToken cancellationToken = default) {
-      return GetDownloadUrlAsync(reference, null, cancellationToken);
     }
 
     internal static async Task<Uri> GetDownloadUrlAsync(

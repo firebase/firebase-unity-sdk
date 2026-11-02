@@ -30,6 +30,8 @@ namespace Firebase.Storage {
   ///   <see cref="StorageReference.GetStreamAsync(Action{System.IO.Stream}, IProgress{DownloadState}, System.Threading.CancellationToken, StorageController)" />
   ///   to associate it with that transfer. A controller is associated with one transfer at a
   ///   time; once that transfer completes, faults or is canceled it may be reused for another.
+  ///   Passing a controller that is still associated with an unfinished transfer throws
+  ///   <see cref="InvalidOperationException" />.
   ///   <para />
   ///   <see cref="Pause" />, <see cref="Resume" /> and <see cref="Cancel" /> may be called from any
   ///   thread. Calling <see cref="Pause" /> or <see cref="Cancel" /> before the controller has
@@ -48,7 +50,7 @@ namespace Firebase.Storage {
     private readonly object _lock = new object();
     private StorageTask _task;
     private StorageReference _reference;
-    // Requests recorded before a transfer is attached.
+    // Requests recorded while no unfinished transfer is attached; applied by Attach().
     private bool _pauseRequested;
     private bool _cancelRequested;
 
@@ -77,7 +79,7 @@ namespace Firebase.Storage {
       get {
         StorageTask task;
         lock (_lock) {
-          if (_task == null) {
+          if (_task == null || _pauseRequested) {
             return _pauseRequested;
           }
           task = _task;
@@ -94,7 +96,7 @@ namespace Firebase.Storage {
       get {
         StorageTask task;
         lock (_lock) {
-          if (_task == null) {
+          if (_task == null || _cancelRequested) {
             return _cancelRequested;
           }
           task = _task;
@@ -128,7 +130,7 @@ namespace Firebase.Storage {
     public bool Pause() {
       StorageTask task;
       lock (_lock) {
-        if (_task == null) {
+        if (IsDetachedLocked()) {
           if (_cancelRequested || _pauseRequested) {
             return false;
           }
@@ -147,7 +149,7 @@ namespace Firebase.Storage {
     public bool Resume() {
       StorageTask task;
       lock (_lock) {
-        if (_task == null) {
+        if (IsDetachedLocked()) {
           bool wasPaused = _pauseRequested;
           _pauseRequested = false;
           return wasPaused;
@@ -166,7 +168,7 @@ namespace Firebase.Storage {
     public bool Cancel() {
       StorageTask task;
       lock (_lock) {
-        if (_task == null) {
+        if (IsDetachedLocked()) {
           if (_cancelRequested) {
             return false;
           }
@@ -177,6 +179,12 @@ namespace Firebase.Storage {
         task = _task;
       }
       return task.Cancel();
+    }
+
+    // True when no transfer is attached, or the attached transfer has already finished; requests
+    // made in this state are recorded and applied to the next transfer. Caller must hold _lock.
+    private bool IsDetachedLocked() {
+      return _task == null || _task.IsCompleted;
     }
 
     // Associates this controller with a transfer. Any Pause()/Cancel() recorded before the
