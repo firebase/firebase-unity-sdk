@@ -2548,9 +2548,7 @@
         "Firebase/m2repository/com/google/firebase/firebase-messaging-unity/14.0.0/firebase-messaging-unity-14.0.0.pom": "406b5a80d9e746a98b9aaa039a8b3ae1",
         "Firebase/m2repository/com/google/firebase/firebase-messaging-unity/14.0.0/firebase-messaging-unity-14.0.0.srcaar": "c018c0d2e26f4e5a90fb4d60cd541cac",
         "Firebase/m2repository/com/google/firebase/firebase-storage-unity/14.0.0/firebase-storage-unity-14.0.0.pom": "026a365084a04486bf2d05ba85fa56d2",
-        "Firebase/m2repository/com/google/firebase/firebase-storage-unity/14.0.0/firebase-storage-unity-14.0.0.srcaar": "17e0ff7c9ed74df39182fc68282736ac",
-        "com.google.firebase.storage/Firebase/FirebaseStorage": "21804d6c5c104039b9673aca72d7e1d6",
-        "com.google.firebase.storage/Firebase/FirebaseStorage/internal": "18d7f1a62dee4dffa13527084622c158"
+        "Firebase/m2repository/com/google/firebase/firebase-storage-unity/14.0.0/firebase-storage-unity-14.0.0.srcaar": "17e0ff7c9ed74df39182fc68282736ac"
     },
     "14.1.0": {
         "Firebase/Editor/FirebaseAI_version-14.1.0_manifest.txt": "dfc7ac2f878142ff8c86a7ae1838a0b0",
