@@ -71,7 +71,7 @@ local checks; use the full (no `--apis`) run if you need the package to build.
 > `--apis=database` and `--apis=storage` currently produce **no package** and
 > still exit 0: their debug configs `include` `FirebaseAuth.unitypackage`
 > without defining it (`Error while parsing project configuration ...
-> includes missing packages ['FirebaseAuth.unitypackage']` in the log). Add
+> includes missing packages ['FirebaseAuth.unitypackage']` in the log). Adding
 > `auth` is not enough, each product is exported from its own JSON. Use the
 > full run and pick the packages you need from `<output_dir>`.
 > Always check the log and the output directory; `build_package.py` ignores

@@ -80,7 +80,7 @@ python scripts/build_scripts/build_zips.py --platform=<linux|macos|windows|ios|t
 
 > [!TIP]
 > On Linux/macOS the script runs plain `make` with no `-j`. Export
-> `MAKEFLAGS=-j$(nproc)` first, otherwise a full build is single-threaded
+> `MAKEFLAGS=-j$(getconf _NPROCESSORS_ONLN)` first, otherwise a full build is single-threaded
 > (the whole SDK, Firestore/gRPC included, takes ~10 min at `-j20` on a
 > 24-core machine versus hours serial).
 
