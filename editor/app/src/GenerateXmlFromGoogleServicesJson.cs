@@ -104,6 +104,8 @@ namespace Firebase.Editor {
 
                 PlayServicesResolver.BundleIdChanged -= OnBundleIdChanged;
                 PlayServicesResolver.BundleIdChanged += OnBundleIdChanged;
+                EditorUserBuildSettings.activeBuildTargetChanged -= CheckConfiguration;
+                EditorUserBuildSettings.activeBuildTargetChanged += CheckConfiguration;
 
                 return true;
 
@@ -147,17 +149,52 @@ namespace Firebase.Editor {
       return UnityCompat.GetApplicationId(BuildTarget.Android);
     }
 
+    // Get the application ID for Apple build targets (iOS, tvOS, or StandaloneOSX).
+    private static string GetAppleApplicationId() {
+      var buildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+      if (buildTargetGroup == BuildTargetGroup.tvOS) {
+        return UnityCompat.GetApplicationId(BuildTarget.tvOS);
+      }
+      if (buildTargetGroup == BuildTargetGroup.Standalone &&
+          EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSX) {
+        string macId = UnityCompat.GetApplicationId(BuildTarget.StandaloneOSX);
+        if (!String.IsNullOrEmpty(macId)) return macId;
+      }
+      string iosId = UnityCompat.GetApplicationId(BuildTarget.iOS);
+      if (!String.IsNullOrEmpty(iosId)) return iosId;
+      return UnityCompat.GetApplicationId(BuildTarget.StandaloneOSX);
+    }
+
+    // Returns true when google-services-desktop.json should prefer
+    // GoogleService-Info.plist (macOS Editor, iOS, tvOS, or StandaloneOSX).
+    private static bool PreferPlistForDesktopConfig() {
+      var buildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+      return Application.platform == RuntimePlatform.OSXEditor ||
+             buildTargetGroup == BuildTargetGroup.iOS ||
+             buildTargetGroup == BuildTargetGroup.tvOS ||
+             (buildTargetGroup == BuildTargetGroup.Standalone &&
+              EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSX);
+    }
+
     // Search for files to process on startup.
     private static void UpdateJson(bool ignoreModificationDate,
                                    LogMessage logMessageForNoConfigFiles = null,
                                    LogMessage logMessageForMissingBundleId = null) {
       string googleServicesFile = FindGoogleServicesFile(ConfigFileType.Json,
+             bundleId: GetAndroidApplicationId(),
              logMessageForNoConfigFiles: LogNoMessage,
              logMessageForMissingBundleId: LogNoMessage);
 
       string googleServiceInfoFile = FindGoogleServicesFile(ConfigFileType.Plist,
+             bundleId: GetAppleApplicationId(),
              logMessageForNoConfigFiles: LogNoMessage,
              logMessageForMissingBundleId: LogNoMessage);
+      if (googleServiceInfoFile == null) {
+        googleServiceInfoFile = FindGoogleServicesFile(ConfigFileType.Plist,
+               bundleId: GetAndroidApplicationId(),
+               logMessageForNoConfigFiles: LogNoMessage,
+               logMessageForMissingBundleId: LogNoMessage);
+      }
 
       // Regenerate the XML for Android systems.
       // (Will do nothing if we're not targeting Android.)
@@ -171,56 +208,41 @@ namespace Firebase.Editor {
       // matches the project) then it will be used to generate the desktop package
       // file.
 
-      // If the project is set to build for Android, the google-services.json file
-      // is preferred.  If it is set to build for iOS+ or macOS, the
-      // GoogleServices-Info.plist file is preferred.  When set to standalone desktop,
-      // it tries to match the current bundleid, and if it can't, it takes any
-      // plist/json file it can find.
-
-      bool foundAtLeastOneFile = googleServicesFile != null || googleServiceInfoFile != null;
-
-      if(!foundAtLeastOneFile) {
-        // If we didn't find any files, and we're running in the editor (which is a given since
-        // we're in an AssetPreprocessor), then try again, except this time we'll just accept
-        // anything.
-        string desktopFile = FindGoogleServicesFile(ConfigFileType.Any,
+      // If the project is set to build for iOS+ or macOS, or is running in the
+      // macOS Editor, the GoogleService-Info.plist file is preferred because
+      // the macOS FirebaseCppApp bundle embeds the Firebase Apple SDK.
+      // Fall back to any available config file of each type when the bundle ID
+      // differs across platforms (e.g. separate Android and Apple bundle IDs).
+      if (googleServiceInfoFile == null) {
+        googleServiceInfoFile = FindGoogleServicesFile(ConfigFileType.Plist,
                mode: FindGoogleServicesFileMode.ReturnAll,
                logMessageForNoConfigFiles: LogNoMessage,
                logMessageForMissingBundleId: LogNoMessage);
-        if (desktopFile != null) {
-          foundAtLeastOneFile = true;
-          if (IsFileOfType(desktopFile, ConfigFileType.Json)) {
-            googleServicesFile = desktopFile;
-          } else if (IsFileOfType(desktopFile, ConfigFileType.Plist)) {
-            googleServiceInfoFile = desktopFile;
-          }
-          foundAtLeastOneFile = googleServicesFile != null || googleServiceInfoFile != null;
-        }
       }
+      if (googleServicesFile == null) {
+        googleServicesFile = FindGoogleServicesFile(ConfigFileType.Json,
+               mode: FindGoogleServicesFileMode.ReturnAll,
+               logMessageForNoConfigFiles: LogNoMessage,
+               logMessageForMissingBundleId: LogNoMessage);
+      }
+
+      bool foundAtLeastOneFile = googleServicesFile != null || googleServiceInfoFile != null;
 
       if (foundAtLeastOneFile) {
         // Regenerate google-services-desktop file.
-        var buildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-        // iOS+ needs the plist. So do macOS players: they embed the Firebase
-        // Apple SDK for Analytics, which requires an Apple app ID.
-        bool preferPlist =
-            buildTargetGroup == BuildTargetGroup.iOS ||
-            buildTargetGroup == BuildTargetGroup.tvOS ||
-            (buildTargetGroup == BuildTargetGroup.Standalone &&
-             EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSX);
-        if (preferPlist) {
+        if (PreferPlistForDesktopConfig()) {
           // Generate the desktop file from the plist, if possible.
           if (googleServiceInfoFile != null) {
-            CreateDesktopJsonFromPlist(googleServiceInfoFile);
+            CreateDesktopJsonFromPlist(googleServiceInfoFile, ignoreModificationDate);
           } else if (googleServicesFile != null) {
-            CreateDesktopJsonFromJson(googleServicesFile);
+            CreateDesktopJsonFromJson(googleServicesFile, ignoreModificationDate);
           }
         } else {
           // Anywhere else, favor the Android json.
           if (googleServicesFile != null) {
-            CreateDesktopJsonFromJson(googleServicesFile);
+            CreateDesktopJsonFromJson(googleServicesFile, ignoreModificationDate);
           } else if (googleServiceInfoFile != null) {
-            CreateDesktopJsonFromPlist(googleServiceInfoFile);
+            CreateDesktopJsonFromPlist(googleServiceInfoFile, ignoreModificationDate);
           }
         }
       } else {
@@ -232,9 +254,8 @@ namespace Firebase.Editor {
         logMessageForNoConfigFiles = logMessageForNoConfigFiles ?? LogErrorIfEnabled;
         logMessageForNoConfigFiles(
             String.Format(DocRef.GoogleServicesFileBundleIdMissing,
-                GetAndroidApplicationId(),
-                (EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.iOS ||
-                 EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.tvOS) ?
+                PreferPlistForDesktopConfig() ? GetAppleApplicationId() : GetAndroidApplicationId(),
+                PreferPlistForDesktopConfig() ?
                     "GoogleService-Info.plist" : "google-services.json",
                 String.Join("\n", BundleIdsFromBundleIdsByConfigFile(
                     ConfigFileDirectory).ToArray()),
@@ -605,13 +626,26 @@ namespace Firebase.Editor {
       }
     }
 
-    private static void CreateDesktopJsonFromPlist(string sourceFilename) {
+    private static bool DesktopJsonHasAppleAppId(string outputFile) {
+      if (!File.Exists(outputFile)) return false;
+      try {
+        return File.ReadAllText(outputFile).Contains(":ios:");
+      } catch {
+        return false;
+      }
+    }
+
+    private static void CreateDesktopJsonFromPlist(string sourceFilename,
+                                                   bool ignoreModificationDate = false) {
       string projectDir = Utility.GetProjectDir();
       string inputFile = Path.Combine(projectDir, sourceFilename);
       string outputFile = Path.Combine(projectDir, GOOGLE_SERVICES_DESKTOP_OUTPUT_PATH);
 
-      // If the output file exists and it's up to date, don't regenerate it.
-      if (File.Exists(outputFile) &&
+      // If the output file exists, already came from a plist (:ios: app ID),
+      // and is up to date, don't regenerate it.
+      if (!ignoreModificationDate &&
+          File.Exists(outputFile) &&
+          DesktopJsonHasAppleAppId(outputFile) &&
           File.GetLastWriteTime(outputFile).CompareTo(
               File.GetLastWriteTime(inputFile)) >= 0) {
         return;
@@ -633,13 +667,17 @@ namespace Firebase.Editor {
       }
     }
 
-    private static void CreateDesktopJsonFromJson(string sourceFilename) {
+    private static void CreateDesktopJsonFromJson(string sourceFilename,
+                                                  bool ignoreModificationDate = false) {
       string projectDir = Utility.GetProjectDir();
       string inputFile = Path.Combine(projectDir, sourceFilename);
       string outputFile = Path.Combine(projectDir, GOOGLE_SERVICES_DESKTOP_OUTPUT_PATH);
 
-      // If the output file exists and it's up to date, don't regenerate it.
-      if (File.Exists(outputFile) &&
+      // If the output file exists, already came from an Android json (non-:ios:
+      // app ID), and is up to date, don't regenerate it.
+      if (!ignoreModificationDate &&
+          File.Exists(outputFile) &&
+          !DesktopJsonHasAppleAppId(outputFile) &&
           File.GetLastWriteTime(outputFile).CompareTo(
               File.GetLastWriteTime(inputFile)) >= 0) {
         return;

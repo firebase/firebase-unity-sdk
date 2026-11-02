@@ -435,8 +435,9 @@ def make_macos_arch(arch, cmake_args):
   if not os.path.exists(arch):
     os.makedirs(arch)
   build_dir = os.path.join(os.getcwd(), arch)
-  cmake_args.append('-DCMAKE_OSX_ARCHITECTURES='+arch)
-  subprocess.call(cmake_args, cwd=build_dir)
+  build_args = list(cmake_args)
+  build_args.append('-DCMAKE_OSX_ARCHITECTURES='+arch)
+  subprocess.call(build_args, cwd=build_dir)
   subprocess.call('make', cwd=build_dir)
   subprocess.call(['cpack', '.'], cwd=build_dir)
 
