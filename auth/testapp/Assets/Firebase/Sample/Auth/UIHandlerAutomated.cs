@@ -36,6 +36,7 @@ namespace Firebase.Sample.Auth {
       Func<Task>[] tests = {
         TestCreateDestroy,
         TestSignInAnonymouslyAsync,
+        TestGetIdTokenResultAsync,
         TestSignInEmailAsync,
         TestSignInCredentialAsync,
         TestUpdateUserProfileAsync,
@@ -273,6 +274,122 @@ namespace Firebase.Sample.Auth {
             ConfirmNoCurrentUser(tcs);
             // The tests are done
             tcs.TrySetResult(0);
+        });
+      });
+
+      return tcs.Task;
+    }
+
+    // Tests FirebaseUser.GetIdTokenResultAsync(forceRefresh: false/true).
+    Task TestGetIdTokenResultAsync() {
+      TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
+
+      if (!TestSetupClearUser(tcs)) {
+        return tcs.Task;
+      }
+
+      DateTime unixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+      SigninAnonymouslyAsync().ContinueWithOnMainThread(t1 => {
+        if (ForwardTaskException(tcs, t1)) return;
+        if (!ConfirmAnonymousCurrentUser(tcs)) return;
+
+        string expectedUid = auth.CurrentUser.UserId;
+        auth.CurrentUser.GetIdTokenResultAsync(false).ContinueWithOnMainThread(t2 => {
+          if (ForwardTaskException(tcs, t2)) return;
+
+          Firebase.Auth.IdTokenResult firstResult = t2.Result;
+          if (string.IsNullOrEmpty(firstResult.Token)) {
+            tcs.TrySetException(new Exception("GetIdTokenResultAsync(false) returned an empty Token."));
+            return;
+          }
+          if (firstResult.AuthTimestamp.Kind != DateTimeKind.Utc ||
+              firstResult.IssuedAtTimestamp.Kind != DateTimeKind.Utc ||
+              firstResult.ExpirationTimestamp.Kind != DateTimeKind.Utc) {
+            tcs.TrySetException(new Exception("IdTokenResult timestamps must have DateTimeKind.Utc."));
+            return;
+          }
+          if (firstResult.AuthTimestamp <= unixEpochUtc ||
+              firstResult.AuthTimestamp > DateTime.UtcNow.AddDays(1)) {
+            tcs.TrySetException(new Exception(
+              "IdTokenResult.AuthTimestamp (" + firstResult.AuthTimestamp + ") is out of range."));
+            return;
+          }
+          if (firstResult.IssuedAtTimestamp <= unixEpochUtc ||
+              firstResult.IssuedAtTimestamp > DateTime.UtcNow.AddDays(1)) {
+            tcs.TrySetException(new Exception(
+              "IdTokenResult.IssuedAtTimestamp (" + firstResult.IssuedAtTimestamp + ") is out of range."));
+            return;
+          }
+          if (firstResult.ExpirationTimestamp <= firstResult.IssuedAtTimestamp) {
+            tcs.TrySetException(new Exception(
+              "IdTokenResult.ExpirationTimestamp (" + firstResult.ExpirationTimestamp +
+              ") must be > IssuedAtTimestamp (" + firstResult.IssuedAtTimestamp + ")."));
+            return;
+          }
+          if (firstResult.SignInProvider != "anonymous") {
+            tcs.TrySetException(new Exception(
+              "Expected SignInProvider 'anonymous', got '" + firstResult.SignInProvider + "'."));
+            return;
+          }
+          if (firstResult.SignInSecondFactor == null) {
+            tcs.TrySetException(new Exception("IdTokenResult.SignInSecondFactor should not be null."));
+            return;
+          }
+          if (firstResult.Claims == null || firstResult.Claims.Count == 0) {
+            tcs.TrySetException(new Exception("IdTokenResult.Claims is null or empty."));
+            return;
+          }
+          object subClaim;
+          if (!firstResult.Claims.TryGetValue("sub", out subClaim) ||
+              (subClaim as string) != expectedUid) {
+            tcs.TrySetException(new Exception(
+              "Expected Claims['sub'] == '" + expectedUid + "', got '" + subClaim + "'."));
+            return;
+          }
+          object firebaseClaim;
+          IDictionary<string, object> firebaseClaimDict = null;
+          if (firstResult.Claims.TryGetValue("firebase", out firebaseClaim)) {
+            firebaseClaimDict = firebaseClaim as IDictionary<string, object>;
+          }
+          object nestedProvider = null;
+          if (firebaseClaimDict == null ||
+              !firebaseClaimDict.TryGetValue("sign_in_provider", out nestedProvider) ||
+              (nestedProvider as string) != "anonymous") {
+            tcs.TrySetException(new Exception(
+              "Expected nested Claims['firebase']['sign_in_provider'] == 'anonymous'."));
+            return;
+          }
+
+          // Wait >1s before forcing refresh so JWT iat advances by at least 1 second.
+          Task.Delay(TimeSpan.FromMilliseconds(1100)).ContinueWithOnMainThread(_ => {
+            auth.CurrentUser.GetIdTokenResultAsync(true).ContinueWithOnMainThread(t3 => {
+              if (ForwardTaskException(tcs, t3)) return;
+
+              Firebase.Auth.IdTokenResult secondResult = t3.Result;
+              if (string.IsNullOrEmpty(secondResult.Token)) {
+                tcs.TrySetException(
+                  new Exception("GetIdTokenResultAsync(true) returned an empty Token."));
+                return;
+              }
+              if (secondResult.Token == firstResult.Token) {
+                tcs.TrySetException(
+                  new Exception("Expected GetIdTokenResultAsync(true) to return a refreshed token."));
+                return;
+              }
+              if (secondResult.IssuedAtTimestamp < firstResult.IssuedAtTimestamp) {
+                tcs.TrySetException(new Exception(
+                  "Expected refreshed IssuedAtTimestamp >= previous IssuedAtTimestamp."));
+                return;
+              }
+
+              DeleteUserAsync().ContinueWithOnMainThread(t4 => {
+                if (ForwardTaskException(tcs, t4)) return;
+                ConfirmNoCurrentUser(tcs);
+                tcs.TrySetResult(0);
+              });
+            });
+          });
         });
       });
 

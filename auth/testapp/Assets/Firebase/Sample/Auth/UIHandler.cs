@@ -492,6 +492,31 @@ namespace Firebase.Sample.Auth {
       });
     }
 
+    // Fetch and display current user's decoded ID token result and claims.
+    public void GetUserIdTokenResult() {
+      if (auth.CurrentUser == null) {
+        DebugLog("Not signed in, unable to get token result.");
+        return;
+      }
+      DebugLog("Fetching user ID token result");
+      fetchingToken = true;
+      auth.CurrentUser.GetIdTokenResultAsync(false).ContinueWithOnMainThread(task => {
+        fetchingToken = false;
+        if (LogTaskCompletion(task, "User ID token result fetch")) {
+          Firebase.Auth.IdTokenResult result = task.Result;
+          string tokenPrefix = !String.IsNullOrEmpty(result.Token) && result.Token.Length >= 8
+              ? result.Token.Substring(0, 8)
+              : result.Token;
+          DebugLog(String.Format(
+              "Token[0:8] = {0}, Provider = {1}, AuthTime = {2:o}, IssuedAt = {3:o}, " +
+              "Expiration = {4:o}, Claims = {5}",
+              tokenPrefix, result.SignInProvider, result.AuthTimestamp,
+              result.IssuedAtTimestamp, result.ExpirationTimestamp,
+              result.Claims != null ? result.Claims.Count : 0));
+        }
+      });
+    }
+
     // Display information about the currently logged in user.
     void GetUserInfo() {
       if (auth.CurrentUser == null) {
@@ -813,6 +838,9 @@ namespace Firebase.Sample.Auth {
         }
         if (GUILayout.Button("Get User Token")) {
           GetUserToken();
+        }
+        if (GUILayout.Button("Get User Token Result")) {
+          GetUserIdTokenResult();
         }
         if (GUILayout.Button("Get User Info")) {
           GetUserInfo();

@@ -146,6 +146,29 @@ public sealed class FirebaseUser : UserInfoInterface {
     return GetValidFirebaseUserInternal().TokenAsync(forceRefresh);
   }
 
+  /// <summary>
+  /// Retrieves the Firebase authentication token result, including claims and
+  /// timestamps.
+  /// </summary>
+  /// <remarks>
+  /// If a current ID token is still believed to be valid (i.e. it has not yet
+  /// expired), that token will be returned immediately. A developer may set the
+  /// <paramref name="forceRefresh"/> flag to get a new ID token, whether or not
+  /// the existing token has expired.
+  /// </remarks>
+  /// <param name="forceRefresh">Whether to force an ID token refresh.</param>
+  /// <returns>
+  /// A task that completes with the <see cref="IdTokenResult"/> for the current
+  /// user.
+  /// </returns>
+  public async Task<IdTokenResult> GetIdTokenResultAsync(bool forceRefresh) {
+    FirebaseUserInternal userInternal = GetValidFirebaseUserInternal();
+    using (IdTokenResultInternal resultInternal =
+        await userInternal.GetIdTokenResultInternalAsync(forceRefresh)) {
+      return IdTokenResult.FromIdTokenResultInternal(resultInternal);
+    }
+  }
+
   /// Attempts to change the password for the current user.
   ///
   /// For an account linked to an Identity Provider (IDP) with no password,

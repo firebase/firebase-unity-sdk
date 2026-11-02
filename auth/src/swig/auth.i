@@ -85,6 +85,9 @@ namespace auth {
 %ignore User::GetToken;
 %ignore User::GetTokenThreadSafe;
 %ignore User::GetTokenLastResult;
+%ignore User::GetIdTokenResult;
+%ignore User::GetIdTokenResultThreadSafe;
+%ignore User::GetIdTokenResultLastResult;
 %ignore User::provider_data;
 %ignore User::is_email_verified;
 %ignore User::is_anonymous;
@@ -335,6 +338,8 @@ static CppInstanceManager<Auth> g_auth_instances;
              firebase::auth::Auth::FetchProvidersResult, FirebaseException)
 %SWIG_FUTURE(Future_Credential, Credential, internal,
              firebase::auth::Credential, FirebaseException)
+%SWIG_FUTURE(Future_IdTokenResult, IdTokenResultInternal, internal,
+             firebase::auth::IdTokenResult, FirebaseException)
 
 // Custom AuthResult handler for the Future_AuthResult implementation.
 // Maps auth specific error codes to Auth specific firebase exceptions.
@@ -961,6 +966,14 @@ static CppInstanceManager<Auth> g_auth_instances;
 %typemap(csclassmodifiers) firebase::auth::Auth::FetchProvidersResult
   "internal sealed class";
 
+// Wrap IdTokenResult internally; the public C# IdTokenResult struct converts it.
+%typemap(csclassmodifiers) firebase::auth::IdTokenResult
+  "internal sealed class";
+%rename(IdTokenResultInternal) firebase::auth::IdTokenResult;
+%rename(ClaimsInternal) firebase::auth::IdTokenResult::claims;
+%ignore firebase::auth::IdTokenResult::operator==;
+%ignore firebase::auth::IdTokenResult::operator!=;
+
 
 // Make snake_case properties CamelCase.
 // FetchProvidersResult
@@ -1087,6 +1100,9 @@ static CppInstanceManager<Auth> g_auth_instances;
 // NOTE: This is not a property as it is an asynchronous operation.
 %rename(Token) firebase::auth::User::GetTokenThreadSafe;
 %ignore firebase::auth::User::GetToken;
+%rename(GetIdTokenResultInternalAsync)
+  firebase::auth::User::GetIdTokenResultThreadSafe;
+%ignore firebase::auth::User::GetIdTokenResult;
 
 // Ignore deprecated fields of User that are not replaced by properties.
 %ignore firebase::auth::User::UID;
