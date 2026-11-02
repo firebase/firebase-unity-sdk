@@ -146,29 +146,27 @@ public sealed class FirebaseUser : UserInfoInterface {
     return GetValidFirebaseUserInternal().TokenAsync(forceRefresh);
   }
 
-  /// <summary>
-  /// Retrieves the Firebase authentication token result, including claims and
-  /// timestamps.
-  /// </summary>
-  /// <remarks>
+  /// Retrieves the Firebase authentication token result, including decoded
+  /// claims and timestamps.
+  ///
   /// If a current ID token is still believed to be valid (i.e. it has not yet
   /// expired), that token will be returned immediately. A developer may set the
-  /// <paramref name="forceRefresh"/> flag to get a new ID token, whether or not
-  /// the existing token has expired.
-  /// </remarks>
-  /// <param name="forceRefresh">Whether to force an ID token refresh.</param>
-  /// <returns>
-  /// A task that completes with the <see cref="IdTokenResult"/> for the current
+  /// `forceRefresh` flag to get a new ID token, whether or not the existing
+  /// token has expired.
+  ///
+  /// @param forceRefresh Force refreshes the token if true.
+  /// @returns A task that completes with the @ref IdTokenResult for the current
   /// user.
-  /// </returns>
   public async Task<IdTokenResult> GetIdTokenResultAsync(bool forceRefresh) {
     Task<IdTokenResultInternal> internalTask;
     using (FirebaseUserInternal userInternal = GetValidFirebaseUserInternal()) {
       internalTask = userInternal.GetIdTokenResultInternalAsync(forceRefresh);
+      System.GC.KeepAlive(userInternal);
     }
-    using (IdTokenResultInternal resultInternal =
-        await internalTask.ConfigureAwait(false)) {
-      return IdTokenResult.FromIdTokenResultInternal(resultInternal);
+    using (IdTokenResultInternal resultInternal = await internalTask) {
+      IdTokenResult result = IdTokenResult.FromIdTokenResultInternal(resultInternal);
+      System.GC.KeepAlive(resultInternal);
+      return result;
     }
   }
 

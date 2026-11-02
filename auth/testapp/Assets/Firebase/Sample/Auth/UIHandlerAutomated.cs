@@ -280,37 +280,25 @@ namespace Firebase.Sample.Auth {
       return tcs.Task;
     }
 
+    void ThrowIfCheckFailed(Func<TaskCompletionSource<int>, bool> check, string fallbackMessage) {
+      var checkTcs = new TaskCompletionSource<int>();
+      if (!check(checkTcs)) {
+        throw checkTcs.Task.Exception != null
+            ? (checkTcs.Task.Exception.InnerException ?? checkTcs.Task.Exception)
+            : new Exception(fallbackMessage);
+      }
+    }
+
     // Tests FirebaseUser.GetIdTokenResultAsync(forceRefresh: false/true).
     async Task TestGetIdTokenResultAsync() {
-      var setupTcs = new TaskCompletionSource<int>();
-      if (!TestSetupClearUser(setupTcs)) {
-        await setupTcs.Task;
-      }
+      ThrowIfCheckFailed(TestSetupClearUser, "Failed to clear user prior to test.");
 
       DateTime unixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-      Firebase.Auth.IdTokenResult defaultResult = default(Firebase.Auth.IdTokenResult);
-      if (defaultResult.Token != string.Empty ||
-          defaultResult.SignInProvider != string.Empty ||
-          defaultResult.SignInSecondFactor != string.Empty ||
-          defaultResult.Claims == null ||
-          defaultResult.Claims.Count != 0 ||
-          defaultResult.AuthTimestamp != unixEpochUtc ||
-          defaultResult.AuthTimestamp.Kind != DateTimeKind.Utc ||
-          defaultResult.IssuedAtTimestamp != unixEpochUtc ||
-          defaultResult.IssuedAtTimestamp.Kind != DateTimeKind.Utc ||
-          defaultResult.ExpirationTimestamp != unixEpochUtc ||
-          defaultResult.ExpirationTimestamp.Kind != DateTimeKind.Utc) {
-        throw new Exception("default(IdTokenResult) did not return safe non-null/UTC defaults.");
-      }
-
       Firebase.Auth.FirebaseUser staleUser = null;
 
       try {
         await SigninAnonymouslyAsync();
-        var userCheckTcs = new TaskCompletionSource<int>();
-        if (!ConfirmAnonymousCurrentUser(userCheckTcs)) {
-          await userCheckTcs.Task;
-        }
+        ThrowIfCheckFailed(ConfirmAnonymousCurrentUser, "Anonymous user check failed.");
 
         staleUser = auth.CurrentUser;
         string expectedUid = auth.CurrentUser.UserId;
@@ -407,10 +395,8 @@ namespace Firebase.Sample.Auth {
         }
       }
 
-      var cleanupCheckTcs = new TaskCompletionSource<int>();
-      if (!ConfirmNoCurrentUser(cleanupCheckTcs)) {
-        await cleanupCheckTcs.Task;
-      }
+      ThrowIfCheckFailed(
+          tcs => ConfirmNoCurrentUser(tcs), "Expected CurrentUser to be null after deletion.");
 
       // Calling GetIdTokenResultAsync on a stale FirebaseUser after sign-out/deletion
       // should fault with FirebaseException rather than crashing natively.

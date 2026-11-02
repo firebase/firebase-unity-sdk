@@ -970,7 +970,6 @@ static CppInstanceManager<Auth> g_auth_instances;
 %ignore firebase::auth::IdTokenResult::operator==;
 %ignore firebase::auth::IdTokenResult::operator!=;
 
-
 // Make snake_case properties CamelCase.
 // FetchProvidersResult
 %rename(Providers) firebase::auth::Auth::FetchProvidersResult::providers;
