@@ -16,10 +16,7 @@
 
 using System;
 using System.Buffers;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -32,12 +29,13 @@ namespace Firebase.Storage.Internal {
   /// with HTTP Range resumption, ETag consistency checks, and ArrayPool buffer pooling.
   /// </summary>
   internal sealed class ResumableDownloadTask {
+    // Streaming read buffer size (256 KB) matches the Firebase Android SDK's FileDownloadTask
+    // (PREFERRED_CHUNK_SIZE); retry timing comes from RetryBackoff.
     internal const int BufferSize = 256 * 1024;
-    private const int InitialBackoffMs = 1000;
-    private const int MaxBackoffMs = 30000;
-    private const int MaxJitterMs = 250;
-    private static readonly Random _jitterRandom = new Random();
-    private static readonly object _jitterLock = new object();
+
+    // Maximum number of times a non-streaming download restarts from byte 0 because the remote
+    // object's ETag changed mid-transfer before giving up.
+    private const int MaxETagRestarts = 1;
 
     private readonly StorageReference _reference;
     private readonly StoragePath _path;
@@ -45,13 +43,11 @@ namespace Firebase.Storage.Internal {
     private readonly DownloadState _downloadState;
     private readonly TransferStateUpdater<DownloadState> _transferStateUpdater;
     private readonly ModuleLogger _logger;
+    private readonly FirebaseApp _app;
+    private readonly TimeSpan _maxRetryTime;
     // Scheduler slot held while the download runs; yielded while parked at the pause gate. Null
     // for GetStreamAsync() streams, which do not hold a slot once handed to the caller.
     private StorageTaskScheduler.Slot _slot;
-
-    // Maximum number of times a non-streaming download restarts from byte 0 because the remote
-    // object's ETag changed mid-transfer before giving up.
-    private const int MaxETagRestarts = 1;
 
     internal ResumableDownloadTask(
         StorageReference reference,
@@ -62,15 +58,10 @@ namespace Firebase.Storage.Internal {
       _reference = Preconditions.CheckNotNull(reference, nameof(reference));
       _path = path;
       _logger = reference.Logger;
-      _storageTask = new StorageTask(cancelToken, reference.Storage?.DisposeToken ?? default);
-      if (controller != null) {
-        try {
-          controller.Attach(_storageTask, reference);
-        } catch {
-          _storageTask.Dispose();
-          throw;
-        }
-      }
+      FirebaseStorage storage = reference.Storage;
+      _app = storage?.App;
+      _maxRetryTime = storage?.MaxDownloadRetryTime ?? TimeSpan.FromMinutes(10);
+      _storageTask = StorageTask.CreateForTransfer(reference, cancelToken, controller);
       _downloadState = new DownloadState(reference, -1);
       _transferStateUpdater = new TransferStateUpdater<DownloadState>(
           reference,
@@ -131,133 +122,115 @@ namespace Firebase.Storage.Internal {
       return downloadTask.RunOpenStreamAsync();
     }
 
-    internal async Task<byte[]> RunGetBytesAsync(long maxDownloadSizeBytes) {
-      try {
-        StorageHttpClient.EnsureObjectReference(_reference, _path, "GetBytes");
-        return await StorageTaskScheduler.RunDownloadAsync(
-            async slot => {
-              _slot = slot;
-              using (var memoryStream = new MemoryStream()) {
-                await DownloadToStreamAsync(
-                    memoryStream,
-                    maxDownloadSizeBytes,
-                    resetStream: () => {
-                      memoryStream.Position = 0;
-                      memoryStream.SetLength(0);
-                    }).ConfigureAwait(false);
-                return memoryStream.ToArray();
-              }
-            },
-            _storageTask.CancellationToken).ConfigureAwait(false);
-      } catch (OperationCanceledException) {
-        _storageTask.MarkCanceled();
-        throw;
-      } catch (Exception) {
-        _storageTask.MarkFaulted();
-        throw;
-      } finally {
-        await _transferStateUpdater.FlushAsync().ConfigureAwait(false);
-        _storageTask.Dispose();
-      }
+    internal Task<byte[]> RunGetBytesAsync(long maxDownloadSizeBytes) {
+      return _storageTask.RunTransferAsync(
+          () => {
+            StorageHttpClient.EnsureObjectReference(_reference, _path, "GetBytes");
+            return StorageTaskScheduler.RunDownloadAsync(
+                async slot => {
+                  _slot = slot;
+                  using (var memoryStream = new MemoryStream()) {
+                    await DownloadToStreamAsync(
+                        memoryStream,
+                        maxDownloadSizeBytes,
+                        resetStream: () => {
+                          memoryStream.Position = 0;
+                          memoryStream.SetLength(0);
+                        }).ConfigureAwait(false);
+                    return memoryStream.ToArray();
+                  }
+                },
+                _storageTask.CancellationToken);
+          },
+          onCanceled: null,
+          cleanupAsync: _transferStateUpdater.FlushAsync);
     }
 
-    internal async Task RunGetFileAsync(string destinationFilePath) {
-      string localPath = ResolveLocalFilePath(destinationFilePath);
+    internal Task RunGetFileAsync(string destinationFilePath) {
+      string localPath = IoUtil.ResolveLocalFilePath(destinationFilePath);
       // Download into a uniquely named sibling temp file and move it into place on success so a
       // failed or cancelled download never leaves a truncated file at the destination, and two
       // concurrent downloads to the same destination cannot clobber each other's partial data.
       string tempPath = $"{localPath}.{Guid.NewGuid():N}.fbdownload";
-      try {
-        StorageHttpClient.EnsureObjectReference(_reference, _path, "GetFile");
-        await StorageTaskScheduler.RunDownloadAsync(
-            async slot => {
-              _slot = slot;
-              string directory = Path.GetDirectoryName(localPath);
-              if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
-                Directory.CreateDirectory(directory);
-              }
+      return _storageTask.RunTransferAsync(
+          () => {
+            StorageHttpClient.EnsureObjectReference(_reference, _path, "GetFile");
+            return StorageTaskScheduler.RunDownloadAsync(
+                async slot => {
+                  _slot = slot;
+                  string directory = Path.GetDirectoryName(localPath);
+                  if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
+                    Directory.CreateDirectory(directory);
+                  }
 
-              using (var fileStream = new FileStream(
-                  tempPath,
-                  FileMode.Create,
-                  FileAccess.Write,
-                  FileShare.Read,
-                  bufferSize: 4096,
-                  useAsync: true)) {
-                await DownloadToStreamAsync(
-                    fileStream,
-                    maxDownloadSizeBytes: 0,
-                    resetStream: () => {
-                      fileStream.Position = 0;
-                      fileStream.SetLength(0);
-                    }).ConfigureAwait(false);
-                await fileStream.FlushAsync(_storageTask.CancellationToken).ConfigureAwait(false);
+                  using (var fileStream = new FileStream(
+                      tempPath,
+                      FileMode.Create,
+                      FileAccess.Write,
+                      FileShare.Read,
+                      bufferSize: 4096,
+                      useAsync: true)) {
+                    await DownloadToStreamAsync(
+                        fileStream,
+                        maxDownloadSizeBytes: 0,
+                        resetStream: () => {
+                          fileStream.Position = 0;
+                          fileStream.SetLength(0);
+                        }).ConfigureAwait(false);
+                    await fileStream.FlushAsync(_storageTask.CancellationToken).ConfigureAwait(false);
+                  }
+                  if (File.Exists(localPath)) {
+                    File.Delete(localPath);
+                  }
+                  File.Move(tempPath, localPath);
+                },
+                _storageTask.CancellationToken);
+          },
+          onCanceled: null,
+          cleanupAsync: () => {
+            try {
+              if (File.Exists(tempPath)) {
+                File.Delete(tempPath);
               }
-              if (File.Exists(localPath)) {
-                File.Delete(localPath);
-              }
-              File.Move(tempPath, localPath);
-            },
-            _storageTask.CancellationToken).ConfigureAwait(false);
-      } catch (OperationCanceledException) {
-        _storageTask.MarkCanceled();
-        throw;
-      } catch (Exception) {
-        _storageTask.MarkFaulted();
-        throw;
-      } finally {
-        try {
-          if (File.Exists(tempPath)) {
-            File.Delete(tempPath);
-          }
-        } catch (Exception) {
-          // Best-effort cleanup of the partial temp file.
-        }
-        await _transferStateUpdater.FlushAsync().ConfigureAwait(false);
-        _storageTask.Dispose();
-      }
+            } catch (Exception) {
+              // Best-effort cleanup of the partial temp file.
+            }
+            return _transferStateUpdater.FlushAsync();
+          });
     }
 
-    internal async Task RunGetStreamProcessorAsync(Action<Stream> streamProcessor) {
-      try {
-        StorageHttpClient.EnsureObjectReference(_reference, _path, "GetStream");
-        await StorageTaskScheduler.RunDownloadAsync(
-            async slot => {
-              _slot = slot;
-              _storageTask.ThrowIfCanceled();
-              _storageTask.TransitionToInProgress();
+    internal Task RunGetStreamProcessorAsync(Action<Stream> streamProcessor) {
+      return _storageTask.RunTransferAsync(
+          () => {
+            StorageHttpClient.EnsureObjectReference(_reference, _path, "GetStream");
+            return StorageTaskScheduler.RunDownloadAsync(
+                async slot => {
+                  _slot = slot;
+                  _storageTask.ThrowIfCanceled();
+                  _storageTask.TransitionToInProgress();
 
-              using (var downloadStream = await OpenResumableStreamInternalAsync(
-                  ownsStorageTask: false).ConfigureAwait(false)) {
-                await Task.Run(
-                    () => {
-                      _storageTask.ThrowIfCanceled();
-                      streamProcessor(downloadStream);
-                      _storageTask.ThrowIfCanceled();
-                    },
-                    _storageTask.CancellationToken).ConfigureAwait(false);
-              }
-              _storageTask.MarkCompleted();
-            },
-            _storageTask.CancellationToken).ConfigureAwait(false);
-      } catch (OperationCanceledException) {
-        _storageTask.MarkCanceled();
-        throw;
-      } catch (Exception) {
-        if (_storageTask.IsCanceled) {
-          _storageTask.ThrowIfCanceled();
-        }
-        _storageTask.MarkFaulted();
-        throw;
-      } finally {
-        await _transferStateUpdater.FlushAsync().ConfigureAwait(false);
-        _storageTask.Dispose();
-      }
+                  using (var downloadStream = await OpenResumableStreamInternalAsync(
+                      ownsStorageTask: false).ConfigureAwait(false)) {
+                    await Task.Run(
+                        () => {
+                          _storageTask.ThrowIfCanceled();
+                          streamProcessor(downloadStream);
+                          _storageTask.ThrowIfCanceled();
+                        },
+                        _storageTask.CancellationToken).ConfigureAwait(false);
+                  }
+                  _storageTask.MarkCompleted();
+                },
+                _storageTask.CancellationToken);
+          },
+          onCanceled: null,
+          cleanupAsync: _transferStateUpdater.FlushAsync);
     }
 
     // Opens a live download stream. A scheduler slot is held only while the request is issued
     // and the response headers are read; it is released before the stream is handed to the
-    // caller so that an undisposed stream can never starve other downloads.
+    // caller so that an undisposed stream can never starve other downloads. Unlike the other
+    // entry points the StorageTask outlives this call: the returned stream owns it.
     internal async Task<Stream> RunOpenStreamAsync() {
       try {
         StorageHttpClient.EnsureObjectReference(_reference, _path, "GetStream");
@@ -274,24 +247,22 @@ namespace Firebase.Storage.Internal {
         _storageTask.Dispose();
         throw;
       } catch (Exception) {
-        if (_storageTask.IsCanceled) {
+        bool canceled = _storageTask.IsCanceled;
+        if (canceled) {
           _storageTask.MarkCanceled();
-          try {
-            _storageTask.ThrowIfCanceled();
-          } finally {
-            _storageTask.Dispose();
-          }
+        } else {
+          _storageTask.MarkFaulted();
         }
-        _storageTask.MarkFaulted();
         _storageTask.Dispose();
+        if (canceled) {
+          _storageTask.ThrowIfCanceled();
+        }
         throw;
       }
     }
 
     private Task WaitIfPausedAsync() {
-      return _slot != null
-          ? _slot.WaitIfPausedAsync(_storageTask, _storageTask.CancellationToken)
-          : _storageTask.WaitIfPausedAsync(_storageTask.CancellationToken);
+      return _storageTask.WaitIfPausedAsync(_slot, _storageTask.CancellationToken);
     }
 
     private async Task DownloadToStreamAsync(
@@ -301,15 +272,10 @@ namespace Firebase.Storage.Internal {
       _storageTask.ThrowIfCanceled();
       _storageTask.TransitionToInProgress();
 
-      FirebaseStorage storage = _reference.Storage;
-      FirebaseApp app = storage?.App;
-      TimeSpan maxDownloadRetryTime = storage?.MaxDownloadRetryTime ?? TimeSpan.FromMinutes(10);
-      // The retry budget measures time spent failing, not wall-clock time: the stopwatch is only
-      // started by a failure and is reset whenever bytes arrive or the transfer is resumed, so a
-      // long healthy download (or a long pause) never exhausts MaxDownloadRetryTime on its own.
-      var retryStopwatch = new Stopwatch();
-      int currentSleepMs = InitialBackoffMs;
-
+      // The retry budget measures time spent failing, not wall-clock time (see RetryBackoff): it
+      // is reset whenever bytes arrive or the transfer is resumed, so a long healthy download (or
+      // a long pause) never exhausts MaxDownloadRetryTime on its own.
+      var backoff = new RetryBackoff(_maxRetryTime);
       long resumeOffset = 0;
       string expectedETag = null;
       bool reportedAnyProgress = false;
@@ -322,9 +288,9 @@ namespace Firebase.Storage.Internal {
           _storageTask.ThrowIfCanceled();
 
           HttpResponseMessage response = null;
-          Exception lastNetworkException = null;
-          bool pausedMidStream = false;
-          bool networkUnavailable = false;
+          Exception lastException = null;
+          bool paused = false;
+          bool transportFailure = false;
           bool etagMismatchRestart = false;
 
           CancellationToken chunkToken = _storageTask.GetChunkCancellationToken();
@@ -332,8 +298,7 @@ namespace Firebase.Storage.Internal {
           try {
             watchdog = new StallWatchdog(chunkToken);
             CancellationToken readToken = watchdog.Token;
-            response = await SendMediaGetRequestAsync(app, resumeOffset, readToken)
-                .ConfigureAwait(false);
+            response = await SendMediaGetRequestAsync(resumeOffset, readToken).ConfigureAwait(false);
             watchdog.Touch();
 
             int statusCode = (int)response.StatusCode;
@@ -411,8 +376,7 @@ namespace Firebase.Storage.Internal {
                     }
                     watchdog.Touch();
                     // Bytes arrived: the connection is healthy, so forget earlier failures.
-                    retryStopwatch.Reset();
-                    currentSleepMs = InitialBackoffMs;
+                    backoff.Reset();
 
                     if (maxDownloadSizeBytes > 0 &&
                         (resumeOffset + bytesRead) > maxDownloadSizeBytes) {
@@ -446,31 +410,14 @@ namespace Firebase.Storage.Internal {
                   .ConfigureAwait(false);
               throw StorageException.CreateFromHttpResponse(statusCode, errorBody);
             }
-          } catch (IndexOutOfRangeException) {
-            throw;
-          } catch (StorageException) {
-            throw;
-          } catch (OperationCanceledException oce) {
-            if (_storageTask.IsCanceled) {
-              _storageTask.ThrowIfCanceled();
-            }
-            if (_storageTask.IsPaused) {
-              pausedMidStream = true;
-            } else {
-              // Stall watchdog fired, or the HTTP stack raised a spurious cancellation; treat as
-              // a transient network failure so the backoff path runs rather than spinning.
-              lastNetworkException = watchdog?.AsStallException(oce) ?? (Exception)oce;
-              networkUnavailable = true;
-            }
           } catch (Exception ex) when (StorageHttpClient.IsTransportException(ex)) {
-            if (_storageTask.IsCanceled) {
-              _storageTask.ThrowIfCanceled();
-            }
-            if (_storageTask.IsPaused) {
-              pausedMidStream = true;
+            if (_storageTask.ClassifyAttemptFailure(ex, watchdog, default, out lastException) ==
+                StorageTask.AttemptFailure.Paused) {
+              paused = true;
             } else {
-              lastNetworkException = ex;
-              networkUnavailable = true;
+              transportFailure = true;
+              _logger.LogMessage(LogLevel.Warning,
+                  $"Download at offset {resumeOffset} failed: {lastException.Message}");
             }
           } finally {
             response?.Dispose();
@@ -481,43 +428,19 @@ namespace Firebase.Storage.Internal {
             continue;
           }
 
-          if (pausedMidStream) {
+          if (paused) {
+            // Pause() severed the request: park at the gate, then resume with a fresh budget.
             await WaitIfPausedAsync().ConfigureAwait(false);
-            // Resumed: start with a fresh retry budget and backoff.
-            retryStopwatch.Reset();
-            currentSleepMs = InitialBackoffMs;
+            backoff.Reset();
             continue;
           }
 
-          if (networkUnavailable) {
-            _logger.LogMessage(LogLevel.Warning,
-                $"Download at offset {resumeOffset} failed: {lastNetworkException?.Message}");
-          }
-
-          if (!retryStopwatch.IsRunning) {
-            retryStopwatch.Start();
-          }
-          int delayMs = currentSleepMs + GetRandomJitterMs();
-          if (retryStopwatch.Elapsed + TimeSpan.FromMilliseconds(delayMs) > maxDownloadRetryTime) {
-            _logger.LogMessage(LogLevel.Error,
-                $"Download retry budget ({maxDownloadRetryTime}) exhausted at offset {resumeOffset}.");
-            throw new StorageException(
-                StorageException.ErrorRetryLimitExceeded,
-                0,
-                lastNetworkException?.Message ??
-                StorageException.GetErrorMessageForCode(StorageException.ErrorRetryLimitExceeded),
-                lastNetworkException);
-          }
-
-          _logger.LogMessage(LogLevel.Debug,
-              $"Retrying download at offset {resumeOffset} in {delayMs} ms.");
-          await Task.Delay(delayMs, _storageTask.CancellationToken).ConfigureAwait(false);
-          if (networkUnavailable) {
-            // Flat 1s re-poll on transport failures (see StorageHttpClient.SendWithExponentialBackoffAsync).
-            currentSleepMs = InitialBackoffMs;
-          } else if (currentSleepMs < MaxBackoffMs) {
-            currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
-          }
+          await backoff.DelayOrThrowAsync(
+              transportFailure,
+              lastException,
+              _logger,
+              $"Download at offset {resumeOffset}",
+              _storageTask.CancellationToken).ConfigureAwait(false);
         }
       } finally {
         ArrayPool<byte>.Shared.Return(buffer);
@@ -526,67 +449,35 @@ namespace Firebase.Storage.Internal {
 
     private async Task<ResumableDownloadStream> OpenResumableStreamInternalAsync(
         bool ownsStorageTask) {
-      FirebaseStorage storage = _reference.Storage;
-      FirebaseApp app = storage?.App;
-      TimeSpan maxDownloadRetryTime = storage?.MaxDownloadRetryTime ?? TimeSpan.FromMinutes(10);
-
-      HttpResponseMessage initialResponse = null;
+      HttpResponseMessage response = await StorageHttpClient.SendTransferRequestAsync(
+          _storageTask,
+          () => CreateMediaRequestAsync(0),
+          _maxRetryTime,
+          HttpCompletionOption.ResponseHeadersRead,
+          _logger,
+          "Download stream open").ConfigureAwait(false);
       try {
-        try {
-          initialResponse = await StorageHttpClient.SendWithExponentialBackoffAsync(
-              StorageHttpClient.Client,
-              () => CreateMediaRequestAsync(app, 0),
-              maxDownloadRetryTime,
-              HttpCompletionOption.ResponseHeadersRead,
-              _storageTask.CancellationToken,
-              StallWatchdog.StallTimeout).ConfigureAwait(false);
-        } catch (OperationCanceledException) when (_storageTask.IsCanceled) {
-          _storageTask.ThrowIfCanceled();
-          throw;
-        } catch (Exception ex) {
-          if (_storageTask.IsCanceled) {
-            _storageTask.ThrowIfCanceled();
-          }
-          StorageException wrapped = StorageHttpClient.WrapRetryFailure(ex);
-          if (wrapped == null) {
-            throw;
-          }
-          throw wrapped;
-        }
-
-        if (!initialResponse.IsSuccessStatusCode) {
-          string errorBody = await StorageHttpClient.ReadResponseContentSafeAsync(initialResponse)
-              .ConfigureAwait(false);
-          int statusCode = (int)initialResponse.StatusCode;
-          initialResponse.Dispose();
-          throw StorageException.CreateFromHttpResponse(statusCode, errorBody);
-        }
-
-        long totalBytes = ParseTotalBytesFromResponse(initialResponse, 0);
+        long totalBytes = ParseTotalBytesFromResponse(response, 0);
         if (totalBytes >= 0) {
           _downloadState.State.TotalByteCount = totalBytes;
         }
-        string initialETag = GetResponseETag(initialResponse);
-        Stream innerStream = await initialResponse.Content.ReadAsStreamAsync()
-            .ConfigureAwait(false);
-
+        Stream innerStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
         return new ResumableDownloadStream(
             this,
-            initialResponse,
+            response,
             innerStream,
-            initialETag,
+            GetResponseETag(response),
             ownsStorageTask);
       } catch {
-        initialResponse?.Dispose();
+        response.Dispose();
         throw;
       }
     }
 
     private async Task<HttpResponseMessage> SendMediaGetRequestAsync(
-        FirebaseApp app,
         long resumeOffset,
         CancellationToken cancellationToken) {
-      using (var request = await CreateMediaRequestAsync(app, resumeOffset).ConfigureAwait(false)) {
+      using (var request = await CreateMediaRequestAsync(resumeOffset).ConfigureAwait(false)) {
         return await StorageHttpClient.Client.SendAsync(
             request,
             HttpCompletionOption.ResponseHeadersRead,
@@ -594,13 +485,10 @@ namespace Firebase.Storage.Internal {
       }
     }
 
-    private async Task<HttpRequestMessage> CreateMediaRequestAsync(
-        FirebaseApp app,
-        long resumeOffset) {
+    private async Task<HttpRequestMessage> CreateMediaRequestAsync(long resumeOffset) {
       string objectUrl = StorageHttpClient.GetObjectUrl(_reference, _path);
-      string mediaUrl = $"{objectUrl}?alt=media";
-      var request = new HttpRequestMessage(HttpMethod.Get, mediaUrl);
-      await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+      var request = new HttpRequestMessage(HttpMethod.Get, $"{objectUrl}?alt=media");
+      await StorageHttpClient.SetStorageRequestHeaders(request, _app).ConfigureAwait(false);
       if (resumeOffset > 0) {
         request.Headers.Range = new RangeHeaderValue(resumeOffset, null);
       }
@@ -608,17 +496,7 @@ namespace Firebase.Storage.Internal {
     }
 
     private static string GetResponseETag(HttpResponseMessage response) {
-      if (response == null) {
-        return null;
-      }
-      if (response.Headers?.ETag != null) {
-        return response.Headers.ETag.Tag;
-      }
-      if (response.Headers != null &&
-          response.Headers.TryGetValues("ETag", out IEnumerable<string> values)) {
-        return values.FirstOrDefault();
-      }
-      return null;
+      return response?.Headers?.ETag?.Tag ?? StorageHttpClient.GetHeaderFirstValue(response, "ETag");
     }
 
     private static long ParseTotalBytesFromResponse(
@@ -637,32 +515,10 @@ namespace Firebase.Storage.Internal {
       return -1;
     }
 
-    internal static string ResolveLocalFilePath(string filePath) {
-      if (string.IsNullOrEmpty(filePath)) {
-        return filePath;
-      }
-      if (filePath.StartsWith("file://", StringComparison.OrdinalIgnoreCase)) {
-        try {
-          // Uri.LocalPath is already unescaped; do not unescape again or literal '%' sequences
-          // in filenames will be corrupted.
-          return new Uri(filePath).LocalPath;
-        } catch (UriFormatException) {
-          return filePath.Substring("file://".Length);
-        }
-      }
-      return filePath;
-    }
-
     private void ReportProgress() {
       _transferStateUpdater.ReportProgress(
           _downloadState.BytesTransferred,
           _downloadState.TotalByteCount);
-    }
-
-    private static int GetRandomJitterMs() {
-      lock (_jitterLock) {
-        return _jitterRandom.Next(MaxJitterMs);
-      }
     }
 
     /// <summary>
@@ -672,9 +528,18 @@ namespace Firebase.Storage.Internal {
     /// finalizer closes the underlying connection as a safety net.
     /// </summary>
     private sealed class ResumableDownloadStream : Stream {
+      private enum ReconnectResult {
+        Connected,
+        EndOfObject,
+        RetryableStatus
+      }
+
       private readonly ResumableDownloadTask _owner;
       private readonly bool _ownsStorageTask;
       private readonly CancellationTokenRegistration _cancelRegistration;
+      // Shared across reads so consecutive failures accumulate against one budget, and reset
+      // whenever a read succeeds.
+      private readonly RetryBackoff _backoff;
       private HttpResponseMessage _currentResponse;
       private Stream _currentStream;
       private string _expectedETag;
@@ -693,6 +558,7 @@ namespace Firebase.Storage.Internal {
         _currentStream = initialStream;
         _expectedETag = initialETag;
         _ownsStorageTask = ownsStorageTask;
+        _backoff = new RetryBackoff(owner._maxRetryTime);
 
         if (_owner._storageTask.CancellationToken.CanBeCanceled) {
           // Capture a weak reference so an undisposed stream stays collectable: the registration
@@ -743,20 +609,14 @@ namespace Firebase.Storage.Internal {
 
         _owner._storageTask.ThrowIfCanceled(cancellationToken);
 
-        FirebaseStorage storage = _owner._reference.Storage;
-        FirebaseApp app = storage?.App;
-        TimeSpan maxDownloadRetryTime = storage?.MaxDownloadRetryTime ?? TimeSpan.FromMinutes(10);
-        var retryStopwatch = Stopwatch.StartNew();
-        int currentSleepMs = InitialBackoffMs;
-
         while (true) {
-          if (_owner._slot != null) {
-            await _owner._slot.WaitIfPausedAsync(_owner._storageTask, cancellationToken)
-                .ConfigureAwait(false);
-          } else {
-            await _owner._storageTask.WaitIfPausedAsync(cancellationToken).ConfigureAwait(false);
-          }
+          await _owner._storageTask.WaitIfPausedAsync(_owner._slot, cancellationToken)
+              .ConfigureAwait(false);
           _owner._storageTask.ThrowIfCanceled(cancellationToken);
+
+          Exception transportError = null;
+          bool paused = false;
+          bool retryableStatus = false;
 
           // Link the watchdog to the per-chunk token as well so Pause() aborts an in-flight read
           // instead of waiting for it to return.
@@ -767,107 +627,79 @@ namespace Firebase.Storage.Internal {
             readCts = CancellationTokenSource.CreateLinkedTokenSource(chunkToken, cancellationToken);
             watchdog = new StallWatchdog(readCts.Token);
             if (_currentStream == null) {
-              await ReconnectAsync(app, watchdog.Token).ConfigureAwait(false);
-              if (_currentStream == null) {
+              ReconnectResult reconnect = await ReconnectAsync(watchdog.Token).ConfigureAwait(false);
+              if (reconnect == ReconnectResult.EndOfObject) {
                 return 0;
               }
+              retryableStatus = reconnect == ReconnectResult.RetryableStatus;
             }
 
-            int read = await _currentStream.ReadAsync(buffer, offset, count, watchdog.Token)
-                .ConfigureAwait(false);
-            if (read > 0) {
-              _bytesReadTotal += read;
-              _owner._downloadState.State.BytesTransferred = _bytesReadTotal;
-              _owner.ReportProgress();
-              _reportedInitialProgress = true;
-            } else if (!_reportedInitialProgress) {
-              _owner._downloadState.State.BytesTransferred = _bytesReadTotal;
-              _owner.ReportProgress();
-              _reportedInitialProgress = true;
+            if (!retryableStatus) {
+              int read = await _currentStream.ReadAsync(buffer, offset, count, watchdog.Token)
+                  .ConfigureAwait(false);
+              if (read > 0) {
+                _bytesReadTotal += read;
+                // Bytes arrived: the connection is healthy, so forget earlier failures.
+                _backoff.Reset();
+                _owner._downloadState.State.BytesTransferred = _bytesReadTotal;
+                _owner.ReportProgress();
+                _reportedInitialProgress = true;
+              } else if (!_reportedInitialProgress) {
+                _owner._downloadState.State.BytesTransferred = _bytesReadTotal;
+                _owner.ReportProgress();
+                _reportedInitialProgress = true;
+              }
+              return read;
             }
-            return read;
-          } catch (OperationCanceledException oce) {
-            _owner._storageTask.ThrowIfCanceled(cancellationToken);
-            if (_owner._storageTask.IsPaused) {
-              // Pause() cancelled the chunk token; drop the connection and park at the pause gate.
-              DisposeCurrentStream();
-              continue;
-            }
-            HttpRequestException stall = watchdog?.AsStallException(oce);
-            if (stall == null) {
-              throw;
-            }
-            // Connection stalled: drop it and fall through to the reconnect/backoff path below.
-            DisposeCurrentStream();
-            _owner._logger.LogMessage(LogLevel.Warning,
-                $"Download stream stalled at offset {_bytesReadTotal}; reconnecting.");
-            int stallDelayMs = currentSleepMs + GetRandomJitterMs();
-            if (retryStopwatch.Elapsed + TimeSpan.FromMilliseconds(stallDelayMs) >
-                maxDownloadRetryTime) {
-              throw new StorageException(
-                  StorageException.ErrorRetryLimitExceeded, 0, stall.Message, stall);
-            }
-            await Task.Delay(stallDelayMs, cancellationToken).ConfigureAwait(false);
-            currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
-          } catch (StorageException) {
-            throw;
-          } catch (IOException) when (_owner._storageTask.IsCanceled ||
-                                      cancellationToken.IsCancellationRequested) {
-            _owner._storageTask.ThrowIfCanceled(cancellationToken);
-            throw;
-          } catch (ObjectDisposedException) when (_owner._storageTask.IsCanceled ||
-                                                  cancellationToken.IsCancellationRequested) {
-            _owner._storageTask.ThrowIfCanceled(cancellationToken);
-            throw;
-          } catch (Exception ex) when (!(ex is OperationCanceledException) &&
-                                       StorageHttpClient.IsTransportException(ex)) {
-            if (_owner._storageTask.IsCanceled || cancellationToken.IsCancellationRequested) {
-              _owner._storageTask.ThrowIfCanceled(cancellationToken);
-            }
-
-            DisposeCurrentStream();
-            _owner._logger.LogMessage(LogLevel.Warning,
-                $"Download stream failed at offset {_bytesReadTotal}: {ex.Message}");
-
-            int delayMs = currentSleepMs + GetRandomJitterMs();
-            if (retryStopwatch.Elapsed + TimeSpan.FromMilliseconds(delayMs) > maxDownloadRetryTime) {
-              throw new StorageException(
-                  StorageException.ErrorRetryLimitExceeded,
-                  0,
-                  ex.Message,
-                  ex);
-            }
-
-            await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
-            currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
+          } catch (Exception ex) when (StorageHttpClient.IsTransportException(ex)) {
+            paused = _owner._storageTask.ClassifyAttemptFailure(
+                ex, watchdog, cancellationToken, out transportError) ==
+                StorageTask.AttemptFailure.Paused;
           } finally {
             watchdog?.Dispose();
             readCts?.Dispose();
           }
+
+          // The attempt failed: drop the connection and either park at the pause gate or back off
+          // before reconnecting with a Range request at _bytesReadTotal.
+          DisposeCurrentStream();
+          if (paused) {
+            continue;
+          }
+          if (transportError != null) {
+            _owner._logger.LogMessage(LogLevel.Warning,
+                $"Download stream failed at offset {_bytesReadTotal}: {transportError.Message}");
+          }
+          await _backoff.DelayOrThrowAsync(
+              transportFailure: !retryableStatus,
+              transportError,
+              _owner._logger,
+              $"Download stream at offset {_bytesReadTotal}",
+              cancellationToken).ConfigureAwait(false);
         }
       }
 
-      private async Task ReconnectAsync(FirebaseApp app, CancellationToken cancellationToken) {
+      // Re-issues the media request from _bytesReadTotal and installs the new response stream.
+      private async Task<ReconnectResult> ReconnectAsync(CancellationToken cancellationToken) {
         HttpResponseMessage response = await _owner.SendMediaGetRequestAsync(
-            app,
             _bytesReadTotal,
             cancellationToken).ConfigureAwait(false);
 
         if (_bytesReadTotal > 0 &&
             response.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable) {
           response.Dispose();
-          _currentResponse = null;
-          _currentStream = null;
-          return;
+          return ReconnectResult.EndOfObject;
         }
 
         if (!response.IsSuccessStatusCode) {
+          int statusCode = (int)response.StatusCode;
           string errorBody = await StorageHttpClient.ReadResponseContentSafeAsync(response)
               .ConfigureAwait(false);
-          int statusCode = (int)response.StatusCode;
           response.Dispose();
           if (StorageHttpClient.IsRetryableStatusCode((HttpStatusCode)statusCode)) {
-            throw new IOException($"Transient HTTP status {statusCode} while reconnecting stream.");
+            _owner._logger.LogMessage(LogLevel.Warning,
+                $"Download stream reconnect at offset {_bytesReadTotal} got HTTP {statusCode}.");
+            return ReconnectResult.RetryableStatus;
           }
           throw StorageException.CreateFromHttpResponse(statusCode, errorBody);
         }
@@ -889,29 +721,13 @@ namespace Firebase.Storage.Internal {
           if (_bytesReadTotal > 0 && response.StatusCode == HttpStatusCode.OK) {
             // The server ignored the Range header and restarted from byte 0, so drain the bytes
             // that have already been handed to the caller before resuming.
-            byte[] skipBuffer = ArrayPool<byte>.Shared.Rent(BufferSize);
-            try {
-              long remaining = _bytesReadTotal;
-              while (remaining > 0) {
-                int toRead = (int)Math.Min(remaining, skipBuffer.Length);
-                int skipped = await newStream.ReadAsync(
-                    skipBuffer,
-                    0,
-                    toRead,
-                    cancellationToken).ConfigureAwait(false);
-                if (skipped <= 0) {
-                  break;
-                }
-                remaining -= skipped;
-              }
-              if (remaining > 0) {
-                throw new StorageException(
-                    StorageException.ErrorUnknown,
-                    (int)response.StatusCode,
-                    "Server returned fewer bytes than already consumed while resuming download.");
-              }
-            } finally {
-              ArrayPool<byte>.Shared.Return(skipBuffer);
+            long skipped = await IoUtil.SkipAsync(newStream, _bytesReadTotal, cancellationToken)
+                .ConfigureAwait(false);
+            if (skipped < _bytesReadTotal) {
+              throw new StorageException(
+                  StorageException.ErrorUnknown,
+                  (int)response.StatusCode,
+                  "Server returned fewer bytes than already consumed while resuming download.");
             }
           }
         } catch (Exception) {
@@ -922,6 +738,7 @@ namespace Firebase.Storage.Internal {
 
         _currentResponse = response;
         _currentStream = newStream;
+        return ReconnectResult.Connected;
       }
 
       public override long Seek(long offset, SeekOrigin origin) {

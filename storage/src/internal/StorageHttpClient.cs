@@ -16,8 +16,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -32,18 +32,6 @@ namespace Firebase.Storage.Internal {
   /// </summary>
   internal static class StorageHttpClient {
     private static readonly HttpMethod PatchMethod = new HttpMethod("PATCH");
-
-    private const int InitialBackoffMs = 1000;
-    private const int MaxBackoffMs = 30000;
-    private const int MaxJitterMs = 250;
-    private static readonly Random _jitterRandom = new Random();
-    private static readonly object _jitterLock = new object();
-
-    private static int GetRandomJitterMs() {
-      lock (_jitterLock) {
-        return _jitterRandom.Next(MaxJitterMs);
-      }
-    }
 
     // Upper bound on simultaneous connections to the Storage host. The scheduler allows up to
     // 2 uploads + 3 downloads + 5 commands in flight, so this must exceed 10 or commands queue
@@ -115,6 +103,25 @@ namespace Firebase.Storage.Internal {
              code == 429;
     }
 
+    // Returns true for 2xx, or 308 "Resume Incomplete", which the resumable upload protocol uses
+    // to acknowledge a chunk or a session query.
+    internal static bool IsSuccessOrResumeIncomplete(int statusCode) {
+      return (statusCode >= 200 && statusCode < 300) || statusCode == 308;
+    }
+
+    // Returns the first value of a response or content header, or null if it is absent.
+    internal static string GetHeaderFirstValue(HttpResponseMessage response, string headerName) {
+      if (response?.Headers != null &&
+          response.Headers.TryGetValues(headerName, out IEnumerable<string> values)) {
+        return values.FirstOrDefault();
+      }
+      if (response?.Content?.Headers != null &&
+          response.Content.Headers.TryGetValues(headerName, out IEnumerable<string> contentValues)) {
+        return contentValues.FirstOrDefault();
+      }
+      return null;
+    }
+
     // Safely reads the response body as a string, returning an empty string on failure or null content.
     internal static async Task<string> ReadResponseContentSafeAsync(HttpResponseMessage response) {
       if (response?.Content == null) {
@@ -127,13 +134,13 @@ namespace Firebase.Storage.Internal {
       }
     }
 
-    // Sends an HTTP request created by requestFactory with non-blocking exponential backoff and jitter,
-    // bounded by maxRetryTime. Retryable HTTP statuses (5xx/408/429) back off exponentially
-    // (1s .. 30s). Transport failures (offline, reset, stall) are re-polled at a flat 1s, matching
-    // the native Android SDK's offline behaviour: on flaky mobile links fast re-polling recovers
-    // far sooner than exponential backoff, and the cost of a failed connect is negligible.
-    // If attemptTimeout is positive, each individual attempt is abandoned (and retried) after that
-    // duration so a stalled connection cannot hang the operation past maxRetryTime.
+    // Sends an HTTP request created by requestFactory with non-blocking retry governed by a
+    // RetryBackoff (exponential 1s..30s for retryable HTTP statuses, flat 1s re-poll for transport
+    // failures) measured from the first attempt and bounded by maxRetryTime. If attemptTimeout is
+    // positive, each individual attempt is abandoned (and retried) after that duration so a stalled
+    // connection cannot hang the operation past maxRetryTime. Non-retryable responses, and the last
+    // retryable response once the budget is spent, are returned to the caller; a transport failure
+    // that outlives the budget is rethrown.
     internal static async Task<HttpResponseMessage> SendWithExponentialBackoffAsync(
         HttpClient client,
         Func<Task<HttpRequestMessage>> requestFactory,
@@ -141,8 +148,8 @@ namespace Firebase.Storage.Internal {
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         CancellationToken cancellationToken = default,
         TimeSpan attemptTimeout = default) {
-      var stopwatch = Stopwatch.StartNew();
-      int currentSleepMs = InitialBackoffMs;
+      var backoff = new RetryBackoff(maxRetryTime);
+      backoff.StartClock();
       Exception lastNetworkException = null;
 
       while (true) {
@@ -183,20 +190,13 @@ namespace Firebase.Storage.Internal {
           cancellationToken.ThrowIfCancellationRequested();
         }
 
-        if (response != null) {
-          int code = (int)response.StatusCode;
-          // 2xx or 308 (GCS Resume Incomplete) are successful responses.
-          if ((code >= 200 && code < 300) || code == 308) {
-            return response;
-          }
-
-          if (!IsRetryableStatusCode(response.StatusCode)) {
-            return response;
-          }
+        if (response != null &&
+            (IsSuccessOrResumeIncomplete((int)response.StatusCode) ||
+             !IsRetryableStatusCode(response.StatusCode))) {
+          return response;
         }
 
-        int delayMs = currentSleepMs + GetRandomJitterMs();
-        if (stopwatch.Elapsed + TimeSpan.FromMilliseconds(delayMs) > maxRetryTime) {
+        if (!backoff.TryGetNextDelay(out int delayMs)) {
           if (response != null) {
             return response;
           }
@@ -205,14 +205,76 @@ namespace Firebase.Storage.Internal {
         }
 
         response?.Dispose();
-        await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
-
-        if (networkUnavailable) {
-          currentSleepMs = InitialBackoffMs;
-        } else if (currentSleepMs < MaxBackoffMs) {
-          currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
-        }
+        await backoff.DelayAsync(delayMs, networkUnavailable, cancellationToken)
+            .ConfigureAwait(false);
       }
+    }
+
+    // Sends with retry and converts a transport failure that outlived the retry budget into
+    // ErrorRetryLimitExceeded; cancellation always wins. Non-success responses are returned as-is.
+    private static async Task<HttpResponseMessage> SendWithRetryOrWrapAsync(
+        Func<Task<HttpRequestMessage>> requestFactory,
+        TimeSpan maxRetryTime,
+        HttpCompletionOption completionOption,
+        CancellationToken cancellationToken,
+        ModuleLogger logger,
+        string description) {
+      try {
+        return await SendWithExponentialBackoffAsync(
+            Client,
+            requestFactory,
+            maxRetryTime,
+            completionOption,
+            cancellationToken,
+            StallWatchdog.StallTimeout).ConfigureAwait(false);
+      } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+        throw;
+      } catch (Exception ex) {
+        StorageException wrapped = WrapRetryFailure(ex);
+        if (wrapped == null) {
+          throw;
+        }
+        logger?.LogMessage(LogLevel.Warning, $"{description} failed after retries: {ex.Message}");
+        throw wrapped;
+      }
+    }
+
+    /// <summary>
+    /// Sends a control request on behalf of a transfer (upload session start / query, download
+    /// stream open) with retry bounded by <paramref name="maxRetryTime" />. Cancellation of
+    /// <paramref name="task" /> wins over any failure, transport failures that outlive the budget
+    /// become <see cref="StorageException.ErrorRetryLimitExceeded" />, and any response other
+    /// than 2xx / 308 is converted to a <see cref="StorageException" />. The caller owns the
+    /// returned response.
+    /// </summary>
+    internal static async Task<HttpResponseMessage> SendTransferRequestAsync(
+        StorageTask task,
+        Func<Task<HttpRequestMessage>> requestFactory,
+        TimeSpan maxRetryTime,
+        HttpCompletionOption completionOption,
+        ModuleLogger logger,
+        string description) {
+      HttpResponseMessage response;
+      try {
+        response = await SendWithRetryOrWrapAsync(
+            requestFactory,
+            maxRetryTime,
+            completionOption,
+            task.CancellationToken,
+            logger,
+            description).ConfigureAwait(false);
+      } catch (Exception) {
+        task.ThrowIfCanceled();
+        throw;
+      }
+
+      int statusCode = (int)response.StatusCode;
+      if (!IsSuccessOrResumeIncomplete(statusCode)) {
+        string errorBody = await ReadResponseContentSafeAsync(response).ConfigureAwait(false);
+        response.Dispose();
+        throw StorageException.CreateFromHttpResponse(statusCode, errorBody);
+      }
+      return response;
     }
 
     internal static StoragePath GetStoragePath(StorageReference reference, StoragePath path = null) {
@@ -339,39 +401,25 @@ namespace Firebase.Storage.Internal {
       FirebaseApp app = storage?.App;
       TimeSpan maxRetryTime = storage?.MaxOperationRetryTime ?? TimeSpan.FromMinutes(2);
       ModuleLogger logger = reference.Logger;
+      string description = $"{method.Method} {url}";
 
-      logger.LogMessage(LogLevel.Debug, $"{method.Method} {url}");
-      HttpResponseMessage response = null;
-      try {
-        try {
-          response = await SendWithExponentialBackoffAsync(
-              Client,
-              async () => {
-                var request = new HttpRequestMessage(method, url);
-                if (contentFactory != null) {
-                  request.Content = contentFactory();
-                }
-                await SetStorageRequestHeaders(request, app).ConfigureAwait(false);
-                return request;
-              },
-              maxRetryTime,
-              HttpCompletionOption.ResponseContentRead,
-              cancellationToken,
-              StallWatchdog.StallTimeout).ConfigureAwait(false);
-        } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
-          throw;
-        } catch (Exception ex) {
-          StorageException wrapped = WrapRetryFailure(ex);
-          if (wrapped == null) {
-            throw;
-          }
-          logger.LogMessage(LogLevel.Warning,
-                            $"{method.Method} {url} failed after retries: {ex.Message}");
-          throw wrapped;
-        }
-
+      logger.LogMessage(LogLevel.Debug, description);
+      using (HttpResponseMessage response = await SendWithRetryOrWrapAsync(
+          async () => {
+            var request = new HttpRequestMessage(method, url);
+            if (contentFactory != null) {
+              request.Content = contentFactory();
+            }
+            await SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+            return request;
+          },
+          maxRetryTime,
+          HttpCompletionOption.ResponseContentRead,
+          cancellationToken,
+          logger,
+          description).ConfigureAwait(false)) {
         int statusCode = (int)response.StatusCode;
-        logger.LogMessage(LogLevel.Debug, $"{method.Method} {url} -> {statusCode}");
+        logger.LogMessage(LogLevel.Debug, $"{description} -> {statusCode}");
         if (!response.IsSuccessStatusCode) {
           string errorBody = await ReadResponseContentSafeAsync(response)
               .ConfigureAwait(false);
@@ -380,8 +428,6 @@ namespace Firebase.Storage.Internal {
         return readBody
             ? await ReadResponseContentSafeAsync(response).ConfigureAwait(false)
             : null;
-      } finally {
-        response?.Dispose();
       }
     }
 

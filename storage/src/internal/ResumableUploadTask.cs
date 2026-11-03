@@ -16,10 +16,7 @@
 
 using System;
 using System.Buffers;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -31,14 +28,10 @@ namespace Firebase.Storage.Internal {
   /// (start -> query -> chunked upload with adaptive 256KB..32MB buffer pooling -> finalize).
   /// </summary>
   internal sealed class ResumableUploadTask {
+    // Chunk scaling bounds (256 KB -> 32 MB) match the Firebase Android SDK's UploadTask
+    // (PREFERRED_CHUNK_SIZE, MAXIMUM_CHUNK_SIZE); retry timing comes from RetryBackoff.
     internal const int PreferredChunkSize = 256 * 1024;
     internal const int MaxChunkSize = 32 * 1024 * 1024;
-
-    private const int InitialBackoffMs = 1000;
-    private const int MaxBackoffMs = 30000;
-    private const int MaxJitterMs = 250;
-    private static readonly Random _jitterRandom = new Random();
-    private static readonly object _jitterLock = new object();
 
     private readonly StorageReference _reference;
     private readonly StoragePath _path;
@@ -51,6 +44,8 @@ namespace Firebase.Storage.Internal {
     // Position of the stream when the upload started; server offsets are relative to this.
     private readonly long _streamBaseOffset;
     private readonly ModuleLogger _logger;
+    private readonly FirebaseApp _app;
+    private readonly TimeSpan _maxRetryTime;
     private Uri _sessionUri;
     // Scheduler slot held while ExecuteUploadAsync runs; yielded while parked at the pause gate.
     private StorageTaskScheduler.Slot _slot;
@@ -74,15 +69,10 @@ namespace Firebase.Storage.Internal {
       _sessionUri = previousSessionUri;
       _streamBaseOffset = stream.CanSeek ? stream.Position : 0;
       _logger = reference.Logger;
-      _storageTask = new StorageTask(cancelToken, reference.Storage?.DisposeToken ?? default);
-      if (controller != null) {
-        try {
-          controller.Attach(_storageTask, reference);
-        } catch {
-          _storageTask.Dispose();
-          throw;
-        }
-      }
+      FirebaseStorage storage = reference.Storage;
+      _app = storage?.App;
+      _maxRetryTime = storage?.MaxUploadRetryTime ?? TimeSpan.FromMinutes(10);
+      _storageTask = StorageTask.CreateForTransfer(reference, cancelToken, controller);
       _uploadState = new UploadState(reference, totalByteCount, previousSessionUri);
       _transferStateUpdater = new TransferStateUpdater<UploadState>(
           reference,
@@ -160,16 +150,13 @@ namespace Firebase.Storage.Internal {
       Preconditions.CheckNotNull(reference, nameof(reference));
       Preconditions.CheckArgument(filePath != null, "filePath cannot be null");
 
-      string localPath = ResolveLocalFilePath(filePath);
-      if (!File.Exists(localPath)) {
-        var tcs = new TaskCompletionSource<StorageMetadata>();
-        tcs.SetException(new FileNotFoundException($"{localPath} not found", filePath));
-        return tcs.Task;
-      }
-
+      string localPath = IoUtil.ResolveLocalFilePath(filePath);
       long fileLength;
       FileStream fileStream;
       try {
+        if (!File.Exists(localPath)) {
+          throw new FileNotFoundException($"{localPath} not found", filePath);
+        }
         fileLength = new FileInfo(localPath).Length;
         fileStream = new FileStream(
             localPath,
@@ -178,13 +165,11 @@ namespace Firebase.Storage.Internal {
             FileShare.Read,
             bufferSize: 4096,
             useAsync: true);
-      } catch (FileNotFoundException) {
-        var tcs = new TaskCompletionSource<StorageMetadata>();
-        tcs.SetException(new FileNotFoundException($"{localPath} not found", filePath));
-        return tcs.Task;
       } catch (Exception ex) {
         var tcs = new TaskCompletionSource<StorageMetadata>();
-        tcs.SetException(ex);
+        tcs.SetException(ex is FileNotFoundException
+            ? new FileNotFoundException($"{localPath} not found", filePath)
+            : ex);
         return tcs.Task;
       }
 
@@ -203,63 +188,36 @@ namespace Firebase.Storage.Internal {
       return uploadTask.RunAsync();
     }
 
-    internal static string ResolveLocalFilePath(string filePath) {
-      if (string.IsNullOrEmpty(filePath)) {
-        return filePath;
-      }
-      if (filePath.StartsWith("file://", StringComparison.OrdinalIgnoreCase)) {
-        try {
-          // Uri.LocalPath is already unescaped; do not unescape again or literal '%' sequences
-          // in filenames will be corrupted.
-          return new Uri(filePath).LocalPath;
-        } catch (UriFormatException) {
-          return filePath.Substring("file://".Length);
-        }
-      }
-      return filePath;
-    }
-
-    internal async Task<StorageMetadata> RunAsync() {
-      try {
-        StorageHttpClient.EnsureObjectReference(_reference, _path, "Upload");
-        return await StorageTaskScheduler.RunUploadAsync(
-            slot => {
-              _slot = slot;
-              return ExecuteUploadAsync();
-            },
-            _storageTask.CancellationToken).ConfigureAwait(false);
-      } catch (OperationCanceledException) {
-        _storageTask.MarkCanceled();
-        FireAndForgetCancelSession();
-        throw;
-      } catch (Exception) {
-        _storageTask.MarkFaulted();
-        throw;
-      } finally {
-        if (_ownsStream) {
-          try {
-            _stream.Dispose();
-          } catch (Exception) {
-          }
-        }
-        await _transferStateUpdater.FlushAsync().ConfigureAwait(false);
-        _storageTask.Dispose();
-      }
+    internal Task<StorageMetadata> RunAsync() {
+      return _storageTask.RunTransferAsync(
+          () => {
+            StorageHttpClient.EnsureObjectReference(_reference, _path, "Upload");
+            return StorageTaskScheduler.RunUploadAsync(
+                slot => {
+                  _slot = slot;
+                  return ExecuteUploadAsync();
+                },
+                _storageTask.CancellationToken);
+          },
+          onCanceled: FireAndForgetCancelSession,
+          cleanupAsync: () => {
+            if (_ownsStream) {
+              try {
+                _stream.Dispose();
+              } catch (Exception) {
+              }
+            }
+            return _transferStateUpdater.FlushAsync();
+          });
     }
 
     private Task WaitIfPausedAsync() {
-      return _slot != null
-          ? _slot.WaitIfPausedAsync(_storageTask, _storageTask.CancellationToken)
-          : _storageTask.WaitIfPausedAsync(_storageTask.CancellationToken);
+      return _storageTask.WaitIfPausedAsync(_slot, _storageTask.CancellationToken);
     }
 
     private async Task<StorageMetadata> ExecuteUploadAsync() {
       _storageTask.ThrowIfCanceled();
       _storageTask.TransitionToInProgress();
-
-      FirebaseStorage storage = _reference.Storage;
-      FirebaseApp app = storage?.App;
-      TimeSpan maxUploadRetryTime = storage?.MaxUploadRetryTime ?? TimeSpan.FromMinutes(10);
 
       long bytesUploaded = 0;
       bool needServerQuery = _sessionUri != null;
@@ -267,7 +225,7 @@ namespace Firebase.Storage.Internal {
       await WaitIfPausedAsync().ConfigureAwait(false);
 
       if (_sessionUri == null) {
-        _sessionUri = await StartSessionAsync(app, maxUploadRetryTime).ConfigureAwait(false);
+        _sessionUri = await StartSessionAsync().ConfigureAwait(false);
         _uploadState.State.UploadSessionUri = _sessionUri;
         _logger.LogMessage(LogLevel.Debug, $"Started resumable upload session {_sessionUri}");
         ReportProgress();
@@ -276,24 +234,18 @@ namespace Firebase.Storage.Internal {
       }
 
       if (needServerQuery) {
-        var queryResult = await QuerySessionWithRetryAsync(
-            app,
-            maxUploadRetryTime,
-            Stopwatch.StartNew()).ConfigureAwait(false);
+        SessionQueryResult queryResult = await QuerySessionAsync(_maxRetryTime).ConfigureAwait(false);
         if (queryResult.IsFinal) {
+          // The previous session already finished; report its size and hand back its metadata.
           StorageMetadata completedMetadata = await ResolveFinalizedMetadataAsync(
               queryResult.ResponseBody).ConfigureAwait(false);
           _uploadState.State.BytesTransferred = queryResult.ServerOffset > 0
               ? queryResult.ServerOffset
               : Math.Max(completedMetadata?.SizeBytes ?? 0, _uploadState.TotalByteCount);
-          _transferStateUpdater.SetMetadata(completedMetadata);
-          _storageTask.MarkCompleted();
-          return completedMetadata;
+          return Complete(completedMetadata);
         }
-        bytesUploaded = await AdvanceStreamToOffsetAsync(
-            bytesUploaded,
-            queryResult.ServerOffset,
-            _storageTask.CancellationToken).ConfigureAwait(false);
+        bytesUploaded = await AdvanceStreamToOffsetAsync(bytesUploaded, queryResult.ServerOffset)
+            .ConfigureAwait(false);
         _uploadState.State.BytesTransferred = bytesUploaded;
         ReportProgress();
       }
@@ -352,11 +304,10 @@ namespace Firebase.Storage.Internal {
           bool isFinalChunk = reachedEof && !hasLookahead;
 
           // Upload the current chunk with retry, pause/resume, and server offset recovery. The
-          // retry budget measures time spent failing, not wall-clock time: the stopwatch is only
-          // started by the first failure of this chunk and is reset after a pause, so a slow but
-          // healthy chunk (or a long pause) never exhausts MaxUploadRetryTime on its own.
-          var retryStopwatch = new Stopwatch();
-          int currentSleepMs = InitialBackoffMs;
+          // retry budget measures time spent failing, not wall-clock time (see RetryBackoff), and
+          // is reset after a pause, so a slow but healthy chunk (or a long pause) never exhausts
+          // MaxUploadRetryTime on its own.
+          var backoff = new RetryBackoff(_maxRetryTime);
           int offsetWithinBuffer = 0;
 
           while (true) {
@@ -371,15 +322,15 @@ namespace Firebase.Storage.Internal {
 
             HttpResponseMessage response = null;
             Exception lastException = null;
-            bool pausedMidChunk = false;
-            bool networkError = false;
+            bool paused = false;
+            bool transportFailure = false;
 
             CancellationToken chunkToken = _storageTask.GetChunkCancellationToken();
             StallWatchdog watchdog = null;
             try {
               watchdog = new StallWatchdog(chunkToken);
               using (var request = new HttpRequestMessage(HttpMethod.Post, _sessionUri)) {
-                await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+                await StorageHttpClient.SetStorageRequestHeaders(request, _app).ConfigureAwait(false);
                 request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
                 request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", uploadCommand);
                 request.Headers.TryAddWithoutValidation(
@@ -393,76 +344,17 @@ namespace Firebase.Storage.Internal {
                     HttpCompletionOption.ResponseContentRead,
                     watchdog.Token).ConfigureAwait(false);
               }
-            } catch (OperationCanceledException oce) {
-              if (_storageTask.IsCanceled) {
-                _storageTask.ThrowIfCanceled();
-              }
-              if (_storageTask.IsPaused) {
-                // Pause() canceled the chunk token; wait at pause gate and then recover offset.
-                pausedMidChunk = true;
-              } else {
-                // Either the stall watchdog fired or the HTTP stack raised a spurious
-                // cancellation; treat both as a transient network failure so the normal
-                // backoff + server-offset recovery path runs.
-                lastException = watchdog?.AsStallException(oce) ?? (Exception)oce;
-                networkError = true;
-              }
             } catch (Exception ex) when (StorageHttpClient.IsTransportException(ex)) {
-              if (_storageTask.IsCanceled) {
-                _storageTask.ThrowIfCanceled();
-              }
-              if (_storageTask.IsPaused) {
-                pausedMidChunk = true;
+              if (_storageTask.ClassifyAttemptFailure(ex, watchdog, default, out lastException) ==
+                  StorageTask.AttemptFailure.Paused) {
+                paused = true;
               } else {
-                lastException = ex;
-                networkError = true;
+                transportFailure = true;
+                _logger.LogMessage(LogLevel.Warning,
+                    $"Upload chunk at offset {uploadOffset} failed: {lastException.Message}");
               }
             } finally {
               watchdog?.Dispose();
-            }
-
-            if (networkError) {
-              _logger.LogMessage(LogLevel.Warning,
-                  $"Upload chunk at offset {uploadOffset} failed: {lastException?.Message}");
-            }
-
-            if (pausedMidChunk) {
-              response?.Dispose();
-              await WaitIfPausedAsync().ConfigureAwait(false);
-              // Resumed: start with a fresh retry budget and backoff.
-              retryStopwatch.Reset();
-              currentSleepMs = InitialBackoffMs;
-              var queryAfterPause = await QuerySessionWithRetryAsync(
-                  app,
-                  maxUploadRetryTime,
-                  retryStopwatch).ConfigureAwait(false);
-              if (queryAfterPause.IsFinal) {
-                bytesUploaded = chunkStartOffset + bytesInChunk;
-                _uploadState.State.BytesTransferred = bytesUploaded;
-                StorageMetadata completedMetadata = await ResolveFinalizedMetadataAsync(
-                    queryAfterPause.ResponseBody).ConfigureAwait(false);
-                _transferStateUpdater.SetMetadata(completedMetadata);
-                _storageTask.MarkCompleted();
-                return completedMetadata;
-              }
-              offsetWithinBuffer = await SynchronizeBufferOrStreamAsync(
-                  chunkStartOffset,
-                  bytesInChunk,
-                  hasLookahead,
-                  queryAfterPause.ServerOffset).ConfigureAwait(false);
-              _uploadState.State.BytesTransferred = queryAfterPause.ServerOffset;
-              ReportProgress();
-              if (offsetWithinBuffer < 0) {
-                bytesUploaded = queryAfterPause.ServerOffset;
-                hasLookahead = false;
-                reachedEof = false;
-                break;
-              }
-              if (offsetWithinBuffer == bytesInChunk && !isFinalChunk) {
-                bytesUploaded = queryAfterPause.ServerOffset;
-                break;
-              }
-              continue;
             }
 
             if (response != null) {
@@ -470,10 +362,11 @@ namespace Firebase.Storage.Internal {
                 int statusCode = (int)response.StatusCode;
                 _logger.LogMessage(LogLevel.Verbose,
                     $"Upload {uploadCommand} offset={uploadOffset} bytes={bytesToSend} -> {statusCode}");
-                if ((statusCode >= 200 && statusCode < 300) || statusCode == 308) {
+                if (StorageHttpClient.IsSuccessOrResumeIncomplete(statusCode)) {
                   string responseBody = await StorageHttpClient.ReadResponseContentSafeAsync(response)
                       .ConfigureAwait(false);
-                  string uploadStatus = GetHeaderFirstValue(response, "X-Goog-Upload-Status");
+                  string uploadStatus =
+                      StorageHttpClient.GetHeaderFirstValue(response, "X-Goog-Upload-Status");
 
                   bytesUploaded = chunkStartOffset + bytesInChunk;
                   _uploadState.State.BytesTransferred = bytesUploaded;
@@ -481,11 +374,7 @@ namespace Firebase.Storage.Internal {
 
                   if (isFinalChunk ||
                       string.Equals(uploadStatus, "final", StringComparison.OrdinalIgnoreCase)) {
-                    StorageMetadata finalMetadata = await ResolveFinalizedMetadataAsync(
-                        responseBody).ConfigureAwait(false);
-                    _transferStateUpdater.SetMetadata(finalMetadata);
-                    _storageTask.MarkCompleted();
-                    return finalMetadata;
+                    return await CompleteAsync(responseBody).ConfigureAwait(false);
                   }
 
                   // Chunk succeeded; scale chunk size up to MaxChunkSize (32 MB).
@@ -505,65 +394,49 @@ namespace Firebase.Storage.Internal {
               }
             }
 
-            // Transient failure: reset chunk size to PreferredChunkSize (256 KB) for future chunks,
-            // sleep with exponential backoff + jitter, and query the server offset.
-            currentChunkSize = PreferredChunkSize;
-            if (!retryStopwatch.IsRunning) {
-              retryStopwatch.Start();
-            }
-            int delayMs = currentSleepMs + GetRandomJitterMs();
-            if (retryStopwatch.Elapsed + TimeSpan.FromMilliseconds(delayMs) > maxUploadRetryTime) {
-              _logger.LogMessage(LogLevel.Error,
-                  $"Upload retry budget ({maxUploadRetryTime}) exhausted at offset {uploadOffset}.");
-              throw new StorageException(
-                  StorageException.ErrorRetryLimitExceeded,
-                  0,
-                  lastException?.Message ??
-                  StorageException.GetErrorMessageForCode(StorageException.ErrorRetryLimitExceeded),
-                  lastException);
+            if (paused) {
+              // Pause() severed the request: park at the gate, then resume with a fresh budget.
+              await WaitIfPausedAsync().ConfigureAwait(false);
+              backoff.Reset();
+            } else {
+              // Transient failure: drop back to 256 KB chunks and back off before resynchronizing.
+              currentChunkSize = PreferredChunkSize;
+              await backoff.DelayOrThrowAsync(
+                  transportFailure,
+                  lastException,
+                  _logger,
+                  $"Upload chunk at offset {uploadOffset}",
+                  _storageTask.CancellationToken).ConfigureAwait(false);
             }
 
-            _logger.LogMessage(LogLevel.Debug,
-                $"Retrying upload chunk at offset {uploadOffset} in {delayMs} ms.");
-            await Task.Delay(delayMs, _storageTask.CancellationToken).ConfigureAwait(false);
-            if (networkError) {
-              // Flat 1s re-poll on transport failures (see StorageHttpClient.SendWithExponentialBackoffAsync).
-              currentSleepMs = InitialBackoffMs;
-            } else if (currentSleepMs < MaxBackoffMs) {
-              currentSleepMs = Math.Min(currentSleepMs * 2, MaxBackoffMs);
-            }
-
-            var recoveryResult = await QuerySessionWithRetryAsync(
-                app,
-                maxUploadRetryTime,
-                retryStopwatch).ConfigureAwait(false);
-            if (recoveryResult.IsFinal) {
+            // Ask the server how much it has committed and continue from there.
+            SessionQueryResult recovery = await QuerySessionAsync(backoff.Remaining)
+                .ConfigureAwait(false);
+            if (recovery.IsFinal) {
               bytesUploaded = chunkStartOffset + bytesInChunk;
               _uploadState.State.BytesTransferred = bytesUploaded;
-              StorageMetadata completedMetadata = await ResolveFinalizedMetadataAsync(
-                  recoveryResult.ResponseBody).ConfigureAwait(false);
-              _transferStateUpdater.SetMetadata(completedMetadata);
-              _storageTask.MarkCompleted();
-              return completedMetadata;
+              return await CompleteAsync(recovery.ResponseBody).ConfigureAwait(false);
             }
 
             _logger.LogMessage(LogLevel.Debug,
-                $"Server reports {recoveryResult.ServerOffset} bytes received; resynchronizing.");
+                $"Server reports {recovery.ServerOffset} bytes received; resynchronizing.");
             offsetWithinBuffer = await SynchronizeBufferOrStreamAsync(
                 chunkStartOffset,
                 bytesInChunk,
                 hasLookahead,
-                recoveryResult.ServerOffset).ConfigureAwait(false);
-            _uploadState.State.BytesTransferred = recoveryResult.ServerOffset;
+                recovery.ServerOffset).ConfigureAwait(false);
+            _uploadState.State.BytesTransferred = recovery.ServerOffset;
             ReportProgress();
             if (offsetWithinBuffer < 0) {
-              bytesUploaded = recoveryResult.ServerOffset;
+              // The stream was repositioned to the server offset; refill from there.
+              bytesUploaded = recovery.ServerOffset;
               hasLookahead = false;
               reachedEof = false;
               break;
             }
             if (offsetWithinBuffer == bytesInChunk && !isFinalChunk) {
-              bytesUploaded = recoveryResult.ServerOffset;
+              // The server already has this whole chunk; move on to the next one.
+              bytesUploaded = recovery.ServerOffset;
               break;
             }
           }
@@ -573,7 +446,7 @@ namespace Firebase.Storage.Internal {
       }
     }
 
-    private async Task<Uri> StartSessionAsync(FirebaseApp app, TimeSpan maxUploadRetryTime) {
+    private async Task<Uri> StartSessionAsync() {
       string bucketObjectsUrl = StorageHttpClient.GetBucketObjectsUrl(_reference, _path);
       string objectPath = StorageHttpClient.GetObjectPath(_reference, _path);
       string startUrl =
@@ -582,64 +455,41 @@ namespace Firebase.Storage.Internal {
       string contentType = !string.IsNullOrEmpty(_metadata?.ContentType)
           ? _metadata.ContentType
           : "application/octet-stream";
-      string metadataJson = _metadata != null ? _metadata.ToJson() : "{}";
+      string metadataJson = _metadata?.ToJson();
       if (string.IsNullOrEmpty(metadataJson)) {
         metadataJson = "{}";
       }
 
-      HttpResponseMessage response = null;
-      try {
-        try {
-          response = await StorageHttpClient.SendWithExponentialBackoffAsync(
-              StorageHttpClient.Client,
-              async () => {
-                var request = new HttpRequestMessage(HttpMethod.Post, startUrl);
-                await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
-                request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
-                request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", "start");
-                request.Headers.TryAddWithoutValidation(
-                    "X-Goog-Upload-Header-Content-Type",
-                    contentType);
-                if (_uploadState.TotalByteCount >= 0) {
-                  request.Headers.TryAddWithoutValidation(
-                      "X-Goog-Upload-Header-Content-Length",
-                      _uploadState.TotalByteCount.ToString());
-                }
-                request.Content = new StringContent(metadataJson, Encoding.UTF8, "application/json");
-                return request;
-              },
-              maxUploadRetryTime,
-              HttpCompletionOption.ResponseContentRead,
-              _storageTask.CancellationToken,
-              StallWatchdog.StallTimeout).ConfigureAwait(false);
-        } catch (OperationCanceledException) when (_storageTask.IsCanceled) {
-          _storageTask.ThrowIfCanceled();
-          throw;
-        } catch (Exception ex) {
-          StorageException wrapped = StorageHttpClient.WrapRetryFailure(ex);
-          if (wrapped == null) {
-            throw;
-          }
-          throw wrapped;
-        }
-
-        string body = await StorageHttpClient.ReadResponseContentSafeAsync(response).ConfigureAwait(false);
-        int statusCode = (int)response.StatusCode;
-        if (!((statusCode >= 200 && statusCode < 300) || statusCode == 308)) {
-          throw StorageException.CreateFromHttpResponse(statusCode, body);
-        }
-
-        string uploadUrl = GetHeaderFirstValue(response, "X-Goog-Upload-URL");
+      using (HttpResponseMessage response = await StorageHttpClient.SendTransferRequestAsync(
+          _storageTask,
+          async () => {
+            var request = new HttpRequestMessage(HttpMethod.Post, startUrl);
+            await StorageHttpClient.SetStorageRequestHeaders(request, _app).ConfigureAwait(false);
+            request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
+            request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", "start");
+            request.Headers.TryAddWithoutValidation(
+                "X-Goog-Upload-Header-Content-Type",
+                contentType);
+            if (_uploadState.TotalByteCount >= 0) {
+              request.Headers.TryAddWithoutValidation(
+                  "X-Goog-Upload-Header-Content-Length",
+                  _uploadState.TotalByteCount.ToString());
+            }
+            request.Content = new StringContent(metadataJson, Encoding.UTF8, "application/json");
+            return request;
+          },
+          _maxRetryTime,
+          HttpCompletionOption.ResponseContentRead,
+          _logger,
+          "Upload session start").ConfigureAwait(false)) {
+        string uploadUrl = StorageHttpClient.GetHeaderFirstValue(response, "X-Goog-Upload-URL");
         if (string.IsNullOrEmpty(uploadUrl)) {
           throw new StorageException(
               StorageException.ErrorUnknown,
-              statusCode,
+              (int)response.StatusCode,
               "Resumable upload start response did not include an X-Goog-Upload-URL header.");
         }
-
         return new Uri(uploadUrl);
-      } finally {
-        response?.Dispose();
       }
     }
 
@@ -649,64 +499,33 @@ namespace Firebase.Storage.Internal {
       public string ResponseBody;
     }
 
-    private async Task<SessionQueryResult> QuerySessionWithRetryAsync(
-        FirebaseApp app,
-        TimeSpan maxUploadRetryTime,
-        Stopwatch stopwatch) {
-      TimeSpan remainingBudget = maxUploadRetryTime - stopwatch.Elapsed;
-      if (remainingBudget < TimeSpan.Zero) {
-        remainingBudget = TimeSpan.Zero;
-      }
-
-      HttpResponseMessage response = null;
-      try {
-        try {
-          response = await StorageHttpClient.SendWithExponentialBackoffAsync(
-              StorageHttpClient.Client,
-              async () => {
-                var request = new HttpRequestMessage(HttpMethod.Post, _sessionUri);
-                await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
-                request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
-                request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", "query");
-                request.Content = new ByteArrayContent(Array.Empty<byte>());
-                return request;
-              },
-              remainingBudget,
-              HttpCompletionOption.ResponseContentRead,
-              _storageTask.CancellationToken,
-              StallWatchdog.StallTimeout).ConfigureAwait(false);
-        } catch (OperationCanceledException) when (_storageTask.IsCanceled) {
-          _storageTask.ThrowIfCanceled();
-          throw;
-        } catch (Exception ex) {
-          StorageException wrapped = StorageHttpClient.WrapRetryFailure(ex);
-          if (wrapped == null) {
-            throw;
-          }
-          throw wrapped;
-        }
-
-        string body = await StorageHttpClient.ReadResponseContentSafeAsync(response).ConfigureAwait(false);
-        int statusCode = (int)response.StatusCode;
-        if (!((statusCode >= 200 && statusCode < 300) || statusCode == 308)) {
-          throw StorageException.CreateFromHttpResponse(statusCode, body);
-        }
-
-        string uploadStatus = GetHeaderFirstValue(response, "X-Goog-Upload-Status");
-        string sizeReceivedStr = GetHeaderFirstValue(response, "X-Goog-Upload-Size-Received");
-        long serverOffset = 0;
-        if (!string.IsNullOrEmpty(sizeReceivedStr)) {
-          long.TryParse(sizeReceivedStr, out serverOffset);
-        }
-
-        bool isFinal = string.Equals(uploadStatus, "final", StringComparison.OrdinalIgnoreCase);
+    // Asks the server how many bytes of the session it has committed, retrying within retryBudget.
+    private async Task<SessionQueryResult> QuerySessionAsync(TimeSpan retryBudget) {
+      using (HttpResponseMessage response = await StorageHttpClient.SendTransferRequestAsync(
+          _storageTask,
+          async () => {
+            var request = new HttpRequestMessage(HttpMethod.Post, _sessionUri);
+            await StorageHttpClient.SetStorageRequestHeaders(request, _app).ConfigureAwait(false);
+            request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
+            request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", "query");
+            request.Content = new ByteArrayContent(Array.Empty<byte>());
+            return request;
+          },
+          retryBudget,
+          HttpCompletionOption.ResponseContentRead,
+          _logger,
+          "Upload session query").ConfigureAwait(false)) {
+        string body = await StorageHttpClient.ReadResponseContentSafeAsync(response)
+            .ConfigureAwait(false);
+        string uploadStatus = StorageHttpClient.GetHeaderFirstValue(response, "X-Goog-Upload-Status");
+        long.TryParse(
+            StorageHttpClient.GetHeaderFirstValue(response, "X-Goog-Upload-Size-Received"),
+            out long serverOffset);
         return new SessionQueryResult {
           ServerOffset = serverOffset,
-          IsFinal = isFinal,
+          IsFinal = string.Equals(uploadStatus, "final", StringComparison.OrdinalIgnoreCase),
           ResponseBody = body
         };
-      } finally {
-        response?.Dispose();
       }
     }
 
@@ -720,6 +539,20 @@ namespace Firebase.Storage.Internal {
           _storageTask.CancellationToken).ConfigureAwait(false);
     }
 
+    // Publishes the finalized metadata to the progress handler and completes the task.
+    private StorageMetadata Complete(StorageMetadata metadata) {
+      _transferStateUpdater.SetMetadata(metadata);
+      _storageTask.MarkCompleted();
+      return metadata;
+    }
+
+    private async Task<StorageMetadata> CompleteAsync(string finalizeResponseBody) {
+      return Complete(await ResolveFinalizedMetadataAsync(finalizeResponseBody).ConfigureAwait(false));
+    }
+
+    // Repositions the upload after the server reported serverOffset committed bytes. Returns the
+    // offset within the current chunk buffer to resume from, or -1 if the stream itself was moved
+    // to serverOffset and the chunk must be refilled.
     private async Task<int> SynchronizeBufferOrStreamAsync(
         long chunkStartOffset,
         int bytesInChunk,
@@ -734,10 +567,8 @@ namespace Firebase.Storage.Internal {
       }
       long currentStreamOffset = chunkStartOffset + bytesInChunk + (hasLookahead ? 1 : 0);
       if (serverOffset >= currentStreamOffset) {
-        long reachedOffset = await AdvanceStreamToOffsetAsync(
-            currentStreamOffset,
-            serverOffset,
-            _storageTask.CancellationToken).ConfigureAwait(false);
+        long reachedOffset = await AdvanceStreamToOffsetAsync(currentStreamOffset, serverOffset)
+            .ConfigureAwait(false);
         if (reachedOffset < serverOffset) {
           throw new StorageException(
               StorageException.ErrorUnknown,
@@ -752,40 +583,23 @@ namespace Firebase.Storage.Internal {
           "Cannot rewind non-seekable upload stream to earlier server offset.");
     }
 
-    private async Task<long> AdvanceStreamToOffsetAsync(
-        long currentOffset,
-        long targetOffset,
-        CancellationToken cancellationToken) {
-      if (targetOffset <= currentOffset) {
-        if (_stream.CanSeek && targetOffset >= 0) {
-          _stream.Seek(_streamBaseOffset + targetOffset, SeekOrigin.Begin);
-          return targetOffset;
-        }
-        return currentOffset;
-      }
-
+    // Moves the stream to targetOffset (seeking when possible, otherwise reading forward) and
+    // returns the offset actually reached.
+    private async Task<long> AdvanceStreamToOffsetAsync(long currentOffset, long targetOffset) {
       if (_stream.CanSeek) {
+        if (targetOffset < 0) {
+          return currentOffset;
+        }
         _stream.Seek(_streamBaseOffset + targetOffset, SeekOrigin.Begin);
         return targetOffset;
       }
-
-      byte[] skipBuffer = ArrayPool<byte>.Shared.Rent(PreferredChunkSize);
-      try {
-        long remaining = targetOffset - currentOffset;
-        while (remaining > 0) {
-          int toRead = (int)Math.Min(remaining, skipBuffer.Length);
-          int read = await _stream.ReadAsync(skipBuffer, 0, toRead, cancellationToken)
-              .ConfigureAwait(false);
-          if (read <= 0) {
-            break;
-          }
-          currentOffset += read;
-          remaining -= read;
-        }
+      if (targetOffset <= currentOffset) {
         return currentOffset;
-      } finally {
-        ArrayPool<byte>.Shared.Return(skipBuffer);
       }
+      return currentOffset + await IoUtil.SkipAsync(
+          _stream,
+          targetOffset - currentOffset,
+          _storageTask.CancellationToken).ConfigureAwait(false);
     }
 
     private void FireAndForgetCancelSession() {
@@ -793,16 +607,14 @@ namespace Firebase.Storage.Internal {
       if (sessionUri == null) {
         return;
       }
-      FirebaseApp app = _reference?.Storage?.App;
       _ = Task.Run(async () => {
         try {
           using (var request = new HttpRequestMessage(HttpMethod.Post, sessionUri)) {
-            await StorageHttpClient.SetStorageRequestHeaders(request, app).ConfigureAwait(false);
+            await StorageHttpClient.SetStorageRequestHeaders(request, _app).ConfigureAwait(false);
             request.Headers.TryAddWithoutValidation("X-Goog-Upload-Protocol", "resumable");
             request.Headers.TryAddWithoutValidation("X-Goog-Upload-Command", "cancel");
             request.Content = new ByteArrayContent(Array.Empty<byte>());
-            using (var response = await StorageHttpClient.Client.SendAsync(request)
-                .ConfigureAwait(false)) {
+            using (await StorageHttpClient.Client.SendAsync(request).ConfigureAwait(false)) {
             }
           }
         } catch (Exception) {
@@ -816,27 +628,6 @@ namespace Firebase.Storage.Internal {
           _uploadState.BytesTransferred,
           _uploadState.TotalByteCount,
           _sessionUri);
-    }
-
-    private static string GetHeaderFirstValue(HttpResponseMessage response, string headerName) {
-      if (response == null) {
-        return null;
-      }
-      if (response.Headers != null &&
-          response.Headers.TryGetValues(headerName, out IEnumerable<string> values)) {
-        return values.FirstOrDefault();
-      }
-      if (response.Content?.Headers != null &&
-          response.Content.Headers.TryGetValues(headerName, out IEnumerable<string> contentValues)) {
-        return contentValues.FirstOrDefault();
-      }
-      return null;
-    }
-
-    private static int GetRandomJitterMs() {
-      lock (_jitterLock) {
-        return _jitterRandom.Next(MaxJitterMs);
-      }
     }
   }
 }

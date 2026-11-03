@@ -21,14 +21,29 @@ using System.Threading.Tasks;
 namespace Firebase.Storage.Internal {
   /// <summary>
   /// Non-blocking concurrency scheduler for Firebase Storage operations.
-  /// Bounds concurrent uploads (2), downloads (3), and metadata/list/delete commands (5)
-  /// using asynchronous semaphores without blocking thread-pool threads. Paused transfers give
-  /// their slot back to the scheduler until they are resumed (see <see cref="Slot" />).
+  /// Mirrors the pool split and limits of the Firebase Android SDK's
+  /// <c>com.google.firebase.storage.StorageTaskScheduler</c>
+  /// (<c>UPLOAD_POOL_SIZE = 2</c>, <c>DOWNLOAD_POOL_SIZE = 3</c>, <c>COMMAND_POOL_SIZE = 5</c>):
+  /// separating short-lived metadata/list/delete commands (5) from long-running uploads (2) and
+  /// downloads (3) prevents large transfers from head-of-line blocking fast RPCs, bounds pooled
+  /// upload buffer memory (up to 32 MB per active upload), and avoids mobile uplink contention.
+  /// Unlike Android's thread-pool executors, concurrency is gated via asynchronous
+  /// <see cref="SemaphoreSlim" /> instances so queued transfers do not occupy thread-pool threads,
+  /// and paused transfers hand their slot back until resumed (see <see cref="Slot" />).
   /// </summary>
   internal static class StorageTaskScheduler {
-    private static readonly SemaphoreSlim _uploadSemaphore = new SemaphoreSlim(2, 2);
-    private static readonly SemaphoreSlim _downloadSemaphore = new SemaphoreSlim(3, 3);
-    private static readonly SemaphoreSlim _commandSemaphore = new SemaphoreSlim(5, 5);
+    // Pool sizes match Firebase Android SDK's StorageTaskScheduler
+    // (UPLOAD_POOL_SIZE = 2, DOWNLOAD_POOL_SIZE = 3, COMMAND_POOL_SIZE = 5).
+    internal const int MaxConcurrentUploads = 2;
+    internal const int MaxConcurrentDownloads = 3;
+    internal const int MaxConcurrentCommands = 5;
+
+    private static readonly SemaphoreSlim _uploadSemaphore =
+        new SemaphoreSlim(MaxConcurrentUploads, MaxConcurrentUploads);
+    private static readonly SemaphoreSlim _downloadSemaphore =
+        new SemaphoreSlim(MaxConcurrentDownloads, MaxConcurrentDownloads);
+    private static readonly SemaphoreSlim _commandSemaphore =
+        new SemaphoreSlim(MaxConcurrentCommands, MaxConcurrentCommands);
 
     /// <summary>
     /// A concurrency slot held by a running transfer. The slot is handed back to the scheduler
@@ -46,9 +61,10 @@ namespace Firebase.Storage.Internal {
       }
 
       /// <summary>
-      /// Equivalent to <see cref="StorageTask.WaitIfPausedAsync" />, but releases this slot for
-      /// the duration of the pause. Throws <see cref="OperationCanceledException" /> if the
-      /// transfer is cancelled while parked, in which case the slot is not re-acquired.
+      /// Equivalent to <see cref="StorageTask.WaitIfPausedAsync(CancellationToken)" />, but
+      /// releases this slot for the duration of the pause. Throws
+      /// <see cref="OperationCanceledException" /> if the transfer is cancelled while parked, in
+      /// which case the slot is not re-acquired.
       /// </summary>
       internal async Task WaitIfPausedAsync(StorageTask task, CancellationToken token) {
         while (_held && task.IsPaused) {

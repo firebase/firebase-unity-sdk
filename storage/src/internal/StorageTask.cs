@@ -69,6 +69,108 @@ namespace Firebase.Storage.Internal {
       }
     }
 
+    /// <summary>
+    /// Creates the task for a transfer on <paramref name="reference" />, linked to its
+    /// <see cref="FirebaseStorage" /> dispose token, and attaches <paramref name="controller" />
+    /// if one was supplied. A controller that is already driving another transfer throws
+    /// <see cref="InvalidOperationException" />, in which case the new task is disposed.
+    /// </summary>
+    internal static StorageTask CreateForTransfer(
+        StorageReference reference,
+        CancellationToken userCancellationToken,
+        StorageController controller) {
+      var task = new StorageTask(userCancellationToken, reference.Storage?.DisposeToken ?? default);
+      if (controller != null) {
+        try {
+          controller.Attach(task, reference);
+        } catch {
+          task.Dispose();
+          throw;
+        }
+      }
+      return task;
+    }
+
+    /// <summary>How one attempt of a transfer ended, as classified by
+    /// <see cref="ClassifyAttemptFailure" />.</summary>
+    internal enum AttemptFailure {
+      /// <summary><see cref="Pause" /> severed the attempt; park at the pause gate.</summary>
+      Paused,
+      /// <summary>A transient transport failure; back off and retry.</summary>
+      Transport
+    }
+
+    /// <summary>
+    /// Classifies a transport-level exception (see
+    /// <see cref="StorageHttpClient.IsTransportException" />) thrown by one attempt of a
+    /// transfer. Throws <see cref="OperationCanceledException" /> if this task or
+    /// <paramref name="callerToken" /> is cancelled, so cancellation always wins over retry.
+    /// Otherwise returns <see cref="AttemptFailure.Paused" /> if the attempt was cut short by
+    /// <see cref="Pause" />, or <see cref="AttemptFailure.Transport" /> with the exception to
+    /// retry in <paramref name="transportError" />: a <see cref="StallWatchdog" /> timeout
+    /// surfaces as a retryable <c>HttpRequestException</c>, and any other cancellation raised by
+    /// the HTTP stack is kept as a transient failure rather than aborting the transfer.
+    /// </summary>
+    internal AttemptFailure ClassifyAttemptFailure(
+        Exception exception,
+        StallWatchdog watchdog,
+        CancellationToken callerToken,
+        out Exception transportError) {
+      ThrowIfCanceled(callerToken);
+      if (IsPaused) {
+        transportError = null;
+        return AttemptFailure.Paused;
+      }
+      transportError = exception is OperationCanceledException canceled
+          ? (Exception)watchdog?.AsStallException(canceled) ?? canceled
+          : exception;
+      return AttemptFailure.Transport;
+    }
+
+    /// <summary>
+    /// Runs the body of a transfer and maps its outcome onto this task's terminal state: a
+    /// cancellation marks the task cancelled (as does any failure observed after cancellation,
+    /// which is re-raised as <see cref="OperationCanceledException" />) and anything else marks
+    /// it faulted. <paramref name="cleanupAsync" /> (progress flush, temporary files) runs on
+    /// every path before the task is disposed.
+    /// </summary>
+    internal async Task<T> RunTransferAsync<T>(
+        Func<Task<T>> body,
+        Action onCanceled,
+        Func<Task> cleanupAsync) {
+      try {
+        return await body().ConfigureAwait(false);
+      } catch (OperationCanceledException) {
+        MarkCanceled();
+        onCanceled?.Invoke();
+        throw;
+      } catch (Exception) {
+        if (IsCanceled) {
+          MarkCanceled();
+          onCanceled?.Invoke();
+          ThrowIfCanceled();
+        }
+        MarkFaulted();
+        throw;
+      } finally {
+        if (cleanupAsync != null) {
+          await cleanupAsync().ConfigureAwait(false);
+        }
+        Dispose();
+      }
+    }
+
+    /// <inheritdoc cref="RunTransferAsync{T}" />
+    internal Task RunTransferAsync(Func<Task> body, Action onCanceled, Func<Task> cleanupAsync) {
+      return RunTransferAsync(
+          async () => {
+            await body().ConfigureAwait(false);
+            return true;
+          },
+          onCanceled,
+          cleanupAsync);
+    }
+
     internal InternalState State {
       get {
         lock (_stateLock) {
@@ -226,6 +328,15 @@ namespace Firebase.Storage.Internal {
 
     /// <summary>
     /// Awaited between chunks by ResumableUploadTask and ResumableDownloadTask.
+    /// Transitions Pausing -> Paused and waits until Resume() or Cancel() is called. When the
+    /// transfer holds a scheduler <paramref name="slot" />, the slot is handed back for the
+    /// duration of the pause (see <see cref="StorageTaskScheduler.Slot.WaitIfPausedAsync" />).
+    /// </summary>
+    internal Task WaitIfPausedAsync(StorageTaskScheduler.Slot slot, CancellationToken token) {
+      return slot != null ? slot.WaitIfPausedAsync(this, token) : WaitIfPausedAsync(token);
+    }
+
+    /// <summary>
     /// Transitions Pausing -> Paused and waits until Resume() or Cancel() is called.
     /// </summary>
     internal async Task WaitIfPausedAsync(CancellationToken token) {
