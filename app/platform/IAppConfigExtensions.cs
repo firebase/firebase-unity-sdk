@@ -84,36 +84,5 @@ namespace Firebase.Platform {
     /// <returns>The editor service account email.</returns>
     /// <param name="app">App.</param>
     string GetEditorServiceAccountEmail(IFirebaseAppPlatform app);
-
-    /// <summary>
-    /// Sets the cert pem file.
-    /// This optionally provides an extra set of root ssl certificates that will be installed within
-    /// mono configuration.  By default, the SDK includes a set of root certificates that
-    /// Google requires to validate the Ssl connection with the Firebase server.
-    /// </summary>
-    /// <param name="app">App.</param>
-    /// <param name="certName">Cert name.</param>
-    void SetCertPemFile(IFirebaseAppPlatform app, string certName);
-
-    /// <summary>
-    /// Gets the cert pem file.
-    /// </summary>
-    /// <returns>The cert pem file.</returns>
-    /// <param name="app">App.</param>
-    string GetCertPemFile(IFirebaseAppPlatform app);
-
-    /// <summary>
-    /// Sets the update url where updated root certs will be downloaded.
-    /// </summary>
-    /// <param name="app">App.</param>
-    /// <param name="certUrl">Url where updated root ssl certs are stored.</param>
-    void SetCertUpdateUrl(IFirebaseAppPlatform app, Uri certUrl);
-
-    /// <summary>
-    /// Gets the cert update url.
-    /// </summary>
-    /// <returns>The cert pem file.</returns>
-    /// <param name="app">App.</param>
-    Uri GetCertUpdateUrl(IFirebaseAppPlatform app);
   }
 }

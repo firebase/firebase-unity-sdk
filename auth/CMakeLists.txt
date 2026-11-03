@@ -25,6 +25,7 @@ set(firebase_auth_swig
 set(firebase_auth_src
   src/FirebaseAccountLinkException.cs
   src/FirebaseUser.cs
+  src/IdTokenResult.cs
   src/IUserInfo.cs
   src/PhoneAuthProvider.cs
 )

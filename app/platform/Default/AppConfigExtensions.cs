@@ -20,8 +20,6 @@ using System.Collections.Generic;
 namespace Firebase.Platform.Default {
 
   internal class AppConfigExtensions : IAppConfigExtensions {
-    private static readonly Uri DefaultUpdateUrl =
-       new Uri("https://www.gstatic.com/firebase/ssl/roots.pem");
     private static readonly string Default = "DEFAULT";
     private static readonly object Sync = new object();
     private static AppConfigExtensions _instance = new AppConfigExtensions();
@@ -119,49 +117,6 @@ namespace Firebase.Platform.Default {
       return GetState(app, (int) ExtraStringState.ServiceAccountEmail, SStringState);
     }
 
-    /// <summary>
-    /// Sets the cert pem file.
-    /// This optionally provides an extra set of root ssl certificates that will be installed within
-    /// mono configuration.  By default, the SDK includes a set of root certificates that
-    /// Google requires to validate the Ssl connection with the Firebase server.
-    /// </summary>
-    /// <param name="app">App.</param>
-    /// <param name="certName">Cert name.</param>
-    public virtual void SetCertPemFile(IFirebaseAppPlatform app, string certName) {
-      SetState(app, (int) ExtraStringState.CertTxtFileName, certName, SStringState);
-    }
-
-    /// <summary>
-    /// Gets the cert pem file.
-    /// </summary>
-    /// <returns>The cert pem file.</returns>
-    /// <param name="app">App.</param>
-    public virtual string GetCertPemFile(IFirebaseAppPlatform app) {
-      return GetState(app, (int) ExtraStringState.CertTxtFileName, SStringState);
-    }
-
-    /// <summary>
-    /// Sets the cert update url.
-    /// </summary>
-    /// <param name="app">App.</param>
-    /// <param name="certUrl">Url where updated root ssl certs are stored.</param>
-    public void SetCertUpdateUrl(IFirebaseAppPlatform app, Uri certUrl) {
-      SetState(app, (int) ExtraStringState.WebCertUpdateUrl, certUrl.ToString(), SStringState);
-    }
-
-    /// <summary>
-    /// Gets the cert update url.
-    /// </summary>
-    /// <returns>The cert pem file.</returns>
-    /// <param name="app">App.</param>
-    public Uri GetCertUpdateUrl(IFirebaseAppPlatform app) {
-      var result = GetState(app, (int) ExtraStringState.WebCertUpdateUrl, SStringState);
-      if (String.IsNullOrEmpty(result)) {
-        return DefaultUpdateUrl;
-      }
-      return new Uri(result);
-    }
-
     private static T GetState<T>(IFirebaseAppPlatform app, int state,
                                  Dictionary<int, Dictionary<string, T>> store) {
       if (app == null) {
@@ -212,9 +167,7 @@ namespace Firebase.Platform.Default {
       DatabaseUrl = 0,
       P12FileName,
       P12Password,
-      ServiceAccountEmail,
-      CertTxtFileName,
-      WebCertUpdateUrl
+      ServiceAccountEmail
     }
   }
 }

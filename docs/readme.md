@@ -109,8 +109,10 @@ Support
 
 Release Notes
 -------------
-### Upcoming Changes
+### Upcoming Release
 -   Changes
+    - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
+      to retrieve decoded ID token claims and metadata.
     - Storage: Rewrote the internal implementation in C#, removing the dependency on the C++
       and native platform Storage libraries.
     - Storage: Populated `UploadState.UploadSessionUri` on all platforms so interrupted uploads
