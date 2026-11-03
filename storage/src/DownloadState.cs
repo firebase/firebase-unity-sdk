@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,13 @@ namespace Firebase.Storage {
     /// <param name="reference">Storage reference associated with this transfer.</param>
     /// <param name="totalByteCount">Total number of bytes to transfer or -1 if the size of the
     /// download is unknown.</param>
-    internal DownloadState(StorageReference reference, long totalByteCount) {
-      State = new TransferState(reference) { TotalByteCount = totalByteCount };
+    /// <param name="bytesTransferred">Bytes downloaded so far.</param>
+    internal DownloadState(StorageReference reference, long totalByteCount,
+                           long bytesTransferred = 0) {
+      State = new TransferState(reference) {
+        TotalByteCount = totalByteCount,
+        BytesTransferred = bytesTransferred
+      };
     }
 
     /// <summary>

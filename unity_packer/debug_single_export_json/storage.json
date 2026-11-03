@@ -151,6 +151,12 @@
           ]
         },
         {
+          "importer": "DefaultImporter",
+          "paths": [
+            "Firebase/FirebaseApp/Internal/"
+          ]
+        },
+        {
           "labels": [
             "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
           ],
@@ -187,7 +193,7 @@
         "manifest": {
           "unity": "2022.1",
           "dependencies": {
-            "com.google.external-dependency-manager": "1.2.186"
+            "com.google.external-dependency-manager": "1.2.190"
           }
         }
       }
@@ -214,87 +220,9 @@
       "name": "FirebaseStorage.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Firebase.Storage.dll",
-            "Firebase/Plugins/Firebase.Storage.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/iOS/Firebase.Storage.dll",
-            "Firebase/Plugins/iOS/Firebase.Storage.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppStorage.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppStorage.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android",
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Google.Sharpen.dll",
-            "Firebase/Plugins/Google.Sharpen.pdb"
-          ]
-        },
-        {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/StorageDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-storage-unity/"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone"
-          ],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppStorage*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/FirebaseStorage*_manifest.txt"
+            "Firebase/FirebaseStorage/*"
           ]
         },
         {
@@ -317,11 +245,8 @@
           ]
         }
       ],
-      "exclude_paths": [
-        "Firebase/Sample/Auth/.*"
-      ],
       "includes": [
-        "FirebaseAuth.unitypackage",
+        "FirebaseApp.unitypackage",
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",
