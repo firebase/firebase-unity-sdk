@@ -109,6 +109,11 @@ Support
 
 Release Notes
 -------------
+### Upcoming Release
+-   Changes
+    - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
+      to retrieve decoded ID token claims and metadata.
+
 ### 14.1.0
 -   Changes
     - General: Update to Firebase C++ SDK version 14.1.0.

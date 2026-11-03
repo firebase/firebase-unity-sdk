@@ -36,6 +36,7 @@ namespace Firebase.Sample.Auth {
       Func<Task>[] tests = {
         TestCreateDestroy,
         TestSignInAnonymouslyAsync,
+        TestGetIdTokenResultAsync,
         TestSignInEmailAsync,
         TestSignInCredentialAsync,
         TestUpdateUserProfileAsync,
@@ -277,6 +278,138 @@ namespace Firebase.Sample.Auth {
       });
 
       return tcs.Task;
+    }
+
+    void ThrowIfCheckFailed(Func<TaskCompletionSource<int>, bool> check, string fallbackMessage) {
+      var checkTcs = new TaskCompletionSource<int>();
+      if (!check(checkTcs)) {
+        throw checkTcs.Task.Exception != null
+            ? (checkTcs.Task.Exception.InnerException ?? checkTcs.Task.Exception)
+            : new Exception(fallbackMessage);
+      }
+    }
+
+    // Tests FirebaseUser.GetIdTokenResultAsync(forceRefresh: false/true).
+    async Task TestGetIdTokenResultAsync() {
+      ThrowIfCheckFailed(TestSetupClearUser, "Failed to clear user prior to test.");
+
+      DateTime unixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+      Firebase.Auth.FirebaseUser staleUser = null;
+
+      try {
+        await SigninAnonymouslyAsync();
+        ThrowIfCheckFailed(ConfirmAnonymousCurrentUser, "Anonymous user check failed.");
+
+        staleUser = auth.CurrentUser;
+        string expectedUid = auth.CurrentUser.UserId;
+
+        Firebase.Auth.IdTokenResult firstResult =
+            await auth.CurrentUser.GetIdTokenResultAsync(false);
+        string rawToken = await auth.CurrentUser.TokenAsync(false);
+
+        if (string.IsNullOrEmpty(firstResult.Token)) {
+          throw new Exception("GetIdTokenResultAsync(false) returned an empty Token.");
+        }
+        if (firstResult.Token != rawToken) {
+          throw new Exception("Expected IdTokenResult.Token to match TokenAsync(false).");
+        }
+        if (firstResult.AuthTimestamp.Kind != DateTimeKind.Utc ||
+            firstResult.IssuedAtTimestamp.Kind != DateTimeKind.Utc ||
+            firstResult.ExpirationTimestamp.Kind != DateTimeKind.Utc) {
+          throw new Exception("IdTokenResult timestamps must have DateTimeKind.Utc.");
+        }
+        if (firstResult.AuthTimestamp <= unixEpochUtc ||
+            firstResult.AuthTimestamp > DateTime.UtcNow.AddDays(1)) {
+          throw new Exception(
+              "IdTokenResult.AuthTimestamp (" + firstResult.AuthTimestamp + ") is out of range.");
+        }
+        if (firstResult.IssuedAtTimestamp <= unixEpochUtc ||
+            firstResult.IssuedAtTimestamp > DateTime.UtcNow.AddDays(1)) {
+          throw new Exception(
+              "IdTokenResult.IssuedAtTimestamp (" + firstResult.IssuedAtTimestamp +
+              ") is out of range.");
+        }
+        if (firstResult.ExpirationTimestamp <= firstResult.IssuedAtTimestamp) {
+          throw new Exception(
+              "IdTokenResult.ExpirationTimestamp (" + firstResult.ExpirationTimestamp +
+              ") must be > IssuedAtTimestamp (" + firstResult.IssuedAtTimestamp + ").");
+        }
+        if (firstResult.SignInProvider != "anonymous") {
+          throw new Exception(
+              "Expected SignInProvider 'anonymous', got '" + firstResult.SignInProvider + "'.");
+        }
+        if (firstResult.SignInSecondFactor != string.Empty) {
+          throw new Exception(
+              "Expected empty SignInSecondFactor for non-MFA user, got '" +
+              firstResult.SignInSecondFactor + "'.");
+        }
+        if (firstResult.Claims == null || firstResult.Claims.Count == 0) {
+          throw new Exception("IdTokenResult.Claims is null or empty.");
+        }
+        object subClaim;
+        if (!firstResult.Claims.TryGetValue("sub", out subClaim) ||
+            (subClaim as string) != expectedUid) {
+          throw new Exception(
+              "Expected Claims['sub'] == '" + expectedUid + "', got '" + subClaim + "'.");
+        }
+        object firebaseClaim;
+        IDictionary<string, object> firebaseClaimDict = null;
+        if (firstResult.Claims.TryGetValue("firebase", out firebaseClaim)) {
+          firebaseClaimDict = firebaseClaim as IDictionary<string, object>;
+        }
+        object nestedProvider = null;
+        if (firebaseClaimDict == null ||
+            !firebaseClaimDict.TryGetValue("sign_in_provider", out nestedProvider) ||
+            (nestedProvider as string) != "anonymous") {
+          throw new Exception(
+              "Expected nested Claims['firebase']['sign_in_provider'] == 'anonymous'.");
+        }
+
+        // Verify forceRefresh: false returns the cached token.
+        Firebase.Auth.IdTokenResult cachedResult =
+            await auth.CurrentUser.GetIdTokenResultAsync(false);
+        if (cachedResult.Token != firstResult.Token) {
+          throw new Exception(
+              "Expected GetIdTokenResultAsync(false) to return the cached token.");
+        }
+
+        // Wait >2s before forcing refresh so backend JWT iat strictly advances by >=1s.
+        await Task.Delay(TimeSpan.FromMilliseconds(2100));
+        Firebase.Auth.IdTokenResult refreshedResult =
+            await auth.CurrentUser.GetIdTokenResultAsync(true);
+        if (string.IsNullOrEmpty(refreshedResult.Token)) {
+          throw new Exception("GetIdTokenResultAsync(true) returned an empty Token.");
+        }
+        if (refreshedResult.Token == firstResult.Token) {
+          throw new Exception(
+              "Expected GetIdTokenResultAsync(true) to return a refreshed token.");
+        }
+        if (refreshedResult.IssuedAtTimestamp <= firstResult.IssuedAtTimestamp) {
+          throw new Exception(
+              "Expected refreshed IssuedAtTimestamp (" + refreshedResult.IssuedAtTimestamp +
+              ") > previous IssuedAtTimestamp (" + firstResult.IssuedAtTimestamp + ").");
+        }
+      } finally {
+        if (auth.CurrentUser != null) {
+          await DeleteUserAsync();
+        }
+      }
+
+      ThrowIfCheckFailed(
+          tcs => ConfirmNoCurrentUser(tcs), "Expected CurrentUser to be null after deletion.");
+
+      // Calling GetIdTokenResultAsync on a stale FirebaseUser after sign-out/deletion
+      // should fault with FirebaseException rather than crashing natively.
+      bool threwOnSignedOutUser = false;
+      try {
+        await staleUser.GetIdTokenResultAsync(false);
+      } catch (Firebase.FirebaseException) {
+        threwOnSignedOutUser = true;
+      }
+      if (!threwOnSignedOutUser) {
+        throw new Exception(
+            "Expected GetIdTokenResultAsync on deleted/signed-out user to throw FirebaseException.");
+      }
     }
 
     // Goes over the standard create/signout/signin flow, using the provided function to sign in.
