@@ -216,6 +216,11 @@ public sealed class AppBuilderHelper {
   /// specified by outputDir.
   /// </summary>
   private static void BuildAndroid() {
+    // A/B experiment: keep the splash screen ON but compress Android textures
+    // as ASTC instead of the default ETC2, to isolate whether the ~9 min
+    // "Prepare splash screen" build step is the ETC2 encoder.
+    EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
+
     if (minify == "proguard") {
 #if UNITY_2020_1_OR_NEWER
       PlayerSettings.Android.minifyDebug = true;
