@@ -226,7 +226,7 @@ public sealed class AppBuilderHelper {
     PlayerSettings.SplashScreen.showUnityLogo = false;
 #if UNITY_2021_2_OR_NEWER
     EditorUserBuildSettings.overrideTextureCompression =
-        OverrideTextureCompression.ForceFastCompressor;
+        UnityEditor.Build.OverrideTextureCompression.ForceFastCompressor;
 #endif
 
     if (minify == "proguard") {
