@@ -124,6 +124,23 @@ SETTINGS = {
   # e.g. https://unity3d.com/unity/whats-new/2020.3.34
   # The modules are required to build sepecific platforms.
   # The modules are valid only if Unity Hub & Unity are installed.
+  "6000": {
+    WINDOWS: {
+      "version": "6000.3.28f1",
+      "changeset": "8f082d2fe476",
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: ["appletv"], WINDOWS: [], MACOS: ["mac-mono"], LINUX: ["linux-mono"], PLAYMODE: []},
+    },
+    MACOS: {
+      "version": "6000.3.28f1",
+      "changeset": "8f082d2fe476",
+      "modules": {ANDROID: ["android"], IOS: ["ios", "appletv"], TVOS: ["appletv"], WINDOWS: ["windows-mono"], MACOS: ["ios"], LINUX: ["linux-mono"], PLAYMODE: []},
+    },
+    LINUX: {
+      "version": "6000.3.28f1",
+      "changeset": "8f082d2fe476",
+      "modules": {ANDROID: ["android"], IOS: ["ios"], TVOS: [], WINDOWS: ["windows-mono"], MACOS: ["mac-mono"], LINUX: [], PLAYMODE: []}
+    }
+  },
   "2022": {
     WINDOWS: {
       "version": "2022.3.47f1",

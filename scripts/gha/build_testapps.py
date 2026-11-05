@@ -498,6 +498,10 @@ def patch_android_env(unity_version):
   major_version = int(unity_version.split(".")[0])
   # Set ndk env
   UNITY_SETTINGS = {
+    "6000": {
+      _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r27c-windows.zip",
+      _MACOS: "https://dl.google.com/android/repository/android-ndk-r27c-darwin.zip",
+    },
     "2022": {
       _WINDOWS: "https://dl.google.com/android/repository/android-ndk-r23b-windows.zip",
       _MACOS: "https://dl.google.com/android/repository/android-ndk-r23b-darwin.zip",

@@ -29,6 +29,10 @@ using UnityEditor;
 [InitializeOnLoad]
 public class RuntimeSwitcher {
   public static void SwitchToLatest(){
+    // Legacy Mono (.NET 3.5) was removed in 2019.3; the setting no longer
+    // exists on Unity 6+, where .NET 4.x is the only runtime.
+#if !UNITY_6000_0_OR_NEWER
     PlayerSettings.scriptingRuntimeVersion = ScriptingRuntimeVersion.Latest;
+#endif
   }
 }

@@ -420,7 +420,11 @@ public sealed class AppBuilderHelper {
     }
     playerOptions.options |= BuildOptions.StrictMode;
     if (symlinkLibraries) {
+#if UNITY_2021_2_OR_NEWER
+      playerOptions.options |= BuildOptions.SymlinkSources;
+#else
       playerOptions.options |= BuildOptions.SymlinkLibraries;
+#endif
     }
     return playerOptions;
   }
