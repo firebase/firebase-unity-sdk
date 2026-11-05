@@ -490,7 +490,11 @@ def build_testapp(dir_helper, api_config, ios_config, target):
   else:
     if api_config.minify:
       build_flags += ["-AppBuilderHelper.minify", api_config.minify]
-    _run(arg_builder.get_args_to_open_project(build_flags))
+    # A/B experiment: build the player with no graphics device, to test whether
+    # the slow "Prepare splash screen" step on Android (Unity 2022.3, GPU-less
+    # Windows runners using the WARP software rasterizer) goes through the
+    # graphics device.
+    _run(arg_builder.get_args_to_open_project(["-nographics"] + build_flags))
     logging.info("Finished building target %s", target)
 
 
