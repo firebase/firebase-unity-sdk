@@ -216,6 +216,19 @@ public sealed class AppBuilderHelper {
   /// specified by outputDir.
   /// </summary>
   private static void BuildAndroid() {
+    // These are CI-only testapps, so skip the splash screen and use Unity's
+    // fast texture encoders. Otherwise the "Prepare splash screen" build step
+    // spends ~9 minutes per app ETC2-compressing the Unity logo with the
+    // legacy best-quality compressor on the GitHub runners. Hiding the splash
+    // screen is only honoured on a Pro licence, so the fast-compressor
+    // override is kept as a fallback. Neither affects what the tests exercise.
+    PlayerSettings.SplashScreen.show = false;
+    PlayerSettings.SplashScreen.showUnityLogo = false;
+#if UNITY_2021_2_OR_NEWER
+    EditorUserBuildSettings.overrideTextureCompression =
+        OverrideTextureCompression.ForceFastCompressor;
+#endif
+
     if (minify == "proguard") {
 #if UNITY_2020_1_OR_NEWER
       PlayerSettings.Android.minifyDebug = true;
