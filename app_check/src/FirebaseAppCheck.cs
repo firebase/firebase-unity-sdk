@@ -211,7 +211,7 @@ public sealed class FirebaseAppCheck {
   }
 
   [MonoPInvokeCallback(typeof(AppCheckUtil.GetTokenFromCSharpDelegate))]
-  private static void GetTokenFromCSharpMethod(string appName, int key) {
+  private static async void GetTokenFromCSharpMethod(string appName, int key) {
     try {
       if (appCheckFactory == null) {
         AppCheckUtil.FinishGetTokenCallback(key, "", 0,
@@ -239,17 +239,15 @@ public sealed class FirebaseAppCheck {
           providerMap[app.Name] = provider;
         }
       }
-      provider.GetTokenAsync().ContinueWith(task => {
-        if (task.IsFaulted) {
-          AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-            (int)AppCheckError.Unknown,
-            "Provider returned an Exception: " + task.Exception);
-        } else {
-          AppCheckToken token = task.Result;
-          AppCheckUtil.FinishGetTokenCallback(key, token.Token,
-            token.ExpireTimeMs, 0, "");
-        }
-      });
+      AppCheckToken token = await provider.GetTokenAsync().ConfigureAwait(false);
+      if (token.Token == null) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.Unknown,
+          "Provider returned a null token.");
+      } else {
+        AppCheckUtil.FinishGetTokenCallback(key, token.Token,
+          token.ExpireTimeMs, 0, "");
+      }
     } catch (System.Exception e) {
       AppCheckUtil.FinishGetTokenCallback(key, "", 0,
         (int)AppCheckError.Unknown,
@@ -258,7 +256,7 @@ public sealed class FirebaseAppCheck {
   }
 
   [MonoPInvokeCallback(typeof(AppCheckUtil.GetTokenFromCSharpDelegate))]
-  private static void GetLimitedUseTokenFromCSharpMethod(string appName, int key) {
+  private static async void GetLimitedUseTokenFromCSharpMethod(string appName, int key) {
     try {
       if (appCheckFactory == null) {
         AppCheckUtil.FinishGetTokenCallback(key, "", 0,
@@ -287,17 +285,15 @@ public sealed class FirebaseAppCheck {
         }
       }
 
-      provider.GetLimitedUseTokenAsync().ContinueWith(task => {
-        if (task.IsFaulted) {
-          AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-            (int)AppCheckError.Unknown,
-            "Provider returned an Exception: " + task.Exception);
-        } else {
-          AppCheckToken token = task.Result;
-          AppCheckUtil.FinishGetTokenCallback(key, token.Token,
-            token.ExpireTimeMs, 0, "");
-        }
-      });
+      AppCheckToken token = await provider.GetLimitedUseTokenAsync().ConfigureAwait(false);
+      if (token.Token == null) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.Unknown,
+          "Provider returned a null token.");
+      } else {
+        AppCheckUtil.FinishGetTokenCallback(key, token.Token,
+          token.ExpireTimeMs, 0, "");
+      }
     } catch (System.Exception e) {
       AppCheckUtil.FinishGetTokenCallback(key, "", 0,
         (int)AppCheckError.Unknown,
