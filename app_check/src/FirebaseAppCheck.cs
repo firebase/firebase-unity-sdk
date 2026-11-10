@@ -212,85 +212,97 @@ public sealed class FirebaseAppCheck {
 
   [MonoPInvokeCallback(typeof(AppCheckUtil.GetTokenFromCSharpDelegate))]
   private static void GetTokenFromCSharpMethod(string appName, int key) {
-    if (appCheckFactory == null) {
-      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-        (int)AppCheckError.InvalidConfiguration,
-        "Missing IAppCheckProviderFactory.");
-      return;
-    }
-    FirebaseApp app = FirebaseApp.GetInstance(appName);
-    if (app == null) {
-      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-        (int)AppCheckError.Unknown,
-        "Unable to find App with name: " + appName);
-      return;
-    }
-    IAppCheckProvider provider;
-    lock (providerMap) {
-      if (!providerMap.TryGetValue(app.Name, out provider)) {
-        provider = appCheckFactory.CreateProvider(app);
-        if (provider == null) {
-          AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-            (int)AppCheckError.InvalidConfiguration,
-            "Failed to create IAppCheckProvider for App: " + appName);
-          return;
-        }
-        providerMap[app.Name] = provider;
+    try {
+      if (appCheckFactory == null) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.InvalidConfiguration,
+          "Missing IAppCheckProviderFactory.");
+        return;
       }
-    }
-    provider.GetTokenAsync().ContinueWith(task => {
-      if (task.IsFaulted) {
+      FirebaseApp app = FirebaseApp.GetInstance(appName);
+      if (app == null) {
         AppCheckUtil.FinishGetTokenCallback(key, "", 0,
           (int)AppCheckError.Unknown,
-          "Provider returned an Exception: " + task.Exception);
-      } else {
-        AppCheckToken token = task.Result;
-        AppCheckUtil.FinishGetTokenCallback(key, token.Token,
-          token.ExpireTimeMs, 0, "");
+          "Unable to find App with name: " + appName);
+        return;
       }
-    });
+      IAppCheckProvider provider;
+      lock (providerMap) {
+        if (!providerMap.TryGetValue(app.Name, out provider)) {
+          provider = appCheckFactory.CreateProvider(app);
+          if (provider == null) {
+            AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+              (int)AppCheckError.InvalidConfiguration,
+              "Failed to create IAppCheckProvider for App: " + appName);
+            return;
+          }
+          providerMap[app.Name] = provider;
+        }
+      }
+      provider.GetTokenAsync().ContinueWith(task => {
+        if (task.IsFaulted) {
+          AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+            (int)AppCheckError.Unknown,
+            "Provider returned an Exception: " + task.Exception);
+        } else {
+          AppCheckToken token = task.Result;
+          AppCheckUtil.FinishGetTokenCallback(key, token.Token,
+            token.ExpireTimeMs, 0, "");
+        }
+      });
+    } catch (System.Exception e) {
+      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+        (int)AppCheckError.Unknown,
+        "Exception while getting App Check token: " + e);
+    }
   }
 
   [MonoPInvokeCallback(typeof(AppCheckUtil.GetTokenFromCSharpDelegate))]
   private static void GetLimitedUseTokenFromCSharpMethod(string appName, int key) {
-    if (appCheckFactory == null) {
-      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-        (int)AppCheckError.InvalidConfiguration,
-        "Missing IAppCheckProviderFactory.");
-      return;
-    }
-    FirebaseApp app = FirebaseApp.GetInstance(appName);
-    if (app == null) {
-      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-        (int)AppCheckError.Unknown,
-        "Unable to find App with name: " + appName);
-      return;
-    }
-    IAppCheckProvider provider;
-    lock (providerMap) {
-      if (!providerMap.TryGetValue(app.Name, out provider)) {
-        provider = appCheckFactory.CreateProvider(app);
-        if (provider == null) {
-          AppCheckUtil.FinishGetTokenCallback(key, "", 0,
-            (int)AppCheckError.InvalidConfiguration,
-            "Failed to create IAppCheckProvider for App: " + appName);
-          return;
-        }
-        providerMap[app.Name] = provider;
+    try {
+      if (appCheckFactory == null) {
+        AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+          (int)AppCheckError.InvalidConfiguration,
+          "Missing IAppCheckProviderFactory.");
+        return;
       }
-    }
-
-    provider.GetLimitedUseTokenAsync().ContinueWith(task => {
-      if (task.IsFaulted) {
+      FirebaseApp app = FirebaseApp.GetInstance(appName);
+      if (app == null) {
         AppCheckUtil.FinishGetTokenCallback(key, "", 0,
           (int)AppCheckError.Unknown,
-          "Provider returned an Exception: " + task.Exception);
-      } else {
-        AppCheckToken token = task.Result;
-        AppCheckUtil.FinishGetTokenCallback(key, token.Token,
-          token.ExpireTimeMs, 0, "");
+          "Unable to find App with name: " + appName);
+        return;
       }
-    });
+      IAppCheckProvider provider;
+      lock (providerMap) {
+        if (!providerMap.TryGetValue(app.Name, out provider)) {
+          provider = appCheckFactory.CreateProvider(app);
+          if (provider == null) {
+            AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+              (int)AppCheckError.InvalidConfiguration,
+              "Failed to create IAppCheckProvider for App: " + appName);
+            return;
+          }
+          providerMap[app.Name] = provider;
+        }
+      }
+
+      provider.GetLimitedUseTokenAsync().ContinueWith(task => {
+        if (task.IsFaulted) {
+          AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+            (int)AppCheckError.Unknown,
+            "Provider returned an Exception: " + task.Exception);
+        } else {
+          AppCheckToken token = task.Result;
+          AppCheckUtil.FinishGetTokenCallback(key, token.Token,
+            token.ExpireTimeMs, 0, "");
+        }
+      });
+    } catch (System.Exception e) {
+      AppCheckUtil.FinishGetTokenCallback(key, "", 0,
+        (int)AppCheckError.Unknown,
+        "Exception while getting limited-use App Check token: " + e);
+    }
   }
 
   [MonoPInvokeCallback(typeof(AppCheckUtil.TokenChangedDelegate))]

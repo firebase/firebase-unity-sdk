@@ -45,8 +45,8 @@ class GameLoopLauncherUITests: XCTestCase {
     let bundleId = environment[Constants.gameLoopBundleId] ?? nil
     app.launchEnvironment[Constants.gameLoopScenario] = scenario
 
-    // Periodically check and dismiss dialogs with "Allow" or "OK"
-    Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { (_) in
+    // Periodically check and dismiss system dialogs with "Open", "Allow", or "OK"
+    let dialogTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { (_) in
 #if os(iOS)
       let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
       for button in [springboard.buttons["Open"], springboard.buttons["Allow"], springboard.buttons["OK"]] {
@@ -67,31 +67,22 @@ class GameLoopLauncherUITests: XCTestCase {
       }
 #endif
     }
+    defer { dialogTimer.invalidate() }
 
-    //Launch Gameloop App
+    // Launch Gameloop App
     app.launch()
-    //Wait until Gameloop App open Integration Test App
-    app.wait(for: .runningBackground, timeout: 20)
-    //Wait until Integration Test App closed (testing finished)
-    let expectation = XCTestExpectation(description: "Integration Test App closed")
-    Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { (_) in
-      if app.state == .runningForeground {
-        NSLog("Integration Test App closed... Gameloop App back to foreground...")
-        expectation.fulfill()
-      } else {
-        NSLog("Testing... Gameloop App in background...")
-      }
-    }
+    // Wait until Gameloop App enters the background after opening Integration Test App
+    let enteredBackground = app.wait(for: .runningBackground, timeout: 60)
+    XCTAssertTrue(enteredBackground, "Gameloop App did not enter background to launch Integration Test App")
 
+    // Wait until Integration Test App finishes and brings Gameloop App back to the foreground
     let timeout = getTimeout()
-    let wait = XCTWaiter().wait(for: [expectation], timeout: timeout)
+    let returnedToForeground = app.wait(for: .runningForeground, timeout: timeout)
+    XCTAssertTrue(returnedToForeground, "Gameloop App did not return to foreground within timeout")
 
-    if wait == .completed {
-      let result = app.staticTexts[Constants.completeText].waitForExistence(timeout: 10)
-      XCTAssert(result)
-    } else {
-      XCTAssert(false)
-    }
+    // Verify that Gameloop App displays the completion text
+    let result = app.staticTexts[Constants.completeText].waitForExistence(timeout: 10)
+    XCTAssertTrue(result)
   }
 
   /// Obtain the timeout from the runtime environment.
@@ -101,7 +92,7 @@ class GameLoopLauncherUITests: XCTestCase {
     {
       return timeoutSecs
     } else {
-      // Default 8 minutes
+      // Default 4 minutes
       return TimeInterval(4 * 60)
     }
   }
