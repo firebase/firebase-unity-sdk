@@ -14,6 +14,14 @@
 
 # This file compiles a mono sample app that uses the firebase mono libraries
 
+# The sample downloads a file through Firebase Storage, which is now shipped as Unity-only C#
+# source (it relies on the Unity main-thread dispatcher), so there is no Mono Storage library
+# to build it against.
+if(NOT TARGET firebase_storage_cs)
+  message(STATUS "Skipping mono_sample_app_cs: Firebase Storage no longer builds for Mono.")
+  return()
+endif()
+
 mono_add_executable(mono_sample_app_cs
   MODULE
     MonoSampleApp
