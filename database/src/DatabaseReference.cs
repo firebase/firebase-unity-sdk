@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Firebase.Database.Internal;
 using Google.MiniJSON;
@@ -37,37 +38,24 @@ namespace Firebase.Database {
   /// and to create mores instances of <see cref="DatabaseReference" />.
   /// </remarks>
   public sealed class DatabaseReference : Query {
-    private readonly InternalDatabaseReference internalReference;
-
-    /// <param name="repo">The repo for this ref</param>
     /// <param name="path">The path to reference</param>
-    internal DatabaseReference(
-        InternalDatabaseReference internalRef, FirebaseDatabase database)
-        : base(internalRef, database) {
-      internalReference = internalRef;
-      Database = database;
+    internal DatabaseReference(FirebaseDatabase database, RtdbPath path)
+        : base(database, new QuerySpec(path)) {
     }
 
     // Getters and other auxiliary methods
     /// <summary>Gets the Database instance associated with this reference.</summary>
     /// <returns>The Database object for this reference.</returns>
-    public FirebaseDatabase Database { get; private set; }
+    public FirebaseDatabase Database => DatabaseInstance;
 
     /// A DatabaseReference to the parent location, or null if this instance references the root
     /// location.
-    public DatabaseReference Parent {
-      get {
-        // In C++, root.GetParent returns the root again.
-        // But for backward's compatibility, we want to return null in C#.
-        return internalReference.is_root() ?
-            null : new DatabaseReference(internalReference.GetParent(), Database);
-      }
-    }
+    public DatabaseReference Parent =>
+        Spec.Path.IsEmpty ? null : new DatabaseReference(DatabaseInstance, Spec.Path.Parent);
 
     /// A reference to the root location of this Firebase Database.
-    public DatabaseReference Root {
-      get { return new DatabaseReference(internalReference.GetRoot(), Database); }
-    }
+    public DatabaseReference Root =>
+        Spec.Path.IsEmpty ? this : new DatabaseReference(DatabaseInstance, RtdbPath.Empty);
 
     /// <summary>Get a reference to location relative to this one</summary>
     /// <param name="pathString">
@@ -75,7 +63,8 @@ namespace Firebase.Database {
     /// </param>
     /// <returns>A new DatabaseReference to the given path</returns>
     public DatabaseReference Child(string pathString) {
-      return new DatabaseReference(internalReference.Child(pathString), Database);
+      RtdbPath childPath = Spec.Path.Child(pathString, nameof(pathString), validate: true);
+      return new DatabaseReference(DatabaseInstance, childPath);
     }
 
     /// <summary>Create a reference to an auto-generated child location.</summary>
@@ -87,7 +76,8 @@ namespace Firebase.Database {
     /// </remarks>
     /// <returns>A DatabaseReference pointing to the new location</returns>
     public DatabaseReference Push() {
-      return new DatabaseReference(internalReference.PushChild(), Database);
+      string pushKey = PushIdGenerator.Generate(DatabaseInstance.Repo.EstimatedServerTimeMs);
+      return new DatabaseReference(DatabaseInstance, Spec.Path.ChildKey(pushKey));
     }
 
     /// <summary>Set the data at this location to the given value.</summary>
@@ -110,7 +100,8 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task SetValueAsync(object value) {
-      return WrapInternalDefaultTask(internalReference.SetValueAsync(Utilities.MakeVariant(value)));
+      RtdbNode node = RtdbNodeFactory.NodeFromObject(value);
+      return DatabaseInstance.Repo.SetValueAsync(Spec.Path, node);
     }
 
     /// <summary>Set the data at this location to the given string json represenation.</summary>
@@ -121,7 +112,8 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task SetRawJsonValueAsync(string jsonValue) {
-      return SetValueAsync(Json.Deserialize(jsonValue));
+      object parsed = jsonValue == null ? null : Json.Deserialize(jsonValue);
+      return SetValueAsync(parsed);
     }
 
     /// <summary>Set the data and priority to the given values.</summary>
@@ -145,8 +137,12 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task SetValueAsync(object value, object priority) {
-      return WrapInternalDefaultTask(internalReference.SetValueAndPriorityAsync(
-          Utilities.MakeVariant(value), Utilities.MakePriorityVariant(priority)));
+      if (Spec.Path.IsEmpty && priority != null) {
+        throw new DatabaseException("Cannot set priority on root location.");
+      }
+      RtdbNode prio = RtdbNodeFactory.ParsePriority(priority);
+      RtdbNode node = RtdbNodeFactory.NodeFromObject(value, prio);
+      return DatabaseInstance.Repo.SetValueAsync(Spec.Path, node);
     }
 
     /// <summary>Set the data and priority to the given values.</summary>
@@ -157,7 +153,8 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task SetRawJsonValueAsync(string jsonValue, object priority) {
-      return SetValueAsync(Json.Deserialize(jsonValue), priority);
+      object parsed = jsonValue == null ? null : Json.Deserialize(jsonValue);
+      return SetValueAsync(parsed, priority);
     }
 
     // Set priority
@@ -199,7 +196,11 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task SetPriorityAsync(object priority) {
-      return WrapInternalDefaultTask(internalReference.SetPriorityAsync(Utilities.MakePriorityVariant(priority)));
+      if (Spec.Path.IsEmpty) {
+        throw new DatabaseException("Cannot set priority on root location.");
+      }
+      RtdbNode prio = RtdbNodeFactory.ParsePriority(priority);
+      return DatabaseInstance.Repo.SetValueAsync(Spec.Path.ChildKey(".priority"), prio);
     }
 
     // Update
@@ -214,9 +215,8 @@ namespace Firebase.Database {
     ///   <see cref="Task{TResult}" />
     ///   for this operation.
     /// </returns>
-    public Task UpdateChildrenAsync(IDictionary<string, object> update) {
-      return internalReference.UpdateChildrenAsync(Utilities.MakeVariant(update));
-    }
+    public Task UpdateChildrenAsync(IDictionary<string, object> update) =>
+        DatabaseInstance.Repo.UpdateChildrenAsync(Spec.Path, update);
 
     // Remove
     /// <summary>Set the value at this location to 'null'</summary>
@@ -225,16 +225,13 @@ namespace Firebase.Database {
     ///   <see cref="Task{TResult}" />
     ///   for this operation.
     /// </returns>
-    public Task RemoveValueAsync() {
-      return internalReference.RemoveValueAsync();
-    }
+    public Task RemoveValueAsync() =>
+        DatabaseInstance.Repo.SetValueAsync(Spec.Path, EmptyNode.Instance);
 
     // Access to disconnect operations
     /// <summary>Provides access to disconnect operations at this location</summary>
     /// <returns>An object for managing disconnect operations at this location</returns>
-    public OnDisconnect OnDisconnect() {
-      return new OnDisconnect(internalReference.OnDisconnect());
-    }
+    public OnDisconnect OnDisconnect() => new OnDisconnect(DatabaseInstance.Repo, Spec.Path);
 
     // Transactions
     /// <summary>Run a transaction on the data at this location.</summary>
@@ -244,9 +241,8 @@ namespace Firebase.Database {
     /// the operation.
     /// </remarks>
     /// <param name="transaction">A function to perform the transaction and return a result</param>
-    public Task<DataSnapshot> RunTransaction(Func<MutableData, TransactionResult> transaction) {
-      return RunTransaction(transaction, true);
-    }
+    public Task<DataSnapshot> RunTransaction(Func<MutableData, TransactionResult> transaction) =>
+        RunTransaction(transaction, fireLocalEvents: true);
 
     /// <summary>Run a transaction on the data at this location.</summary>
     /// <remarks>
@@ -260,22 +256,10 @@ namespace Firebase.Database {
     ///   the final result state of the transaction, and not for any
     ///   intermediate states
     /// </param>
-    public Task<DataSnapshot> RunTransaction(Func<MutableData, TransactionResult> transaction,
-        bool fireLocalEvents) {
-      InternalTransactionHandler handler =
-          new InternalTransactionHandler(transaction, Database);
-      Task<InternalDataSnapshot> t =
-          internalReference.RunTransactionAsync(handler.CallbackId, fireLocalEvents);
-      t.ContinueWith((task) => {
-          // We dispose the handler once the transaction completes.
-          // No matter HOW the transaction completed, we're done with the handler.
-          // Note: WrapInternalDataSnapshotTask will register a second ContinueWith on this task.
-          // This is perfectly valid in C#. It is also safe, as we don't care about the
-          // order in which these continuations are called.
-          handler.Dispose();
-      });
-      return WrapInternalDataSnapshotTask(t);
-    }
+    public Task<DataSnapshot> RunTransaction(
+        Func<MutableData, TransactionResult> transaction,
+        bool fireLocalEvents) =>
+        DatabaseInstance.Repo.RunTransactionAsync(Spec.Path, transaction, fireLocalEvents);
 
     // Manual Connection Management
     /// <summary>
@@ -287,9 +271,7 @@ namespace Firebase.Database {
     ///   automatic reconnection.
     ///   Note: Invoking this method will impact all Firebase Database connections.
     /// </remarks>
-    public static void GoOffline() {
-      FirebaseDatabase.AnyInstance.GoOffline();
-    }
+    public static void GoOffline() => FirebaseDatabase.GoOfflineAll();
 
     /// <summary>
     ///   Manually reestablish a connection to the Firebase Database server and enable
@@ -300,42 +282,38 @@ namespace Firebase.Database {
     ///   automatic reconnection.
     ///   Note: Invoking this method will impact all Firebase Database connections.
     /// </remarks>
-    public static void GoOnline() {
-      FirebaseDatabase.AnyInstance.GoOnline();
-    }
+    public static void GoOnline() => FirebaseDatabase.GoOnlineAll();
 
     /// The full location url for this reference.
     public override string ToString() {
-      return internalReference.url();
+      string baseUrl = DatabaseInstance.Repo.BaseUrl;
+      if (Spec.Path.IsEmpty) {
+        return baseUrl;
+      }
+      var sb = new StringBuilder(baseUrl.Length + 1 + Spec.Path.Count * 8);
+      sb.Append(baseUrl);
+      for (int i = 0; i < Spec.Path.Count; i++) {
+        sb.Append('/').Append(Uri.EscapeDataString(Spec.Path[i]));
+      }
+      return sb.ToString();
     }
 
     /// <value>The last token in the location pointed to by this reference</value>
-    public string Key {
-      get { return internalReference.is_root() ? null : internalReference.key_string(); }
-    }
+    public string Key => Spec.Path.Back;
 
     /// Returns true if both objects reference the same database path.
-    public override bool Equals(object other) {
-      return other is DatabaseReference && ToString().Equals(other.ToString());
-    }
+    public override bool Equals(object other) =>
+        other is DatabaseReference otherRef &&
+        string.Equals(
+            DatabaseInstance.Repo.ParsedUrl.CacheKey,
+            otherRef.DatabaseInstance.Repo.ParsedUrl.CacheKey,
+            StringComparison.Ordinal) &&
+        Spec.Path.Equals(otherRef.Spec.Path);
 
     /// A hash code based on the string path of the reference.
-    public override int GetHashCode() {
-      return ToString().GetHashCode();
-    }
-
-    /// Creates a wrapper around the internal task returned by the SWIG classes.
-    internal Task WrapInternalDefaultTask(Task it) {
-      TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
-      it.ContinueWith(task => {
-        // By calling CheckTaskStatus(), it keeps a reference to this, which holds a reference to
-        // FirebaseDatabase.  This prevents FirebaseDatabase from being GCed until the end of this
-        // block.
-        if (CheckTaskStatus<bool>(task, tcs)){
-          tcs.SetResult(true);
-        }
-      });
-      return tcs.Task;
-    }
+    public override int GetHashCode() =>
+        unchecked(
+            StringComparer.Ordinal.GetHashCode(DatabaseInstance.Repo.ParsedUrl.CacheKey) * 397
+            ^ Spec.Path.GetHashCode());
   }
 }

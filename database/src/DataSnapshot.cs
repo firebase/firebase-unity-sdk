@@ -16,7 +16,6 @@
 
 using System.Collections;
 using System.Collections.Generic;
-
 using Firebase.Database.Internal;
 using Google.MiniJSON;
 
@@ -63,51 +62,25 @@ namespace Firebase.Database {
   ///   </see>).
   /// </remarks>
   public sealed class DataSnapshot {
-    private readonly InternalDataSnapshot internalSnapshot;
-    // We only keeps a reference to the database to ensure that it's kept alive,
-    // as the underlying C++ code needs that.
-    private readonly FirebaseDatabase database;
-    // If the DataSnapshot is created via Child, we want to hold onto a reference of the original
-    // DataSnapshot that triggered it, to prevent the underlying C++ snapshot from being deleted.
-    private readonly DataSnapshot parentSnapshot;
-    // If the DataSnapshot is created via Children, we want to hold onto a reference to the List
-    // of Children that this originated from, to prevent the underlying C++ list from being deleted.
-    private readonly DataSnapshotList parentList;
+    private readonly FirebaseDatabase _database;
+    private readonly RtdbPath _path;
+    private readonly RtdbNode _node;
+    private readonly RtdbIndex _index;
 
-    private DataSnapshot(InternalDataSnapshot internalSnapshot, FirebaseDatabase database,
-                         DataSnapshot parentSnapshot, DataSnapshotList parentList) {
-      this.internalSnapshot = internalSnapshot;
-      this.database = database;
-      this.parentSnapshot = parentSnapshot;
-      this.parentList = parentList;
-    }
-
-    internal static DataSnapshot CreateSnapshot(
-        InternalDataSnapshot internalSnapshot, FirebaseDatabase database) {
-      return new DataSnapshot(internalSnapshot, database, null, null);
-    }
-
-    private static DataSnapshot CreateSnapshot(
-        InternalDataSnapshot internalSnapshot, FirebaseDatabase database, DataSnapshot parent) {
-      return new DataSnapshot(internalSnapshot, database, parent, null);
-    }
-
-    private static DataSnapshot CreateSnapshot(
-        InternalDataSnapshot internalSnapshot, FirebaseDatabase database, DataSnapshotList list) {
-      return new DataSnapshot(internalSnapshot, database, null, list);
+    internal DataSnapshot(FirebaseDatabase database, RtdbPath path, RtdbNode node, RtdbIndex index) {
+      _database = database;
+      _path = path;
+      _node = node ?? EmptyNode.Instance;
+      _index = index ?? RtdbIndex.Priority;
     }
 
     /// <summary>Indicates whether this snapshot has any children</summary>
     /// <returns>True if the snapshot has any children, otherwise false</returns>
-    public bool HasChildren {
-      get { return internalSnapshot.has_children(); }
-    }
+    public bool HasChildren => !_node.IsLeaf && _node.ChildrenCount > 0;
 
     /// <summary>Returns true if the snapshot contains a non-null value.</summary>
     /// <returns>True if the snapshot contains a non-null value, otherwise false</returns>
-    public bool Exists {
-      get { return internalSnapshot.exists(); }
-    }
+    public bool Exists => !_node.IsEmpty;
 
     /// <summary>Value returns the data contained in this snapshot as native types.</summary>
     /// <remarks>
@@ -125,75 +98,19 @@ namespace Firebase.Database {
     ///   types available in JSON.
     /// </remarks>
     /// <returns>The data contained in this snapshot as native types</returns>
-    public object Value {
-      get { return GetValue(false); }
-    }
+    public object Value => GetValue(false);
 
     /// The number of immediate children in the this snapshot.
-    public long ChildrenCount {
-      get { return internalSnapshot.children_count(); }
-    }
+    public long ChildrenCount => _node.ChildrenCount;
 
     /// <summary>Used to obtain a reference to the source location for this Snapshot.</summary>
     /// <returns>
     ///   A DatabaseReference corresponding to the location that this snapshot came from
     /// </returns>
-    public DatabaseReference Reference {
-      get { return new DatabaseReference(internalSnapshot.GetReference(), database); }
-    }
+    public DatabaseReference Reference => new DatabaseReference(_database, _path);
 
     /// The key name for the source location of this snapshot.
-    public string Key {
-      get { return internalSnapshot.key_string(); }
-    }
-
-    /// This is a simple wrapper around the enumerator returned by the internal
-    /// SWIG class.
-    private sealed class DataSnapshotEnumerator : IEnumerator<DataSnapshot> {
-      private IEnumerator<InternalDataSnapshot> internalEnumerator;
-      private FirebaseDatabase database;
-      private DataSnapshotList parentList;
-      public DataSnapshotEnumerator(
-          IEnumerator<InternalDataSnapshot> internalEnumerator, FirebaseDatabase database,
-          DataSnapshotList parentList) {
-        this.internalEnumerator = internalEnumerator;
-        this.database = database;
-        this.parentList = parentList;
-      }
-      public DataSnapshot Current {
-        get { return CreateSnapshot(internalEnumerator.Current, database, parentList); }
-      }
-      object IEnumerator.Current {
-        get { return CreateSnapshot(internalEnumerator.Current, database, parentList); }
-      }
-      public bool MoveNext() {
-        return internalEnumerator.MoveNext();
-      }
-      public void Reset() {
-        internalEnumerator.Reset();
-      }
-      public void Dispose() {
-        internalEnumerator.Dispose();
-      }
-    }
-
-    /// This is a simple wrapper around the children list returned by the
-    /// internal SWIG class.
-    private sealed class DataSnapshotList : IEnumerable<DataSnapshot> {
-      private IEnumerable<InternalDataSnapshot> internalList;
-      private FirebaseDatabase database;
-      public DataSnapshotList(
-          IEnumerable<InternalDataSnapshot> internalList, FirebaseDatabase database) {
-        this.internalList = internalList;
-        this.database = database;
-      }
-      public IEnumerator<DataSnapshot> GetEnumerator() {
-        return new DataSnapshotEnumerator(internalList.GetEnumerator(), database, this);
-      }
-      IEnumerator IEnumerable.GetEnumerator() {
-        return new DataSnapshotEnumerator(internalList.GetEnumerator(), database, this);
-      }
-    }
+    public string Key => _path.Back;
 
     /// <summary>Gives access to all of the immediate children of this Snapshot.</summary>
     /// <remarks>
@@ -202,7 +119,43 @@ namespace Firebase.Database {
     /// </remarks>
     /// <returns>The immediate children of this snapshot</returns>
     public IEnumerable<DataSnapshot> Children {
-      get { return new DataSnapshotList(internalSnapshot.children(), database); }
+      get {
+        if (_node is not ChildrenNode childrenNode || childrenNode.IsEmpty) {
+          yield break;
+        }
+        if (_index.OrderBy == QueryOrderBy.Key) {
+          foreach (KeyValuePair<string, RtdbNode> kv in childrenNode.Children) {
+            yield return new DataSnapshot(_database, _path.ChildKey(kv.Key), kv.Value, RtdbIndex.Priority);
+          }
+          yield break;
+        }
+
+        // Fast path when no child has a priority under default PriorityIndex: Children map is already in ChildKeyComparer order!
+        if (_index.OrderBy == QueryOrderBy.Priority) {
+          bool anyPriority = false;
+          foreach (KeyValuePair<string, RtdbNode> kv in childrenNode.Children) {
+            if (!kv.Value.Priority.IsEmpty) {
+              anyPriority = true;
+              break;
+            }
+          }
+          if (!anyPriority) {
+            foreach (KeyValuePair<string, RtdbNode> kv in childrenNode.Children) {
+              yield return new DataSnapshot(_database, _path.ChildKey(kv.Key), kv.Value, RtdbIndex.Priority);
+            }
+            yield break;
+          }
+        }
+
+        // General indexed traversal using SortedSet (0 LOH allocations even for huge child counts).
+        var ordered = new SortedSet<NamedNode>(_index);
+        foreach (KeyValuePair<string, RtdbNode> kv in childrenNode.Children) {
+          ordered.Add(new NamedNode(kv.Key, kv.Value));
+        }
+        foreach (NamedNode item in ordered) {
+          yield return new DataSnapshot(_database, _path.ChildKey(item.Key), item.Node, RtdbIndex.Priority);
+        }
+      }
     }
 
     /// <summary>
@@ -216,9 +169,7 @@ namespace Firebase.Database {
     ///   Note that null is also allowed.
     /// </remarks>
     /// <returns>the priority of the data contained in this snapshot as a native type</returns>
-    public object Priority {
-      get { return internalSnapshot.priority().ToObject(VariantExtension.KeyOptions.UseStringKeys); }
-    }
+    public object Priority => _node.Priority.GetValue(false);
 
     /// <summary>Get a DataSnapshot for the location at the specified relative path.</summary>
     /// <remarks>
@@ -230,8 +181,14 @@ namespace Firebase.Database {
     /// <param name="path">A relative path to the location of child data</param>
     /// <returns>The DataSnapshot for the child location</returns>
     public DataSnapshot Child(string path) {
-      // Do not use CreateSnapshot here, because we do return an empty DataSnapshot here.
-      return new DataSnapshot(internalSnapshot.Child(path), database, this, null);
+      if (string.IsNullOrEmpty(path)) {
+        return new DataSnapshot(_database, _path, EmptyNode.Instance, RtdbIndex.Priority);
+      }
+      RtdbPath rel = RtdbPath.ParseUnchecked(path);
+      if (rel.IsEmpty) {
+        return new DataSnapshot(_database, _path, EmptyNode.Instance, RtdbIndex.Priority);
+      }
+      return new DataSnapshot(_database, _path.Child(rel), _node.GetChild(rel), RtdbIndex.Priority);
     }
 
     /// <summary>
@@ -240,7 +197,10 @@ namespace Firebase.Database {
     /// <param name="path">A relative path to the location of child data</param>
     /// <returns>Whether or not the specified child location has data</returns>
     public bool HasChild(string path) {
-      return internalSnapshot.HasChild(path);
+      if (string.IsNullOrEmpty(path)) return false;
+      RtdbPath rel = RtdbPath.ParseUnchecked(path);
+      if (rel.IsEmpty) return false;
+      return !_node.GetChild(rel).IsEmpty;
     }
 
     /// <summary>GetRawJsonValue() returns the data contained in this snapshot
@@ -250,13 +210,10 @@ namespace Firebase.Database {
     /// GetRawJsonValue() returns the data contained in this snapshot as a json string.
     /// <returns>The data contained in this snapshot as json. Return null if no data.</returns>
     public string GetRawJsonValue() {
-      // This is to align the behavior on mobile and on desktop (C# implementation).
-      if (!internalSnapshot.exists()) {
+      if (_node.IsEmpty) {
         return null;
       }
-
-      return Json.Serialize(
-          internalSnapshot.value().ToObject(VariantExtension.KeyOptions.UseStringKeys));
+      return Json.Serialize(GetValue(false));
     }
 
     /// <summary>GetValue() returns the data contained in this snapshot as native types.</summary>
@@ -279,16 +236,11 @@ namespace Firebase.Database {
     /// </remarks>
     /// <param name="useExportFormat">Whether or not to include priority information</param>
     /// <returns>The data, along with its priority, in native types</returns>
-    public object GetValue(bool useExportFormat) {
-      // TODO(phohmeyer): implement useExportFormat
-      return internalSnapshot.value().ToObject(VariantExtension.KeyOptions.UseStringKeys);
-    }
+    public object GetValue(bool useExportFormat) => _node.GetValue(useExportFormat);
 
     /// A string representing the DataSnapshot as a key, value pair.
     /// It returns the following form:
     ///   `DataSnapshot { key = {Key}, value = {Value} };`
-    public override string ToString() {
-      return "DataSnapshot { key = " + Key + ", value = " + Value + " }";
-    }
+    public override string ToString() => "DataSnapshot { key = " + Key + ", value = " + Value + " }";
   }
 }

@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
 using Firebase.Database.Internal;
 
 namespace Firebase.Database {
@@ -39,10 +36,12 @@ namespace Firebase.Database {
   ///   on a Firebase Database ref.
   /// </remarks>
   public sealed class OnDisconnect {
-    private readonly DisconnectionHandler internalHandler;
+    private readonly DatabaseRepo _repo;
+    private readonly RtdbPath _path;
 
-    internal OnDisconnect(DisconnectionHandler internalHandler) {
-      this.internalHandler = internalHandler;
+    internal OnDisconnect(DatabaseRepo repo, RtdbPath path) {
+      _repo = repo;
+      _path = path;
     }
 
     /// <summary>
@@ -66,7 +65,8 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task SetValue(object value) {
-      return internalHandler.SetValueAsync(Utilities.MakeVariant(value));
+      RtdbNode node = RtdbNodeFactory.NodeFromObject(value);
+      return _repo.OnDisconnectSetValueAsync(_path, node);
     }
 
     /// <summary>
@@ -91,8 +91,9 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task SetValue(object value, string priority) {
-      return internalHandler.SetValueAndPriorityAsync(
-          Utilities.MakeVariant(value), Utilities.MakePriorityVariant(priority));
+      RtdbNode prio = RtdbNodeFactory.ParsePriority(priority);
+      RtdbNode node = RtdbNodeFactory.NodeFromObject(value, prio);
+      return _repo.OnDisconnectSetValueAsync(_path, node);
     }
 
     /// <summary>
@@ -117,8 +118,9 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task SetValue(object value, double priority) {
-      return internalHandler.SetValueAndPriorityAsync(
-          Utilities.MakeVariant(value), Utilities.MakePriorityVariant(priority));
+      RtdbNode prio = RtdbNodeFactory.ParsePriority(priority);
+      RtdbNode node = RtdbNodeFactory.NodeFromObject(value, prio);
+      return _repo.OnDisconnectSetValueAsync(_path, node);
     }
 
     // Update
@@ -133,7 +135,7 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task UpdateChildren(IDictionary<string, object> update) {
-      return internalHandler.UpdateChildrenAsync(Utilities.MakeVariant(update));
+      return _repo.OnDisconnectUpdateChildrenAsync(_path, update);
     }
 
     // Remove
@@ -144,7 +146,7 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task RemoveValue() {
-      return internalHandler.RemoveValueAsync();
+      return _repo.OnDisconnectSetValueAsync(_path, EmptyNode.Instance);
     }
 
     // Cancel the operation
@@ -155,7 +157,7 @@ namespace Firebase.Database {
     ///   for this operation.
     /// </returns>
     public Task Cancel() {
-      return internalHandler.CancelAsync();
+      return _repo.OnDisconnectCancelAsync(_path);
     }
   }
 }

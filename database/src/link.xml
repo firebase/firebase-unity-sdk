@@ -1,0 +1,3 @@
+<linker>
+  <assembly fullname="Firebase.Database" preserve="all"/>
+</linker>

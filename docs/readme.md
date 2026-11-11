@@ -136,6 +136,12 @@ Release Notes
       `FirebaseCppCrashlytics` native libraries, the `firebase-crashlytics-unity` Android AAR, and
       the transitive `firebase-analytics` Android dependency while preserving full native
       POSIX/Mach/NDK/IL2CPP crash reporting.
+    - Database: Rewrote the internal implementation in C#, removing the dependency on the C++ and
+      native platform Realtime Database libraries. `Firebase.Database.dll` is now shipped as C#
+      source with an assembly definition of the same name (update `precompiledReferences` in your
+      own asmdefs accordingly), the `FirebaseCppDatabase` native libraries, `firebase-database`
+      Android dependency, and `FirebaseDatabase` iOS dependency have been removed, and added
+      `ServerValue.Increment` and `FirebaseDatabase.PersistenceCacheSizeBytes`.
     - Installations: Rewrote the internal implementation in C#, removing the dependency on the C++
       and native platform Installations libraries while adding full Desktop support (replacing the
       previous stub implementation). `Firebase.Installations` is now shipped as C# source with an

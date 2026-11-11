@@ -151,6 +151,12 @@
           ]
         },
         {
+          "importer": "DefaultImporter",
+          "paths": [
+            "Firebase/FirebaseApp/Internal/"
+          ]
+        },
+        {
           "labels": [
             "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
           ],
@@ -214,81 +220,9 @@
       "name": "FirebaseDatabase.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Firebase.Database.dll",
-            "Firebase/Plugins/Firebase.Database.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/iOS/Firebase.Database.dll",
-            "Firebase/Plugins/iOS/Firebase.Database.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppDatabase.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppDatabase.xcframework"
-          ]
-        },
-        {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/DatabaseDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-database-unity/"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone"
-          ],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppDatabase*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/FirebaseDatabase*_manifest.txt"
-          ]
-        },
-        {
-          "labels": [
-            "gvh_targets-windows-windows64-osx-osxintel-osxintel64-linux-linux32-linux64"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Http/link.xml"
+            "Firebase/FirebaseDatabase/*"
           ]
         },
         {
@@ -311,11 +245,8 @@
           ]
         }
       ],
-      "exclude_paths": [
-        "Firebase/Sample/Auth/.*"
-      ],
       "includes": [
-        "FirebaseAuth.unitypackage",
+        "FirebaseApp.unitypackage",
         "SampleCommon.unitypackage"
       ],
       "manifest_path": "Firebase/Editor",

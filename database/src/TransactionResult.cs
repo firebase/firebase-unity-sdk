@@ -27,9 +27,7 @@ namespace Firebase.Database {
 
     /// Aborts the transaction run with <see cref="DatabaseReference.RunTransaction"/> and
     /// returns an aborted <see cref="TransactionResult"/> which can be returned from RunTransaction.
-    public static TransactionResult Abort() {
-      return new TransactionResult(false);
-    }
+    public static TransactionResult Abort() => new TransactionResult(false);
 
     /// Builds a successful result to be returned from the handler passed to
     /// <see cref="DatabaseReference.RunTransaction"/>.
@@ -39,12 +37,11 @@ namespace Firebase.Database {
     ///   <see cref="TransactionResult" />
     ///   indicating the new data to be stored at the location.
     /// </returns>
-    public static TransactionResult Success(MutableData resultData) {
+    public static TransactionResult Success(MutableData resultData) =>
       // TODO(phohmeyer): Do we need this data? I must test what happens if someone
       // writes a transaction that returns a different MutableData, e.g.
       // return TransactionResult.Success(mutableData.Child("key"));
-      return new TransactionResult(true);
-    }
+      new TransactionResult(true);
 
     internal TransactionResult(bool success) {
       IsSuccess = success;

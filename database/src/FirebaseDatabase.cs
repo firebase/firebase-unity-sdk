@@ -16,8 +16,9 @@
 
 using System;
 using System.Collections.Generic;
-using Firebase.Platform;
 using Firebase.Database.Internal;
+using Firebase.Internal;
+using Firebase.Platform;
 
 namespace Firebase.Database {
   /// <summary>The entry point for accessing a Firebase Database.</summary>
@@ -28,51 +29,30 @@ namespace Firebase.Database {
   ///   write data, use
   ///   <see cref="GetReference()" />
   /// </remarks>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   public sealed class FirebaseDatabase {
-    private const string SFirebaseSdkVersion = "1.0.0.0";
-    private const string SDefaultName = "__DEFAULT__";
+    private static readonly object LiveLock = new object();
+    private static readonly HashSet<FirebaseDatabase> LiveInstances = new HashSet<FirebaseDatabase>();
+    private static readonly FirebaseInstanceCache<FirebaseDatabase> Instances =
+        new FirebaseInstanceCache<FirebaseDatabase>(db => db.DisposeInternal());
 
-    private InternalFirebaseDatabase internalDatabase;
+    static FirebaseDatabase() {
+      FirebaseInstanceCache.RegisterResetHook(ClearLiveSet);
+    }
 
-    // Name of this instance in the databases dictionary.
-    private string name;
+    private readonly DatabaseRepo _repo;
 
-    internal FirebaseDatabase(FirebaseApp app, InternalFirebaseDatabase internalDB) {
+    private FirebaseDatabase(FirebaseApp app, ParsedDatabaseUrl parsedUrl) {
       App = app;
-      internalDatabase = internalDB;
-      App.AppDisposed += OnAppDisposed;
-    }
-
-    // Dispose of this object.
-    private static void DisposeObject(object objectToDispose) {
-      ((FirebaseDatabase)objectToDispose).Dispose();
-    }
-
-    ~FirebaseDatabase() {
-      Dispose();
-    }
-
-    void OnAppDisposed(object sender, System.EventArgs eventArgs) {
-      Dispose();
-    }
-
-    // Destroy the proxy to the C++ Database object.
-    private void Dispose() {
-      System.GC.SuppressFinalize(this);
-      lock(this) {
-        if (internalDatabase == null) return;
-
-        lock(databases) {
-          databases.Remove(name);
-        }
-
-        App.AppDisposed -= OnAppDisposed;
-        App = null;
-
-        internalDatabase.Dispose();
-        internalDatabase = null;
+      _repo = new DatabaseRepo(app, this, parsedUrl);
+      lock (LiveLock) {
+        LiveInstances.Add(this);
       }
     }
+
+    internal DatabaseRepo Repo => _repo;
 
     /// <summary>
     ///   Returns the Firebase.FirebaseApp instance to which this FirebaseDatabase belongs.
@@ -93,45 +73,27 @@ namespace Firebase.Database {
       }
     }
 
-    /// <summary>A static map FirebaseApp.name to FirebaseDatabase instance.</summary>
-    /// <remarks>
-    ///   This prevents creating two different C# FirebaseDatabase instances for
-    ///   the same underlying C++ instance. It uses weak references to avoid keeping
-    ///   the FirebaseDatabase alive forever.
-    /// </remarks>
-    private static Dictionary<string, FirebaseDatabase> databases =
-        new Dictionary<string, FirebaseDatabase>();
-
     /// <summary>Gets an instance of FirebaseDatabase for a specific Firebase.FirebaseApp.</summary>
     /// <param name="app">The Firebase.FirebaseApp to get a FirebaseDatabase for.</param>
     /// <returns>A FirebaseDatabase instance.</returns>
     public static FirebaseDatabase GetInstance(FirebaseApp app) {
-      return GetInstance(app, Services.AppConfig.GetDatabaseUrl(app.AppPlatform));
-    }
-
-    // This returns a database instance that is currently live, or the default instance
-    // if there is no live instance.
-    // This is used for the GoOnline / GoOffline methods that are static in almost any
-    // Firebase SDK (including this one), except the C++ SDK.
-    // It's not ideal to use an arbitrary instance, but it should work.
-    internal static FirebaseDatabase AnyInstance {
-      get {
-        lock(databases) {
-          var e = databases.GetEnumerator();
-          while (e.MoveNext()) {
-            FirebaseDatabase db = e.Current.Value;
-            if (db != null) return db;
-          }
-        }
-        // no existing databases, try to create a default instance
-        return DefaultInstance;
+      if (app == null) {
+        throw new ArgumentNullException(nameof(app));
       }
+      string configuredUrl = null;
+      if (Services.AppConfig != null && app.AppPlatform != null) {
+        configuredUrl = Services.AppConfig.GetDatabaseUrl(app.AppPlatform);
+      }
+      if (string.IsNullOrEmpty(configuredUrl)) {
+        configuredUrl = app.Options?.DatabaseUrl?.ToString();
+      }
+      return GetInstance(app, configuredUrl);
     }
 
     /// <summary>Gets an instance of FirebaseDatabase for the specified URL.</summary>
     /// <param name="url">The URL to the Firebase Database instance you want to access.</param>
     /// <returns>A FirebaseDatabase instance.</returns>
-    public static FirebaseDatabase GetInstance(String url) {
+    public static FirebaseDatabase GetInstance(string url) {
       FirebaseApp instance = FirebaseApp.DefaultInstance;
       if (instance == null) {
         // This *should* never happen.
@@ -145,41 +107,37 @@ namespace Firebase.Database {
     /// <param name="app">The Firebase.FirebaseApp to get a FirebaseDatabase for.</param>
     /// <param name="url">The URL to the Firebase Database instance you want to access.</param>
     /// <returns>A FirebaseDatabase instance.</returns>
-    public static FirebaseDatabase GetInstance(FirebaseApp app, String url) {
-      if (String.IsNullOrEmpty(url)) {
+    public static FirebaseDatabase GetInstance(FirebaseApp app, string url) {
+      if (app == null) {
+        throw new ArgumentNullException(nameof(app));
+      }
+      if (string.IsNullOrEmpty(url)) {
         throw new DatabaseException(
-          "Failed to get FirebaseDatabase instance: Specify DatabaseURL within "
-              + "FirebaseApp or from your GetInstance() call.");
+            "Failed to get FirebaseDatabase instance: Specify DatabaseURL within "
+            + "FirebaseApp or from your GetInstance() call.");
       }
-      FirebaseDatabase db = null;
-      string name = String.Format("({0}, {1})", app.Name, url);
-      lock (databases) {
-        if (!databases.TryGetValue(name, out db)) {
-          InitResult initResult;
-          var internalDB = InternalFirebaseDatabase.GetInstanceInternal(app, url, out initResult);
-          if (internalDB == null || initResult != InitResult.Success) {
-            throw new DatabaseException("Failed to get FirebaseDatabase instance. "
-                + "Please check the log for more information.");
-          }
-          db = new FirebaseDatabase(app, internalDB);
-          db.name = name;
-          databases[name] = db;
-        }
+      ParsedDatabaseUrl parsedUrl = ParsedDatabaseUrl.Parse(url, app);
+      if (!parsedUrl.Path.IsEmpty) {
+        throw new DatabaseException(
+            $"Specified Database URL '{url}' must point to the root of a Firebase Database "
+            + "(use GetReferenceFromUrl() to reference a child path).");
       }
-      return db;
+      return Instances.GetOrCreate(
+          app,
+          () => new FirebaseDatabase(app, parsedUrl),
+          parsedUrl.CacheKey);
     }
 
     /// <summary>Gets a DatabaseReference for the root location of this FirebaseDatabase.</summary>
     /// <value>A DatabaseReference instance.</value>
-    public DatabaseReference RootReference {
-      get { return new DatabaseReference(internalDatabase.GetReference(), this); }
-    }
+    public DatabaseReference RootReference => new DatabaseReference(this, RtdbPath.Empty);
 
     /// <summary>Gets a DatabaseReference for the provided path.</summary>
     /// <param name="path">Path to a location in your FirebaseDatabase.</param>
     /// <returns>A DatabaseReference pointing to the specified path.</returns>
     public DatabaseReference GetReference(string path) {
-      return new DatabaseReference(internalDatabase.GetReference(path), this);
+      RtdbPath parsed = RtdbPath.ParseAndValidate(path, nameof(path), allowMetaKeys: path != null && path.StartsWith(".info", StringComparison.Ordinal));
+      return new DatabaseReference(this, parsed);
     }
 
     /// <summary>Gets a DatabaseReference for the provided URL.</summary>
@@ -198,6 +156,9 @@ namespace Firebase.Database {
     /// <param name="url">A URL to a path within your database.</param>
     /// <returns>A DatabaseReference for the provided URL.</returns>
     public DatabaseReference GetReferenceFromUrl(Uri url) {
+      if (url == null) {
+        throw new ArgumentNullException(nameof(url));
+      }
       return GetReferenceFromUrl(url.ToString());
     }
 
@@ -217,7 +178,18 @@ namespace Firebase.Database {
     /// <param name="url">A URL to a path within your database.</param>
     /// <returns>A DatabaseReference for the provided URL.</returns>
     public DatabaseReference GetReferenceFromUrl(string url) {
-      return new DatabaseReference(internalDatabase.GetReferenceFromUrl(url), this);
+      if (string.IsNullOrWhiteSpace(url)) {
+        throw new ArgumentException("Database URL cannot be null or empty.", nameof(url));
+      }
+      ParsedDatabaseUrl target = ParsedDatabaseUrl.Parse(url, App);
+      bool hostMatches = string.Equals(target.Host, _repo.ParsedUrl.Host, StringComparison.OrdinalIgnoreCase);
+      bool nsMatches = !target.HasExplicitNamespace ||
+          string.Equals(target.Namespace, _repo.ParsedUrl.Namespace, StringComparison.Ordinal);
+      if (!hostMatches || !nsMatches) {
+        throw new DatabaseException(
+            $"Invalid URL '{url}' passed to GetReferenceFromUrl(); expected host '{_repo.BaseUrl}'.");
+      }
+      return new DatabaseReference(this, target.Path);
     }
 
     /// <summary>
@@ -235,27 +207,21 @@ namespace Firebase.Database {
     ///   be rolled back locally, perhaps triggering events for affected event listeners, and the
     ///   client will not (re-)send them to the Firebase backend.
     /// </remarks>
-    public void PurgeOutstandingWrites() {
-      internalDatabase.PurgeOutstandingWrites();
-    }
+    public void PurgeOutstandingWrites() => _repo.PurgeOutstandingWrites();
 
     /// <summary>
     ///   Resumes our connection to the Firebase Database backend after a previous
     ///   <see cref="GoOffline()" />
     ///   Call.
     /// </summary>
-    public void GoOnline() {
-      internalDatabase.GoOnline();
-    }
+    public void GoOnline() => _repo.GoOnline();
 
     /// <summary>
     ///   Shuts down our connection to the Firebase Database backend until
     ///   <see cref="GoOnline()" />
     ///   is called.
     /// </summary>
-    public void GoOffline() {
-      internalDatabase.GoOffline();
-    }
+    public void GoOffline() => _repo.GoOffline();
 
     /// <summary>
     ///   Sets whether pending write data will persist between application exits.
@@ -276,8 +242,12 @@ namespace Firebase.Database {
     ///   Set this to true to persist write data to on-device (disk) storage, or false to discard
     ///   pending writes when the app exists.
     /// </param>
-    public void SetPersistenceEnabled(bool enabled) {
-      internalDatabase.set_persistence_enabled(enabled);
+    public void SetPersistenceEnabled(bool enabled) => _repo.SetPersistenceEnabled(enabled);
+
+    /// <summary>Gets or sets the maximum disk cache size in bytes when persistence is enabled (default 10 MB).</summary>
+    public long PersistenceCacheSizeBytes {
+      get => _repo.PersistenceCacheSizeBytes;
+      set => _repo.PersistenceCacheSizeBytes = value;
     }
 
     /// <summary>
@@ -294,15 +264,53 @@ namespace Firebase.Database {
     ///   <see cref="Firebase.LogLevel.Debug">Debug</see>
     ///   to turn on the diagnostic logging.
     /// </summary>
-    /// <remarks>
-    /// On Android this can only be set before any operations have been performed with the object.
-    /// </remarks>
     /// <value>The desired minimum log level</value>
     public LogLevel LogLevel {
-      get { return internalDatabase.log_level(); }
-      set {
-          internalDatabase.set_log_level(value);
+      get => _repo.LogLevel;
+      set => _repo.LogLevel = value;
+    }
+
+    internal static void GoOfflineAll() {
+      FirebaseDatabase[] snapshot;
+      lock (LiveLock) {
+        snapshot = new FirebaseDatabase[LiveInstances.Count];
+        LiveInstances.CopyTo(snapshot);
       }
+      if (snapshot.Length == 0) {
+        DefaultInstance.GoOffline();
+        return;
+      }
+      for (int i = 0; i < snapshot.Length; i++) {
+        snapshot[i].GoOffline();
+      }
+    }
+
+    internal static void GoOnlineAll() {
+      FirebaseDatabase[] snapshot;
+      lock (LiveLock) {
+        snapshot = new FirebaseDatabase[LiveInstances.Count];
+        LiveInstances.CopyTo(snapshot);
+      }
+      if (snapshot.Length == 0) {
+        DefaultInstance.GoOnline();
+        return;
+      }
+      for (int i = 0; i < snapshot.Length; i++) {
+        snapshot[i].GoOnline();
+      }
+    }
+
+    private static void ClearLiveSet() {
+      lock (LiveLock) {
+        LiveInstances.Clear();
+      }
+    }
+
+    private void DisposeInternal() {
+      lock (LiveLock) {
+        LiveInstances.Remove(this);
+      }
+      _repo.Dispose();
     }
   }
 }

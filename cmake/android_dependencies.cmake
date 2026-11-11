@@ -32,12 +32,6 @@ set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
     "com.google.firebase:firebase-crashlytics-ndk:21.0.1"
 )
 
-set(FIREBASE_DATABASE_ANDROID_DEPS
-    "com.google.firebase:firebase-database:23.0.0"
-    "com.google.firebase:firebase-analytics:24.0.0"
-    "com.google.android.gms:play-services-base:18.11.1"
-)
-
 set(FIREBASE_FIRESTORE_ANDROID_DEPS
     "com.google.firebase:firebase-firestore:26.6.0"
     "com.google.firebase:firebase-analytics:24.0.0"

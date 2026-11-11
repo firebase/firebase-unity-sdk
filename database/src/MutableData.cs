@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using Firebase.Database.Internal;
+
+namespace Firebase.Database.Internal {
+  internal sealed class MutableNodeHolder {
+    internal RtdbNode RootNode { get; set; }
+
+    internal MutableNodeHolder(RtdbNode initialNode) {
+      RootNode = initialNode ?? EmptyNode.Instance;
+    }
+  }
+}
 
 namespace Firebase.Database {
   /// <summary>
@@ -32,72 +40,26 @@ namespace Firebase.Database {
   ///   parent and vice versa.
   /// </remarks>
   public sealed class MutableData {
-    private InternalMutableData internalData;
-    // We only keep a reference to the database to ensure that it's kept alive,
-    // as the underlying C++ code needs that.
-    // Note: this might be overkill for this class, as the MutableData should only be
-    // used while a transaction is ongoing and the InternalTransactionHandler will also
-    // keep the Database alive.
-    private FirebaseDatabase database;
+    private readonly MutableNodeHolder _holder;
+    private readonly RtdbPath _path;
 
-    /// <param name="node">The data</param>
-    internal MutableData(InternalMutableData internalData, FirebaseDatabase database) {
-      this.internalData = internalData;
-      this.database = database;
+    internal MutableData(MutableNodeHolder holder, RtdbPath path) {
+      _holder = holder;
+      _path = path;
     }
+
+    private RtdbNode CurrentNode => _holder.RootNode.GetChild(_path);
 
     /// True if the data at this location has children, false otherwise.
     public bool HasChildren {
-      get { return internalData.children_count() != 0; }
+      get {
+        RtdbNode n = CurrentNode;
+        return !n.IsLeaf && n.ChildrenCount > 0;
+      }
     }
 
     /// The number of immediate children at this location.
-    public long ChildrenCount {
-      get { return internalData.children_count(); }
-    }
-
-    /// This is a simple wrapper around the enumerator returned by the internal
-    /// SWIG class.
-    private sealed class ChildrenEnumerator : IEnumerator<MutableData> {
-      private MutableDataChildrenEnumerator internalEnumerator;
-      private FirebaseDatabase database;
-      public ChildrenEnumerator(
-          MutableDataChildrenEnumerator internalEnumerator, FirebaseDatabase database) {
-        this.internalEnumerator = internalEnumerator;
-        this.database = database;
-      }
-      public MutableData Current {
-        get { return new MutableData(internalEnumerator.Current(), database); }
-      }
-      object IEnumerator.Current {
-        get { return new MutableData(internalEnumerator.Current(), database); }
-      }
-      public bool MoveNext() {
-        return internalEnumerator.MoveNext();
-      }
-      public void Reset() {
-        internalEnumerator.Reset();
-      }
-      // We only implement Dispose because IEnumerator<T> extends IDisposable
-      public void Dispose() {
-        internalEnumerator.Dispose();
-      }
-    }
-
-    private sealed class ChildrenEnumerable : IEnumerable<MutableData> {
-      private InternalMutableData internalData;
-      private FirebaseDatabase database;
-      public ChildrenEnumerable(InternalMutableData internalData, FirebaseDatabase database) {
-        this.internalData = internalData;
-        this.database = database;
-      }
-      public IEnumerator<MutableData> GetEnumerator() {
-        return new ChildrenEnumerator(internalData.ChildrenEnumerator(), database);
-      }
-      IEnumerator IEnumerable.GetEnumerator() {
-        return new ChildrenEnumerator(internalData.ChildrenEnumerator(), database);
-      }
-    }
+    public long ChildrenCount => CurrentNode.ChildrenCount;
 
     /// <summary>
     ///   Used to iterate over the immediate children at this location
@@ -107,13 +69,22 @@ namespace Firebase.Database {
     /// </remarks>
     /// <returns>The immediate children at this location</returns>
     public IEnumerable<MutableData> Children {
-      get { return new ChildrenEnumerable(internalData, database); }
+      get {
+        if (CurrentNode is not ChildrenNode childrenNode || childrenNode.IsEmpty) {
+          yield break;
+        }
+        var ordered = new SortedSet<NamedNode>(RtdbIndex.Priority);
+        foreach (KeyValuePair<string, RtdbNode> kv in childrenNode.Children) {
+          ordered.Add(new NamedNode(kv.Key, kv.Value));
+        }
+        foreach (NamedNode item in ordered) {
+          yield return new MutableData(_holder, _path.ChildKey(item.Key));
+        }
+      }
     }
 
     /// The key name of this location, or null if it is the top-most location
-    public string Key {
-      get { return internalData.key(); }
-    }
+    public string Key => _path.Back;
 
     /// <summary>getValue() returns the data contained in this instance as native types.</summary>
     /// <remarks>
@@ -132,10 +103,12 @@ namespace Firebase.Database {
     /// </remarks>
     /// <returns>The data contained in this instance as native types</returns>
     public object Value {
-      get { return internalData.value().ToObject(VariantExtension.KeyOptions.UseStringKeys); }
-      set { internalData.set_value(Utilities.MakeVariant(value)); }
+      get => CurrentNode.GetValue(false);
+      set {
+        RtdbNode newNode = RtdbNodeFactory.NodeFromObject(value);
+        _holder.RootNode = _holder.RootNode.UpdateChild(_path, newNode);
+      }
     }
-
 
     /// <summary>Gets the current priority at this location.</summary>
     /// <remarks>
@@ -148,15 +121,22 @@ namespace Firebase.Database {
     /// </remarks>
     /// <returns>The priority at this location as a native type</returns>
     public object Priority {
-      get { return internalData.priority().ToObject(VariantExtension.KeyOptions.UseStringKeys); }
-      set { internalData.set_priority(Utilities.MakePriorityVariant(value)); }
+      get => CurrentNode.Priority.GetValue(false);
+      set {
+        RtdbNode prio = RtdbNodeFactory.ParsePriority(value);
+        RtdbNode updated = CurrentNode.WithPriority(prio);
+        _holder.RootNode = _holder.RootNode.UpdateChild(_path, updated);
+      }
     }
 
     /// Determines if data exists at the given path.
     /// <param name="path">A relative path</param>
     /// <returns>True if data exists at the given path, otherwise false</returns>
     public bool HasChild(string path) {
-      return internalData.HasChild(path);
+      if (string.IsNullOrEmpty(path)) return false;
+      RtdbPath rel = RtdbPath.ParseUnchecked(path);
+      if (rel.IsEmpty) return false;
+      return !CurrentNode.GetChild(rel).IsEmpty;
     }
 
     /// <summary>
@@ -166,29 +146,25 @@ namespace Firebase.Database {
     /// <param name="path">A relative path</param>
     /// <returns>An instance encapsulating the data and priority at the given path</returns>
     public MutableData Child(string path) {
-      return new MutableData(internalData.GetChild(path), database);
+      if (string.IsNullOrEmpty(path)) {
+        return new MutableData(new MutableNodeHolder(EmptyNode.Instance), RtdbPath.Empty);
+      }
+      RtdbPath rel = RtdbPath.ParseUnchecked(path);
+      if (rel.IsEmpty) {
+        return new MutableData(new MutableNodeHolder(EmptyNode.Instance), RtdbPath.Empty);
+      }
+      return new MutableData(_holder, _path.Child(rel));
     }
 
     /// Two MutableData are considered equal if they contain the same references and priority.
-    public override bool Equals(object o) {
-      // TODO(phohmeyer): Can we just remove this function + the hashcode one?
-      // I don't see any valid reason to compare two MutableData objects.
-      // And using them as keys in a hashmap / putting them into a set sounds like
-      // a real bad idea. For now, fallback to the standard object implementation,
-      // so code that somehow does that still compiles and does something reasonable.
-      return base.Equals(o);
-    }
+    public override bool Equals(object o) =>
+        o is MutableData other && ReferenceEquals(_holder, other._holder) && _path.Equals(other._path);
 
     /// Overriden to ensure two objects that are Equal have the same hash.
-    public override int GetHashCode() {
-      return base.GetHashCode();
-    }
+    public override int GetHashCode() =>
+        unchecked((_holder?.GetHashCode() ?? 0) * 397 ^ _path.GetHashCode());
 
     /// Representation of the mutable data as a string containing a key, value pair.
-    public override string ToString() {
-      // Note: this ToString function is different from the one in the old C# implementation,
-      // but should be good enough. Especially as it should mostly be used in debugging.
-      return "MutableData { key = " + Key + ", value = " + Value + " }";
-    }
+    public override string ToString() => "MutableData { key = " + Key + ", value = " + Value + " }";
   }
 }
