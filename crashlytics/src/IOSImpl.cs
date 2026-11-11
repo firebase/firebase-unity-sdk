@@ -14,133 +14,129 @@
  * limitations under the License.
  */
 
-namespace Firebase.Crashlytics
-{
-  using System;
-  using System.Runtime.InteropServices;
-  using System.Diagnostics;
-  using System.Collections.Generic;
-  using System.Linq;
-  using UnityEngine;
+#if (UNITY_IOS || UNITY_TVOS) && !UNITY_EDITOR
+using System;
+using System.Buffers;
+using System.Runtime.InteropServices;
+using System.Text;
+using Firebase.Platform;
 
-  
-  [StructLayout(LayoutKind.Sequential)]
-  internal struct Frame
-  {
-    public string library;
-    public string symbol;
-    public string fileName;
-    public string lineNumber;
-  }
-  
+namespace Firebase.Crashlytics {
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+  internal sealed class IOSImpl : IDisposable {
+    private const string ObjCLib = "/usr/lib/libobjc.A.dylib", SystemLib = "/usr/lib/libSystem.B.dylib";
+    private static readonly IntPtr RtldDefault = new IntPtr(-2);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate void RecordInternalKeyValueDelegate(IntPtr nsKey, IntPtr nsValue);
 
-  // Stub implementation that is not used on iOS or tvOS.
-  internal class AndroidImpl : Impl {}
+    [DllImport(ObjCLib)] private static extern IntPtr objc_getClass(string name);
+    [DllImport(ObjCLib)] private static extern IntPtr sel_registerName(string name);
+    [DllImport(ObjCLib)] private static extern IntPtr objc_autoreleasePoolPush();
+    [DllImport(ObjCLib)] private static extern void objc_autoreleasePoolPop(IntPtr pool);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] private static extern IntPtr SendPtr(IntPtr receiver, IntPtr sel);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] private static extern IntPtr SendPtrPtr(IntPtr receiver, IntPtr sel, IntPtr a1);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] private static extern IntPtr SendPtrPtrPtr(IntPtr receiver, IntPtr sel, IntPtr a1, IntPtr a2);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] private static extern IntPtr SendPtrPtrPtrNInt(IntPtr receiver, IntPtr sel, IntPtr a1, IntPtr a2, nint a3);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] private static extern IntPtr SendPtrNUInt(IntPtr receiver, IntPtr sel, nuint a1);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] private static extern void SendVoidPtr(IntPtr receiver, IntPtr sel, IntPtr a1);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] private static extern void SendVoidPtrPtr(IntPtr receiver, IntPtr sel, IntPtr a1, IntPtr a2);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] private static extern void SendVoidBool(IntPtr receiver, IntPtr sel, [MarshalAs(UnmanagedType.I1)] bool a1);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] [return: MarshalAs(UnmanagedType.I1)] private static extern bool SendBool(IntPtr receiver, IntPtr sel);
+    [DllImport(ObjCLib, EntryPoint = "objc_msgSend")] [return: MarshalAs(UnmanagedType.I1)] private static extern bool SendBoolPtr(IntPtr receiver, IntPtr sel, IntPtr a1);
+    [DllImport(SystemLib)] private static extern IntPtr dlsym(IntPtr handle, string symbol);
 
-  //TODO(b/112043008): These extern symbols aren't available for Android builds.
-  internal class IOSImpl : Impl
-  {
-    #region DLL Imports
-    [DllImport("__Internal")]
-    private static extern bool CLUIsInitialized();
+    private static RecordInternalKeyValueDelegate s_internalKeyFn;
+    private static bool s_internalKeyProbed;
+    private readonly IntPtr _crashlyticsClass, _exceptionModelClass, _stackFrameClass, _nsStringClass, _nsMutableArrayClass;
+    private bool _disposed;
 
-    [DllImport("__Internal")]
-    private static extern void CLULog(string msg);
-
-    [DllImport("__Internal")]
-    private static extern void CLUSetKeyValue(string key, string value);
-
-    [DllImport("__Internal")]
-    private static extern void CLUSetInternalKeyValue(string key, string value);
-
-    [DllImport("__Internal")]
-    private static extern void CLUSetUserIdentifier(string identifier);
-
-    [DllImport("__Internal")]
-    private static extern void CLUSetDevelopmentPlatform(string name, string version);
-
-    [DllImport("__Internal")]
-    private static extern void CLURecordCustomException(string name, string reason,
-                                                        Frame[] frames, int frameCount, bool isOnDemand);
-
-    [DllImport("__Internal")]
-    private static extern bool CLUIsCrashlyticsCollectionEnabled();
-
-    [DllImport("__Internal")]
-    private static extern void CLUSetCrashlyticsCollectionEnabled(bool enabled);
-    #endregion
-
-    public IOSImpl() {
-      CLUSetDevelopmentPlatform("Unity", Application.unityVersion);
-      CLUSetInternalKeyValue(MetadataBuilder.METADATA_KEY, MetadataBuilder.GenerateMetadataJSON());
+    internal IOSImpl() {
+      IntPtr pool = objc_autoreleasePoolPush();
+      try {
+        _crashlyticsClass = objc_getClass("FIRCrashlytics"); _exceptionModelClass = objc_getClass("FIRExceptionModel");
+        _stackFrameClass = objc_getClass("FIRStackFrame"); _nsStringClass = objc_getClass("NSString");
+        _nsMutableArrayClass = objc_getClass("NSMutableArray");
+        IntPtr instance = GetInstance();
+        if (instance == IntPtr.Zero) { Impl.SafeLog(PlatformLogLevel.Warning, "FIRCrashlytics is not available on this iOS/tvOS build."); return; }
+        IntPtr selDevName = sel_registerName("setDevelopmentPlatformName:"), selDevVer = sel_registerName("setDevelopmentPlatformVersion:");
+        if (RespondsTo(instance, selDevName)) SendVoidPtr(instance, selDevName, ToNSString("Unity"));
+        if (RespondsTo(instance, selDevVer)) SendVoidPtr(instance, selDevVer, ToNSString(MetadataBuilder.CachedUnityVersion));
+        string metadataJson = MetadataBuilder.GenerateMetadataJSON();
+        if (!string.IsNullOrEmpty(metadataJson)) SetInternalKeyValue(instance, MetadataBuilder.METADATA_KEY, metadataJson);
+      } finally { objc_autoreleasePoolPop(pool); }
     }
 
-    public override bool IsSDKInitialized() {
-      return CLUIsInitialized();
-    }
+    internal bool IsInitialized => !_disposed && _crashlyticsClass != IntPtr.Zero && WithInstance(false, _ => true);
+    internal bool DidCrashOnPreviousExecution() => WithInstance(false, inst => SendBool(inst, sel_registerName("didCrashDuringPreviousExecution")));
+    internal void Log(string message) => WithInstance(true, inst => { SendVoidPtr(inst, sel_registerName("log:"), ToNSString(message)); return true; });
+    internal void SetCustomKey(string key, string value) => WithInstance(true, inst => {
+      if (key != null) SendVoidPtrPtr(inst, sel_registerName("setCustomValue:forKey:"), ToNSString(value), ToNSString(key));
+      return true;
+    });
+    internal void SetUserId(string identifier) => WithInstance(true, inst => { SendVoidPtr(inst, sel_registerName("setUserID:"), ToNSString(identifier)); return true; });
+    internal bool IsCrashlyticsCollectionEnabled() => WithInstance(false, inst => SendBool(inst, sel_registerName("isCrashlyticsCollectionEnabled")));
+    internal void SetCrashlyticsCollectionEnabled(bool enabled) => WithInstance(true, inst => { SendVoidBool(inst, sel_registerName("setCrashlyticsCollectionEnabled:"), enabled); return true; });
 
-    public override void Log(string message)
-    {
-      CLULog(message);
-    }
-
-    public override void SetCustomKey(string key, string value)
-    {
-      CLUSetKeyValue(key, value);
-    }
-
-    public override void SetUserId(string identifier)
-    {
-      CLUSetUserIdentifier(identifier);
-    }
-
-    public override void LogException(Exception exception)
-    {
-      var loggedException = LoggedException.FromException(exception);
-      RecordCustomException(loggedException, false);
-    }
-
-    public override void LogExceptionAsFatal(Exception exception) {
-      var loggedException = LoggedException.FromException(exception);
-      RecordCustomException(loggedException, true);
-    }
-
-    public override bool IsCrashlyticsCollectionEnabled() {
-      return CLUIsCrashlyticsCollectionEnabled();
-    }
-
-    public override void SetCrashlyticsCollectionEnabled(bool enabled) {
-      CLUSetCrashlyticsCollectionEnabled(enabled);
-    }
-
-    // private void RecordCustomException(string name, string reason, string stackTraceString)
-    private void RecordCustomException(LoggedException loggedException, bool isOnDemand) {
-      Dictionary<string, string>[] parsedStackTrace = loggedException.ParsedStackTrace;
-
-      if (isOnDemand && parsedStackTrace.Length == 0) {
-        // if for some reason we don't get stack trace from exception, we add current stack trace in
-        var currentStackTrace = System.Environment.StackTrace;
-        LoggedException loggedExceptionWithCurrentStackTrace = new LoggedException(loggedException.Name, loggedException.Message, currentStackTrace);
-        parsedStackTrace = loggedExceptionWithCurrentStackTrace.ParsedStackTrace;
-
-        if (parsedStackTrace.Length > 2) {
-          // remove RecordCustomException and System.Environment.StackTrace frame for fault blame on crashlytics sdk
-          var slicedParsedStackTrace = parsedStackTrace.Skip(2).Take(parsedStackTrace.Length - 2).ToArray();
-          parsedStackTrace = slicedParsedStackTrace;
+    internal void RecordException(LoggedException loggedException, bool isFatal) {
+      if (loggedException == null) return;
+      StackFrameData[] frames = loggedException.Frames;
+      // if for some reason we don't get stack trace from exception, we add current stack trace in
+      // remove RecordException and Environment.StackTrace frame for fault blame on crashlytics sdk
+      if (isFatal && frames.Length == 0) frames = StackTraceParser.ParseFrames(Environment.StackTrace, skipLeadingFrames: 2);
+      _ = WithInstance(true, instance => {
+        if (_exceptionModelClass == IntPtr.Zero || _stackFrameClass == IntPtr.Zero) return false;
+        IntPtr framesArray = SendPtrNUInt(_nsMutableArrayClass, sel_registerName("arrayWithCapacity:"), (nuint)frames.Length);
+        IntPtr selAddObj = sel_registerName("addObject:"), selWithSymbol = sel_registerName("stackFrameWithSymbol:file:line:"), selWithAddress = sel_registerName("stackFrameWithAddress:");
+        for (int i = 0; i < frames.Length; i++) {
+          StackFrameData f = frames[i];
+          IntPtr nativeFrame = f.IsAddressOnly
+              ? SendPtrNUInt(_stackFrameClass, selWithAddress, (nuint)f.Address)
+              : SendPtrPtrPtrNInt(_stackFrameClass, selWithSymbol, ToNSString(f.MethodName), ToNSString(f.FileName), (nint)f.LineNumber);
+          if (nativeFrame != IntPtr.Zero) SendVoidPtr(framesArray, selAddObj, nativeFrame);
         }
-      }
-
-      List<Frame> frames = new List<Frame>();
-      foreach (Dictionary<string, string> frame in parsedStackTrace) {
-        frames.Add(new Frame {
-          library = frame["class"],
-          symbol = frame["method"],
-          fileName = frame["file"],
-          lineNumber = frame["line"],
-        });
-      }
-
-      CLURecordCustomException(loggedException.Name, loggedException.Message, frames.ToArray(), frames.Count, isOnDemand);
+        IntPtr model = SendPtrPtrPtr(_exceptionModelClass, sel_registerName("exceptionModelWithName:reason:"), ToNSString(loggedException.Name), ToNSString(loggedException.Message));
+        if (model == IntPtr.Zero) return false;
+        SendVoidPtr(model, sel_registerName("setStackTrace:"), framesArray);
+        if (isFatal) {
+          IntPtr selOnDemand = sel_registerName("setOnDemand:"), selIsFatal = sel_registerName("setIsFatal:"), selRecordOnDemand = sel_registerName("recordOnDemandExceptionModel:");
+          if (RespondsTo(model, selOnDemand)) SendVoidBool(model, selOnDemand, true);
+          if (RespondsTo(model, selIsFatal)) SendVoidBool(model, selIsFatal, true);
+          if (RespondsTo(instance, selRecordOnDemand)) { SendVoidPtr(instance, selRecordOnDemand, model); return true; }
+        }
+        SendVoidPtr(instance, sel_registerName("recordExceptionModel:"), model);
+        return true;
+      });
     }
+
+    private T WithInstance<T>(T fallback, Func<IntPtr, T> work) {
+      IntPtr pool = objc_autoreleasePoolPush();
+      try { IntPtr inst = GetInstance(); return inst != IntPtr.Zero ? work(inst) : fallback; }
+      finally { objc_autoreleasePoolPop(pool); }
+    }
+    private IntPtr GetInstance() => !_disposed && _crashlyticsClass != IntPtr.Zero ? SendPtr(_crashlyticsClass, sel_registerName("crashlytics")) : IntPtr.Zero;
+    private static bool RespondsTo(IntPtr obj, IntPtr sel) => obj != IntPtr.Zero && sel != IntPtr.Zero && SendBoolPtr(obj, sel_registerName("respondsToSelector:"), sel);
+    private void SetInternalKeyValue(IntPtr instance, string key, string value) {
+      if (!s_internalKeyProbed) {
+        s_internalKeyProbed = true;
+        IntPtr sym = dlsym(RtldDefault, "FIRCLSUserLoggingRecordInternalKeyValue");
+        if (sym != IntPtr.Zero) s_internalKeyFn = Marshal.GetDelegateForFunctionPointer<RecordInternalKeyValueDelegate>(sym);
+      }
+      IntPtr nsKey = ToNSString(key), nsVal = ToNSString(value);
+      if (s_internalKeyFn != null) s_internalKeyFn(nsKey, nsVal);
+      else SendVoidPtrPtr(instance, sel_registerName("setCustomValue:forKey:"), nsVal, nsKey);
+    }
+    private IntPtr ToNSString(string value) {
+      if (value == null || _nsStringClass == IntPtr.Zero) return IntPtr.Zero;
+      byte[] rented = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(value.Length) + 1);
+      GCHandle pin = default;
+      try {
+        int written = Encoding.UTF8.GetBytes(value, 0, value.Length, rented, 0);
+        rented[written] = 0; pin = GCHandle.Alloc(rented, GCHandleType.Pinned);
+        return SendPtrPtr(_nsStringClass, sel_registerName("stringWithUTF8String:"), pin.AddrOfPinnedObject());
+      } finally { if (pin.IsAllocated) pin.Free(); ArrayPool<byte>.Shared.Return(rented); }
+    }
+    public void Dispose() => _disposed = true;
   }
 }
+#endif

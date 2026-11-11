@@ -12,125 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CMake file for the firebase crashlytics library
-
-include(build_shared)
+# CMake file for the Firebase Crashlytics library (shipped as C# source with .asmdef)
 
 # Only for unity builds
 if(NOT FIREBASE_INCLUDE_UNITY)
   return()
 endif()
 
-add_subdirectory(src/cpp)
-
-# Firebase Crashlytics Swig input files
-set(firebase_crashlytics_swig
-  src/swig/crashlytics.i
-)
-
-# Firebase Crashlytics CSharp files that should be included in reference docs
-set(firebase_crashlytics_src_documented
-  src/Crashlytics.cs
-)
-
-# Firebase Crashlytics CSharp files
-set(firebase_crashlytics_src
-  ${firebase_crashlytics_src_documented}
-  src/ExceptionHandler.cs
-  src/Impl.cs
-  src/LoggedException.cs
-  src/Metadata.cs
-  src/MetadataBuilder.cs
-  src/StackTraceParser.cs
-)
-
-set(firebase_crashlytics_src_android
-  src/AndroidImpl.cs
-)
-
-set(firebase_crashlytics_src_ios
-  src/IOSImpl.cs
-)
-
-if(IOS)
-  list(APPEND firebase_crashlytics_src ${firebase_crashlytics_src_ios})
-else()
-  list(APPEND firebase_crashlytics_src ${firebase_crashlytics_src_android})
-endif()
-
-if(NOT FIREBASE_UNI_LIBRARY AND APPLE AND NOT IOS)
-  set(EXTERNAL_LIB_NAMES
-    "-framework Foundation"
-    "-framework Security"
-  )
-else()
-  set(EXTERNAL_LIB_NAMES)
-endif()
-
-firebase_swig_add_library(firebase_crashlytics_swig
-  NAMESPACE
-    Firebase.Crashlytics
-  MODULE
-    FirebaseCppCrashlytics
-  SOURCES
-    ${firebase_crashlytics_swig}
-  DEPENDS
-    firebase_crashlytics
-  SYSTEM_DEPS
-    ${EXTERNAL_LIB_NAMES}
+unity_pack_folder(
+  "${FIREBASE_UNITY_DIR}/crashlytics/src/"
+  PACK_PATH "Firebase/FirebaseCrashlytics"
 )
 
 unity_pack_documentation_sources(crashlytics
   DOCUMENTATION_SOURCES
-    ${firebase_crashlytics_src_documented}
+    src/Crashlytics.cs
 )
-if (FIREBASE_GENERATE_SWIG_ONLY)
-  unity_pack_documentation_sources(crashlytics
-    DOCUMENTATION_SOURCES
-      ${firebase_crashlytics_swig_gen_src}
-      ${firebase_crashlytics_swig_gen_cpp_src}
-  )
-  return()
-endif()
-
-mono_add_library(firebase_crashlytics_cs
-  MODULE
-    Firebase.Crashlytics
-  SOURCES
-    ${firebase_crashlytics_src}
-    ${firebase_crashlytics_swig_gen_src}
-  REFERENCES
-    ${FIREBASE_PLATFORM_REF}
-  DEPENDS
-    firebase_crashlytics_swig
-  DEFINES
-    FIREBASE_OPENSOURCE
-)
-
-if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_crashlytics libFirebaseCppCrashlytics DEPS firebase_crashlytics firebase_crashlytics_swig)
-else()
-  build_firebase_shared(
-    crashlytics
-    crashlytics
-    FirebaseCppCrashlytics
-  )
-endif()
-
-unity_pack_cs(firebase_crashlytics_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
-  generate_dependencies_xml(Crashlytics
-    FIREBASE_SPM_DEPS
-      "FirebaseCrashlytics|Firebase/Crashlytics"
-    ANDROID_DEPS
-      ${FIREBASE_CRASHLYTICS_ANDROID_DEPS}
-    ANDROID_SPEC
-      "crashlytics"
+  set(CRASHLYTICS_ANDROID_PACKAGES "")
+  foreach(ANDROID_DEP ${FIREBASE_CRASHLYTICS_ANDROID_DEPS})
+    string(CONCAT CRASHLYTICS_ANDROID_PACKAGES "${CRASHLYTICS_ANDROID_PACKAGES}"
+      "    <androidPackage spec=\"${ANDROID_DEP}\">\n"
+      "    </androidPackage>\n")
+  endforeach()
+
+  set(CRASHLYTICS_DEPS_XML "${CMAKE_CURRENT_BINARY_DIR}/CrashlyticsDependencies.xml")
+  file(WRITE "${CRASHLYTICS_DEPS_XML}"
+"<!-- Copyright (C) 2019 Google Inc. All Rights Reserved.\n"
+"\n"
+"FirebaseCrashlytics iOS and Android Dependencies.\n"
+"-->\n"
+"\n"
+"<dependencies>\n"
+"  <remoteSwiftPackage url=\"https://github.com/firebase/firebase-ios-sdk.git\" version=\"${FIREBASE_SPM_VERSION}\">\n"
+"    <swiftPackage name=\"FirebaseCrashlytics\"/>\n"
+"  </remoteSwiftPackage>\n"
+"  <androidPackages>\n"
+"${CRASHLYTICS_ANDROID_PACKAGES}"
+"  </androidPackages>\n"
+"</dependencies>\n"
+  )
+  install(
+    FILES "${CRASHLYTICS_DEPS_XML}"
+    DESTINATION "Firebase/Editor/"
   )
 endif()
-
-set_property(TARGET firebase_crashlytics_cs
-  PROPERTY FOLDER
-  "Firebase ${FIREBASE_PLATFORM_NAME}"
-)

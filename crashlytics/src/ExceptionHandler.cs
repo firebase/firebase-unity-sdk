@@ -13,13 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Firebase.Crashlytics.Test")]
+
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using Firebase.Platform;
+using UnityEngine;
 
 namespace Firebase.Crashlytics {
-
-  using System;
-  using System.Runtime.InteropServices;
-  using UnityEngine;
+  internal sealed class LoggedException : Exception {
+    private Dictionary<string, string>[] _parsedDictionaries;
+    internal LoggedException(string name, string message, string stackTrace, int skipFrames = 0) : base(message ?? string.Empty) {
+      Name = string.IsNullOrEmpty(name) ? "Exception" : name;
+      CustomStackTrace = stackTrace ?? string.Empty;
+      Frames = StackTraceParser.ParseFrames(CustomStackTrace, skipFrames);
+    }
+    internal static LoggedException FromException(Exception exception) =>
+        exception == null ? null : exception is LoggedException existing ? existing
+        : new LoggedException(exception.GetType().Name, exception.Message, exception.StackTrace);
+    internal string Name { get; }
+    internal string CustomStackTrace { get; }
+    internal StackFrameData[] Frames { get; }
+    internal Dictionary<string, string>[] ParsedStackTrace => _parsedDictionaries ??= StackTraceParser.ToDictionaries(Frames);
+  }
 
   /// <summary>
   /// This class registers exception handlers in the Unity runtime.
@@ -27,78 +43,89 @@ namespace Firebase.Crashlytics {
   /// Exceptions caught by this class are serialized and logged to the
   /// platform-specific Crashlytics SDK as non-fatal exceptions.
   /// </summary>
-  internal class ExceptionHandler {
-
-    private bool isRegistered = false;
+  internal sealed class ExceptionHandler {
+    private readonly object _lock = new object();
+    private bool _isRegistered;
+    internal bool IsRegistered { get { lock (_lock) return _isRegistered; } }
 
     /// <summary>
     /// Register both Mono and Unity-specific exception handlers
     /// </summary>
     internal void Register() {
-      if (isRegistered) {
+      lock (_lock) {
+        if (_isRegistered) return;
+        Impl.SafeLog(PlatformLogLevel.Debug, "Registering Crashlytics exception handlers");
+        AppDomain.CurrentDomain.UnhandledException -= HandleException;
+        AppDomain.CurrentDomain.UnhandledException += HandleException;
+        _isRegistered = true;
+        UpdateUnityLogCallback(subscribe: true);
+      }
+    }
+
+    internal void Unregister() {
+      lock (_lock) {
+        AppDomain.CurrentDomain.UnhandledException -= HandleException;
+        _isRegistered = false;
+        UpdateUnityLogCallback(subscribe: false);
+      }
+    }
+
+    private void UpdateUnityLogCallback(bool subscribe) {
+      int mainTid = MetadataBuilder.MainThreadId;
+      if (mainTid != 0 && Thread.CurrentThread.ManagedThreadId != mainTid) {
+        Action applyOnMain = () => { lock (_lock) ApplyUnityLogCallback(_isRegistered); };
+        if (FirebaseHandler.DefaultInstance != null) _ = FirebaseHandler.RunOnMainThreadAsync(() => { applyOnMain(); return true; });
+        else MetadataBuilder.MainSyncContext?.Post(_ => applyOnMain(), null);
         return;
       }
+      ApplyUnityLogCallback(subscribe);
+    }
 
-      LogUtil.LogMessage(LogLevel.Debug, "Registering Crashlytics exception handlers");
-      AppDomain.CurrentDomain.UnhandledException += HandleException;
-
-      if (Application.unityVersion.StartsWith("4.", System.StringComparison.OrdinalIgnoreCase)) {
-        Application.RegisterLogCallback(HandleLog);
-      } else {
-        Application.logMessageReceived += HandleLog;
+    private void ApplyUnityLogCallback(bool subscribe) {
+      try {
+        Application.logMessageReceived -= HandleLog;
+        if (subscribe) Application.logMessageReceived += HandleLog;
+      } catch (Exception) {
+        // Headless .NET test hosts do not load native UnityEngine runtime bindings.
       }
-      isRegistered = true;
     }
 
     internal void HandleException(object sender, UnhandledExceptionEventArgs eArgs) {
-      Exception e = (Exception)eArgs.ExceptionObject;
-      var loggedException = LoggedException.FromException(e);
-      LogException(loggedException);
+      if (eArgs?.ExceptionObject == null) return;
+      LogException(eArgs.ExceptionObject is Exception ex ? LoggedException.FromException(ex)
+          : new LoggedException("UnhandledException", eArgs.ExceptionObject.ToString(), string.Empty));
     }
 
     internal void HandleLog(string message, string stackTraceString, LogType type) {
-      if (type == LogType.Exception) {
-        string[] messageParts = getMessageParts(message);
-        var exception = new LoggedException(messageParts[0], messageParts[1], stackTraceString);
-        LogException(exception);
-      }
+      if (type != LogType.Exception || message == null) return;
+      SplitExceptionCondition(message, out string name, out string reason);
+      LogException(new LoggedException(name, reason, stackTraceString));
     }
 
-    private string[] getMessageParts(string message) {
-      // Split into two parts so we only split on the first delimiter
-      char[] delim = { ':' };
-      string[] messageParts = message.Split(delim, 2, StringSplitOptions.None);
-
-      if (messageParts.Length == 2) {
-        string[] trimmedParts = new string[2];
-        for (int i = 0; i < 2; i++) {
-          trimmedParts[i] = messageParts[i].Trim();
-        }
-        // We want to make sure the first part of the message does not contain a
-        // space because it should just be the name of an exception class
-        if (!trimmedParts[0].Contains(" ")) {
-          return trimmedParts;
+    internal static void SplitExceptionCondition(string message, out string name, out string reason) {
+      if (!string.IsNullOrEmpty(message)) {
+        // Split into two parts so we only split on the first delimiter
+        int colon = message.IndexOf(':');
+        if (colon > 0) {
+          ReadOnlySpan<char> first = message.AsSpan(0, colon).Trim();
+          // We want to make sure the first part of the message does not contain a
+          // space because it should just be the name of an exception class
+          if (first.Length > 0 && first.IndexOf(' ') < 0) {
+            name = first.ToString(); reason = message.AsSpan(colon + 1).Trim().ToString(); return;
+          }
         }
       }
-
-      return new string[] {"Exception", message};
+      name = "Exception"; reason = message ?? string.Empty;
     }
 
     /// <summary>
     /// Forwards the exception to the Crashlytics platform SDK.
-    /// This is virtual for testing.
     /// </summary>
-    internal virtual void LogException(LoggedException e) {
-      LogUtil.LogMessage (LogLevel.Debug,
-                              String.Format("Crashlytics recording exception: {0}\n" +
-                                            "Exception stack trace:\n" +
-                                            "{1}", e.Message, e.StackTrace)
-                             );
-      if (Crashlytics.ReportUncaughtExceptionsAsFatal) {
-        Crashlytics.LogExceptionAsFatal(e);
-      } else {
-        Crashlytics.LogException(e);
-      }
+    internal void LogException(LoggedException e) {
+      if (e == null) return;
+      if (Impl.IsDebugLogEnabled()) Impl.SafeLog(PlatformLogLevel.Debug, $"Crashlytics recording exception: {e.Message}\nException stack trace:\n{e.CustomStackTrace}");
+      if (Crashlytics.ReportUncaughtExceptionsAsFatal) Crashlytics.LogExceptionAsFatal(e);
+      else Crashlytics.LogException(e);
     }
   }
 }

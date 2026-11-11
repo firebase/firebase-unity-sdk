@@ -129,6 +129,13 @@ Release Notes
       assembly definition of the same name (update `precompiledReferences` in your own asmdefs
       accordingly), and the `FirebaseCppAuth` native libraries, `firebase-auth` Android dependency,
       and `FirebaseAuth` iOS dependency have been removed.
+    - Crashlytics: Replaced the C++/SWIG wrapper with a direct C# implementation over the native
+      Android (`firebase-crashlytics-ndk`) and Apple (`FirebaseCrashlytics`) Crashlytics SDKs.
+      `Firebase.Crashlytics.dll` is now shipped as C# source with an assembly definition of the
+      same name (update `precompiledReferences` in your own asmdefs accordingly), removing the
+      `FirebaseCppCrashlytics` native libraries, the `firebase-crashlytics-unity` Android AAR, and
+      the transitive `firebase-analytics` Android dependency while preserving full native
+      POSIX/Mach/NDK/IL2CPP crash reporting.
     - Installations: Rewrote the internal implementation in C#, removing the dependency on the C++
       and native platform Installations libraries while adding full Desktop support (replacing the
       previous stub implementation). `Firebase.Installations` is now shipped as C# source with an

@@ -372,48 +372,9 @@
       "name": "FirebaseCrashlytics.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android"
-          ],
-          "cpu": "AnyCPU",
+          "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Plugins/Firebase.Crashlytics.dll",
-            "Firebase/Plugins/Firebase.Crashlytics.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/iOS/Firebase.Crashlytics.dll",
-            "Firebase/Plugins/iOS/Firebase.Crashlytics.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppCrashlytics.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppCrashlytics.xcframework"
+            "Firebase/FirebaseCrashlytics/*"
           ]
         },
         {
@@ -440,8 +401,7 @@
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/CrashlyticsDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-crashlytics-unity/"
+            "Firebase/Editor/CrashlyticsDependencies.xml"
           ]
         },
         {
