@@ -83,48 +83,17 @@ public sealed class AppOptions : global::System.IDisposable {
   /// @param json_config JSON string to read options from.
   ///
   /// @returns Returns an AppOptions instance if successful, null otherwise.
-  public static AppOptions LoadFromJsonConfig(string json_config) {
-    var internalOptions = AppUtil.AppOptionsLoadFromJsonConfig(json_config);
-    if (internalOptions == null) return null;
-    return new AppOptions(internalOptions);
-  }
+  public static AppOptions LoadFromJsonConfig(string json_config) =>
+      AppConfigLoader.LoadFromJsonConfig(json_config);
 
-  // Creates an AppOptions that reflects the data from the internal version.
-  internal AppOptions(AppOptionsInternal other) {
-    DatabaseUrl = other.DatabaseUrl;
-    AppId = other.AppId;
-    ApiKey = other.ApiKey;
-    MessageSenderId = other.MessageSenderId;
-    StorageBucket = other.StorageBucket;
-    ProjectId = other.ProjectId;
-    PackageName = other.PackageName;
-  }
+  internal static AppOptions LoadFromPlistConfig(string plistConfig) =>
+      AppConfigLoader.LoadFromPlistConfig(plistConfig);
 
-  // Convert this object to a AppOptionsInternal.
-  internal AppOptionsInternal ConvertToInternal() {
-    var options = new AppOptionsInternal();
-    options.DatabaseUrl = DatabaseUrl;
-    if (!String.IsNullOrEmpty(AppId)) {
-      options.AppId = AppId;
-    }
-    if (!String.IsNullOrEmpty(ApiKey)) {
-      options.ApiKey = ApiKey;
-    }
-    if (!String.IsNullOrEmpty(MessageSenderId)) {
-      options.MessageSenderId = MessageSenderId;
-    }
-    if (!String.IsNullOrEmpty(StorageBucket)) {
-      options.StorageBucket = StorageBucket;
-    }
-    if (!String.IsNullOrEmpty(ProjectId)) {
-      options.ProjectId = ProjectId;
-    }
-    if (!String.IsNullOrEmpty(PackageName)) {
-      options.PackageName = PackageName;
-    }
-    return options;
-  }
+  internal AppOptions Clone() => new AppOptions {
+    DatabaseUrl = DatabaseUrl, AppId = AppId, ApiKey = ApiKey,
+    MessageSenderId = MessageSenderId, StorageBucket = StorageBucket,
+    ProjectId = ProjectId, PackageName = PackageName,
+  };
 }
 
 }  // namespace Firebase
-

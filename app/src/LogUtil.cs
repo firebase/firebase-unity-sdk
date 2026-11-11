@@ -17,89 +17,36 @@ using System;
 
 namespace Firebase {
 
-// A utility class to help manage C# logging delegates.  LogUtil's static
-// constructor creates a private singleton instance of LogUtil, which is an
-// IDisposable that registers the proper C# delegates on creation, and
-// unregisters them when it is disposed, to ensure that C++ doesn't try to call
-// into a C# logging callback once the C# environment have been torn down.
-//
-// Classes that need access to logging should call LogUtil.InitializeLogging()
-// both to ensure that LogUtil's static constructor is invoked, and perform any
-// necessary logging initialization.
+#if UNITY_6000_6_OR_NEWER
+[global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
 internal sealed class LogUtil : global::System.IDisposable {
   // Delegate which logs a message.
-  internal delegate void LogMessageDelegate(Firebase.LogLevel log_level,
-                                            string message);
+  internal delegate void LogMessageDelegate(LogLevel log_level, string message);
 
-  private static LogUtil _instance = null;
-
-  static LogUtil() {
-    _instance = new LogUtil();
-  }
-
-  // Implicitly calls the static constructor of LogUtil if it hasn't already
-  // been called, which handles initialization.
-  private static object InitializeLoggingLock = new object();
-  public static void InitializeLogging() {
-    lock(InitializeLoggingLock) {
-      AppUtil.AppEnableLogCallback(true);
-    }
-  }
+  public static void InitializeLogging() { }
 
   // Convert from a Firebase LogLevel to the version used by the Platform layer.
-  internal static Firebase.Platform.PlatformLogLevel ConvertLogLevel(
-      Firebase.LogLevel logLevel) {
-    switch (logLevel) {
-      case Firebase.LogLevel.Verbose:
-        return Firebase.Platform.PlatformLogLevel.Verbose;
-      case Firebase.LogLevel.Info:
-        return Firebase.Platform.PlatformLogLevel.Info;
-      case Firebase.LogLevel.Warning:
-        return Firebase.Platform.PlatformLogLevel.Warning;
-      case Firebase.LogLevel.Error:
-        return Firebase.Platform.PlatformLogLevel.Error;
-      case Firebase.LogLevel.Debug:
-      default:
-        return Firebase.Platform.PlatformLogLevel.Debug;
-    }
-  }
+  internal static Platform.PlatformLogLevel ConvertLogLevel(LogLevel logLevel) => logLevel switch {
+    LogLevel.Verbose => Platform.PlatformLogLevel.Verbose,
+    LogLevel.Info => Platform.PlatformLogLevel.Info,
+    LogLevel.Warning => Platform.PlatformLogLevel.Warning,
+    LogLevel.Error => Platform.PlatformLogLevel.Error,
+    LogLevel.Assert => Platform.PlatformLogLevel.Assert,
+    _ => Platform.PlatformLogLevel.Debug,
+  };
 
   // Logs a message, based on the platform.
-  internal static void LogMessage(Firebase.LogLevel logLevel, string message) {
-    Firebase.Platform.FirebaseLogger.LogMessage(ConvertLogLevel(logLevel), message);
-  }
-
-  private  bool _disposed = false;
-
-  // Log message via a callback from C/C++.
-  [MonoPInvokeCallback(typeof(LogUtil.LogMessageDelegate))]
-  internal static void LogMessageFromCallback(Firebase.LogLevel logLevel, string message) {
-    if (Firebase.Platform.FirebaseLogger.CanRedirectNativeLogs) LogMessage(logLevel, message);
-  }
-
-  public LogUtil() {
-    AppUtil.SetLogFunction(LogUtil.LogMessageFromCallback);
-    AppDomain.CurrentDomain.DomainUnload += (object sender, EventArgs e) => {
-      Dispose(false);
-    };
-  }
-
-  ~LogUtil() {
-    Dispose(false);
-  }
-
-  public void Dispose() {
-    Dispose(true);
-    System.GC.SuppressFinalize(this);
-  }
-
-  protected void Dispose(bool disposing) {
-    if(!_disposed) {
-      AppUtil.SetLogFunction(null);
-
-      _disposed = true;
+  internal static void LogMessage(LogLevel logLevel, string message) {
+    if (logLevel < FirebaseApp.LogLevel) return;
+    try {
+      Platform.FirebaseLogger.LogMessage(ConvertLogLevel(logLevel), message);
+    } catch (Exception) {
+      // Headless .NET test environment without UnityEngine.Debug ECall bound.
     }
   }
+
+  public void Dispose() => GC.SuppressFinalize(this);
 }
 
 }  // namespace Firebase

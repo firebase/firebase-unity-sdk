@@ -17,7 +17,7 @@
 namespace Firebase {
 
 /// @brief Build and runtime environment information.
-internal class VersionInfo {
+internal static class VersionInfo {
 
   /// @brief Retrieves the Firebase Unity SDK version number as a string.
   // "@FIREBASE_UNITY_SDK_VERSION@" is replaced at build time.

@@ -170,12 +170,43 @@ include(FindPkgConfig)
 include(android_dependencies)
 include(build_universal)
 include(external_rules)
-include(firebase_swig)
 include(firebase_unity_version)
 include(ios_pack)
 include(play_services_resolver_deps)
 include(unity_mono)
 include(unity_pack)
+
+# Determine whether any enabled module still builds legacy SWIG/C++ targets.
+set(FIREBASE_NEEDS_CPP_SDK OFF)
+foreach(_firebase_mod_entry
+    ANALYTICS:analytics
+    APP_CHECK:app_check
+    AUTH:auth
+    CRASHLYTICS:crashlytics
+    DATABASE:database
+    INSTALLATIONS:installations
+    FIRESTORE:firestore
+    FUNCTIONS:functions
+    MESSAGING:messaging
+    REMOTE_CONFIG:remote_config
+    STORAGE:storage
+    FIREBASEAI:firebaseai)
+  string(REPLACE ":" ";" _firebase_mod_pair "${_firebase_mod_entry}")
+  list(GET _firebase_mod_pair 0 _firebase_mod_opt)
+  list(GET _firebase_mod_pair 1 _firebase_mod_dir)
+  if(FIREBASE_INCLUDE_${_firebase_mod_opt} AND
+     EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_firebase_mod_dir}/src/swig")
+    set(FIREBASE_NEEDS_CPP_SDK ON)
+  endif()
+endforeach()
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(FIREBASE_64BIT_BUILD ON)
+endif()
+
+if(FIREBASE_NEEDS_CPP_SDK)
+  include(firebase_swig)
+endif()
 
 # Set variables that are used by download_external_sources.
 set(FIREBASE_SOURCE_DIR ${PROJECT_SOURCE_DIR})
@@ -211,23 +242,25 @@ if(UNIX AND NOT APPLE) # we only need this for linux
   set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 endif()
 
-if(NOT EXISTS ${FIREBASE_CPP_SDK_DIR})
-  message(FATAL_ERROR "The Firebase C++ SDK directory does not exist: \
-  ${FIREBASE_CPP_SDK_DIR}. See the readme.md for more information")
-endif()
+if(FIREBASE_NEEDS_CPP_SDK)
+  if(NOT EXISTS ${FIREBASE_CPP_SDK_DIR})
+    message(FATAL_ERROR "The Firebase C++ SDK directory does not exist: \
+    ${FIREBASE_CPP_SDK_DIR}. See the readme.md for more information")
+  endif()
 
-# Add the Firebase libraries to the target using the function from the SDK.
-add_subdirectory(${FIREBASE_CPP_SDK_DIR} bin/ EXCLUDE_FROM_ALL)
+  # Add the Firebase libraries to the target using the function from the SDK.
+  add_subdirectory(${FIREBASE_CPP_SDK_DIR} bin/ EXCLUDE_FROM_ALL)
 
-# Fix for Xcode multi-target dependency issue in firebase-cpp-sdk
-if (TARGET firebase_app AND TARGET app_generated_google_services_includes)
-  add_dependencies(firebase_app app_generated_google_services_includes)
-endif()
-if (TARGET firebase_testing AND TARGET generate_testing_fps)
-  add_dependencies(firebase_testing generate_testing_fps)
-endif()
-if (TARGET firebase_analytics AND TARGET FIREBASE_ANALYTICS_GENERATED_HEADERS)
-  add_dependencies(firebase_analytics FIREBASE_ANALYTICS_GENERATED_HEADERS)
+  # Fix for Xcode multi-target dependency issue in firebase-cpp-sdk
+  if (TARGET firebase_app AND TARGET app_generated_google_services_includes)
+    add_dependencies(firebase_app app_generated_google_services_includes)
+  endif()
+  if (TARGET firebase_testing AND TARGET generate_testing_fps)
+    add_dependencies(firebase_testing generate_testing_fps)
+  endif()
+  if (TARGET firebase_analytics AND TARGET FIREBASE_ANALYTICS_GENERATED_HEADERS)
+    add_dependencies(firebase_analytics FIREBASE_ANALYTICS_GENERATED_HEADERS)
+  endif()
 endif()
 
 # Windows runtime mode, either MD or MT depending on whether you are using
@@ -250,17 +283,16 @@ add_subdirectory(external)
 string(REPLACE "." "_" version_string ${FIREBASE_UNITY_SDK_VERSION})
 set(FIREBASE_APP_UNI_VERSIONED "FirebaseCppApp-${version_string}")
 
-# Setup override of the CSharp import library for uni builds
-if(FIREBASE_UNI_LIBRARY)
+# Setup override of the CSharp import library for legacy uni builds
+if(FIREBASE_UNI_LIBRARY AND FIREBASE_NEEDS_CPP_SDK)
   set(FIREBASE_SWIG_OVERRIDE_IMPORT_MODULE "${FIREBASE_APP_UNI_VERSIONED}")
 endif()
 
-# Includes platform which needs to be invoked first
+# Includes platform and pure-managed Firebase.App
 add_subdirectory(app)
-set(TARGET_LINK_LIB_NAMES "firebase_app" "firebase_app_swig")
-set(DOCUMENTATION_ONLY_LIB_NAMES "firebase_app_swig")
+set(TARGET_LINK_LIB_NAMES)
+set(DOCUMENTATION_ONLY_LIB_NAMES)
 set(PROJECT_LIST_HEADER "#define PROJECT_LIST(X)")
-list(APPEND PROJECT_LIST_HEADER "  X(App)")
 
 # Include Firebase editor tools.
 if (DESKTOP AND APPLE AND FIREBASE_INCLUDE_EDITOR_TOOL AND NOT FIREBASE_GENERATE_SWIG_ONLY)
@@ -320,9 +352,9 @@ if (FIREBASE_INCLUDE_FIREBASEAI)
   # Doesn't use swig, so don't need to update the other lists
 endif()
 
-if(FIREBASE_UNI_LIBRARY)
+if(FIREBASE_UNI_LIBRARY AND TARGET_LINK_LIB_NAMES)
   if(FIREBASE_IOS_BUILD)
-    ios_pack(firebase_lib_uni libFirebaseCppApp DEPS "firebase_app" "firebase_app_swig")
+    ios_pack(firebase_lib_uni libFirebaseCppApp DEPS ${TARGET_LINK_LIB_NAMES})
   else()
     build_uni(
       "${TARGET_LINK_LIB_NAMES}"

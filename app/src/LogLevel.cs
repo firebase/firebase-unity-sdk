@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef FIREBASE_APP_CLIENT_UNITY_SRC_EXPORT_FIX_H_
-#define FIREBASE_APP_CLIENT_UNITY_SRC_EXPORT_FIX_H_
+namespace Firebase {
 
-// Stub function to add well known export to swig. See export_fix.cc for better
-// description
-namespace internal
-{
-  inline void ExportFix() {}
-}  // namespace internal
+/// <summary>
+/// Levels used when logging messages.
+/// </summary>
+public enum LogLevel {
+  /// <summary>Verbose Log Level.</summary>
+  Verbose = 0,
+  /// <summary>Debug Log Level.</summary>
+  Debug = 1,
+  /// <summary>Info Log Level.</summary>
+  Info = 2,
+  /// <summary>Warning Log Level.</summary>
+  Warning = 3,
+  /// <summary>Error Log Level.</summary>
+  Error = 4,
+  /// <summary>Assert Log Level.</summary>
+  Assert = 5,
+}
 
-
-#endif  // FIREBASE_APP_CLIENT_UNITY_SRC_EXPORT_FIX_H_
+}  // namespace Firebase

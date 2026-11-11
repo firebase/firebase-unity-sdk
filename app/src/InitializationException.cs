@@ -16,31 +16,31 @@
 
 namespace Firebase {
 
+/// <summary>Reports whether a Firebase module initialized successfully.</summary>
+public enum InitResult {
+  /// <summary>The Firebase module initialized successfully.</summary>
+  Success = 0,
+  /// <summary>A required dependency for the module is missing on the system.</summary>
+  FailedMissingDependency = 1,
+}
+
 /// The exception that is thrown when a problem occurs with initialization
 /// of a Firebase module or class.
-public sealed class InitializationException : System.Exception
-{
+public sealed class InitializationException : System.Exception {
   /// The error code describing the cause of the failure.
   public InitResult InitResult { get; private set; }
 
   /// Initializes a new InitializationException, with the given result.
-  public InitializationException(InitResult result) : base() {
-    this.InitResult = result;
-  }
+  public InitializationException(InitResult result) : base() => InitResult = result;
 
   /// Initializes a new InitializationException, with the given result and
   /// message.
-  public InitializationException(InitResult result, string message)
-      : base(message) {
-    this.InitResult = result;
-  }
+  public InitializationException(InitResult result, string message) : base(message) => InitResult = result;
 
   /// Initializes a new InitializationException, with the given result,
   /// message, and a reference to the inner exception.
-  public InitializationException(InitResult result, string message,
-      System.Exception inner) : base(message, inner) {
-    this.InitResult = result;
-  }
+  public InitializationException(InitResult result, string message, System.Exception inner)
+      : base(message, inner) => InitResult = result;
 }
 
 }  // namespace Firebase

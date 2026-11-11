@@ -112,6 +112,10 @@ Release Notes
 -------------
 ### Upcoming Release
 -   Changes
+    - App: Rewrote `Firebase.App` in pure managed C#, eliminating the `FirebaseCppApp` native
+      libraries (`FirebaseCppApp-*.so`/`.dll`/`.bundle`, `libFirebaseCppApp.xcframework`, and
+      `firebase-app-unity` AAR) and removing the `com.google.firebase:firebase-analytics` Android
+      dependency from `FirebaseApp`.
     - App Check: Rewrote `Firebase.AppCheck` and `DebugAppCheckProviderFactory` in C# and bridged
       mobile attestation (`PlayIntegrityProviderFactory`, `AppAttestProviderFactory`, and
       `DeviceCheckProviderFactory`) directly without C++ or SWIG. `Firebase.AppCheck` is now shipped

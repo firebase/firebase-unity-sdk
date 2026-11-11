@@ -17,7 +17,6 @@
 if(FIREBASE_INCLUDE_UNITY)
   set(FIREBASE_PLATFORM_NAME "Unity" PARENT_SCOPE)
   set(firebase_platform_task_lib "unity_engine_cs")
-
 else()
   set(FIREBASE_PLATFORM_NAME "Mono" PARENT_SCOPE)
   set(firebase_platform_task_lib "")
@@ -36,28 +35,25 @@ set(FIREBASE_PLATFORM_REF
   PARENT_SCOPE
 )
 
-# Firebase App Swig input files
-set(firebase_app_swig
-  src/swig/app.i
-)
-
 # Firebase App CSharp files that should be included in reference docs
 set(firebase_app_src_documented
   src/AppOptions.cs
   src/DependencyStatus.cs
+  src/FirebaseApp.cs
   src/FirebaseException.cs
   src/InitializationException.cs
+  src/LogLevel.cs
 )
 
 # Firebase App CSharp files
 set(firebase_app_src
   ${firebase_app_src_documented}
+  src/AppConfigLoader.cs
+  src/AssemblyInfo.cs
   src/ErrorMessages.cs
   src/LogUtil.cs
-  src/VariantExtension.cs
-  src/TaskCompletionSourceCompat.cs
+  src/MobileAppBridge.cs
   src/MonoPInvokeCallbackAttribute.cs
-  platform/Unity/AssemblyInfo.cs
   platform/FirebaseAppUtils.cs
   platform/FirebaseAppPlatform.cs
 )
@@ -70,37 +66,23 @@ configure_file(src/VersionInfoTemplate.cs ${version_info_file}
   NEWLINE_STYLE CRLF
 )
 
-firebase_swig_add_library(firebase_app_swig
-  NAMESPACE
-    Firebase
-  MODULE
-    FirebaseCppApp
-  MODULE_OUT
-    Firebase.App
-  SOURCES
-    ${firebase_app_swig}
-  DEPENDS
-    firebase_app
-)
-
 unity_pack_documentation_sources(app
   DOCUMENTATION_SOURCES
     ${firebase_app_src_documented}
-    ${firebase_app_swig_gen_src}
     task_extension/TaskExtension.cs
 )
 if (FIREBASE_GENERATE_SWIG_ONLY)
-  unity_pack_documentation_sources(app
-    DOCUMENTATION_SOURCES
-      ${firebase_app_swig_gen_cpp_src}
-  )
   return()
 endif()
 
-if(FIREBASE_UNI_LIBRARY AND NOT FIREBASE_IOS_BUILD)
-  set(firebase_native_library firebase_app_uni)
+if(FIREBASE_IOS_BUILD)
+  if(FIREBASE_TVOS_VARIANT)
+    set(firebase_app_cs_defines UNITY_TVOS)
+  else()
+    set(firebase_app_cs_defines UNITY_IOS)
+  endif()
 else()
-  set(firebase_native_library firebase_app_swig)
+  set(firebase_app_cs_defines FIREBASE_APP_ANDROID_BRIDGE)
 endif()
 
 mono_add_library(firebase_app_cs
@@ -108,14 +90,14 @@ mono_add_library(firebase_app_cs
     Firebase.App
   SOURCES
     ${firebase_app_src}
-    ${firebase_app_swig_gen_src}
     ${version_info_file}
   REFERENCES
     ${firebase_platform_task_lib}
     firebase_platform_cs
     firebase_taskextension_cs
-  DEPENDS
-    ${firebase_native_library}
+    google_minijson_cs
+  DEFINES
+    ${firebase_app_cs_defines}
 )
 
 unity_pack_cs(firebase_app_cs)
@@ -127,13 +109,32 @@ unity_pack_folder(
 )
 
 if (FIREBASE_INCLUDE_UNITY)
-  generate_dependencies_xml(App
-    FIREBASE_SPM_DEPS
-      "FirebaseCore|Firebase/Core"
-    ANDROID_DEPS
-      ${FIREBASE_APP_ANDROID_DEPS}
-    ANDROID_SPEC
-      "app"
+  set(FIREBASE_APP_ANDROID_PACKAGES "")
+  foreach(ANDROID_DEP ${FIREBASE_APP_ANDROID_DEPS})
+    string(CONCAT FIREBASE_APP_ANDROID_PACKAGES "${FIREBASE_APP_ANDROID_PACKAGES}"
+      "    <androidPackage spec=\"${ANDROID_DEP}\">\r\n"
+      "    </androidPackage>\r\n")
+  endforeach()
+
+  set(FIREBASE_APP_DEPS_XML "${PROJECT_BINARY_DIR}/AppDependencies.xml")
+  file(WRITE "${FIREBASE_APP_DEPS_XML}"
+"<!-- Copyright (C) 2019 Google Inc. All Rights Reserved.\r\n"
+"\r\n"
+"FirebaseApp iOS and Android Dependencies.\r\n"
+"-->\r\n"
+"\r\n"
+"<dependencies>\r\n"
+"  <remoteSwiftPackage url=\"https://github.com/firebase/firebase-ios-sdk.git\" version=\"${FIREBASE_SPM_VERSION}\">\r\n"
+"    <swiftPackage name=\"FirebaseCore\"/>\r\n"
+"  </remoteSwiftPackage>\r\n"
+"  <androidPackages>\r\n"
+"${FIREBASE_APP_ANDROID_PACKAGES}"
+"  </androidPackages>\r\n"
+"</dependencies>\r\n"
+  )
+  install(
+    FILES "${FIREBASE_APP_DEPS_XML}"
+    DESTINATION "Firebase/Editor/"
   )
 endif()
 

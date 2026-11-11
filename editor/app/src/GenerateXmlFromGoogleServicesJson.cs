@@ -25,24 +25,25 @@
 // targets will prefer google-services.json.)
 //
 // Usage:
-//   - Put this script, `generate_xml_from_google_services_json.exe`,
-//     and `generate_xml_from_google_services_json.py` into the
-//     `Assets/FirebaseUnityEditor/Editor` directory of your project.
 //   - Copy the `google-services.json` file you downloaded from the
 //     Firebase console anywhere into your `Assets` directory.  (Or
 //     alternately, the GoogleService-Info.plist file.)
 //   - The google-services-desktop.json file will automatically be
 //     created in `Assets/StreamingAssets/`.
-//   - If targeting Android, the googleservices.xml file will automatically
-//     be created in `Assets/Plugins/Android/google-play-services/res/values`.
+//   - If targeting Android, the google-services.xml file will automatically
+//     be created in `Assets/Plugins/Android/FirebaseApp.androidlib/res/values`.
 
 namespace Firebase.Editor {
 
   using Google;
+  using Google.MiniJSON;
   using GooglePlayServices;
   using System;
   using System.Collections.Generic;
+  using System.Globalization;
   using System.IO;
+  using System.Text;
+  using System.Xml;
   using UnityEngine;
   using UnityEditor;
 
@@ -52,12 +53,9 @@ namespace Firebase.Editor {
   /// </summary>
   [InitializeOnLoad]
   public class GenerateXmlFromGoogleServicesJson : AssetPostprocessor {
-    private static PythonExecutor resourceGenerator =
-      new PythonExecutor(Path.Combine(Path.Combine("Assets", "Firebase"), "Editor"),
-                         "generate_xml_from_google_services_json.py",
-                         "8f18ed76c0f04ce0a65736104f913ef8",
-                         "generate_xml_from_google_services_json.exe",
-                         "ae88c0972b7448b5b36def1716f1d711");
+    private const int OAUTH_CLIENT_TYPE_ANDROID_APP = 1;
+    private const int OAUTH_CLIENT_TYPE_WEB = 3;
+    private const string ANDROID_TOOLS_NAMESPACE = "http://schemas.android.com/tools";
 
     // Hard coded directories and file names.
     private static string GOOGLE_SERVICES_FILE_BASENAME = "google-services";
@@ -86,9 +84,6 @@ namespace Firebase.Editor {
         Path.Combine(GOOGLE_SERVICES_DESKTOP_OUTPUT_DIRECTORY,
                      GOOGLE_SERVICES_DESKTOP_OUTPUT_FILE);
 
-    // Used to parse the output of the command line tool.
-    private static char[] NEWLINE_CHARS = new char[] { '\r', '\n' };
-    private static char[] FIELD_DELIMITER = new char[] { '=' };
     // This flag, when set to true stops/guards the dialog from spamming the user.
     private static bool spamguard;
 
@@ -393,29 +388,279 @@ namespace Firebase.Editor {
       return selectedFile;
     }
 
-    // Read bundle IDs from the config file.
-    private static List<string> ReadBundleIds(string googleServicesFile) {
-      // If the file we're reading is a plist file, we have to add a flag on
-      // to the tool's command-line invocation.
+    private static string ResolveConfigFilePath(string configPath) {
+      if (String.IsNullOrEmpty(configPath) || Path.IsPathRooted(configPath)) {
+        return configPath;
+      }
+      return Path.Combine(Utility.GetProjectDir(), configPath);
+    }
 
-      var args = new List<string> {
-        "-i",
-        String.Format("\"{0}\"", googleServicesFile),
-        "-l",
-      };
-      if (IsFileOfType(googleServicesFile, ConfigFileType.Plist)) args.Add("--plist");
+    private static Dictionary<string, object> GetMap(Dictionary<string, object> map, string key) {
+      object value;
+      if (map != null && map.TryGetValue(key, out value)) {
+        return value as Dictionary<string, object>;
+      }
+      return null;
+    }
 
-      var bundleIds = new SortedDictionary<string, string>();
-      var result = RunResourceGenerator(args, googleServicesFile, showCommandLine: false);
-      if (result.exitCode == 0) {
-        foreach (var bundleId in result.stdout.Split(NEWLINE_CHARS)) {
-          if (String.IsNullOrEmpty(bundleId)) {
-            continue;
+    private static List<object> GetList(Dictionary<string, object> map, string key) {
+      object value;
+      if (map != null && map.TryGetValue(key, out value)) {
+        return value as List<object>;
+      }
+      return null;
+    }
+
+    private static string GetString(Dictionary<string, object> map, string key) {
+      object value;
+      if (map != null && map.TryGetValue(key, out value) && value != null) {
+        return value as string ?? Convert.ToString(value, CultureInfo.InvariantCulture);
+      }
+      return null;
+    }
+
+    private static object ReadPlistValue(XmlNode node) {
+      if (node == null) return null;
+      switch (node.Name) {
+        case "string":
+          return String.IsNullOrEmpty(node.InnerText) ? null : node.InnerText;
+        case "integer":
+          long intValue;
+          return long.TryParse(node.InnerText, NumberStyles.Integer,
+                               CultureInfo.InvariantCulture, out intValue)
+              ? (object)intValue : null;
+        case "real":
+          double realValue;
+          return double.TryParse(node.InnerText, NumberStyles.Float,
+                                 CultureInfo.InvariantCulture, out realValue)
+              ? (object)realValue : null;
+        case "false":
+          return 0L;
+        case "true":
+          return 1L;
+        default:
+          return null;
+      }
+    }
+
+    private static Dictionary<string, object> ConstructPlistDictionary(XmlElement xmlRoot) {
+      if (xmlRoot == null) return null;
+      XmlNode xmlDict = null;
+      foreach (XmlNode child in xmlRoot.ChildNodes) {
+        if (child.NodeType == XmlNodeType.Element && child.Name == "dict") {
+          xmlDict = child;
+          break;
+        }
+      }
+      if (xmlDict == null) return null;
+
+      var elementChildren = new List<XmlNode>();
+      foreach (XmlNode child in xmlDict.ChildNodes) {
+        if (child.NodeType == XmlNodeType.Element) {
+          elementChildren.Add(child);
+        }
+      }
+
+      var plistDict = new Dictionary<string, object>(StringComparer.Ordinal);
+      for (int i = 0; i < elementChildren.Count; i++) {
+        if (elementChildren[i].Name == "key") {
+          string key = elementChildren[i].InnerText;
+          i++;
+          if (i < elementChildren.Count && !String.IsNullOrEmpty(key)) {
+            object value = ReadPlistValue(elementChildren[i]);
+            if (value != null) {
+              plistDict[key] = value;
+            }
           }
-          bundleIds[bundleId] = bundleId;
+        }
+      }
+      return plistDict;
+    }
+
+    private static bool TryConvertPlistToJson(string plistString, string inputFilename,
+                                              out string jsonString, out string errorMessage) {
+      jsonString = null;
+      errorMessage = null;
+      XmlDocument doc = new XmlDocument();
+      try {
+        var settings = new XmlReaderSettings {
+          DtdProcessing = DtdProcessing.Ignore,
+          XmlResolver = null,
+        };
+        using (var stringReader = new StringReader(plistString))
+        using (var xmlReader = XmlReader.Create(stringReader, settings)) {
+          doc.Load(xmlReader);
+        }
+      } catch (Exception e) {
+        errorMessage = String.Format(
+            "Error parsing file {0}.\nIt does not appear to be valid XML.\n{1}",
+            inputFilename, e.Message);
+        return false;
+      }
+
+      var plistDict = ConstructPlistDictionary(doc.DocumentElement);
+      if (plistDict == null) {
+        errorMessage = String.Format(
+            "In file {0}, could not locate a top-level 'dict' element.\n" +
+            "File format should be plist XML, with a top-level dictionary containing " +
+            "project settings as key-value pairs.\n",
+            inputFilename);
+        return false;
+      }
+
+      string[] requiredKeys = new string[] { "GOOGLE_APP_ID", "BUNDLE_ID", "API_KEY" };
+      foreach (string requiredKey in requiredKeys) {
+        if (!plistDict.ContainsKey(requiredKey)) {
+          errorMessage = String.Format("Could not find key in plist file: [{0}]", requiredKey);
+          return false;
+        }
+      }
+
+      var projectInfo = new Dictionary<string, object>(StringComparer.Ordinal);
+      var keyMap = new Dictionary<string, string>(StringComparer.Ordinal) {
+        { "GCM_SENDER_ID", "project_number" },
+        { "DATABASE_URL", "firebase_url" },
+        { "PROJECT_ID", "project_id" },
+        { "STORAGE_BUCKET", "storage_bucket" },
+      };
+      foreach (var entry in keyMap) {
+        object val;
+        if (plistDict.TryGetValue(entry.Key, out val) && val != null) {
+          projectInfo[entry.Value] = val;
+        }
+      }
+
+      object analyticsEnabled = 0L;
+      plistDict.TryGetValue("IS_ANALYTICS_ENABLED", out analyticsEnabled);
+      object appInviteEnabled = 0L;
+      plistDict.TryGetValue("IS_APPINVITE_ENABLED", out appInviteEnabled);
+
+      var clientEntry = new Dictionary<string, object>(StringComparer.Ordinal) {
+        {
+          "client_info",
+          new Dictionary<string, object>(StringComparer.Ordinal) {
+            { "mobilesdk_app_id", plistDict["GOOGLE_APP_ID"] },
+            {
+              "android_client_info",
+              new Dictionary<string, object>(StringComparer.Ordinal) {
+                { "package_name", plistDict["BUNDLE_ID"] }
+              }
+            }
+          }
+        },
+        {
+          "api_key",
+          new List<object> {
+            new Dictionary<string, object>(StringComparer.Ordinal) {
+              { "current_key", plistDict["API_KEY"] }
+            }
+          }
+        },
+        {
+          "services",
+          new Dictionary<string, object>(StringComparer.Ordinal) {
+            {
+              "analytics_service",
+              new Dictionary<string, object>(StringComparer.Ordinal) {
+                { "status", analyticsEnabled ?? 0L }
+              }
+            },
+            {
+              "appinvite_service",
+              new Dictionary<string, object>(StringComparer.Ordinal) {
+                { "status", appInviteEnabled ?? 0L }
+              }
+            }
+          }
+        }
+      };
+
+      object clientId;
+      if (plistDict.TryGetValue("CLIENT_ID", out clientId) && clientId != null) {
+        clientEntry["oauth_client"] = new List<object> {
+          new Dictionary<string, object>(StringComparer.Ordinal) {
+            { "client_id", clientId }
+          }
+        };
+      }
+
+      var jsonStruct = new Dictionary<string, object>(StringComparer.Ordinal) {
+        { "project_info", projectInfo },
+        { "client", new List<object> { clientEntry } },
+        { "configuration_version", "1" }
+      };
+
+      jsonString = Json.Serialize(jsonStruct);
+      return true;
+    }
+
+    private static bool TryLoadConfigJsonObject(
+        string configFilePath,
+        bool isPlist,
+        out Dictionary<string, object> jsonObject,
+        out string jsonString,
+        out string errorMessage) {
+      jsonObject = null;
+      jsonString = null;
+      errorMessage = null;
+
+      string fullPath = ResolveConfigFilePath(configFilePath);
+      string fileContent;
+      try {
+        fileContent = File.ReadAllText(fullPath, Encoding.UTF8);
+        if (!String.IsNullOrEmpty(fileContent) && fileContent[0] == '\uFEFF') {
+          fileContent = fileContent.Substring(1);
+        }
+      } catch (Exception e) {
+        errorMessage = e.ToString();
+        return false;
+      }
+
+      if (isPlist) {
+        if (!TryConvertPlistToJson(fileContent, configFilePath, out jsonString, out errorMessage)) {
+          return false;
         }
       } else {
-        LogWarningIfEnabled(result.message);
+        jsonString = fileContent;
+      }
+
+      jsonObject = Json.Deserialize(jsonString) as Dictionary<string, object>;
+      if (jsonObject == null) {
+        errorMessage = String.Format("Failed to parse Firebase configuration JSON in {0}.", configFilePath);
+        return false;
+      }
+      return true;
+    }
+
+    // Read bundle IDs from the config file.
+    private static List<string> ReadBundleIds(string googleServicesFile) {
+      var bundleIds = new SortedDictionary<string, string>(StringComparer.Ordinal);
+      Dictionary<string, object> jsonObject;
+      string unusedJson;
+      string errorMessage;
+      if (!TryLoadConfigJsonObject(
+              googleServicesFile,
+              IsFileOfType(googleServicesFile, ConfigFileType.Plist),
+              out jsonObject, out unusedJson, out errorMessage)) {
+        LogWarningIfEnabled(errorMessage);
+        return new List<string>();
+      }
+
+      var clientList = GetList(jsonObject, "client");
+      if (clientList != null) {
+        foreach (object clientObj in clientList) {
+          var client = clientObj as Dictionary<string, object>;
+          if (client == null) continue;
+          string packageName = GetString(GetMap(GetMap(client, "client_info"), "android_client_info"),
+                                         "package_name");
+          if (String.IsNullOrEmpty(packageName)) {
+            packageName = GetString(GetMap(GetMap(client, "oauth_client"), "android_info"),
+                                    "package_name");
+          }
+          if (!String.IsNullOrEmpty(packageName)) {
+            bundleIds[packageName] = packageName;
+          }
+        }
       }
       return new List<string>(bundleIds.Keys);
     }
@@ -423,23 +668,27 @@ namespace Firebase.Editor {
     // Read the project fields from the config file.
     private static Dictionary<string, string> ReadProjectFields(
             string googleServicesFile) {
-      var fields = new Dictionary<string, string>();
-      var result = RunResourceGenerator(new List<string> {
-          "-i",
-          String.Format("\"{0}\"", googleServicesFile),
-          "-f",
-        },
-        googleServicesFile,
-        showCommandLine: false);
-      if (result.exitCode == 0) {
-        foreach (var line in result.stdout.Split(NEWLINE_CHARS)) {
-          string[] tokens = line.Split(FIELD_DELIMITER);
-          if (tokens.Length == 2) {
-            fields[tokens[0]] = tokens[1];
-          }
+      var fields = new Dictionary<string, string>(StringComparer.Ordinal);
+      Dictionary<string, object> jsonObject;
+      string unusedJson;
+      string errorMessage;
+      if (!TryLoadConfigJsonObject(
+              googleServicesFile,
+              IsFileOfType(googleServicesFile, ConfigFileType.Plist),
+              out jsonObject, out unusedJson, out errorMessage)) {
+        LogWarningIfEnabled(errorMessage);
+        return fields;
+      }
+
+      var projectInfo = GetMap(jsonObject, "project_info");
+      if (projectInfo == null) {
+        LogWarningIfEnabled(String.Format("No project info found in {0}.", googleServicesFile));
+        return fields;
+      }
+      foreach (var entry in projectInfo) {
+        if (entry.Value != null) {
+          fields[entry.Key] = Convert.ToString(entry.Value, CultureInfo.InvariantCulture);
         }
-      } else {
-        LogWarningIfEnabled(result.message);
       }
       return fields;
     }
@@ -514,40 +763,168 @@ namespace Firebase.Editor {
           });
     }
 
-    // Run the resource generator script.
-    private static CommandLine.Result RunResourceGenerator(
-            IEnumerable<string> arguments, string inputPath, bool showCommandLine = true) {
-      // Start the import process and wait for it to return.
-      string commandLineForLog = resourceGenerator.GetCommand(arguments);
-      var result = new CommandLine.Result { exitCode = 1 };
-      try {
-        result = resourceGenerator.Run(resourceGenerator.GetArguments(arguments));
-      } catch (System.ComponentModel.Win32Exception exception) {
-        Measurement.ReportWithBuildTarget("generateconfig/failed/toolmissing", null,
-                                          "Config File Tool Missing");
-        Debug.LogError(
-            String.Format(DocRef.GoogleServicesToolMissing,
-                          resourceGenerator.Executable, GOOGLE_SERVICES_OUTPUT_FILE, inputPath,
-                          exception.ToString()));
-        return result;
+    private static void AppendXmlString(XmlDocument doc, XmlElement root, List<string> keepStrings,
+                                        string name, string text) {
+      if (String.IsNullOrEmpty(text)) return;
+      keepStrings.Add("@string/" + name);
+      XmlElement child = doc.CreateElement("string");
+      child.SetAttribute("name", name);
+      child.SetAttribute("translatable", "false");
+      child.InnerText = text;
+      root.AppendChild(child);
+    }
+
+    private static bool TryGenerateXmlFromJsonFile(string inputPath, string outputPath,
+                                                   string targetPackageName,
+                                                   out string errorMessage) {
+      Dictionary<string, object> jsonObject;
+      string unusedJson;
+      if (!TryLoadConfigJsonObject(inputPath, false, out jsonObject, out unusedJson, out errorMessage)) {
+        return false;
       }
-      if (result.exitCode == 0) {
-        Measurement.ReportWithBuildTarget("generateconfig/success", null,
-                                          "Config File Generation Successful");
-        if (showCommandLine) {
-          Debug.Log(
-              String.Format(DocRef.GoogleServicesAndroidGenerateXml,
-                  GOOGLE_SERVICES_OUTPUT_PATH, inputPath, commandLineForLog));
+
+      var doc = new XmlDocument();
+      doc.AppendChild(doc.CreateXmlDeclaration("1.0", "utf-8", null));
+      XmlElement root = doc.CreateElement("resources");
+      root.SetAttribute("xmlns:tools", ANDROID_TOOLS_NAMESPACE);
+      doc.AppendChild(root);
+
+      var keepStrings = new List<string>();
+      var projectInfo = GetMap(jsonObject, "project_info");
+      if (projectInfo != null) {
+        AppendXmlString(doc, root, keepStrings, "firebase_database_url",
+                        GetString(projectInfo, "firebase_url"));
+        AppendXmlString(doc, root, keepStrings, "gcm_defaultSenderId",
+                        GetString(projectInfo, "project_number"));
+        AppendXmlString(doc, root, keepStrings, "google_storage_bucket",
+                        GetString(projectInfo, "storage_bucket"));
+        AppendXmlString(doc, root, keepStrings, "project_id",
+                        GetString(projectInfo, "project_id"));
+      }
+
+      var clientList = GetList(jsonObject, "client");
+      if (clientList != null && clientList.Count > 0) {
+        string selectedPackageName = "";
+        var selectedClient = clientList[0] as Dictionary<string, object>;
+        var packages = new List<string>();
+        var packageSet = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (object clientObj in clientList) {
+          var client = clientObj as Dictionary<string, object>;
+          if (client == null) continue;
+          string packageName = GetString(GetMap(GetMap(client, "client_info"), "android_client_info"),
+                                         "package_name");
+          if (String.IsNullOrEmpty(packageName)) {
+            packageName = GetString(GetMap(GetMap(client, "oauth_client"), "android_info"),
+                                    "package_name");
+          }
+          if (!String.IsNullOrEmpty(packageName)) {
+            if (String.IsNullOrEmpty(selectedPackageName)) {
+              selectedPackageName = packageName;
+              selectedClient = client;
+            }
+            if (packageName == targetPackageName) {
+              selectedPackageName = packageName;
+              selectedClient = client;
+            }
+            if (packageSet.Add(packageName)) {
+              packages.Add(packageName);
+            }
+          }
         }
-      } else {
-        Measurement.ReportWithBuildTarget("generateconfig/failed/toolfailed", null,
-                                          "Config File Tool Failed");
-        Debug.LogError(
-            String.Format(DocRef.GoogleServicesAndroidGenerationFailed,
-                GOOGLE_SERVICES_OUTPUT_FILE, inputPath, commandLineForLog,
-                result.stdout + "\n" + result.stderr + "\n"));
+
+        if (!String.IsNullOrEmpty(targetPackageName) && selectedPackageName != targetPackageName) {
+          errorMessage = String.Format(
+              "No packages found in {0} which match the package name {1}\n\nFound the following:\n{2}\n",
+              inputPath, targetPackageName, String.Join("\n", packages.ToArray()));
+          return false;
+        }
+
+        if (selectedClient != null) {
+          var clientApiKeys = GetList(selectedClient, "api_key");
+          if (clientApiKeys != null && clientApiKeys.Count > 0) {
+            var apiKey0 = clientApiKeys[0] as Dictionary<string, object>;
+            string apiKey = GetString(apiKey0, "current_key");
+            AppendXmlString(doc, root, keepStrings, "google_api_key", apiKey);
+            AppendXmlString(doc, root, keepStrings, "google_crash_reporting_api_key", apiKey);
+          }
+
+          var clientInfo = GetMap(selectedClient, "client_info");
+          if (clientInfo != null) {
+            AppendXmlString(doc, root, keepStrings, "google_app_id",
+                            GetString(clientInfo, "mobilesdk_app_id"));
+          }
+
+          bool clientIdWebParsed = false;
+          bool clientIdAndroidParsed = false;
+          var oauthClientList = GetList(selectedClient, "oauth_client");
+          if (oauthClientList != null) {
+            foreach (object oauthObj in oauthClientList) {
+              var oauthClient = oauthObj as Dictionary<string, object>;
+              if (oauthClient == null) continue;
+              object clientTypeObj;
+              if (!oauthClient.TryGetValue("client_type", out clientTypeObj) || clientTypeObj == null) {
+                continue;
+              }
+              long clientType = Convert.ToInt64(clientTypeObj, CultureInfo.InvariantCulture);
+              string clientId = GetString(oauthClient, "client_id");
+              if (clientType == 0 || String.IsNullOrEmpty(clientId)) continue;
+              if (clientType == OAUTH_CLIENT_TYPE_WEB && !clientIdWebParsed) {
+                AppendXmlString(doc, root, keepStrings, "default_web_client_id", clientId);
+                clientIdWebParsed = true;
+              }
+              if (clientType == OAUTH_CLIENT_TYPE_ANDROID_APP && !clientIdAndroidParsed) {
+                AppendXmlString(doc, root, keepStrings, "default_android_client_id", clientId);
+                clientIdAndroidParsed = true;
+              }
+            }
+          }
+
+          var services = GetMap(selectedClient, "services");
+          if (services != null) {
+            var adsService = GetMap(services, "ads_service");
+            if (adsService != null) {
+              AppendXmlString(doc, root, keepStrings, "test_banner_ad_unit_id",
+                              GetString(adsService, "test_banner_ad_unit_id"));
+              AppendXmlString(doc, root, keepStrings, "test_interstitial_ad_unit_id",
+                              GetString(adsService, "test_interstitial_ad_unit_id"));
+            }
+            var analyticsService = GetMap(services, "analytics_service");
+            if (analyticsService != null) {
+              var analyticsProperty = GetMap(analyticsService, "analytics_property");
+              if (analyticsProperty != null) {
+                AppendXmlString(doc, root, keepStrings, "ga_trackingId",
+                                GetString(analyticsProperty, "tracking_id"));
+              }
+            }
+          }
+        }
       }
-      return result;
+
+      if (keepStrings.Count > 0) {
+        XmlAttribute keepAttr = doc.CreateAttribute("tools", "keep", ANDROID_TOOLS_NAMESPACE);
+        keepAttr.Value = String.Join(",", keepStrings.ToArray());
+        root.Attributes.Append(keepAttr);
+      }
+
+      try {
+        string outputDirectory = Path.GetDirectoryName(outputPath);
+        if (!String.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory)) {
+          Directory.CreateDirectory(outputDirectory);
+        }
+        var writerSettings = new XmlWriterSettings {
+          Indent = true,
+          IndentChars = "  ",
+          Encoding = new UTF8Encoding(false),
+        };
+        using (var writer = XmlWriter.Create(outputPath, writerSettings)) {
+          doc.Save(writer);
+        }
+        return true;
+      } catch (Exception e) {
+        errorMessage = e.ToString();
+        return false;
+      }
     }
 
     // Generate Android resources from the json config file.
@@ -575,7 +952,7 @@ namespace Firebase.Editor {
         }
       }
 
-      // Run the script to process `asset` into our fixed output location.
+      // Convert google-services.json into google-services.xml in-process.
       string inputFile = Path.Combine(projectDir, googleServicesFile);
       string outputFile = Path.Combine(projectDir,
                                        GOOGLE_SERVICES_OUTPUT_PATH);
@@ -585,14 +962,22 @@ namespace Firebase.Editor {
           !File.Exists(outputFile) ||
           File.GetLastWriteTime(outputFile).CompareTo(
               File.GetLastWriteTime(inputFile)) < 0) {
-        RunResourceGenerator(new List<string> {
-            "-i",
-            String.Format("\"{0}\"", inputFile),
-            "-o",
-            String.Format("\"{0}\"", outputFile),
-            "-p",
-            String.Format("\"{0}\"", GetAndroidApplicationId()),
-          }, inputFile);
+        string errorMessage;
+        if (TryGenerateXmlFromJsonFile(inputFile, outputFile, GetAndroidApplicationId(),
+                                       out errorMessage)) {
+          Measurement.ReportWithBuildTarget("generateconfig/success", null,
+                                            "Config File Generation Successful");
+          Debug.Log(
+              String.Format(DocRef.GoogleServicesAndroidGenerateXml,
+                  GOOGLE_SERVICES_OUTPUT_PATH, inputFile, "pure-C# resource generator"));
+        } else {
+          Measurement.ReportWithBuildTarget("generateconfig/failed/toolfailed", null,
+                                            "Config File Tool Failed");
+          Debug.LogError(
+              String.Format(DocRef.GoogleServicesAndroidGenerationFailed,
+                  GOOGLE_SERVICES_OUTPUT_FILE, inputFile, "pure-C# resource generator",
+                  errorMessage ?? ""));
+        }
       }
 
       // Generate AndroidManifest.xml and project.properties for generated google-services.xml.
@@ -615,18 +1000,25 @@ namespace Firebase.Editor {
       }
 
       if (PrepareJsonDirectory()) {
-        var result = RunResourceGenerator(new List<string> {
-            "-i",
-            String.Format("\"{0}\"", inputFile),
-            "-o",
-            String.Format("\"{0}\"", outputFile),
-            "--plist",
-          },
-          sourceFilename,
-          showCommandLine: false);
-        if (result.exitCode != 0) {
-          Debug.LogError(String.Format(DocRef.CouldNotTranslatePlist, sourceFilename));
+        Dictionary<string, object> unusedObj;
+        string jsonString;
+        string errorMessage;
+        if (TryLoadConfigJsonObject(inputFile, true, out unusedObj, out jsonString, out errorMessage)) {
+          try {
+            File.WriteAllText(outputFile, jsonString, new UTF8Encoding(false));
+            Measurement.ReportWithBuildTarget("generateconfig/success", null,
+                                              "Config File Generation Successful");
+            return;
+          } catch (Exception e) {
+            errorMessage = e.ToString();
+          }
         }
+        Measurement.ReportWithBuildTarget("generateconfig/failed/toolfailed", null,
+                                          "Config File Tool Failed");
+        if (!String.IsNullOrEmpty(errorMessage)) {
+          Debug.LogWarning(errorMessage);
+        }
+        Debug.LogError(String.Format(DocRef.CouldNotTranslatePlist, sourceFilename));
       }
     }
 
