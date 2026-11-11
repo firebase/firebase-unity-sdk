@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
 using System;
 using System.Runtime.InteropServices;
+using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
   /// <summary>
@@ -69,21 +69,17 @@ namespace Firebase.Firestore {
     }
 
     /// <inheritdoc />
-    public override bool Equals(object obj) {
-      return obj is GeoPoint && Equals((GeoPoint)obj);
-    }
+    public override bool Equals(object obj) => obj is GeoPoint && Equals((GeoPoint)obj);
 
     /// <inheritdoc />
-    public override int GetHashCode() {
-      // The hash implementation matches native client SDK but not the .net SDK.  We believe it is a
-      // bug of .net SDK.
-      return Hash.DoubleBitwiseHash(_latitude) * 31 + Hash.DoubleBitwiseHash(_longitude);
-    }
+    public override int GetHashCode() =>
+        // The hash implementation matches native client SDK but not the .net SDK.  We believe it is a
+        // bug of .net SDK.
+        Hash.DoubleBitwiseHash(_latitude) * 31 + Hash.DoubleBitwiseHash(_longitude);
 
     /// <inheritdoc />
-    public bool Equals(GeoPoint other) {
-      return Latitude == other.Latitude && Longitude == other.Longitude;
-    }
+    public bool Equals(GeoPoint other) =>
+        Latitude == other.Latitude && Longitude == other.Longitude;
 
     /// <summary>
     /// Operator overload to compare two GeoPoint values for equality.
@@ -92,9 +88,7 @@ namespace Firebase.Firestore {
     /// <param name="rhs">Right value to compare</param>
     /// <returns><c>true</c> if <paramref name="lhs"/> is equal to <paramref name="rhs"/>; otherwise
     /// <c>false</c>.</returns>
-    public static bool operator ==(GeoPoint lhs, GeoPoint rhs) {
-      return lhs.Equals(rhs);
-    }
+    public static bool operator ==(GeoPoint lhs, GeoPoint rhs) => lhs.Equals(rhs);
 
     /// <summary>
     /// Operator overload to compare two GeoPoint values for inequality.
@@ -103,22 +97,11 @@ namespace Firebase.Firestore {
     /// <param name="rhs">Right value to compare</param>
     /// <returns><c>false</c> if <paramref name="lhs"/> is equal to <paramref name="rhs"/>;
     /// otherwise <c>true</c>.</returns>
-    public static bool operator !=(GeoPoint lhs, GeoPoint rhs) {
-      return !lhs.Equals(rhs);
-    }
+    public static bool operator !=(GeoPoint lhs, GeoPoint rhs) => !lhs.Equals(rhs);
 
     /// <inheritdoc />
-    public override string ToString() {
-      // Cannot use $ to construct string as not supported by google3 toolchain.
-      return String.Format("GeoPoint:({0:g},{1:g})", _latitude, _longitude);
-    }
-
-    internal GeoPointProxy ConvertToProxy() {
-      return new GeoPointProxy(_latitude, _longitude);
-    }
-
-    internal static GeoPoint ConvertFromProxy(GeoPointProxy obj) {
-      return new GeoPoint(obj.latitude(), obj.longitude());
-    }
+    public override string ToString() =>
+        // Cannot use $ to construct string as not supported by google3 toolchain.
+        String.Format("GeoPoint:({0:g},{1:g})", _latitude, _longitude);
   }
 }

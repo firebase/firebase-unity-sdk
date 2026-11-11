@@ -12,23 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
-
 namespace Firebase.Firestore {
-  internal static class ServerTimestampBehaviorConverter {
-    public static DocumentSnapshotProxy.ServerTimestampBehavior ConvertToProxy(this ServerTimestampBehavior stb) {
-      switch (stb) {
-        case ServerTimestampBehavior.None:
-          return DocumentSnapshotProxy.ServerTimestampBehavior.None;
-        case ServerTimestampBehavior.Estimate:
-          return DocumentSnapshotProxy.ServerTimestampBehavior.Estimate;
-        case ServerTimestampBehavior.Previous:
-          return DocumentSnapshotProxy.ServerTimestampBehavior.Previous;
-      }
-      throw new ArgumentException("Unsupported ServerTimestampBehavior:" + stb);
-    }
-  }
-
   /// <summary>
   /// Controls the return value for server timestamps that have not yet been set to their final
   /// value.

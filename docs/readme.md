@@ -192,6 +192,12 @@ Release Notes
       `maxResults` is between 1 and 1000.
     - Storage: `StorageException.HttpResultCode` now carries the real HTTP status returned by the
       server (previously a synthetic code), and `InnerException` is populated for network failures.
+    - Firestore: Rewrote the internal implementation in C# over HTTP/JSON and WebChannel streaming,
+      removing the dependency on the C++, gRPC, and native platform Firestore libraries.
+      `Firebase.Firestore.dll` is now shipped as C# source with an assembly definition of the same
+      name (update `precompiledReferences` in your own asmdefs accordingly), and the
+      `FirebaseCppFirestore` native libraries, `firebase-firestore` Android dependency, and
+      `FirebaseFirestore` iOS dependency have been removed.
 
 ### 14.1.0
 -   Changes

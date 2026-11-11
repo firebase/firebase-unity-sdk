@@ -12,49 +12,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   internal sealed class AttributedIdAssigner {
     private static readonly Dictionary<BclType, AttributedIdAssigner> s_assigners =
         new Dictionary<BclType, AttributedIdAssigner>();
 
-    private readonly List<PropertyInfo> _idProperties;
-    private readonly List<PropertyInfo> _referenceProperties;
+    private readonly List<Action<object, string>> _idSetters;
+    private readonly List<Action<object, DocumentReference>> _refSetters;
 
-    private AttributedIdAssigner(List<PropertyInfo> idProperties, List<PropertyInfo> referenceProperties) {
-      _idProperties = idProperties;
-      _referenceProperties = referenceProperties;
+    private AttributedIdAssigner(
+        List<Action<object, string>> idSetters,
+        List<Action<object, DocumentReference>> refSetters) {
+      _idSetters = idSetters;
+      _refSetters = refSetters;
     }
 
     private void AssignId(object value, DocumentReference reference) {
-      // TODO: Create delegates instead of using reflection on every invocation?
-
-      foreach (var property in _idProperties) {
-        property.SetValue(value, reference.Id, index: null);
+      if (_idSetters.Count > 0) {
+        string id = reference.Id;
+        for (int i = 0; i < _idSetters.Count; i++) {
+          _idSetters[i](value, id);
+        }
       }
-
-      foreach (var property in _referenceProperties) {
-        property.SetValue(value, reference, index: null);
+      for (int i = 0; i < _refSetters.Count; i++) {
+        _refSetters[i](value, reference);
       }
     }
 
     internal static void MaybeAssignId(object value, DocumentReference reference) {
-      if (value == null) {
-        return;
-      }
+      if (value == null) return;
+      AttributedIdAssigner assigner;
+      BclType type = value.GetType();
       lock (s_assigners) {
-        AttributedIdAssigner assigner;
-        if (!s_assigners.TryGetValue(value.GetType(), out assigner)) {
-          assigner = MaybeCreateAssigner(value.GetType());
-          s_assigners[value.GetType()] = assigner;
+        if (!s_assigners.TryGetValue(type, out assigner)) {
+          assigner = MaybeCreateAssigner(type);
+          s_assigners[type] = assigner;
         }
-        assigner?.AssignId(value, reference);
       }
+      assigner?.AssignId(value, reference);
     }
 
     /// <summary>
@@ -69,15 +74,16 @@ namespace Firebase.Firestore.Converters {
       }
 
       // While it's unusual, it's not an error to have multiple properties decorated with [FirestoreDocumentId]
-      List<PropertyInfo> setIdProperties = new List<PropertyInfo>();
-      List<PropertyInfo> setReferenceProperties = new List<PropertyInfo>();
+      var idSetters = new List<Action<object, string>>();
+      var refSetters = new List<Action<object, DocumentReference>>();
       // We look for static properties specifically to find problems. We'll never use static properties.
-      foreach (var property in type.GetProperties(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
+      foreach (PropertyInfo property in type.GetProperties(
+          BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
         string typeName = property.DeclaringType.FullName;
         if (!property.IsDefined(typeof(FirestoreDocumentIdAttribute), inherit: true)) {
           continue;
         }
-        var setMethod = property.GetSetMethod(nonPublic: true);
+        MethodInfo setMethod = property.GetSetMethod(nonPublic: true);
         Preconditions.CheckState(setMethod != null,
             "{0}.{1} has no setter, and should not be decorated with {2}.",
             typeName, property.Name, nameof(FirestoreDocumentIdAttribute));
@@ -91,17 +97,34 @@ namespace Firebase.Firestore.Converters {
             "{0}.{1} is decorated with FirestorePropertyAttribute, and should not be decorated with {2}.",
             typeName, property.Name, nameof(FirestoreDocumentIdAttribute));
         if (property.PropertyType == typeof(string)) {
-          setIdProperties.Add(property);
+          idSetters.Add(BuildSetter<string>(type, property, setMethod));
         } else if (property.PropertyType == typeof(DocumentReference)) {
-          setReferenceProperties.Add(property);
+          refSetters.Add(BuildSetter<DocumentReference>(type, property, setMethod));
         } else {
           throw new InvalidOperationException(String.Format(
               "{0}.{1} is not a string or {2} property, and should not be decorated with {3}.",
               typeName, property.Name, nameof(DocumentReference), nameof(FirestoreDocumentIdAttribute)));
         }
       }
-      return setIdProperties.Count == 0 && setReferenceProperties.Count == 0
-          ? null : new AttributedIdAssigner(setIdProperties, setReferenceProperties);
+      return idSetters.Count == 0 && refSetters.Count == 0
+          ? null
+          : new AttributedIdAssigner(idSetters, refSetters);
+    }
+
+    private static Action<object, TProp> BuildSetter<TProp>(
+        BclType declaringType, PropertyInfo prop, MethodInfo setMethod) {
+      if (!declaringType.IsValueType) {
+        try {
+          ParameterExpression targetParam = Expression.Parameter(typeof(object), "target");
+          ParameterExpression valParam = Expression.Parameter(typeof(TProp), "val");
+          MethodCallExpression call = Expression.Call(
+              Expression.Convert(targetParam, declaringType), setMethod, valParam);
+          return Expression.Lambda<Action<object, TProp>>(call, targetParam, valParam).Compile();
+        } catch (Exception) {
+          // Fall back to PropertyInfo on AOT runtimes without dynamic codegen.
+        }
+      }
+      return (target, val) => prop.SetValue(target, val, index: null);
     }
   }
 }

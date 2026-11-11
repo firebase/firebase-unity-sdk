@@ -2,7 +2,9 @@
     "name": "Tests",
     "references": [
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "Firebase.Auth",
+        "Firebase.Firestore"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -11,8 +13,6 @@
     "precompiledReferences": [
         "nunit.framework.dll",
         "Firebase.App.dll",
-        "Firebase.Auth.dll",
-        "Firebase.Firestore.dll",
         "Firebase.TaskExtension.dll"
     ],
     "autoReferenced": false,

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
 using System;
 using System.Collections.Generic;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
@@ -28,25 +28,17 @@ namespace Firebase.Firestore.Converters {
       _elementType = elementType;
     }
 
-    protected override object DeserializeArray(DeserializationContext context, FieldValueProxy arrayValue) {
-      Preconditions.CheckState(arrayValue.type() == FieldValueProxy.Type.Array, "Expected to receive an array FieldValue");
-
-      using (var array = FirestoreCpp.ConvertFieldValueToVector(arrayValue)) {
-        uint usize = array.Size();
-        if (usize > System.Int32.MaxValue) {
-          throw new ArgumentException(
-              "Array contains too many values (more than System.Int32.MaxValue)");
-        }
-
-        Array result = Array.CreateInstance(_elementType, usize);
-        for (int i = 0; i < usize; i++) {
-          FieldValueProxy value = array.GetUnsafeView((uint)i);
-          var converted = ValueDeserializer.Deserialize(context, value, _elementType);
-          result.SetValue(converted, i);
-        }
-
-        return result;
+    protected override object DeserializeArray(
+        DeserializationContext context, FirestoreValue arrayValue) {
+      Preconditions.CheckState(
+          arrayValue.Kind == FirestoreValueKind.Array, "Expected to receive an array FirestoreValue");
+      IReadOnlyList<FirestoreValue> src = arrayValue.ArrayValue;
+      Array result = Array.CreateInstance(_elementType, src.Count);
+      for (int i = 0; i < src.Count; i++) {
+        object converted = ValueDeserializer.Deserialize(context, src[i], _elementType);
+        result.SetValue(converted, i);
       }
+      return result;
     }
   }
 }

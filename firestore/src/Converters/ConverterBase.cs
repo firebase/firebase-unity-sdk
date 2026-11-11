@@ -14,14 +14,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
   /// <summary>
   /// A base class for many converters, allowing them to simply override the method for the one
   /// deserialization case required. Serializing to a single value has to be implemented; serializing
-  /// to a map will fail with an exception unless <see cref="SerializeMap(SerializationContext, object, IDictionary{string, FieldValueProxy})"/>
+  /// to a map will fail with an exception unless <see cref="SerializeMap(SerializationContext, object, IDictionary{string, FirestoreValue})"/>
   /// is overridden.
   /// </summary>
   internal abstract class ConverterBase : IFirestoreInternalConverter {
@@ -31,47 +31,49 @@ namespace Firebase.Firestore.Converters {
       TargetType = targetType;
     }
 
-    public // TODO(b/141568173): Significant newline.
-    virtual object DeserializeMap(DeserializationContext context, FieldValueProxy mapValue) {
+    public virtual object DeserializeMap(DeserializationContext context, FirestoreValue mapValue) {
       throw new ArgumentException(String.Format("Unable to convert map value to {0}", TargetType));
     }
 
-    public // TODO(b/141568173): Significant newline.
-    virtual object DeserializeValue(DeserializationContext context, FieldValueProxy value) {
-      switch (value.type()) {
-        case FieldValueProxy.Type.Array:
+    public virtual object DeserializeValue(DeserializationContext context, FirestoreValue value) {
+      switch (value.Kind) {
+        case FirestoreValueKind.Array:
           return DeserializeArray(context, value);
-        case FieldValueProxy.Type.Boolean:
-          return DeserializeBoolean(context, value.boolean_value());
-        case FieldValueProxy.Type.Blob:
-          return DeserializeBytes(context, ConvertFromProxyBlob(value));
-        case FieldValueProxy.Type.Double:
-          return DeserializeDouble(context, value.double_value());
-        case FieldValueProxy.Type.GeoPoint:
-          return DeserializeGeoPoint(context, GeoPoint.ConvertFromProxy(value.geo_point_value()));
-        case FieldValueProxy.Type.Integer:
-          return DeserializeInteger(context, value.integer_value());
-        case FieldValueProxy.Type.Map:
+        case FirestoreValueKind.Boolean:
+          return DeserializeBoolean(context, value.BooleanValue);
+        case FirestoreValueKind.Blob:
+          return DeserializeBytes(context, value.BlobValue.ToBytes());
+        case FirestoreValueKind.Double:
+          return DeserializeDouble(context, value.DoubleValue);
+        case FirestoreValueKind.GeoPoint:
+          return DeserializeGeoPoint(context, value.GeoPointValue);
+        case FirestoreValueKind.Integer:
+          return DeserializeInteger(context, value.IntegerValue);
+        case FirestoreValueKind.Map:
           return DeserializeMap(context, value);
-        case FieldValueProxy.Type.Reference:
-          return DeserializeReference(context, new DocumentReference(value.reference_value(), context.Firestore));
-        case FieldValueProxy.Type.String:
-          return DeserializeString(context, value.string_value());
-        case FieldValueProxy.Type.Timestamp:
-          return DeserializeTimestamp(context, Timestamp.ConvertFromProxy(value.timestamp_value()));
+        case FirestoreValueKind.Reference: {
+          DocumentReferenceValue refVal = value.ReferenceValue;
+          FirebaseFirestore targetDb = context.Firestore.GetDatabaseInstanceForReference(
+              refVal.ProjectId, refVal.DatabaseId);
+          return DeserializeReference(context, new DocumentReference(refVal.Path, targetDb));
+        }
+        case FirestoreValueKind.String:
+          return DeserializeString(context, value.StringValue);
+        case FirestoreValueKind.Timestamp:
+          return DeserializeTimestamp(context, value.TimestampValue);
         default:
-          throw new ArgumentException(String.Format("Unable to convert value type {0}", value.type()));
+          throw new ArgumentException(String.Format("Unable to convert value type {0}", value.Kind));
       }
     }
 
-    public // TODO(b/141568173): Significant newline.
-    abstract FieldValueProxy Serialize(SerializationContext context, object value);
+    public abstract FirestoreValue Serialize(SerializationContext context, object value);
 
-    public virtual void SerializeMap(SerializationContext context, object value, IDictionary<string, FieldValueProxy> map) {
+    public virtual void SerializeMap(
+        SerializationContext context, object value, IDictionary<string, FirestoreValue> map) {
       throw new ArgumentException(String.Format("Unable to convert {0} to a map", TargetType));
     }
 
-    protected virtual object DeserializeArray(DeserializationContext context, FieldValueProxy arrayValue) {
+    protected virtual object DeserializeArray(DeserializationContext context, FirestoreValue arrayValue) {
       throw new ArgumentException(String.Format("Unable to convert array value to {0}", TargetType));
     }
 
@@ -105,49 +107,6 @@ namespace Firebase.Firestore.Converters {
 
     protected virtual object DeserializeTimestamp(DeserializationContext context, Timestamp value) {
       throw new ArgumentException(String.Format("Unable to convert Timestamp value to {0}", TargetType));
-    }
-
-    // Some helpers for marshalling C# types to/from FieldValueProxy
-    // (since the SWIG-generated methods aren't very friendly).
-
-    internal static FieldValueProxy ConvertToProxyMap(IDictionary<string, FieldValueProxy> map) {
-      var internalMap = new FieldToValueMap();
-      foreach (var key_value in map) {
-        internalMap.Insert(key_value.Key, key_value.Value);
-      }
-      return FirestoreCpp.ConvertMapToFieldValue(internalMap);
-    }
-
-    internal static FieldValueProxy ConvertToProxyArray(IList<FieldValueProxy> list) {
-      var internalArray = new FieldValueVector();
-      for (int i = 0; i < list.Count; ++i) {
-        internalArray.PushBack(list[i]);
-      }
-      return FirestoreCpp.ConvertVectorToFieldValue(internalArray);
-    }
-
-    internal static byte[] ConvertFromProxyBlob(FieldValueProxy internalValue) {
-      IntPtr ptr = SWIGTYPE_p_unsigned_char.getCPtr(internalValue.blob_value()).Handle;
-      uint size = internalValue.blob_size();
-      byte[] bytes = new byte[size];
-      Marshal.Copy(ptr, bytes, 0, (int)size);
-      return bytes;
-    }
-
-    internal static FieldValueProxy ConvertToProxyBlob(byte[] value) {
-      int size = Marshal.SizeOf((byte)0) * (int)value.Length;
-      IntPtr ptr = (IntPtr)Marshal.AllocHGlobal(size);
-      try {
-        Marshal.Copy(value, 0, ptr, size);
-        FieldValueProxy result = FieldValueProxy.Blob(
-            new SWIGTYPE_p_unsigned_char(ptr, /*futureUse=*/true),
-            (uint)size);
-        return result;
-      } finally {
-        // We have no way to reset the one in SWIGTYPE_p_unsigned_char.  But as far as we do
-        // not use it, it is safe to keep the ptr there.
-        Marshal.FreeHGlobal(ptr);
-      }
     }
   }
 }

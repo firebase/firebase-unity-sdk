@@ -13,8 +13,7 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
-using System.Reflection;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
@@ -33,9 +32,8 @@ namespace Firebase.Firestore.Converters {
       return Enum.ToObject(TargetType, baseValue);
     }
 
-    public // TODO(b/141568173): Significant newline.
-    override FieldValueProxy Serialize(SerializationContext context, object value) =>
-        FieldValueProxy.Integer(EnumToInt64(value));
+    public override FirestoreValue Serialize(SerializationContext context, object value) =>
+        FirestoreValue.FromInteger(EnumToInt64(value));
 
     private long EnumToInt64(object value) {
       switch (_typeCode) {

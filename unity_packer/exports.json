@@ -1037,66 +1037,9 @@
       "name": "FirebaseFirestore.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Firebase.Firestore.dll",
-            "Firebase/Plugins/Firebase.Firestore.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/iOS/Firebase.Firestore.dll",
-            "Firebase/Plugins/iOS/Firebase.Firestore.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppFirestore.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppFirestore.xcframework"
-          ]
-        },
-        {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/FirestoreDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-firestore-unity/"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone"
-          ],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppFirestore*"
+            "Firebase/FirebaseFirestore/*"
           ]
         },
         {

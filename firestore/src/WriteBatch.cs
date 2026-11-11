@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
   /// <summary>
@@ -33,10 +31,27 @@ namespace Firebase.Firestore {
   /// when you don't need to condition your writes on read data.</para>
   /// </remarks>
   public sealed class WriteBatch {
-    private readonly WriteBatchProxy _proxy;
+    private readonly FirebaseFirestore _firestore;
+    private readonly object _lock = new object();
+    private readonly List<MutationSpec> _mutations = new List<MutationSpec>();
+    private bool _committed;
 
-    internal WriteBatch(WriteBatchProxy proxy) {
-      _proxy = Util.NotNull(proxy);
+    internal WriteBatch(FirebaseFirestore firestore) {
+      _firestore = Preconditions.CheckNotNull(firestore, nameof(firestore));
+    }
+
+    private void ValidateWritableAndRef(DocumentReference docRef) {
+      Preconditions.CheckNotNull(docRef, nameof(docRef));
+      if (!ReferenceEquals(docRef.Firestore, _firestore)) {
+        throw new ArgumentException(
+            "Provided DocumentReference belongs to a different FirebaseFirestore instance.",
+            nameof(docRef));
+      }
+      lock (_lock) {
+        if (_committed) {
+          throw new InvalidOperationException("A WriteBatch can no longer be used after CommitAsync has been called.");
+        }
+      }
     }
 
     /// <summary>
@@ -45,8 +60,10 @@ namespace Firebase.Firestore {
     /// <param name="documentReference">The document to delete. Must not be <c>null</c>.</param>
     /// <returns>This batch, for the purposes of method chaining.</returns>
     public WriteBatch Delete(DocumentReference documentReference) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
-      _proxy.Delete(documentReference.Proxy);
+      ValidateWritableAndRef(documentReference);
+      lock (_lock) {
+        _mutations.Add(MutationSpec.CreateDelete(documentReference.ResourcePath));
+      }
       return this;
     }
 
@@ -59,23 +76,26 @@ namespace Firebase.Firestore {
     /// to reference nested fields in the document.  Fields not present in this dictionary are not
     /// updated. Must not be <c>null</c>.</param>
     /// <returns>This batch, for the purposes of method chaining.</returns>
-    public WriteBatch Update(DocumentReference documentReference, IDictionary<string, object> updates) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
+    public WriteBatch Update(
+        DocumentReference documentReference, IDictionary<string, object> updates) {
+      ValidateWritableAndRef(documentReference);
       Preconditions.CheckNotNull(updates, nameof(updates));
 
-      var fieldValue = ConvertToFieldValue(updates);
-      FirestoreCpp.WriteBatchUpdate(_proxy, documentReference.Proxy, fieldValue);
-
+      var fpUpdates = new List<KeyValuePair<FieldPath, object>>(updates.Count);
+      foreach (KeyValuePair<string, object> kv in updates) {
+        FieldPath fp = FieldPath.FromDotSeparatedString(kv.Key);
+        fpUpdates.Add(new KeyValuePair<FieldPath, object>(fp, kv.Value));
+      }
+      MutationSpec spec = MutationSpec.ParseUpdate(
+          SerializationContext.Default,
+          documentReference.ResourcePath,
+          fpUpdates,
+          _firestore.ProjectId,
+          _firestore.DatabaseId);
+      lock (_lock) {
+        _mutations.Add(spec);
+      }
       return this;
-    }
-
-    private FieldValueProxy ConvertToFieldValue(IDictionary<string, object> updates) {
-      FieldValueProxy data = ValueSerializer.Serialize(SerializationContext.Default, updates);
-
-      Util.HardAssert(data.is_map(), "The serialized type should be a map but isn't. " +
-          "This should not happen.");
-
-      return data;
     }
 
     /// <summary>
@@ -88,14 +108,11 @@ namespace Firebase.Firestore {
     /// <param name="value">The new value for the field. May be <c>null</c>.</param>
     /// <returns>This batch, for the purposes of method chaining.</returns>
     public WriteBatch Update(DocumentReference documentReference, string field, object value) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
+      ValidateWritableAndRef(documentReference);
       Preconditions.CheckNotNullOrEmpty(field, nameof(field));
-
-      var data = new FieldToValueMap();
-      data.Insert(field, ValueSerializer.Serialize(SerializationContext.Default, value));
-      FirestoreCpp.WriteBatchUpdate(_proxy, documentReference.Proxy, data);
-
-      return this;
+      return Update(documentReference, new Dictionary<string, object>(1, StringComparer.Ordinal) {
+        { field, value },
+      });
     }
 
     /// <summary>
@@ -106,18 +123,24 @@ namespace Firebase.Firestore {
     /// <param name="updates">A dictionary of field / value pairs to update. Fields not present in
     /// this dictionary are not updated. Must not be <c>null</c>.</param>
     /// <returns>This batch, for the purposes of method chaining.</returns>
-    public WriteBatch Update(DocumentReference documentReference, IDictionary<FieldPath, object> updates) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
+    public WriteBatch Update(
+        DocumentReference documentReference, IDictionary<FieldPath, object> updates) {
+      ValidateWritableAndRef(documentReference);
       Preconditions.CheckNotNull(updates, nameof(updates));
-
-      var data = new FieldPathToValueMap();
-      foreach (KeyValuePair<FieldPath, object> key_value in updates) {
-        FieldPathProxy key = key_value.Key.ConvertToProxy();
-        FieldValueProxy value = ValueSerializer.Serialize(SerializationContext.Default, key_value.Value);
-        data.Insert(key, value);
+      foreach (KeyValuePair<FieldPath, object> kv in updates) {
+        if (kv.Key == null) {
+          throw new ArgumentNullException(nameof(updates), "FieldPath key cannot be null.");
+        }
       }
-      FirestoreCpp.WriteBatchUpdate(_proxy, documentReference.Proxy, data);
-
+      MutationSpec spec = MutationSpec.ParseUpdate(
+          SerializationContext.Default,
+          documentReference.ResourcePath,
+          updates,
+          _firestore.ProjectId,
+          _firestore.DatabaseId);
+      lock (_lock) {
+        _mutations.Add(spec);
+      }
       return this;
     }
 
@@ -132,20 +155,29 @@ namespace Firebase.Firestore {
     /// <param name="options">The options to use when updating the document. May be <c>null</c>,
     /// which is equivalent to <see cref="SetOptions.Overwrite"/>.</param>
     /// <returns>This batch, for the purposes of method chaining.</returns>
-    public WriteBatch Set(DocumentReference documentReference, object documentData, SetOptions options = null) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
+    public WriteBatch Set(
+        DocumentReference documentReference, object documentData, SetOptions options = null) {
+      ValidateWritableAndRef(documentReference);
       Preconditions.CheckNotNull(documentData, nameof(documentData));
 
-      FieldValueProxy data = ValueSerializer.Serialize(SerializationContext.Default, documentData);
-      if (!data.is_map()) {
-        throw new ArgumentException("documentData must be either an IDictionary or a POCO. Instead we get " +
-                                    documentData.GetType().FullName);
+      FirestoreValue data = ValueSerializer.Serialize(SerializationContext.Default, documentData);
+      if (data.Kind != FirestoreValueKind.Map) {
+        throw new ArgumentException(
+            "documentData must be either an IDictionary or a POCO. Instead we get " +
+            documentData.GetType().FullName);
       }
-      if (options == null) {
-        options = SetOptions.Overwrite;
+      var rawMap = data.MapValue as Dictionary<string, FirestoreValue>
+          ?? FirestoreValue.CloneMapDeep(data.MapValue);
+      MutationSpec spec = MutationSpec.ParseSet(
+          SerializationContext.Default,
+          documentReference.ResourcePath,
+          rawMap,
+          options ?? SetOptions.Overwrite,
+          _firestore.ProjectId,
+          _firestore.DatabaseId);
+      lock (_lock) {
+        _mutations.Add(spec);
       }
-
-      FirestoreCpp.WriteBatchSet(_proxy, documentReference.Proxy, data, options.Proxy);
       return this;
     }
 
@@ -154,6 +186,17 @@ namespace Firebase.Firestore {
     /// </summary>
     /// <returns>The write result of the server operation. The task will not complete while the
     /// client is offline, though local changes will be visible immediately.</returns>
-    public Task CommitAsync() => _proxy.CommitAsync();
+    public Task CommitAsync() {
+      List<MutationSpec> snapshot;
+      lock (_lock) {
+        if (_committed) {
+          return Util.TaskFromException<bool>(new InvalidOperationException(
+              "A WriteBatch can no longer be used after CommitAsync has been called."));
+        }
+        _committed = true;
+        snapshot = new List<MutationSpec>(_mutations);
+      }
+      return _firestore.Core.EnqueueMutationsAsync(snapshot);
+    }
   }
 }

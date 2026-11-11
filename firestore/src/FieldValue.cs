@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
@@ -27,17 +28,20 @@ namespace Firebase.Firestore {
   /// serialized (for example, in anonymous types), and they will be handled directly by the
   /// serialization mechanism.</para>
   /// </remarks>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   public static class FieldValue {
     /// <summary>
     /// Sentinel value indicating that the field should be set to the timestamp of the commit
     /// that creates or modifies the document.
     /// </summary>
-    public static object ServerTimestamp { get; } = FieldValueProxy.ServerTimestamp();
+    public static object ServerTimestamp { get; } = FirestoreValue.ServerTimestampSentinel;
 
     /// <summary>
     /// Sentinel value indicating that the field should be deleted from the document.
     /// </summary>
-    public static object Delete { get; } = FieldValueProxy.Delete();
+    public static object Delete { get; } = FirestoreValue.DeleteSentinel;
 
     /// <summary>
     /// Returns a special value that can be used with <c>SetAsync()</c> or <c>UpdateAsync()</c> that tells the
@@ -52,9 +56,19 @@ namespace Firebase.Firestore {
     /// </returns>
     public static object ArrayUnion(params object[] elements) {
       Preconditions.CheckNotNull(elements, nameof(elements));
-      var fieldValue = ValueSerializer.Serialize(SerializationContext.Default, elements);
-      var array = FirestoreCpp.ConvertFieldValueToVector(fieldValue);
-      return FirestoreCpp.FieldValueArrayUnion(array);
+      var copy = new object[elements.Length];
+      Array.Copy(elements, copy, elements.Length);
+      // Eagerly validate element serializability and reject nested arrays / sentinels synchronously!
+      for (int i = 0; i < copy.Length; i++) {
+        FirestoreValue v = ValueSerializer.Serialize(SerializationContext.Default, copy[i]);
+        if (v.IsSentinel) {
+          throw new ArgumentException("FieldValue sentinels cannot be used inside ArrayUnion.");
+        }
+        if (v.Kind == FirestoreValueKind.Array) {
+          throw new ArgumentException("Nested arrays are not supported inside ArrayUnion.");
+        }
+      }
+      return FirestoreValue.SentinelArrayUnion(copy);
     }
 
     /// <summary>
@@ -69,9 +83,18 @@ namespace Firebase.Firestore {
     /// </returns>
     public static object ArrayRemove(params object[] elements) {
       Preconditions.CheckNotNull(elements, nameof(elements));
-      var fieldValue = ValueSerializer.Serialize(SerializationContext.Default, elements);
-      var array = FirestoreCpp.ConvertFieldValueToVector(fieldValue);
-      return FirestoreCpp.FieldValueArrayRemove(array);
+      var copy = new object[elements.Length];
+      Array.Copy(elements, copy, elements.Length);
+      for (int i = 0; i < copy.Length; i++) {
+        FirestoreValue v = ValueSerializer.Serialize(SerializationContext.Default, copy[i]);
+        if (v.IsSentinel) {
+          throw new ArgumentException("FieldValue sentinels cannot be used inside ArrayRemove.");
+        }
+        if (v.Kind == FirestoreValueKind.Array) {
+          throw new ArgumentException("Nested arrays are not supported inside ArrayRemove.");
+        }
+      }
+      return FirestoreValue.SentinelArrayRemove(copy);
     }
 
     /// <summary>
@@ -90,7 +113,7 @@ namespace Firebase.Firestore {
     /// </remarks>
     /// <returns>The <c>FieldValue</c> sentinel for use in a call to <c>SetAsync()</c> or <c>UpdateAsync()</c>.</returns>
     ///
-    public static object Increment(long value) => FieldValueProxy.IntegerIncrement(value);
+    public static object Increment(long value) => FirestoreValue.SentinelIncrement(value);
 
     /// <summary>
     /// Returns a special value that can be used with <c>SetAsync()</c> or <c>UpdateAsync()</c> that tells the server to
@@ -104,6 +127,6 @@ namespace Firebase.Firestore {
     /// </remarks>
     /// <returns>The <c>FieldValue</c> sentinel for use in a call to <c>SetAsync()</c> or <c>UpdateAsync()</c>.</returns>
     ///
-    public static object Increment(double value) => FieldValueProxy.DoubleIncrement(value);
+    public static object Increment(double value) => FirestoreValue.SentinelIncrement(value);
   }
 }

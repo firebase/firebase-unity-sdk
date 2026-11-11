@@ -13,8 +13,8 @@
 // limitations under the License.
 
 using System;
-using System.Runtime.InteropServices;
 using System.Text;
+using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
   /// <summary>
@@ -27,10 +27,12 @@ namespace Firebase.Firestore {
     private readonly byte[] _bytes;
     private int _hash;
 
+    internal byte[] InternalBytes => _bytes ?? Array.Empty<byte>();
+
     /// <summary>
     /// The length of the blob, in bytes.
     /// </summary>
-    public int Length => _bytes.Length;
+    public int Length => _bytes == null ? 0 : _bytes.Length;
 
     /// <summary>
     /// Returns the byte at index <paramref name="index"/>.
@@ -38,12 +40,17 @@ namespace Firebase.Firestore {
     /// <param name="index">The index in the blob to return. Must be greater than or equal to 0, and
     /// less than <see cref="Length"/>.</param>
     /// <returns>The byte at index <paramref name="index"/>.</returns>
-    public byte this[int index] => _bytes[index];
+    public byte this[int index] {
+      get {
+        if (_bytes == null) throw new IndexOutOfRangeException();
+        return _bytes[index];
+      }
+    }
 
     /// <summary>
     /// Returns a copy of this Blob as a byte[].
     /// </summary>
-    public byte[] ToBytes() => (byte[])_bytes.Clone();
+    public byte[] ToBytes() => _bytes == null ? Array.Empty<byte>() : (byte[])_bytes.Clone();
 
     /// <summary>
     /// Constructs a new <see cref="Blob"/> by copying the current content of
@@ -51,7 +58,13 @@ namespace Firebase.Firestore {
     /// </summary>
     /// <param name="bytes">Byte array to copy.</param>
     /// <returns>A new blob containing a copy of <paramref name="bytes"/>.</returns>
-    public static Blob CopyFrom(byte[] bytes) => new Blob(bytes);
+    public static Blob CopyFrom(byte[] bytes) {
+      Preconditions.CheckNotNull(bytes, nameof(bytes));
+      return new Blob(bytes, copy: true);
+    }
+
+    internal static Blob FromTrusted(byte[] bytes) =>
+        new Blob(bytes ?? Array.Empty<byte>(), copy: false);
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is Blob && Equals((Blob)obj);
@@ -62,9 +75,10 @@ namespace Firebase.Firestore {
       if (_hash != 0) {
         return _hash;
       }
-      int result = Length;
-      foreach (byte b in _bytes) {
-        result = result * 31 + (int)b;
+      byte[] arr = InternalBytes;
+      int result = arr.Length;
+      for (int i = 0; i < arr.Length; i++) {
+        result = result * 31 + arr[i];
       }
       if (result == 0) {
         result = 1;
@@ -76,12 +90,13 @@ namespace Firebase.Firestore {
     /// <inheritdoc />
     public bool Equals(Blob other) {
       // SequenceEqual is not available. So just do this in naive way.
-      if (Length != other.Length ||
-          (_hash != 0 && other._hash != 0 && _hash != other._hash)) {
+      byte[] a = InternalBytes;
+      byte[] b = other.InternalBytes;
+      if (a.Length != b.Length || (_hash != 0 && other._hash != 0 && _hash != other._hash)) {
         return false;
       }
-      for (int i = 0; i < Length; ++i) {
-        if (_bytes[i] != other._bytes[i]) {
+      for (int i = 0; i < a.Length; ++i) {
+        if (a[i] != b[i]) {
           return false;
         }
       }
@@ -108,20 +123,21 @@ namespace Firebase.Firestore {
 
     /// <inheritdoc />
     public override string ToString() {
-      StringBuilder builder = new StringBuilder("Blob: Length=");
-      builder.Append(_bytes.Length);
-      builder.Append(_bytes.Length > 32 ? "; Hex (first 32 bytes only)=" : "; Hex=");
-      for (int i = 0; i < Math.Min(_bytes.Length, 32); i++) {
+      byte[] arr = InternalBytes;
+      var builder = new StringBuilder("Blob: Length=");
+      builder.Append(arr.Length);
+      builder.Append(arr.Length > 32 ? "; Hex (first 32 bytes only)=" : "; Hex=");
+      for (int i = 0; i < Math.Min(arr.Length, 32); i++) {
         if (i != 0) {
           builder.Append(" ");
         }
-        builder.Append(_bytes[i].ToString("X2"));
+        builder.Append(arr[i].ToString("X2"));
       }
       return builder.ToString();
     }
 
-    private Blob(byte[] bytes) {
-      _bytes = (byte[])bytes.Clone();
+    private Blob(byte[] bytes, bool copy) {
+      _bytes = copy ? (byte[])bytes.Clone() : bytes;
       _hash = 0;
     }
   }

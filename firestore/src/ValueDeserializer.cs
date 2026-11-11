@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore {
@@ -25,37 +24,38 @@ namespace Firebase.Firestore {
   // aim is just to work out the functionality required, and optimize later.
 
   /// <summary>
-  /// Provides conversions from FieldValueProxy values to .NET types.
+  /// Provides conversions from <see cref="FirestoreValue"/> values to .NET types.
   /// </summary>
   internal static class ValueDeserializer {
     /// <summary>
-    /// Deserializes from a FieldValueProxy to a .NET type.
+    /// Deserializes from a <see cref="FirestoreValue"/> to a .NET type.
     /// </summary>
     /// <param name="context">The context for the deserialization operation. Never null.</param>
-    /// <param name="value">The value to deserialize. Must not be null.</param>
+    /// <param name="value">The value to deserialize.</param>
     /// <param name="targetType">The target type. The method tries to convert to this type. If the type is
     /// object, it uses the default representation of the value.</param>
     /// <returns>The deserialized value</returns>
-    internal static object Deserialize(DeserializationContext context, FieldValueProxy value, BclType targetType) {
+    internal static object Deserialize(
+        DeserializationContext context, FirestoreValue value, BclType targetType) {
       Preconditions.CheckNotNull(context, nameof(context));
-      Preconditions.CheckNotNull(value, nameof(value));
+      Preconditions.CheckNotNull(targetType, nameof(targetType));
 
-      // If we're asked for a FieldValueProxy, just return it. Since it's immutable, no
+      // If we're asked for a FirestoreValue, just return it. Since it's immutable, no
       // cloning is necessary.
-      if (targetType == typeof(FieldValueProxy)) {
+      if (targetType == typeof(FirestoreValue)) {
         return value;
       }
       if (targetType == typeof(object)) {
-        targetType = GetTargetType(value);
+        return DeserializeDefaultObject(context, value);
       }
 
       BclType underlyingType = Nullable.GetUnderlyingType(targetType);
-      if (value.is_null()) {
+      if (value.IsNull) {
         if (!targetType.IsValueType || underlyingType != null) {
           return null;
-        } else {
-          throw new ArgumentException(String.Format("Unable to convert null value to {0}", targetType.FullName));
         }
+        throw new ArgumentException(
+            String.Format("Unable to convert null value to {0}", targetType.FullName));
       }
 
       // We deserialize to T and Nullable<T> the same way for all non-null values. Use the converter
@@ -64,42 +64,65 @@ namespace Firebase.Firestore {
       return context.GetConverter(nonNullableTargetType).DeserializeValue(context, value);
     }
 
-    internal static object DeserializeMap(DeserializationContext context, FieldValueProxy mapValue, BclType targetType) {
-      if (targetType == typeof(object)) {
-        targetType = typeof(Dictionary<string, object>);
+    internal static object DeserializeMap(
+        DeserializationContext context, FirestoreValue mapValue, BclType targetType) {
+      if (targetType == typeof(object) || targetType == typeof(Dictionary<string, object>) ||
+          targetType == typeof(IDictionary<string, object>)) {
+        return DeserializeDefaultMap(context, mapValue.MapValue);
       }
       return context.GetConverter(targetType).DeserializeMap(context, mapValue);
     }
 
-    private static BclType GetTargetType(FieldValueProxy value) {
-      // TODO: Use an array instead?
-      switch (value.type()) {
-        case FieldValueProxy.Type.Null:
-          // Any nullable type is fine here; we'll return null anyway.
-          return typeof(string);
-        case FieldValueProxy.Type.Array:
-          return typeof(List<object>);
-        case FieldValueProxy.Type.Boolean:
-          return typeof(bool);
-        case FieldValueProxy.Type.Blob:
-          return typeof(Blob);
-        case FieldValueProxy.Type.Double:
-          return typeof(double);
-        case FieldValueProxy.Type.GeoPoint:
-          return typeof(GeoPoint);
-        case FieldValueProxy.Type.Integer:
-          return typeof(long);
-        case FieldValueProxy.Type.Map:
-          return typeof(Dictionary<string, object>);
-        case FieldValueProxy.Type.Reference:
-          return typeof(DocumentReference);
-        case FieldValueProxy.Type.String:
-          return typeof(string);
-        case FieldValueProxy.Type.Timestamp:
-          return typeof(Timestamp);
+    private static object DeserializeDefaultObject(
+        DeserializationContext context, FirestoreValue value) {
+      switch (value.Kind) {
+        case FirestoreValueKind.Null:
+          return null;
+        case FirestoreValueKind.Boolean:
+          return value.BooleanValue;
+        case FirestoreValueKind.Integer:
+          return value.IntegerValue;
+        case FirestoreValueKind.Double:
+          return value.DoubleValue;
+        case FirestoreValueKind.String:
+          return value.StringValue;
+        case FirestoreValueKind.Timestamp:
+          return value.TimestampValue;
+        case FirestoreValueKind.Blob:
+          return value.BlobValue;
+        case FirestoreValueKind.GeoPoint:
+          return value.GeoPointValue;
+        case FirestoreValueKind.Reference: {
+          DocumentReferenceValue rv = value.ReferenceValue;
+          FirebaseFirestore db = context.Firestore.GetDatabaseInstanceForReference(
+              rv.ProjectId, rv.DatabaseId);
+          return new DocumentReference(rv.Path, db);
+        }
+        case FirestoreValueKind.Array: {
+          IReadOnlyList<FirestoreValue> arr = value.ArrayValue;
+          var list = new List<object>(arr.Count);
+          for (int i = 0; i < arr.Count; i++) {
+            list.Add(DeserializeDefaultObject(context, arr[i]));
+          }
+          return list;
+        }
+        case FirestoreValueKind.Map:
+          return DeserializeDefaultMap(context, value.MapValue);
         default:
-          throw new ArgumentException(String.Format("Unable to convert value type {0} to System.Object", value.type()));
+          throw new ArgumentException(
+              String.Format("Unable to convert value type {0} to System.Object", value.Kind));
       }
+    }
+
+    private static Dictionary<string, object> DeserializeDefaultMap(
+        DeserializationContext context, IDictionary<string, FirestoreValue> map) {
+      var dict = new Dictionary<string, object>(map?.Count ?? 0, StringComparer.Ordinal);
+      if (map != null) {
+        foreach (KeyValuePair<string, FirestoreValue> kv in map) {
+          dict[kv.Key] = DeserializeDefaultObject(context, kv.Value);
+        }
+      }
+      return dict;
     }
   }
 }

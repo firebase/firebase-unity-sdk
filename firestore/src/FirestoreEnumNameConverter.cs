@@ -33,6 +33,9 @@ namespace Firebase.Firestore {
   /// </para>
   /// </remarks>
   /// <typeparam name="T">The enum type to convert</typeparam>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   public sealed class FirestoreEnumNameConverter<T> : FirestoreConverter<T>
       where T : struct {
     // These dictionaries are static as they only depend on the type of T.

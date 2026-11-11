@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
-
   /// <summary>
   /// Converter for <see cref="IList"/>-based types. (Note that this doesn't handle types that
   /// implement the generic <see cref="IList{T}"/> interface without the non-generic one.)
@@ -30,58 +27,53 @@ namespace Firebase.Firestore.Converters {
   /// </summary>
   internal sealed class EnumerableConverter : EnumerableConverterBase {
     private readonly BclType _elementType;
+    // Internal type to hold deserialized values.
+    private readonly BclType _listType;
 
     internal EnumerableConverter(BclType targetType) : base(targetType) {
       _elementType = typeof(object);
 
       // (We could also make this type generic, like DictionaryConverter. There's a difference
       // in that we don't need a generic interface in the conversion code here.)
-      var interfaces = targetType.GetInterfaces();
+      Type[] interfaces = targetType.GetInterfaces();
       Type genericEnumerable = null;
       if (targetType.IsInterface && targetType.IsGenericType &&
           targetType.GetGenericTypeDefinition() == typeof(IEnumerable<>)) {
         genericEnumerable = targetType;
       } else {
-        genericEnumerable = interfaces.FirstOrDefault(iface => iface.IsGenericType &&
-                                                               iface.GetGenericTypeDefinition() ==
-                                                                   typeof(IEnumerable<>));
+        genericEnumerable = interfaces.FirstOrDefault(
+            iface => iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IEnumerable<>));
       }
       if (genericEnumerable != null) {
         _elementType = genericEnumerable.GetGenericArguments()[0];
       }
+      _listType = typeof(List<>).MakeGenericType(_elementType);
     }
 
-    protected override object DeserializeArray(DeserializationContext context,
-                                               FieldValueProxy arrayValue) {
-      Preconditions.CheckState(arrayValue.type() == FieldValueProxy.Type.Array,
-                               "Expected to receive an array FieldValue");
-
-      // Internal type to hold deserialized values.
-      var listType = typeof(List<>).MakeGenericType(_elementType);
-      if (!TargetType.IsAssignableFrom(listType)) {
-        throw new NotSupportedException(
-            String.Format("Deserializing to {0} is not supported. Please change to a List " +
-                              "or use a custom converter to convert to it.",
-                          TargetType.FullName));
+    protected override object DeserializeArray(
+        DeserializationContext context, FirestoreValue arrayValue) {
+      Preconditions.CheckState(
+          arrayValue.Kind == FirestoreValueKind.Array, "Expected to receive an array FirestoreValue");
+      if (!TargetType.IsAssignableFrom(_listType)) {
+        throw new NotSupportedException(String.Format(
+            "Deserializing to {0} is not supported. Please change to a List " +
+            "or use a custom converter to convert to it.",
+            TargetType.FullName));
       }
-
-      using (var array = FirestoreCpp.ConvertFieldValueToVector(arrayValue)) {
-        uint usize = array.Size();
-        if (usize > System.Int32.MaxValue) {
-          throw new ArgumentException(
-              "List contains too many values. (More than System.Int32.MaxValue)");
+      IReadOnlyList<FirestoreValue> src = arrayValue.ArrayValue;
+      if (_elementType == typeof(object)) {
+        var fastList = new List<object>(src.Count);
+        for (int i = 0; i < src.Count; i++) {
+          fastList.Add(ValueDeserializer.Deserialize(context, src[i], typeof(object)));
         }
-
-        // TODO: See if using a compiled expression tree is faster.
-        var ret = (IList)Activator.CreateInstance(listType);
-        for (int i = 0; i < usize; i++) {
-          FieldValueProxy value = array.GetUnsafeView((uint)i);
-          var deserialized = ValueDeserializer.Deserialize(context, value, _elementType);
-          ret.Add(deserialized);
-        }
-
-        return ret;
+        return fastList;
       }
+      // TODO: See if using a compiled expression tree is faster.
+      var ret = (IList)Activator.CreateInstance(_listType, src.Count);
+      for (int i = 0; i < src.Count; i++) {
+        ret.Add(ValueDeserializer.Deserialize(context, src[i], _elementType));
+      }
+      return ret;
     }
   }
 }

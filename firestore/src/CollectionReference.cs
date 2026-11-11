@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
   /// <summary>
@@ -27,39 +26,35 @@ namespace Firebase.Firestore {
   /// and querying for documents (using the methods inherited from <c>Query</c>).
   /// </remarks>
   public sealed class CollectionReference : Query, IEquatable<CollectionReference> {
-    // _proxy is defined in the base class Query of type Object.
+    private readonly ResourcePath _collectionPath;
 
-    internal CollectionReference(CollectionReferenceProxy proxy, FirebaseFirestore firestore)
-        : base(proxy, firestore) { }
-
-    private CollectionReferenceProxy Proxy {
-      get {
-        return (CollectionReferenceProxy)_proxy;
-      }
+    internal CollectionReference(ResourcePath collectionPath, FirebaseFirestore firestore)
+        : base(new QuerySpec(collectionPath, collectionGroup: null), firestore) {
+      _collectionPath = Preconditions.CheckNotNull(collectionPath, nameof(collectionPath));
     }
+
+    internal ResourcePath CollectionPath => _collectionPath;
 
     /// <summary>
     /// The final part of the complete collection path; this is the identity of the collection
     /// relative to its parent document.
     /// </summary>
-    public string Id => Proxy.id();
+    public string Id => Firestore.IsDisposed ? string.Empty : _collectionPath.Id;
 
     /// <summary>
-    /// The complete collection path, including project and database ID.
+    /// The complete collection path relative to the database root.
     /// </summary>
-    public string Path => Proxy.path();
+    public string Path => Firestore.IsDisposed ? string.Empty : _collectionPath.CanonicalString;
 
     /// <summary>
     /// The parent document, or null if this is a root collection.
     /// </summary>
     public DocumentReference Parent {
       get {
-        DocumentReferenceProxy parent = Proxy.Parent();
-        if (parent.is_valid()) {
-          return new DocumentReference(parent, Firestore);
-        } else {
-          return null;
-        }
+        ResourcePath parent = _collectionPath.Parent;
+        return parent == null || parent.IsEmpty
+            ? null
+            : new DocumentReference(parent, Firestore);
       }
     }
 
@@ -70,7 +65,8 @@ namespace Firebase.Firestore {
     /// </summary>
     /// <returns>A <see cref="DocumentReference"/> to a child document of this collection with a
     /// random ID.</returns>
-    public DocumentReference Document() => new DocumentReference(Proxy.Document(), Firestore);
+    public DocumentReference Document() =>
+        new DocumentReference(_collectionPath.Child(ResourcePath.AutoId()), Firestore);
 
     /// <summary>
     /// Creates a <see cref="DocumentReference"/> for a child document of this reference.
@@ -80,7 +76,13 @@ namespace Firebase.Firestore {
     /// <returns>A <see cref="DocumentReference"/> for the specified document.</returns>
     public DocumentReference Document(string path) {
       Preconditions.CheckNotNullOrEmpty(path, nameof(path));
-      return new DocumentReference(Proxy.Document(path), Firestore);
+      ResourcePath rel = ResourcePath.ParseRelative(path, nameof(path));
+      if (rel.Count % 2 == 0) {
+        throw new ArgumentException(
+            $"Invalid document reference. Relative document paths must have an odd number of segments, but {path} has {rel.Count}.",
+            nameof(path));
+      }
+      return new DocumentReference(_collectionPath.Append(rel), Firestore);
     }
 
     /// <summary>
@@ -97,19 +99,17 @@ namespace Firebase.Firestore {
     }
 
     /// <inheritdoc />
-    public override int GetHashCode() {
-      int hash = Firestore.GetHashCode();
-      hash = hash * 31 + base.GetHashCode();
-      return hash;
-    }
+    public override int GetHashCode() =>
+        Firestore.GetHashCode() * 31 + _collectionPath.GetHashCode();
 
     /// <inheritdoc />
     public override bool Equals(object obj) => Equals(obj as CollectionReference);
 
     /// <inheritdoc />
-    public bool Equals(CollectionReference other) {
-      return other != null && base.Equals(other);
-    }
+    public bool Equals(CollectionReference other) =>
+        other != null &&
+        ReferenceEquals(Firestore, other.Firestore) &&
+        _collectionPath.Equals(other._collectionPath);
 
     /// <inheritdoc />
     public override string ToString() => Path;

@@ -13,49 +13,52 @@
 // limitations under the License.
 
 using System;
-using System.Threading;
 using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
   /// <summary>
   /// Settings used to configure a <see cref="FirebaseFirestore"/> instance.
   /// </summary>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   public sealed class FirebaseFirestoreSettings {
+    private const string DefaultHost = "firestore.googleapis.com";
+    private const long DefaultCacheSizeBytes = 100L * 1024L * 1024L;
+    private const long MinimumCacheSizeBytes = 1024L * 1024L;
+
     /// Constant to use when setting <see cref="FirebaseFirestoreSettings.CacheSizeBytes"/> to
     /// disable garbage collection.
-    public static readonly long CacheSizeUnlimited = SettingsProxy.kCacheSizeUnlimited;
+    public static readonly long CacheSizeUnlimited = -1L;
 
-    // The lock that must be held during read and write operations to all instance variables
-    // declared below, such as `_firestoreProxy` and `_host`.
-    private readonly ReaderWriterLock _lock = new ReaderWriterLock();
+    private readonly object _lock = new object();
+    private bool _frozen;
+    private string _host = DefaultHost;
+    private bool _sslEnabled = true;
+    private bool _persistenceEnabled = true;
+    private long _cacheSizeBytes = DefaultCacheSizeBytes;
 
-    // The `FirestoreProxy` to which to apply the settings from this object.
-    // This field will be set to `null` after the settings are applied.
-    private FirestoreProxy _firestoreProxy;
-
-    private string _host;
-    private bool _sslEnabled;
-    private bool _persistenceEnabled;
-    private long _cacheSizeBytes;
-
-    internal FirebaseFirestoreSettings(FirestoreProxy firestoreProxy) {
-      Preconditions.CheckNotNull(firestoreProxy, nameof(firestoreProxy));
-      _firestoreProxy = firestoreProxy;
-
-      SettingsProxy settingsProxy = firestoreProxy.settings();
-      Preconditions.CheckNotNull(settingsProxy, nameof(settingsProxy));
-      _host = settingsProxy.host();
-      _sslEnabled = settingsProxy.is_ssl_enabled();
-      _persistenceEnabled = settingsProxy.is_persistence_enabled();
-      _cacheSizeBytes = settingsProxy.cache_size_bytes();
+    internal FirebaseFirestoreSettings() {
     }
 
-    internal void Dispose() {
-      _lock.AcquireWriterLock(Int32.MaxValue);
-      try {
-        _firestoreProxy = null;
-      } finally {
-        _lock.ReleaseWriterLock();
+    internal void MarkDisposed() {
+      lock (_lock) {
+        _frozen = true;
+      }
+    }
+
+    internal void ValidateAndFreeze() {
+      lock (_lock) {
+        if (_frozen) return;
+        if (string.Equals(_host, DefaultHost, StringComparison.OrdinalIgnoreCase) && !_sslEnabled) {
+          throw new InvalidOperationException(
+              "You can't set the 'SslEnabled' setting to false unless you also set a non-default 'Host'.");
+        }
+        if (_cacheSizeBytes != CacheSizeUnlimited && _cacheSizeBytes < MinimumCacheSizeBytes) {
+          throw new InvalidOperationException(
+              $"Cache size must be set to at least {MinimumCacheSizeBytes} bytes or CacheSizeUnlimited.");
+        }
+        _frozen = true;
       }
     }
 
@@ -68,10 +71,13 @@ namespace Firebase.Firestore {
     /// <see cref="FirebaseFirestore"/> object. Attempting to do so will result in an exception.
     /// </remarks>
     public string Host {
-      get { return WithReadLock(() => _host); }
+      get { lock (_lock) return _host; }
       set {
         Preconditions.CheckNotNullOrEmpty(value, nameof(value));
-        WithWriteLock(() => { _host = value; });
+        lock (_lock) {
+          EnsureWritableLocked();
+          _host = value;
+        }
       }
     }
 
@@ -84,9 +90,12 @@ namespace Firebase.Firestore {
     /// <see cref="FirebaseFirestore"/> object. Attempting to do so will result in an exception.
     /// </remarks>
     public bool SslEnabled {
-      get { return WithReadLock(() => _sslEnabled); }
+      get { lock (_lock) return _sslEnabled; }
       set {
-        WithWriteLock(() => { _sslEnabled = value; });
+        lock (_lock) {
+          EnsureWritableLocked();
+          _sslEnabled = value;
+        }
       }
     }
 
@@ -99,9 +108,12 @@ namespace Firebase.Firestore {
     /// <see cref="FirebaseFirestore"/> object. Attempting to do so will result in an exception.
     /// </remarks>
     public bool PersistenceEnabled {
-      get { return WithReadLock(() => _persistenceEnabled); }
+      get { lock (_lock) return _persistenceEnabled; }
       set {
-        WithWriteLock(() => { _persistenceEnabled = value; });
+        lock (_lock) {
+          EnsureWritableLocked();
+          _persistenceEnabled = value;
+        }
       }
     }
 
@@ -121,79 +133,31 @@ namespace Firebase.Firestore {
     /// <see cref="FirebaseFirestore"/> object. Attempting to do so will result in an exception.
     /// </remarks>
     public long CacheSizeBytes {
-      get { return WithReadLock(() => _cacheSizeBytes); }
+      get { lock (_lock) return _cacheSizeBytes; }
       set {
-        WithWriteLock(() => { _cacheSizeBytes = value; });
-      }
-    }
-
-    private T WithReadLock<T>(Func<T> func) {
-      _lock.AcquireReaderLock(Int32.MaxValue);
-      try {
-        return func();
-      } finally {
-        _lock.ReleaseReaderLock();
-      }
-    }
-
-    private void WithWriteLock(Action action) {
-      _lock.AcquireWriterLock(Int32.MaxValue);
-      try {
-        if (_firestoreProxy == null) {
-          throw new InvalidOperationException(
-              "The settings cannot be modified after calling non-static methods in the " +
-              "FirebaseFirestore instance or after the FirebaseFirestore instance is disposed.");
+        lock (_lock) {
+          EnsureWritableLocked();
+          if (value != CacheSizeUnlimited && value < MinimumCacheSizeBytes) {
+            throw new ArgumentException(
+                $"Cache size must be at least {MinimumCacheSizeBytes} bytes.", nameof(value));
+          }
+          _cacheSizeBytes = value;
         }
-        action();
-      } finally {
-        _lock.ReleaseWriterLock();
       }
     }
 
-    /// <summary>
-    /// The first time that this method is invoked it will apply the settings from this object to
-    /// the <a cref="FirestoreProxy" /> object that was given to the constructor.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// All subsequent invocations after the first invocation will simply do nothing and return as
-    /// if successful.
-    /// </para>
-    /// <para>
-    /// After this method is invoked then any attempts to change the values of the properties in
-    /// this object will result in an exception.
-    /// </para>
-    /// </remarks>
-    internal void EnsureAppliedToFirestoreProxy() {
-      if (_firestoreProxy == null) {
-        return;
-      }
-
-      _lock.AcquireWriterLock(Int32.MaxValue);
-      try {
-        if (_firestoreProxy == null) {
-          return;
-        }
-
-        SettingsProxy settingsProxy = new SettingsProxy();
-        settingsProxy.set_host(_host);
-        settingsProxy.set_ssl_enabled(_sslEnabled);
-        settingsProxy.set_persistence_enabled(_persistenceEnabled);
-        settingsProxy.set_cache_size_bytes(_cacheSizeBytes);
-
-        _firestoreProxy.set_settings(settingsProxy);
-
-        _firestoreProxy = null;
-      } finally {
-        _lock.ReleaseWriterLock();
+    private void EnsureWritableLocked() {
+      if (_frozen) {
+        throw new InvalidOperationException(
+            "The settings cannot be modified after calling non-static methods in the " +
+            "FirebaseFirestore instance or after the FirebaseFirestore instance is disposed.");
       }
     }
 
     /// <inheritdoc />
-    public override string ToString() {
-      return nameof(FirebaseFirestoreSettings) + "{" + nameof(Host) + "=" + Host + ", " +
-             nameof(SslEnabled) + "=" + SslEnabled + ", " + nameof(PersistenceEnabled) + "=" +
-             PersistenceEnabled + ", " + nameof(CacheSizeBytes) + "=" + CacheSizeBytes + "}";
-    }
+    public override string ToString() =>
+        nameof(FirebaseFirestoreSettings) + "{" + nameof(Host) + "=" + Host + ", " +
+        nameof(SslEnabled) + "=" + SslEnabled + ", " + nameof(PersistenceEnabled) + "=" +
+        PersistenceEnabled + ", " + nameof(CacheSizeBytes) + "=" + CacheSizeBytes + "}";
   }
 }

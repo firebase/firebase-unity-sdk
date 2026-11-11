@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
   /// <summary>
@@ -25,20 +25,51 @@ namespace Firebase.Firestore {
   /// (and overloads) and passed to user code.
   /// </summary>
   public sealed class Transaction {
-    private readonly TransactionCallbackProxy _proxy;
     private readonly FirebaseFirestore _firestore;
+    private readonly FirestoreRpcClient _rpc;
+    private readonly string _transactionId;
+    private readonly CancellationToken _ct;
+    private readonly object _lock = new object();
+    private readonly List<MutationSpec> _mutations = new List<MutationSpec>();
+    private volatile bool _disposed;
 
-    internal Transaction(TransactionCallbackProxy proxy, FirebaseFirestore firestore) {
-      _proxy = Util.NotNull(proxy);
-      _firestore = Util.NotNull(firestore);
+    internal List<MutationSpec> PendingMutations {
+      get { lock (_lock) return new List<MutationSpec>(_mutations); }
+    }
+
+    internal void MarkDisposed() => _disposed = true;
+
+    private bool IsInvalid =>
+        _disposed || _firestore.IsDisposed || _firestore.Core.IsDisposed || _firestore.Core.IsTerminated;
+
+    private void EnsureValid() {
+      if (IsInvalid) {
+        throw new InvalidOperationException("Transaction is no longer valid.");
+      }
+    }
+
+    internal Transaction(
+        FirebaseFirestore firestore,
+        FirestoreRpcClient rpc,
+        string transactionId,
+        CancellationToken ct) {
+      _firestore = Preconditions.CheckNotNull(firestore, nameof(firestore));
+      _rpc = Preconditions.CheckNotNull(rpc, nameof(rpc));
+      _transactionId = transactionId;
+      _ct = ct;
     }
 
     /// <summary>
     /// The database for this transaction.
     /// </summary>
-    public FirebaseFirestore Firestore {
-      get {
-        return _firestore;
+    public FirebaseFirestore Firestore => _firestore;
+
+    private void ValidateDocumentReference(DocumentReference docRef) {
+      Preconditions.CheckNotNull(docRef, nameof(docRef));
+      if (!ReferenceEquals(docRef.Firestore, _firestore)) {
+        throw new ArgumentException(
+            "Provided DocumentReference belongs to a different FirebaseFirestore instance.",
+            nameof(docRef));
       }
     }
 
@@ -51,18 +82,37 @@ namespace Firebase.Firestore {
     /// </param>
     /// <returns>A snapshot of the given document with respect to this transaction.</returns>
     public Task<DocumentSnapshot> GetSnapshotAsync(DocumentReference documentReference) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
-      // C++ and native client SDK only provides sync API. Here we convert it to async API.
-      return Task.Factory.StartNew(() => {
-        TransactionResultOfGetProxy result = _proxy.Get(documentReference.Proxy);
-        if (!result.is_valid()) {
-          throw new InvalidOperationException("Transaction has ended");
-        } else if (Enums.Convert(result.error_code()) == FirestoreError.Ok) {
-          return new DocumentSnapshot(result.TakeSnapshot(), Firestore);
-        } else {
-          throw new FirestoreException(Enums.Convert(result.error_code()), result.error_message());
+      ValidateDocumentReference(documentReference);
+      if (IsInvalid) {
+        return Util.TaskFromException<DocumentSnapshot>(
+            new InvalidOperationException("Transaction is no longer valid."));
+      }
+      lock (_lock) {
+        if (_mutations.Count > 0) {
+          return Util.TaskFromException<DocumentSnapshot>(new InvalidOperationException(
+              "Firestore transactions require all reads to be executed before all writes."));
         }
-      });
+      }
+      FirestoreException invalidPath = documentReference.ResourcePath.ValidateForBackend();
+      if (invalidPath != null) {
+        return Util.TaskFromException<DocumentSnapshot>(invalidPath);
+      }
+      return ReadTransactionalDocAsync(documentReference);
+    }
+
+    private async Task<DocumentSnapshot> ReadTransactionalDocAsync(DocumentReference docRef) {
+      EnsureValid();
+      Dictionary<ResourcePath, MutableDocument> res =
+          await _rpc.BatchGetAsync(new[] { docRef.ResourcePath }, _transactionId, _ct)
+              .ConfigureAwait(false);
+      EnsureValid();
+      res.TryGetValue(docRef.ResourcePath, out MutableDocument doc);
+      bool exists = doc != null && doc.Exists;
+      return new DocumentSnapshot(
+          docRef,
+          exists ? doc.Fields : null,
+          exists,
+          new SnapshotMetadata(hasPendingWrites: false, isFromCache: false));
     }
 
     /// <summary>
@@ -75,22 +125,34 @@ namespace Firebase.Firestore {
     /// <param name="documentData">The data for the document. Must not be <c>null</c>.</param>
     /// <param name="options">The options to use when updating the document. May be <c>null</c>,
     /// which is equivalent to <see cref="SetOptions.Overwrite"/>.</param>
-    public void Set(DocumentReference documentReference, object documentData, SetOptions options =
-        null) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
+    public void Set(
+        DocumentReference documentReference, object documentData, SetOptions options = null) {
+      ValidateDocumentReference(documentReference);
       Preconditions.CheckNotNull(documentData, nameof(documentData));
-
-      FieldValueProxy data = ValueSerializer.Serialize(SerializationContext.Default, documentData);
-      if (!data.is_map()) {
-        throw new ArgumentException("documentData must be either an IDictionary or a POCO. Instead we get " + documentData.GetType().FullName);
-      }
-      if (options == null) {
-        options = SetOptions.Overwrite;
+      EnsureValid();
+      FirestoreException pathErr = documentReference.ResourcePath.ValidateForBackend();
+      if (pathErr != null) {
+        throw new ArgumentException(pathErr.Message, nameof(documentReference));
       }
 
-      bool successful = _proxy.Set(documentReference.Proxy, data, options.Proxy);
-      if (!successful) {
-        throw new InvalidOperationException("Transaction has ended");
+      FirestoreValue data = ValueSerializer.Serialize(SerializationContext.Default, documentData);
+      if (data.Kind != FirestoreValueKind.Map) {
+        throw new ArgumentException(
+            "documentData must be either an IDictionary or a POCO. Instead we get " +
+            documentData.GetType().FullName);
+      }
+      var rawMap = data.MapValue as Dictionary<string, FirestoreValue>
+          ?? FirestoreValue.CloneMapDeep(data.MapValue);
+      MutationSpec spec = MutationSpec.ParseSet(
+          SerializationContext.Default,
+          documentReference.ResourcePath,
+          rawMap,
+          options ?? SetOptions.Overwrite,
+          _firestore.ProjectId,
+          _firestore.DatabaseId);
+      lock (_lock) {
+        EnsureValid();
+        _mutations.Add(spec);
       }
     }
 
@@ -103,18 +165,28 @@ namespace Firebase.Firestore {
     /// to reference nested fields in the document.  Fields not present in this dictionary are not
     /// updated. Must not be <c>null</c>.</param>
     public void Update(DocumentReference documentReference, IDictionary<string, object> updates) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
+      ValidateDocumentReference(documentReference);
       Preconditions.CheckNotNull(updates, nameof(updates));
-
-      FieldValueProxy data = ValueSerializer.Serialize(SerializationContext.Default, updates);
-      if (!data.is_map()) {
-        // TODO(zxu): More likely to be an internal error since the type is already checked.
-        throw new ArgumentException("updates must be Dictionary<string, object>. Instead we get " + updates.GetType().FullName);
+      EnsureValid();
+      FirestoreException pathErr = documentReference.ResourcePath.ValidateForBackend();
+      if (pathErr != null) {
+        throw new ArgumentException(pathErr.Message, nameof(documentReference));
       }
 
-      bool successful = _proxy.Update(documentReference.Proxy, data);
-      if (!successful) {
-        throw new InvalidOperationException("Transaction has ended");
+      var fpUpdates = new List<KeyValuePair<FieldPath, object>>(updates.Count);
+      foreach (KeyValuePair<string, object> kv in updates) {
+        FieldPath fp = FieldPath.FromDotSeparatedString(kv.Key);
+        fpUpdates.Add(new KeyValuePair<FieldPath, object>(fp, kv.Value));
+      }
+      MutationSpec spec = MutationSpec.ParseUpdate(
+          SerializationContext.Default,
+          documentReference.ResourcePath,
+          fpUpdates,
+          _firestore.ProjectId,
+          _firestore.DatabaseId);
+      lock (_lock) {
+        EnsureValid();
+        _mutations.Add(spec);
       }
     }
 
@@ -127,16 +199,12 @@ namespace Firebase.Firestore {
     /// </param>
     /// <param name="value">The new value for the field. May be <c>null</c>.</param>
     public void Update(DocumentReference documentReference, string field, object value) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
+      ValidateDocumentReference(documentReference);
       Preconditions.CheckNotNullOrEmpty(field, nameof(field));
-
-      var data = new FieldToValueMap();
-      data.Insert(field, ValueSerializer.Serialize(SerializationContext.Default, value));
-
-      bool successful = _proxy.Update(documentReference.Proxy, data);
-      if (!successful) {
-        throw new InvalidOperationException("Transaction has ended");
-      }
+      EnsureValid();
+      Update(documentReference, new Dictionary<string, object>(1, StringComparer.Ordinal) {
+        { field, value },
+      });
     }
 
     /// <summary>
@@ -147,19 +215,28 @@ namespace Firebase.Firestore {
     /// <param name="updates">A dictionary of field / value pairs to update. Fields not present in
     /// this dictionary are not updated. Must not be <c>null</c>.</param>
     public void Update(DocumentReference documentReference, IDictionary<FieldPath, object> updates) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
+      ValidateDocumentReference(documentReference);
       Preconditions.CheckNotNull(updates, nameof(updates));
-
-      var data = new FieldPathToValueMap();
-      foreach (KeyValuePair<FieldPath, object> key_value in updates) {
-        FieldPathProxy key = key_value.Key.ConvertToProxy();
-        FieldValueProxy value = ValueSerializer.Serialize(SerializationContext.Default, key_value.Value);
-        data.Insert(key, value);
+      EnsureValid();
+      FirestoreException pathErr = documentReference.ResourcePath.ValidateForBackend();
+      if (pathErr != null) {
+        throw new ArgumentException(pathErr.Message, nameof(documentReference));
       }
 
-      bool successful = _proxy.Update(documentReference.Proxy, data);
-      if (!successful) {
-        throw new InvalidOperationException("Transaction has ended");
+      foreach (KeyValuePair<FieldPath, object> kv in updates) {
+        if (kv.Key == null) {
+          throw new ArgumentNullException(nameof(updates), "FieldPath key cannot be null.");
+        }
+      }
+      MutationSpec spec = MutationSpec.ParseUpdate(
+          SerializationContext.Default,
+          documentReference.ResourcePath,
+          updates,
+          _firestore.ProjectId,
+          _firestore.DatabaseId);
+      lock (_lock) {
+        EnsureValid();
+        _mutations.Add(spec);
       }
     }
 
@@ -168,10 +245,11 @@ namespace Firebase.Firestore {
     /// </summary>
     /// <param name="documentReference">The document to delete. Must not be <c>null</c>.</param>
     public void Delete(DocumentReference documentReference) {
-      Preconditions.CheckNotNull(documentReference, nameof(documentReference));
-      bool successful = _proxy.Delete(documentReference.Proxy);
-      if (!successful) {
-        throw new InvalidOperationException("Transaction has ended");
+      ValidateDocumentReference(documentReference);
+      EnsureValid();
+      lock (_lock) {
+        EnsureValid();
+        _mutations.Add(MutationSpec.CreateDelete(documentReference.ResourcePath));
       }
     }
   }

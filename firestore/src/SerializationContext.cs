@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Converters;
 using System.Collections.Generic;
+using Firebase.Firestore.Converters;
 using BclType = System.Type;
 
 namespace Firebase.Firestore {
@@ -22,6 +22,9 @@ namespace Firebase.Firestore {
   /// databases, etc. Currently only used for custom converters (so Firestore-wide) but could potentially
   /// have more information later.
   /// </summary>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   internal sealed class SerializationContext {
     // Important note: if this class ever contains more state than just the converters,
     // e.g. a reference to the Database, then WithWarningLogger will need to be adjusted accordingly.

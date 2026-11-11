@@ -12,25 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Collections.Generic;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
   /// <summary>
   /// Base class for types that always serialize to a map value.
   /// Derived classes need to implement deserialization as well as overriding
-  /// <see cref="ConverterBase.SerializeMap(SerializationContext, object, System.Collections.Generic.IDictionary{string, FieldValueProxy})"/>,
+  /// <see cref="ConverterBase.SerializeMap(SerializationContext, object, System.Collections.Generic.IDictionary{string, FirestoreValue})"/>,
   /// which is called by this class's implementation of <see cref="Serialize(SerializationContext, object)"/>.
   /// </summary>
   internal abstract class MapConverterBase : ConverterBase {
     internal MapConverterBase(BclType targetType) : base(targetType) {
     }
 
-    public // TODO(b/141568173): Significant newline.
-    override FieldValueProxy Serialize(SerializationContext context, object value) {
-      var map = new Dictionary<string, FieldValueProxy>();
+    public override FirestoreValue Serialize(SerializationContext context, object value) {
+      var map = new Dictionary<string, FirestoreValue>(StringComparer.Ordinal);
       SerializeMap(context, value, map);
-      return ConvertToProxyMap(map);
+      return FirestoreValue.FromMap(map);
     }
   }
 }

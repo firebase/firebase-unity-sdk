@@ -12,18 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
-using Firebase.Platform;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
-  using DocumentSnapshotCallbackMap =
-      ListenerRegistrationMap<Action<DocumentSnapshotProxy, FirestoreError, string>>;
-
   /// <summary>
   /// A <c>DocumentReference</c> refers to a document location in a Cloud Firestore database and can
   /// be used to write, read, or listen to the location. There may or may not exist a document at
@@ -31,50 +25,36 @@ namespace Firebase.Firestore {
   /// <see cref="CollectionReference"/> to a subcollection.
   /// </summary>
   public sealed class DocumentReference : IEquatable<DocumentReference> {
-    private readonly DocumentReferenceProxy _proxy;
+    private readonly ResourcePath _path;
     private readonly FirebaseFirestore _firestore;
 
-    internal DocumentReferenceProxy Proxy {
-      get {
-        return _proxy;
-      }
-    }
+    internal ResourcePath ResourcePath => _path;
 
-    internal DocumentReference(DocumentReferenceProxy proxy, FirebaseFirestore firestore) {
-      Util.HardAssert(Util.NotNull(proxy).is_valid(),
-          "Cannot create DocumentReference for invalid DocumentReferenceProxy");
-      _proxy = proxy;
-      _firestore = Util.NotNull(firestore);
-    }
-
-    internal static void ClearCallbacksForOwner(FirebaseFirestore owner) {
-      snapshotListenerCallbacks.ClearCallbacksForOwner(owner);
+    internal DocumentReference(ResourcePath path, FirebaseFirestore firestore) {
+      _path = Preconditions.CheckNotNull(path, nameof(path));
+      _firestore = Preconditions.CheckNotNull(firestore, nameof(firestore));
     }
 
     /// <summary>
     /// The database which contains the document.
     /// </summary>
-    public FirebaseFirestore Firestore {
-      get {
-        return _firestore;
-      }
-    }
+    public FirebaseFirestore Firestore => _firestore;
 
     /// <summary>
     /// The final part of the complete document path; this is the identity of the document relative
     /// to its parent collection.
     /// </summary>
-    public string Id => _proxy.id();
+    public string Id => _firestore.IsDisposed ? string.Empty : _path.Id;
 
     /// <summary>
     /// The complete document path, not including project and database ID.
     /// </summary>
-    public string Path => _proxy.path();
+    public string Path => _firestore.IsDisposed ? string.Empty : _path.CanonicalString;
 
     /// <summary>
     /// The parent collection. Never <c>null</c>.
     /// </summary>
-    public CollectionReference Parent => new CollectionReference(_proxy.Parent(), Firestore);
+    public CollectionReference Parent => new CollectionReference(_path.Parent, _firestore);
 
     /// <summary>
     /// Creates a <see cref="CollectionReference"/> for a child collection of this document.
@@ -83,33 +63,41 @@ namespace Firebase.Firestore {
     /// <c>null</c>, and must contain an odd number of slash-separated path elements.</param>
     /// <returns>A <see cref="CollectionReference"/> for the specified collection.</returns>
     public CollectionReference Collection(string path) {
-      Preconditions.CheckNotNull(path, nameof(path));
-      return new CollectionReference(_proxy.Collection(path), Firestore);
+      Preconditions.CheckNotNullOrEmpty(path, nameof(path));
+      ResourcePath rel = ResourcePath.ParseRelative(path, nameof(path));
+      if (rel.Count % 2 == 0) {
+        throw new ArgumentException(
+            $"Invalid collection reference. Relative collection paths must have an odd number of segments, but {path} has {rel.Count}.",
+            nameof(path));
+      }
+      return new CollectionReference(_path.Append(rel), _firestore);
     }
 
     /// <inheritdoc />
-    public override int GetHashCode() => Firestore.GetHashCode() * 31 + Path.GetHashCode();
+    public override int GetHashCode() => _firestore.GetHashCode() * 31 + _path.GetHashCode();
 
     /// <inheritdoc />
     public override bool Equals(object obj) => Equals(obj as DocumentReference);
 
     /// <inheritdoc />
-    public bool Equals(DocumentReference other) => other != null && Path == other.Path && Firestore == other.Firestore;
+    public bool Equals(DocumentReference other) =>
+        other != null &&
+        ReferenceEquals(_firestore, other._firestore) &&
+        _path.Equals(other._path);
 
     /// <inheritdoc />
-    public override string ToString() {
-      AppOptionsInternal options = Util.NotNull(Firestore.App.options());
-      string projectId = Util.NotNull(options.ProjectId);
-      // TODO(zxu): Find a way to programmatically get database id.
-      return "/projects/" + projectId + "/databases/(default)/" + Path;
-    }
+    public override string ToString() =>
+        $"/projects/{_firestore.ProjectId}/databases/{_firestore.DatabaseId}/{Path}";
 
     /// <summary>
     /// Asynchronously deletes the document referred to by this <c>DocumentReference</c>.
     /// </summary>
     /// <returns>The write result of the server operation. The task will not complete while the
     /// client is offline, though local changes will be visible immediately.</returns>
-    public Task DeleteAsync() => _proxy.DeleteAsync();
+    public Task DeleteAsync() {
+      return _firestore.Core.EnqueueMutationsAsync(
+          new[] { MutationSpec.CreateDelete(_path) });
+    }
 
     /// <summary>
     /// Asynchronously performs a set of updates on the document referred to by this
@@ -122,8 +110,22 @@ namespace Firebase.Firestore {
     /// client is offline, though local changes will be visible immediately.</returns>
     public Task UpdateAsync(IDictionary<string, object> updates) {
       Preconditions.CheckNotNull(updates, nameof(updates));
-      FieldValueProxy fieldValue = ValueSerializer.Serialize(SerializationContext.Default, updates);
-      return FirestoreCpp.DocumentReferenceUpdateAsync(_proxy, fieldValue);
+      try {
+        var fpUpdates = new List<KeyValuePair<FieldPath, object>>(updates.Count);
+        foreach (KeyValuePair<string, object> kv in updates) {
+          FieldPath fp = FieldPath.FromDotSeparatedString(kv.Key);
+          fpUpdates.Add(new KeyValuePair<FieldPath, object>(fp, kv.Value));
+        }
+        MutationSpec spec = MutationSpec.ParseUpdate(
+            SerializationContext.Default,
+            _path,
+            fpUpdates,
+            _firestore.ProjectId,
+            _firestore.DatabaseId);
+        return _firestore.Core.EnqueueMutationsAsync(new[] { spec });
+      } catch (Exception ex) {
+        return Util.TaskFromException<bool>(ex);
+      }
     }
 
     /// <summary>
@@ -137,9 +139,13 @@ namespace Firebase.Firestore {
     /// client is offline, though local changes will be visible immediately.</returns>
     public Task UpdateAsync(string field, object value) {
       Preconditions.CheckNotNull(field, nameof(field));
-      FieldValueProxy proxyValue = ValueSerializer.Serialize(SerializationContext.Default, value);
-      return UpdateAsync(new Dictionary<string, object>{
-        {field, proxyValue},
+      // Validate value serializability synchronously if non-null, while empty field string faults Task
+      // (matching DocumentReference_UpdateAsync_EmptyStringField in InvalidArgumentsTest.cs).
+      if (value != null) {
+        ValueSerializer.Serialize(SerializationContext.Default, value);
+      }
+      return UpdateAsync(new Dictionary<string, object>(1, StringComparer.Ordinal) {
+        { field, value },
       });
     }
 
@@ -154,13 +160,23 @@ namespace Firebase.Firestore {
     /// client is offline, though local changes will be visible immediately.</returns>
     public Task UpdateAsync(IDictionary<FieldPath, object> updates) {
       Preconditions.CheckNotNull(updates, nameof(updates));
-      var data = new FieldPathToValueMap();
+      // Null FieldPath key throws synchronously; other validation errors fault the returned Task.
       foreach (KeyValuePair<FieldPath, object> kv in updates) {
-        FieldPathProxy key = kv.Key.ConvertToProxy();
-        FieldValueProxy value = ValueSerializer.Serialize(SerializationContext.Default, kv.Value);
-        data.Insert(key, value);
+        if (kv.Key == null) {
+          throw new ArgumentNullException(nameof(updates), "Update dictionary cannot contain a null FieldPath key.");
+        }
       }
-      return FirestoreCpp.DocumentReferenceUpdateAsync(_proxy, data);
+      try {
+        MutationSpec spec = MutationSpec.ParseUpdate(
+            SerializationContext.Default,
+            _path,
+            updates,
+            _firestore.ProjectId,
+            _firestore.DatabaseId);
+        return _firestore.Core.EnqueueMutationsAsync(new[] { spec });
+      } catch (Exception ex) {
+        return Util.TaskFromException<bool>(ex);
+      }
     }
 
     /// <summary>
@@ -176,18 +192,30 @@ namespace Firebase.Firestore {
     /// client is offline, though local changes will be visible immediately.</returns>
     public Task SetAsync(object documentData, SetOptions options = null) {
       Preconditions.CheckNotNull(documentData, nameof(documentData));
+      options ??= SetOptions.Overwrite;
 
-      if (options == null) {
-        options = SetOptions.Overwrite;
+      FirestoreValue serialized =
+          ValueSerializer.Serialize(SerializationContext.Default, documentData);
+      if (serialized.Kind != FirestoreValueKind.Map) {
+        throw new ArgumentException(
+            "documentData must be either an IDictionary or a POCO. Instead we got " +
+            documentData.GetType().FullName);
       }
 
-      FieldValueProxy fieldValue = ValueSerializer.Serialize(SerializationContext.Default, documentData);
-      if (!fieldValue.is_map()) {
-        throw new ArgumentException("documentData must be either an IDictionary or a POCO." +
-                                    " Instead we got " + documentData.GetType().FullName);
+      try {
+        var rawMap = serialized.MapValue as Dictionary<string, FirestoreValue>
+            ?? FirestoreValue.CloneMapDeep(serialized.MapValue);
+        MutationSpec spec = MutationSpec.ParseSet(
+            SerializationContext.Default,
+            _path,
+            rawMap,
+            options,
+            _firestore.ProjectId,
+            _firestore.DatabaseId);
+        return _firestore.Core.EnqueueMutationsAsync(new[] { spec });
+      } catch (Exception ex) {
+        return Util.TaskFromException<bool>(ex);
       }
-
-      return FirestoreCpp.DocumentReferenceSetAsync(_proxy, fieldValue, options.Proxy);
     }
 
     /// <summary>
@@ -204,10 +232,7 @@ namespace Firebase.Firestore {
     /// fall back to the cache (<c>Source.Default</c>).</param>
     /// <returns>A snapshot of the document. The snapshot may represent a missing document.</returns>
     public Task<DocumentSnapshot> GetSnapshotAsync(Source source = Source.Default) {
-      var sourceProxy = Enums.Convert(source);
-      return Util.MapResult(_proxy.GetAsync(sourceProxy), taskResult => {
-        return new DocumentSnapshot(taskResult, Firestore);
-      });
+      return _firestore.Core.GetDocumentSnapshotAsync(this, source);
     }
 
     /// <summary>
@@ -231,50 +256,10 @@ namespace Firebase.Firestore {
     /// be <c>null</c>. The callback will be invoked on the main thread.</param>
     /// <returns>A <see cref="ListenerRegistration"/> which may be used to stop listening
     /// gracefully.</returns>
-    public ListenerRegistration Listen(MetadataChanges metadataChanges, Action<DocumentSnapshot> callback) {
+    public ListenerRegistration Listen(
+        MetadataChanges metadataChanges, Action<DocumentSnapshot> callback) {
       Preconditions.CheckNotNull(callback, nameof(callback));
-      var tcs = new TaskCompletionSource<object>();
-      int uid = snapshotListenerCallbacks.Register(Firestore, (snapshotProxy, errorCode,
-                                                               errorMessage) => {
-        if (errorCode != FirestoreError.Ok) {
-          tcs.SetException(new FirestoreException(errorCode, errorMessage));
-        } else {
-          FirebaseHandler.RunOnMainThread<object>(() => {
-            callback(new DocumentSnapshot(snapshotProxy, Firestore));
-            return null;
-          });
-        }
-      });
-
-      var metadataChangesProxy = Enums.Convert(metadataChanges);
-      var listener = FirestoreCpp.AddDocumentSnapshotListener(_proxy, metadataChangesProxy, uid,
-                                                              documentSnapshotsHandler);
-
-      return new ListenerRegistration(snapshotListenerCallbacks, uid, tcs, listener);
-    }
-
-    private static DocumentSnapshotCallbackMap snapshotListenerCallbacks = new DocumentSnapshotCallbackMap();
-    internal delegate void ListenerDelegate(int callbackId, IntPtr snapshotPtr,
-                                            FirestoreError errorCode, string errorMessage);
-    private static ListenerDelegate documentSnapshotsHandler = new ListenerDelegate(DocumentSnapshotsHandler);
-
-
-    [MonoPInvokeCallback(typeof(ListenerDelegate))]
-    private static void DocumentSnapshotsHandler(int callbackId, IntPtr snapshotPtr,
-                                                 FirestoreError errorCode, string errorMessage) {
-      try {
-        // Create the proxy object _before_ doing anything else to ensure that the C++ object's
-        // memory does not get leaked (https://github.com/firebase/firebase-unity-sdk/issues/49).
-        var documentSnapshotProxy = new DocumentSnapshotProxy(snapshotPtr, /*cMemoryOwn=*/true);
-
-        Action<DocumentSnapshotProxy, FirestoreError, string> callback;
-        if (snapshotListenerCallbacks.TryGetCallback(callbackId, out callback)) {
-          callback(documentSnapshotProxy, errorCode, errorMessage);
-        }
-
-      } catch (Exception e) {
-        Util.OnPInvokeManagedException(e, nameof(DocumentSnapshotsHandler));
-      }
+      return _firestore.Core.ListenDocument(this, metadataChanges, callback);
     }
   }
 }

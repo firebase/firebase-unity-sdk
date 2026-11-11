@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Collections.Generic;
+using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore.Converters {
   /// <summary>
@@ -25,7 +26,7 @@ namespace Firebase.Firestore.Converters {
     /// <param name="context">The context for the deserialization operation. Never null.</param>
     /// <param name="value">The Firestore value to deserialize. Never null.</param>
     /// <returns>The deserialized value. Should never be null.</returns>
-    object DeserializeValue(DeserializationContext context, FieldValueProxy value);
+    object DeserializeValue(DeserializationContext context, FirestoreValue value);
 
     /// <summary>
     /// Deserializes a map (as a dictionary of name/value pairs) to a POCO.
@@ -33,7 +34,7 @@ namespace Firebase.Firestore.Converters {
     /// <param name="context">The context for the deserialization operation. Never null.</param>
     /// <param name="mapValue">The name/value pairs to deserialize. Never null.</param>
     /// <returns>The deserialized value. Should never be null.</returns>
-    object DeserializeMap(DeserializationContext context, FieldValueProxy mapValue);
+    object DeserializeMap(DeserializationContext context, FirestoreValue mapValue);
 
     /// <summary>
     /// Serializes a single POCO to a Firestore representation.
@@ -41,7 +42,7 @@ namespace Firebase.Firestore.Converters {
     /// <param name="context"></param>
     /// <param name="value">The value to serialize. Never null.</param>
     /// <returns>The serialized value. Should never be null.</returns>
-    FieldValueProxy Serialize(SerializationContext context, object value);
+    FirestoreValue Serialize(SerializationContext context, object value);
 
     /// <summary>
     /// Populates a map based on the serialized form of a POCO.
@@ -52,6 +53,6 @@ namespace Firebase.Firestore.Converters {
     /// <param name="context"></param>
     /// <param name="value">The value to serialize. Never null.</param>
     /// <param name="map">The map to populate. Never null.</param>
-    void SerializeMap(SerializationContext context, object value, IDictionary<string, FieldValueProxy> map);
+    void SerializeMap(SerializationContext context, object value, IDictionary<string, FirestoreValue> map);
   }
 }

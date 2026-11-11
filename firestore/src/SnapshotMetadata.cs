@@ -44,23 +44,12 @@ namespace Firebase.Firestore {
       IsFromCache = isFromCache;
     }
 
-    internal SnapshotMetadataProxy ConvertToProxy() {
-      return new SnapshotMetadataProxy(HasPendingWrites, IsFromCache);
-    }
-
-    internal static SnapshotMetadata ConvertFromProxy(SnapshotMetadataProxy metadata) {
-      return new SnapshotMetadata(metadata.has_pending_writes(), metadata.is_from_cache());
-    }
+    /// <inheritdoc />
+    public override int GetHashCode() =>
+        HasPendingWrites.GetHashCode() * 31 + IsFromCache.GetHashCode() * 23;
 
     /// <inheritdoc />
-    public override int GetHashCode() {
-      return HasPendingWrites.GetHashCode() * 31 + IsFromCache.GetHashCode() * 23;
-    }
-
-    /// <inheritdoc />
-    public override bool Equals(object obj) {
-      return Equals(obj as SnapshotMetadata);
-    }
+    public override bool Equals(object obj) => Equals(obj as SnapshotMetadata);
 
     /// <summary>
     /// Compares this snapshot metadata with another for equality.
@@ -68,9 +57,8 @@ namespace Firebase.Firestore {
     /// <param name="other">The snapshot metadata to compare this one with.</param>
     /// <returns><c>true</c> if this snapshot metadata is equal to <paramref name="other"/>;
     /// <c>false</c> otherwise.</returns>
-    public bool Equals(SnapshotMetadata other) {
-      return other != null && HasPendingWrites == other.HasPendingWrites &&
-             IsFromCache == other.IsFromCache;
-    }
+    public bool Equals(SnapshotMetadata other) =>
+        other != null && HasPendingWrites == other.HasPendingWrites &&
+        IsFromCache == other.IsFromCache;
   }
 }

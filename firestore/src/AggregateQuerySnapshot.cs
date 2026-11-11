@@ -19,31 +19,24 @@ namespace Firebase.Firestore {
   /// The results of executing an <c>AggregateQuerySnapshot</c>.
   /// </summary>
   public sealed class AggregateQuerySnapshot {
-    private readonly AggregateQuerySnapshotProxy _proxy;
-    private readonly FirebaseFirestore _firestore;
+    private readonly AggregateQuery _query;
+    private readonly long _count;
 
-    internal AggregateQuerySnapshot(AggregateQuerySnapshotProxy proxy, FirebaseFirestore firestore) {
-      _proxy = Util.NotNull(proxy);
-      _firestore = Util.NotNull(firestore);
+    internal AggregateQuerySnapshot(AggregateQuery query, long count) {
+      _query = Preconditions.CheckNotNull(query, nameof(query));
+      _count = count;
     }
+
     /// <summary>
     /// Returns the query that was executed to produce this result.
     /// </summary>
-    public AggregateQuery Query {
-      get {
-        return new AggregateQuery(_proxy.query(), _firestore);
-      }
-    }
+    public AggregateQuery Query => _query;
 
     /// <summary>
     /// Returns the number of documents in the result set of the underlying query.
     /// </summary>
-    public long Count {
-      get {
-        return _proxy.count();
-      }
-    }
-    
+    public long Count => _count;
+
     /// <inheritdoc />
     public override bool Equals(object obj) => Equals(obj as AggregateQuerySnapshot);
 
@@ -54,11 +47,10 @@ namespace Firebase.Firestore {
     /// <returns><c>true</c> if this aggregate snapshot is equal to <paramref name="other"/>;
     /// <c>false</c> otherwise.</returns>
     public bool Equals(AggregateQuerySnapshot other) =>
-      other != null && FirestoreCpp.AggregateQuerySnapshotEquals(_proxy, other._proxy);
-    
+        other != null && _count == other._count && _query.Equals(other._query);
+
     /// <inheritdoc />
-    public override int GetHashCode() {
-      return FirestoreCpp.AggregateQuerySnapshotHashCode(_proxy);
-    }
+    public override int GetHashCode() =>
+        _query.GetHashCode() * 31 + Hash.LongHash(_count);
   }
 }

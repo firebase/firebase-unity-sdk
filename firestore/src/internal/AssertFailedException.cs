@@ -25,7 +25,7 @@ namespace Firebase.Firestore.Internal {
   /// incorrectly, such as specifying a null value when null is forbidden or calling a method on a
   /// "closed" instance.
   /// </remarks>
-  internal class AssertFailedException : Exception {
+  internal sealed class AssertFailedException : Exception {
 
     public AssertFailedException() {
     }

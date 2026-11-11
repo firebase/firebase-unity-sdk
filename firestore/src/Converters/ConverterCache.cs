@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
@@ -25,6 +26,9 @@ namespace Firebase.Firestore.Converters {
   /// A cache for serializers based on the target type. Some are prepopulated (e.g. for
   /// primitives); one for anonymous and attributed types are added on demand.
   /// </summary>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   internal static class ConverterCache {
     private static readonly Dictionary<BclType, IFirestoreInternalConverter> s_converters =
         new Dictionary<BclType, IFirestoreInternalConverter> {
@@ -44,7 +48,7 @@ namespace Firebase.Firestore.Converters {
           [typeof(GeoPoint)] = new GeoPointConverter(),
           [typeof(Blob)] = new BlobConverter(),
           [typeof(byte[])] = new ByteArrayConverter(),
-          [typeof(FieldValueProxy)] = new FieldValueProxyConverter(),
+          [typeof(FirestoreValue)] = new FirestoreValuePassThroughConverter(),
           [typeof(DateTime)] = new DateTimeConverter(),
           [typeof(DateTimeOffset)] = new DateTimeOffsetConverter(),
           // DictionaryConverter parameterized with primitive value types are created by default, because they do not
@@ -73,13 +77,12 @@ namespace Firebase.Firestore.Converters {
           [typeof(IDictionary<string, double>)] = new DictionaryConverter<double>(typeof(Dictionary<string, double>)),
           [typeof(IDictionary<string, bool>)] = new DictionaryConverter<bool>(typeof(Dictionary<string, bool>)),
           [typeof(IDictionary<string, object>)] = new DictionaryConverter<object>(typeof(Dictionary<string, object>)),
-          [typeof(DocumentReference)] = new DocumentReferenceConverter()
+          [typeof(DocumentReference)] = new DocumentReferenceConverter(),
         };
 
     internal static IFirestoreInternalConverter GetConverter(BclType targetType) {
       lock (s_converters) {
-        IFirestoreInternalConverter converter;
-        if (!s_converters.TryGetValue(targetType, out converter)) {
+        if (!s_converters.TryGetValue(targetType, out IFirestoreInternalConverter converter)) {
           converter = CreateConverter(targetType);
           s_converters[targetType] = converter;
         }
@@ -101,9 +104,11 @@ namespace Firebase.Firestore.Converters {
       CreateDictionaryConverter<bool>(typeof(bool));
     }
 
-    private static readonly MethodInfo s_createDictionaryConverter = typeof(ConverterCache).GetMethod(nameof(CreateDictionaryConverter), BindingFlags.Static | BindingFlags.NonPublic);
+    private static readonly MethodInfo s_createDictionaryConverter =
+        typeof(ConverterCache).GetMethod(nameof(CreateDictionaryConverter), BindingFlags.Static | BindingFlags.NonPublic);
 
-    private static IFirestoreInternalConverter CreateDictionaryConverter<T>(BclType targetType) => new DictionaryConverter<T>(targetType);
+    private static IFirestoreInternalConverter CreateDictionaryConverter<T>(BclType targetType) =>
+        new DictionaryConverter<T>(targetType);
 
     private static IFirestoreInternalConverter CreateConverter(BclType targetType) {
       if (targetType.IsArray) {
@@ -116,27 +121,21 @@ namespace Firebase.Firestore.Converters {
       if (targetType.IsDefined(typeof(CompilerGeneratedAttribute), inherit: true)) {
         return new AnonymousTypeConverter(targetType);
       }
-
       if (targetType.IsEnum) {
         return new EnumConverter(targetType);
       }
-      if (TryGetStringDictionaryValueType(targetType, out var dictionaryElementType)) {
-        var method = s_createDictionaryConverter.MakeGenericMethod(dictionaryElementType);
+      if (TryGetStringDictionaryValueType(targetType, out BclType dictionaryElementType)) {
+        MethodInfo method = s_createDictionaryConverter.MakeGenericMethod(dictionaryElementType);
         try {
           return (IFirestoreInternalConverter)method.Invoke(null, new object[] { targetType });
         } catch (TargetInvocationException e) {
-          if (e.InnerException != null) {
-            throw e.InnerException;
-          } else {
-            throw;
-          }
+          if (e.InnerException != null) throw e.InnerException;
+          throw;
         }
       }
-
       if (typeof(IEnumerable).IsAssignableFrom(targetType)) {
         return new EnumerableConverter(targetType);
       }
-
       throw new ArgumentException(String.Format("Unable to create converter for type {0}", targetType.FullName));
     }
 
@@ -150,7 +149,8 @@ namespace Firebase.Firestore.Converters {
       elementType = type
           .GetInterfaces()
           .Concat(new[] { type }) // Make this method handle IDictionary<,> as an input; GetInterfaces doesn't return the type you call it on
-          .Select(MapInterfaceToDictionaryValueTypeArgument).FirstOrDefault(t => t != null);
+          .Select(MapInterfaceToDictionaryValueTypeArgument)
+          .FirstOrDefault(t => t != null);
       return elementType != null;
     }
 
@@ -158,11 +158,10 @@ namespace Firebase.Firestore.Converters {
       if (!iface.IsGenericType || iface.IsGenericTypeDefinition) {
         return null;
       }
-      var generic = iface.GetGenericTypeDefinition();
-      if (generic != typeof(IDictionary<,>)) {
+      if (iface.GetGenericTypeDefinition() != typeof(IDictionary<,>)) {
         return null;
       }
-      var typeArguments = iface.GetGenericArguments();
+      BclType[] typeArguments = iface.GetGenericArguments();
       return typeArguments[0] == typeof(string) ? typeArguments[1] : null;
     }
   }

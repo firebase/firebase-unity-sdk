@@ -15,6 +15,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
@@ -30,8 +31,10 @@ namespace Firebase.Firestore.Converters {
       _properties = targetType.GetProperties().ToList();
     }
 
-    public override void SerializeMap(SerializationContext context, object value, IDictionary<string, FieldValueProxy> map) {
-      foreach (var property in _properties) {
+    public override void SerializeMap(
+        SerializationContext context, object value, IDictionary<string, FirestoreValue> map) {
+      for (int i = 0; i < _properties.Count; i++) {
+        PropertyInfo property = _properties[i];
         map[property.Name] = ValueSerializer.Serialize(context, property.GetValue(value, index: null));
       }
     }

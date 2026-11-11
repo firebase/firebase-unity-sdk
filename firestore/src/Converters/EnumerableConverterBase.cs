@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
@@ -24,16 +24,24 @@ namespace Firebase.Firestore.Converters {
   /// derived types need to perform deserialization.
   /// </summary>
   internal abstract class EnumerableConverterBase : ConverterBase {
-    internal EnumerableConverterBase(BclType targetType) : base(targetType) {}
+    internal EnumerableConverterBase(BclType targetType) : base(targetType) { }
 
     public  // TODO(b/141568173): Significant newline.
-        override FieldValueProxy Serialize(SerializationContext context, object value) {
-      var list = new List<FieldValueProxy>();
-      foreach (object element in (IEnumerable)value) {
-        var serializedElement = ValueSerializer.Serialize(context, element);
-        list.Add(serializedElement);
+        override FirestoreValue Serialize(SerializationContext context, object value) {
+      if (value is ICollection col) {
+        if (col.Count == 0) return FirestoreValue.FromArray(System.Array.Empty<FirestoreValue>());
+        var arr = new FirestoreValue[col.Count];
+        int idx = 0;
+        foreach (object element in col) {
+          arr[idx++] = ValueSerializer.Serialize(context, element);
+        }
+        return FirestoreValue.FromArray(arr);
       }
-      return ConvertToProxyArray(list);
+      var list = new List<FirestoreValue>();
+      foreach (object element in (IEnumerable)value) {
+        list.Add(ValueSerializer.Serialize(context, element));
+      }
+      return FirestoreValue.FromArray(list.ToArray());
     }
   }
 }

@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+using Firebase.Firestore.Internal;
 using BclType = System.Type;
 
 namespace Firebase.Firestore.Converters {
@@ -25,6 +24,7 @@ namespace Firebase.Firestore.Converters {
   /// <typeparam name="TValue">Type of values in the dictionary.</typeparam>
   internal sealed class DictionaryConverter<TValue> : MapConverterBase {
     private readonly BclType _concreteType;
+    private readonly bool _isStandardDictionary;
 
     internal DictionaryConverter(BclType targetType) : base(targetType) {
       _concreteType = targetType;
@@ -38,29 +38,32 @@ namespace Firebase.Firestore.Converters {
           throw new ArgumentException(String.Format("Unable to deserialize map to {0}", targetType));
         }
       }
+      _isStandardDictionary = _concreteType == typeof(Dictionary<string, TValue>);
     }
 
     public // TODO(b/141568173): Significant newline.
-    override object DeserializeMap(DeserializationContext context, FieldValueProxy mapValue) {
-      Preconditions.CheckState(mapValue.type() == FieldValueProxy.Type.Map, "Expected to receive a map FieldValue");
-
+    override object DeserializeMap(DeserializationContext context, FirestoreValue mapValue) {
+      Preconditions.CheckState(
+          mapValue.Kind == FirestoreValueKind.Map, "Expected to receive a map FirestoreValue");
+      IDictionary<string, FirestoreValue> src = mapValue.MapValue;
       // TODO: Compile an expression tree on construction, or at least accept an optional delegate for construction
       // (allowing for special-casing of Dictionary<string, object>).
-      var ret = (IDictionary<string, TValue>)Activator.CreateInstance(_concreteType);
-      using (var map = FirestoreCpp.ConvertFieldValueToMap(mapValue)) {
-        var iter = map.Iterator();
-        while (iter.HasMore()) {
-          ret.Add(iter.UnsafeKeyView(), (TValue)ValueDeserializer.Deserialize(context, iter.UnsafeValueView(), typeof(TValue)));
-          iter.Advance();
-        }
+      IDictionary<string, TValue> ret = _isStandardDictionary
+          ? new Dictionary<string, TValue>(src.Count, StringComparer.Ordinal)
+          : (IDictionary<string, TValue>)Activator.CreateInstance(_concreteType);
+      foreach (KeyValuePair<string, FirestoreValue> kv in src) {
+        ret.Add(kv.Key, (TValue)ValueDeserializer.Deserialize(context, kv.Value, typeof(TValue)));
       }
-
       return ret;
     }
 
-    public override void SerializeMap(SerializationContext context, object value, IDictionary<string, FieldValueProxy> map) {
+    public override void SerializeMap(
+        SerializationContext context, object value, IDictionary<string, FirestoreValue> map) {
       var dictionary = (IDictionary<string, TValue>)value;
-      foreach (var pair in dictionary) {
+      foreach (KeyValuePair<string, TValue> pair in dictionary) {
+        if (pair.Key == null) {
+          throw new ArgumentException("Dictionary keys cannot be null.");
+        }
         map[pair.Key] = ValueSerializer.Serialize(context, pair.Value);
       }
     }

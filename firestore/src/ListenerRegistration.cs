@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Firebase.Firestore.Internal;
-using System.Threading.Tasks;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Firebase.Firestore.Internal;
 
 namespace Firebase.Firestore {
   /// <summary>
@@ -25,7 +26,8 @@ namespace Firebase.Firestore {
   /// The listener can be removed by calling <see cref="ListenerRegistration.Stop"/>.
   /// </remarks>
   public sealed class ListenerRegistration : IDisposable {
-    private readonly ListenerRegistrationProxy _proxy;
+    private readonly Task _listenerTask;
+    private Action _stopAction;
 
     /// <summary>
     /// A task that will complete when the listen operation finishes.
@@ -35,21 +37,20 @@ namespace Firebase.Firestore {
     /// was thrown, including any non-retriable RPC exceptions. The task will finish in a state of
     /// <c>TaskStatus.RanToCompletion"</c> if the listener stopped gracefully.
     /// </remarks>
-    public Task ListenerTask {
-      get { return taskSource.Task; }
+    public Task ListenerTask => _listenerTask;
+
+    internal ListenerRegistration(Task listenerTask, Action stopAction) {
+      _listenerTask = listenerTask ?? Task.CompletedTask;
+      _stopAction = stopAction;
     }
 
-    internal readonly int callbackId;
-    internal readonly TaskCompletionSource<object> taskSource;
-    private IListenerRegistrationMap owner;
-
-    internal ListenerRegistration(IListenerRegistrationMap owner, int callbackId, TaskCompletionSource<object> tcs, ListenerRegistrationProxy proxy) {
-      this.owner = Util.NotNull(owner);
-      this.callbackId = callbackId;
-
-      _proxy = Util.NotNull(proxy);
-      taskSource = Util.NotNull(tcs);
+    internal static ListenerRegistration CreateInert() {
+      var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+      return new ListenerRegistration(tcs.Task, () => tcs.TrySetResult(true));
     }
+
+    internal static ListenerRegistration CreateFaulted(Exception error) =>
+        new ListenerRegistration(Util.TaskFromException<bool>(error), null);
 
     /// <summary>
     /// Removes the listener being tracked by this <c>ListenerRegistration</c>.
@@ -60,10 +61,8 @@ namespace Firebase.Firestore {
     /// subsequent calls have no effect.
     /// </remarks>
     public void Stop() {
-      _proxy.Remove();
-      taskSource.TrySetResult(null);
-
-      owner.Unregister(callbackId);
+      Action act = Interlocked.Exchange(ref _stopAction, null);
+      act?.Invoke();
     }
 
     /// <summary>

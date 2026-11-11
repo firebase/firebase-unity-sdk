@@ -16,67 +16,38 @@ using System;
 using System.Threading;
 
 namespace Firebase.Firestore {
-
-/// <summary>
-/// Options to customize transaction behavior for
-/// <see cref="FirebaseFirestore.RunTransactionAsync"/>.
-/// </summary>
-public sealed class TransactionOptions {
-
-  // The lock that must be held during all accesses to _proxy.
-  private readonly ReaderWriterLock _proxyLock = new ReaderWriterLock();
-
-  // The underlying C++ TransactionOptions object.
-  private TransactionOptionsProxy _proxy = new TransactionOptionsProxy();
-
-  internal TransactionOptionsProxy Proxy {
-    get {
-      _proxyLock.AcquireReaderLock(Int32.MaxValue);
-      try {
-        return new TransactionOptionsProxy(_proxy);
-      } finally {
-        _proxyLock.ReleaseReaderLock();
-      }
-    }
-  }
-
   /// <summary>
-  /// Creates the default <c>TransactionOptions</c>.
+  /// Options to customize transaction behavior for
+  /// <see cref="FirebaseFirestore.RunTransactionAsync"/>.
   /// </summary>
-  public TransactionOptions() {
-  }
+  public sealed class TransactionOptions {
+    private int _maxAttempts = 5;
 
-  /// <summary>
-  /// The maximum number of attempts to commit, after which the transaction fails.
-  /// </summary>
-  ///
-  /// <remarks>
-  /// The default value is 5, and must be greater than zero.
-  /// </remarks>
-  public Int32 MaxAttempts {
-    get {
-      _proxyLock.AcquireReaderLock(Int32.MaxValue);
-      try {
-        return _proxy.max_attempts();
-      } finally {
-        _proxyLock.ReleaseReaderLock();
+    /// <summary>
+    /// Creates the default <c>TransactionOptions</c>.
+    /// </summary>
+    public TransactionOptions() {
+    }
+
+    /// <summary>
+    /// The maximum number of attempts to commit, after which the transaction fails.
+    /// </summary>
+    ///
+    /// <remarks>
+    /// The default value is 5, and must be greater than zero.
+    /// </remarks>
+    public int MaxAttempts {
+      get => Volatile.Read(ref _maxAttempts);
+      set {
+        if (value < 1) {
+          throw new ArgumentException("MaxAttempts must be at least 1.", nameof(value));
+        }
+        Volatile.Write(ref _maxAttempts, value);
       }
     }
-    set {
-      _proxyLock.AcquireWriterLock(Int32.MaxValue);
-      try {
-        _proxy.set_max_attempts(value);
-      } finally {
-        _proxyLock.ReleaseWriterLock();
-      }
-    }
+
+    /// <inheritdoc />
+    public override string ToString() =>
+        nameof(TransactionOptions) + "{" + nameof(MaxAttempts) + "=" + MaxAttempts + "}";
   }
-
-  /// <inheritdoc />
-  public override string ToString() {
-    return nameof(TransactionOptions) + "{" + nameof(MaxAttempts) + "=" + MaxAttempts + "}";
-  }
-
-}
-
 }

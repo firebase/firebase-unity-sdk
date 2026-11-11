@@ -14,8 +14,8 @@
 
 using System;
 using System.Collections.Generic;
-using BclType = System.Type;
 using Firebase.Firestore.Internal;
+using BclType = System.Type;
 
 namespace Firebase.Firestore {
   /// <summary>
@@ -33,43 +33,45 @@ namespace Firebase.Firestore {
   /// checking <see cref="DocumentSnapshot.Exists"/>.</para>
   /// </remarks>
   public sealed class DocumentSnapshot {
-    private readonly DocumentSnapshotProxy _proxy;
-    private readonly FirebaseFirestore _firestore;
+    private readonly DocumentReference _reference;
+    private readonly Dictionary<string, FirestoreValue> _fields;
+    private readonly bool _exists;
+    private readonly SnapshotMetadata _metadata;
 
-    internal DocumentSnapshotProxy Proxy {
-      get {
-        return _proxy;
-      }
-    }
+    internal Dictionary<string, FirestoreValue> InternalFields => _fields;
 
-    internal DocumentSnapshot(DocumentSnapshotProxy proxy, FirebaseFirestore firestore) {
-      _proxy = Util.NotNull(proxy);
-      _firestore = Util.NotNull(firestore);
+    internal DocumentSnapshot(
+        DocumentReference reference,
+        Dictionary<string, FirestoreValue> fields,
+        bool exists,
+        SnapshotMetadata metadata) {
+      _reference = Preconditions.CheckNotNull(reference, nameof(reference));
+      _exists = exists;
+      _fields = exists
+          ? (fields ?? new Dictionary<string, FirestoreValue>(StringComparer.Ordinal))
+          : null;
+      _metadata = metadata ?? new SnapshotMetadata(false, false);
     }
 
     /// <summary>
     /// The full reference to the document.
     /// </summary>
-    public DocumentReference Reference => new DocumentReference(_proxy.reference(), _firestore);
+    public DocumentReference Reference => _reference;
 
     /// <summary>
     /// The ID of the document.
     /// </summary>
-    public string Id => _proxy.id();
+    public string Id => _reference.Id;
 
     /// <summary>
     /// Whether or not the document exists.
     /// </summary>
-    public bool Exists => _proxy.exists();
+    public bool Exists => _exists;
 
     /// <summary>
     /// The metadata for this <c>DocumentSnapshot</c>.
     /// </summary>
-    public SnapshotMetadata Metadata {
-      get {
-        return SnapshotMetadata.ConvertFromProxy(_proxy.metadata());
-      }
-    }
+    public SnapshotMetadata Metadata => _metadata;
 
     /// <summary>
     /// Returns the document data as a <see cref="Dictionary{String, Object}"/>.
@@ -78,8 +80,9 @@ namespace Firebase.Firestore {
     /// have not yet been set to their final value.</param>
     /// <returns>A <see cref="Dictionary{String, Object}"/> containing the document data or
     /// <c>null</c> if this is a nonexistent document.</returns>
-    public Dictionary<string, object> ToDictionary(ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None)
-        => ConvertTo<Dictionary<string, object>>(serverTimestampBehavior);
+    public Dictionary<string, object> ToDictionary(
+        ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None) =>
+        ConvertTo<Dictionary<string, object>>(serverTimestampBehavior);
 
     /// <summary>
     /// Deserializes the document data as the specified type.
@@ -89,24 +92,24 @@ namespace Firebase.Firestore {
     /// have not yet been set to their final value.</param>
     /// <returns>The deserialized data or <c>default(T)</c> if this is a nonexistent document.
     /// </returns>
-    public T ConvertTo<T>(ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None) {
-      // C++ returns a non-existent document as an empty map, because the map is returned by value.
+    public T ConvertTo<T>(
+        ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None) {
       // For reference types, it makes more sense to return a non-existent document as a null
       // value. This matches Android behavior.
-      var targetType = typeof(T);
-      if (!Exists) {
+      BclType targetType = typeof(T);
+      if (!_exists) {
         BclType underlyingType = Nullable.GetUnderlyingType(targetType);
         if (!targetType.IsValueType || underlyingType != null) {
-          return default(T);
-        } else {
-          throw new ArgumentException(String.Format(
-              "Unable to convert a non-existent document to {0}", targetType.FullName));
+          return default;
         }
+        throw new ArgumentException(String.Format(
+            "Unable to convert a non-existent document to {0}", targetType.FullName));
       }
 
-      var map = FirestoreCpp.ConvertSnapshotToFieldValue(_proxy, serverTimestampBehavior.ConvertToProxy());
+      FirestoreValue mapVal = FirestoreValue.FromMap(_fields)
+          .ResolveServerTimestamp(serverTimestampBehavior);
       var context = new DeserializationContext(this);
-      return (T)ValueDeserializer.Deserialize(context, map, targetType);
+      return (T)ValueDeserializer.Deserialize(context, mapVal, targetType);
     }
 
     /// <summary>
@@ -119,8 +122,9 @@ namespace Firebase.Firestore {
     /// <exception cref="InvalidOperationException">The field does not exist in the document data.
     /// </exception>
     /// <returns>The deserialized value.</returns>
-    public T GetValue<T>(string path, ServerTimestampBehavior serverTimestampBehavior =
-                                          ServerTimestampBehavior.None) {
+    public T GetValue<T>(
+        string path,
+        ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None) {
       Preconditions.CheckNotNullOrEmpty(path, nameof(path));
       return GetValue<T>(FieldPath.FromDotSeparatedString(path), serverTimestampBehavior);
     }
@@ -142,11 +146,12 @@ namespace Firebase.Firestore {
     /// <returns><c>true</c> if the field was found in the document; <c>false</c> otherwise.
     /// </returns>
     public bool TryGetValue<T>(
-        string path, out T value,
+        string path,
+        out T value,
         ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None) {
       Preconditions.CheckNotNullOrEmpty(path, nameof(path));
-      return TryGetValue(FieldPath.FromDotSeparatedString(path), out value,
-                         serverTimestampBehavior);
+      return TryGetValue(
+          FieldPath.FromDotSeparatedString(path), out value, serverTimestampBehavior);
     }
 
     /// <summary>
@@ -158,14 +163,14 @@ namespace Firebase.Firestore {
     /// <exception cref="InvalidOperationException">The field does not exist in the document data.
     /// </exception>
     /// <returns>The deserialized value.</returns>
-    public T GetValue<T>(FieldPath path, ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None) {
+    public T GetValue<T>(
+        FieldPath path,
+        ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None) {
       Preconditions.CheckNotNull(path, nameof(path));
-      T value;
-      if (TryGetValue(path, out value, serverTimestampBehavior)) {
+      if (TryGetValue(path, out T value, serverTimestampBehavior)) {
         return value;
-      } else {
-        throw new InvalidOperationException("Field " + path + " not found in document");
       }
+      throw new InvalidOperationException("Field " + path + " not found in document");
     }
 
     /// <summary>
@@ -183,21 +188,29 @@ namespace Firebase.Firestore {
     /// have not yet been set to their final value.</param>
     /// <returns><c>true</c> if the field was found in the document; <c>false</c> otherwise.
     /// </returns>
-    public bool TryGetValue<T>(FieldPath path, out T value, ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None) {
+    public bool TryGetValue<T>(
+        FieldPath path,
+        out T value,
+        ServerTimestampBehavior serverTimestampBehavior = ServerTimestampBehavior.None) {
       Preconditions.CheckNotNull(path, nameof(path));
-      value = default(T);
-      if (!Exists) {
-        return false;
-      } else {
-        FieldValueProxy fvi = _proxy.Get(path.ConvertToProxy(), serverTimestampBehavior.ConvertToProxy());
-        if (!fvi.is_valid()) {
-          return false;
-        } else {
-          var context = new DeserializationContext(this);
-          value = (T)ValueDeserializer.Deserialize(context, fvi, typeof(T));
-          return true;
-        }
+      value = default;
+      if (!_exists) return false;
+      if (path.IsDocumentId) {
+        var context = new DeserializationContext(this);
+        FirestoreValue refFv = FirestoreValue.FromReference(new DocumentReferenceValue(
+            _reference.Firestore.ProjectId,
+            _reference.Firestore.DatabaseId,
+            _reference.ResourcePath));
+        value = (T)ValueDeserializer.Deserialize(context, refFv, typeof(T));
+        return true;
       }
+      if (!FirestoreValue.TryGetFieldByPath(_fields, path, out FirestoreValue raw)) {
+        return false;
+      }
+      FirestoreValue resolved = raw.ResolveServerTimestamp(serverTimestampBehavior);
+      var deserCtx = new DeserializationContext(this);
+      value = (T)ValueDeserializer.Deserialize(deserCtx, resolved, typeof(T));
+      return true;
     }
 
     /// <summary>
@@ -222,19 +235,35 @@ namespace Firebase.Firestore {
     /// otherwise.  </returns>
     public bool ContainsField(FieldPath path) {
       Preconditions.CheckNotNull(path, nameof(path));
-      return Exists && _proxy.Get(path.ConvertToProxy()).is_valid();
+      if (!_exists) return false;
+      return FirestoreValue.TryGetFieldByPath(_fields, path, out _);
     }
 
     /// <inheritdoc />
     public override bool Equals(object obj) => Equals(obj as DocumentSnapshot);
 
     /// <inheritdoc />
-    public bool Equals(DocumentSnapshot other) =>
-        other != null && FirestoreCpp.DocumentSnapshotEquals(_proxy, other._proxy);
+    public bool Equals(DocumentSnapshot other) {
+      if (ReferenceEquals(this, other)) return true;
+      if (other == null) return false;
+      if (!_reference.Equals(other._reference) ||
+          _exists != other._exists ||
+          !_metadata.Equals(other._metadata)) {
+        return false;
+      }
+      if (!_exists) return true;
+      return FirestoreClientCore.MapsEqualExact(_fields, other._fields);
+    }
 
     /// <inheritdoc />
     public override int GetHashCode() {
-      return FirestoreCpp.DocumentSnapshotHashCode(_proxy);
+      int h = _reference.GetHashCode();
+      h = h * 31 + (_exists ? 1 : 0);
+      h = h * 31 + _metadata.GetHashCode();
+      if (_exists && _fields != null) {
+        h = h * 31 + FirestoreValue.FromMap(_fields).GetHashCode();
+      }
+      return h;
     }
   }
 }

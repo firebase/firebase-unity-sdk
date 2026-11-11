@@ -13,7 +13,7 @@
 // limitations under the License.
 
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Firebase.Firestore.Internal;
@@ -25,13 +25,16 @@ namespace Firebase.Firestore {
   /// top level field in the document), or a list of field names (referring to a nested field in the
   /// document).
   /// </summary>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   public sealed class FieldPath : IEquatable<FieldPath> {
-    private static readonly char[] dotSplit = { '.' };
+    private static readonly char[] DotSplit = { '.' };
 
     /// <summary>
     /// Characters prohibited within dot-separated field paths.
     /// </summary>
-    private static readonly char[] prohibitedCharacters = { '~', '*', '[', ']', '/' };
+    private static readonly char[] ProhibitedCharacters = { '~', '*', '[', ']', '/' };
 
     /// <summary>
     /// Sentinel field path to refer to the ID of a document. Used in queries to sort or filter by
@@ -41,8 +44,11 @@ namespace Firebase.Firestore {
         new FieldPath(new[] { "__name__" }, trusted: true);
 
     private readonly string[] _segments;
-
     private string _encodedPath;
+
+    internal string[] Segments => _segments;
+    internal bool IsDocumentId =>
+        _segments.Length == 1 && string.Equals(_segments[0], "__name__", StringComparison.Ordinal);
 
     internal string EncodedPath => _encodedPath ?? (_encodedPath = GetCanonicalPath(_segments));
 
@@ -57,7 +63,10 @@ namespace Firebase.Firestore {
       } else {
         _segments = Preconditions.CheckNotNull(segments, nameof(segments)).ToArray();
         Preconditions.CheckArgument(segments.Length != 0, nameof(segments), "Path must not be empty");
-        Preconditions.CheckArgument(segments.All(n => !string.IsNullOrEmpty(n)), nameof(segments), "Path must not contain null or empty names");
+        Preconditions.CheckArgument(
+            segments.All(n => !string.IsNullOrEmpty(n)),
+            nameof(segments),
+            "Path must not contain null or empty names");
       }
     }
 
@@ -72,19 +81,50 @@ namespace Firebase.Firestore {
 
     internal static FieldPath FromDotSeparatedString(string path) {
       Preconditions.CheckNotNullOrEmpty(path, nameof(path));
-      Preconditions.CheckArgument(path.IndexOfAny(prohibitedCharacters) == -1, nameof(path), "Use the constructor for field names containing any of '~*/[]'.");
-      string[] elements = path.Split(dotSplit);
-      if (elements.Contains("")) {
+      Preconditions.CheckArgument(
+          path.IndexOfAny(ProhibitedCharacters) == -1,
+          nameof(path),
+          "Use the constructor for field names containing any of '~*/[]'.");
+      string[] elements = path.Split(DotSplit);
+      if (elements.Contains(string.Empty)) {
         throw new ArgumentException("Path cannot contain empty elements", nameof(path));
       }
       return new FieldPath(elements, trusted: true);
     }
 
+    internal static FieldPath ParseCanonical(string canonical) {
+      if (string.IsNullOrEmpty(canonical)) {
+        throw new ArgumentException("Field path cannot be empty.", nameof(canonical));
+      }
+      if (canonical == "__name__") return DocumentId;
+      if (canonical.IndexOf('`') < 0 && canonical.IndexOf('\\') < 0) {
+        return new FieldPath(canonical.Split(DotSplit), trusted: true);
+      }
+      var segs = new List<string>();
+      var cur = new StringBuilder();
+      bool inBackticks = false;
+      for (int i = 0; i < canonical.Length; i++) {
+        char c = canonical[i];
+        if (c == '\\' && i + 1 < canonical.Length) {
+          cur.Append(canonical[++i]);
+        } else if (c == '`') {
+          inBackticks = !inBackticks;
+        } else if (c == '.' && !inBackticks) {
+          segs.Add(cur.ToString());
+          cur.Clear();
+        } else {
+          cur.Append(c);
+        }
+      }
+      segs.Add(cur.ToString());
+      return new FieldPath(segs.ToArray(), trusted: true);
+    }
+
     private static string GetCanonicalPath(string[] fields) {
-      StringBuilder builder = new StringBuilder();
+      var builder = new StringBuilder();
       for (int i = 0; i < fields.Length; i++) {
         if (i > 0) {
-          builder.Append(".");
+          builder.Append('.');
         }
         // Escape backslashes and backticks.
         string escaped = fields[i].Replace(@"\", @"\\").Replace("`", @"\`");
@@ -124,17 +164,10 @@ namespace Firebase.Firestore {
     public override bool Equals(object obj) => Equals(obj as FieldPath);
 
     /// <inheritdoc />
-    public override int GetHashCode() => EncodedPath.GetHashCode();
+    public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(EncodedPath);
 
     /// <inheritdoc />
-    public bool Equals(FieldPath other) => EncodedPath == other?.EncodedPath;
-
-    internal FieldPathProxy ConvertToProxy() {
-      StringList segments = new StringList();
-      foreach (string segment in _segments) {
-        segments.Add(segment);
-      }
-      return new FieldPathProxy(segments);
-    }
+    public bool Equals(FieldPath other) =>
+        other != null && string.Equals(EncodedPath, other.EncodedPath, StringComparison.Ordinal);
   }
 }

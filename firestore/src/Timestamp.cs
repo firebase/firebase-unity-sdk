@@ -31,6 +31,9 @@ namespace Firebase.Firestore {
   /// to 9999-12-31T23:59:59.999999999Z. By restricting to that range, we ensure that we can convert
   /// to and from RFC 3339 date strings.
   /// </remarks>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   public struct Timestamp : IEquatable<Timestamp>, IComparable, IComparable<Timestamp> {
     private static readonly DateTime s_unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
@@ -53,6 +56,9 @@ namespace Firebase.Firestore {
 
     // See https://github.com/google/protobuf/blob/master/src/google/protobuf/timestamp.proto for
     // more details.
+
+    internal long Seconds => _seconds;
+    internal int Nanoseconds => _nanoseconds;
 
     /// <summary>
     /// Converts this timestamp to a <see cref="DateTime"/> with a kind of
@@ -124,7 +130,7 @@ namespace Firebase.Firestore {
     public override int GetHashCode() {
       long result = 37 * _seconds + _nanoseconds;
       // TODO(zxu): call the one in Hash.cs
-      return (int)((result & result >> 32) & 0xFFFFFFFF);
+      return (int)((result ^ (result >> 32)) & 0xFFFFFFFF);
     }
 
     /// <inheritdoc />
@@ -144,8 +150,9 @@ namespace Firebase.Firestore {
       if (obj == null) {
         // Everything comes after null
         return 1;
-      } else if (obj is Timestamp) {
-        return CompareTo((Timestamp)obj);
+      }
+      if (obj is Timestamp ts) {
+        return CompareTo(ts);
       }
       throw new ArgumentException("Can only compare timestamps with each other", nameof(obj));
     }
@@ -157,9 +164,7 @@ namespace Firebase.Firestore {
     /// <param name="rhs">Right value to compare</param>
     /// <returns><c>true</c> if <paramref name="lhs"/> is equal to <paramref name="rhs"/>; otherwise
     /// <c>false</c>.</returns>
-    public static bool operator ==(Timestamp lhs, Timestamp rhs) {
-      return lhs.Equals(rhs);
-    }
+    public static bool operator ==(Timestamp lhs, Timestamp rhs) => lhs.Equals(rhs);
 
     /// <summary>
     /// Operator overload to compare two Timestamp values for inequality.
@@ -168,9 +173,7 @@ namespace Firebase.Firestore {
     /// <param name="rhs">Right value to compare</param>
     /// <returns><c>false</c> if <paramref name="lhs"/> is equal to <paramref name="rhs"/>;
     /// otherwise <c>true</c>.</returns>
-    public static bool operator !=(Timestamp lhs, Timestamp rhs) {
-      return !lhs.Equals(rhs);
-    }
+    public static bool operator !=(Timestamp lhs, Timestamp rhs) => !lhs.Equals(rhs);
 
     /// <summary>
     /// Compares two timestamps.
@@ -179,9 +182,7 @@ namespace Firebase.Firestore {
     /// <param name="rhs">The right timestamp to compare.</param>
     /// <returns><c>true</c> if <paramref name="lhs"/> is strictly earlier than
     /// <paramref name="rhs"/>; otherwise <c>false</c>.</returns>
-    public static bool operator <(Timestamp lhs, Timestamp rhs) {
-      return lhs.CompareTo(rhs) < 0;
-    }
+    public static bool operator <(Timestamp lhs, Timestamp rhs) => lhs.CompareTo(rhs) < 0;
 
     /// <summary>
     /// Compares two timestamps.
@@ -190,9 +191,7 @@ namespace Firebase.Firestore {
     /// <param name="rhs">The right timestamp to compare.</param>
     /// <returns><c>true</c> if <paramref name="lhs"/> is earlier than or equal to
     /// <paramref name="rhs"/>; otherwise <c>false</c>.</returns>
-    public static bool operator <=(Timestamp lhs, Timestamp rhs) {
-      return lhs.CompareTo(rhs) <= 0;
-    }
+    public static bool operator <=(Timestamp lhs, Timestamp rhs) => lhs.CompareTo(rhs) <= 0;
 
     /// <summary>
     /// Compares two timestamps.
@@ -201,9 +200,7 @@ namespace Firebase.Firestore {
     /// <param name="rhs">The right timestamp to compare.</param>
     /// <returns><c>true</c> if <paramref name="lhs"/> is strictly later than
     /// <paramref name="rhs"/>; otherwise <c>false</c>.</returns>
-    public static bool operator >(Timestamp lhs, Timestamp rhs) {
-      return lhs.CompareTo(rhs) > 0;
-    }
+    public static bool operator >(Timestamp lhs, Timestamp rhs) => lhs.CompareTo(rhs) > 0;
 
     /// <summary>
     /// Compares two timestamps.
@@ -212,9 +209,7 @@ namespace Firebase.Firestore {
     /// <param name="rhs">The right timestamp to compare.</param>
     /// <returns><c>true</c> if <paramref name="lhs"/> is later than or equal to
     /// <paramref name="rhs"/>; otherwise <c>false</c>.</returns>
-    public static bool operator >=(Timestamp lhs, Timestamp rhs) {
-      return lhs.CompareTo(rhs) >= 0;
-    }
+    public static bool operator >=(Timestamp lhs, Timestamp rhs) => lhs.CompareTo(rhs) >= 0;
 
     /// <inheritdoc />
     public override string ToString() {
@@ -246,14 +241,6 @@ namespace Firebase.Firestore {
       }
       _seconds = seconds;
       _nanoseconds = nanoseconds;
-    }
-
-    internal TimestampProxy ConvertToProxy() {
-      return new TimestampProxy(_seconds, _nanoseconds);
-    }
-
-    internal static Timestamp ConvertFromProxy(TimestampProxy obj) {
-      return new Timestamp(obj.seconds(), obj.nanoseconds());
     }
   }
 }
