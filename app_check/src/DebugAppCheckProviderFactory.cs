@@ -15,100 +15,142 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using Firebase.AppCheck.Internal;
+using Firebase.Internal;
 
 namespace Firebase.AppCheck {
 
-/// Implementation of an IAppCheckProviderFactory that builds
-/// DebugAppCheckProviders.
-///
-/// DebugAppCheckProvider can exchange a debug token registered in the Firebase
-/// console for a Firebase App Check token. The debug provider is designed to
-/// enable testing applications on a simulator or test environment.
-///
-/// NOTE: Do not use the debug provider in applications used by real users.
-public sealed class DebugAppCheckProviderFactory : IAppCheckProviderFactory {
-  // The static Factory singleton
-  private static DebugAppCheckProviderFactory s_factoryInstance;
+  /// Implementation of an IAppCheckProviderFactory that builds
+  /// DebugAppCheckProviders.
+  ///
+  /// DebugAppCheckProvider can exchange a debug token registered in the Firebase
+  /// console for a Firebase App Check token. The debug provider is designed to
+  /// enable testing applications on a simulator or test environment.
+  ///
+  /// NOTE: Do not use the debug provider in applications used by real users.
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+  public sealed class DebugAppCheckProviderFactory : IAppCheckProviderFactory {
+    // The static Factory singleton
+    private static DebugAppCheckProviderFactory s_instance;
 
-  // The C++ factory that this class wraps
-  private DebugAppCheckProviderFactoryInternal factoryInternal;
+    // Map from App names to Providers already created by the factory
+    private readonly FirebaseInstanceCache<DebugAppCheckProvider> _providers = new(p => p.Dispose());
 
-  // Map from App names to Providers already created by the factory
-  private Dictionary<string, BuiltInProviderWrapper> providerMap = new Dictionary<string, BuiltInProviderWrapper>();
+    private volatile string _debugToken;
 
-  // Private constructor as users are meant to use the GetInstance function.
-  private DebugAppCheckProviderFactory(DebugAppCheckProviderFactoryInternal factoryInternal) {
-    this.factoryInternal = factoryInternal;
+    // Private constructor as users are meant to use the GetInstance function.
+    private DebugAppCheckProviderFactory() { }
+
+    internal string DebugToken => _debugToken;
+
+    /**
+    * Gets an instance of this class for installation into a
+    * FirebaseAppCheck instance.
+    */
+    public static DebugAppCheckProviderFactory Instance => LazyInitializer.EnsureInitialized(ref s_instance, () => new DebugAppCheckProviderFactory());
+
+    /**
+    * Gets the IAppCheckProvider associated with the given
+    * FirebaseApp instance, or creates one if none already exists.
+    */
+    public IAppCheckProvider CreateProvider(FirebaseApp app) =>
+        app == null ? throw new ArgumentNullException(nameof(app)) : _providers.GetOrCreate(app, () => new DebugAppCheckProvider(app, this));
+
+    /**
+    * Sets the Debug Token to use when communicating with the backend.
+    * This should match a debug token set in the Firebase console for your
+    * App.
+    */
+    public void SetDebugToken(string token) => _debugToken = token ?? string.Empty;
   }
 
-  private void ThrowIfNull() {
-    if (factoryInternal == null ||
-        DebugAppCheckProviderFactoryInternal.getCPtr(factoryInternal).Handle == System.IntPtr.Zero) {
-      throw new System.NullReferenceException();
-    }
+  /// Implementation of an IAppCheckProviderFactory that builds
+  /// providering using the Play Integrity service. To be used
+  /// when targeting the Android platform.
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+  public sealed class PlayIntegrityProviderFactory : IAppCheckProviderFactory {
+    // The static Factory singleton
+    private static PlayIntegrityProviderFactory s_instance;
+
+    // Map from App names to Providers already created by the factory
+    private readonly FirebaseInstanceCache<IAppCheckProvider> _providers = new(p => (p as IDisposable)?.Dispose());
+
+    // Private constructor as users are meant to use the GetInstance function.
+    private PlayIntegrityProviderFactory() { }
+
+    /**
+    * Gets an instance of this class for installation into a
+    * FirebaseAppCheck instance.
+    */
+    public static PlayIntegrityProviderFactory Instance => MobileAppCheckBridge.GetAndroidFactory(ref s_instance, () => new PlayIntegrityProviderFactory());
+
+    /**
+    * Gets the IAppCheckProvider associated with the given
+    * FirebaseApp instance, or creates one if none already exists.
+    */
+    public IAppCheckProvider CreateProvider(FirebaseApp app) => MobileAppCheckBridge.GetAndroidProvider(_providers, app);
   }
 
-  /**
-  * Gets an instance of this class for installation into a
-  * FirebaseAppCheck instance.
-  */
-  public static DebugAppCheckProviderFactory Instance {
-    get {
-      if (s_factoryInstance != null) {
-        return s_factoryInstance;
-      }
+  /// Implementation of an IAppCheckProviderFactory that builds
+  /// providering using the App Attest service. To be used
+  /// when targeting the iOS platform.
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+  public sealed class AppAttestProviderFactory : IAppCheckProviderFactory {
+    // The static Factory singleton
+    private static AppAttestProviderFactory s_instance;
 
-      // Get the C++ Factory, and wrap it
-      DebugAppCheckProviderFactoryInternal factoryInternal = DebugAppCheckProviderFactoryInternal.GetInstance();
-      s_factoryInstance = new DebugAppCheckProviderFactory(factoryInternal);
-      return s_factoryInstance;
-    }
+    // Map from App names to Providers already created by the factory
+    private readonly FirebaseInstanceCache<IAppCheckProvider> _providers = new(p => (p as IDisposable)?.Dispose());
+
+    // Private constructor as users are meant to use the GetInstance function.
+    private AppAttestProviderFactory() { }
+
+    /**
+    * Gets an instance of this class for installation into a
+    * FirebaseAppCheck instance.
+    */
+    public static AppAttestProviderFactory Instance => MobileAppCheckBridge.GetIosFactory(ref s_instance, () => new AppAttestProviderFactory(), "App Attest");
+
+    /**
+    * Gets the IAppCheckProvider associated with the given
+    * FirebaseApp instance, or creates one if none already exists.
+    */
+    public IAppCheckProvider CreateProvider(FirebaseApp app) => MobileAppCheckBridge.GetIosProvider(_providers, app, "App Attest", "FIRAppAttestProvider");
   }
 
-  /**
-  * Gets the IAppCheckProvider associated with the given
-  * FirebaseApp instance, or creates one if none already exists.
-  */
-  public IAppCheckProvider CreateProvider(FirebaseApp app) {
-    BuiltInProviderWrapper provider;
-    BuiltInProviderWrapper created = null;
-    lock (providerMap) {
-      if (providerMap.TryGetValue(app.Name, out provider)) {
-        return provider;
-      }
+  /// Implementation of an IAppCheckProviderFactory that builds
+  /// providering using the Device Check service. To be used
+  /// when targeting the iOS platform.
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+  public sealed class DeviceCheckProviderFactory : IAppCheckProviderFactory {
+    // The static Factory singleton
+    private static DeviceCheckProviderFactory s_instance;
 
-      ThrowIfNull();
-      AppCheckProviderInternal providerInternal = factoryInternal.CreateProvider(app);
-      provider = new BuiltInProviderWrapper(providerInternal);
-      providerMap[app.Name] = provider;
-      created = provider;
-    }
-    // The C++ provider is bound to this App, so forget it when the App is disposed. Otherwise
-    // an App re-created with the same name in the same domain (e.g. Enter Play Mode with domain
-    // reload disabled, or an explicit FirebaseApp.Dispose()) would reuse a provider that
-    // references the deleted App, and crash on the next token request.
-    string appName = app.Name;
-    app.AppDisposed += (sender, eventArgs) => {
-      lock (providerMap) {
-        BuiltInProviderWrapper cached;
-        if (providerMap.TryGetValue(appName, out cached) && cached == created) {
-          providerMap.Remove(appName);
-        }
-      }
-    };
-    return provider;
+    // Map from App names to Providers already created by the factory
+    private readonly FirebaseInstanceCache<IAppCheckProvider> _providers = new(p => (p as IDisposable)?.Dispose());
+
+    // Private constructor as users are meant to use the GetInstance function.
+    private DeviceCheckProviderFactory() { }
+
+    /**
+    * Gets an instance of this class for installation into a
+    * FirebaseAppCheck instance.
+    */
+    public static DeviceCheckProviderFactory Instance => MobileAppCheckBridge.GetIosFactory(ref s_instance, () => new DeviceCheckProviderFactory(), "Device Check");
+
+    /**
+    * Gets the IAppCheckProvider associated with the given
+    * FirebaseApp instance, or creates one if none already exists.
+    */
+    public IAppCheckProvider CreateProvider(FirebaseApp app) => MobileAppCheckBridge.GetIosProvider(_providers, app, "Device Check", "FIRDeviceCheckProvider");
   }
-
-  /**
-  * Sets the Debug Token to use when communicating with the backend.
-  * This should match a debug token set in the Firebase console for your
-  * App.
-  */
-  public void SetDebugToken(string token) {
-    ThrowIfNull();
-    factoryInternal.SetDebugToken(token);
-  }
-}
-
 }

@@ -112,6 +112,11 @@ Release Notes
 -------------
 ### Upcoming Release
 -   Changes
+    - App Check: Rewrote `Firebase.AppCheck` and `DebugAppCheckProviderFactory` in C# and bridged
+      mobile attestation (`PlayIntegrityProviderFactory`, `AppAttestProviderFactory`, and
+      `DeviceCheckProviderFactory`) directly without C++ or SWIG. `Firebase.AppCheck` is now shipped
+      as C# source (`Firebase.AppCheck.asmdef`), removing `FirebaseCppAppCheck` native libraries and
+      the transitive `firebase-analytics` Android dependency.
     - Installations: Rewrote the internal implementation in C#, removing the dependency on the C++
       and native platform Installations libraries while adding full Desktop support (replacing the
       previous stub implementation). `Firebase.Installations` is now shipped as C# source with an

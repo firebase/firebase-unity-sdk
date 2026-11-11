@@ -3,6 +3,7 @@
     "rootNamespace": "Firebase.Sample.FirebaseAI",
     "references": [
         "Firebase.App.Internal",
+        "Firebase.AppCheck",
         "Firebase.FirebaseAI"
     ],
     "includePlatforms": [],
@@ -13,8 +14,7 @@
         "Firebase.App.dll",
         "Firebase.Platform.dll",
         "Google.MiniJson.dll",
-        "Firebase.TaskExtension.dll",
-        "Firebase.AppCheck.dll"
+        "Firebase.TaskExtension.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

@@ -1639,66 +1639,15 @@
       "name": "FirebaseAppCheck.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android"
-          ],
-          "cpu": "AnyCPU",
+          "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Plugins/Firebase.AppCheck.dll",
-            "Firebase/Plugins/Firebase.AppCheck.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/iOS/Firebase.AppCheck.dll",
-            "Firebase/Plugins/iOS/Firebase.AppCheck.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAppCheck.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppAppCheck.xcframework"
+            "Firebase/FirebaseAppCheck/*"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/AppCheckDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-appcheck-unity/"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone"
-          ],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppAppCheck*"
+            "Firebase/Editor/AppCheckDependencies.xml"
           ]
         },
         {

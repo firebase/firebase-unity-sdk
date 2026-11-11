@@ -14,101 +14,44 @@
 
 # CMake file for the firebase app check library
 
-include(build_shared)
-
-# Firebase App Check Swig input files
-set(firebase_app_check_swig_files
-  src/swig/app_check.i
+unity_pack_folder(
+  "${FIREBASE_UNITY_DIR}/app_check/src/"
+  PACK_PATH "Firebase/FirebaseAppCheck"
 )
 
-# Firebase App Check CSharp files
-set(firebase_app_check_src
-  src/AppCheckError.cs
-  src/AppCheckToken.cs
-  src/FirebaseAppCheck.cs
-  src/IAppCheckProvider.cs
-  src/IAppCheckProviderFactory.cs
-  src/TokenChangedEventArgs.cs
-
-  # Built In Providers
-  src/BuiltInProviderWrapper.cs
-  src/AppAttestProviderFactory.cs
-  src/DebugAppCheckProviderFactory.cs
-  src/DeviceCheckProviderFactory.cs
-  src/PlayIntegrityProviderFactory.cs
-)
-
-if(NOT FIREBASE_UNI_LIBRARY AND APPLE AND NOT IOS)
-  set(EXTERNAL_LIB_NAMES
-    "-framework Foundation"
-    "-framework Security"
-  )
-else()
-  set(EXTERNAL_LIB_NAMES)
-endif()
-
-firebase_swig_add_library(firebase_app_check_swig
-  NAMESPACE
-    Firebase.AppCheck
-  MODULE
-    FirebaseCppAppCheck
-  SOURCES
-    ${firebase_app_check_swig_files}
-  DEPENDS
-    firebase_app_check
-  SYSTEM_DEPS
-    ${EXTERNAL_LIB_NAMES}
-)
-
+file(GLOB_RECURSE firebase_app_check_doc_src "src/*.cs")
+list(FILTER firebase_app_check_doc_src EXCLUDE REGEX "src/internal/")
 unity_pack_documentation_sources(app_check
   DOCUMENTATION_SOURCES
-    ${firebase_app_check_src}
-    ${firebase_app_check_swig_gen_src}
+    ${firebase_app_check_doc_src}
 )
-if (FIREBASE_GENERATE_SWIG_ONLY)
-  unity_pack_documentation_sources(app_check
-    DOCUMENTATION_SOURCES
-      ${firebase_app_check_swig_gen_cpp_src}
-  )
-  return()
-endif()
-
-mono_add_library(firebase_app_check_cs
-  MODULE
-    Firebase.AppCheck
-  SOURCES
-    ${firebase_app_check_src}
-    ${firebase_app_check_swig_gen_src}
-  REFERENCES
-    ${FIREBASE_PLATFORM_REF}
-  DEPENDS
-    firebase_app_check_swig
-)
-
-if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_app_check libFirebaseCppAppCheck DEPS firebase_app_check firebase_app_check_swig)
-else()
-build_firebase_shared(
-  app_check
-  appcheck
-  FirebaseCppAppCheck
-)
-endif()
-
-unity_pack_cs(firebase_app_check_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
-  generate_dependencies_xml(AppCheck
-    FIREBASE_SPM_DEPS
-      "FirebaseAppCheck|Firebase/AppCheck"
-    ANDROID_DEPS
-      ${FIREBASE_APP_CHECK_ANDROID_DEPS}
-    ANDROID_SPEC
-      "appcheck"
+  set(APP_CHECK_ANDROID_PACKAGES "")
+  foreach(ANDROID_DEP ${FIREBASE_APP_CHECK_ANDROID_DEPS})
+    string(CONCAT APP_CHECK_ANDROID_PACKAGES "${APP_CHECK_ANDROID_PACKAGES}"
+      "    <androidPackage spec=\"${ANDROID_DEP}\">\n"
+      "    </androidPackage>\n")
+  endforeach()
+
+  set(APP_CHECK_DEPS_XML "${CMAKE_CURRENT_BINARY_DIR}/AppCheckDependencies.xml")
+  file(WRITE "${APP_CHECK_DEPS_XML}"
+"<!-- Copyright (C) 2023 Google Inc. All Rights Reserved.\n"
+"\n"
+"FirebaseAppCheck iOS and Android Dependencies.\n"
+"-->\n"
+"\n"
+"<dependencies>\n"
+"  <remoteSwiftPackage url=\"https://github.com/firebase/firebase-ios-sdk.git\" version=\"${FIREBASE_SPM_VERSION}\">\n"
+"    <swiftPackage name=\"FirebaseAppCheck\"/>\n"
+"  </remoteSwiftPackage>\n"
+"  <androidPackages>\n"
+"${APP_CHECK_ANDROID_PACKAGES}"
+"  </androidPackages>\n"
+"</dependencies>\n"
+  )
+  install(
+    FILES "${APP_CHECK_DEPS_XML}"
+    DESTINATION "Firebase/Editor/"
   )
 endif()
-
-set_property(TARGET firebase_app_check_cs
-  PROPERTY FOLDER
-  "Firebase ${FIREBASE_PLATFORM_NAME}"
-)
