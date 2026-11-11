@@ -24,10 +24,10 @@
 // targets will prefer the GoogleService-Info.plist file, while Android build
 // targets will prefer google-services.json.)
 //
+// The conversion itself is implemented in GoogleServicesConfigConverter, which
+// runs inside the Unity Editor and does not require Python or any external tools.
+//
 // Usage:
-//   - Put this script, `generate_xml_from_google_services_json.exe`,
-//     and `generate_xml_from_google_services_json.py` into the
-//     `Assets/FirebaseUnityEditor/Editor` directory of your project.
 //   - Copy the `google-services.json` file you downloaded from the
 //     Firebase console anywhere into your `Assets` directory.  (Or
 //     alternately, the GoogleService-Info.plist file.)
@@ -52,13 +52,6 @@ namespace Firebase.Editor {
   /// </summary>
   [InitializeOnLoad]
   public class GenerateXmlFromGoogleServicesJson : AssetPostprocessor {
-    private static PythonExecutor resourceGenerator =
-      new PythonExecutor(Path.Combine(Path.Combine("Assets", "Firebase"), "Editor"),
-                         "generate_xml_from_google_services_json.py",
-                         "8f18ed76c0f04ce0a65736104f913ef8",
-                         "generate_xml_from_google_services_json.exe",
-                         "ae88c0972b7448b5b36def1716f1d711");
-
     // Hard coded directories and file names.
     private static string GOOGLE_SERVICES_FILE_BASENAME = "google-services";
     private static string GOOGLE_SERVICES_INPUT_FILE =
@@ -86,9 +79,6 @@ namespace Firebase.Editor {
         Path.Combine(GOOGLE_SERVICES_DESKTOP_OUTPUT_DIRECTORY,
                      GOOGLE_SERVICES_DESKTOP_OUTPUT_FILE);
 
-    // Used to parse the output of the command line tool.
-    private static char[] NEWLINE_CHARS = new char[] { '\r', '\n' };
-    private static char[] FIELD_DELIMITER = new char[] { '=' };
     // This flag, when set to true stops/guards the dialog from spamming the user.
     private static bool spamguard;
 
@@ -395,53 +385,25 @@ namespace Firebase.Editor {
 
     // Read bundle IDs from the config file.
     private static List<string> ReadBundleIds(string googleServicesFile) {
-      // If the file we're reading is a plist file, we have to add a flag on
-      // to the tool's command-line invocation.
-
-      var args = new List<string> {
-        "-i",
-        String.Format("\"{0}\"", googleServicesFile),
-        "-l",
-      };
-      if (IsFileOfType(googleServicesFile, ConfigFileType.Plist)) args.Add("--plist");
-
-      var bundleIds = new SortedDictionary<string, string>();
-      var result = RunResourceGenerator(args, googleServicesFile, showCommandLine: false);
-      if (result.exitCode == 0) {
-        foreach (var bundleId in result.stdout.Split(NEWLINE_CHARS)) {
-          if (String.IsNullOrEmpty(bundleId)) {
-            continue;
-          }
-          bundleIds[bundleId] = bundleId;
-        }
-      } else {
-        LogWarningIfEnabled(result.message);
+      try {
+        return GoogleServicesConfigConverter.ReadBundleIds(googleServicesFile);
+      } catch (GoogleServicesConfigException exception) {
+        LogWarningIfEnabled(String.Format(DocRef.GoogleServicesFileReadFailed,
+                                          googleServicesFile, exception.Message));
       }
-      return new List<string>(bundleIds.Keys);
+      return new List<string>();
     }
 
     // Read the project fields from the config file.
     private static Dictionary<string, string> ReadProjectFields(
             string googleServicesFile) {
-      var fields = new Dictionary<string, string>();
-      var result = RunResourceGenerator(new List<string> {
-          "-i",
-          String.Format("\"{0}\"", googleServicesFile),
-          "-f",
-        },
-        googleServicesFile,
-        showCommandLine: false);
-      if (result.exitCode == 0) {
-        foreach (var line in result.stdout.Split(NEWLINE_CHARS)) {
-          string[] tokens = line.Split(FIELD_DELIMITER);
-          if (tokens.Length == 2) {
-            fields[tokens[0]] = tokens[1];
-          }
-        }
-      } else {
-        LogWarningIfEnabled(result.message);
+      try {
+        return GoogleServicesConfigConverter.ReadProjectFields(googleServicesFile);
+      } catch (GoogleServicesConfigException exception) {
+        LogWarningIfEnabled(String.Format(DocRef.GoogleServicesFileReadFailed,
+                                          googleServicesFile, exception.Message));
       }
-      return fields;
+      return new Dictionary<string, string>();
     }
 
     // Used by the Android build window:
@@ -514,40 +476,21 @@ namespace Firebase.Editor {
           });
     }
 
-    // Run the resource generator script.
-    private static CommandLine.Result RunResourceGenerator(
-            IEnumerable<string> arguments, string inputPath, bool showCommandLine = true) {
-      // Start the import process and wait for it to return.
-      string commandLineForLog = resourceGenerator.GetCommand(arguments);
-      var result = new CommandLine.Result { exitCode = 1 };
+    // Run a config file conversion, reporting the result to analytics.
+    // Returns true if the conversion succeeded. On failure, errorMessage describes the problem.
+    private static bool RunConfigConversion(Action conversion, out string errorMessage) {
+      errorMessage = null;
       try {
-        result = resourceGenerator.Run(resourceGenerator.GetArguments(arguments));
-      } catch (System.ComponentModel.Win32Exception exception) {
-        Measurement.ReportWithBuildTarget("generateconfig/failed/toolmissing", null,
-                                          "Config File Tool Missing");
-        Debug.LogError(
-            String.Format(DocRef.GoogleServicesToolMissing,
-                          resourceGenerator.Executable, GOOGLE_SERVICES_OUTPUT_FILE, inputPath,
-                          exception.ToString()));
-        return result;
-      }
-      if (result.exitCode == 0) {
-        Measurement.ReportWithBuildTarget("generateconfig/success", null,
-                                          "Config File Generation Successful");
-        if (showCommandLine) {
-          Debug.Log(
-              String.Format(DocRef.GoogleServicesAndroidGenerateXml,
-                  GOOGLE_SERVICES_OUTPUT_PATH, inputPath, commandLineForLog));
-        }
-      } else {
+        conversion();
+      } catch (GoogleServicesConfigException exception) {
         Measurement.ReportWithBuildTarget("generateconfig/failed/toolfailed", null,
                                           "Config File Tool Failed");
-        Debug.LogError(
-            String.Format(DocRef.GoogleServicesAndroidGenerationFailed,
-                GOOGLE_SERVICES_OUTPUT_FILE, inputPath, commandLineForLog,
-                result.stdout + "\n" + result.stderr + "\n"));
+        errorMessage = exception.Message;
+        return false;
       }
-      return result;
+      Measurement.ReportWithBuildTarget("generateconfig/success", null,
+                                        "Config File Generation Successful");
+      return true;
     }
 
     // Generate Android resources from the json config file.
@@ -569,13 +512,13 @@ namespace Firebase.Editor {
           Debug.LogError(
               String.Format(DocRef.GoogleServicesAndroidGenerationFailed,
                   GOOGLE_SERVICES_OUTPUT_PATH, googleServicesFile,
-                  String.Format(DocRef.UnableToCreateDirectory, outputDir), ""));
+                  String.Format(DocRef.UnableToCreateDirectory, outputDir)));
           Debug.LogException(e);
           return;
         }
       }
 
-      // Run the script to process `asset` into our fixed output location.
+      // Process `asset` into our fixed output location.
       string inputFile = Path.Combine(projectDir, googleServicesFile);
       string outputFile = Path.Combine(projectDir,
                                        GOOGLE_SERVICES_OUTPUT_PATH);
@@ -585,14 +528,17 @@ namespace Firebase.Editor {
           !File.Exists(outputFile) ||
           File.GetLastWriteTime(outputFile).CompareTo(
               File.GetLastWriteTime(inputFile)) < 0) {
-        RunResourceGenerator(new List<string> {
-            "-i",
-            String.Format("\"{0}\"", inputFile),
-            "-o",
-            String.Format("\"{0}\"", outputFile),
-            "-p",
-            String.Format("\"{0}\"", GetAndroidApplicationId()),
-          }, inputFile);
+        string packageName = GetAndroidApplicationId();
+        string errorMessage;
+        if (RunConfigConversion(
+                () => GoogleServicesConfigConverter.GenerateAndroidResources(
+                    inputFile, outputFile, packageName), out errorMessage)) {
+          Debug.Log(String.Format(DocRef.GoogleServicesAndroidGenerateXml,
+                                  GOOGLE_SERVICES_OUTPUT_PATH, inputFile));
+        } else {
+          Debug.LogError(String.Format(DocRef.GoogleServicesAndroidGenerationFailed,
+                                       GOOGLE_SERVICES_OUTPUT_FILE, inputFile, errorMessage));
+        }
       }
 
       // Generate AndroidManifest.xml and project.properties for generated google-services.xml.
@@ -615,17 +561,12 @@ namespace Firebase.Editor {
       }
 
       if (PrepareJsonDirectory()) {
-        var result = RunResourceGenerator(new List<string> {
-            "-i",
-            String.Format("\"{0}\"", inputFile),
-            "-o",
-            String.Format("\"{0}\"", outputFile),
-            "--plist",
-          },
-          sourceFilename,
-          showCommandLine: false);
-        if (result.exitCode != 0) {
-          Debug.LogError(String.Format(DocRef.CouldNotTranslatePlist, sourceFilename));
+        string errorMessage;
+        if (!RunConfigConversion(
+                () => GoogleServicesConfigConverter.ConvertPlistToDesktopJson(
+                    inputFile, outputFile), out errorMessage)) {
+          Debug.LogError(String.Format(DocRef.CouldNotTranslatePlist, sourceFilename) +
+                         "\n\n" + errorMessage);
         }
       }
     }
