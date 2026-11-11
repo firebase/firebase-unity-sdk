@@ -21,12 +21,12 @@ set(firebase_app_editor_src
     src/AssemblyInfo.cs
     src/DllLocationPatcher.cs
     src/GenerateXmlFromGoogleServicesJson.cs
+    src/GoogleServicesConfigConverter.cs
     src/Settings.cs
     src/SettingsWindow.cs
     src/XcodeProjectPatcher.cs
     src/ChooserDialog.cs
     src/Measurement.cs
-    src/PythonExecutor.cs
     src/CategoryLogger.cs
     src/Utility.cs
     src/AndroidManifestModifier.cs
@@ -44,6 +44,7 @@ set(firebase_app_editor_src
 set(firebase_app_editor_reference
   unity_editor_cs
   unity_engine_cs  
+  google_minijson_cs
   google_jar_resolver_cs
   google_ios_resolver_cs
   google_version_handlerimpl_cs
