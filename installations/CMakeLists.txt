@@ -14,88 +14,18 @@
 
 # CMake file for the firebase installations library
 
-include(build_shared)
-
-# Firebase Installations Swig input files
-set(firebase_installations_swig
-  src/swig/installations.i
+# Firebase Installations is provided as a pure-C# source library with an .asmdef.
+unity_pack_folder(
+  "${FIREBASE_UNITY_DIR}/installations/src/"
+  PACK_PATH "Firebase/FirebaseInstallations"
 )
 
-# Firebase Installations CSharp files
-set(firebase_installations_src
-)
-
-if(NOT FIREBASE_UNI_LIBRARY AND APPLE AND NOT IOS)
-  set(EXTERNAL_LIB_NAMES
-    "-framework Foundation"
-    "-framework Security"
-  )
-else()
-  set(EXTERNAL_LIB_NAMES)
-endif()
-
-firebase_swig_add_library(firebase_installations_swig
-  NAMESPACE
-    Firebase.Installations
-  MODULE
-    FirebaseCppInstallations
-  SOURCES
-    ${firebase_installations_swig}
-  DEPENDS
-    firebase_installations
-  SYSTEM_DEPS
-    ${EXTERNAL_LIB_NAMES}
-)
-
+# For documentation, get all C# files recursively,
+# which make up the public API.
+file(GLOB_RECURSE firebase_installations_doc_src "src/*.cs")
+# Filter out any files located in src/internal
+list(FILTER firebase_installations_doc_src EXCLUDE REGEX "src/internal/")
 unity_pack_documentation_sources(installations
   DOCUMENTATION_SOURCES
-    ${firebase_installations_src}
-    ${firebase_installations_swig_gen_src}
-)
-if (FIREBASE_GENERATE_SWIG_ONLY)
-  unity_pack_documentation_sources(installations
-    DOCUMENTATION_SOURCES
-      ${firebase_installations_swig_gen_cpp_src}
-  )
-  return()
-endif()
-
-mono_add_library(firebase_installations_cs
-  MODULE
-    Firebase.Installations
-  SOURCES
-    ${firebase_installations_src}
-    ${firebase_installations_swig_gen_src}
-  REFERENCES
-    ${FIREBASE_PLATFORM_REF}
-  DEPENDS
-    firebase_installations_swig
-)
-
-if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_installations libFirebaseCppInstallations DEPS firebase_installations firebase_installations_swig)
-else()
-build_firebase_shared(
-  installations
-  installations
-  FirebaseCppInstallations
-)
-endif()
-
-unity_pack_cs(firebase_installations_cs)
-
-if (FIREBASE_INCLUDE_UNITY)
-  generate_dependencies_xml(Installations
-    FIREBASE_SPM_DEPS
-      "FirebaseInstallations|FirebaseInstallations"
-    ANDROID_DEPS
-      ${FIREBASE_INSTALLATIONS_ANDROID_DEPS}
-    ANDROID_SPEC
-      "installations"
-  )
-endif()
-
-set_property(TARGET firebase_installations_cs
-  PROPERTY FOLDER
-  "Firebase ${FIREBASE_PLATFORM_NAME}"
+    ${firebase_installations_doc_src}
 )

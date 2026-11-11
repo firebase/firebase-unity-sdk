@@ -52,11 +52,6 @@ set(FIREBASE_FIRESTORE_ANDROID_DEPS
     "com.google.firebase:firebase-analytics:24.0.0"
 )
 
-set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-installations:20.0.0"
-    "com.google.firebase:firebase-analytics:24.0.0"
-)
-
 # iid is needed by messaging to avoid a conflict with functions
 set(FIREBASE_MESSAGING_ANDROID_DEPS
     "com.google.firebase:firebase-messaging:26.0.1"

@@ -35,6 +35,7 @@ desktop builds on Windows, OS X, and Linux:
 | Firebase Realtime Database*        | FirebaseDatabase.unitypackage     |
 | Cloud Firestore                    | FirebaseFirestore.unitypackage    |
 | Firebase Functions                 | FirebaseFunctions.unitypackage    |
+| Firebase Installations             | FirebaseInstallations.unitypackage|
 | Firebase Remote Config             | FirebaseRemoteConfig.unitypackage |
 | Firebase Storage                   | FirebaseStorage.unitypackage      |
 
@@ -111,6 +112,14 @@ Release Notes
 -------------
 ### Upcoming Release
 -   Changes
+    - Installations: Rewrote the internal implementation in C#, removing the dependency on the C++
+      and native platform Installations libraries while adding full Desktop support (replacing the
+      previous stub implementation). `Firebase.Installations` is now shipped as C# source with an
+      assembly definition of the same name (update `precompiledReferences` in your own asmdefs
+      accordingly), the `FirebaseCppInstallations` native libraries, `firebase-installations`
+      Android dependency, and `FirebaseInstallations` iOS dependency are gone, and mobile builds
+      that also include native Analytics, Crashlytics, or Messaging automatically share the native
+      Firebase Installation ID.
     - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
       to retrieve decoded ID token claims and metadata.
     - Storage: Rewrote the internal implementation in C#, removing the dependency on the C++
