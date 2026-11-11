@@ -43,10 +43,6 @@ set(FIREBASE_FIRESTORE_ANDROID_DEPS
     "com.google.firebase:firebase-analytics:24.0.0"
 )
 
-# iid is needed by messaging to avoid a conflict with functions
 set(FIREBASE_MESSAGING_ANDROID_DEPS
     "com.google.firebase:firebase-messaging:26.0.1"
-    "com.google.firebase:firebase-analytics:24.0.0"
-    "com.google.firebase:firebase-iid:21.1.0"
-    "com.google.flatbuffers:flatbuffers-java:1.12.0"
 )

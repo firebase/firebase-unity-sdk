@@ -16,39 +16,29 @@
 
 namespace Firebase.Messaging {
 
-  /// Event argument for the MessageReceived event containing the message data.
-  public sealed class MessageReceivedEventArgs : System.EventArgs {
-    public MessageReceivedEventArgs(FirebaseMessage msg) {
-      this.Message = msg;
-    }
-
-    /// Message data passed to the MessageReceived event handler.
-    public FirebaseMessage Message { get; set; }
-  }
-  /// Token argument for the TokenReceived event containing the token string.
-  public sealed class TokenReceivedEventArgs : System.EventArgs {
-    public TokenReceivedEventArgs(string token) { this.Token = token; }
-    /// An identity token string provided by the TokenReceived event handler.
-    public string Token { get; set; }
-  }
-
-  /// Argument for the RegistrationReceived event containing the installation ID string.
-  public sealed class RegistrationReceivedEventArgs : System.EventArgs {
-    public RegistrationReceivedEventArgs(string installationId) {
-      this.InstallationId = installationId;
-    }
-    /// The Firebase Installation ID (FID) used for sending messages to this app instance.
-    public string InstallationId { get; set; }
-  }
-
-  /// Argument for the UnregistrationReceived event containing the installation ID string.
-  public sealed class UnregistrationReceivedEventArgs : System.EventArgs {
-    public UnregistrationReceivedEventArgs(string installationId) {
-      this.InstallationId = installationId;
-    }
-    /// The Firebase Installation ID (FID) that was unregistered.
-    public string InstallationId { get; set; }
-  }
+/// Event argument for the MessageReceived event containing the message data.
+public sealed class MessageReceivedEventArgs : System.EventArgs {
+  public MessageReceivedEventArgs(FirebaseMessage msg) => Message = msg;
+  /// Message data passed to the MessageReceived event handler.
+  public FirebaseMessage Message { get; set; }
+}
+/// Token argument for the TokenReceived event containing the token string.
+public sealed class TokenReceivedEventArgs : System.EventArgs {
+  public TokenReceivedEventArgs(string token) => Token = token;
+  /// An identity token string provided by the TokenReceived event handler.
+  public string Token { get; set; }
+}
+/// Argument for the RegistrationReceived event containing the installation ID string.
+public sealed class RegistrationReceivedEventArgs : System.EventArgs {
+  public RegistrationReceivedEventArgs(string installationId) => InstallationId = installationId;
+  /// The Firebase Installation ID (FID) used for sending messages to this app instance.
+  public string InstallationId { get; set; }
+}
+/// Argument for the UnregistrationReceived event containing the installation ID string.
+public sealed class UnregistrationReceivedEventArgs : System.EventArgs {
+  public UnregistrationReceivedEventArgs(string installationId) => InstallationId = installationId;
+  /// The Firebase Installation ID (FID) that was unregistered.
+  public string InstallationId { get; set; }
+}
 
 }  // namespace Firebase.Messaging
-

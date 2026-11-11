@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
 
 namespace Firebase.Messaging {
@@ -21,16 +22,10 @@ namespace Firebase.Messaging {
 /// @brief Data structure for parameters that are unique to the Android
 /// implementation.
 public sealed class AndroidNotificationParams {
-  internal static AndroidNotificationParams FromInternal(AndroidNotificationParamsInternal other) {
-    if (other == null) return null;
-
-    AndroidNotificationParams android = new AndroidNotificationParams();
-    android.ChannelId = other.channel_id;
-    return android;
-  }
+  public AndroidNotificationParams() { }
 
   /// The channel id that was provided when the message was sent.
-  public string ChannelId { get; private set; }
+  public string ChannelId { get; internal set; } = string.Empty;
 }
 
 /// Used for messages that display a notification.
@@ -38,36 +33,16 @@ public sealed class AndroidNotificationParams {
 /// On android, this requires that the app is using the Play Services client
 /// library.
 public sealed class FirebaseNotification {
-  internal static FirebaseNotification FromInternal(FirebaseNotificationInternal other) {
-    if (other == null) return null;
-
-    FirebaseNotification notification = new FirebaseNotification();
-    notification.Android = AndroidNotificationParams.FromInternal(other.android);
-    notification.Badge = other.badge;
-    notification.Body = other.body;
-    // Make a copy of the list, to not rely on the C++ memory lasting around
-    notification.BodyLocalizationArgs = new List<string>(other.body_loc_args);
-    notification.BodyLocalizationKey = other.body_loc_key;
-    notification.ClickAction = other.click_action;
-    notification.Color = other.color;
-    notification.Icon = other.icon;
-    notification.Sound = other.sound;
-    notification.Tag = other.tag;
-    notification.Title = other.title;
-    // Make a copy of the list, to not rely on the C++ memory lasting around
-    notification.TitleLocalizationArgs = new List<string>(other.title_loc_args);
-    notification.TitleLocalizationKey = other.title_loc_key;
-    return notification;
-  }
+  public FirebaseNotification() { }
 
   /// Android-specific data to show.
-  public AndroidNotificationParams Android { get; private set; }
+  public AndroidNotificationParams Android { get; internal set; }
 
   /// Indicates the badge on the client app home icon. iOS and tvOS only.
-  public string Badge { get; private set; }
+  public string Badge { get; internal set; } = string.Empty;
 
   /// Indicates notification body text.
-  public string Body { get; private set; }
+  public string Body { get; internal set; } = string.Empty;
 
   /// Indicates the string value to replace format specifiers in body string
   /// for localization.
@@ -79,7 +54,7 @@ public sealed class FirebaseNotification {
   ///
   /// [1]:
   /// https://developer.android.com/guide/topics/resources/string-resource.html#FormattingAndStyling
-  public System.Collections.Generic.IEnumerable<string> BodyLocalizationArgs { get; private set; }
+  public IEnumerable<string> BodyLocalizationArgs { get; internal set; } = Array.Empty<string>();
 
   /// Indicates the key to the body string for localization.
   ///
@@ -87,7 +62,7 @@ public sealed class FirebaseNotification {
   ///
   /// On Android, use the key in the app's string resources when populating this
   /// value.
-  public string BodyLocalizationKey { get; private set; }
+  public string BodyLocalizationKey { get; internal set; } = string.Empty;
 
   /// The action associated with a user click on the notification.
   ///
@@ -95,14 +70,14 @@ public sealed class FirebaseNotification {
   /// launched when user clicks the notification.
   ///
   /// If set on iOS or tvOS, corresponds to category in APNS payload.
-  public string ClickAction { get; private set; }
+  public string ClickAction { get; internal set; } = string.Empty;
 
   /// Indicates color of the icon, expressed in \#rrggbb format. Android only.
-  public string Color { get; private set; }
+  public string Color { get; internal set; } = string.Empty;
 
   /// Indicates notification icon. Sets value to myicon for drawable resource
   /// myicon.
-  public string Icon { get; private set; }
+  public string Icon { get; internal set; } = string.Empty;
 
   /// Indicates a sound to play when the device receives the notification.
   /// Supports default, or the filename of a sound resource bundled in the
@@ -111,18 +86,18 @@ public sealed class FirebaseNotification {
   /// Android sound files must reside in /res/raw/, while tvOS and iOS sound
   /// files can be in the main bundle of the client app or in the
   /// Library/Sounds folder of the app’s data container.
-  public string Sound { get; private set; }
+  public string Sound { get; internal set; } = string.Empty;
 
   /// Indicates whether each notification results in a new entry in the
   /// notification drawer on Android. If not set, each request creates a new
   /// notification. If set, and a notification with the same tag is already
   /// being shown, the new notification replaces the existing one in the
   /// notification drawer.
-  public string Tag { get; private set; }
+  public string Tag { get; internal set; } = string.Empty;
 
   /// Indicates notification title. This field is not visible on tvOS, iOS
   /// phones and tablets.
-  public string Title { get; private set; }
+  public string Title { get; internal set; } = string.Empty;
 
   /// Indicates the string value to replace format specifiers in title string
   /// for localization.
@@ -134,7 +109,7 @@ public sealed class FirebaseNotification {
   ///
   /// [1]:
   /// https://developer.android.com/guide/topics/resources/string-resource.html#FormattingAndStyling
-  public System.Collections.Generic.IEnumerable<string> TitleLocalizationArgs { get; private set; }
+  public IEnumerable<string> TitleLocalizationArgs { get; internal set; } = Array.Empty<string>();
 
   /// Indicates the key to the title string for localization.
   ///
@@ -142,7 +117,7 @@ public sealed class FirebaseNotification {
   ///
   /// On Android, use the key in the app's string resources when populating this
   /// value.
-  public string TitleLocalizationKey { get; private set; }
+  public string TitleLocalizationKey { get; internal set; } = string.Empty;
 }
 
 }  // namespace Firebase.Messaging

@@ -144,6 +144,12 @@ Release Notes
       Android dependency, and `FirebaseInstallations` iOS dependency are gone, and mobile builds
       that also include native Analytics, Crashlytics, or Messaging automatically share the native
       Firebase Installation ID.
+    - Messaging: Rewrote `Firebase.Messaging` in C# with direct Android JNI and iOS/tvOS Objective-C
+      runtime bridges, removing the `FirebaseCppMessaging` C++/SWIG wrapper, `firebase-messaging-cpp.aar`
+      FlatBuffers transport, and unused `firebase-analytics`, `firebase-iid`, and `flatbuffers-java`
+      Android dependencies. `Firebase.Messaging` is now shipped as C# source with a
+      `Firebase.Messaging.asmdef` assembly definition, and `RequestPermissionAsync()` now requests the
+      `POST_NOTIFICATIONS` runtime permission on Android 13+ (API 33+).
     - Remote Config: Rewrote the internal implementation in pure C#, removing the dependency on the
       C++ and native platform Remote Config libraries. `Firebase.RemoteConfig` is now shipped as C#
       source with an assembly definition (`Firebase.RemoteConfig.asmdef`), real-time config updates

@@ -527,48 +527,9 @@
       "name": "FirebaseMessaging.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android"
-          ],
-          "cpu": "AnyCPU",
+          "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Plugins/Firebase.Messaging.dll",
-            "Firebase/Plugins/Firebase.Messaging.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/iOS/Firebase.Messaging.dll",
-            "Firebase/Plugins/iOS/Firebase.Messaging.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppMessaging.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppMessaging.xcframework"
+            "Firebase/FirebaseMessaging/*"
           ]
         },
         {
@@ -596,29 +557,7 @@
           "paths": [
             "Firebase/Editor/MessagingDependencies.xml",
             "Firebase/Editor/Messaging/FirebaseMessagingActivityGenerator.asmdef",
-            "Firebase/Editor/Messaging/FirebaseMessagingActivityGenerator.cs",
-            "Firebase/m2repository/com/google/firebase/firebase-messaging-unity/"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone"
-          ],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppMessaging*"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Android"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Android/firebase-messaging-cpp.aar"
+            "Firebase/Editor/Messaging/FirebaseMessagingActivityGenerator.cs"
           ]
         },
         {

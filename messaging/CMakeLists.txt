@@ -14,80 +14,45 @@
 
 # CMake file for the firebase messaging library
 
-include(build_shared)
-
-# Firebase Messaging Swig input files
-set(firebase_messaging_swig
-  src/swig/messaging.i
+unity_pack_folder(
+  "${FIREBASE_UNITY_DIR}/messaging/src/"
+  PACK_PATH "Firebase/FirebaseMessaging"
 )
 
-# Firebase Messaging CSharp files
-set(firebase_messaging_src
-  src/FirebaseMessage.cs
-  src/FirebaseMessaging.cs
-  src/FirebaseNotification.cs
-  src/MessagingEventArgs.cs
-  src/MessagingOptions.cs
-)
-
-firebase_swig_add_library(firebase_messaging_swig
-  NAMESPACE
-    Firebase.Messaging
-  MODULE
-    FirebaseCppMessaging
-  SOURCES
-    ${firebase_messaging_swig}
-  DEPENDS
-    firebase_messaging
-)
-
+file(GLOB_RECURSE firebase_messaging_doc_src "src/*.cs")
+list(FILTER firebase_messaging_doc_src EXCLUDE REGEX "src/internal/")
 unity_pack_documentation_sources(messaging
   DOCUMENTATION_SOURCES
-    ${firebase_messaging_src}
-    ${firebase_messaging_swig_gen_src}
+    ${firebase_messaging_doc_src}
 )
-if (FIREBASE_GENERATE_SWIG_ONLY)
-  unity_pack_documentation_sources(messaging
-    DOCUMENTATION_SOURCES
-      ${firebase_messaging_swig_gen_cpp_src}
-  )
-  return()
-endif()
-
-mono_add_library(firebase_messaging_cs
-  MODULE
-    Firebase.Messaging
-  SOURCES
-    ${firebase_messaging_src}
-    ${firebase_messaging_swig_gen_src}
-  REFERENCES
-    ${FIREBASE_PLATFORM_REF}
-  DEPENDS
-    firebase_messaging_swig
-)
-
-if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_messaging libFirebaseCppMessaging DEPS firebase_messaging firebase_messaging_swig)
-else()
-build_firebase_shared(
-  messaging
-  messaging
-  FirebaseCppMessaging
-  ANDROID_MANIFEST
-    "${CMAKE_CURRENT_LIST_DIR}/AndroidManifest.xml"
-)
-endif()
-
-unity_pack_cs(firebase_messaging_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
-  generate_dependencies_xml(Messaging
-    FIREBASE_SPM_DEPS
-      "FirebaseMessaging|Firebase/Messaging"
-    ANDROID_DEPS
-      ${FIREBASE_MESSAGING_ANDROID_DEPS}
-    ANDROID_SPEC
-      "messaging"
+  set(MESSAGING_ANDROID_PACKAGES "")
+  foreach(ANDROID_DEP ${FIREBASE_MESSAGING_ANDROID_DEPS})
+    string(CONCAT MESSAGING_ANDROID_PACKAGES "${MESSAGING_ANDROID_PACKAGES}"
+      "    <androidPackage spec=\"${ANDROID_DEP}\">\n"
+      "    </androidPackage>\n")
+  endforeach()
+
+  set(MESSAGING_DEPS_XML "${CMAKE_CURRENT_BINARY_DIR}/MessagingDependencies.xml")
+  file(WRITE "${MESSAGING_DEPS_XML}"
+"<!-- Copyright (C) 2019 Google Inc. All Rights Reserved.\n"
+"\n"
+"FirebaseMessaging iOS and Android Dependencies.\n"
+"-->\n"
+"\n"
+"<dependencies>\n"
+"  <remoteSwiftPackage url=\"https://github.com/firebase/firebase-ios-sdk.git\" version=\"${FIREBASE_SPM_VERSION}\">\n"
+"    <swiftPackage name=\"FirebaseMessaging\"/>\n"
+"  </remoteSwiftPackage>\n"
+"  <androidPackages>\n"
+"${MESSAGING_ANDROID_PACKAGES}"
+"  </androidPackages>\n"
+"</dependencies>\n"
+  )
+  install(
+    FILES "${MESSAGING_DEPS_XML}"
+    DESTINATION "Firebase/Editor/"
   )
 endif()
 
@@ -103,23 +68,4 @@ if (ANDROID)
     PACK_PATH
       "Firebase/Editor/Messaging/"
   )
-  # Get the Messaging Java AAR file from the C++ SDK.
-  add_custom_target(
-    firebase_messaging_java_aar_unity
-    ALL
-    DEPENDS firebase_messaging_java_aar
-  )
-  get_target_property(messaging_aar_file firebase_messaging_java_aar OBJECT_OUTPUTS)
-  unity_pack_file(
-    ${messaging_aar_file}
-    PACK_PATH
-      "Firebase/Plugins/Android/"
-    RENAME_TO
-      "firebase-messaging-cpp.aar"
-  )
 endif()
-
-set_property(TARGET firebase_messaging_cs
-  PROPERTY FOLDER
-  "Firebase ${FIREBASE_PLATFORM_NAME}"
-)

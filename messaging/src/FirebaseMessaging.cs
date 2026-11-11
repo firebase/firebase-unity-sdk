@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
+using System;
+using System.Threading.Tasks;
+using Firebase.Messaging.Internal;
+
 namespace Firebase.Messaging {
+
+/// Error code returned by Firebase Cloud Messaging functions.
+public enum Error { None = 0, FailedToRegisterForRemoteNotifications = 1, InvalidTopicName = 2, NoRegistrationToken = 3, Unknown = 4 }
 
 /// @brief Firebase Cloud Messaging API.
 ///
@@ -66,14 +73,7 @@ public static class FirebaseMessaging {
   ///   &lt;false/&gt;
   /// @endcode
   /// @endif
-  public static bool RegistrationOnInitEnabled {
-    get {
-      return FirebaseMessagingInternal.IsRegistrationOnInitEnabled();
-    }
-    set {
-      FirebaseMessagingInternal.SetRegistrationOnInitEnabled(value);
-    }
-  }
+  public static bool RegistrationOnInitEnabled { get => MessagingRuntime.RegistrationOnInitEnabled; set => MessagingRuntime.RegistrationOnInitEnabled = value; }
 
   /// Enable or disable token registration during initialization of Firebase
   /// Cloud Messaging.
@@ -115,15 +115,8 @@ public static class FirebaseMessaging {
   ///   &lt;false/&gt;
   /// @endcode
   /// @endif
-  [System.Obsolete("Use RegistrationOnInitEnabled instead.")]
-  public static bool TokenRegistrationOnInitEnabled {
-    get {
-      return FirebaseMessagingInternal.IsTokenRegistrationOnInitEnabled();
-    }
-    set {
-      FirebaseMessagingInternal.SetTokenRegistrationOnInitEnabled(value);
-    }
-  }
+  [Obsolete("Use RegistrationOnInitEnabled instead.")]
+  public static bool TokenRegistrationOnInitEnabled { get => MessagingRuntime.RegistrationOnInitEnabled; set => MessagingRuntime.RegistrationOnInitEnabled = value; }
 
   /// Enables or disables Firebase Cloud Messaging message delivery metrics
   /// export to BigQuery.
@@ -140,14 +133,7 @@ public static class FirebaseMessaging {
   ///
   /// @note This function is currently only implemented on Android, and has no
   /// behavior on other platforms.
-  public static bool DeliveryMetricsExportedToBigQueryEnabled {
-    get {
-      return FirebaseMessagingInternal.DeliveryMetricsExportToBigQueryEnabled();
-    }
-    set {
-      FirebaseMessagingInternal.SetDeliveryMetricsExportToBigQuery(value);
-    }
-  }
+  public static bool DeliveryMetricsExportedToBigQueryEnabled { get => MessagingRuntime.DeliveryMetricsExportedToBigQueryEnabled; set => MessagingRuntime.DeliveryMetricsExportedToBigQueryEnabled = value; }
 
   /// @brief Registers the current Firebase app instance with the Firebase Cloud
   /// Messaging (FCM) backend to receive messages.
@@ -161,9 +147,7 @@ public static class FirebaseMessaging {
   /// RegistrationReceived callback with the existing FID.
   ///
   /// @return A task that completes when the registration is completed.
-  public static System.Threading.Tasks.Task RegisterAsync() {
-    return FirebaseMessagingInternal.RegisterAsync();
-  }
+  public static Task RegisterAsync() => MessagingRuntime.RegisterAsync();
 
   /// @brief Unregisters the current app instance with FCM.
   ///
@@ -172,19 +156,15 @@ public static class FirebaseMessaging {
   /// deleting that.
   ///
   /// @return A task that completes when the unregistration is completed.
-  public static System.Threading.Tasks.Task UnregisterAsync() {
-    return FirebaseMessagingInternal.UnregisterAsync();
-  }
+  public static Task UnregisterAsync() => MessagingRuntime.UnregisterAsync();
 
   /// @brief This creates a Firebase Installations ID, if one does not exist, and
   /// sends information about the application and the device where it's running to
   /// the Firebase backend.
   ///
   /// @return A task with the token.
-  [System.Obsolete("Use RegisterAsync() instead.")]
-  public static System.Threading.Tasks.Task<string> GetTokenAsync() {
-    return FirebaseMessagingInternal.GetTokenAsync();
-  }
+  [Obsolete("Use RegisterAsync() instead.")]
+  public static Task<string> GetTokenAsync() => MessagingRuntime.GetTokenAsync();
 
   /// @brief Deletes the default token for this Firebase project.
   ///
@@ -193,68 +173,21 @@ public static class FirebaseMessaging {
   /// deleting that.
   ///
   /// @return A task that completes when the token is deleted.
-  [System.Obsolete("Use UnregisterAsync() instead.")]
-  public static System.Threading.Tasks.Task DeleteTokenAsync() {
-    return FirebaseMessagingInternal.DeleteTokenAsync();
-  }
+  [Obsolete("Use UnregisterAsync() instead.")]
+  public static Task DeleteTokenAsync() => MessagingRuntime.DeleteTokenAsync();
 
-#if DOXYGEN
   /// Called on the client when a message arrives.
-  public static event System.EventHandler<MessageReceivedEventArgs> MessageReceived;
-#else
-  public static event System.EventHandler<MessageReceivedEventArgs> MessageReceived {
-    add {
-      FirebaseMessagingInternal.MessageReceived += value;
-    }
-    remove {
-      FirebaseMessagingInternal.MessageReceived -= value;
-    }
-  }
-#endif  // DOXYGEN
+  public static event EventHandler<MessageReceivedEventArgs> MessageReceived { add => MessagingRuntime.AddMessageReceived(value); remove => MessagingRuntime.RemoveMessageReceived(value); }
 
-#if DOXYGEN
   /// Called on the client when a registration token message arrives.
-  [System.Obsolete("Use RegistrationReceived instead.")]
-  public static event System.EventHandler<TokenReceivedEventArgs> TokenReceived;
-#else
-  [System.Obsolete("Use RegistrationReceived instead.")]
-  public static event System.EventHandler<TokenReceivedEventArgs> TokenReceived {
-    add {
-      FirebaseMessagingInternal.TokenReceived += value;
-    }
-    remove {
-      FirebaseMessagingInternal.TokenReceived -= value;
-    }
-  }
-#endif
+  [Obsolete("Use RegistrationReceived instead.")]
+  public static event EventHandler<TokenReceivedEventArgs> TokenReceived { add => MessagingRuntime.AddTokenReceived(value); remove => MessagingRuntime.RemoveTokenReceived(value); }
 
-#if DOXYGEN
   /// Called on the client when a registration installation ID arrives or changes.
-  public static event System.EventHandler<RegistrationReceivedEventArgs> RegistrationReceived;
-#else
-  public static event System.EventHandler<RegistrationReceivedEventArgs> RegistrationReceived {
-    add {
-      FirebaseMessagingInternal.RegistrationReceived += value;
-    }
-    remove {
-      FirebaseMessagingInternal.RegistrationReceived -= value;
-    }
-  }
-#endif
+  public static event EventHandler<RegistrationReceivedEventArgs> RegistrationReceived { add => MessagingRuntime.AddRegistrationReceived(value); remove => MessagingRuntime.RemoveRegistrationReceived(value); }
 
-#if DOXYGEN
   /// Called on the client when an unregistration confirmation arrives.
-  public static event System.EventHandler<UnregistrationReceivedEventArgs> UnregistrationReceived;
-#else
-  public static event System.EventHandler<UnregistrationReceivedEventArgs> UnregistrationReceived {
-    add {
-      FirebaseMessagingInternal.UnregistrationReceived += value;
-    }
-    remove {
-      FirebaseMessagingInternal.UnregistrationReceived -= value;
-    }
-  }
-#endif
+  public static event EventHandler<UnregistrationReceivedEventArgs> UnregistrationReceived { add => MessagingRuntime.AddUnregistrationReceived(value); remove => MessagingRuntime.RemoveUnregistrationReceived(value); }
 
   /// @brief Displays a prompt to the user requesting permission to display
   ///        notifications.
@@ -265,9 +198,7 @@ public static class FirebaseMessaging {
   ///
   /// @return A Task that completes when the notification prompt has been
   ///         dismissed.
-  public static System.Threading.Tasks.Task RequestPermissionAsync() {
-    return FirebaseMessagingInternal.RequestPermissionAsync();
-  }
+  public static Task RequestPermissionAsync() => MessagingRuntime.RequestPermissionAsync();
 
   /// @brief Subscribe to receive all messages to the specified topic.
   ///
@@ -276,9 +207,7 @@ public static class FirebaseMessaging {
   ///
   /// @param[in] topic The name of the topic to subscribe. Must match the
   ///            following regular expression: `[a-zA-Z0-9-_.~%]{1,900}`.
-  public static System.Threading.Tasks.Task SubscribeAsync(string topic) {
-    return FirebaseMessagingInternal.SubscribeAsync(topic);
-  }
+  public static Task SubscribeAsync(string topic) => MessagingRuntime.SubscribeAsync(topic);
 
   /// @brief Unsubscribe from a topic.
   ///
@@ -287,9 +216,7 @@ public static class FirebaseMessaging {
   ///
   /// @param[in] topic The name of the topic to unsubscribe from. Must match the
   ///            following regular expression: `[a-zA-Z0-9-_.~%]{1,900}`.
-  public static System.Threading.Tasks.Task UnsubscribeAsync(string topic) {
-    return FirebaseMessagingInternal.UnsubscribeAsync(topic);
-  }
+  public static Task UnsubscribeAsync(string topic) => MessagingRuntime.UnsubscribeAsync(topic);
 }
 
 }  // namespace Firebase.Messaging

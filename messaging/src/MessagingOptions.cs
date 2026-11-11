@@ -23,9 +23,7 @@ namespace Firebase.Messaging {
 public sealed class MessagingOptions {
   public MessagingOptions() { }
 
-  public bool SuppressNotificationPermissionPrompt {
-    get; set;
-  }
+  public bool SuppressNotificationPermissionPrompt { get; set; }
 }
 
 }  // namespace Firebase.Messaging
