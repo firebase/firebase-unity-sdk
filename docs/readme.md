@@ -117,6 +117,11 @@ Release Notes
       `DeviceCheckProviderFactory`) directly without C++ or SWIG. `Firebase.AppCheck` is now shipped
       as C# source (`Firebase.AppCheck.asmdef`), removing `FirebaseCppAppCheck` native libraries and
       the transitive `firebase-analytics` Android dependency.
+    - Auth: Rewrote the internal implementation in C#, removing the dependency on the C++ and
+      native platform Auth libraries. `Firebase.Auth.dll` is now shipped as C# source with an
+      assembly definition of the same name (update `precompiledReferences` in your own asmdefs
+      accordingly), and the `FirebaseCppAuth` native libraries, `firebase-auth` Android dependency,
+      and `FirebaseAuth` iOS dependency have been removed.
     - Installations: Rewrote the internal implementation in C#, removing the dependency on the C++
       and native platform Installations libraries while adding full Desktop support (replacing the
       previous stub implementation). `Firebase.Installations` is now shipped as C# source with an

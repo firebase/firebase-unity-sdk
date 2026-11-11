@@ -14,39 +14,35 @@
  * limitations under the License.
  */
 
+using System;
+
 namespace Firebase.Auth {
+  /// Exception thrown for failed Account Link Attempts
+  ///
+  /// Represents a Firebase Auth error when attempting to link an account. UserInfo contains
+  /// additional information about the account as returned by the Firebase Auth service, and may
+  /// include a valid UpdatedCredential which can be used to sign in to the service through
+  /// Firebase.Auth.SignInWithCredential.
+  public sealed class FirebaseAccountLinkException : Exception {
+    private readonly AuthResult _result;
 
-/// Exception thrown for failed Account Link Attempts
-///
-/// Represents a Firebase Auth error when attempting to link an account. UserInfo contains
-/// additional information about the account as returned by the Firebase Auth service, and may
-/// include a valid UpdatedCredential which can be used to sign in to the service through
-/// Firebase.Auth.SignInWithCredential.
-public sealed class FirebaseAccountLinkException : System.Exception
-{
-  /// Initializes a new FirebaseAccountLinkException, with the given error code and
-  /// message and the AdditionalUserInfo returned from the Firebase auth service.
-  public FirebaseAccountLinkException(int errorCode, string message,
-                                      AuthResult authResult) : base(message)
-  {
-    ErrorCode = errorCode;
-    result = authResult;
+    /// Initializes a new FirebaseAccountLinkException, with the given error code and
+    /// message and the AdditionalUserInfo returned from the Firebase auth service.
+    public FirebaseAccountLinkException(int errorCode, string message, AuthResult authResult)
+        : base(message) {
+      ErrorCode = errorCode;
+      _result = authResult;
+    }
+
+    /// Returns the Auth defined non-zero error code.
+    /// If the error code is 0, the error is with the Task itself, and not the
+    /// API. See the exception message for more detail.
+    public int ErrorCode { get; private set; }
+
+    /// Returns a Firebase.Auth.UserInfo object that may include additional information about the
+    /// account which failed to link. Additionally, if UserInfo.UpdatedCredential.IsValid() is true,
+    /// the credential may be used to sign-in the user into Firebase with
+    /// Firebase.Auth.SignInWithCredentialAsync.
+    public AdditionalUserInfo UserInfo => _result != null ? _result.AdditionalUserInfo : null;
   }
-
-  /// Returns the Auth defined non-zero error code.
-  /// If the error code is 0, the error is with the Task itself, and not the
-  /// API. See the exception message for more detail.
-  public int ErrorCode { get; private set; }
-
-  /// Returns a Firebase.Auth.UserInfo object that may include additional information about the
-  /// account which failed to link. Additionally, if UserInfo.UpdatedCredential.IsValid() is true,
-  /// the credential may be used to sign-in the user into Firebase with
-  /// Firebase.Auth.SignInWithCredentialAsync.
-  public AdditionalUserInfo UserInfo {
-    get { return (result != null) ? result.AdditionalUserInfoInternal : null; }
-  }
-
-  private AuthResult result = null;
-}
-
 }

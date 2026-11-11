@@ -29,11 +29,6 @@ set(FIREBASE_APP_CHECK_ANDROID_DEPS
     "com.google.firebase:firebase-appcheck-playintegrity:20.0.0"
 )
 
-set(FIREBASE_AUTH_ANDROID_DEPS
-    "com.google.firebase:firebase-auth:25.0.0"
-    "com.google.firebase:firebase-analytics:24.0.0"
-)
-
 set(FIREBASE_CRASHLYTICS_ANDROID_DEPS
     "com.google.firebase:firebase-crashlytics-ndk:21.0.1"
     "com.google.firebase:firebase-analytics:24.0.0"
