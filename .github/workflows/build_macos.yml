@@ -58,15 +58,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: true # zizmor: ignore[artipacked]
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
-        with:
-          repository: firebase/firebase-cpp-sdk
-          path: firebase-cpp-sdk
-          submodules: true
-          ref: ${{ inputs.firebase_cpp_sdk_version }}
-          fetch-depth: 0
-          persist-credentials: true # zizmor: ignore[artipacked]
-
       # Remove other python installs before installing the version we want
       - name: Remove other pythons
         shell: bash
@@ -80,29 +71,17 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Add msbuild to PATH (windows)
-        if: startsWith(matrix.os, 'windows')
-        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # ratchet:microsoft/setup-msbuild@v3
-
-      - name: Install prerequisites
+      - name: Ensure Mono is installed
         shell: bash
         run: |
-          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
-          cd firebase-cpp-sdk
-          python scripts/gha/install_prereqs_desktop.py
-          cd ..
-          brew install swig
+          if ! command -v mono >/dev/null 2>&1 || (! command -v msbuild >/dev/null 2>&1 && ! command -v xbuild >/dev/null 2>&1); then
+            brew install mono
+          fi
 
       - name: Install python deps
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-
-      - name: Install OpenSSL (macOS)
-        run: |
-          brew install openssl
-          # brew won't overwrite MacOS system default OpenSSL, so force it here.
-          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl --installed)" >> $GITHUB_ENV
 
       - id: unity_setup
         uses: ./gha/unity
@@ -110,13 +89,6 @@ jobs:
         with:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}
-
-      - name: Setup Swig Env
-        shell: bash
-        run: |
-          echo "$(swig -swiglib)" >> $GITHUB_PATH
-          swig -swiglib
-          echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
 
       - name: Build SDK (MacOS)
         timeout-minutes: 120
@@ -130,7 +102,7 @@ jobs:
           fi
           # TODO add handling cmake_extras
           CLEAN_APIS=$(echo ${INPUTS_APIS} | tr -d "'" | tr -d "\"")
-          python scripts/build_scripts/build_zips.py --gha --platform=macos --unity_root=$UNITY_ROOT_DIR --use_boringssl --architecture=x86_64 --architecture=arm64 --apis=${CLEAN_APIS}
+          python scripts/build_scripts/build_zips.py --gha --platform=macos --unity_root=$UNITY_ROOT_DIR --apis=${CLEAN_APIS}
         env:
           INPUTS_APIS: ${{ inputs.apis }}
 

@@ -75,44 +75,12 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Cache NDK
-        id: cache_ndk
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # ratchet:actions/cache@v6
-        with:
-          path: /tmp/android-ndk-r23b
-          key: android-ndk-${{ matrix.os }}-r23b
-
-      - name: Check cached NDK
+      - name: Ensure Mono is installed
         shell: bash
-        if: steps.cache_ndk.outputs.cache-hit != 'true'
         run: |
-          # If the NDK failed to download from the cache, but there is a
-          # /tmp/android-ndk-r23b directory, it's incomplete, so remove it.
-          if [[ -d "/tmp/android-ndk-r23b" ]]; then
-            echo "Removing incomplete download of NDK"
-            rm -rf /tmp/android-ndk-r23b
+          if ! command -v mono >/dev/null 2>&1 || (! command -v msbuild >/dev/null 2>&1 && ! command -v xbuild >/dev/null 2>&1); then
+            brew install mono
           fi
-
-      - name: Install prerequisites
-        shell: bash
-        run: |
-          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
-          cd firebase-cpp-sdk
-          python scripts/gha/install_prereqs_desktop.py
-          build_scripts/android/install_prereqs.sh
-          cd ..
-          echo "NDK_ROOT=/tmp/android-ndk-r23b" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=/tmp/android-ndk-r23b" >> $GITHUB_ENV
-          brew install swig
-      
-      - name: Force Java 11
-        if: runner.os != 'macOS'
-        shell: bash
-        run: echo "JAVA_HOME=${JAVA_HOME_11_X64}" >> $GITHUB_ENV
-      - name: Force Java 11 (mac)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: echo "JAVA_HOME=${JAVA_HOME_11_arm64}" >> $GITHUB_ENV
 
       - name: Install python deps
         shell: bash
@@ -125,11 +93,6 @@ jobs:
         with:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}
-
-      - name: Display Swig Version
-        shell: bash
-        run: |
-          swig -version
 
       - name: Build SDK (Android)
         timeout-minutes: 90

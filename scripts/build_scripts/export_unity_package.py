@@ -590,6 +590,9 @@ def posix_path(path):
   return path.replace('\\', '/')
 
 
+_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+
+
 class MissingGuidsError(Exception):
   """Raised when GUIDs are missing for input files in export_package().
 
@@ -604,21 +607,22 @@ class MissingGuidsError(Exception):
       missing_guid_paths: List of files missing GUIDs.
     """
     self.missing_guid_paths = sorted(list(set(missing_guid_paths)))
-    super(MissingGuidsError, self).__init__(self.__str__())
+    guids_file = FLAGS.guids_file if FLAGS.guids_file else ""
+    plugins_version = FLAGS.plugins_version if FLAGS.plugins_version else ""
+    self._message = (
+        ("There were asset paths without a known guid. "
+         "generate guids for these assets:\n\n"
+         "{gen_guids} "
+         "--guids_file=\"{guids_file}\" "
+         "--version=\"{plugins_version}\" \"").format(
+             gen_guids=os.path.join(_SCRIPT_DIR, "gen_guids.py"),
+             guids_file=guids_file, plugins_version=plugins_version) +
+        "\" \"".join(self.missing_guid_paths) + "\"")
+    super(MissingGuidsError, self).__init__(self._message)
 
   def __str__(self):
     """Retrieves a description of this error."""
-    guids_file = FLAGS.guids_file if FLAGS.guids_file else ""
-    plugins_version = FLAGS.plugins_version if FLAGS.plugins_version else ""
-    return (("There were asset paths without a known guid. "
-             "generate guids for these assets:\n\n"
-             "{gen_guids} "
-             "--guids_file=\"{guids_file}\" "
-             "--version=\"{plugins_version}\" \"").format(
-                 gen_guids=os.path.realpath(
-                   os.path.join(os.path.dirname(__file__), "gen_guids.py")),
-                 guids_file=guids_file, plugins_version=plugins_version) +
-            "\" \"".join(self.missing_guid_paths) + "\"")
+    return self._message
 
 
 class DuplicateGuidsError(Exception):

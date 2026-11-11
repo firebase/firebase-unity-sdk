@@ -56,15 +56,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: true # zizmor: ignore[artipacked]
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
-        with:
-          repository: firebase/firebase-cpp-sdk
-          path: firebase-cpp-sdk
-          submodules: true
-          ref: ${{ inputs.firebase_cpp_sdk_version }}
-          fetch-depth: 0
-          persist-credentials: true # zizmor: ignore[artipacked]
-
       - name: Support longpaths
         run: git config --system core.longpaths true
 
@@ -76,22 +67,10 @@ jobs:
       - name: Add msbuild to PATH (windows)
         uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # ratchet:microsoft/setup-msbuild@v3
 
-      - name: Install prerequisites
-        shell: bash
-        run: |
-          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
-          cd firebase-cpp-sdk
-          python scripts/gha/install_prereqs_desktop.py
-          cd ..
-
       - name: Install python deps
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-
-      - name: Install OpenSSL (Windows)
-        run: |
-          choco install openssl -r
 
       - id: unity_setup
         uses: ./gha/unity
@@ -100,34 +79,13 @@ jobs:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}
 
-      - name: Setup Swig Env
-        shell: bash
-        run: |
-          echo "$(swig -swiglib)" >> $GITHUB_PATH
-          swig -swiglib
-          echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
-
-      # mingw has zlib installed, which causes problems for the build, so we remove it
-      - name: Remove zlib
-        shell: bash
-        run: |
-          rm -f C:/mingw32/i686-w64-mingw32/lib/libz*
-          rm -f C:/mingw64/x86_64-w64-mingw32/lib/libz*
-          rm -f C:/msys64/mingw64/lib/libz*
-
-      # Strawberry Perl has zlib within, so we also remove it
-      - name: Remove Strawberry
-        shell: bash
-        run: |
-          rm -rf C:/Strawberry
-      
       - name: Build SDK (Windows)
         timeout-minutes: 90
         shell: bash
         run: |
           # TODO add handling cmake_extras
           CLEAN_APIS=$(echo ${INPUTS_APIS} | tr -d "'" | tr -d "\"")
-          python scripts/build_scripts/build_zips.py --gha --platform=windows --unity_root="$UNITY_ROOT_DIR" --swig_dir="$SWIG_DIR" --apis=${CLEAN_APIS}
+          python scripts/build_scripts/build_zips.py --gha --platform=windows --unity_root="$UNITY_ROOT_DIR" --apis=${CLEAN_APIS}
         env:
           INPUTS_APIS: ${{ inputs.apis }}
 

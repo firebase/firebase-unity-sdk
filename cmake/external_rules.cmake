@@ -51,15 +51,6 @@ function(download_external_sources)
   check_use_local_directory(PARSE)
   check_use_local_directory(GOOGLE_UNITY_JAR_RESOLVER)
 
-  # Check if the Firebase C++ SDK needs to be downloaded
-  if (EXISTS ${FIREBASE_CPP_SDK_DIR})
-    set(DOWNLOAD_FIREBASE_CPP_SDK OFF)
-  else()
-    set(DOWNLOAD_FIREBASE_CPP_SDK ON)
-    set(FIREBASE_CPP_SDK_DIR
-        "${FIREBASE_BINARY_DIR}/external/src/firebase_cpp_sdk" PARENT_SCOPE)
-  endif()
-
   execute_process(
     COMMAND
       ${ENV_COMMAND} cmake --debug-output
@@ -68,15 +59,12 @@ function(download_external_sources)
       -DPLATFORM=${PLATFORM}
       -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
       -DCMAKE_INSTALL_PREFIX=${FIREBASE_INSTALL_DIR}
-      -DFIREBASE_CPP_GIT_REPO=${FIREBASE_CPP_GIT_REPO}
       -DFIREBASE_DOWNLOAD_DIR=${FIREBASE_DOWNLOAD_DIR}
       -DFIREBASE_EXTERNAL_PLATFORM=${external_platform}
-      -DDOWNLOAD_FIREBASE_CPP_SDK=${DOWNLOAD_FIREBASE_CPP_SDK}
       -DDOWNLOAD_GOOGLE_UNITY_JAR_RESOLVER=${DOWNLOAD_GOOGLE_UNITY_JAR_RESOLVER}
       -DDOWNLOAD_MINIJSON=${DOWNLOAD_MINIJSON}
       -DDOWNLOAD_PARSE=${DOWNLOAD_PARSE}
       -DGOOGLE_UNITY_JAR_RESOLVER_VERSION=${FIREBASE_UNITY_JAR_RESOLVER_VERSION}
-      -DFIREBASE_CPP_SDK_PRESET_VERSION=${FIREBASE_CPP_SDK_PRESET_VERSION}
       ${PROJECT_SOURCE_DIR}/cmake/external
     OUTPUT_FILE ${PROJECT_BINARY_DIR}/external/output_cmake_config.txt
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/external

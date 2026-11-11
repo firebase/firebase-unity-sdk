@@ -18,10 +18,9 @@
 # project, which is done via external_rules.cmake, one directory above.
 
 cmake_minimum_required(VERSION 3.22)
-project(firebase_unity_download C CXX)
+project(firebase_unity_download NONE)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 
-include(firebase_cpp_sdk)
 include(google_unity_jar_resolver)
 include(minijson)

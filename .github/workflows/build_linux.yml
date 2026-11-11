@@ -56,36 +56,23 @@ jobs:
           fetch-depth: 0
           persist-credentials: true # zizmor: ignore[artipacked]
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
-        with:
-          repository: firebase/firebase-cpp-sdk
-          path: firebase-cpp-sdk
-          submodules: true
-          ref: ${{ inputs.firebase_cpp_sdk_version }}
-          fetch-depth: 0
-          persist-credentials: true # zizmor: ignore[artipacked]
-
       - name: Setup python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # ratchet:actions/setup-python@v7
         with:
           python-version: '3.9'
 
-      - name: Install prerequisites
+      - name: Ensure Mono is installed
         shell: bash
         run: |
-          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
-          cd firebase-cpp-sdk
-          python scripts/gha/install_prereqs_desktop.py
-          cd ..
+          if ! command -v mono >/dev/null 2>&1 || (! command -v msbuild >/dev/null 2>&1 && ! command -v xbuild >/dev/null 2>&1); then
+            sudo apt-get update
+            sudo apt-get install -y mono-complete
+          fi
 
       - name: Install python deps
         shell: bash
         run: |
           pip install -r scripts/gha/requirements.txt
-
-      - name: Install OpenSSL (Linux)
-        run: |
-          sudo apt install openssl
 
       - id: unity_setup
         uses: ./gha/unity
@@ -94,20 +81,13 @@ jobs:
           version: ${{ inputs.unity_version }}
           platforms: ${{ inputs.unity_platform_name }}
 
-      - name: Setup Swig Env
-        shell: bash
-        run: |
-          echo "$(swig -swiglib)" >> $GITHUB_PATH
-          swig -swiglib
-          echo "SWIG_DIR=$(swig -swiglib)" >> $GITHUB_ENV
-
       - name: Build SDK (Linux)
         timeout-minutes: 90
         shell: bash
         run: |
           # TODO add handling cmake_extras
           CLEAN_APIS=$(echo ${INPUTS_APIS} | tr -d "'" | tr -d "\"")
-          python scripts/build_scripts/build_zips.py --gha --platform=linux --use_boringssl=true --unity_root=$UNITY_ROOT_DIR --apis=${CLEAN_APIS} --gen_documentation_zip
+          python scripts/build_scripts/build_zips.py --gha --platform=linux --unity_root=$UNITY_ROOT_DIR --apis=${CLEAN_APIS} --gen_documentation_zip
         env:
           INPUTS_APIS: ${{ inputs.apis }}
       

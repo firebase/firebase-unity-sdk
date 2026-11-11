@@ -140,23 +140,9 @@ def get_build_path(platform, clean_build=False):
 
 
 def get_cpp_folder_args(source_path):
-  """Get the cmake args to pass in local Firebase C++ SDK folder.
-    If not found, will download from Firebase C++ git repo.
-
-    Args:
-      source_path: root source folder cd back.
-
-    Returns:
-      cmake args with the folder path of local Firebase C++ SDK. 
-      Empty string if not found.
-  """
-  global g_cpp_sdk_realpath
-  cpp_folder = os.path.join(os.getcwd(), "..", "firebase-cpp-sdk")
-  if os.path.exists(cpp_folder):
-    g_cpp_sdk_realpath = os.path.realpath(cpp_folder)
-    return "-DFIREBASE_CPP_SDK_DIR=" + g_cpp_sdk_realpath
-  else:
-    return ""
+  """Pure-C# Unity SDK build no longer uses firebase-cpp-sdk."""
+  del source_path
+  return ""
 
 
 def get_unity_engine_folder_args(unity_root):
@@ -217,45 +203,10 @@ def get_ios_or_tvos_args(source_path):
     Returns:
       cmake args for iOS or tvOS platform.
   """
-  config_dict = TVOS_CONFIG_DICT if is_tvos_build() else IOS_CONFIG_DICT
-  toolchain_file = "unity_tvos.cmake" if is_tvos_build() else "unity_ios.cmake"
-
-  result_args = []
-  toolchain_path = os.path.join(source_path, "cmake", toolchain_file)
-  # toolchain args is required
-  result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_path)
-  result_args.extend(["-G", "Xcode"])
-
-  # check device input
-  global g_target_devices
-  if FLAGS.device:
-    for device in FLAGS.device:
-      if device not in SUPPORT_DEVICE:
-        raise app.UsageError(
-            'Wrong device type {}, please pick from {}'.format(
-                device, ",".join(SUPPORT_DEVICE)))
-    g_target_devices = FLAGS.device
-  else:
-    g_target_devices = SUPPORT_DEVICE
-
-  global g_target_architectures
-  # check architecture input
-  archs_to_check = []
-  for device in g_target_devices:
-    for arch in config_dict[device]["architecture"]:
-      if arch not in archs_to_check:
-        archs_to_check.append(arch)
-
-  if FLAGS.architecture:
-    for arch in FLAGS.architecture:
-      if arch not in archs_to_check:
-        raise app.UsageError(
-            'Wrong architecture "{}" for device type {}, please pick from {}'.format(
-                arch, ",".join(g_target_devices), ",".join(archs_to_check)))
-    g_target_architectures = FLAGS.architecture
-  else:
-    g_target_architectures = archs_to_check
-
+  del source_path
+  result_args = ["-DFIREBASE_IOS_BUILD=ON", "-DIOS=ON"]
+  if is_tvos_build():
+    result_args.append("-DFIREBASE_TVOS_VARIANT=ON")
   return result_args
 
 
@@ -263,127 +214,9 @@ def get_android_args():
   """Get the cmake args for android platform specific.
 
     Returns:
-      camke args for android platform.
+      cmake args for android platform.
   """
-  result_args = []
-  # get Android NDK path
-  system_android_ndk_home = os.getenv('ANDROID_NDK_HOME')
-  if system_android_ndk_home:
-    toolchain_path = os.path.join(
-        system_android_ndk_home, "build", "cmake", "android.toolchain.cmake")
-    result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_path)
-    logging.info("Use ANDROID_NDK_HOME(%s) cmake toolchain(%s)",
-                 system_android_ndk_home, toolchain_path)
-  else:
-    system_android_home = os.getenv('ANDROID_HOME')
-    if system_android_home:
-      toolchain_files = glob.glob(os.path.join(system_android_home,
-                                               "**", "build", "cmake", "android.toolchain.cmake"), recursive=True)
-      if toolchain_files:
-        result_args.append("-DCMAKE_TOOLCHAIN_FILE=" + toolchain_files[0])
-      logging.info("Use ANDROID_HOME(%s) cmake toolchain (%s)",
-                   system_android_home, toolchain_files[0])
-    else:
-      raise app.UsageError(
-          'Neither ANDROID_NDK_HOME nor ANDROID_HOME is set.')
-
-  # get architecture setup
-  global g_target_architectures
-  if FLAGS.architecture:
-    for arch in FLAGS.architecture:
-      if arch not in ANDROID_SUPPORT_ARCHITECTURE:
-        raise app.UsageError(
-            'Wrong architecture "{}", please pick from {}'.format(
-                arch, ",".join(ANDROID_SUPPORT_ARCHITECTURE)))
-    g_target_architectures = FLAGS.architecture
-  else:
-    g_target_architectures = ANDROID_SUPPORT_ARCHITECTURE
-
-  if len(g_target_architectures) == 1:
-    result_args.append("-DANDROID_ABI="+g_target_architectures[0])
-
-  result_args.append("-DFIREBASE_ANDROID_BUILD=true")
-  # android default to build release.
-  result_args.append("-DCMAKE_BUILD_TYPE=release")
-  result_args.append("-DANDROID_STL=c++_shared")
-  return result_args
-
-def make_android_multi_arch_build(cmake_args, merge_script):
-  """Make android build for different architectures, and then combine them together.
-
-    Args:
-      cmake_args: cmake arguments used to build each architecture.
-      merge_script: script path to merge the srcaar files.
-  """
-  global g_target_architectures
-  current_folder = os.getcwd()
-  # build multiple archictures
-  for arch in g_target_architectures:
-    if not os.path.exists(arch):
-      os.makedirs(arch)
-    build_dir = os.path.join(current_folder, arch)
-    cmake_args.append("-DANDROID_ABI="+arch)
-    subprocess.call(cmake_args, cwd=build_dir)
-    subprocess.call("make", cwd=build_dir)
-
-    cmake_pack_args = [
-      "cpack",
-      ".",
-    ]
-    subprocess.call(cmake_pack_args, cwd=build_dir)
-
-  # merge them
-  zip_base_name = ""
-  srcarr_list = []
-  base_temp_dir = tempfile.mkdtemp()
-  for arch in g_target_architectures:
-    # find *Android.zip in subfolder architecture
-    arch_zip_path = glob.glob(os.path.join(arch, "*Android.zip"))
-    if not arch_zip_path:
-      logging.error("No *Android.zip generated for architecture %s", arch)
-      return
-    if not zip_base_name:
-      # first architecture, so extract to the final temp folder. The following
-      # srcaar files will merge to the ones in this folder.
-      zip_base_name = arch_zip_path[0]
-      with zipfile.ZipFile(zip_base_name) as zip_file:
-        zip_file.extractall(base_temp_dir)
-      srcarr_list.extend(glob.glob(os.path.join(
-          base_temp_dir, "**", "*.srcaar"), recursive=True))
-    else:
-      temporary_dir = tempfile.mkdtemp()
-      # from the second *Android.zip, we only need to extract *.srcaar files to operate the merge.
-      with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
-        for file in zip_file.namelist():
-          if file.endswith('.srcaar'):
-            zip_file.extract(file, temporary_dir)
-            logging.debug("Unpacked file %s from zip file %s to %s",
-                          file, arch_zip_path, temporary_dir)
-
-      for srcaar_file in srcarr_list:
-        srcaar_name = os.path.basename(srcaar_file)
-        matching_files = glob.glob(os.path.join(
-            temporary_dir, "**", "*"+srcaar_name), recursive=True)
-        if matching_files:
-          merge_args = [
-              "python3",
-              merge_script,
-              "--inputs=" + srcaar_file,
-              "--inputs=" + matching_files[0],
-              "--output=" + srcaar_file,
-          ]
-          subprocess.call(merge_args)
-          logging.debug("merging %s to %s", matching_files[0], srcaar_file)
-
-  # achive the temp folder to the final firebase_unity-<version>-Android.zip
-  final_zip_path = os.path.join(current_folder, os.path.basename(zip_base_name))
-  with zipfile.ZipFile(final_zip_path, "w", allowZip64=True) as zip_file:
-    for current_root, _, filenames in os.walk(base_temp_dir):
-      for filename in filenames:
-        fullpath = os.path.join(current_root, filename)
-        zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
-  logging.info("Generated Android multi-arch (%s) zip %s",
-               ",".join(g_target_architectures), final_zip_path)
+  return ["-DFIREBASE_ANDROID_BUILD=true"]
 
 def get_windows_args():
   """Get the cmake args for windows platform specific.
@@ -395,7 +228,6 @@ def get_windows_args():
   result_args.append('-G Visual Studio 17 2022')
   result_args.append('-A x64') # TODO flexibily for x32
   result_args.append("-DFIREBASE_PYTHON_HOST_EXECUTABLE:FILEPATH=%s" % sys.executable)
-  # Use a newer version of the Windows SDK, as the default one has build issues with grpc
   if FLAGS.gha:
     result_args.append('-DCMAKE_SYSTEM_VERSION=10.0.20348.0')
   return result_args
@@ -406,286 +238,7 @@ def get_macos_args():
     Returns:
       cmake args for macos platform.
   """
-  result_args = []
-  global g_target_architectures
-  # get architecture setup global g_target_architectures
-  if FLAGS.architecture:
-    for arch in FLAGS.architecture:
-      if arch not in MACOS_SUPPORT_ARCHITECTURE:
-        raise app.UsageError(
-            'Wrong architecture "{}", please pick from {}'.format(
-                arch, ",".join(MACOS_SUPPORT_ARCHITECTURE)))
-    g_target_architectures = FLAGS.architecture
-  else:
-    # Default to selecting none, as it will likely only be able to build the local architecture.
-    g_target_architectures = []
-  if len(g_target_architectures) == 1:
-    result_args.append('-DCMAKE_OSX_ARCHITECTURES='+g_target_architectures[0])
-  
-  return result_args
-
-def make_macos_arch(arch, cmake_args):
-  """Make the macos build for the given architecture.
-     Assumed to be called from the build directory.
-
-    Args:
-      arch: The architecture to build for.
-      cmake_args: Additional cmake arguments to use.
-  """
-  if not os.path.exists(arch):
-    os.makedirs(arch)
-  build_dir = os.path.join(os.getcwd(), arch)
-  cmake_args.append('-DCMAKE_OSX_ARCHITECTURES='+arch)
-  subprocess.call(cmake_args, cwd=build_dir)
-  subprocess.call('make', cwd=build_dir)
-  subprocess.call(['cpack', '.'], cwd=build_dir)
-
-def make_macos_multi_arch_build(cmake_args):
-  """Make macos build for different architectures, and then combine them together
-
-    Args:
-      cmake_args: cmake arguments used to build each architecture.
-  """
-  global g_target_architectures
-  # build multiple architectures
-  current_folder = os.getcwd()
-  threads = []
-  for arch in g_target_architectures:
-    t = threading.Thread(target=make_macos_arch, args=(arch, cmake_args))
-    t.start()
-    threads.append(t)
-
-  for t in threads:
-    t.join()
-  
-  # Merge the different zip files together, using lipo on the bundle files
-  zip_base_name = ""
-  bundle_list = []
-  base_temp_dir = tempfile.mkdtemp()
-  for arch in g_target_architectures:
-    # find *Darwin.zip in subfolder architecture
-    arch_zip_path = glob.glob(os.path.join(arch, "*Darwin.zip"))
-    if not arch_zip_path:
-      logging.error("No *Darwin.zip generated for architecture %s", arch)
-      return
-    if not zip_base_name:
-      # first architecture, so extract to the final temp folder. The following
-      # bundle files will merge to the ones in this folder.
-      zip_base_name = arch_zip_path[0]
-      with zipfile.ZipFile(zip_base_name) as zip_file:
-        zip_file.extractall(base_temp_dir)
-      bundle_list.extend(glob.glob(os.path.join(
-          base_temp_dir, "**", "*.bundle"), recursive=True))
-    else:
-      temporary_dir = tempfile.mkdtemp()
-      # from the second *Darwin.zip, we only need to extract *.bundle files to operate the merge.
-      with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
-        for file in zip_file.namelist():
-          if file.endswith('.bundle'):
-            zip_file.extract(file, temporary_dir)
-            logging.debug("Unpacked file %s from zip file %s to %s",
-                          file, arch_zip_path, temporary_dir)
-
-      for bundle_file in bundle_list:
-        bundle_name = os.path.basename(bundle_file)
-        matching_files = glob.glob(os.path.join(
-            temporary_dir, "**", "*"+bundle_name), recursive=True)
-        if matching_files:
-          merge_args = [
-              "lipo",
-              bundle_file,
-              matching_files[0],
-              "-create",
-              "-output",
-              bundle_file,
-          ]
-          subprocess.call(merge_args)
-          logging.debug("merging %s to %s", matching_files[0], bundle_file)
-
-  # achive the temp folder to the final firebase_unity-<version>-Darwin.zip
-  final_zip_path = os.path.join(current_folder, os.path.basename(zip_base_name))
-  with zipfile.ZipFile(final_zip_path, "w", allowZip64=True) as zip_file:
-    for current_root, _, filenames in os.walk(base_temp_dir):
-      for filename in filenames:
-        fullpath = os.path.join(current_root, filename)
-        zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
-  logging.info("Generated Darwin (MacOS) multi-arch (%s) zip %s",
-               ",".join(g_target_architectures), final_zip_path)
-
-
-def configure_ios_or_tvos_target(device_config, device, arch, cmake_args):
-  """Configure the iOS or tvOS build for the given device config and architecture.
-     Assumed to be called from the build directory.
-
-    Args:
-      device_config: Dictionary entry from IOS_CONFIG_DICT or TVOS_CONFIG_DICT.
-      device: Building for device or simulator.
-      arch: The architecture to build for.
-      cmake_args: Additional cmake arguments to use.
-
-    Returns:
-      The directory that the project is configured in.
-  """
-  build_args = cmake_args.copy()
-  build_args.append("-DCMAKE_OSX_ARCHITECTURES=" + arch)
-  build_args.append("-DCMAKE_OSX_SYSROOT=" + device_config["osx_sysroot"])
-  build_args.append("-DCMAKE_XCODE_EFFECTIVE_PLATFORMS=-" +
-                    device_config["osx_sysroot"])
-  build_args.append("-DIOS_PLATFORM_LOCATION=" +
-                    device_config["ios_platform_location"])
-  if "toolchain_platform" in device_config:
-    build_args.append("-DPLATFORM=" + device_config["toolchain_platform"])
-
-  subdir = device[:3] + "-" + arch
-  if not os.path.exists(subdir):
-    os.makedirs(subdir)
-  build_dir = os.path.join(os.getcwd(), subdir)
-  subprocess.call(build_args, cwd=build_dir)
-  return build_dir
-
-
-def make_ios_or_tvos_target(build_dir):
-  """Builds the previously configured cmake project in the given directory.
-
-    Args:
-      build_dir: The full path to the directory to perform the build in.
-  """
-  subprocess.call(["cmake", "--build", ".", "--config", "Release"], cwd=build_dir)
-  subprocess.call(['cpack', '-C', 'Release', '.'], cwd=build_dir)
-
-
-def make_ios_or_tvos_multi_arch_build(cmake_args):
-  """Make iOS or tvOS build for different architectures, and then combine
-    them together into xcframeworks and a single zip file.
-
-    Args:
-      cmake_args: cmake arguments used to build each architecture.
-  """
-  global g_target_devices
-  config_dict = TVOS_CONFIG_DICT if is_tvos_build() else IOS_CONFIG_DICT
-  platform_name = "tvOS" if is_tvos_build() else "iOS"
-  current_folder = os.getcwd()
-
-  # build multiple architectures
-  threads = []
-  for device in g_target_devices:
-    device_config = config_dict[device]
-    device_architectures = device_config["architecture"]
-    if FLAGS.architecture:
-      device_architectures = [a for a in g_target_architectures
-                              if a in device_architectures]
-    for arch in device_architectures:
-      # Run the configure step sequentially, since they can clobber the shared Cocoapod cache
-      build_dir = configure_ios_or_tvos_target(device_config, device, arch, cmake_args)
-      # Run the builds in parallel
-      t = threading.Thread(target=make_ios_or_tvos_target, args=(build_dir,))
-      t.start()
-      threads.append(t)
-
-  # Wait for the builds to be finished
-  for t in threads:
-    t.join()
-
-  # Merge the different zip files together, first using lipo to merge
-  # the architectures by target device, then using xcodebuild to merge
-  # those into xcframeworks.
-  zip_base_name = ""
-  library_list = []
-  base_temp_dir = tempfile.mkdtemp()
-  device_temp_dir_list = []
-  zip_pattern = f"*-{platform_name}.zip"
-  try:
-    for device in g_target_devices:
-      device_temp_dir = None
-      device_library_list = []
-
-      device_architectures = config_dict[device]["architecture"]
-      if FLAGS.architecture:
-        device_architectures = [a for a in g_target_architectures
-                                if a in device_architectures]
-      for arch in device_architectures:
-        subfolder = device[:3] + "-" + arch
-        # find *.zip in subfolder architecture
-        arch_zip_path = glob.glob(os.path.join(subfolder, zip_pattern))
-        if not arch_zip_path:
-          raise RuntimeError(
-              f"No {zip_pattern} generated for device {device}, architecture {arch}")
-        if not zip_base_name:
-          # first architecture, so extract all non-.a files to the final temp folder.
-          # The xcframework files will eventually be added to the ones in this folder.
-          zip_base_name = arch_zip_path[0]
-          with zipfile.ZipFile(zip_base_name) as zip_file:
-            for file in zip_file.namelist():
-              if not file.endswith('.a'):
-                zip_file.extract(file, base_temp_dir)
-              if file.endswith('.a'):
-                library_list.append(os.path.join(base_temp_dir, file))
-        if not device_temp_dir:
-          # First architecture for this device type, so extract all .a files.
-          # The other .a files will be merged into these.
-          device_temp_dir = tempfile.mkdtemp()
-          device_temp_dir_list.append(device_temp_dir)
-          with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
-            for file in zip_file.namelist():
-              if file.endswith('.a'):
-                zip_file.extract(file, device_temp_dir)
-                device_library_list.append(os.path.join(device_temp_dir, file))
-        else:
-          temporary_dir = tempfile.mkdtemp()
-          try:
-            # from the second zip, we only need to extract *.a files to operate the merge.
-            with zipfile.ZipFile(arch_zip_path[0]) as zip_file:
-              for file in zip_file.namelist():
-                if file.endswith('.a'):
-                  zip_file.extract(file, temporary_dir)
-
-            for library_file in device_library_list:
-              library_name = os.path.basename(library_file)
-              matching_files = glob.glob(os.path.join(
-                  temporary_dir, "Plugins", platform_name, "Firebase", library_name))
-              if matching_files:
-                merge_args = [
-                    "lipo",
-                    library_file,
-                    matching_files[0],
-                    "-create",
-                    "-output",
-                    library_file,
-                ]
-                subprocess.check_call(merge_args)
-                logging.info("merging %s to %s", matching_files[0], library_name)
-          finally:
-            shutil.rmtree(temporary_dir, ignore_errors=True)
-
-    # Done with the devices, so create the xcframeworks
-    for library_file in library_list:
-      library_name = os.path.basename(library_file)
-      xcframework_args = ["xcodebuild", "-create-xcframework"]
-      # Get the .a files for each device type
-      for device_temp_dir in device_temp_dir_list:
-        matching_files = glob.glob(os.path.join(
-            device_temp_dir, "Plugins", platform_name, "Firebase", library_name))
-        if matching_files:
-          xcframework_args.append("-library")
-          xcframework_args.append(matching_files[0])
-      xcframework_args.append("-output")
-      xcframework_args.append(os.path.splitext(library_file)[0] + ".xcframework")
-      subprocess.check_call(xcframework_args)
-      logging.info("creating xcframework for %s", os.path.splitext(library_name)[0])
-
-    # archive the temp folder to the final firebase_unity-<version>-<platform>.zip
-    final_zip_path = os.path.join(current_folder, os.path.basename(zip_base_name))
-    with zipfile.ZipFile(final_zip_path, "w", allowZip64=True) as zip_file:
-      for current_root, _, filenames in os.walk(base_temp_dir):
-        for filename in filenames:
-          fullpath = os.path.join(current_root, filename)
-          zip_file.write(fullpath, os.path.relpath(fullpath, base_temp_dir))
-    logging.info("Generated Darwin (%s) multi-arch (%s) zip %s",
-                 platform_name, ",".join(g_target_architectures), final_zip_path)
-  finally:
-    for device_temp_dir in device_temp_dir_list:
-      shutil.rmtree(device_temp_dir, ignore_errors=True)
-    shutil.rmtree(base_temp_dir, ignore_errors=True)
+  return []
 
 def gen_documentation_zip():
   """If the flag was enabled, builds the zip file containing source files to document.
@@ -698,7 +251,7 @@ def gen_documentation_zip():
     '-D', 'CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE=ON',
     '-D', 'CPACK_ARCHIVE_FILE_NAME=documentation_sources'
   ]
-  subprocess.call(cpack_args)
+  subprocess.check_call(cpack_args)
 
 def is_android_build():
   """
@@ -754,10 +307,6 @@ def main(argv):
   source_path = os.getcwd()
   cmake_cpp_folder_args = get_cpp_folder_args(source_path)
   build_path = get_build_path(platform, FLAGS.clean_build)
-  if is_android_build() and g_cpp_sdk_realpath:
-    # For android build, if we find local cpp folder,
-    # We trigger the cpp android build first.
-    subprocess.call("./gradlew", cwd=g_cpp_sdk_realpath)
 
   os.chdir(build_path)
   cmake_setup_args = [
@@ -772,10 +321,9 @@ def main(argv):
     # windows args need to happen right after target path
     cmake_setup_args.extend(get_windows_args())
 
-  cmake_setup_args.extend([   
+  cmake_setup_args.extend([
     "-DFIREBASE_INCLUDE_UNITY=ON",
     "-DFIREBASE_UNITY_BUILD_TESTS=ON",
-    "-DFIREBASE_CPP_BUILD_STUB_TESTS=ON",
   ])
 
   if FLAGS.gha:
@@ -806,11 +354,6 @@ def main(argv):
   if FLAGS.cmake_extras:
     cmake_setup_args.extend(FLAGS.cmake_extras)
 
-  if FLAGS.use_boringssl:
-    cmake_setup_args.append("-DFIREBASE_USE_BORINGSSL=ON")
-  else:
-    cmake_setup_args.append("-DFIREBASE_USE_BORINGSSL=OFF")
-
   if is_ios_build() or is_tvos_build():
     cmake_setup_args.extend(get_ios_or_tvos_args(source_path))
   elif is_android_build():
@@ -821,41 +364,26 @@ def main(argv):
   if FLAGS.gen_swig_only:
     cmake_setup_args.append("-DFIREBASE_GENERATE_SWIG_ONLY=ON")
 
-  global g_target_architectures
   logging.info("cmake_setup_args is: " + " ".join(cmake_setup_args))
-  if is_android_build() and len(g_target_architectures) > 1:
-    logging.info("Build android with multiple architectures %s",
-                 ",".join(g_target_architectures))
-    # android multi architecture build is a bit different
-    make_android_multi_arch_build(cmake_setup_args, os.path.join(
-        source_path, "aar_builder", "merge_aar.py"))
-  elif is_macos_build() and len(g_target_architectures) > 1:
-    logging.info("Build macos with multiple architectures %s",
-                 ",".join(g_target_architectures))
-    make_macos_multi_arch_build(cmake_setup_args)
-  elif is_ios_build() or is_tvos_build():
-    make_ios_or_tvos_multi_arch_build(cmake_setup_args)
-  else:
-    subprocess.call(cmake_setup_args)
-    if (not FLAGS.gen_swig_only):
-      if is_windows_build():
-        # no make command in windows or when using Xcode generator. TODO make config passable
-        subprocess.call(["cmake", "--build", ".", "--config", "Release"])
-      else:
-        subprocess.call("make")
-
-      cmake_pack_args = [
-        "cpack",
-      ]
-      if is_windows_build():
-        cmake_pack_args.extend(["-C", "Release"])
-      cmake_pack_args.append(".")
-
-      subprocess.call(cmake_pack_args)
+  subprocess.check_call(cmake_setup_args)
+  if not FLAGS.gen_swig_only:
+    if is_windows_build():
+      subprocess.check_call(["cmake", "--build", ".", "--config", "Release"])
     else:
-      subprocess.call(["cmake", "--build", ".", "--target", "firebase_swig_targets"])
+      subprocess.check_call(["make"])
 
-    gen_documentation_zip()
+    cmake_pack_args = [
+      "cpack",
+    ]
+    if is_windows_build():
+      cmake_pack_args.extend(["-C", "Release"])
+    cmake_pack_args.append(".")
+
+    subprocess.check_call(cmake_pack_args)
+  else:
+    subprocess.check_call(["cmake", "--build", ".", "--target", "firebase_swig_targets"])
+
+  gen_documentation_zip()
 
   os.chdir(source_path)
 

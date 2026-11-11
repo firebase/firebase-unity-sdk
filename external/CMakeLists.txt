@@ -17,14 +17,14 @@
 
 mono_add_external_dll(unity_editor_cs "${UNITY_EDITOR_DLL}")
 mono_add_external_dll(unity_engine_cs "${UNITY_ENGINE_DLL}")
-if(APPLE)
+if(APPLE OR EXISTS "${UNITY_EDITOR_IOS_XCODE_DLL}")
   mono_add_external_dll(unity_ios_extensions_xcode_cs "${UNITY_EDITOR_IOS_XCODE_DLL}")
 endif()
 
 # Dont pack libraries shipped with unity
 unity_pack_skip(unity_editor_cs)
 unity_pack_skip(unity_engine_cs)
-if(APPLE)
+if(APPLE OR EXISTS "${UNITY_EDITOR_IOS_XCODE_DLL}")
   unity_pack_skip(unity_ios_extensions_xcode_cs)
 endif()
 
@@ -66,15 +66,5 @@ if(FIREBASE_INCLUDE_UNITY)
   unity_pack_folder(
     "${JAR_RESOLVER_DLL_DIR}/"
     PACK_PATH "ExternalDependencyManager/Editor/"
-  )
-
-  unity_pack_file(
-    "${FIREBASE_CPP_SDK_DIR}/generate_xml_from_google_services_json.exe"
-    PACK_PATH "Firebase/Editor"
-  )
-
-  unity_pack_file(
-    "${FIREBASE_CPP_SDK_DIR}/generate_xml_from_google_services_json.py"
-    PACK_PATH "Firebase/Editor"
   )
 endif()

@@ -59,33 +59,18 @@ jobs:
           ref: ${{ inputs.unity_branch }}
           fetch-depth: 0
           persist-credentials: true # zizmor: ignore[artipacked]
-          
-      - name: Checkout CPP Repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
-        with:
-          repository: firebase/firebase-cpp-sdk
-          path: firebase-cpp-sdk
-          ref: ${{ inputs.firebase_cpp_sdk_version }}
-          submodules: true
-          fetch-depth: 0
-          persist-credentials: true # zizmor: ignore[artipacked]
 
       - name: Setup python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # ratchet:actions/setup-python@v7
         with:
           python-version: '3.9'
 
-      - name: setup Xcode version
-        run: sudo xcode-select -s /Applications/Xcode_${{ env.xcodeVersion }}.app/Contents/Developer
-
-      - name: Install prerequisites
+      - name: Ensure Mono is installed
         shell: bash
         run: |
-          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
-          cd firebase-cpp-sdk
-          python scripts/gha/install_prereqs_desktop.py
-          cd ..
-          brew install swig
+          if ! command -v mono >/dev/null 2>&1 || (! command -v msbuild >/dev/null 2>&1 && ! command -v xbuild >/dev/null 2>&1); then
+            brew install mono
+          fi
 
       - name: Install python deps
         shell: bash

@@ -46,26 +46,6 @@
         },
         {
           "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppApp.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppApp.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
           "platforms": [],
           "labels": [
             "gvh_targets-editor"
@@ -104,10 +84,7 @@
           "importer": "DefaultImporter",
           "paths": [
             "Editor Default Resources/",
-            "Firebase/Editor/generate_xml_from_google_services_json.exe",
-            "Firebase/Editor/generate_xml_from_google_services_json.py",
-            "Firebase/Editor/AppDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-app-unity/"
+            "Firebase/Editor/AppDependencies.xml"
           ]
         },
         {
@@ -136,18 +113,6 @@
           ],
           "paths": [
             "Firebase/Editor/InternalArtifactReposDependencies.xml"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone"
-          ],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppApp-*",
-            "Firebase/Plugins/x86_64/FirebaseCppApp.*"
           ]
         },
         {

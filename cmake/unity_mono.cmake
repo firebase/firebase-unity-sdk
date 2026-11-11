@@ -101,7 +101,7 @@ macro(mono_add_external_library name projpath)
   endif()
 
   set(CSHARP_BUILD_EXE "${UNITY_CSHARP_BUILD_EXE}")
-  if(MSVC)
+  if(MSVC OR WIN32 OR CMAKE_HOST_WIN32)
     set(CSHARP_BUILD_EXE "${MONO_CSHARP_BUILD_EXE}")
   endif()
 
