@@ -112,6 +112,9 @@ Release Notes
 -------------
 ### Upcoming Release
 -   Changes
+    - Analytics: Rewrote `Firebase.Analytics` in C# with direct Android, iOS/tvOS, and desktop
+      native bridges, shipping as C# source (`Firebase.Analytics.asmdef`) and removing the
+      `FirebaseCppAnalytics` native libraries and `firebase-analytics-unity` Android wrapper AAR.
     - App: Rewrote `Firebase.App` in pure managed C#, eliminating the `FirebaseCppApp` native
       libraries (`FirebaseCppApp-*.so`/`.dll`/`.bundle`, `libFirebaseCppApp.xcframework`, and
       `firebase-app-unity` AAR) and removing the `com.google.firebase:firebase-analytics` Android

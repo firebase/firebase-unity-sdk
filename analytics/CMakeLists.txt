@@ -14,126 +14,53 @@
 
 # CMake file for the firebase analytics library
 
-include(build_shared)
-
-# Firebase Analytics Swig input files
-set(firebase_analytics_swig
-  src/swig/analytics.i
+unity_pack_folder(
+  "${FIREBASE_UNITY_DIR}/analytics/src/"
+  PACK_PATH "Firebase/FirebaseAnalytics"
 )
 
-# Generate CSharp files for the various Analytics constants
-set(analytics_cpp_generated_headers_dir
-    "${CMAKE_BINARY_DIR}/generated/analytics/src/include/firebase/analytics")
-set(analytics_csharp_generated_dir
-    "${CMAKE_BINARY_DIR}/analytics/generated")
-file(MAKE_DIRECTORY ${analytics_csharp_generated_dir})
-
-# Generate the header file by invoking the generate_constants python script.
-function(generate_analytics_unity_file CPP_FILE CSHARP_FILE)
-  add_custom_command(
-    OUTPUT ${CSHARP_FILE}
-    COMMAND ${FIREBASE_PYTHON_EXECUTABLE} "${CMAKE_CURRENT_LIST_DIR}/generate_constants.py"
-      "--cpp_header=${CPP_FILE}"
-      "--csharp_file=${CSHARP_FILE}"
-    DEPENDS FIREBASE_ANALYTICS_GENERATED_HEADERS
-      ${CPP_FILE}
-    COMMENT "Generating ${CSHARP_FILE}"
-  )
-endfunction()
-
-# Call the above function for all of the files to generate.
-generate_analytics_unity_file(
-  "${analytics_cpp_generated_headers_dir}/event_names.h"
-  "${analytics_csharp_generated_dir}/EventNames.cs"
+unity_pack_file(
+  "${CMAKE_CURRENT_LIST_DIR}/plugins/iOS/FirebaseUnityAppleTransactionVerifier.swift"
+  PACK_PATH "Firebase/Plugins/iOS/"
 )
-generate_analytics_unity_file(
-  "${analytics_cpp_generated_headers_dir}/parameter_names.h"
-  "${analytics_csharp_generated_dir}/ParameterNames.cs"
-)
-generate_analytics_unity_file(
-  "${analytics_cpp_generated_headers_dir}/user_property_names.h"
-  "${analytics_csharp_generated_dir}/UserPropertyNames.cs"
-)
-add_custom_target(FIREBASE_UNITY_ANALYTICS_GENERATED_FILES
-  DEPENDS 
-    ${analytics_csharp_generated_dir}/EventNames.cs
-    ${analytics_csharp_generated_dir}/ParameterNames.cs
-    ${analytics_csharp_generated_dir}/UserPropertyNames.cs
+unity_pack_file(
+  "${CMAKE_CURRENT_LIST_DIR}/plugins/iOS/FirebaseUnityAppleTransactionVerifier.swift.meta"
+  PACK_PATH "Firebase/Plugins/iOS/"
 )
 
-# Firebase Analytics CSharp files
-set(firebase_analytics_src
-  src/Consent.cs
-  src/FirebaseAnalytics.cs
-  src/Parameter.cs
-  ${analytics_csharp_generated_dir}/EventNames.cs
-  ${analytics_csharp_generated_dir}/ParameterNames.cs
-  ${analytics_csharp_generated_dir}/UserPropertyNames.cs
-)
-
-firebase_swig_add_library(firebase_analytics_swig
-  NAMESPACE
-    Firebase.Analytics
-  MODULE
-    FirebaseCppAnalytics
-  SOURCES
-    ${firebase_analytics_swig}
-  DEPENDS
-    firebase_analytics
-)
-
+file(GLOB_RECURSE firebase_analytics_doc_src "src/*.cs")
+list(FILTER firebase_analytics_doc_src EXCLUDE REGEX "src/internal/")
 unity_pack_documentation_sources(analytics
   DOCUMENTATION_SOURCES
-    ${firebase_analytics_src}
-    ${firebase_analytics_swig_gen_src}
+    ${firebase_analytics_doc_src}
 )
-if (FIREBASE_GENERATE_SWIG_ONLY)
-  unity_pack_documentation_sources(analytics
-    DOCUMENTATION_SOURCES
-      ${firebase_analytics_swig_gen_cpp_src}
-  )
-  return()
-endif()
-
-mono_add_library(firebase_analytics_cs
-  MODULE
-    Firebase.Analytics
-  SOURCES
-    ${firebase_analytics_src}
-    ${firebase_analytics_swig_gen_src}
-  REFERENCES
-    ${FIREBASE_PLATFORM_REF}
-  DEPENDS
-    firebase_analytics_swig
-    FIREBASE_UNITY_ANALYTICS_GENERATED_FILES
-)
-
-if(FIREBASE_IOS_BUILD)
-  ios_pack(firebase_lib_analytics libFirebaseCppAnalytics DEPS firebase_analytics firebase_analytics_swig)
-else()
-  build_firebase_shared(
-    analytics
-    analytics
-    FirebaseCppAnalytics
-  )
-endif()
-
-unity_pack_cs(firebase_analytics_cs)
 
 if (FIREBASE_INCLUDE_UNITY)
-  generate_dependencies_xml(Analytics
-    FIREBASE_SPM_DEPS
-      "FirebaseAnalytics|Firebase/Analytics"
-    IOS_DEPS
-      "Firebase/Analytics"
-    ANDROID_DEPS
-      ${FIREBASE_ANALYTICS_ANDROID_DEPS}
-    ANDROID_SPEC
-      "analytics"
+  set(ANALYTICS_ANDROID_PACKAGES "")
+  foreach(ANDROID_DEP ${FIREBASE_ANALYTICS_ANDROID_DEPS})
+    string(CONCAT ANALYTICS_ANDROID_PACKAGES "${ANALYTICS_ANDROID_PACKAGES}"
+      "    <androidPackage spec=\"${ANDROID_DEP}\">\n"
+      "    </androidPackage>\n")
+  endforeach()
+
+  set(ANALYTICS_DEPS_XML "${CMAKE_CURRENT_BINARY_DIR}/AnalyticsDependencies.xml")
+  file(WRITE "${ANALYTICS_DEPS_XML}"
+"<!-- Copyright (C) 2019 Google Inc. All Rights Reserved.\n"
+"\n"
+"FirebaseAnalytics iOS and Android Dependencies.\n"
+"-->\n"
+"\n"
+"<dependencies>\n"
+"  <remoteSwiftPackage url=\"https://github.com/firebase/firebase-ios-sdk.git\" version=\"${FIREBASE_SPM_VERSION}\">\n"
+"    <swiftPackage name=\"FirebaseAnalytics\"/>\n"
+"  </remoteSwiftPackage>\n"
+"  <androidPackages>\n"
+"${ANALYTICS_ANDROID_PACKAGES}"
+"  </androidPackages>\n"
+"</dependencies>\n"
+  )
+  install(
+    FILES "${ANALYTICS_DEPS_XML}"
+    DESTINATION "Firebase/Editor/"
   )
 endif()
-
-set_property(TARGET firebase_analytics_cs
-  PROPERTY FOLDER
-  "Firebase ${FIREBASE_PLATFORM_NAME}"
-)

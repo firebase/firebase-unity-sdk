@@ -15,24 +15,17 @@
  */
 
 namespace Firebase.Analytics {
+  /// @brief The type of consent to set.
+  ///
+  /// Supported consent types are mapped to corresponding constants in the Android
+  /// and iOS SDKs. Omitting a type retains its previous status.
+  public enum ConsentType { AdStorage = 0, AnalyticsStorage = 1, AdUserData = 2, AdPersonalization = 3 }
 
-/// @brief The type of consent to set.
-///
-/// Supported consent types are mapped to corresponding constants in the Android
-/// and iOS SDKs. Omitting a type retains its previous status.
-public enum ConsentType {
-  AdStorage = 0,
-  AnalyticsStorage,
-  AdUserData,
-  AdPersonalization
-}
+  /// @brief The status value of the consent type.
+  ///
+  /// Supported statuses are ConsentStatus.Granted and ConsentStatus.Denied.
+  public enum ConsentStatus { Granted = 0, Denied = 1 }
 
-/// @brief The status value of the consent type.
-///
-/// Supported statuses are ConsentStatus.Granted and ConsentStatus.Denied.
-public enum ConsentStatus {
-  Granted = 0,
-  Denied
-}
-
+  /// <summary>The state of an application in its lifecycle.</summary>
+  public enum AppLifecycleState { Unknown = 0, Termination = 1 }
 }

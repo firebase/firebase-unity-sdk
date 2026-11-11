@@ -220,16 +220,9 @@
       "name": "FirebaseAnalytics.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android"
-          ],
-          "cpu": "AnyCPU",
+          "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Plugins/Firebase.Analytics.dll",
-            "Firebase/Plugins/Firebase.Analytics.pdb"
+            "Firebase/FirebaseAnalytics/*"
           ]
         },
         {
@@ -240,52 +233,13 @@
           ],
           "cpu": "AnyCPU",
           "paths": [
-            "Firebase/Plugins/iOS/Firebase.Analytics.dll",
-            "Firebase/Plugins/iOS/Firebase.Analytics.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppAnalytics.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppAnalytics.xcframework"
+            "Firebase/Plugins/iOS/FirebaseUnityAppleTransactionVerifier.swift"
           ]
         },
         {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/AnalyticsDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-analytics-unity/"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone"
-          ],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppAnalytics*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/FirebaseAnalytics*_manifest.txt"
+            "Firebase/Editor/AnalyticsDependencies.xml"
           ]
         },
         {

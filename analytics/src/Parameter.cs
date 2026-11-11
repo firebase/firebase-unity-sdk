@@ -17,80 +17,67 @@
 using System.Collections.Generic;
 
 namespace Firebase.Analytics {
+  internal enum ParameterKind : byte { String = 0, Int64 = 1, Double = 2, Map = 3, MapSequence = 4 }
 
-/// @brief Event parameter.
-///
-/// Parameters supply information that contextualize events (see @ref LogEvent).
-/// You can associate up to 25 unique Parameters with each event type (name).
-///
-/// Common event types are provided as static properties of the
-/// FirebaseAnalytics class (e.g FirebaseAnalytics.EventPostScore) where
-/// parameters of these events are also provided in this FirebaseAnalytics
-/// class (e.g FirebaseAnalytics.ParameterScore).
-///
-/// You are not limited to the set of event types and parameter names
-/// suggested in FirebaseAnalytics class properties.  Additional Parameters can
-/// be supplied for suggested event types or custom Parameters for custom event
-/// types.
-///
-/// Parameter names must be a combination of letters and digits
-/// (matching the regular expression [a-zA-Z0-9]) between 1 and 40 characters
-/// long starting with a letter [a-zA-Z] character.  The "firebase_",
-/// "google_" and "ga_" prefixes are reserved and should not be used.
-///
-/// Parameter string values can be up to 100 characters long.
-///
-/// An array of Parameter class instances can be passed to LogEvent in order
-/// to associate parameters's of an event with values where each value can be
-/// a double, 64-bit integer or string.
-///
-/// For example, a game may log an achievement event along with the
-/// character the player is using and the level they're currently on:
-///
-/// @code{.cs}
-/// using Firebase.Analytics;
-///
-/// int currentLevel = GetCurrentLevel();
-/// Parameter[] AchievementParameters = {
-///   new Parameter(FirebaseAnalytics.ParameterAchievementID,
-///                 "ultimate_wizard"),
-///   new Parameter(FirebaseAnalytics.ParameterCharacter, "mysterion"),
-///   new Parameter(FirebaseAnalytics.ParameterLevel, currentLevel),
-/// };
-/// FirebaseAnalytics.LogEvent(FirebaseAnalytics.EventLevelUp,
-///                            AchievementParameters);
-/// @endcode
-///
-public class Parameter {
+  /// @brief Event parameter.
+  ///
+  /// Parameters supply information that contextualize events (see @ref LogEvent).
+  /// You can associate up to 25 unique Parameters with each event type (name).
+  ///
+  /// Common event types are provided as static properties of the
+  /// FirebaseAnalytics class (e.g FirebaseAnalytics.EventPostScore) where
+  /// parameters of these events are also provided in this FirebaseAnalytics
+  /// class (e.g FirebaseAnalytics.ParameterScore).
+  ///
+  /// You are not limited to the set of event types and parameter names
+  /// suggested in FirebaseAnalytics class properties.  Additional Parameters can
+  /// be supplied for suggested event types or custom Parameters for custom event
+  /// types.
+  ///
+  /// Parameter names must be a combination of letters and digits
+  /// (matching the regular expression [a-zA-Z0-9]) between 1 and 40 characters
+  /// long starting with a letter [a-zA-Z] character.  The "firebase_",
+  /// "google_" and "ga_" prefixes are reserved and should not be used.
+  ///
+  /// Parameter string values can be up to 100 characters long.
+  ///
+  /// An array of Parameter class instances can be passed to LogEvent in order
+  /// to associate parameters's of an event with values where each value can be
+  /// a double, 64-bit integer or string.
+  ///
+  /// For example, a game may log an achievement event along with the
+  /// character the player is using and the level they're currently on:
+  ///
+  /// @code{.cs}
+  /// using Firebase.Analytics;
+  ///
+  /// int currentLevel = GetCurrentLevel();
+  /// Parameter[] AchievementParameters = {
+  ///   new Parameter(FirebaseAnalytics.ParameterAchievementID,
+  ///                 "ultimate_wizard"),
+  ///   new Parameter(FirebaseAnalytics.ParameterCharacter, "mysterion"),
+  ///   new Parameter(FirebaseAnalytics.ParameterLevel, currentLevel),
+  /// };
+  /// FirebaseAnalytics.LogEvent(FirebaseAnalytics.EventLevelUp,
+  ///                            AchievementParameters);
+  /// @endcode
+  ///
+  public class Parameter {
+    internal readonly string Name;
+    internal readonly ParameterKind Kind;
+    internal readonly long Int64Value;
+    internal readonly double DoubleValue;
+    internal readonly object RefValue;
 
-  internal string Name { get; set; }
-
-  internal object Value { get; set; }
-
-  public Parameter(string parameterName, string parameterValue) {
-    Name = parameterName;
-    Value = parameterValue;
+    /// <summary>Creates a string-valued analytics parameter.</summary>
+    public Parameter(string parameterName, string parameterValue) => (Name, Kind, RefValue) = (parameterName, ParameterKind.String, parameterValue);
+    /// <summary>Creates a 64-bit integer-valued analytics parameter without boxing.</summary>
+    public Parameter(string parameterName, long parameterValue) => (Name, Kind, Int64Value) = (parameterName, ParameterKind.Int64, parameterValue);
+    /// <summary>Creates a double-precision floating-point analytics parameter without boxing.</summary>
+    public Parameter(string parameterName, double parameterValue) => (Name, Kind, DoubleValue) = (parameterName, ParameterKind.Double, parameterValue);
+    /// <summary>Creates a dictionary/bundle-valued analytics parameter.</summary>
+    public Parameter(string parameterName, IDictionary<string, object> parameterValue) => (Name, Kind, RefValue) = (parameterName, ParameterKind.Map, parameterValue);
+    /// <summary>Creates a sequence-of-dictionaries analytics parameter.</summary>
+    public Parameter(string parameterName, IEnumerable<IDictionary<string, object>> parameterValue) => (Name, Kind, RefValue) = (parameterName, ParameterKind.MapSequence, parameterValue);
   }
-
-  public Parameter(string parameterName, long parameterValue) {
-    Name = parameterName;
-    Value = parameterValue;
-  }
-
-  public Parameter(string parameterName, double parameterValue) {
-    Name = parameterName;
-    Value = parameterValue;
-  }
-
-  public Parameter(string parameterName, IDictionary<string, object> parameterValue) {
-    Name = parameterName;
-    Value = parameterValue;
-  }
-
-  public Parameter(string parameterName, IEnumerable<IDictionary<string, object>> parameterValue) {
-    Name = parameterName;
-    Value = parameterValue;
-  }
-}
-
 }
