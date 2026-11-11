@@ -14,34 +14,49 @@
  * limitations under the License.
  */
 
+using System;
+
 namespace Firebase.RemoteConfig {
-
-/// @brief Describes the state of the most recent Fetch() call.
-/// Normally returned as a result of the GetInfo() function.
-public sealed class ConfigInfo {
-
-  private System.DateTime UnixEpochUtc =
-      new System.DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-
-  /// @brief The time when the last fetch operation completed.
-  public System.DateTime FetchTime { internal set; get; }
-
-  /// @brief The time when Remote Config data refreshes will no longer
-  /// be throttled.
-  public System.DateTime ThrottledEndTime { internal set; get; }
-
-  /// @brief The status of the last fetch request.
-  public LastFetchStatus LastFetchStatus { internal set; get; }
-
-  /// @brief The reason the most recent fetch failed.
-  public FetchFailureReason LastFetchFailureReason { internal set; get; }
-
-  internal ConfigInfo(ConfigInfoInternal configInfoInternal) {
-    FetchTime = UnixEpochUtc.AddMilliseconds(configInfoInternal.fetch_time);
-    ThrottledEndTime = UnixEpochUtc.AddMilliseconds(configInfoInternal.throttled_end_time);
-    LastFetchStatus = configInfoInternal.last_fetch_status;
-    LastFetchFailureReason = configInfoInternal.last_fetch_failure_reason;
+  /// <summary>Describes the most recent fetch request status.</summary>
+  public enum LastFetchStatus {
+    /// <summary>The most recent fetch succeeded and its data is ready to be activated.</summary>
+    Success = 0,
+    /// <summary>The most recent fetch request failed.</summary>
+    Failure = 1,
+    /// <summary>The most recent fetch is in progress or no fetch has been performed yet.</summary>
+    Pending = 2,
   }
-}
 
+  /// <summary>Describes the most recent fetch failure reason.</summary>
+  public enum FetchFailureReason {
+    /// <summary>The fetch has not failed.</summary>
+    Invalid = 0,
+    /// <summary>The most recent fetch failed because it was throttled by the server.</summary>
+    Throttled = 1,
+    /// <summary>The most recent fetch failed due to a network or server error.</summary>
+    Error = 2,
+  }
+
+  /// @brief Describes the state of the most recent Fetch() call.
+  /// Normally returned as a result of the GetInfo() function.
+  public sealed class ConfigInfo {
+    /// @brief The time when the last fetch operation completed.
+    public DateTime FetchTime { get; internal set; }
+
+    /// @brief The time when Remote Config data refreshes will no longer
+    /// be throttled.
+    public DateTime ThrottledEndTime { get; internal set; }
+
+    /// @brief The status of the last fetch request.
+    public LastFetchStatus LastFetchStatus { get; internal set; }
+
+    /// @brief The reason the most recent fetch failed.
+    public FetchFailureReason LastFetchFailureReason { get; internal set; }
+
+    internal ConfigInfo(long fetchTimeMillis, long throttledEndTimeMillis, LastFetchStatus status, FetchFailureReason failureReason) {
+      var epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+      (FetchTime, ThrottledEndTime) = (epoch.AddMilliseconds(Math.Max(0L, fetchTimeMillis)), epoch.AddMilliseconds(Math.Max(0L, throttledEndTimeMillis)));
+      (LastFetchStatus, LastFetchFailureReason) = (status, failureReason);
+    }
+  }
 }

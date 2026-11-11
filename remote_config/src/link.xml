@@ -1,0 +1,5 @@
+<linker>
+  <assembly fullname="Firebase.RemoteConfig">
+    <type fullname="Firebase.RemoteConfig.FirebaseRemoteConfig" preserve="all"/>
+  </assembly>
+</linker>

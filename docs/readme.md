@@ -125,6 +125,13 @@ Release Notes
       Android dependency, and `FirebaseInstallations` iOS dependency are gone, and mobile builds
       that also include native Analytics, Crashlytics, or Messaging automatically share the native
       Firebase Installation ID.
+    - Remote Config: Rewrote the internal implementation in pure C#, removing the dependency on the
+      C++ and native platform Remote Config libraries. `Firebase.RemoteConfig` is now shipped as C#
+      source with an assembly definition (`Firebase.RemoteConfig.asmdef`), real-time config updates
+      (`OnConfigUpdateListener`) are now supported on Desktop and in the Unity Editor in addition to
+      mobile platforms, and the `FirebaseCppRemoteConfig` native libraries, `firebase-config` /
+      `firebase-analytics` Android dependencies, and `FirebaseRemoteConfig` iOS dependency are
+      removed.
     - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
       to retrieve decoded ID token claims and metadata.
     - Storage: Rewrote the internal implementation in C#, removing the dependency on the C++

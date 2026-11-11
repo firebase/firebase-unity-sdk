@@ -16,106 +16,64 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Internal;
+using Firebase.RemoteConfig.Internal;
 
 namespace Firebase.RemoteConfig {
-
   /// @brief Entry point for the Firebase C# SDK for Remote Config.
   public sealed class FirebaseRemoteConfig {
-    // Dictionary of FirebaseRemoteConfig instances indexed by a key
-    // FirebaseRemoteConfigInternal.InstanceKey.
-    private static readonly Dictionary<string, FirebaseRemoteConfig> remoteConfigByInstanceKey =
-        new Dictionary<string, FirebaseRemoteConfig>();
+#if UNITY_6000_6_OR_NEWER
+    [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+    private static readonly FirebaseInstanceCache<FirebaseRemoteConfig> Instances =
+        new FirebaseInstanceCache<FirebaseRemoteConfig>(rc => rc.Dispose());
 
-    // Proxy for the C++ firebase::remote_config::remote_config object.
-    private FirebaseRemoteConfigInternal remoteConfigInternal;
-    // Proxy for the C++ firebase::app::App object.
-    private readonly FirebaseApp firebaseApp;
-    // Key of this instance within remoteConfigByInstanceKey.
-    private string instanceKey;
+    private readonly FirebaseApp _app;
+    private readonly CancellationTokenSource _disposeCts = new CancellationTokenSource();
+    private readonly RemoteConfigStore _store;
+    private readonly RemoteConfigFetchClient _fetchClient;
+    private readonly RealtimeStreamClient _realtimeClient;
+    private int _disposed;
 
-    // Function for C++ to call when the config is updated.
-    private static RemoteConfigUtil.ConfigUpdateDelegate configUpdateDelegate =
-      new RemoteConfigUtil.ConfigUpdateDelegate(ConfigUpdateMethod);
+    private FirebaseRemoteConfig(FirebaseApp app, AtomicFileStore fileStore = null) {
+      _app = app ?? throw new ArgumentNullException(nameof(app));
+      _store = new RemoteConfigStore(app.Name, RemoteConfigFetchClient.ResolveProjectIdentifier(app) ?? app.Options?.AppId ?? string.Empty, fileStore);
+      _fetchClient = new RemoteConfigFetchClient(app, _store);
+      _realtimeClient = new RealtimeStreamClient(this, app, _store, _fetchClient, _disposeCts.Token);
+    }
+
+#if UNITY_EDITOR
+    [UnityEditor.InitializeOnLoadMethod]
+    private static void RegisterEditorReloadHook() {
+      UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+      UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+    }
+    private static void OnBeforeAssemblyReload() => Instances.ClearForReload();
+#endif
+
+    internal static FirebaseRemoteConfig CreateForTesting(FirebaseApp app, AtomicFileStore fileStore) => new FirebaseRemoteConfig(app, fileStore);
+    internal void Dispose() { if (Interlocked.Exchange(ref _disposed, 1) == 0) { _disposeCts.Cancel(); _realtimeClient.Dispose(); } }
+    internal RemoteConfigStore Store => _store;
+    internal RealtimeStreamClient RealtimeClient => _realtimeClient;
+    internal IReadOnlyList<string> LastActivatedUpdatedKeys => _store.LastActivatedUpdatedKeys;
 
     /// @brief App object associated with this FirebaseRemoteConfig.
-    public FirebaseApp App {
-      get { return firebaseApp; }
-    }
+    public FirebaseApp App => _app;
+    /// @brief Returns the FirebaseRemoteConfig initialized with the default FirebaseApp.
+    public static FirebaseRemoteConfig DefaultInstance => GetInstance(FirebaseApp.DefaultInstance);
+    /// @brief The default cache expiration used by FetchAsync(), equal to 12 hours.
+    public static TimeSpan DefaultCacheExpiration => TimeSpan.FromMilliseconds(RemoteConfigStore.DefaultMinimumFetchIntervalMs);
+    /// The default timeout used by FetchAsync(), equal to 30 seconds,
+    /// in milliseconds.
+    public static ulong DefaultTimeoutInMilliseconds => RemoteConfigStore.DefaultFetchTimeoutMs;
 
-    private event EventHandler<ConfigUpdateEventArgs> ConfigUpdateListenerImpl;
-    // EventHandlers that will be used as ConfigUpdateListeners. The first listener added will open 
+    // EventHandlers that will be used as ConfigUpdateListeners. The first listener added will open
     // the stream connection and the last removed will close the stream.
     public event EventHandler<ConfigUpdateEventArgs> OnConfigUpdateListener {
-      add {
-        ThrowIfNull();
-        bool isFirst = ConfigUpdateListenerImpl == null;
-        ConfigUpdateListenerImpl += value;
-
-        // If this is the first listener, hook into C++.
-        if (isFirst) {
-          RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, configUpdateDelegate);
-        }
-      }
-      remove {
-        ThrowIfNull();
-        ConfigUpdateListenerImpl -= value;
-
-        // If that was the last listener, remove the C++ hooks.
-        if (ConfigUpdateListenerImpl == null) {
-          RemoteConfigUtil.SetConfigUpdateCallback(remoteConfigInternal, null);
-        }
-      }
-    }
-
-    private FirebaseRemoteConfig(FirebaseRemoteConfigInternal remoteConfig, FirebaseApp app) {
-      firebaseApp = app;
-      firebaseApp.AppDisposed += OnAppDisposed;
-      remoteConfigInternal = remoteConfig;
-
-      // As we know there is only one reference to the C++ internal object here
-      // we'll let the proxy object take ownership so the C++ object can be deleted when the
-      // proxy's Dispose() method is executed.
-      remoteConfigInternal.SetSwigCMemOwn(true);
-      instanceKey = remoteConfigInternal.InstanceKey;
-    }
-
-    // Dispose of this object.
-    private static void DisposeObject(object objectToDispose) {
-      ((FirebaseRemoteConfig)objectToDispose).Dispose();
-    }
-
-    /// <summary>
-    /// Remove the reference to this object from the remoteConfigByInstanceKey dictionary.
-    /// </summary>
-    ~FirebaseRemoteConfig() {
-      Dispose();
-    }
-
-    // Remove the reference to this instance from remoteConfigByInstanceKey and dispose the proxy.
-    private void Dispose() {
-      System.GC.SuppressFinalize(this);
-      lock (remoteConfigByInstanceKey) {
-        if (remoteConfigInternal != null &&
-            FirebaseRemoteConfigInternal.getCPtr(remoteConfigInternal).Handle != IntPtr.Zero) {
-          firebaseApp.AppDisposed -= OnAppDisposed;
-          remoteConfigByInstanceKey.Remove(instanceKey);
-          remoteConfigInternal.Dispose();
-          remoteConfigInternal = null;
-        }
-      }
-    }
-
-    void OnAppDisposed(object sender, System.EventArgs eventArgs) {
-      Dispose();
-    }
-
-    // Throw a NullReferenceException if this proxy references a deleted object.
-    private void ThrowIfNull() {
-      if (remoteConfigInternal == null ||
-          FirebaseRemoteConfigInternal.getCPtr(remoteConfigInternal).Handle == System.IntPtr.Zero) {
-        throw new System.NullReferenceException();
-      }
+      add { ThrowIfDisposed(); _realtimeClient.AddListener(value); }
+      remove { if (Volatile.Read(ref _disposed) == 0) _realtimeClient.RemoveListener(value); }
     }
 
     /// @brief Returns a FirebaseRemoteConfig, initialized with a custom Firebase App.
@@ -124,42 +82,8 @@ namespace Firebase.RemoteConfig {
     ///
     /// @returns A FirebaseRemoteConfig instance.
     public static FirebaseRemoteConfig GetInstance(FirebaseApp app) {
-      app = app ?? FirebaseApp.DefaultInstance;
-      FirebaseRemoteConfigInternal remoteConfigInternal =
-          FirebaseRemoteConfigInternal.GetInstanceInternal(app);
-
-      if (remoteConfigInternal == null) {
-        LogUtil.LogMessage(LogLevel.Error,
-                           "Unable to create FirebaseRemoteConfig for app " + app.Name);
-        return null;
-      }
-      FirebaseRemoteConfig remoteConfig = null;
-      lock (remoteConfigByInstanceKey) {
-        var instanceKey = remoteConfigInternal.InstanceKey;
-        remoteConfig = FindByKey(instanceKey);
-        if (remoteConfig != null)
-          return remoteConfig;
-        remoteConfig = new FirebaseRemoteConfig(remoteConfigInternal, app);
-        remoteConfigByInstanceKey[instanceKey] = remoteConfig;
-      }
-      return remoteConfig;
-    }
-
-    private static FirebaseRemoteConfig FindByKey(string instanceKey) {
-      lock (remoteConfigByInstanceKey) {
-        FirebaseRemoteConfig remoteConfig = null;
-        if (remoteConfigByInstanceKey.TryGetValue(instanceKey, out remoteConfig)) {
-          if (remoteConfig != null)
-            return remoteConfig;
-          remoteConfigByInstanceKey.Remove(instanceKey);
-        }
-      }
-      return null;
-    }
-
-    /// @brief Returns the FirebaseRemoteConfig initialized with the default FirebaseApp.
-    public static FirebaseRemoteConfig DefaultInstance {
-      get { return GetInstance(FirebaseApp.DefaultInstance); }
+      FirebaseApp targetApp = app ?? FirebaseApp.DefaultInstance;
+      return Instances.GetOrCreate(targetApp, () => new FirebaseRemoteConfig(targetApp));
     }
 
     /// @brief Returns a Task that contains ConfigInfo representing the
@@ -167,24 +91,14 @@ namespace Firebase.RemoteConfig {
     /// Use this method to ensure Set/Get call not being blocked.
     ///
     /// @returns A Task contains ConfigInfo.
-    public async System.Threading.Tasks.Task<ConfigInfo> EnsureInitializedAsync() {
-      ThrowIfNull();
-      using (ConfigInfoInternal configInfoInternal = await remoteConfigInternal.EnsureInitializedAsync()) {
-        ConfigInfo configInfo = new ConfigInfo(configInfoInternal);
-        global::System.GC.KeepAlive(configInfoInternal);
-        return configInfo;
-      }
-    }
+    public Task<ConfigInfo> EnsureInitializedAsync() { ThrowIfDisposed(); return Task.FromResult(_store.GetInfo()); }
 
     /// @brief Asynchronously activates the most recently fetched configs,
     /// so that the fetched key value pairs take effect.
     ///
     /// @returns A Task that contains true if fetched configs were activated.
     /// The Task will contain false if the configs were already activated.
-    public System.Threading.Tasks.Task<bool> ActivateAsync() {
-      ThrowIfNull();
-      return remoteConfigInternal.ActivateAsync();
-    }
+    public Task<bool> ActivateAsync() { ThrowIfDisposed(); return _store.ActivateAsync(); }
 
     /// @brief Asynchronously fetches and then activates the fetched configs.
     ///
@@ -198,9 +112,10 @@ namespace Firebase.RemoteConfig {
     /// @returns A Task that contains true if the call activated the fetched configs.
     /// The Task will contain false if the fetch failed, or the configs were already
     /// activated.
-    public Task<bool> FetchAndActivateAsync() {
-      ThrowIfNull();
-      return remoteConfigInternal.FetchAndActivateAsync();
+    public async Task<bool> FetchAndActivateAsync() {
+      ThrowIfDisposed();
+      await FetchAsync().ConfigureAwait(false);
+      return await ActivateAsync().ConfigureAwait(false);
     }
 
     /// @brief Fetches config data from the server.
@@ -213,8 +128,9 @@ namespace Firebase.RemoteConfig {
     ///
     /// @returns A Task which can be used to determine with the fetch is complete.
     public Task FetchAsync() {
-      ThrowIfNull();
-      return remoteConfigInternal.FetchAsync();
+      ThrowIfDisposed();
+      ulong minMs = _store.GetSettings().MinimumFetchIntervalInMilliseconds;
+      return _fetchClient.FetchAsync(minMs >= (ulong)TimeSpan.MaxValue.TotalMilliseconds ? TimeSpan.MaxValue : TimeSpan.FromMilliseconds(minMs), _disposeCts.Token);
     }
 
     /// @brief Fetches config data from the server.
@@ -232,10 +148,7 @@ namespace Firebase.RemoteConfig {
     /// zero will always cause a fetch.
     ///
     /// @returns A Task which can be used to determine with the fetch is complete.
-    public System.Threading.Tasks.Task FetchAsync(TimeSpan cacheExpiration) {
-      ThrowIfNull();
-      return remoteConfigInternal.FetchAsync((ulong)cacheExpiration.TotalSeconds);
-    }
+    public Task FetchAsync(TimeSpan cacheExpiration) { ThrowIfDisposed(); return _fetchClient.FetchAsync(cacheExpiration, _disposeCts.Token); }
 
     /// @brief Sets the default values based on a string to object dictionary.
     ///
@@ -248,15 +161,9 @@ namespace Firebase.RemoteConfig {
     /// @return A Task which can be used to determine when the operation is
     /// complete.
     public Task SetDefaultsAsync(IDictionary<string, object> defaults) {
-      ThrowIfNull();
-      if (defaults == null) {
-        throw new System.ArgumentNullException(nameof(defaults));
-      }
-      using (StringStringMap defaultsMap = RemoteConfigUtil.ConvertDictionaryToMap(defaults)) {
-        Task task = remoteConfigInternal.SetDefaultsInternalAsync(defaultsMap);
-        global::System.GC.KeepAlive(defaultsMap);
-        return task;
-      }
+      ThrowIfDisposed();
+      if (defaults == null) throw new ArgumentNullException(nameof(defaults));
+      return _store.SetDefaultsAsync(defaults);
     }
 
     /// @brief Sets the custom signals values based on the input dictionary.
@@ -273,24 +180,11 @@ namespace Firebase.RemoteConfig {
     /// @return A Task which can be used to determine when the operation is
     /// complete.
     public Task SetCustomSignalsAsync(IDictionary<string, object> customSignals) {
-      ThrowIfNull();
-      if (customSignals == null) {
-        throw new System.ArgumentNullException(nameof(customSignals));
-      }
-      using (StringList signalKeys = new StringList())
-      using (VariantList signalValues = new VariantList()) {
-        foreach (KeyValuePair<string, object> pair in customSignals) {
-          if (pair.Key == null) {
-            throw new System.ArgumentException("Key cannot be null", nameof(customSignals));
-          }
-          signalKeys.Add(pair.Key);
-          signalValues.Add(Variant.FromObject(pair.Value));
-        }
-        Task task = remoteConfigInternal.SetCustomSignalsInternalAsync(signalKeys, signalValues);
-        global::System.GC.KeepAlive(signalKeys);
-        global::System.GC.KeepAlive(signalValues);
-        return task;
-      }
+      ThrowIfDisposed();
+      if (customSignals == null) throw new ArgumentNullException(nameof(customSignals));
+      foreach (KeyValuePair<string, object> pair in customSignals) if (pair.Key == null) throw new ArgumentException("Key cannot be null", nameof(customSignals));
+      try { return _store.SetCustomSignalsAsync(customSignals); }
+      catch (FirebaseException ex) { return Task.FromException(ex); }
     }
 
     /// @brief Asynchronously changes the settings for this Remote Config
@@ -300,48 +194,19 @@ namespace Firebase.RemoteConfig {
     ///
     /// @return a Task which can be used to determine when the operation is
     /// complete.
-    public Task SetConfigSettingsAsync(ConfigSettings settings) {
-      ThrowIfNull();
-      using (ConfigSettingsInternal settingsInternal = ConfigSettings.ToInternal(settings)) {
-        Task task = remoteConfigInternal.SetConfigSettingsAsync(settingsInternal);
-        global::System.GC.KeepAlive(settingsInternal);
-        return task;
-      }
-    }
+    public Task SetConfigSettingsAsync(ConfigSettings settings) { ThrowIfDisposed(); return _store.SetSettingsAsync(settings); }
 
     /// @brief Gets the current settings of the RemoteConfig object.
-    public ConfigSettings ConfigSettings {
-      get {
-        ThrowIfNull();
-        using (ConfigSettingsInternal settingsInternal = remoteConfigInternal.GetConfigSettings()) {
-          ConfigSettings settings = ConfigSettings.FromInternal(settingsInternal);
-          global::System.GC.KeepAlive(settingsInternal);
-          return settings;
-        }
-      }
-    }
+    public ConfigSettings ConfigSettings { get { ThrowIfDisposed(); return _store.GetSettings(); } }
 
     /// @brief Gets the @ref ConfigValue corresponding to the key.
     ///
     /// @param key Key of the value to be retrieved.
     /// @returns The @ref ConfigValue associated with the key.
-    public ConfigValue GetValue(string key) {
-      ThrowIfNull();
-      ConfigValueInternal valueInternal = remoteConfigInternal.GetValueInternal(key);
-      byte[] array = new byte[valueInternal.data.Count];
-      valueInternal.data.CopyTo(array);
-      ConfigValue result = new ConfigValue(array, valueInternal.source);
-      valueInternal.Dispose();
-      return result;
-    }
+    public ConfigValue GetValue(string key) { ThrowIfDisposed(); return _store.GetValue(key); }
 
     /// @brief Gets the set of all Remote Config parameter keys.
-    public IEnumerable<string> Keys {
-      get {
-        ThrowIfNull();
-        return remoteConfigInternal.GetKeys();
-      }
-    }
+    public IEnumerable<string> Keys { get { ThrowIfDisposed(); return _store.GetKeys(); } }
 
     /// @brief Gets the set of keys that start with the given prefix.
     ///
@@ -351,77 +216,21 @@ namespace Firebase.RemoteConfig {
     /// @return Set of Remote Config parameter keys that start with the specified
     /// prefix. Will return an empty set if there are no keys with the given
     /// prefix.
-    public IEnumerable<string> GetKeysByPrefix(string prefix) {
-      ThrowIfNull();
-      return remoteConfigInternal.GetKeysByPrefix(prefix);
-    }
+    public IEnumerable<string> GetKeysByPrefix(string prefix) { ThrowIfDisposed(); return _store.GetKeysByPrefix(prefix); }
 
     /// @brief Returns a Dictionary of Firebase Remote Config key value pairs.
     ///
     /// Evaluates the values of the parameters in the following order:
     /// The activated value, if the last successful @ref ActivateAsync() contained the
     /// key. The default value, if the key was set with @ref SetDefaultsAsync().
-    public IDictionary<string, ConfigValue> AllValues {
-      get {
-        ThrowIfNull();
-        Dictionary<string, ConfigValue> result = new Dictionary<string, ConfigValue>();
-        foreach (string key in Keys) {
-          result[key] = GetValue(key);
-        }
-        return result;
-      }
-    }
+    public IDictionary<string, ConfigValue> AllValues { get { ThrowIfDisposed(); return _store.GetAllValues(); } }
 
     /// @brief Returns information about the last fetch request, in the form
     /// of a @ref ConfigInfo object.
-    public ConfigInfo Info {
-      get {
-        ThrowIfNull();
-        using (ConfigInfoInternal infoInternal = remoteConfigInternal.GetInfo()) {
-          ConfigInfo info = new ConfigInfo(infoInternal);
-          global::System.GC.KeepAlive(infoInternal);
-          return info;
-        }
-      }
-    }
+    public ConfigInfo Info { get { ThrowIfDisposed(); return _store.GetInfo(); } }
 
-    /// @brief The default cache expiration used by FetchAsync(), equal to 12 hours.
-    public static TimeSpan DefaultCacheExpiration {
-      get {
-        return System.TimeSpan.FromMilliseconds((long)RemoteConfigUtil.kDefaultCacheExpiration);
-      }
-    }
-
-    /// The default timeout used by FetchAsync(), equal to 30 seconds,
-    /// in milliseconds.
-    public static ulong DefaultTimeoutInMilliseconds {
-      get { return RemoteConfigUtil.kDefaultTimeoutInMilliseconds; }
-    }
-
-    internal void OnConfigUpdate(ConfigUpdateInternal configUpdate, RemoteConfigError error) {
-      EventHandler<ConfigUpdateEventArgs> handler = ConfigUpdateListenerImpl;
-      if (handler != null) {
-        // Make a copy of the list, to not rely on the Swig list
-        List<string> updatedKeys = new List<string>(configUpdate.updated_keys);
-        handler(this, new ConfigUpdateEventArgs {
-          UpdatedKeys = updatedKeys,
-          Error = error
-        });
-      }
-    }
-
-    [MonoPInvokeCallback(typeof(RemoteConfigUtil.ConfigUpdateDelegate))]
-    private static void ConfigUpdateMethod(string appName, System.IntPtr configUpdatePtr, 
-        int error) {
-      FirebaseRemoteConfig rc;
-      if (remoteConfigByInstanceKey.TryGetValue(appName, out rc)) {
-        // Create a ConfigUpdateInternal with the given pointer
-        ConfigUpdateInternal configUpdate = new ConfigUpdateInternal(configUpdatePtr, false);
-        // convert error to RemoteConfigError
-        RemoteConfigError errorInternal = (RemoteConfigError)error;
-
-        rc.OnConfigUpdate(configUpdate, errorInternal);
-      }
+    private void ThrowIfDisposed() {
+      if (Volatile.Read(ref _disposed) != 0) throw new ObjectDisposedException(nameof(FirebaseRemoteConfig));
     }
   }
 }  // namespace Firebase.RemoteConfig

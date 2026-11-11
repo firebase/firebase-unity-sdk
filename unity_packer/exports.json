@@ -609,72 +609,9 @@
       "name": "FirebaseRemoteConfig.unitypackage",
       "imports": [
         {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone",
-            "Android"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/Firebase.RemoteConfig.dll",
-            "Firebase/Plugins/Firebase.RemoteConfig.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS",
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Firebase/Plugins/iOS/Firebase.RemoteConfig.dll",
-            "Firebase/Plugins/iOS/Firebase.RemoteConfig.pdb"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "iOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/iOS/Firebase/libFirebaseCppRemoteConfig.xcframework"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "tvOS"
-          ],
-          "cpu": "AnyCPU",
-          "paths": [
-            "Plugins/tvOS/Firebase/libFirebaseCppRemoteConfig.xcframework"
-          ]
-        },
-        {
           "importer": "DefaultImporter",
           "paths": [
-            "Firebase/Editor/RemoteConfigDependencies.xml",
-            "Firebase/m2repository/com/google/firebase/firebase-config-unity/"
-          ]
-        },
-        {
-          "importer": "PluginImporter",
-          "platforms": [
-            "Editor",
-            "Standalone"
-          ],
-          "cpu": "x86_64",
-          "paths": [
-            "Firebase/Plugins/x86_64/FirebaseCppRemoteConfig*"
-          ]
-        },
-        {
-          "importer": "DefaultImporter",
-          "paths": [
-            "Firebase/Editor/FirebaseRemoteConfig*_manifest.txt"
+            "Firebase/FirebaseRemoteConfig/*"
           ]
         },
         {

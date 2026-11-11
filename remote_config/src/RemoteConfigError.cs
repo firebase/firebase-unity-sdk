@@ -23,12 +23,12 @@ namespace Firebase.RemoteConfig {
     // No error.
     None = 0,
     // Unable to make a connection to the Remote Config backend.
-    ConfigUpdateStreamError,
+    ConfigUpdateStreamError = 1,
     // The ConfigUpdate message was unparsable.
-    ConfigUpdateMessageInvalid,
+    ConfigUpdateMessageInvalid = 2,
     // Unable to fetch the latest version of the config.
-    ConfigUpdateNotFetched,
+    ConfigUpdateNotFetched = 3,
     // The Remote Config real-time config update service is unavailable.
-    ConfigUpdateUnavailable,
+    ConfigUpdateUnavailable = 4,
   }
 }

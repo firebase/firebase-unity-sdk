@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. */
 
-using System.Collections;
+using System;
 using System.Collections.Generic;
 
 namespace Firebase.RemoteConfig {
   // Object passed to ConfigUpdateEventHandlers that contains ConfigUpdate arguments.
-  public sealed class ConfigUpdateEventArgs : System.EventArgs {
+  public sealed class ConfigUpdateEventArgs : EventArgs {
     // The keys that have changes in the config.
     public IEnumerable<string> UpdatedKeys { get; set; }
-    
+
     // Remote Config Errors that may have come up while listening for updates.
     public RemoteConfigError Error { get; set; }
   }
 }
-

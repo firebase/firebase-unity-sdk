@@ -57,8 +57,3 @@ set(FIREBASE_MESSAGING_ANDROID_DEPS
     "com.google.firebase:firebase-iid:21.1.0"
     "com.google.flatbuffers:flatbuffers-java:1.12.0"
 )
-
-set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
-    "com.google.firebase:firebase-config:24.0.1"
-    "com.google.firebase:firebase-analytics:24.0.0"
-)

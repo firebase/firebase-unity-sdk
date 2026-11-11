@@ -13,28 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-using System.Text.RegularExpressions;
+
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 
 namespace Firebase.RemoteConfig {
+  /// <summary>Describes the source a <see cref="ConfigValue"/> was retrieved from.</summary>
+  public enum ValueSource {
+    /// <summary>The value was not specified and no default was set, so a static empty value was returned.</summary>
+    StaticValue = 0,
+    /// <summary>The value was retrieved from the activated remote configuration.</summary>
+    RemoteValue = 1,
+    /// <summary>The value was retrieved from the in-app defaults.</summary>
+    DefaultValue = 2,
+  }
 
   /// @brief Wrapper for a Remote Config parameter value, with methods to get
   /// it as different types, such as bools and doubles, along with information
   /// about where the data came from.
   public struct ConfigValue {
-    // Regular expressions used to determine if the config value is a "valid" bool.
-    // Written to match what is used internally by the Java implementation.
-    internal static Regex booleanTruePattern = new Regex(@"^(1|true|t|yes|y|on)$",
-                                                         RegexOptions.IgnoreCase);
-    internal static Regex booleanFalsePattern = new Regex(@"^(0|false|f|no|n|off|)$",
-                                                          RegexOptions.IgnoreCase);
+    private readonly string _stringValue;
+    private readonly IEnumerable<byte> _bytes;
 
-    /// Constructor used to pass along the data.
-    ///
-    /// param[in] data The underlying byte data, which will be converted.
-    /// param[in] source Where the data was obtained from.
-    internal ConfigValue(byte[] data, ValueSource source) : this() {
-      Data = data;
-      Source = source;
+    internal ConfigValue(string stringValue, IEnumerable<byte> bytes, ValueSource source) {
+      (_stringValue, _bytes, Source) = (stringValue ?? string.Empty, bytes ?? Array.Empty<byte>(), source);
+    }
+
+    internal static ConfigValue Create(string value, ValueSource source) {
+      string norm = value ?? string.Empty;
+      return new ConfigValue(norm, norm.Length == 0 ? Array.Empty<byte>() : Array.AsReadOnly(Encoding.UTF8.GetBytes(norm)), source);
     }
 
     /// @brief Gets the value as a bool.
@@ -43,57 +52,39 @@ namespace Firebase.RemoteConfig {
     /// @returns Bool representation of this parameter value.
     public bool BooleanValue {
       get {
-        string stringValue = StringValue;
-        if (booleanTruePattern.IsMatch(stringValue)) return true;
-        if (booleanFalsePattern.IsMatch(stringValue)) return false;
-        throw new System.FormatException(string.Format("ConfigValue '{0}' is not a boolean value",
-                                                       stringValue));
+        string s = StringValue;
+        if (s.Length == 0 || s.Equals("0", StringComparison.Ordinal) || s.Equals("false", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("f", StringComparison.OrdinalIgnoreCase) || s.Equals("no", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("n", StringComparison.OrdinalIgnoreCase) || s.Equals("off", StringComparison.OrdinalIgnoreCase)) return false;
+        if (s.Equals("1", StringComparison.Ordinal) || s.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("t", StringComparison.OrdinalIgnoreCase) || s.Equals("yes", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals("y", StringComparison.OrdinalIgnoreCase) || s.Equals("on", StringComparison.OrdinalIgnoreCase)) return true;
+        throw new FormatException($"ConfigValue '{s}' is not a boolean value");
       }
     }
 
     /// @brief Gets the value as an IEnumerable of byte.
     ///
     /// @returns IEnumerable of byte representation of this parameter value.
-    public System.Collections.Generic.IEnumerable<byte> ByteArrayValue {
-      get {
-        return Data;
-      }
-    }
+    public IEnumerable<byte> ByteArrayValue => _bytes ?? Array.Empty<byte>();
 
     /// @brief Gets the value as a double.
     ///
     /// @throws System.FormatException if the data fails be converted to a
     /// double.
     /// @returns Double representation of this parameter value.
-    public double DoubleValue {
-      get {
-        return System.Convert.ToDouble(StringValue,
-            System.Globalization.CultureInfo.InvariantCulture);
-      }
-    }
+    public double DoubleValue => Convert.ToDouble(StringValue, CultureInfo.InvariantCulture);
 
     /// @brief Gets the value as a long.
     ///
     /// @throws System.FormatException if the data fails be converted to a long.
     /// @returns Long representation of this parameter value.
-    public long LongValue {
-      get {
-        return System.Convert.ToInt64(StringValue,
-            System.Globalization.CultureInfo.InvariantCulture);
-      }
-    }
+    public long LongValue => Convert.ToInt64(StringValue, CultureInfo.InvariantCulture);
 
     /// @brief Gets the value as a string.
     ///
     /// @returns String representation of this parameter value.
-    public string StringValue {
-      get {
-        return System.Text.Encoding.UTF8.GetString(Data);
-      }
-    }
-
-    /// The internal data.
-    internal byte[] Data { get; set; }
+    public string StringValue => _stringValue ?? string.Empty;
 
     /// @brief Indicates which source this value came from.
     ///
@@ -101,6 +92,4 @@ namespace Firebase.RemoteConfig {
     /// either the server, the default value provided, or static, if neither.
     public ValueSource Source { get; internal set; }
   }
-
 }  // namespace Firebase.RemoteConfig
-
