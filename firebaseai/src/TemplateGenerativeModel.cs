@@ -55,10 +55,8 @@ namespace Firebase.AI
       _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
 
       // Create a HttpClient using the timeout requested, or the default one.
-      _httpClient = new HttpClient()
-      {
-        Timeout = requestOptions?.Timeout ?? RequestOptions.DefaultTimeout
-      };
+      _httpClient = Firebase.Internal.HttpHelpers.CreateHttpClient(
+          requestOptions?.Timeout ?? RequestOptions.DefaultTimeout);
     }
 
     /// <summary>
@@ -147,11 +145,11 @@ namespace Firebase.AI
         TemplateToolConfig? toolConfig,
         CancellationToken cancellationToken)
     {
-      HttpRequestMessage request = new(HttpMethod.Post,
+      using HttpRequestMessage request = new(HttpMethod.Post,
           Firebase.AI.Internal.HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateGenerateContent");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens).ConfigureAwait(false);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(inputs, chatHistory, tools, toolConfig);
@@ -161,10 +159,10 @@ namespace Firebase.AI
       UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-      var response = await _httpClient.SendAsync(request, cancellationToken);
-      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
+      using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response).ConfigureAwait(false);
 
-      string result = await response.Content.ReadAsStringAsync();
+      string result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
 #if FIREBASE_LOG_REST_CALLS
       UnityEngine.Debug.Log("Response:\n" + result);
@@ -180,11 +178,11 @@ namespace Firebase.AI
         TemplateToolConfig? toolConfig,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-      HttpRequestMessage request = new(HttpMethod.Post,
+      using HttpRequestMessage request = new(HttpMethod.Post,
           Firebase.AI.Internal.HttpHelpers.GetTemplateURL(_firebaseApp, _backend, templateId) + ":templateStreamGenerateContent?alt=sse");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens).ConfigureAwait(false);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(inputs, chatHistory, tools, toolConfig);
@@ -194,25 +192,15 @@ namespace Firebase.AI
       UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-      var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
+      using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response).ConfigureAwait(false);
 
-      // We are expecting a Stream as the response, so handle that.
-      using var stream = await response.Content.ReadAsStreamAsync();
-      using var reader = new StreamReader(stream);
-
-      string line;
-      while ((line = await reader.ReadLineAsync()) != null)
+      await foreach (string data in Firebase.Internal.SseLineReader.ReadDataFramesAsync(response, cancellationToken).ConfigureAwait(false))
       {
-        // Only pass along strings that begin with the expected prefix.
-        if (line.StartsWith(Firebase.AI.Internal.HttpHelpers.StreamPrefix))
-        {
 #if FIREBASE_LOG_REST_CALLS
-          UnityEngine.Debug.Log("Streaming Response:\n" + line);
+        UnityEngine.Debug.Log("Streaming Response:\n" + data);
 #endif
-
-          yield return GenerateContentResponse.FromJson(line[Firebase.AI.Internal.HttpHelpers.StreamPrefix.Length..], _backend.Provider);
-        }
+        yield return GenerateContentResponse.FromJson(data, _backend.Provider);
       }
     }
   }

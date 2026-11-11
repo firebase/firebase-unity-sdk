@@ -15,11 +15,13 @@
  */
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Internal;
 
 namespace Firebase.Storage.Internal {
   /// <summary>
@@ -45,9 +47,11 @@ namespace Firebase.Storage.Internal {
     private readonly FirebaseApp _app;
     private readonly TimeSpan _maxRetryTime;
     private Uri _sessionUri;
-    // Chunk buffer, grown as the chunk size scales up. Chunks are sequential, so one buffer per
-    // upload suffices; ArrayPool<byte>.Shared would not pool anything above 1 MB on Unity's BCL.
+    // Chunk buffer, grown as the chunk size scales up. Buffers up to 1 MB are rented from
+    // ArrayPool<byte>.Shared and returned when ExecuteUploadAsync exits.
+    private const int MaxPooledBufferSize = 1024 * 1024;
     private byte[] _chunkBuffer;
+    private bool _chunkBufferPooled;
 
     internal ResumableUploadTask(
         StorageReference reference,
@@ -186,6 +190,7 @@ namespace Firebase.Storage.Internal {
           },
           onCanceled: FireAndForgetCancelSession,
           cleanupAsync: () => {
+            ReleaseChunkBuffer();
             if (_ownsStream) {
               try {
                 _stream.Dispose();
@@ -203,7 +208,7 @@ namespace Firebase.Storage.Internal {
       // The retry budget measures time spent failing, not wall-clock time (see RetryBackoff), and
       // is reset whenever a chunk commits or a pause ends, so a slow but healthy upload (or a long
       // pause) never exhausts MaxUploadRetryTime on its own.
-      var backoff = new RetryBackoff(_maxRetryTime);
+      RetryBackoff backoff = StorageHttpClient.CreateRetryBackoff(_maxRetryTime);
       long bytesUploaded = 0;
 
       if (_sessionUri == null) {
@@ -235,7 +240,11 @@ namespace Firebase.Storage.Internal {
         ReportProgress();
       }
 
-      int currentChunkSize = PreferredChunkSize;
+      int initialChunkSize =
+          (_uploadState.TotalByteCount >= 0 && _uploadState.TotalByteCount < PreferredChunkSize)
+              ? Math.Max(1, (int)_uploadState.TotalByteCount)
+              : PreferredChunkSize;
+      int currentChunkSize = initialChunkSize;
       byte[] lookaheadByte = new byte[1];
       bool hasLookahead = false;
       bool reachedEof = false;
@@ -358,9 +367,9 @@ namespace Firebase.Storage.Internal {
           }
 
           if (!sent) {
-            // The attempt failed or was paused: drop back to 256 KB slices so a flaky link does
-            // not keep timing out on 32 MB payloads.
-            currentChunkSize = PreferredChunkSize;
+            // The attempt failed or was paused: drop back to the initial slice size so a flaky link
+            // does not keep timing out on 32 MB payloads.
+            currentChunkSize = initialChunkSize;
           }
 
           // Ask the server how much it has committed and continue from there.
@@ -402,9 +411,24 @@ namespace Firebase.Storage.Internal {
 
     private byte[] GetChunkBuffer(int size) {
       if (_chunkBuffer == null || _chunkBuffer.Length < size) {
-        _chunkBuffer = new byte[size];
+        ReleaseChunkBuffer();
+        if (size <= MaxPooledBufferSize) {
+          _chunkBuffer = ArrayPool<byte>.Shared.Rent(size);
+          _chunkBufferPooled = true;
+        } else {
+          _chunkBuffer = new byte[size];
+          _chunkBufferPooled = false;
+        }
       }
       return _chunkBuffer;
+    }
+
+    private void ReleaseChunkBuffer() {
+      if (_chunkBuffer != null && _chunkBufferPooled) {
+        ArrayPool<byte>.Shared.Return(_chunkBuffer);
+      }
+      _chunkBuffer = null;
+      _chunkBufferPooled = false;
     }
 
     private async Task<Uri> StartSessionAsync(RetryBackoff backoff) {

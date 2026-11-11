@@ -15,7 +15,7 @@
  */
 
 using System;
-using System.Collections.Concurrent;
+using Firebase.Internal;
 
 namespace Firebase.AI
 {
@@ -86,7 +86,10 @@ namespace Firebase.AI
       }
     }
 
-    private static readonly ConcurrentDictionary<string, FirebaseAI> _instances = new();
+#if UNITY_6000_6_OR_NEWER
+    [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+    private static readonly FirebaseInstanceCache<FirebaseAI> _instances = new();
 
     private readonly FirebaseApp _firebaseApp;
     private readonly Backend _backend;
@@ -139,15 +142,11 @@ namespace Firebase.AI
       Backend resolvedBackend = backend ?? Backend.GoogleAI();
 
       // FirebaseAI instances are keyed by a combination of the app name and backend.
-      string key = $"{app.Name}::{resolvedBackend}::{useLimitedUseAppCheckTokens}";
-      // An App with the same name may have been disposed and re-created (e.g. Enter Play Mode
-      // with domain reload disabled, or an explicit FirebaseApp.Dispose()). Only reuse a cached
-      // instance if it is bound to this exact App object.
-      return _instances.AddOrUpdate(key,
-          _ => new FirebaseAI(app, resolvedBackend, useLimitedUseAppCheckTokens),
-          (_, existing) => ReferenceEquals(existing._firebaseApp, app)
-              ? existing
-              : new FirebaseAI(app, resolvedBackend, useLimitedUseAppCheckTokens));
+      string subKey = $"{resolvedBackend}::{useLimitedUseAppCheckTokens}";
+      return _instances.GetOrCreate(
+          app,
+          () => new FirebaseAI(app, resolvedBackend, useLimitedUseAppCheckTokens),
+          subKey);
     }
 
     /// <summary>

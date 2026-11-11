@@ -52,11 +52,6 @@ set(FIREBASE_FIRESTORE_ANDROID_DEPS
     "com.google.firebase:firebase-analytics:24.0.0"
 )
 
-set(FIREBASE_FUNCTIONS_ANDROID_DEPS
-    "com.google.firebase:firebase-functions:23.0.0"
-    "com.google.firebase:firebase-analytics:24.0.0"
-)
-
 set(FIREBASE_INSTALLATIONS_ANDROID_DEPS
     "com.google.firebase:firebase-installations:20.0.0"
     "com.google.firebase:firebase-analytics:24.0.0"
@@ -72,10 +67,5 @@ set(FIREBASE_MESSAGING_ANDROID_DEPS
 
 set(FIREBASE_REMOTE_CONFIG_ANDROID_DEPS
     "com.google.firebase:firebase-config:24.0.1"
-    "com.google.firebase:firebase-analytics:24.0.0"
-)
-
-set(FIREBASE_STORAGE_ANDROID_DEPS
-    "com.google.firebase:firebase-storage:23.0.0"
     "com.google.firebase:firebase-analytics:24.0.0"
 )

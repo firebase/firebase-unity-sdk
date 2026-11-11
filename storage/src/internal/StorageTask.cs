@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Internal;
 
 namespace Firebase.Storage.Internal {
   /// <summary>
@@ -163,8 +164,11 @@ namespace Firebase.Storage.Internal {
       // the gate) and resets the budget, matching a pause during the attempt itself.
       try {
         await backoff.DelayOrThrowAsync(
-            transportFailure, error, logger, context, GetChunkCancellationToken())
-            .ConfigureAwait(false);
+            transportFailure,
+            error,
+            GetChunkCancellationToken(),
+            logger != null ? (Action<LogLevel, string>)logger.LogMessage : null,
+            context).ConfigureAwait(false);
       } catch (OperationCanceledException) when (!_masterToken.IsCancellationRequested &&
                                                  !callerToken.IsCancellationRequested &&
                                                  IsPaused) {

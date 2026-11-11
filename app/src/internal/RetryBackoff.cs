@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Firebase.Storage.Internal {
+namespace Firebase.Internal {
   /// <summary>
   /// Retry budget and backoff policy shared by every Storage network loop; the C# counterpart of
   /// the Firebase Android SDK's <c>ExponentialBackoffSender</c>. Retryable HTTP statuses
@@ -34,20 +34,24 @@ namespace Firebase.Storage.Internal {
   /// own.
   /// </para>
   /// </summary>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   internal sealed class RetryBackoff {
     // Mirrors Firebase Android SDK's ExponentialBackoffSender (NETWORK_STATUS_POLL_INTERVAL = 1000,
     // MAXIMUM_WAIT_TIME_MILLI = 30000, RND_MAX = 250).
-    internal const int InitialBackoffMs = 1000;
-    internal const int MaxBackoffMs = 30000;
-    internal const int MaxJitterMs = 250;
+    internal const int InitialBackoffMs = 1000, MaxBackoffMs = 30000, MaxJitterMs = 250;
+    private static readonly Random _jitterRandom = new();
+    private readonly Stopwatch _stopwatch = new();
+    private readonly Func<Exception, Exception> _wrapExhaustedError;
+    private readonly int _initialBackoffMs, _maxBackoffMs, _maxJitterMs;
+    private int _currentSleepMs;
 
-    private static readonly Random _jitterRandom = new Random();
-
-    private readonly Stopwatch _stopwatch = new Stopwatch();
-    private int _currentSleepMs = InitialBackoffMs;
-
-    internal RetryBackoff(TimeSpan maxRetryTime) {
+    internal RetryBackoff(TimeSpan maxRetryTime, Func<Exception, Exception> wrapExhaustedError = null,
+        int initialBackoffMs = InitialBackoffMs, int maxBackoffMs = MaxBackoffMs, int maxJitterMs = MaxJitterMs) {
       MaxRetryTime = maxRetryTime;
+      _wrapExhaustedError = wrapExhaustedError;
+      (_initialBackoffMs, _maxBackoffMs, _maxJitterMs, _currentSleepMs) = (initialBackoffMs, maxBackoffMs, maxJitterMs, initialBackoffMs);
     }
 
     /// <summary>Total time the operation may spend failing before it gives up.</summary>
@@ -56,50 +60,36 @@ namespace Firebase.Storage.Internal {
     /// <summary>
     /// Forgets earlier failures: bytes arrived, a chunk committed, or the transfer resumed.
     /// </summary>
-    internal void Reset() {
-      _stopwatch.Reset();
-      _currentSleepMs = InitialBackoffMs;
-    }
+    internal void Reset() { _stopwatch.Reset(); _currentSleepMs = _initialBackoffMs; }
 
     /// <summary>
-    /// Waits before the next attempt of a transfer, or throws once the budget is spent: a
-    /// <see cref="StorageException" /> in <paramref name="lastError" /> (a retryable HTTP status,
-    /// which keeps its real status code and server message) is rethrown as-is, anything else is
-    /// wrapped in <see cref="StorageException.ErrorRetryLimitExceeded" />.
+    /// Waits before the next attempt, or throws once the budget is spent: passes
+    /// <paramref name="lastError" /> through <c>_wrapExhaustedError</c> if provided, otherwise
+    /// rethrows <paramref name="lastError" /> or throws a <see cref="TimeoutException" /> when
+    /// <paramref name="lastError" /> is <c>null</c> (and likewise falls back to
+    /// <see cref="TimeoutException" /> if <c>_wrapExhaustedError</c> returns <c>null</c>).
     /// </summary>
     /// <param name="transportFailure">True if the attempt failed at the transport level (flat 1s
     /// re-poll) rather than with a retryable HTTP status (exponential backoff).</param>
     /// <param name="lastError">The failure being retried.</param>
-    /// <param name="logger">Receives a debug line per retry and an error when giving up.</param>
-    /// <param name="context">Describes the attempt in log lines, e.g. the transfer offset.</param>
     /// <param name="token">Aborts the wait.</param>
+    /// <param name="log">Optional log callback receiving a debug line per retry and an error when
+    /// giving up.</param>
+    /// <param name="context">Describes the attempt in log lines, e.g. the transfer offset.</param>
     internal async Task DelayOrThrowAsync(
-        bool transportFailure,
-        Exception lastError,
-        ModuleLogger logger,
-        string context,
-        CancellationToken token) {
-      if (!_stopwatch.IsRunning) {
-        _stopwatch.Start();
-      }
-      int delayMs;
-      lock (_jitterRandom) {
-        delayMs = _currentSleepMs + _jitterRandom.Next(MaxJitterMs);
-      }
+        bool transportFailure, Exception lastError, CancellationToken token = default,
+        Action<LogLevel, string> log = null, string context = null) {
+      if (!_stopwatch.IsRunning) _stopwatch.Start();
+      int delayMs = _currentSleepMs;
+      if (_maxJitterMs > 0) lock (_jitterRandom) delayMs += _jitterRandom.Next(_maxJitterMs);
       if (_stopwatch.Elapsed + TimeSpan.FromMilliseconds(delayMs) > MaxRetryTime) {
-        logger?.LogMessage(LogLevel.Error, $"{context}: retry budget ({MaxRetryTime}) exhausted.");
-        throw lastError as StorageException ?? new StorageException(
-            StorageException.ErrorRetryLimitExceeded,
-            0,
-            lastError?.Message ??
-            StorageException.GetErrorMessageForCode(StorageException.ErrorRetryLimitExceeded),
-            lastError);
+        log?.Invoke(LogLevel.Error, $"{context}: retry budget ({MaxRetryTime}) exhausted.");
+        Exception wrapped = _wrapExhaustedError != null ? _wrapExhaustedError(lastError) : lastError;
+        throw wrapped ?? new TimeoutException($"Retry budget ({MaxRetryTime}) exhausted.", lastError);
       }
-      logger?.LogMessage(LogLevel.Debug, $"{context}: retrying in {delayMs} ms.");
+      log?.Invoke(LogLevel.Debug, $"{context}: retrying in {delayMs} ms.");
       await Task.Delay(delayMs, token).ConfigureAwait(false);
-      _currentSleepMs = transportFailure
-          ? InitialBackoffMs
-          : Math.Min(_currentSleepMs * 2, MaxBackoffMs);
+      _currentSleepMs = transportFailure ? _initialBackoffMs : Math.Min(_currentSleepMs * 2, _maxBackoffMs);
     }
   }
 }

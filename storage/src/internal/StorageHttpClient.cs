@@ -30,6 +30,9 @@ namespace Firebase.Storage.Internal {
   /// <summary>
   /// Shared HTTP client and REST command operations for Firebase Storage.
   /// </summary>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   internal static class StorageHttpClient {
     private static readonly HttpMethod PatchMethod = new HttpMethod("PATCH");
 
@@ -38,40 +41,43 @@ namespace Firebase.Storage.Internal {
     // behind long transfers (Mono's default per-host limit is 2).
     private const int MaxConnectionsPerServer = 16;
 
-    private static readonly HttpClient _httpClient = CreateDefaultHttpClient();
+    private static readonly object _clientLock = new object();
+    // Per-attempt stall detection is handled by StallWatchdog (see StorageTask.RunAttemptAsync)
+    // so the client-wide timeout is disabled.
+    private static readonly HttpClient _httpClient =
+        HttpHelpers.CreateHttpClient(Timeout.InfiniteTimeSpan, MaxConnectionsPerServer);
+    private static Func<HttpMessageHandler> _customFactory;
+    private static HttpClient _customClient;
 
     internal static HttpClient Client {
-      get { return _httpClient; }
+      get {
+        var factory = HttpHelpers.CustomHandlerFactory;
+        if (factory == null) {
+          return _httpClient;
+        }
+        lock (_clientLock) {
+          if (!ReferenceEquals(_customFactory, factory) || _customClient == null) {
+            _customFactory = factory;
+            _customClient = HttpHelpers.CreateHttpClient(Timeout.InfiniteTimeSpan, MaxConnectionsPerServer);
+          }
+          return _customClient;
+        }
+      }
     }
 
-    private static HttpClient CreateDefaultHttpClient() {
-      try {
-        if (ServicePointManager.DefaultConnectionLimit < MaxConnectionsPerServer) {
-          ServicePointManager.DefaultConnectionLimit = MaxConnectionsPerServer;
-        }
-      } catch (Exception) {
-        // Ignore on runtimes where ServicePointManager is unsupported.
-      }
-      var handler = new HttpClientHandler();
-      try {
-        handler.MaxConnectionsPerServer = MaxConnectionsPerServer;
-      } catch (Exception) {
-        // MonoWebRequestHandler (Windows Mono / iOS IL2CPP) throws NotImplementedException;
-        // other runtimes may throw PlatformNotSupportedException. ServicePointManager fallback
-        // above covers MonoWebRequestHandler.
-      }
-      // Per-attempt stall detection is handled by StallWatchdog (see StorageTask.RunAttemptAsync)
-      // so the client-wide timeout is disabled.
-      var client = new HttpClient(handler) {
-        Timeout = Timeout.InfiniteTimeSpan
-      };
-      // Mono defaults to "Expect: 100-continue", which costs a round trip on every upload chunk.
-      client.DefaultRequestHeaders.ExpectContinue = false;
-      return client;
+    internal static RetryBackoff CreateRetryBackoff(TimeSpan maxRetryTime) {
+      return new RetryBackoff(
+          maxRetryTime,
+          lastError => lastError as StorageException ?? new StorageException(
+              StorageException.ErrorRetryLimitExceeded,
+              0,
+              lastError?.Message ??
+              StorageException.GetErrorMessageForCode(StorageException.ErrorRetryLimitExceeded),
+              lastError));
     }
 
     // Sets the standard Firebase Storage REST headers on an HttpRequestMessage.
-    // Note: Firebase Storage backend rejects 'x-goog-api-client' (b/74440917) and requires
+    // Note: Firebase Storage backend rejects 'x-goog-api-client' and requires
     // 'X-Firebase-Storage-Version' instead.
     internal static async Task SetStorageRequestHeaders(
         HttpRequestMessage request,
@@ -84,26 +90,15 @@ namespace Firebase.Storage.Internal {
         if (!string.IsNullOrEmpty(appId)) {
           request.Headers.TryAddWithoutValidation("x-firebase-gmpid", appId);
         }
-        if (FirebaseInterops.GetIsDataCollectionDefaultEnabled(firebaseApp)) {
-          if (!string.IsNullOrEmpty(appId)) {
-            request.Headers.TryAddWithoutValidation("X-Firebase-AppId", appId);
-          }
-          string appVersion = FirebaseInterops.GetApplicationVersion();
-          if (!string.IsNullOrEmpty(appVersion)) {
-            request.Headers.TryAddWithoutValidation("X-Firebase-AppVersion", appVersion);
-          }
-        }
+        HttpHelpers.SetDataCollectionHeaders(request, firebaseApp);
         await FirebaseInterops.AddFirebaseTokensAsync(
             request, firebaseApp, "Firebase", limitedUseAppCheckTokens).ConfigureAwait(false);
       }
     }
 
     // Returns true if the HTTP status code represents a transient / retryable server or rate-limit error.
-    internal static bool IsRetryableStatusCode(int statusCode) {
-      return (statusCode >= 500 && statusCode < 600) ||
-             statusCode == (int)HttpStatusCode.RequestTimeout ||
-             statusCode == 429;
-    }
+    internal static bool IsRetryableStatusCode(int statusCode) =>
+        HttpHelpers.IsRetryableStatusCode(statusCode);
 
     // Returns true for 2xx, or 308 "Resume Incomplete", which the resumable upload protocol uses
     // to acknowledge a chunk or a session query.
@@ -125,16 +120,8 @@ namespace Firebase.Storage.Internal {
     }
 
     // Safely reads the response body as a string, returning an empty string on failure or null content.
-    internal static async Task<string> ReadResponseContentSafeAsync(HttpResponseMessage response) {
-      if (response?.Content == null) {
-        return string.Empty;
-      }
-      try {
-        return await response.Content.ReadAsStringAsync().ConfigureAwait(false) ?? string.Empty;
-      } catch (Exception) {
-        return string.Empty;
-      }
-    }
+    internal static Task<string> ReadResponseContentSafeAsync(HttpResponseMessage response) =>
+        HttpHelpers.ReadErrorBodySafeAsync(response);
 
     /// <summary>
     /// Builds the <see cref="StorageException" /> for a non-success <paramref name="response" />
@@ -232,34 +219,8 @@ namespace Firebase.Storage.Internal {
     /// Local I/O (the caller's stream or file) is read and written outside the retry step, so
     /// its errors propagate unchanged and are never retried.
     /// </summary>
-    internal static bool IsTransportException(Exception ex) {
-      switch (ex) {
-        case null:
-          return false;
-        case HttpRequestException _:
-        case IOException _:
-        case SocketException _:
-        case WebException _:
-        case ObjectDisposedException _:
-        case OperationCanceledException _:
-        // A TLS failure in the middle of a transfer (corrupted record, renegotiation refused by a
-        // middlebox) kills the connection; the next attempt opens a new one.
-        case System.Security.Authentication.AuthenticationException _:
-          return true;
-        case AggregateException agg:
-          if (agg.InnerExceptions.Count == 0) {
-            return false;
-          }
-          foreach (Exception inner in agg.InnerExceptions) {
-            if (!IsTransportException(inner)) {
-              return false;
-            }
-          }
-          return true;
-        default:
-          return false;
-      }
-    }
+    internal static bool IsTransportException(Exception ex) =>
+        HttpHelpers.IsTransportError(ex);
 
     /// <summary>
     /// Sends a single REST command (metadata, list, delete) with retry and returns the body of a
@@ -274,7 +235,7 @@ namespace Firebase.Storage.Internal {
         CancellationToken cancellationToken) {
       FirebaseStorage storage = reference.Storage;
       FirebaseApp app = storage?.App;
-      var backoff = new RetryBackoff(storage?.MaxOperationRetryTime ?? TimeSpan.FromMinutes(2));
+      RetryBackoff backoff = CreateRetryBackoff(storage?.MaxOperationRetryTime ?? TimeSpan.FromMinutes(2));
       ModuleLogger logger = reference.Logger;
       string description = $"{method.Method} {url}";
 

@@ -6,4 +6,7 @@
   <assembly fullname="Firebase.AppCheck">
     <type fullname="Firebase.AppCheck.FirebaseAppCheck" preserve="all"/>
   </assembly>
+  <assembly fullname="Firebase.Installations">
+    <type fullname="Firebase.Installations.FirebaseInstallations" preserve="all"/>
+  </assembly>
 </linker>

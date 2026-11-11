@@ -15,12 +15,14 @@
  */
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Internal;
 using Firebase.Platform;
 
 namespace Firebase.Storage.Internal {
@@ -250,56 +252,60 @@ namespace Firebase.Storage.Internal {
       _storageTask.TransitionToInProgress();
 
       int restarts = 0;
-      var buffer = new byte[BufferSize];
-      while (true) {
-        using (ResumableDownloadStream source =
-            await OpenStreamAsync(ownsStorageTask: false).ConfigureAwait(false)) {
-          try {
-            long totalBytes = source.Length;
-            if (maxDownloadSizeBytes > 0 && totalBytes > maxDownloadSizeBytes) {
-              throw new IndexOutOfRangeException(
-                  $"Streamed file size ({totalBytes} bytes) exceeded maximum allowed size " +
-                  $"of {maxDownloadSizeBytes} bytes.");
-            }
-            if (destination is MemoryStream memoryStream &&
-                totalBytes > memoryStream.Capacity && totalBytes <= int.MaxValue) {
-              memoryStream.Capacity = (int)totalBytes;
-            }
-
-            while (true) {
-              int read = await source.ReadAsync(buffer, 0, buffer.Length, default)
-                  .ConfigureAwait(false);
-              if (read <= 0) {
-                break;
-              }
-              if (maxDownloadSizeBytes > 0 && source.Position > maxDownloadSizeBytes) {
+      byte[] buffer = ArrayPool<byte>.Shared.Rent(HttpHelpers.PooledBufferSize);
+      try {
+        while (true) {
+          using (ResumableDownloadStream source =
+              await OpenStreamAsync(ownsStorageTask: false).ConfigureAwait(false)) {
+            try {
+              long totalBytes = source.Length;
+              if (maxDownloadSizeBytes > 0 && totalBytes > maxDownloadSizeBytes) {
                 throw new IndexOutOfRangeException(
-                    $"Streamed file size ({Math.Max(source.Length, source.Position)} bytes) " +
-                    $"exceeded maximum allowed size of {maxDownloadSizeBytes} bytes.");
+                    $"Streamed file size ({totalBytes} bytes) exceeded maximum allowed size " +
+                    $"of {maxDownloadSizeBytes} bytes.");
               }
-              // Outside the retry step: a destination error propagates unchanged.
-              await destination.WriteAsync(buffer, 0, read, _storageTask.CancellationToken)
-                  .ConfigureAwait(false);
+              if (destination is MemoryStream memoryStream &&
+                  totalBytes > memoryStream.Capacity && totalBytes <= int.MaxValue) {
+                memoryStream.Capacity = (int)totalBytes;
+              }
+
+              while (true) {
+                int read = await source.ReadAsync(buffer, 0, buffer.Length, default)
+                    .ConfigureAwait(false);
+                if (read <= 0) {
+                  break;
+                }
+                if (maxDownloadSizeBytes > 0 && source.Position > maxDownloadSizeBytes) {
+                  throw new IndexOutOfRangeException(
+                      $"Streamed file size ({Math.Max(source.Length, source.Position)} bytes) " +
+                      $"exceeded maximum allowed size of {maxDownloadSizeBytes} bytes.");
+                }
+                // Outside the retry step: a destination error propagates unchanged.
+                await destination.WriteAsync(buffer, 0, read, _storageTask.CancellationToken)
+                    .ConfigureAwait(false);
+              }
+              _storageTask.MarkCompleted();
+              return;
+            } catch (StorageException ex) when (ex.HttpResultCode == ObjectChangedStatus &&
+                                                 restarts++ < MaxRestarts) {
+              // Remote object mutated mid-download; truncate and restart from byte 0.
+              _logger.LogMessage(LogLevel.Warning,
+                  "Remote object changed during download; restarting from byte 0.");
+              destination.Position = 0;
+              destination.SetLength(0);
+              _downloadState.BytesTransferred = 0;
             }
-            _storageTask.MarkCompleted();
-            return;
-          } catch (StorageException ex) when (ex.HttpResultCode == ObjectChangedStatus &&
-                                               restarts++ < MaxRestarts) {
-            // Remote object mutated mid-download; truncate and restart from byte 0.
-            _logger.LogMessage(LogLevel.Warning,
-                "Remote object changed during download; restarting from byte 0.");
-            destination.Position = 0;
-            destination.SetLength(0);
-            _downloadState.BytesTransferred = 0;
           }
         }
+      } finally {
+        ArrayPool<byte>.Shared.Return(buffer);
       }
     }
 
     // Issues the first GET for a stream (retrying within the download budget) and wraps the
     // response in a ResumableDownloadStream.
     private async Task<ResumableDownloadStream> OpenStreamAsync(bool ownsStorageTask) {
-      var backoff = new RetryBackoff(_maxRetryTime);
+      RetryBackoff backoff = StorageHttpClient.CreateRetryBackoff(_maxRetryTime);
       HttpResponseMessage response = await StorageHttpClient.SendAsync(
           _storageTask,
           () => CreateMediaRequestAsync(0),

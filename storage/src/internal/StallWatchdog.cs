@@ -28,6 +28,9 @@ namespace Firebase.Storage.Internal {
   /// <see cref="StallTimeout" />, or when the linked token is cancelled. Callers distinguish a stall
   /// from a cancellation via <see cref="TimedOut" />.
   /// </summary>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   internal sealed class StallWatchdog : IDisposable {
     /// <summary>
     /// How long a single request may make no progress before it is abandoned and retried.

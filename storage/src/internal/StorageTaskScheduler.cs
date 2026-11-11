@@ -31,6 +31,9 @@ namespace Firebase.Storage.Internal {
   /// <see cref="SemaphoreSlim" /> instances so queued transfers do not occupy thread-pool threads,
   /// and paused transfers hand their slot back until resumed (see <see cref="Slot" />).
   /// </summary>
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
   internal static class StorageTaskScheduler {
     // Pool sizes match Firebase Android SDK's StorageTaskScheduler
     // (UPLOAD_POOL_SIZE = 2, DOWNLOAD_POOL_SIZE = 3, COMMAND_POOL_SIZE = 5).

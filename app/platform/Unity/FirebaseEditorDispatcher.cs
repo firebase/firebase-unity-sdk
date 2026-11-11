@@ -99,7 +99,7 @@ internal sealed class FirebaseEditorDispatcher {
   }
 
   public static void Update() {
-    FirebaseHandler.DefaultInstance.Update();
+    FirebaseHandler.DefaultInstance?.Update();
   }
 
   // Subscribes to the event UnityEditor.EditorApplication.playmodeStateChanged,
@@ -139,18 +139,22 @@ internal sealed class FirebaseEditorDispatcher {
   }
 
   private static void PlayModeStateChanged() {
-    if (!FirebaseHandler.DefaultInstance.IsPlayMode && EditorIsPlaying) {
+    var instance = FirebaseHandler.DefaultInstance;
+    if (instance == null) {
+      return;
+    }
+    if (!instance.IsPlayMode && EditorIsPlaying) {
       // If we have entered Play mode, start up the monobehaviour.
       StopEditorUpdate();
-      FirebaseHandler.DefaultInstance.StartMonoBehaviour();
-      FirebaseHandler.DefaultInstance.IsPlayMode = true;
-    } else if (FirebaseHandler.DefaultInstance.IsPlayMode &&
+      instance.StartMonoBehaviour();
+      instance.IsPlayMode = true;
+    } else if (instance.IsPlayMode &&
                !EditorIsPlayingOrWillChangePlaymode) {
       // If the editor is about to leave play mode, we need to tear down the
       // monobehaviour, and start following editor updates.
-      FirebaseHandler.DefaultInstance.StopMonoBehaviour();
+      instance.StopMonoBehaviour();
       StartEditorUpdate();
-      FirebaseHandler.DefaultInstance.IsPlayMode = false;
+      instance.IsPlayMode = false;
     }
   }
 

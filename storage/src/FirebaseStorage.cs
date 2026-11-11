@@ -15,8 +15,8 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
+using Firebase.Internal;
 using Firebase.Storage.Internal;
 
 namespace Firebase.Storage {
@@ -46,24 +46,22 @@ namespace Firebase.Storage {
   ///   configuration file downloaded from the web.
   /// </remarks>
   public sealed class FirebaseStorage {
-    // FirebaseStorage instances indexed by "{app.Name}/{url}". All access must hold the
-    // storageByInstanceKey lock so that GetInstance and Dispose are atomic with respect to
-    // each other.
-    private static readonly Dictionary<string, FirebaseStorage> storageByInstanceKey =
-        new Dictionary<string, FirebaseStorage>();
+#if UNITY_6000_6_OR_NEWER
+    [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+    private static readonly FirebaseInstanceCache<FirebaseStorage> _instances =
+        new FirebaseInstanceCache<FirebaseStorage>(s => s.Dispose());
 
     // The FirebaseApp instance associated with this FirebaseStorage instance.
     private readonly FirebaseApp firebaseApp;
-    // Key of this instance within storageByInstanceKey.
-    private readonly string instanceKey;
     // Cancelled when this instance is disposed so in-flight transfers are aborted.
     private readonly CancellationTokenSource disposeCts = new CancellationTokenSource();
     private readonly CancellationToken disposeToken;
-    // Tracks whether the associated FirebaseApp has been disposed. Guarded by
-    // storageByInstanceKey.
-    private bool _disposed;
 
     // Logger for this module; parent of every instance's Logger.
+#if UNITY_6000_6_OR_NEWER
+    [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     private static readonly ModuleLogger moduleLogger =
         new ModuleLogger { Tag = "Cloud Storage" };
 
@@ -72,37 +70,17 @@ namespace Firebase.Storage {
     /// </summary>
     /// <param name="app">App this FirebaseStorage instance is associated with.</param>
     /// <param name="bucket">Cloud Storage bucket name.</param>
-    /// <param name="key">Instance cache key.</param>
-    private FirebaseStorage(FirebaseApp app, string bucket, string key) {
+    private FirebaseStorage(FirebaseApp app, string bucket) {
       firebaseApp = app;
       Bucket = bucket ?? string.Empty;
-      instanceKey = key;
       disposeToken = disposeCts.Token;
       Logger = new ModuleLogger(parentLogger: moduleLogger) {
         Tag = $"{moduleLogger.Tag} {Url()}:",
       };
     }
 
-    private void OnAppDisposed(object sender, EventArgs eventArgs) {
-      Dispose();
-    }
-
-    // Remove the reference to this instance from storageByInstanceKey, unsubscribe from
-    // AppDisposed and cancel any in-flight transfers started from this instance.
+    // Cancel any in-flight transfers started from this instance when evicted by AppDisposed/reload.
     private void Dispose() {
-      lock (storageByInstanceKey) {
-        if (_disposed) {
-          return;
-        }
-        _disposed = true;
-        if (storageByInstanceKey.TryGetValue(instanceKey, out FirebaseStorage cached) &&
-            ReferenceEquals(cached, this)) {
-          storageByInstanceKey.Remove(instanceKey);
-        }
-      }
-      // Event (un)subscription and cancellation run outside the cache lock: FirebaseApp raises
-      // AppDisposed while holding its own lock, so taking ours inside theirs must stay one-way.
-      firebaseApp.AppDisposed -= OnAppDisposed;
       // The source is intentionally never disposed: transfers started after Dispose() still
       // register on DisposeToken, which would throw ObjectDisposedException on Mono.
       disposeCts.Cancel();
@@ -274,35 +252,14 @@ namespace Firebase.Storage {
         resolvedUrl = "gs://" + bucket;
       }
 
-      string key = $"{app.Name}/{resolvedUrl ?? ""}";
-      lock (storageByInstanceKey) {
-        if (storageByInstanceKey.TryGetValue(key, out FirebaseStorage existing) &&
-            ReferenceEquals(existing.firebaseApp, app) && !existing._disposed) {
-          return existing;
-        }
-      }
-
-      // Construct and subscribe to AppDisposed outside the cache lock (see Dispose), then
-      // publish under the lock. If another thread published first, discard ours.
-      var created = new FirebaseStorage(app, bucket, key);
-      app.AppDisposed += created.OnAppDisposed;
-      FirebaseStorage winner;
-      lock (storageByInstanceKey) {
-        if (storageByInstanceKey.TryGetValue(key, out FirebaseStorage existing) &&
-            ReferenceEquals(existing.firebaseApp, app) && !existing._disposed) {
-          winner = existing;
-        } else {
-          storageByInstanceKey[key] = created;
-          winner = created;
-        }
-      }
-      if (!ReferenceEquals(winner, created)) {
-        app.AppDisposed -= created.OnAppDisposed;
-        created.disposeCts.Dispose();
-      } else {
-        created.Logger.LogMessage(LogLevel.Debug, String.Format("Created {0}", key));
-      }
-      return winner;
+      return _instances.GetOrCreate(
+          app,
+          () => {
+            var created = new FirebaseStorage(app, bucket);
+            created.Logger.LogMessage(LogLevel.Debug, String.Format("Created {0}/{1}", app.Name, resolvedUrl ?? ""));
+            return created;
+          },
+          resolvedUrl ?? string.Empty);
     }
 
     /// <summary>

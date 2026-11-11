@@ -18,10 +18,11 @@ using System;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace Firebase.Internal
-{
+namespace Firebase.Internal {
   // Contains internal helper methods for interacting with other Firebase libraries.
   //
   // The static state here is reflection metadata (Types / MethodInfos / PropertyInfos) that is
@@ -32,458 +33,134 @@ namespace Firebase.Internal
 #if UNITY_6000_6_OR_NEWER
   [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
 #endif
-  internal static class FirebaseInterops
-  {
-    // The cached fields for FirebaseApp reflection.
-    private static PropertyInfo _dataCollectionProperty = null;
+  internal static class FirebaseInterops {
+    private const string AppCheckHeader = "X-Firebase-AppCheck", AuthHeader = "Authorization";
+    private static volatile Func<FirebaseApp, bool, Task<string>> _authProvider, _fidTokenProvider;
+    private static volatile Func<FirebaseApp, bool, bool, Task<string>> _appCheckProvider;
+    private static volatile Func<FirebaseApp, Task<string>> _fidIdProvider;
 
-    // The various App Check types needed to retrieve the token, cached via reflection on startup.
-    private static Type _appCheckType;
-    private static MethodInfo _appCheckGetInstanceMethod;
-    private static MethodInfo _appCheckGetTokenMethod;
-    private static MethodInfo _appCheckGetLimitedUseTokenMethod;
-    private static PropertyInfo _appCheckTokenResultProperty;
-    private static PropertyInfo _appCheckTokenTokenProperty;
-    // Used to determine if the App Check reflection initialized successfully, and should work.
-    private static bool _appCheckReflectionInitialized = false;
-    // The header used by the AppCheck token.
-    private const string appCheckHeader = "X-Firebase-AppCheck";
+    private static readonly PropertyInfo _dataCollectionProp, _acResultProp, _acTokenProp, _authCurrentUser;
+    private static readonly MethodInfo _acGetInstance, _acGetToken, _acGetLimitedToken, _authGetAuth, _userTokenAsync, _fidGetInstance, _fidGetIdAsync, _fidGetTokenAsync;
+    private static readonly Lazy<string> _sdkVersion = new(() => { try { return VersionInfo.SdkVersion ?? "unknown"; } catch (Exception) { return "unknown"; } });
+    private static readonly Lazy<string> _appVersion = new(() => { try { return Firebase.Platform.PlatformInformation.AppVersion ?? string.Empty; } catch (Exception) { return string.Empty; } });
 
-    // The various Auth types needed to retrieve the token, cached via reflection on startup.
-    private static Type _authType;
-    private static MethodInfo _authGetAuthMethod;
-    private static PropertyInfo _authCurrentUserProperty;
-    private static MethodInfo _userTokenAsyncMethod;
-    private static PropertyInfo _userTokenTaskResultProperty;
-    // Used to determine if the Auth reflection initialized successfully, and should work.
-    private static bool _authReflectionInitialized = false;
-    // The header used by the AppCheck token.
-    private const string authHeader = "Authorization";
-
-    static FirebaseInterops()
-    {
-      InitializeAppReflection();
-      InitializeAppCheckReflection();
-      InitializeAuthReflection();
+    static FirebaseInterops() {
+      Type[] appArg = { typeof(FirebaseApp) }, boolArg = { typeof(bool) };
+      _dataCollectionProp = typeof(FirebaseApp).GetProperty("IsDataCollectionDefaultEnabled", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+      // Cache the various types and methods needed for AppCheck token retrieval.
+      Type acType = Type.GetType("Firebase.AppCheck.FirebaseAppCheck, Firebase.AppCheck");
+      // Get the static method GetInstance(FirebaseApp app)
+      _acGetInstance = GetPubMethod(acType, "GetInstance", isStatic: true, appArg);
+      // Get the instance method GetAppCheckTokenAsync(bool forceRefresh)
+      _acGetToken = GetPubMethod(acType, "GetAppCheckTokenAsync", isStatic: false, boolArg);
+      // Get the instance method GetLimitedUseAppCheckTokenAsync()
+      _acGetLimitedToken = GetPubMethod(acType, "GetLimitedUseAppCheckTokenAsync", isStatic: false, Type.EmptyTypes);
+      // Get the Result property from the Task<AppCheckToken>
+      _acResultProp = _acGetToken?.ReturnType.GetProperty("Result");
+      _acTokenProp = _acResultProp?.PropertyType.GetProperty("Token");
+      // Cache the various types and methods needed for Auth token retrieval.
+      Type authType = Type.GetType("Firebase.Auth.FirebaseAuth, Firebase.Auth");
+      // Get the static method GetAuth(FirebaseApp app):
+      _authGetAuth = GetPubMethod(authType, "GetAuth", isStatic: true, appArg);
+      // Get the CurrentUser property from FirebaseAuth instance
+      _authCurrentUser = authType?.GetProperty("CurrentUser", BindingFlags.Instance | BindingFlags.Public);
+      // Get the TokenAsync(bool) method from FirebaseUser
+      _userTokenAsync = GetPubMethod(_authCurrentUser?.PropertyType, "TokenAsync", isStatic: false, boolArg);
+      Type fidType = Type.GetType("Firebase.Installations.FirebaseInstallations, Firebase.Installations");
+      _fidGetInstance = GetPubMethod(fidType, "GetInstance", isStatic: true, appArg);
+      _fidGetIdAsync = GetPubMethod(fidType, "GetIdAsync", isStatic: false, Type.EmptyTypes);
+      _fidGetTokenAsync = GetPubMethod(fidType, "GetTokenAsync", isStatic: false, boolArg);
     }
 
-    private static void LogError(string message)
-    {
-#if FIREBASEAI_DEBUG_LOGGING
-      UnityEngine.Debug.LogError(message);
-#endif
-    }
+    private static MethodInfo GetPubMethod(Type t, string name, bool isStatic, Type[] args) =>
+        t?.GetMethod(name, BindingFlags.Public | (isStatic ? BindingFlags.Static : BindingFlags.Instance), null, args, null);
 
-    // Cache the methods needed for FirebaseApp reflection.
-    private static void InitializeAppReflection()
-    {
-      try
-      {
-        _dataCollectionProperty = typeof(FirebaseApp).GetProperty(
-            "IsDataCollectionDefaultEnabled",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        if (_dataCollectionProperty == null)
-        {
-          LogError("Could not find FirebaseApp.IsDataCollectionDefaultEnabled property via reflection.");
-          return;
-        }
-        if (_dataCollectionProperty.PropertyType != typeof(bool))
-        {
-          LogError("FirebaseApp.IsDataCollectionDefaultEnabled is not a bool, " +
-                   $"but is {_dataCollectionProperty.PropertyType}");
-          return;
-        }
-      }
-      catch (Exception e)
-      {
-        LogError($"Failed to initialize FirebaseApp reflection: {e}");
-      }
+    internal static void RegisterAuthTokenProvider(Func<FirebaseApp, bool, Task<string>> provider) => _authProvider = provider;
+    internal static void RegisterAppCheckTokenProvider(Func<FirebaseApp, bool, bool, Task<string>> provider) => _appCheckProvider = provider;
+    internal static void RegisterInstallationsProvider(Func<FirebaseApp, Task<string>> idProvider, Func<FirebaseApp, bool, Task<string>> tokenProvider) {
+      _fidIdProvider = idProvider;
+      _fidTokenProvider = tokenProvider;
     }
 
     // Gets the property FirebaseApp.IsDataCollectionDefaultEnabled.
-    public static bool GetIsDataCollectionDefaultEnabled(FirebaseApp firebaseApp)
-    {
-      if (firebaseApp == null || _dataCollectionProperty == null)
-      {
-        return false;
-      }
-
-      try
-      {
-        return (bool)_dataCollectionProperty.GetValue(firebaseApp);
-      }
-      catch (Exception e)
-      {
-        LogError($"Error accessing 'IsDataCollectionDefaultEnabled': {e}");
-        return false;
-      }
+    public static bool GetIsDataCollectionDefaultEnabled(FirebaseApp firebaseApp) {
+      if (firebaseApp == null || _dataCollectionProp?.PropertyType != typeof(bool)) return false;
+      try { return (bool)_dataCollectionProp.GetValue(firebaseApp); } catch (Exception) { return false; }
     }
-
-    // SDK version to use if unable to find it.
-    private const string _unknownSdkVersion = "unknown";
-    private static readonly Lazy<string> _sdkVersionFetcher = new(() =>
-    {
-      try
-      {
-        // Get the type Firebase.VersionInfo from the assembly that defines FirebaseApp.
-        Type versionInfoType = typeof(FirebaseApp).Assembly.GetType("Firebase.VersionInfo");
-        if (versionInfoType == null)
-        {
-          LogError("Firebase.VersionInfo type not found via reflection");
-          return _unknownSdkVersion;
-        }
-
-        // Firebase.VersionInfo.SdkVersion
-        PropertyInfo sdkVersionProperty = versionInfoType.GetProperty(
-                "SdkVersion",
-                BindingFlags.Static | BindingFlags.NonPublic);
-        if (sdkVersionProperty == null)
-        {
-          LogError("Firebase.VersionInfo.SdkVersion property not found via reflection.");
-          return _unknownSdkVersion;
-        }
-
-        return sdkVersionProperty.GetValue(null) as string ?? _unknownSdkVersion;
-      }
-      catch (Exception e)
-      {
-        LogError($"Error accessing SdkVersion via reflection: {e}");
-        return _unknownSdkVersion;
-      }
-    });
 
     // Gets the internal property Firebase.VersionInfo.SdkVersion
-    internal static string GetVersionInfoSdkVersion()
-    {
-      return _sdkVersionFetcher.Value;
-    }
-
-    private static readonly Lazy<string> _appVersionFetcher = new(() =>
-    {
-      try
-      {
-        return Firebase.Platform.PlatformInformation.AppVersion ?? "";
-      }
-      catch (Exception e)
-      {
-        LogError($"Error accessing AppVersion: {e}");
-        return "";
-      }
-    });
+    internal static string GetVersionInfoSdkVersion() => _sdkVersion.Value;
 
     // Gets the application version from PlatformInformation.
-    internal static string GetApplicationVersion()
-    {
-      return _appVersionFetcher.Value;
-    }
+    internal static string GetApplicationVersion() => _appVersion.Value;
 
-    // Cache the various types and methods needed for AppCheck token retrieval.
-    private static void InitializeAppCheckReflection()
-    {
-      const string firebaseAppCheckTypeName = "Firebase.AppCheck.FirebaseAppCheck, Firebase.AppCheck";
-      const string getAppCheckTokenMethodName = "GetAppCheckTokenAsync";
-      const string getLimitedUseAppCheckTokenMethodName = "GetLimitedUseAppCheckTokenAsync";
-
-      try
-      {
-        // Set this to false, to allow easy failing out via return.
-        _appCheckReflectionInitialized = false;
-
-        _appCheckType = Type.GetType(firebaseAppCheckTypeName);
-        if (_appCheckType == null)
-        {
-          return;
-        }
-
-        // Get the static method GetInstance(FirebaseApp app)
-        _appCheckGetInstanceMethod = _appCheckType.GetMethod(
-            "GetInstance", BindingFlags.Static | BindingFlags.Public, null,
-            new Type[] { typeof(FirebaseApp) }, null);
-        if (_appCheckGetInstanceMethod == null)
-        {
-          LogError("Could not find FirebaseAppCheck.GetInstance method via reflection.");
-          return;
-        }
-
-        // Get the instance method GetAppCheckTokenAsync(bool forceRefresh)
-        _appCheckGetTokenMethod = _appCheckType.GetMethod(
-            getAppCheckTokenMethodName, BindingFlags.Instance | BindingFlags.Public, null,
-            new Type[] { typeof(bool) }, null);
-        if (_appCheckGetTokenMethod == null)
-        {
-          LogError($"Could not find {getAppCheckTokenMethodName} method via reflection.");
-          return;
-        }
-
-        // Get the instance method GetLimitedUseAppCheckTokenAsync()
-        _appCheckGetLimitedUseTokenMethod = _appCheckType.GetMethod(
-            getLimitedUseAppCheckTokenMethodName, BindingFlags.Instance | BindingFlags.Public, null,
-            Type.EmptyTypes, null);
-        if (_appCheckGetLimitedUseTokenMethod == null)
-        {
-          LogError($"Could not find {getLimitedUseAppCheckTokenMethodName} method via reflection.");
-          return;
-        }
-
-        // Should be Task<AppCheckToken>
-        Type appCheckTokenTaskType = _appCheckGetTokenMethod.ReturnType;
-
-        // Get the Result property from the Task<AppCheckToken>
-        _appCheckTokenResultProperty = appCheckTokenTaskType.GetProperty("Result");
-        if (_appCheckTokenResultProperty == null)
-        {
-          LogError("Could not find Result property on App Check token Task.");
-          return;
-        }
-
-        // Should be AppCheckToken
-        Type appCheckTokenType = _appCheckTokenResultProperty.PropertyType;
-
-        _appCheckTokenTokenProperty = appCheckTokenType.GetProperty("Token");
-        if (_appCheckTokenTokenProperty == null)
-        {
-          LogError($"Could not find Token property on AppCheckToken.");
-          return;
-        }
-
-        _appCheckReflectionInitialized = true;
+    internal static string PtrToStringUtf8(IntPtr ptr) {
+      if (ptr == IntPtr.Zero) return null;
+      int len = 0;
+      while (Marshal.ReadByte(ptr, len) != 0) {
+        len++;
       }
-      catch (Exception e)
-      {
-        LogError($"Exception during static initialization of FirebaseInterops: {e}");
-      }
+      if (len == 0) return string.Empty;
+      byte[] buffer = new byte[len];
+      Marshal.Copy(ptr, buffer, 0, len);
+      return Encoding.UTF8.GetString(buffer);
     }
 
     // Gets the AppCheck Token, assuming there is one. Otherwise, returns null.
-    internal static async Task<string> GetAppCheckTokenAsync(FirebaseApp firebaseApp, bool limitedUse = false)
-    {
+    internal static Task<string> GetAppCheckTokenAsync(FirebaseApp app, bool limitedUse = false, bool forceRefresh = false) {
+      if (app == null) return Task.FromResult<string>(null);
+      if (_appCheckProvider is var direct && direct != null) return SafeCallAsync(() => direct(app, limitedUse, forceRefresh));
       // If AppCheck reflection failed for any reason, nothing to do.
-      if (!_appCheckReflectionInitialized)
-      {
-        return null;
-      }
-
-      try
-      {
+      if (_acGetInstance == null || _acTokenProp == null) return Task.FromResult<string>(null);
+      return SafeCallAsync(async () => {
         // Get the FirebaseAppCheck instance for the current FirebaseApp
-        object appCheckInstance = _appCheckGetInstanceMethod.Invoke(null, new object[] { firebaseApp });
-        if (appCheckInstance == null)
-        {
-          LogError("Failed to get FirebaseAppCheck instance via reflection.");
-          return null;
-        }
-
-        object taskObject;
-        if (limitedUse)
-        {
-          taskObject = _appCheckGetLimitedUseTokenMethod.Invoke(appCheckInstance, null);
-        }
-        else
-        {
-          // Invoke GetAppCheckTokenAsync(false) - returns a Task<AppCheckToken>
-          taskObject = _appCheckGetTokenMethod.Invoke(appCheckInstance, new object[] { false });
-        }
-        
-        if (taskObject is not Task appCheckTokenTask)
-        {
-          LogError($"Invoking GetToken did not return a Task.");
-          return null;
-        }
-
+        object inst = _acGetInstance.Invoke(null, new object[] { app });
+        object taskObj = inst == null ? null : (limitedUse ? _acGetLimitedToken?.Invoke(inst, null) : _acGetToken?.Invoke(inst, new object[] { forceRefresh }));
+        if (taskObj is not Task task) return null;
         // Await the task to get the AppCheckToken result
-        await appCheckTokenTask;
-
-        // Check for exceptions in the task
-        if (appCheckTokenTask.IsFaulted)
-        {
-          LogError($"Error getting App Check token: {appCheckTokenTask.Exception}");
-          return null;
-        }
-
+        await task.ConfigureAwait(false);
         // Get the Result property from the Task<AppCheckToken>
-        object tokenResult = _appCheckTokenResultProperty.GetValue(appCheckTokenTask); // This is the AppCheckToken struct
-        if (tokenResult == null)
-        {
-          LogError("App Check token result was null.");
-          return null;
-        }
-
         // Get the Token property from the AppCheckToken struct
-        string finalToken = _appCheckTokenTokenProperty.GetValue(tokenResult) as string;
-        return finalToken;
-      }
-      catch (Exception e)
-      {
-        // Log any exceptions during the reflection/invocation process
-        LogError($"An error occurred while trying to fetch App Check token: {e}");
-      }
-      return null;
-    }
-
-    // Cache the various types and methods needed for Auth token retrieval.
-    private static void InitializeAuthReflection()
-    {
-      const string firebaseAuthTypeName = "Firebase.Auth.FirebaseAuth, Firebase.Auth";
-      const string getTokenMethodName = "TokenAsync";
-
-      try
-      {
-        // Set this to false, to allow easy failing out via return.
-        _authReflectionInitialized = false;
-
-        _authType = Type.GetType(firebaseAuthTypeName);
-        if (_authType == null)
-        {
-          // Auth assembly likely not present, fine to skip
-          return;
-        }
-
-        // Get the static method GetAuth(FirebaseApp app):
-        _authGetAuthMethod = _authType.GetMethod(
-            "GetAuth", BindingFlags.Static | BindingFlags.Public, null,
-            new Type[] { typeof(FirebaseApp) }, null);
-        if (_authGetAuthMethod == null)
-        {
-          LogError("Could not find FirebaseAuth.GetAuth method via reflection.");
-          return;
-        }
-
-        // Get the CurrentUser property from FirebaseAuth instance
-        _authCurrentUserProperty = _authType.GetProperty("CurrentUser", BindingFlags.Instance | BindingFlags.Public);
-        if (_authCurrentUserProperty == null)
-        {
-          LogError("Could not find FirebaseAuth.CurrentUser property via reflection.");
-          return;
-        }
-
-        // This should be FirebaseUser type
-        Type userType = _authCurrentUserProperty.PropertyType;
-
-        // Get the TokenAsync(bool) method from FirebaseUser
-        _userTokenAsyncMethod = userType.GetMethod(
-            getTokenMethodName, BindingFlags.Instance | BindingFlags.Public, null,
-            new Type[] { typeof(bool) }, null);
-        if (_userTokenAsyncMethod == null)
-        {
-          LogError($"Could not find FirebaseUser.{getTokenMethodName}(bool) method via reflection.");
-          return;
-        }
-
-        // The return type is Task<string>
-        Type tokenTaskType = _userTokenAsyncMethod.ReturnType;
-
-        // Get the Result property from Task<string>
-        _userTokenTaskResultProperty = tokenTaskType.GetProperty("Result");
-        if (_userTokenTaskResultProperty == null)
-        {
-          LogError("Could not find Result property on Auth token Task.");
-          return;
-        }
-
-        // Check if Result property is actually a string
-        if (_userTokenTaskResultProperty.PropertyType != typeof(string))
-        {
-          LogError("Auth token Task's Result property is not a string, " +
-              $"but is {_userTokenTaskResultProperty.PropertyType}");
-          return;
-        }
-
-        _authReflectionInitialized = true;
-      }
-      catch (Exception e)
-      {
-        LogError($"Exception during static initialization of Auth reflection in FirebaseInterops: {e}");
-        _authReflectionInitialized = false;
-      }
+        return _acResultProp.GetValue(task) is object res ? _acTokenProp.GetValue(res) as string : null;
+      });
     }
 
     // Gets the Auth Token, assuming there is one. Otherwise, returns null.
-    internal static async Task<string> GetAuthTokenAsync(FirebaseApp firebaseApp)
-    {
+    internal static Task<string> GetAuthTokenAsync(FirebaseApp app, bool forceRefresh = false) {
+      if (app == null) return Task.FromResult<string>(null);
+      if (_authProvider is var direct && direct != null) return SafeCallAsync(() => direct(app, forceRefresh));
       // If Auth reflection failed for any reason, nothing to do.
-      if (!_authReflectionInitialized)
-      {
-        return null;
-      }
-
-      try
-      {
-        // Get the FirebaseAuth instance for the given FirebaseApp.
-        object authInstance = _authGetAuthMethod.Invoke(null, new object[] { firebaseApp });
-        if (authInstance == null)
-        {
-          LogError("Failed to get FirebaseAuth instance via reflection.");
-          return null;
-        }
-
-        // Get the CurrentUser property
-        object currentUser = _authCurrentUserProperty.GetValue(authInstance);
-        if (currentUser == null)
-        {
-          // No user logged in, so no token
-          return null;
-        }
-
-        // Invoke TokenAsync(false) - returns a Task<string>
-        object taskObject = _userTokenAsyncMethod.Invoke(currentUser, new object[] { false });
-        if (taskObject is not Task tokenTask)
-        {
-          LogError("Invoking TokenAsync did not return a Task.");
-          return null;
-        }
-
-        // Await the task to get the token result
-        await tokenTask;
-
-        // Check for exceptions in the task
-        if (tokenTask.IsFaulted)
-        {
-          LogError($"Error getting Auth token: {tokenTask.Exception}");
-          return null;
-        }
-
-        // Get the Result property (which is the string token)
-        return _userTokenTaskResultProperty.GetValue(tokenTask) as string;
-      }
-      catch (Exception e)
-      {
-        // Log any exceptions during the reflection/invocation process
-        LogError($"An error occurred while trying to fetch Auth token: {e}");
-      }
-      return null;
+      return _authGetAuth == null || _userTokenAsync == null ? Task.FromResult<string>(null)
+          : SafeCallAsync(() => _authGetAuth.Invoke(null, new object[] { app }) is object a && _authCurrentUser.GetValue(a) is object u
+              ? _userTokenAsync.Invoke(u, new object[] { forceRefresh }) as Task<string> : null);
     }
 
-    // Adds the other Firebase tokens to the HttpRequest, as available.
-    internal static async Task AddFirebaseTokensAsync(HttpRequestMessage request, FirebaseApp firebaseApp, string authTokenPrefix = "Firebase", bool limitedUseAppCheckTokens = false)
-    {
-      string appCheckToken = await GetAppCheckTokenAsync(firebaseApp, limitedUseAppCheckTokens);
-      if (!string.IsNullOrEmpty(appCheckToken))
-      {
-        request.Headers.Add(appCheckHeader, appCheckToken);
-      }
+    internal static Task<string> GetInstallationIdAsync(FirebaseApp app) =>
+        InvokeFidAsync(app, _fidIdProvider is var d && d != null ? () => d(app) : null, _fidGetIdAsync, null);
+    internal static Task<string> GetInstallationTokenAsync(FirebaseApp app, bool forceRefresh = false) =>
+        InvokeFidAsync(app, _fidTokenProvider is var d && d != null ? () => d(app, forceRefresh) : null, _fidGetTokenAsync, new object[] { forceRefresh });
+    internal static async Task<(string Id, string AuthToken)> GetInstallationIdentityAsync(FirebaseApp app, bool forceRefresh = false) =>
+        (await GetInstallationIdAsync(app).ConfigureAwait(false), await GetInstallationTokenAsync(app, forceRefresh).ConfigureAwait(false));
 
-      string authToken = await GetAuthTokenAsync(firebaseApp);
-      if (!string.IsNullOrEmpty(authToken))
-      {
-        request.Headers.Add(authHeader, $"{authTokenPrefix} {authToken}");
-      }
+    // Adds the other Firebase tokens to the HttpRequest, as available.
+    internal static async Task AddFirebaseTokensAsync(HttpRequestMessage request, FirebaseApp app, string authTokenPrefix = "Firebase", bool limitedUseAppCheckTokens = false) {
+      if (await GetAppCheckTokenAsync(app, limitedUseAppCheckTokens).ConfigureAwait(false) is string ac && ac.Length > 0) request.Headers.TryAddWithoutValidation(AppCheckHeader, ac);
+      if (await GetAuthTokenAsync(app).ConfigureAwait(false) is string auth && auth.Length > 0) request.Headers.TryAddWithoutValidation(AuthHeader, $"{authTokenPrefix} {auth}");
     }
 
     // Adds the other Firebase tokens to the WebSocket, as available.
-    internal static async Task AddFirebaseTokensAsync(ClientWebSocket socket, FirebaseApp firebaseApp, string authTokenPrefix = "Firebase", bool limitedUseAppCheckTokens = false)
-    {
-      string appCheckToken = await GetAppCheckTokenAsync(firebaseApp, limitedUseAppCheckTokens);
-      if (!string.IsNullOrEmpty(appCheckToken))
-      {
-        socket.Options.SetRequestHeader(appCheckHeader, appCheckToken);
-      }
+    internal static async Task AddFirebaseTokensAsync(ClientWebSocket socket, FirebaseApp app, string authTokenPrefix = "Firebase", bool limitedUseAppCheckTokens = false) {
+      if (await GetAppCheckTokenAsync(app, limitedUseAppCheckTokens).ConfigureAwait(false) is string ac && ac.Length > 0) socket.Options.SetRequestHeader(AppCheckHeader, ac);
+      if (await GetAuthTokenAsync(app).ConfigureAwait(false) is string auth && auth.Length > 0) socket.Options.SetRequestHeader(AuthHeader, $"{authTokenPrefix} {auth}");
+    }
 
-      string authToken = await GetAuthTokenAsync(firebaseApp);
-      if (!string.IsNullOrEmpty(authToken))
-      {
-        socket.Options.SetRequestHeader(authHeader, $"{authTokenPrefix} {authToken}");
-      }
+    private static Task<string> InvokeFidAsync(FirebaseApp app, Func<Task<string>> direct, MethodInfo method, object[] args) =>
+        app == null ? Task.FromResult<string>(null) : direct != null ? SafeCallAsync(direct)
+        : (_fidGetInstance == null || method == null ? Task.FromResult<string>(null)
+            : SafeCallAsync(() => _fidGetInstance.Invoke(null, new object[] { app }) is object i ? method.Invoke(i, args) as Task<string> : null));
+
+    private static async Task<string> SafeCallAsync(Func<Task<string>> call) {
+      try { return call() is Task<string> t ? await t.ConfigureAwait(false) : null; } catch (Exception) { return null; }
     }
   }
-
 }

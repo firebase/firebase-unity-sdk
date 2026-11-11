@@ -17,7 +17,8 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "Firebase.App.dll",
-        "Firebase.Platform.dll"
+        "Firebase.Platform.dll",
+        "Google.MiniJson.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

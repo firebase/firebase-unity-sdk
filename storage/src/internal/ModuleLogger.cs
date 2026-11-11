@@ -26,7 +26,10 @@ namespace Firebase.Storage.Internal {
   /// loggers to control the log level of this instance.
   // TODO(smiles): This should be backed with a C++ implementation so that we can mirror the
   // behavior C++ and C# implementations.
-  internal class ModuleLogger {
+#if UNITY_6000_6_OR_NEWER
+  [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+  internal sealed class ModuleLogger {
     // Lock for roots, parent and children members of this class.
     private static object lockObject = new object();
 

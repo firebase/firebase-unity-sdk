@@ -19,13 +19,14 @@ using System.Buffers;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Internal;
 
 namespace Firebase.Storage.Internal {
   /// <summary>
   /// Local file and stream helpers shared by the upload and download engines.
   /// </summary>
   internal static class IoUtil {
-    private const int SkipBufferSize = 256 * 1024;
+    private const int SkipBufferSize = HttpHelpers.PooledBufferSize;
 
     /// <summary>
     /// Converts a <c>file://</c> URI into a local file system path; any other input is returned

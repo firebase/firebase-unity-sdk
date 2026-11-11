@@ -224,6 +224,9 @@ namespace Firebase.AI
     }
 
 
+#if UNITY_6000_6_OR_NEWER
+    [global::Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
     private static readonly Dictionary<string, object> EmptyRealtimeData = new();
 
     /// <summary>

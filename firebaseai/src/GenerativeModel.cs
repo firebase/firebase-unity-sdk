@@ -48,8 +48,6 @@ namespace Firebase.AI
     private readonly bool _useLimitedUseAppCheckTokens;
 
     private readonly HttpClient _httpClient;
-    // String prefix to look for when handling streaming a response.
-    private const string StreamPrefix = "data: ";
 
     /// <summary>
     /// Intended for internal use only.
@@ -79,10 +77,8 @@ namespace Firebase.AI
       _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
 
       // Create a HttpClient using the timeout requested, or the default one.
-      _httpClient = new HttpClient()
-      {
-        Timeout = requestOptions?.Timeout ?? RequestOptions.DefaultTimeout
-      };
+      _httpClient = Firebase.Internal.HttpHelpers.CreateHttpClient(
+          requestOptions?.Timeout ?? RequestOptions.DefaultTimeout);
     }
 
     #region Public API
@@ -271,11 +267,11 @@ namespace Firebase.AI
         IEnumerable<ModelContent> content,
         CancellationToken cancellationToken)
     {
-      HttpRequestMessage request = new(HttpMethod.Post,
+      using HttpRequestMessage request = new(HttpMethod.Post,
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":generateContent");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens).ConfigureAwait(false);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(content);
@@ -285,10 +281,10 @@ namespace Firebase.AI
       UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-      var response = await _httpClient.SendAsync(request, cancellationToken);
-      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
+      using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response).ConfigureAwait(false);
 
-      string result = await response.Content.ReadAsStringAsync();
+      string result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
 #if FIREBASE_LOG_REST_CALLS
       UnityEngine.Debug.Log("Response:\n" + result);
@@ -301,11 +297,11 @@ namespace Firebase.AI
         IEnumerable<ModelContent> content,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-      HttpRequestMessage request = new(HttpMethod.Post,
+      using HttpRequestMessage request = new(HttpMethod.Post,
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":streamGenerateContent?alt=sse");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens).ConfigureAwait(false);
 
       // Set the content
       string bodyJson = MakeGenerateContentRequest(content);
@@ -315,25 +311,15 @@ namespace Firebase.AI
       UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-      var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
+      using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response).ConfigureAwait(false);
 
-      // We are expecting a Stream as the response, so handle that.
-      using var stream = await response.Content.ReadAsStreamAsync();
-      using var reader = new StreamReader(stream);
-
-      string line;
-      while ((line = await reader.ReadLineAsync()) != null)
+      await foreach (string data in Firebase.Internal.SseLineReader.ReadDataFramesAsync(response, cancellationToken).ConfigureAwait(false))
       {
-        // Only pass along strings that begin with the expected prefix.
-        if (line.StartsWith(StreamPrefix))
-        {
 #if FIREBASE_LOG_REST_CALLS
-          UnityEngine.Debug.Log("Streaming Response:\n" + line);
+        UnityEngine.Debug.Log("Streaming Response:\n" + data);
 #endif
-
-          yield return GenerateContentResponse.FromJson(line[StreamPrefix.Length..], _backend.Provider);
-        }
+        yield return GenerateContentResponse.FromJson(data, _backend.Provider);
       }
     }
 
@@ -341,11 +327,11 @@ namespace Firebase.AI
         IEnumerable<ModelContent> content,
         CancellationToken cancellationToken)
     {
-      HttpRequestMessage request = new(HttpMethod.Post,
+      using HttpRequestMessage request = new(HttpMethod.Post,
           Firebase.AI.Internal.HttpHelpers.GetURL(_firebaseApp, _backend, _modelName) + ":countTokens");
 
       // Set the request headers
-      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens);
+      await Firebase.Internal.HttpHelpers.SetRequestHeaders(request, _firebaseApp, limitedUseAppCheckTokens: _useLimitedUseAppCheckTokens).ConfigureAwait(false);
 
       // Set the content
       string bodyJson = MakeCountTokensRequest(content);
@@ -355,10 +341,10 @@ namespace Firebase.AI
       UnityEngine.Debug.Log("CountTokensRequest:\n" + bodyJson);
 #endif
 
-      var response = await _httpClient.SendAsync(request, cancellationToken);
-      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
+      using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response).ConfigureAwait(false);
 
-      string result = await response.Content.ReadAsStringAsync();
+      string result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
 #if FIREBASE_LOG_REST_CALLS
       UnityEngine.Debug.Log("CountTokensResponse:\n" + result);
