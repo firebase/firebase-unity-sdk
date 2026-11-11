@@ -30,8 +30,8 @@ from requests.packages.urllib3.util.retry import Retry
 RETRIES = 3
 BACKOFF = 5
 RETRY_STATUS = (403, 500, 502, 504)
-TIMEOUT = 5
-TIMEOUT_LONG = 20
+TIMEOUT = 15
+TIMEOUT_LONG = 30
 
 OWNER = 'firebase'
 REPO = 'firebase-unity-sdk'
@@ -337,7 +337,7 @@ def list_jobs_for_workflow_run(token, run_id, attempt=None, limit=200):
     page = page + 1
     keep_going = False
     with requests_retry_session().get(url, headers=headers, params=params,
-                      stream=True, timeout=TIMEOUT) as response:
+                      stream=True, timeout=TIMEOUT_LONG) as response:
       logging.info("list_jobs_for_workflow_run: %s page %d, response: %s",
                    url, params['page'], response)
       if 'jobs' not in response.json():
