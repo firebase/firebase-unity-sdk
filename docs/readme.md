@@ -113,6 +113,33 @@ Release Notes
 -   Changes
     - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
       to retrieve decoded ID token claims and metadata.
+    - Storage: Rewrote the internal implementation in C#, removing the dependency on the C++
+      and native platform Storage libraries. `Firebase.Storage.dll` is now shipped as C# source
+      with an assembly definition of the same name (update `precompiledReferences` in your own
+      asmdefs accordingly), the `FirebaseCppStorage` native libraries, `firebase-storage` Android
+      dependency and `FirebaseStorage` iOS dependency are gone, and the `com.google.firebase.storage`
+      UPM package no longer depends on `com.google.firebase.auth` (add it to your project if you
+      relied on it being pulled in transitively).
+    - Storage: Populated `UploadState.UploadSessionUri` on all platforms so interrupted uploads
+      can be resumed via the `previousSessionUri` parameter of `PutBytesAsync`, `PutFileAsync`,
+      and `PutStreamAsync`.
+    - Storage: Added `StorageController`, which can be passed to the upload and download methods
+      on `StorageReference` to pause, resume or cancel a transfer in progress.
+    - Storage: **Behavior Change** `StorageReference.GetStreamAsync()` now returns a live,
+      forward-only network stream instead of a buffered `MemoryStream` (`CanSeek` is `false`).
+    - Storage: **Behavior Change** `StorageReference.Parent` returns `null` for the root
+      reference, as documented and as on other platforms, instead of another root reference.
+    - Storage: **Behavior Change** Awaiting a canceled transfer throws
+      `OperationCanceledException` (the task is still `IsCanceled`); code catching the derived
+      `TaskCanceledException` should catch `OperationCanceledException` instead.
+    - Storage: **Behavior Change** Setting a `MetadataChange` property or custom metadata value
+      to `null` now clears that field on the server instead of throwing.
+    - Storage: **Behavior Change** `FirebaseStorage.GetInstance` without a configured bucket no
+      longer fails when creating references; operations on such references fail with
+      `StorageException.ErrorBucketNotFound`. `StorageReference.ListAsync` validates that
+      `maxResults` is between 1 and 1000.
+    - Storage: `StorageException.HttpResultCode` now carries the real HTTP status returned by the
+      server (previously a synthetic code), and `InnerException` is populated for network failures.
 
 ### 14.1.0
 -   Changes

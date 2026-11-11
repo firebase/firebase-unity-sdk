@@ -40,9 +40,6 @@ namespace Firebase.Storage.Internal {
     // changes the log level of all children.
     private ModuleLogger parent;
 
-    // Children of this logger.
-    private List<ModuleLogger> children = new List<ModuleLogger>();
-
     // Tag for log messages.
     private string tag;
 
@@ -62,7 +59,7 @@ namespace Firebase.Storage.Internal {
           roots.Add(new WeakReference(this, false));
         } else {
           parent = parentLogger;
-          parent.children.Add(this);
+          GC.SuppressFinalize(this);
         }
       }
     }
@@ -81,7 +78,6 @@ namespace Firebase.Storage.Internal {
             }
           }
         } else {
-          parent.children.Remove(this);
           parent = null;
         }
       }
