@@ -179,54 +179,53 @@ namespace Firebase.Editor {
                                                          string sourceName) {
       var plist = ParsePlist(plistContents, sourceName);
 
-      var projectInfo = new Dictionary<string, object>();
+      // JsonObject is used (rather than Dictionary) so that the key order of the generated file
+      // is guaranteed to match generate_xml_from_google_services_json.py.
+      var projectInfo = new JsonObject();
       for (int i = 0; i < PLIST_TO_PROJECT_INFO_KEYS.GetLength(0); ++i) {
         object value;
         if (plist.TryGetValue(PLIST_TO_PROJECT_INFO_KEYS[i, 0], out value)) {
-          projectInfo[PLIST_TO_PROJECT_INFO_KEYS[i, 1]] = value;
+          projectInfo.Add(PLIST_TO_PROJECT_INFO_KEYS[i, 1], value);
         }
       }
 
-      var services = new Dictionary<string, object>();
+      var clientInfo = new JsonObject {
+        { "mobilesdk_app_id", GetRequiredPlistValue(plist, "GOOGLE_APP_ID", sourceName) },
+        { "android_client_info", new JsonObject {
+            { "package_name", GetRequiredPlistValue(plist, "BUNDLE_ID", sourceName) }
+          }
+        },
+      };
+      var apiKey = new List<object> {
+        new JsonObject {
+          { "current_key", GetRequiredPlistValue(plist, "API_KEY", sourceName) }
+        }
+      };
+
+      var services = new JsonObject();
       object analyticsEnabled;
       if (plist.TryGetValue("IS_ANALYTICS_ENABLED", out analyticsEnabled)) {
-        services["analytics_service"] = new Dictionary<string, object> {
-          { "status", analyticsEnabled }
-        };
+        services.Add("analytics_service", new JsonObject { { "status", analyticsEnabled } });
       }
       object appInviteEnabled;
       if (plist.TryGetValue("IS_APPINVITE_ENABLED", out appInviteEnabled)) {
-        services["appinvite_service"] = new Dictionary<string, object> {
-          { "status", appInviteEnabled }
-        };
+        services.Add("appinvite_service", new JsonObject { { "status", appInviteEnabled } });
       }
 
-      var client = new Dictionary<string, object> {
-        { "client_info", new Dictionary<string, object> {
-            { "mobilesdk_app_id", GetRequiredPlistValue(plist, "GOOGLE_APP_ID", sourceName) },
-            { "android_client_info", new Dictionary<string, object> {
-                { "package_name", GetRequiredPlistValue(plist, "BUNDLE_ID", sourceName) }
-              }
-            }
-          }
-        },
-        { "api_key", new List<object> {
-            new Dictionary<string, object> {
-              { "current_key", GetRequiredPlistValue(plist, "API_KEY", sourceName) }
-            }
-          }
-        },
+      var client = new JsonObject {
+        { "client_info", clientInfo },
+        { "api_key", apiKey },
         { "services", services },
       };
       // OAuth client is optional, but include it if present.
       object clientId;
       if (plist.TryGetValue("CLIENT_ID", out clientId)) {
-        client["oauth_client"] = new List<object> {
-          new Dictionary<string, object> { { "client_id", clientId } }
-        };
+        client.Add("oauth_client", new List<object> {
+          new JsonObject { { "client_id", clientId } }
+        });
       }
 
-      var root = new Dictionary<string, object> {
+      var root = new JsonObject {
         { "project_info", projectInfo },
         { "client", new List<object> { client } },
         { "configuration_version", "1" },
@@ -526,26 +525,35 @@ namespace Firebase.Editor {
     }
 
     /// <summary>
-    /// Serialize a JSON value (dictionaries, lists, strings, numbers, booleans, null) to an
-    /// indented string.
+    /// Serialize a JSON value (JsonObject, lists, strings, numbers, booleans, null) to an
+    /// indented string, formatted like Python's json.dumps(value, indent=2).
     /// </summary>
     internal static string SerializeJson(object value) {
       var builder = new StringBuilder();
       WriteJsonValue(builder, value, 0);
-      builder.Append('\n');
       return builder.ToString();
     }
 
+    /// <summary>
+    /// JSON object that preserves the order keys are added in, so serialized output is
+    /// deterministic. Supports collection initializer syntax: new JsonObject { { "key", value } }.
+    /// </summary>
+    internal class JsonObject : List<KeyValuePair<string, object>> {
+      public void Add(string key, object value) {
+        Add(new KeyValuePair<string, object>(key, value));
+      }
+    }
+
     private static void WriteJsonValue(StringBuilder builder, object value, int depth) {
-      var dictionary = value as IDictionary<string, object>;
-      if (dictionary != null) {
-        if (dictionary.Count == 0) {
+      var jsonObject = value as JsonObject;
+      if (jsonObject != null) {
+        if (jsonObject.Count == 0) {
           builder.Append("{}");
           return;
         }
         builder.Append("{\n");
         bool first = true;
-        foreach (var kv in dictionary) {
+        foreach (var kv in jsonObject) {
           if (!first) builder.Append(",\n");
           first = false;
           builder.Append(' ', (depth + 1) * 2);
