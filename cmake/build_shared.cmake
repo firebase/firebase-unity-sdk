@@ -60,9 +60,9 @@ function(build_firebase_shared LIBRARY_NAME ARTIFACT_NAME OUTPUT_NAME)
   )
 
   # Non-universal macOS builds: embed the Firebase Apple SDK in the Analytics
-  # bundle (see build_universal.cmake).
+  # or Installations bundle (see build_universal.cmake).
   if(APPLE AND NOT FIREBASE_IOS_BUILD AND NOT FIREBASE_UNI_LIBRARY
-     AND LIBRARY_NAME STREQUAL "analytics"
+     AND (LIBRARY_NAME STREQUAL "analytics" OR LIBRARY_NAME STREQUAL "installations")
      AND FIREBASE_UNITY_MACOS_EMBED_APPLE_ANALYTICS
      AND COMMAND firebase_cpp_link_apple_analytics_sdk)
     firebase_cpp_link_apple_analytics_sdk(${shared_target})

@@ -111,11 +111,12 @@ Release Notes
 -------------
 ### Upcoming
 -   Changes
-    - Analytics (macOS): The macOS Editor and standalone player now send
-      Analytics through the embedded Firebase Apple SDK instead of desktop
-      stubs. This requires an Apple app (`GoogleService-Info.plist`) in your
-      project. In the Editor, events report the Unity Editor's bundle ID and
-      the Editor's local Analytics storage is shared across projects. Use
+    - Analytics, Installations (macOS): The macOS Editor and standalone player
+      now send Analytics and Installations requests through the embedded
+      Firebase Apple SDK (`FIRAnalytics` and `FIRInstallations`) instead of
+      desktop stubs. This requires an Apple app (`GoogleService-Info.plist`) in
+      your project. In the Editor, events report the Unity Editor's bundle ID
+      and the Editor's local Analytics storage is shared across projects. Use
       `Window > Firebase > Analytics` to turn on debug mode (DebugView) or turn
       Editor Analytics off.
 
