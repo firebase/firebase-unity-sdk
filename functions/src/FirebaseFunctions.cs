@@ -54,7 +54,7 @@ namespace Firebase.Functions {
 
     private static void LogError(string message) {
 #if FUNCTIONS_DEBUG_LOGGING
-      UnityEngine.Debug.LogError(message);
+      Firebase.LogUtil.LogMessage(Firebase.LogLevel.Error, message);
 #endif
     }
 

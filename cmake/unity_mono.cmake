@@ -17,6 +17,13 @@
 find_package(Unity REQUIRED)
 
 set(MONO_PROJ_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/project.template)
+set(DOTNET_PROJ_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/dotnet_project.template)
+
+if(NOT FIREBASE_INCLUDE_UNITY AND DOTNET_EXE AND DOTNET_VERSION)
+  set(FIREBASE_USE_DOTNET_SDK ON)
+else()
+  set(FIREBASE_USE_DOTNET_SDK OFF)
+endif()
 
 define_property(TARGET
   PROPERTY
@@ -112,27 +119,53 @@ macro(mono_add_external_library name projpath)
     list(APPEND file_deps "${ref_dllpath}/${ref_dllname}")
   endforeach()
 
-  add_custom_command(
-    COMMAND
-      ${CSHARP_BUILD_EXE}
-      /p:AllowUnsafeBlocks=true
-      /p:Configuration=Release
-      /p:OutDir="${outdir}/"
-      /p:OutputPath="bin\\Release"
-      /p:Platform=${platform}
-      /p:DebugSymbols=true
-      /p:DebugType=Full
-      /p:TargetName=${DLL_NAME}
-      /p:AssemblyName=${DLL_NAME}
-      ${absprojpath}
-    DEPENDS
-      ${projpath}
-      ${file_deps}
-    OUTPUT
-      ${outdir}/${DLL_NAME}.dll
-    COMMENT
-      "Building csproj for ${DLL_NAME}.dll with ${CSHARP_BUILD_EXE}"
-  )
+  if(FIREBASE_USE_DOTNET_SDK)
+    add_custom_command(
+      COMMAND
+        ${DOTNET_EXE} build
+        ${absprojpath}
+        -c Release
+        -o "${outdir}"
+        /p:BaseIntermediateOutputPath="${objdir}/"
+        /p:AllowUnsafeBlocks=true
+        /p:DebugSymbols=true
+        /p:DebugType=portable
+        /p:TargetName=${DLL_NAME}
+        /p:AssemblyName=${DLL_NAME}
+        /p:DisableImplicitNuGetFallbackFolder=true
+        --nologo
+      DEPENDS
+        ${projpath}
+        ${file_deps}
+        ${UNITY_MONO_SOURCES}
+      OUTPUT
+        ${outdir}/${DLL_NAME}.dll
+      COMMENT
+        "Building SDK csproj for ${DLL_NAME}.dll with ${DOTNET_EXE}"
+    )
+  else()
+    add_custom_command(
+      COMMAND
+        ${CSHARP_BUILD_EXE}
+        /p:AllowUnsafeBlocks=true
+        /p:Configuration=Release
+        /p:OutDir="${outdir}/"
+        /p:OutputPath="bin\\Release"
+        /p:Platform=${platform}
+        /p:DebugSymbols=true
+        /p:DebugType=Full
+        /p:TargetName=${DLL_NAME}
+        /p:AssemblyName=${DLL_NAME}
+        ${absprojpath}
+      DEPENDS
+        ${projpath}
+        ${file_deps}
+      OUTPUT
+        ${outdir}/${DLL_NAME}.dll
+      COMMENT
+        "Building csproj for ${DLL_NAME}.dll with ${CSHARP_BUILD_EXE}"
+    )
+  endif()
 
   set_target_properties(${name} PROPERTIES
     LIBRARY_OUTPUT_NAME
@@ -291,65 +324,103 @@ macro(mono_add_internal name output_type)
   set(VAR_DEFINES "TRACE")
   set(VAR_OUTPUT_TYPE ${output_type})
 
-  string(APPEND VAR_REFERENCE "    <Reference Include=\"netstandard\" />\n")
-  string(APPEND VAR_REFERENCE "    <Reference Include=\"System\" />\n")
-  string(APPEND VAR_REFERENCE "    <Reference Include=\"System.Core\" />\n")
+  if(FIREBASE_USE_DOTNET_SDK)
+    if("${output_type}" STREQUAL "Exe")
+      set(VAR_TARGET_FRAMEWORK "net${DOTNET_MAJOR_VERSION}.0")
+    else()
+      set(VAR_TARGET_FRAMEWORK "netstandard2.1")
+    endif()
 
-  if(NOT "${UNITY_MONO_SYSTEM_REFERENCES}" STREQUAL "")
-    foreach(ref ${UNITY_MONO_SYSTEM_REFERENCES})
-      string(APPEND VAR_REFERENCE "    <Reference Include=\"${ref}\" />\n")
+    foreach(ref ${UNITY_MONO_REFERENCES})
+      get_target_property(dllname ${ref} LIBRARY_OUTPUT_NAME)
+      get_target_property(dllpath ${ref} LIBRARY_OUTPUT_DIRECTORY)
+
+      set(includename ${dllname})
+      string(REPLACE ".dll" "" includename ${dllname})
+      string(REPLACE "_" ";" includename ${includename})
+      list(GET includename 0 includename)
+
+      string(APPEND VAR_REFERENCE "    <!-- ${ref} -->\n")
+      string(APPEND VAR_REFERENCE "    <Reference Include=\"${includename}\">\n")
+      string(APPEND VAR_REFERENCE "      <HintPath>${dllpath}/${dllname}</HintPath>\n")
+      string(APPEND VAR_REFERENCE "      <Private>True</Private>\n")
+      string(APPEND VAR_REFERENCE "    </Reference>\n")
+    endforeach()
+
+    foreach(file ${UNITY_MONO_SOURCES})
+      if(IS_ABSOLUTE "${file}")
+        set(VAR_FILE "${file}")
+      else()
+        set(VAR_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
+      endif()
+
+      if(${file} MATCHES "\\.cs$")
+        string(APPEND VAR_COMPILE "    <Compile Include=\"${VAR_FILE}\" />\n")
+      else()
+        string(APPEND VAR_COMPILE "    <EmbeddedResource Include=\"${VAR_FILE}\" />\n")
+      endif()
+    endforeach()
+  else()
+    string(APPEND VAR_REFERENCE "    <Reference Include=\"netstandard\" />\n")
+    string(APPEND VAR_REFERENCE "    <Reference Include=\"System\" />\n")
+    string(APPEND VAR_REFERENCE "    <Reference Include=\"System.Core\" />\n")
+
+    if(NOT "${UNITY_MONO_SYSTEM_REFERENCES}" STREQUAL "")
+      foreach(ref ${UNITY_MONO_SYSTEM_REFERENCES})
+        string(APPEND VAR_REFERENCE "    <Reference Include=\"${ref}\" />\n")
+      endforeach()
+    endif()
+
+    foreach(ref ${UNITY_MONO_REFERENCES})
+      get_target_property(dllname ${ref} LIBRARY_OUTPUT_NAME)
+      get_target_property(dllpath ${ref} LIBRARY_OUTPUT_DIRECTORY)
+
+      set(includename ${dllname})
+      string(REPLACE ".dll" "" includename ${dllname})
+      string(REPLACE "_" ";" includename ${includename})
+      list(GET includename 0 includename)
+
+      string(APPEND VAR_REFERENCE "    <!-- ${ref} -->\n")
+      string(APPEND VAR_REFERENCE "    <Reference Include=\"${includename}\" >\n")
+      string(APPEND VAR_REFERENCE "      <SpecificVersion>False</SpecificVersion>\n")
+      string(APPEND VAR_REFERENCE "      <HintPath>${dllpath}/${dllname}</HintPath>\n")
+      string(APPEND VAR_REFERENCE "    </Reference>\n")
+    endforeach()
+
+    string(REPLACE "/" "\\" VAR_CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+    foreach(file ${UNITY_MONO_SOURCES})
+      string(REPLACE "/" "\\" VAR_FILE ${file})
+
+      if(NOT IS_ABSOLUTE ${file})
+        set(VAR_FILE "${VAR_CURRENT_DIR}\\${VAR_FILE}")
+      endif()
+
+      if(${file} MATCHES "\.resx$")
+        string(REPLACE ".resx" ".Designer.cs" temp ${VAR_FILE})
+        get_filename_component(tempname ${temp} NAME)
+
+        string(APPEND VAR_COMPILE "    <EmbeddedResource Include=\"${VAR_FILE}\">\n")
+        string(APPEND VAR_COMPILE "      <Generator>ResXFileCodeGenerator</Generator>\n")
+        string(APPEND VAR_COMPILE "      <LastGenOutput>${tempname}</LastGenOutput>\n")
+        string(APPEND VAR_COMPILE "    </EmbeddedResource>\n")
+      elseif(${file} MATCHES "\.Designer\.cs$")
+        string(REPLACE ".Designer.cs" ".resx" temp ${VAR_FILE})
+        get_filename_component(tempname ${temp} NAME)
+
+        string(APPEND VAR_COMPILE "    <Compile Include=\"${VAR_FILE}\">\n")
+        string(APPEND VAR_COMPILE "      <AutoGen>True</AutoGen>\n")
+        string(APPEND VAR_COMPILE "      <DesignTime>True</DesignTime>\n")
+        string(APPEND VAR_COMPILE "      <DependentUpon>${tempname}</DependentUpon>\n")
+        string(APPEND VAR_COMPILE "    </Compile>\n")
+      elseif(${file} MATCHES "\.cs$")
+        string(APPEND VAR_COMPILE "    <Compile Include=\"${VAR_FILE}\" />\n")
+      else()
+        # Assume all the non-cs file is an embedded resource.
+        string(APPEND VAR_COMPILE "    <EmbeddedResource Include=\"${VAR_FILE}\" />\n")
+      endif()
     endforeach()
   endif()
-
-  foreach(ref ${UNITY_MONO_REFERENCES})
-    get_target_property(dllname ${ref} LIBRARY_OUTPUT_NAME)
-    get_target_property(dllpath ${ref} LIBRARY_OUTPUT_DIRECTORY)
-
-    set(includename ${dllname})
-    string(REPLACE ".dll" "" includename ${dllname})
-    string(REPLACE "_" ";" includename ${includename})
-	list(GET includename 0 includename)
-
-    string(APPEND VAR_REFERENCE "    <!-- ${ref} -->\n")
-    string(APPEND VAR_REFERENCE "    <Reference Include=\"${includename}\" >\n")
-    string(APPEND VAR_REFERENCE "      <SpecificVersion>False</SpecificVersion>\n")
-    string(APPEND VAR_REFERENCE "      <HintPath>${dllpath}/${dllname}</HintPath>\n")
-    string(APPEND VAR_REFERENCE "    </Reference>\n")
-  endforeach()
-
-  string(REPLACE "/" "\\" VAR_CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-  foreach(file ${UNITY_MONO_SOURCES})
-    string(REPLACE "/" "\\" VAR_FILE ${file})
-
-    if(NOT IS_ABSOLUTE ${file})
-      set(VAR_FILE "${VAR_CURRENT_DIR}\\${VAR_FILE}")
-    endif()
-
-    if(${file} MATCHES "\.resx$")
-      string(REPLACE ".resx" ".Designer.cs" temp ${VAR_FILE})
-      get_filename_component(tempname ${temp} NAME)
-
-      string(APPEND VAR_COMPILE "    <EmbeddedResource Include=\"${VAR_FILE}\">\n")
-      string(APPEND VAR_COMPILE "      <Generator>ResXFileCodeGenerator</Generator>\n")
-      string(APPEND VAR_COMPILE "      <LastGenOutput>${tempname}</LastGenOutput>\n")
-      string(APPEND VAR_COMPILE "    </EmbeddedResource>\n")
-    elseif(${file} MATCHES "\.Designer\.cs$")
-      string(REPLACE ".Designer.cs" ".resx" temp ${VAR_FILE})
-      get_filename_component(tempname ${temp} NAME)
-
-      string(APPEND VAR_COMPILE "    <Compile Include=\"${VAR_FILE}\">\n")
-      string(APPEND VAR_COMPILE "      <AutoGen>True</AutoGen>\n")
-      string(APPEND VAR_COMPILE "      <DesignTime>True</DesignTime>\n")
-      string(APPEND VAR_COMPILE "      <DependentUpon>${tempname}</DependentUpon>\n")
-      string(APPEND VAR_COMPILE "    </Compile>\n")
-    elseif(${file} MATCHES "\.cs$")
-      string(APPEND VAR_COMPILE "    <Compile Include=\"${VAR_FILE}\" />\n")
-    else()
-      # Assume all the non-cs file is an embedded resource.
-      string(APPEND VAR_COMPILE "    <EmbeddedResource Include=\"${VAR_FILE}\" />\n")
-    endif()
-  endforeach()
 
   if(FIREBASE_INCLUDE_UNITY)
     string(APPEND VAR_DEFINES ";UNITY")
@@ -361,10 +432,17 @@ macro(mono_add_internal name output_type)
     endforeach()
   endif()
 
-  configure_file(${MONO_PROJ_TEMPLATE} ${MONO_PROJ_FILE}
-    @ONLY
-    NEWLINE_STYLE CRLF
-  )
+  if(FIREBASE_USE_DOTNET_SDK)
+    configure_file(${DOTNET_PROJ_TEMPLATE} ${MONO_PROJ_FILE}
+      @ONLY
+    )
+    unset(VAR_TARGET_FRAMEWORK)
+  else()
+    configure_file(${MONO_PROJ_TEMPLATE} ${MONO_PROJ_FILE}
+      @ONLY
+      NEWLINE_STYLE CRLF
+    )
+  endif()
 
   unset(VAR_PROJECT_GUID)
   unset(VAR_ROOT_NAMESPACE)

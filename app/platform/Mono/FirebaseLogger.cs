@@ -20,12 +20,12 @@ internal class FirebaseLogger {
   // Determine whether it's possible to redirect C++ logs via the C# logger.
   internal static bool CanRedirectNativeLogs { get { return true; } }
 
-  // Log a message via the System Console.
+  // Log a message, with its level, to standard error.
   internal static void LogMessage(PlatformLogLevel logLevel,
                                   string message) {
     PlatformLogLevel currentLevel = FirebaseHandler.AppUtils.GetLogLevel();
     if (logLevel < currentLevel) return;
-    System.Diagnostics.Debug.WriteLine(message);
+    System.Console.Error.WriteLine("[Firebase][{0}] {1}", logLevel, message);
   }
 }
 

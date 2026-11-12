@@ -200,7 +200,7 @@ namespace Firebase.AI
           }
           catch (Exception e)
           {
-            UnityEngine.Debug.LogError($"Failed to convert object key {kvp.Key}, {e.Message}");
+            Firebase.LogUtil.LogMessage(Firebase.LogLevel.Error, $"Failed to convert object key {kvp.Key}, {e.Message}");
           }
         }
 

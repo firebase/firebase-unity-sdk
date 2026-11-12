@@ -22,7 +22,9 @@ namespace Firebase.Crashlytics
   using System.Collections.Generic;
   using System.Linq;
 
+#if UNITY
   using UnityEngine;
+#endif
 
   // Stub implementation that is not used on Android.
   internal class IOSImpl : Impl {}

@@ -87,6 +87,19 @@ python scripts/build_scripts/build_zips.py --platform=<target platform> --target
 
 > **Note:** Supported library names: analytics, app_check, auth, crashlytics, database, firebaseai, firestore, functions, installations, messaging, remote_config, storage
 
+### Building without Unity
+
+For development and testing on a machine without a Unity installation, pass
+`--unityless`. This needs the [.NET SDK](https://dotnet.microsoft.com/download)
+(8.0 or newer) instead of Unity:
+```
+python scripts/build_scripts/build_zips.py --platform=<target platform> --unityless
+```
+The output goes to `<target platform>_unityless_build` and must not be packaged
+into a `.unitypackage`: it is built against a non-Unity platform layer.
+`scripts/build_scripts/verify_unityless.sh` builds the Linux variant and runs the
+existing product testapp suites in `samples/mono_app` (`MonoTestApp`).
+
 ## Unity Assembly Definitions (.asmdef)
 
 For the assemblies written in C# where the code is directly included in the `unitypackage` or `tgz` (in the case of UPM), we use Unity Assembly Definitions (`.asmdef`). This is required for including pure C# code within Unity Package Manager (`.tgz`) packages.

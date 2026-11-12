@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <TargetFramework>@VAR_TARGET_FRAMEWORK@</TargetFramework>
+    <OutputType>@VAR_OUTPUT_TYPE@</OutputType>
+    <RootNamespace>@VAR_ROOT_NAMESPACE@</RootNamespace>
+    <AssemblyName>@VAR_ASSEMBLY_NAME@</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <DefineConstants>@VAR_DEFINES@</DefineConstants>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <NoWarn>$(NoWarn);CS0618;CS0612;CS0414;CS0169;CS0067;CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+@VAR_REFERENCE@
+  </ItemGroup>
+  <ItemGroup>
+@VAR_COMPILE@
+  </ItemGroup>
+</Project>

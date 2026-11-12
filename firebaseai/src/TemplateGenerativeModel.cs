@@ -158,7 +158,7 @@ namespace Firebase.AI
       request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
 #if FIREBASE_LOG_REST_CALLS
-      UnityEngine.Debug.Log("Request:\n" + bodyJson);
+      Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, "Request:\n" + bodyJson);
 #endif
 
       var response = await _httpClient.SendAsync(request, cancellationToken);
@@ -167,7 +167,7 @@ namespace Firebase.AI
       string result = await response.Content.ReadAsStringAsync();
 
 #if FIREBASE_LOG_REST_CALLS
-      UnityEngine.Debug.Log("Response:\n" + result);
+      Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, "Response:\n" + result);
 #endif
 
       return GenerateContentResponse.FromJson(result, _backend.Provider);
@@ -191,7 +191,7 @@ namespace Firebase.AI
       request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
 
 #if FIREBASE_LOG_REST_CALLS
-      UnityEngine.Debug.Log("Request:\n" + bodyJson);
+      Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, "Request:\n" + bodyJson);
 #endif
 
       var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -208,7 +208,7 @@ namespace Firebase.AI
         if (line.StartsWith(Firebase.AI.Internal.HttpHelpers.StreamPrefix))
         {
 #if FIREBASE_LOG_REST_CALLS
-          UnityEngine.Debug.Log("Streaming Response:\n" + line);
+          Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, "Streaming Response:\n" + line);
 #endif
 
           yield return GenerateContentResponse.FromJson(line[Firebase.AI.Internal.HttpHelpers.StreamPrefix.Length..], _backend.Provider);

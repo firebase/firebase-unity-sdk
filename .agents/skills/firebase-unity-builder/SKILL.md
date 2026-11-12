@@ -163,7 +163,46 @@ the product you care about to keep it fast. C++ Doxygen comments are converted
 to C# XML docs by `swig_commenter.py` (see `cmake/firebase_swig.cmake`), so
 `<SWIG>`/`@if swig_examples` blocks in C++ headers matter for Unity docs.
 
-## 5. CI equivalents
+## 5. Building without Unity (`--unityless`)
+
+For development and testing on a machine with no Unity installation:
+
+```bash
+python scripts/build_scripts/build_zips.py --platform=linux --unityless
+```
+
+- Needs the **.NET SDK** (`dotnet`, 8.0 or newer) instead of Unity; C# is
+  compiled with `dotnet build` (`cmake/dotnet_project.template`). Mono is not
+  required.
+- Sets `FIREBASE_INCLUDE_UNITY=OFF`, `FIREBASE_INCLUDE_MONO=ON` and
+  `FIREBASE_INCLUDE_EDITOR_TOOL=OFF`. `Firebase.Platform.dll` is built from
+  `app/platform/Mono/` (its own update thread, logs to stderr) instead of
+  `app/platform/Unity/`, and Functions, Firebase AI and `Firebase.App.Internal`
+  are compiled to DLLs instead of only being packed as source.
+- Output goes to `<platform>_unityless_build/`, separate from
+  `<platform>_unity/`, so the two modes never share a CMake cache.
+
+> [!CAUTION]
+> A `--unityless` zip must never be packaged into a `.unitypackage` / `.tgz`.
+> Its `Firebase.Platform.dll` runs callbacks on its own thread rather than
+> Unity's main thread, and the Editor tooling is missing. Release builds stay
+> on the default (Unity) mode.
+
+`scripts/build_scripts/verify_unityless.sh [--build] [--cpp-dir=<path>]` builds
+(or reuses) the Linux `--unityless` zip, checks that no built assembly
+references `UnityEngine`/`UnityEditor`, and runs the unified `MonoTestApp`
+player (`samples/mono_app`) compiling all product `testapp` suites against the
+built DLLs and native library. When `bwrap` is available it runs with `~/Unity`
+hidden.
+
+On Android (`--platform=android --unityless`) the native library reads the
+activity from the `UnityPlayer` class; a host that is not a Unity player must
+register its activity before creating a `FirebaseApp`: natively through the
+exported `FirebaseSetAndroidActivity(JNIEnv*, jobject)` (see
+`app/src/unity_main.cpp`), or from C# through the internal
+`AppUtil.SetAndroidActivityInternal(IntPtr jniEnv, IntPtr activity)`.
+
+## 6. CI equivalents
 
 `.github/workflows/build_starter.yml` fans out to `build_<platform>.yml`, each
 of which checks out `firebase-cpp-sdk` next to the Unity repo and runs e.g.:

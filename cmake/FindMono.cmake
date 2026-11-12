@@ -38,6 +38,57 @@ if(EXISTS "${MONO_DIR}")
   )
 endif()
 
+# Search for .NET SDK (dotnet) first for Unity-less C# builds.
+# Drop a stale or non-working cached DOTNET_EXE before find_program runs so
+# that a moved or sandboxed SDK path (e.g. /tmp/dotnet-sdk/dotnet) is
+# re-searched automatically.
+if(DOTNET_EXE)
+  if(NOT EXISTS "${DOTNET_EXE}")
+    unset(DOTNET_EXE)
+    unset(DOTNET_EXE CACHE)
+  else()
+    execute_process(
+      COMMAND "${DOTNET_EXE}" --version
+      OUTPUT_QUIET
+      ERROR_QUIET
+      RESULT_VARIABLE DOTNET_CACHED_RESULT
+    )
+    if(NOT "${DOTNET_CACHED_RESULT}" EQUAL "0")
+      unset(DOTNET_EXE)
+      unset(DOTNET_EXE CACHE)
+    endif()
+  endif()
+endif()
+
+find_program(DOTNET_EXE dotnet
+  HINTS
+    "$ENV{DOTNET_ROOT}"
+    "$ENV{HOME}/.dotnet"
+)
+
+# Not cached: re-detected on every configure so a stale DOTNET_EXE is noticed.
+unset(DOTNET_VERSION)
+unset(DOTNET_VERSION CACHE)
+unset(DOTNET_MAJOR_VERSION)
+unset(DOTNET_MAJOR_VERSION CACHE)
+if(DOTNET_EXE AND EXISTS "${DOTNET_EXE}")
+  execute_process(
+    COMMAND "${DOTNET_EXE}" --version
+    OUTPUT_VARIABLE DOTNET_VERSION_RAW
+    RESULT_VARIABLE DOTNET_RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(${DOTNET_RESULT} EQUAL "0")
+    set(DOTNET_VERSION "${DOTNET_VERSION_RAW}")
+    string(REGEX MATCH "^[0-9]+" DOTNET_MAJOR_MATCH "${DOTNET_VERSION_RAW}")
+    if(DOTNET_MAJOR_MATCH)
+      set(DOTNET_MAJOR_VERSION "${DOTNET_MAJOR_MATCH}")
+    else()
+      set(DOTNET_MAJOR_VERSION "8")
+    endif()
+  endif()
+endif()
+
 # Search for Mono tools.
 find_program(MONO_EXE mono
   ${FIND_MONO_OPTIONS}
@@ -86,6 +137,27 @@ if(MONO_EXE)
     set(MONO_VERSION "${MONO_VERSION_MATCH}" CACHE STRING "Mono version.")
   else()
     set(MONO_VERSION "0.0.0" CACHE STRING "Mono version.")
+  endif()
+endif()
+
+# Builds without Unity (FIREBASE_INCLUDE_UNITY=OFF) compile C# with the .NET
+# SDK, so Mono is optional there. DOTNET_EXE is kept separate from the Mono
+# variables: they are cached, and `dotnet` does not accept Mono's flags.
+if(NOT FIREBASE_INCLUDE_UNITY AND DOTNET_EXE AND DOTNET_VERSION)
+  if(NOT MONO_EXE OR NOT MONO_CSHARP_BUILD_EXE)
+    set(Mono_FOUND TRUE)
+    set(MONO_FOUND TRUE)
+    return()
+  endif()
+elseif(NOT FIREBASE_INCLUDE_UNITY)
+  if(DOTNET_EXE)
+    message(WARNING "Running '${DOTNET_EXE} --version' failed (${DOTNET_RESULT}). "
+      "Building without Unity needs a working .NET SDK (dotnet) to compile the "
+      "C# 9 sources; the Mono msbuild/xbuild fallback is not expected to work.")
+  else()
+    message(WARNING "The .NET SDK (dotnet) was not found. Building without "
+      "Unity needs it to compile the C# 9 sources; the Mono msbuild/xbuild "
+      "fallback is not expected to work.")
   endif()
 endif()
 

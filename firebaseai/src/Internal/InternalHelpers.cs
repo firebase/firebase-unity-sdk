@@ -354,7 +354,11 @@ namespace Firebase.AI.Internal
         }
         catch (Exception e)
         {
+#if UNITY_5_3_OR_NEWER
           UnityEngine.Debug.LogException(e);
+#else
+          Firebase.LogUtil.LogMessage(Firebase.LogLevel.Error, e.ToString());
+#endif
         }
       }
 

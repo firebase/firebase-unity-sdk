@@ -31,6 +31,8 @@ internal sealed class LogUtil : global::System.IDisposable {
   internal delegate void LogMessageDelegate(Firebase.LogLevel log_level,
                                             string message);
 
+  private static readonly LogMessageDelegate s_logMessageDelegate =
+      new LogMessageDelegate(LogMessageFromCallback);
   private static LogUtil _instance = null;
 
   static LogUtil() {
@@ -78,7 +80,7 @@ internal sealed class LogUtil : global::System.IDisposable {
   }
 
   public LogUtil() {
-    AppUtil.SetLogFunction(LogUtil.LogMessageFromCallback);
+    AppUtil.SetLogFunction(s_logMessageDelegate);
     AppDomain.CurrentDomain.DomainUnload += (object sender, EventArgs e) => {
       Dispose(false);
     };

@@ -354,12 +354,12 @@ namespace Firebase.AI
 #if FIREBASEAI_DEBUG_LOGGING
           if (currentWebSocket.CloseStatus == WebSocketCloseStatus.NormalClosure)
           {
-            UnityEngine.Debug.Log(
+            Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info,
                 $"WebSocket closed normally. Description: {currentWebSocket.CloseStatusDescription}");
           }
           else
           {
-            UnityEngine.Debug.LogWarning(
+            Firebase.LogUtil.LogMessage(Firebase.LogLevel.Warning,
                 $"WebSocket closed abnormally. Status: {currentWebSocket.CloseStatus}, " +
                 $"Description: {currentWebSocket.CloseStatusDescription}");
           }

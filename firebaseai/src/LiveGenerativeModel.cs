@@ -184,7 +184,7 @@ namespace Firebase.AI
 
         var serializedSetup = Json.Serialize(jsonDict);
 #if FIREBASEAI_DEBUG_LOGGING
-        UnityEngine.Debug.Log($"[LiveGenerativeModel] Sending setup message: {serializedSetup}");
+        Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, $"[LiveGenerativeModel] Sending setup message: {serializedSetup}");
 #endif
         var byteArray = Encoding.UTF8.GetBytes(serializedSetup);
         await clientWebSocket.SendAsync(new ArraySegment<byte>(byteArray), WebSocketMessageType.Binary, true, cancellationToken);

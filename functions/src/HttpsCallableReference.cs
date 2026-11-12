@@ -101,7 +101,7 @@ namespace Firebase.Functions
       request.Content = MakeFunctionsRequest(data);
 
 #if FIREBASE_LOG_REST_CALLS
-      UnityEngine.Debug.Log("Request:\n" + request.Content);
+      Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, "Request:\n" + request.Content);
 #endif
       // TODO pipe through cancellation tokens
       using var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
@@ -116,7 +116,7 @@ namespace Firebase.Functions
           }
           catch (Exception e)
           {
-            UnityEngine.Debug.LogWarning("Failed to read error response: " + e.Message);
+            Firebase.LogUtil.LogMessage(Firebase.LogLevel.Warning, "Failed to read error response: " + e.Message);
           }
         }
         throw FunctionsErrorParser.ParseError(response, errorBody);
@@ -130,7 +130,7 @@ namespace Firebase.Functions
       string result = await response.Content.ReadAsStringAsync();
 
 #if FIREBASE_LOG_REST_CALLS
-      UnityEngine.Debug.Log("Response:\n" + result);
+      Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, "Response:\n" + result);
 #endif
       var responseData = FunctionsSerializer.Deserialize(result);
       return new HttpsCallableResult(responseData);
@@ -167,7 +167,7 @@ namespace Firebase.Functions
       request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
 
 #if FIREBASE_LOG_REST_CALLS
-      UnityEngine.Debug.Log("Request:\n" + request.Content);
+      Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, "Request:\n" + request.Content);
 #endif
 
       // Use ResponseHeadersRead to avoid loading the whole stream at once.
@@ -183,7 +183,7 @@ namespace Firebase.Functions
           }
           catch (Exception e)
           {
-            UnityEngine.Debug.LogWarning("Failed to read error response: " + e.Message);
+            Firebase.LogUtil.LogMessage(Firebase.LogLevel.Warning, "Failed to read error response: " + e.Message);
           }
         }
         throw FunctionsErrorParser.ParseError(response, errorBody);
@@ -214,7 +214,7 @@ namespace Firebase.Functions
             currentEventData.Clear();
 
 #if FIREBASE_LOG_REST_CALLS
-            UnityEngine.Debug.Log("Streaming Response:\n" + jsonText);
+            Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, "Streaming Response:\n" + jsonText);
 #endif
             yield return FunctionsSerializer.DeserializeStreamResponse(jsonText);
           }

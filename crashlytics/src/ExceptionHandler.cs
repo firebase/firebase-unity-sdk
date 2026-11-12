@@ -19,7 +19,9 @@ namespace Firebase.Crashlytics {
 
   using System;
   using System.Runtime.InteropServices;
+#if UNITY
   using UnityEngine;
+#endif
 
   /// <summary>
   /// This class registers exception handlers in the Unity runtime.
@@ -42,11 +44,13 @@ namespace Firebase.Crashlytics {
       LogUtil.LogMessage(LogLevel.Debug, "Registering Crashlytics exception handlers");
       AppDomain.CurrentDomain.UnhandledException += HandleException;
 
+#if UNITY
       if (Application.unityVersion.StartsWith("4.", System.StringComparison.OrdinalIgnoreCase)) {
         Application.RegisterLogCallback(HandleLog);
       } else {
         Application.logMessageReceived += HandleLog;
       }
+#endif
       isRegistered = true;
     }
 
@@ -56,6 +60,7 @@ namespace Firebase.Crashlytics {
       LogException(loggedException);
     }
 
+#if UNITY
     internal void HandleLog(string message, string stackTraceString, LogType type) {
       if (type == LogType.Exception) {
         string[] messageParts = getMessageParts(message);
@@ -63,6 +68,7 @@ namespace Firebase.Crashlytics {
         LogException(exception);
       }
     }
+#endif
 
     private string[] getMessageParts(string message) {
       // Split into two parts so we only split on the first delimiter

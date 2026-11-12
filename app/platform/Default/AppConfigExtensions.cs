@@ -36,7 +36,7 @@ namespace Firebase.Platform.Default {
     /// Returns a valid writeable path for the app.
     /// </summary>
     public virtual string GetWriteablePath(IFirebaseAppPlatform app) {
-      return string.Empty;
+      return System.IO.Path.GetTempPath();
     }
 
     public virtual void SetDatabaseUrl(IFirebaseAppPlatform app, string databaseUrl) {

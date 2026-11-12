@@ -626,6 +626,7 @@ namespace Firebase.AI
       // Check for the commonly used attribute Range, for Min and Max
       float? min = null;
       float? max = null;
+#if UNITY_5_3_OR_NEWER
       var rangeAttr = memberInfo == null ?
           type.GetCustomAttribute<UnityEngine.RangeAttribute>() :
           memberInfo.GetCustomAttribute<UnityEngine.RangeAttribute>();
@@ -634,6 +635,26 @@ namespace Firebase.AI
         min = rangeAttr.min;
         max = rangeAttr.max;
       }
+#else
+      // Outside of Unity there is no UnityEngine assembly to compile against,
+      // so match the attribute by name.
+      ICustomAttributeProvider attrProvider = (ICustomAttributeProvider)memberInfo ?? type;
+      foreach (object attr in attrProvider.GetCustomAttributes(inherit: true))
+      {
+        Type attrType = attr.GetType();
+        if (attrType.FullName == "UnityEngine.RangeAttribute")
+        {
+          FieldInfo minField = attrType.GetField("min", BindingFlags.Public | BindingFlags.Instance);
+          FieldInfo maxField = attrType.GetField("max", BindingFlags.Public | BindingFlags.Instance);
+          if (minField?.GetValue(attr) is float minVal && maxField?.GetValue(attr) is float maxVal)
+          {
+            min = minVal;
+            max = maxVal;
+          }
+          break;
+        }
+      }
+#endif
 
       if (type.IsPrimitive)
       {

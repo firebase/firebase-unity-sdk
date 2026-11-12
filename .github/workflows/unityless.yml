@@ -1,0 +1,78 @@
+# Builds the SDK without a Unity installation (build_zips.py --unityless) on
+# Linux and runs the unified MonoTestApp product suites against the result.
+name: Build and test without Unity (SubWorkflow)
+
+on:
+  workflow_call:
+    inputs:
+      firebase_cpp_sdk_version:
+        description: 'Firebase CPP SDK version to build against (The branch, tag or SHA to checkout)'
+        default: ''
+        required: false
+        type: string
+      unity_branch:
+        description: 'Unity branch to build against, empty means current branch'
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  unityless_linux:
+    name: unityless-linux-CPP${{ inputs.firebase_cpp_sdk_version }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    steps:
+      - uses: lukka/get-cmake@80ed063af494e28dd56b85fb7a630f2f8f55ceed # ratchet:lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.31.0"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+        with:
+          submodules: true
+          ref: ${{ inputs.unity_branch }}
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+        with:
+          repository: firebase/firebase-cpp-sdk
+          path: firebase-cpp-sdk
+          submodules: true
+          ref: ${{ inputs.firebase_cpp_sdk_version }}
+          persist-credentials: false
+
+      - name: Setup python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # ratchet:actions/setup-python@v7
+        with:
+          python-version: '3.9'
+
+      - name: Install prerequisites
+        shell: bash
+        run: |
+          echo "FIREBASE_CPP_SDK_DIR=${{ github.workspace }}/firebase-cpp-sdk" >> $GITHUB_ENV
+          cd firebase-cpp-sdk
+          python scripts/gha/install_prereqs_desktop.py
+          cd ..
+
+      - name: Install python deps
+        shell: bash
+        run: |
+          pip install -r scripts/gha/requirements.txt
+
+      - name: Install OpenSSL (Linux)
+        run: |
+          sudo apt install openssl
+
+      - name: Check tools
+        shell: bash
+        run: |
+          # The .NET SDK preinstalled on the runner image compiles the C#.
+          dotnet --version
+          swig -version
+
+      - name: Build without Unity and run the smoke tests
+        timeout-minutes: 100
+        shell: bash
+        run: |
+          ./scripts/build_scripts/verify_unityless.sh --build

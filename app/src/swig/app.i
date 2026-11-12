@@ -61,6 +61,14 @@ extern JavaVM *g_jvm;
 // Implemented in unity_main.cpp.
 extern jobject UnityGetActivity(JNIEnv **env);
 #endif  // defined(__ANDROID__)
+}  // namespace firebase
+
+#if defined(__ANDROID__)
+// Implemented in unity_main.cpp.
+extern "C" void FirebaseSetAndroidActivity(JNIEnv *jni_env, jobject activity);
+#endif  // defined(__ANDROID__)
+
+namespace firebase {
 
 // Reference count manager for C++ App instance, using pointer as the key for
 // searching.
@@ -76,14 +84,20 @@ static App *AppCreate(const AppOptions *options, const char *name) {
 #if defined(__ANDROID__)
   JNIEnv* jni_env;
   jobject activity_local_ref = UnityGetActivity(&jni_env);
-  if (name) {
-    app = App::Create(*options, name, jni_env, activity_local_ref);
-  } else if (options) {
-    app = App::Create(*options, jni_env, activity_local_ref);
+  if (!jni_env || !activity_local_ref) {
+    // No activity is available (UnityGetActivity logged why); report it
+    // through the error path below.
+    app = nullptr;
   } else {
-    app = App::Create(jni_env, activity_local_ref);
+    if (name) {
+      app = App::Create(*options, name, jni_env, activity_local_ref);
+    } else if (options) {
+      app = App::Create(*options, jni_env, activity_local_ref);
+    } else {
+      app = App::Create(jni_env, activity_local_ref);
+    }
+    jni_env->DeleteLocalRef(activity_local_ref);
   }
-  jni_env->DeleteLocalRef(activity_local_ref);
 #else
   if (name) {
     app = App::Create(*options, name);
@@ -173,6 +187,7 @@ static void RegisterLibrariesHelper(
 #if FIREBASE_PLATFORM_ANDROID
     JNIEnv* jni_env;
     jobject activity_local_ref = UnityGetActivity(&jni_env);
+    if (!jni_env || !activity_local_ref) return;
     firebase::CallAfterEnsureMethodsCached(
             jni_env, activity_local_ref, [&libraries, &jni_env](){
         for (std::map<std::string, std::string>::const_iterator it =
@@ -869,7 +884,6 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
     lock (nameToProxy) {
       // If this is the first App, register library information.
       if (!userAgentRegistered) {
-        userAgentRegistered = true;
         var userAgentMap = new StringStringMap();
 
         // fire-(unity|mono)/<sdk_version>
@@ -922,6 +936,7 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
               Firebase.InitResult.FailedMissingDependency,
               "App creation failed with an unknown error.");
         }
+        userAgentRegistered = true;
         cPtrHandleRef = FirebaseApp.getCPtr(newProxy);
       } catch (System.ApplicationException exception) {
         // Stop the mono behavior or update thread and tear down logging.
@@ -1538,6 +1553,12 @@ static ::firebase::Future<void> FixAndroidDependencies();
 
 static void InitializePlayServicesInternal();
 static void TerminatePlayServicesInternal();
+
+// Registers the Android activity (a JNIEnv* and a jobject reference to an
+// android.app.Activity) that Firebase should use when the host is not a Unity
+// player. Must be called before the first FirebaseApp is created. Does nothing
+// on other platforms.
+static void SetAndroidActivityInternal(void* jni_env, void* activity);
 }
 
 %{
@@ -1547,6 +1568,9 @@ static google_play_services::Availability CheckAndroidDependencies() {
 #if defined(__ANDROID__)
   JNIEnv* jni_env;
   jobject activity_local_ref = UnityGetActivity(&jni_env);
+  if (!jni_env || !activity_local_ref) {
+    return google_play_services::kAvailabilityUnavailableOther;
+  }
   google_play_services::Availability availability =
       google_play_services::CheckAvailability(jni_env, activity_local_ref);
   jni_env->DeleteLocalRef(activity_local_ref);
@@ -1560,6 +1584,7 @@ static Future<void> FixAndroidDependencies() {
 #if defined(__ANDROID__)
   JNIEnv* jni_env;
   jobject activity_local_ref = UnityGetActivity(&jni_env);
+  if (!jni_env || !activity_local_ref) return Future<void>();
   Future<void> future = google_play_services::MakeAvailable(
       jni_env, activity_local_ref);
   jni_env->DeleteLocalRef(activity_local_ref);
@@ -1569,10 +1594,18 @@ static Future<void> FixAndroidDependencies() {
 #endif  // defined(__ANDROID__)
 }
 
+static void SetAndroidActivityInternal(void* jni_env, void* activity) {
+#if defined(__ANDROID__)
+  FirebaseSetAndroidActivity(static_cast<JNIEnv*>(jni_env),
+                             static_cast<jobject>(activity));
+#endif  // defined(__ANDROID__)
+}
+
 static void InitializePlayServicesInternal() {
 #if defined(__ANDROID__)
   JNIEnv* jni_env;
   jobject activity_local_ref = UnityGetActivity(&jni_env);
+  if (!jni_env || !activity_local_ref) return;
   google_play_services::Initialize(jni_env, activity_local_ref);
   jni_env->DeleteLocalRef(activity_local_ref);
 #endif  // defined(__ANDROID__)
@@ -1582,8 +1615,9 @@ static void TerminatePlayServicesInternal() {
 #if defined(__ANDROID__)
   JNIEnv* jni_env;
   jobject activity_local_ref = UnityGetActivity(&jni_env);
+  if (!jni_env) return;
   google_play_services::Terminate(jni_env);
-  jni_env->DeleteLocalRef(activity_local_ref);
+  if (activity_local_ref) jni_env->DeleteLocalRef(activity_local_ref);
 #endif  // defined(__ANDROID__)
 }
 

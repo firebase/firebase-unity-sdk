@@ -44,20 +44,40 @@ internal sealed class FirebaseHandler {
 
   private FirebaseHandler() {
     RunUpdateThread = true;
-    UpdateThread = new Thread(new ThreadStart(this.ThreadUpdater));
-    UpdateThread.Start();
+    using (var dispatcherReady = new ManualResetEventSlim(false)) {
+      UpdateThread = new Thread(() => {
+        ThreadDispatcher = new Dispatcher();
+        dispatcherReady.Set();
+        ThreadUpdater();
+      });
+      UpdateThread.IsBackground = true;
+      UpdateThread.Name = "FirebaseMonoUpdateThread";
+      UpdateThread.Start();
+      dispatcherReady.Wait();
+    }
   }
 
   // Simple update loop that occasionally polls.
   public void ThreadUpdater() {
-    ThreadDispatcher = new Dispatcher();
     while (RunUpdateThread) {
-      Update();
+      try {
+        Update();
+      } catch (System.Exception e) {
+        // An unhandled exception on this thread would terminate the process;
+        // log it and keep polling, as Unity does after a failed Update().
+        FirebaseLogger.LogMessage(PlatformLogLevel.Error, e.ToString());
+      }
       // The update rate is 33 ms (30 Hz), as these are primarily going to be for
       // checking the Firebase asynchronous functions, which don't need as frequent
       // ticks.
       Thread.Sleep(33);
       tickCount++;
+    }
+    try {
+      ThreadDispatcher.PollJobs();
+      ExceptionAggregator.LogException(ExceptionAggregator.GetAndClearPendingExceptions());
+    } catch (System.Exception e) {
+      FirebaseLogger.LogMessage(PlatformLogLevel.Error, e.ToString());
     }
   }
 
@@ -65,7 +85,11 @@ internal sealed class FirebaseHandler {
   // as this instance of FirebaseHandler, and returns the result.
   // Note that the "MainThread" is the thread that is created by the FirebaseHandler.
   public static TResult RunOnMainThread<TResult>(System.Func<TResult> f) {
-    return firebaseHandler.ThreadDispatcher.Run(f);
+    var handler = firebaseHandler;
+    if (handler != null && handler.ThreadDispatcher != null) {
+      return handler.ThreadDispatcher.Run(f);
+    }
+    return f();
   }
 
   // Queue the function provided and execute on the same thread as this instance of
@@ -75,7 +99,11 @@ internal sealed class FirebaseHandler {
   // with CreatePartialOnMainThread. Otherwise, it will run the given function
   // on the calling thread.
   public static Task<TResult> RunOnMainThreadAsync<TResult>(System.Func<TResult> f) {
-    return firebaseHandler.ThreadDispatcher.RunAsync(f);
+    var handler = firebaseHandler;
+    if (handler != null && handler.ThreadDispatcher != null) {
+      return handler.ThreadDispatcher.RunAsync(f);
+    }
+    return Dispatcher.RunAsyncNow(f);
   }
 
   // Returns whether the current thread is the main thread.
@@ -83,7 +111,7 @@ internal sealed class FirebaseHandler {
   // with CreatePartialOnMainThread.
   // Note that the "MainThread" is the thread that is created by the FirebaseHandler.
   internal bool IsMainThread() {
-    return ThreadDispatcher.ManagesThisThread();
+    return ThreadDispatcher != null && ThreadDispatcher.ManagesThisThread();
   }
 
   // Passed to the ApplicationFocusChanged event.
@@ -143,7 +171,9 @@ internal sealed class FirebaseHandler {
             Updated(this, null);
           });
     }
-    ExceptionAggregator.ThrowAndClearPendingExceptions();
+    // Log exceptions raised by user callbacks instead of rethrowing them: there
+    // is no engine above this thread to catch them.
+    ExceptionAggregator.LogException(ExceptionAggregator.GetAndClearPendingExceptions());
   }
 
   internal void OnApplicationFocus(bool hasFocus) {
@@ -153,9 +183,17 @@ internal sealed class FirebaseHandler {
   }
 
   internal static void Terminate() {
-    firebaseHandler.RunUpdateThread = false;
-    firebaseHandler.UpdateThread.Join();
-    firebaseHandler = null;
+    FirebaseHandler handler;
+    lock (typeof(FirebaseHandler)) {
+      handler = firebaseHandler;
+      if (handler == null) return;
+      handler.RunUpdateThread = false;
+      firebaseHandler = null;
+    }
+    if (handler.UpdateThread != null &&
+        Thread.CurrentThread != handler.UpdateThread) {
+      handler.UpdateThread.Join();
+    }
   }
 }
 

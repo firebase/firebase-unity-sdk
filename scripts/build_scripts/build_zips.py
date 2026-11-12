@@ -120,6 +120,20 @@ flags.DEFINE_string("swig_dir", None, "If pass in swig dir directly rather than 
 flags.DEFINE_bool("gen_documentation_zip", False, "Also generate a zip file containing files to document")
 flags.DEFINE_bool("gha", False, "True if the build is triggered by Github Action.")
 flags.DEFINE_bool("gen_swig_only", False, "Should it only generate swig, skipping building libraries")
+flags.DEFINE_bool(
+    "unityless", False,
+    "Build without a Unity installation, compiling C# with the .NET SDK "
+    "(FIREBASE_INCLUDE_UNITY=OFF, FIREBASE_INCLUDE_MONO=ON). The output goes "
+    "to <platform>_unityless_build/ and is for development and testing only: "
+    "it must not be packaged into a .unitypackage.")
+
+
+def run_build_cmd(cmd, **kwargs):
+  """Run a build subprocess, failing on non-zero exit in --unityless mode."""
+  if FLAGS.unityless:
+    subprocess.check_call(cmd, **kwargs)
+  else:
+    subprocess.call(cmd, **kwargs)
 
 def get_build_path(platform, clean_build=False):
   """Get the folder that cmake configure and build in.
@@ -131,7 +145,9 @@ def get_build_path(platform, clean_build=False):
     Returns:
       The folder path to build sdk inside.
   """
-  platform_path = os.path.join(os.getcwd(), platform + "_unity")
+  # Unity and Unity-less builds must not share a CMake cache.
+  suffix = "_unityless_build" if FLAGS.unityless else "_unity"
+  platform_path = os.path.join(os.getcwd(), platform + suffix)
   if os.path.exists(platform_path) and clean_build:
     shutil.rmtree(platform_path)
   if not os.path.exists(platform_path):
@@ -323,14 +339,14 @@ def make_android_multi_arch_build(cmake_args, merge_script):
       os.makedirs(arch)
     build_dir = os.path.join(current_folder, arch)
     cmake_args.append("-DANDROID_ABI="+arch)
-    subprocess.call(cmake_args, cwd=build_dir)
-    subprocess.call("make", cwd=build_dir)
+    run_build_cmd(cmake_args, cwd=build_dir)
+    run_build_cmd("make", cwd=build_dir)
 
     cmake_pack_args = [
       "cpack",
       ".",
     ]
-    subprocess.call(cmake_pack_args, cwd=build_dir)
+    run_build_cmd(cmake_pack_args, cwd=build_dir)
 
   # merge them
   zip_base_name = ""
@@ -436,9 +452,9 @@ def make_macos_arch(arch, cmake_args):
     os.makedirs(arch)
   build_dir = os.path.join(os.getcwd(), arch)
   cmake_args.append('-DCMAKE_OSX_ARCHITECTURES='+arch)
-  subprocess.call(cmake_args, cwd=build_dir)
-  subprocess.call('make', cwd=build_dir)
-  subprocess.call(['cpack', '.'], cwd=build_dir)
+  run_build_cmd(cmake_args, cwd=build_dir)
+  run_build_cmd('make', cwd=build_dir)
+  run_build_cmd(['cpack', '.'], cwd=build_dir)
 
 def make_macos_multi_arch_build(cmake_args):
   """Make macos build for different architectures, and then combine them together
@@ -540,7 +556,7 @@ def configure_ios_or_tvos_target(device_config, device, arch, cmake_args):
   if not os.path.exists(subdir):
     os.makedirs(subdir)
   build_dir = os.path.join(os.getcwd(), subdir)
-  subprocess.call(build_args, cwd=build_dir)
+  run_build_cmd(build_args, cwd=build_dir)
   return build_dir
 
 
@@ -550,8 +566,8 @@ def make_ios_or_tvos_target(build_dir):
     Args:
       build_dir: The full path to the directory to perform the build in.
   """
-  subprocess.call(["cmake", "--build", ".", "--config", "Release"], cwd=build_dir)
-  subprocess.call(['cpack', '-C', 'Release', '.'], cwd=build_dir)
+  run_build_cmd(["cmake", "--build", ".", "--config", "Release"], cwd=build_dir)
+  run_build_cmd(['cpack', '-C', 'Release', '.'], cwd=build_dir)
 
 
 def make_ios_or_tvos_multi_arch_build(cmake_args):
@@ -772,8 +788,20 @@ def main(argv):
     # windows args need to happen right after target path
     cmake_setup_args.extend(get_windows_args())
 
-  cmake_setup_args.extend([   
-    "-DFIREBASE_INCLUDE_UNITY=ON",
+  include_unity = not FLAGS.unityless
+  if include_unity:
+    cmake_setup_args.extend([
+      "-DFIREBASE_INCLUDE_UNITY=ON",
+      "-DFIREBASE_INCLUDE_MONO=OFF",
+    ])
+  else:
+    cmake_setup_args.extend([
+      "-DFIREBASE_INCLUDE_UNITY=OFF",
+      "-DFIREBASE_INCLUDE_MONO=ON",
+      "-DFIREBASE_INCLUDE_EDITOR_TOOL=OFF",
+    ])
+
+  cmake_setup_args.extend([
     "-DFIREBASE_UNITY_BUILD_TESTS=ON",
     "-DFIREBASE_CPP_BUILD_STUB_TESTS=ON",
   ])
@@ -781,9 +809,10 @@ def main(argv):
   if FLAGS.gha:
     cmake_setup_args.append("-DFIREBASE_GITHUB_ACTION_BUILD=ON")
 
-  unity_root_args = get_unity_engine_folder_args(FLAGS.unity_root)
-  if unity_root_args:
-    cmake_setup_args.append(unity_root_args)
+  if include_unity:
+    unity_root_args = get_unity_engine_folder_args(FLAGS.unity_root)
+    if unity_root_args:
+      cmake_setup_args.append(unity_root_args)
   if cmake_cpp_folder_args:
     cmake_setup_args.append(cmake_cpp_folder_args)
   
@@ -836,13 +865,13 @@ def main(argv):
   elif is_ios_build() or is_tvos_build():
     make_ios_or_tvos_multi_arch_build(cmake_setup_args)
   else:
-    subprocess.call(cmake_setup_args)
+    run_build_cmd(cmake_setup_args)
     if (not FLAGS.gen_swig_only):
       if is_windows_build():
         # no make command in windows or when using Xcode generator. TODO make config passable
-        subprocess.call(["cmake", "--build", ".", "--config", "Release"])
+        run_build_cmd(["cmake", "--build", ".", "--config", "Release"])
       else:
-        subprocess.call("make")
+        run_build_cmd("make")
 
       cmake_pack_args = [
         "cpack",
@@ -851,9 +880,9 @@ def main(argv):
         cmake_pack_args.extend(["-C", "Release"])
       cmake_pack_args.append(".")
 
-      subprocess.call(cmake_pack_args)
+      run_build_cmd(cmake_pack_args)
     else:
-      subprocess.call(["cmake", "--build", ".", "--target", "firebase_swig_targets"])
+      run_build_cmd(["cmake", "--build", ".", "--target", "firebase_swig_targets"])
 
     gen_documentation_zip()
 

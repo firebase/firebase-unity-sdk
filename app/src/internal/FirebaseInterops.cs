@@ -70,7 +70,7 @@ namespace Firebase.Internal
     private static void LogError(string message)
     {
 #if FIREBASEAI_DEBUG_LOGGING
-      UnityEngine.Debug.LogError(message);
+      Firebase.LogUtil.LogMessage(Firebase.LogLevel.Error, message);
 #endif
     }
 
