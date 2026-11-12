@@ -266,6 +266,15 @@ jobs:
       unity_platform_name: Linux
       additional_cmake_flags: ${{ needs.check_and_prepare.outputs.additional_cmake_flags }}
 
+  build_unityless_linux:
+    name: build-unityless-linux-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
+    uses: ./.github/workflows/unityless.yml
+    needs: [check_and_prepare, decide_build_branch]
+    if: always() && contains(needs.check_and_prepare.outputs.platform, 'Linux')
+    with:
+      firebase_cpp_sdk_version: ${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
+      unity_branch: ${{ needs.decide_build_branch.outputs.build_branch }}
+
   build_macos:
     name: build-macos-unity${{ needs.check_and_prepare.outputs.unity_version }}-CPP${{ needs.check_and_prepare.outputs.firebase_cpp_sdk_version }}
     uses: ./.github/workflows/build_macos.yml

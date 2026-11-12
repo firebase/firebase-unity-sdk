@@ -17,6 +17,10 @@
 find_package(Unity REQUIRED)
 
 set(MONO_PROJ_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/project.template)
+if(NOT FIREBASE_INCLUDE_UNITY)
+  # Builds without Unity compile C# with the .NET SDK (see FindMono.cmake).
+  set(MONO_PROJ_TEMPLATE ${CMAKE_CURRENT_LIST_DIR}/dotnet_project.template)
+endif()
 
 define_property(TARGET
   PROPERTY
@@ -112,27 +116,47 @@ macro(mono_add_external_library name projpath)
     list(APPEND file_deps "${ref_dllpath}/${ref_dllname}")
   endforeach()
 
-  add_custom_command(
-    COMMAND
-      ${CSHARP_BUILD_EXE}
-      /p:AllowUnsafeBlocks=true
-      /p:Configuration=Release
-      /p:OutDir="${outdir}/"
-      /p:OutputPath="bin\\Release"
-      /p:Platform=${platform}
-      /p:DebugSymbols=true
-      /p:DebugType=Full
-      /p:TargetName=${DLL_NAME}
-      /p:AssemblyName=${DLL_NAME}
-      ${absprojpath}
-    DEPENDS
-      ${projpath}
-      ${file_deps}
-    OUTPUT
-      ${outdir}/${DLL_NAME}.dll
-    COMMENT
-      "Building csproj for ${DLL_NAME}.dll with ${CSHARP_BUILD_EXE}"
-  )
+  if(NOT FIREBASE_INCLUDE_UNITY)
+    add_custom_command(
+      COMMAND
+        ${DOTNET_EXE} build
+        ${absprojpath}
+        -c Release
+        -o "${outdir}"
+        /p:BaseIntermediateOutputPath="${objdir}/"
+        --nologo
+      DEPENDS
+        ${projpath}
+        ${file_deps}
+        ${UNITY_MONO_SOURCES}
+      OUTPUT
+        ${outdir}/${DLL_NAME}.dll
+      COMMENT
+        "Building SDK csproj for ${DLL_NAME}.dll with ${DOTNET_EXE}"
+    )
+  else()
+    add_custom_command(
+      COMMAND
+        ${CSHARP_BUILD_EXE}
+        /p:AllowUnsafeBlocks=true
+        /p:Configuration=Release
+        /p:OutDir="${outdir}/"
+        /p:OutputPath="bin\\Release"
+        /p:Platform=${platform}
+        /p:DebugSymbols=true
+        /p:DebugType=Full
+        /p:TargetName=${DLL_NAME}
+        /p:AssemblyName=${DLL_NAME}
+        ${absprojpath}
+      DEPENDS
+        ${projpath}
+        ${file_deps}
+      OUTPUT
+        ${outdir}/${DLL_NAME}.dll
+      COMMENT
+        "Building csproj for ${DLL_NAME}.dll with ${CSHARP_BUILD_EXE}"
+    )
+  endif()
 
   set_target_properties(${name} PROPERTIES
     LIBRARY_OUTPUT_NAME
@@ -299,6 +323,22 @@ macro(mono_add_internal name output_type)
     foreach(ref ${UNITY_MONO_SYSTEM_REFERENCES})
       string(APPEND VAR_REFERENCE "    <Reference Include=\"${ref}\" />\n")
     endforeach()
+  endif()
+
+  if(NOT FIREBASE_INCLUDE_UNITY)
+    # Sources must test for the absence of this symbol (#if !FIREBASE_UNITYLESS)
+    # and never for UNITY: no define reaches the compiler in Unity builds,
+    # which pass Platform=x86 while project.template only sets DefineConstants
+    # for AnyCPU.
+    string(APPEND VAR_DEFINES ";FIREBASE_UNITYLESS")
+    # The .NET SDK references the framework assemblies itself, so drop the
+    # ones added above.
+    set(VAR_REFERENCE "")
+    if("${output_type}" STREQUAL "Exe")
+      set(VAR_TARGET_FRAMEWORK "net${DOTNET_MAJOR_VERSION}.0")
+    else()
+      set(VAR_TARGET_FRAMEWORK "netstandard2.1")
+    endif()
   endif()
 
   foreach(ref ${UNITY_MONO_REFERENCES})

@@ -44,13 +44,21 @@ internal sealed class FirebaseHandler {
 
   private FirebaseHandler() {
     RunUpdateThread = true;
-    UpdateThread = new Thread(new ThreadStart(this.ThreadUpdater));
-    UpdateThread.Start();
+    using (var dispatcherReady = new ManualResetEventSlim(false)) {
+      UpdateThread = new Thread(() => {
+        ThreadDispatcher = new Dispatcher();
+        dispatcherReady.Set();
+        ThreadUpdater();
+      });
+      UpdateThread.IsBackground = true;
+      UpdateThread.Name = "FirebaseMonoUpdateThread";
+      UpdateThread.Start();
+      dispatcherReady.Wait();
+    }
   }
 
   // Simple update loop that occasionally polls.
   public void ThreadUpdater() {
-    ThreadDispatcher = new Dispatcher();
     while (RunUpdateThread) {
       Update();
       // The update rate is 33 ms (30 Hz), as these are primarily going to be for
@@ -65,7 +73,11 @@ internal sealed class FirebaseHandler {
   // as this instance of FirebaseHandler, and returns the result.
   // Note that the "MainThread" is the thread that is created by the FirebaseHandler.
   public static TResult RunOnMainThread<TResult>(System.Func<TResult> f) {
-    return firebaseHandler.ThreadDispatcher.Run(f);
+    var handler = firebaseHandler;
+    if (handler != null) {
+      return handler.ThreadDispatcher.Run(f);
+    }
+    return f();
   }
 
   // Queue the function provided and execute on the same thread as this instance of
@@ -75,7 +87,11 @@ internal sealed class FirebaseHandler {
   // with CreatePartialOnMainThread. Otherwise, it will run the given function
   // on the calling thread.
   public static Task<TResult> RunOnMainThreadAsync<TResult>(System.Func<TResult> f) {
-    return firebaseHandler.ThreadDispatcher.RunAsync(f);
+    var handler = firebaseHandler;
+    if (handler != null) {
+      return handler.ThreadDispatcher.RunAsync(f);
+    }
+    return Dispatcher.RunAsyncNow(f);
   }
 
   // Returns whether the current thread is the main thread.
@@ -143,7 +159,9 @@ internal sealed class FirebaseHandler {
             Updated(this, null);
           });
     }
-    ExceptionAggregator.ThrowAndClearPendingExceptions();
+    // Log exceptions raised by user callbacks instead of rethrowing them: there
+    // is no engine above this thread to catch them.
+    ExceptionAggregator.LogException(ExceptionAggregator.GetAndClearPendingExceptions());
   }
 
   internal void OnApplicationFocus(bool hasFocus) {

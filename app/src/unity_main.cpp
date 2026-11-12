@@ -38,6 +38,48 @@ jobject g_activity = nullptr;
 static const char *kUnityPlayerClass = "com/unity3d/player/UnityPlayer";
 static const char *kUnityPlayerActivityProperty = "currentActivity";
 
+// Enable the module initializers of the Firebase libraries whose Java classes
+// are present in the application.
+static void InitializeAndroidModuleCallbacks(JNIEnv *jni_env,
+                                             jobject activity) {
+  static const struct {
+    const char *java_class;
+    const char *module_name;
+  } kJavaClassModuleMap[] = {
+      {"com/google/firebase/analytics/FirebaseAnalytics", "analytics"},
+      {"com/google/firebase/appcheck/FirebaseAppCheck", "app_check"},
+      {"com/google/firebase/auth/FirebaseAuth", "auth"},
+      {"com/google/firebase/crashlytics/FirebaseCrashlytics", "crashlytics"},
+      {"com/google/firebase/database/FirebaseDatabase", "database"},
+      {"com/google/firebase/functions/FirebaseFunctions", "functions"},
+      {"com/google/firebase/installations/FirebaseInstallations",
+       "installations"},
+      {"com/google/firebase/messaging/FirebaseMessaging", "messaging"},
+      {"com/google/firebase/perf/FirebasePerformance", "performance"},
+      {"com/google/firebase/remoteconfig/FirebaseRemoteConfigInfo",
+       "remote_config"},
+      {"com/google/firebase/storage/FirebaseStorage", "storage"},
+  };
+  // TODO(smiles): Fix this when all plugins are split into separate shared
+  // libraries.
+  // Use the presence of Java classes to enable module initializers.  The
+  // way this is supposed to work is where the end user links the library
+  // they want to use and includes the Java dependencies but since our
+  // Unity library currently packs all C++ code into a single shared library
+  // module initializers need to be enabled manually.
+  ::firebase::util::InitializeActivityClasses(jni_env, activity);
+  for (const auto &entry : kJavaClassModuleMap) {
+    jclass found_class = ::firebase::util::FindClass(jni_env, entry.java_class);
+    ::firebase::LogDebug("Dependency of %s %s", entry.module_name,
+                         found_class ? "found" : "not found");
+    if (found_class) {
+      jni_env->DeleteLocalRef(found_class);
+      ::firebase::AppCallback::SetEnabledByName(entry.module_name, true);
+    }
+  }
+  ::firebase::util::TerminateActivityClasses(jni_env);
+}
+
 // Get the activity from the UnityPlayer.
 jobject UnityGetActivity(JNIEnv **jni_env) {
   static const char *kGetActivityFailedMessage =
@@ -57,6 +99,9 @@ jobject UnityGetActivity(JNIEnv **jni_env) {
 
   jclass unity_player_class = (*jni_env)->FindClass(kUnityPlayerClass);
   if (!unity_player_class) {
+    // Not a Unity player (see FirebaseSetAndroidActivity): do not leave the
+    // exception thrown by FindClass pending.
+    (*jni_env)->ExceptionClear();
     ::firebase::LogError("Unable to find class %s.\n%s", kUnityPlayerClass,
                          kGetActivityFailedMessage);
     return nullptr;
@@ -90,6 +135,21 @@ jobject UnityGetActivity(JNIEnv **jni_env) {
 
 extern "C" {
 
+// Registers the Android activity Firebase should use, for hosts that are not
+// a Unity player (where the activity cannot be read from the UnityPlayer
+// class). Call it once, with a valid JNIEnv for the calling thread and a
+// reference to an android.app.Activity, before the first FirebaseApp is
+// created; a global reference to the activity is retained. Does nothing if an
+// activity is already known.
+JNIEXPORT void JNICALL FirebaseSetAndroidActivity(JNIEnv *jni_env,
+                                                  jobject activity) {
+  if (!jni_env || !activity || ::firebase::g_activity) return;
+  // JNI_OnLoad is not called when the library is loaded with dlopen.
+  jni_env->GetJavaVM(&::firebase::g_jvm);
+  ::firebase::InitializeAndroidModuleCallbacks(jni_env, activity);
+  ::firebase::g_activity = jni_env->NewGlobalRef(activity);
+}
+
 jint JNI_OnLoad(JavaVM *jvm, void *reserved) {
   ::firebase::LogDebug("JNI_OnLoad");
   ::firebase::g_jvm = jvm;
@@ -100,48 +160,8 @@ jint JNI_OnLoad(JavaVM *jvm, void *reserved) {
       ::firebase::kUnityPlayerActivityProperty,
       static_cast<int>(reinterpret_cast<intptr_t>(activity_local_ref)));
   if (activity_local_ref) {
-    static const struct {
-      const char *java_class;
-      const char *module_name;
-    } kJavaClassModuleMap[] = {
-        {"com/google/firebase/analytics/FirebaseAnalytics", "analytics"},
-        {"com/google/firebase/appcheck/FirebaseAppCheck", "app_check"},
-        {"com/google/firebase/auth/FirebaseAuth", "auth"},
-        {"com/google/firebase/crashlytics/FirebaseCrashlytics", "crashlytics"},
-        {"com/google/firebase/database/FirebaseDatabase", "database"},
-        {"com/google/firebase/functions/FirebaseFunctions", "functions"},
-        {"com/google/firebase/installations/FirebaseInstallations",
-         "installations"},
-        {"com/google/firebase/messaging/FirebaseMessaging", "messaging"},
-        {"com/google/firebase/perf/FirebasePerformance", "performance"},
-        {"com/google/firebase/remoteconfig/FirebaseRemoteConfigInfo",
-         "remote_config"},
-        {"com/google/firebase/storage/FirebaseStorage", "storage"},
-    };
-    // TODO(smiles): Fix this when all plugins are split into separate shared
-    // libraries.
-    // Use the presence of Java classes to enable module initializers.  The
-    // way this is supposed to work is where the end user links the library
-    // they want to use and includes the Java dependencies but since our
-    // Unity library currently packs all C++ code into a single shared library
-    // module initializers need to be enabled manually.
-    ::firebase::util::InitializeActivityClasses(jni_env, activity_local_ref);
-    for (size_t i = 0;
-         i < sizeof(kJavaClassModuleMap) / sizeof(kJavaClassModuleMap[0]);
-         ++i) {
-      jclass found_class = ::firebase::util::FindClass(
-          jni_env, kJavaClassModuleMap[i].java_class);
-      ::firebase::LogDebug("Dependency of %s %s",
-                           kJavaClassModuleMap[i].module_name,
-                           found_class ? "found" : "not found");
-      if (found_class) {
-        jni_env->DeleteLocalRef(found_class);
-        ::firebase::AppCallback::SetEnabledByName(
-            kJavaClassModuleMap[i].module_name, true);
-      }
-    }
+    ::firebase::InitializeAndroidModuleCallbacks(jni_env, activity_local_ref);
     jni_env->DeleteLocalRef(activity_local_ref);
-    ::firebase::util::TerminateActivityClasses(jni_env);
   }
 
   return JNI_VERSION_1_6;  // minimum JNI

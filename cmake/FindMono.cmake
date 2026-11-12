@@ -25,6 +25,37 @@
 #  MONO_CSHARP_BUILD_EXE: Location of the tool (e.g msbuild or xbuild) that
 #    can build .csproj projects.
 
+# Builds without Unity (FIREBASE_INCLUDE_UNITY=OFF) compile C# with the .NET
+# SDK instead of Mono, so only `dotnet` is located for them.
+if(NOT FIREBASE_INCLUDE_UNITY)
+  find_program(DOTNET_EXE dotnet
+    HINTS
+      "$ENV{DOTNET_ROOT}"
+      "$ENV{HOME}/.dotnet"
+  )
+  if(NOT DOTNET_EXE)
+    message(FATAL_ERROR "Building without Unity needs the .NET SDK (dotnet).")
+  endif()
+  execute_process(
+    COMMAND "${DOTNET_EXE}" --version
+    OUTPUT_VARIABLE DOTNET_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+  string(REGEX MATCH "^[0-9]+" DOTNET_MAJOR_VERSION "${DOTNET_VERSION}")
+  # 8.0 is the oldest SDK this mode has been built with. Older ones are refused
+  # rather than tried: before 7.0 the build can succeed and the assemblies then
+  # crash at run time (see LangVersion in dotnet_project.template).
+  if("${DOTNET_MAJOR_VERSION}" STREQUAL "" OR DOTNET_MAJOR_VERSION LESS 8)
+    message(FATAL_ERROR
+      "Building without Unity needs .NET SDK 8.0 or newer, but ${DOTNET_EXE} "
+      "reports version '${DOTNET_VERSION}'. Install a newer SDK, or point at "
+      "one with -DDOTNET_EXE=<path to dotnet>.")
+  endif()
+  message(STATUS "Using .NET SDK ${DOTNET_VERSION} (${DOTNET_EXE})")
+  return()
+endif()
+
 # If MONO_DIR is specified, only search that path.
 set(FIND_MONO_OPTIONS "")
 if(EXISTS "${MONO_DIR}")

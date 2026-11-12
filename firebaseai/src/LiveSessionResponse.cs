@@ -141,7 +141,7 @@ namespace Firebase.AI
       {
         // TODO: Determine if we want to log this, or just ignore it?
 #if FIREBASE_LOG_REST_CALLS
-        UnityEngine.Debug.Log($"Failed to parse LiveSessionResponse from JSON, with keys: {string.Join(',', jsonDict.Keys)}");
+        Firebase.LogUtil.LogMessage(Firebase.LogLevel.Info, $"Failed to parse LiveSessionResponse from JSON, with keys: {string.Join(',', jsonDict.Keys)}");
 #endif
         return null;
       }
@@ -350,7 +350,7 @@ namespace Firebase.AI
       }
       catch (Exception e)
       {
-        UnityEngine.Debug.LogError("Failed to properly parse GoingAwayNotice: " + e);
+        Firebase.LogUtil.LogMessage(Firebase.LogLevel.Error, "Failed to properly parse GoingAwayNotice: " + e);
       }
 
       return new LiveSessionGoingAway(

@@ -126,6 +126,21 @@ unity_pack_folder(
   PACK_PATH "Firebase/FirebaseApp/Internal"
 )
 
+if (NOT FIREBASE_INCLUDE_UNITY)
+  mono_add_library(firebase_app_internal_cs
+    MODULE
+      Firebase.App.Internal
+    SOURCES
+      src/internal/AssemblyInfo.cs
+      src/internal/FirebaseInterops.cs
+      src/internal/HttpHelpers.cs
+    REFERENCES
+      firebase_app_cs
+      firebase_platform_cs
+  )
+  unity_pack_cs(firebase_app_internal_cs)
+endif()
+
 if (FIREBASE_INCLUDE_UNITY)
   generate_dependencies_xml(App
     FIREBASE_SPM_DEPS
