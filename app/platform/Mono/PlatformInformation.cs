@@ -16,24 +16,23 @@
 
 using System;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Firebase.Platform {
 
 // Helper class that contains functions that handle platform specific behavior.
 internal static class PlatformInformation {
-  // Is the current platform Android?
-  internal static bool IsAndroid {
-    get {
-      return false;
-    }
-  }
+  private static readonly bool isAndroid =
+      RuntimeInformation.IsOSPlatform(OSPlatform.Create("ANDROID"));
+  private static readonly bool isIOS =
+      RuntimeInformation.IsOSPlatform(OSPlatform.Create("IOS")) ||
+      RuntimeInformation.IsOSPlatform(OSPlatform.Create("TVOS"));
 
-  // Is the current platform iOS?
-  internal static bool IsIOS {
-    get {
-      return false;
-    }
-  }
+  // Is the current platform Android?
+  internal static bool IsAndroid { get { return isAndroid; } }
+
+  // Is the current platform iOS or tvOS?
+  internal static bool IsIOS { get { return isIOS; } }
 
   internal static string DefaultConfigLocation {
     get {
@@ -77,7 +76,7 @@ internal static class PlatformInformation {
           if (version != null) return version;
         }
       }
-      return "unknown";
+      return Environment.Version.ToString();
     }
   }
 

@@ -16,11 +16,6 @@
 
 include(build_shared)
 
-# Only for unity builds
-if(NOT FIREBASE_INCLUDE_UNITY)
-  return()
-endif()
-
 add_subdirectory(src/cpp)
 
 # Firebase Crashlytics Swig input files
@@ -39,10 +34,13 @@ set(firebase_crashlytics_src
   src/ExceptionHandler.cs
   src/Impl.cs
   src/LoggedException.cs
-  src/Metadata.cs
   src/MetadataBuilder.cs
   src/StackTraceParser.cs
 )
+
+if(FIREBASE_INCLUDE_UNITY)
+  list(APPEND firebase_crashlytics_src src/Metadata.cs)
+endif()
 
 set(firebase_crashlytics_src_android
   src/AndroidImpl.cs

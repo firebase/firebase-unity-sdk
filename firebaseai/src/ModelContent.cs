@@ -675,7 +675,7 @@ namespace Firebase.AI
       else
       {
 #if FIREBASEAI_DEBUG_LOGGING
-        UnityEngine.Debug.LogWarning($"Received unknown part, with keys: {string.Join(',', jsonDict.Keys)}");
+        Firebase.LogUtil.LogMessage(Firebase.LogLevel.Warning, $"Received unknown part, with keys: {string.Join(',', jsonDict.Keys)}");
 #endif
         return null;
       }
