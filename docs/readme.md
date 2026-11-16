@@ -113,6 +113,9 @@ Release Notes
 -   Changes
     - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
       to retrieve decoded ID token claims and metadata.
+    - Firebase AI: Added `LiveSessionVoiceActivity` to expose server-detected
+      voice activity (`ActivityStart` and `ActivityEnd`) and `AudioOffset` in
+      `LiveSession`.
 
 ### 14.1.0
 -   Changes

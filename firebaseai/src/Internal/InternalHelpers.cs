@@ -49,7 +49,12 @@ namespace Firebase.AI.Internal
     {
       if (jsonDict.TryGetValue(key, out object obj))
       {
-        if (obj is T tObj)
+        if (obj == null)
+        {
+          value = default;
+          return false;
+        }
+        else if (obj is T tObj)
         {
           value = tObj;
           return true;
