@@ -86,13 +86,19 @@ BUILD_OS = (WINDOWS, MACOS, LINUX)
 SUPPORTED_PLATFORMS = (ANDROID, IOS, TVOS, WINDOWS, MACOS, LINUX, PLAYMODE)
 UNITY_VERSION_PLACEHOLDER = "unity_version_placeholder"
 
-UNITY_HUB_URL_ARM_MAC = "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup-arm64.dmg"
+# Unity Hub 4.0+ removed the `--headless` CLI that this script relies on (it
+# points users to the standalone Unity CLI instead), and its Linux build needs
+# glibc 2.39. Pin to 3.22.6, the final Unity Hub 3 release, until this script
+# is migrated to the Unity CLI.
+UNITY_HUB_VERSION = "3.22.6"
+UNITY_HUB_BASE_URL = f"https://public-cdn.cloud.unity3d.com/hub/prod/{UNITY_HUB_VERSION}"
+UNITY_HUB_URL_ARM_MAC = f"{UNITY_HUB_BASE_URL}/UnityHubSetup-{UNITY_HUB_VERSION}-arm64.dmg"
 SETTINGS = {
   # Used for downloading Unity Hub
   "unity_hub_url": {
-    WINDOWS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup-x64.exe",
+    WINDOWS: f"{UNITY_HUB_BASE_URL}/UnityHubSetup-{UNITY_HUB_VERSION}-x64.exe",
     # Note that this is for x86 architecture. UNITY_HUB_URL_ARM_MAC above is used for arm64
-    MACOS: "https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg",
+    MACOS: f"{UNITY_HUB_BASE_URL}/UnityHubSetup-{UNITY_HUB_VERSION}-x64.dmg",
     LINUX: "",
   },
   # Unity Hub will be installed at this location
@@ -298,7 +304,7 @@ def install_unity_hub():
     run('sudo sh -c \'echo "deb https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list\'')
     run('wget -qO - https://hub.unity3d.com/linux/keys/public | sudo apt-key add -', max_attempts=MAX_ATTEMPTS)
     run('sudo apt update')
-    run('sudo apt-get install unityhub', max_attempts=MAX_ATTEMPTS)
+    run(f'sudo apt-get install -y unityhub={UNITY_HUB_VERSION}', max_attempts=MAX_ATTEMPTS)
 
 def download_unity_hub(unity_hub_url, unity_hub_installer, max_attempts=1):
   attempt_num = 1
