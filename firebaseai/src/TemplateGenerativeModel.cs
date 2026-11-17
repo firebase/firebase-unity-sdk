@@ -54,11 +54,10 @@ namespace Firebase.AI
       _backend = backend;
       _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
 
-      // Create a HttpClient using the timeout requested, or the default one.
-      _httpClient = new HttpClient()
-      {
-        Timeout = requestOptions?.Timeout ?? RequestOptions.DefaultTimeout
-      };
+      // Create an HttpClient backed by the shared native FirebaseHttpMessageHandler using the
+      // timeout requested, or the default one.
+      _httpClient = Firebase.Internal.HttpHelpers.CreateHttpClient(
+          requestOptions?.Timeout ?? RequestOptions.DefaultTimeout);
     }
 
     /// <summary>

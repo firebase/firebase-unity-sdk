@@ -98,25 +98,38 @@ namespace Firebase.Storage.Internal {
     /// <summary>Runs an upload once one of the upload slots is free.</summary>
     internal static Task<T> RunUploadAsync<T>(
         Func<Slot, Task<T>> action, CancellationToken cancellationToken) {
-      return RunAsync(_uploadSemaphore, action, cancellationToken);
+      return RunAsync(_uploadSemaphore, action, cancellationToken, offloadFromMainThread: true);
     }
 
     /// <summary>Runs a download once one of the download slots is free.</summary>
     internal static Task<T> RunDownloadAsync<T>(
         Func<Slot, Task<T>> action, CancellationToken cancellationToken) {
-      return RunAsync(_downloadSemaphore, action, cancellationToken);
+      return RunAsync(_downloadSemaphore, action, cancellationToken, offloadFromMainThread: true);
     }
 
     /// <summary>Runs a metadata / list / delete command once one of the command slots is free.</summary>
     internal static Task<T> RunCommandAsync<T>(
         Func<Task<T>> action, CancellationToken cancellationToken) {
-      return RunAsync(_commandSemaphore, _ => action(), cancellationToken);
+      return RunAsync(_commandSemaphore, _ => action(), cancellationToken,
+                      offloadFromMainThread: false);
     }
 
     private static async Task<T> RunAsync<T>(
-        SemaphoreSlim semaphore, Func<Slot, Task<T>> action, CancellationToken cancellationToken) {
+        SemaphoreSlim semaphore,
+        Func<Slot, Task<T>> action,
+        CancellationToken cancellationToken,
+        bool offloadFromMainThread) {
       await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
       using (var slot = new Slot(semaphore)) {
+        if (offloadFromMainThread) {
+          Firebase.Platform.FirebaseHandler handler =
+              Firebase.Platform.FirebaseHandler.DefaultInstance;
+          if (handler != null && handler.IsMainThread()) {
+            // Hop off the Unity main thread once a slot is acquired so synchronous FileStream I/O
+            // and native HTTP fast-path copies never block main-thread frame updates.
+            return await Task.Run(() => action(slot)).ConfigureAwait(false);
+          }
+        }
         return await action(slot).ConfigureAwait(false);
       }
     }

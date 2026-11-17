@@ -33,14 +33,15 @@ namespace Firebase.Storage.Internal {
     internal const int MaxChunkSize = 32 * 1024 * 1024;
 
     private readonly StorageReference _reference;
-    private readonly Stream _stream;
+    private readonly Func<Stream> _streamFactory;
+    private Stream _stream;
     private readonly bool _ownsStream;
     private readonly StorageMetadata _metadata;
     private readonly StorageTask _storageTask;
     private readonly UploadState _uploadState;
     private readonly TransferStateUpdater<UploadState> _transferStateUpdater;
     // Position of the stream when the upload started; server offsets are relative to this.
-    private readonly long _streamBaseOffset;
+    private long _streamBaseOffset;
     private readonly ModuleLogger _logger;
     private readonly FirebaseApp _app;
     private readonly TimeSpan _maxRetryTime;
@@ -58,13 +59,18 @@ namespace Firebase.Storage.Internal {
         IProgress<UploadState> progressHandler,
         CancellationToken cancelToken,
         Uri previousSessionUri = null,
-        StorageController controller = null) {
+        StorageController controller = null,
+        Func<Stream> streamFactory = null) {
       _reference = Preconditions.CheckNotNull(reference, nameof(reference));
-      _stream = Preconditions.CheckNotNull(stream, nameof(stream));
+      if (streamFactory == null) {
+        _stream = Preconditions.CheckNotNull(stream, nameof(stream));
+        _streamBaseOffset = stream.CanSeek ? stream.Position : 0;
+      } else {
+        _streamFactory = streamFactory;
+      }
       _ownsStream = ownsStream;
       _metadata = metadata;
       _sessionUri = previousSessionUri;
-      _streamBaseOffset = stream.CanSeek ? stream.Position : 0;
       _logger = reference.Logger;
       FirebaseStorage storage = reference.Storage;
       _app = storage?.App;
@@ -136,40 +142,28 @@ namespace Firebase.Storage.Internal {
       Preconditions.CheckArgument(filePath != null, "filePath cannot be null");
 
       string localPath = IoUtil.ResolveLocalFilePath(filePath);
-      FileStream fileStream;
-      try {
-        if (!File.Exists(localPath)) {
-          throw new FileNotFoundException($"{localPath} not found", filePath);
-        }
-        fileStream = new FileStream(
-            localPath,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.ReadWrite,
-            IoUtil.FileStreamBufferSize,
-            useAsync: true);
-      } catch (Exception ex) {
-        var tcs = new TaskCompletionSource<StorageMetadata>();
-        tcs.SetException(ex);
-        return tcs.Task;
-      }
-
-      ResumableUploadTask uploadTask;
-      try {
-        uploadTask = new ResumableUploadTask(
-            reference,
-            fileStream,
-            fileStream.Length,
-            ownsStream: true,
-            MetadataChange.Build(customMetadata),
-            progressHandler,
-            cancelToken,
-            previousSessionUri,
-              controller);
-      } catch {
-        fileStream.Dispose();
-        throw;
-      }
+      var uploadTask = new ResumableUploadTask(
+          reference,
+          stream: null,
+          totalByteCount: -1,
+          ownsStream: true,
+          MetadataChange.Build(customMetadata),
+          progressHandler,
+          cancelToken,
+          previousSessionUri,
+          controller,
+          streamFactory: () => {
+            if (!File.Exists(localPath)) {
+              throw new FileNotFoundException($"{localPath} not found", filePath);
+            }
+            return new FileStream(
+                localPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite,
+                IoUtil.FileStreamBufferSize,
+                useAsync: false);
+          });
       return uploadTask.RunAsync();
     }
 
@@ -186,7 +180,7 @@ namespace Firebase.Storage.Internal {
           },
           onCanceled: FireAndForgetCancelSession,
           cleanupAsync: () => {
-            if (_ownsStream) {
+            if (_ownsStream && _stream != null) {
               try {
                 _stream.Dispose();
               } catch (Exception) {
@@ -198,6 +192,13 @@ namespace Firebase.Storage.Internal {
 
     private async Task<StorageMetadata> ExecuteUploadAsync() {
       _storageTask.ThrowIfCanceled();
+      if (_stream == null && _streamFactory != null) {
+        _stream = _streamFactory();
+        _streamBaseOffset = _stream.CanSeek ? _stream.Position : 0;
+        if (_stream.CanSeek) {
+          _uploadState.TotalByteCount = Math.Max(0, _stream.Length - _streamBaseOffset);
+        }
+      }
       _storageTask.TransitionToInProgress();
 
       // The retry budget measures time spent failing, not wall-clock time (see RetryBackoff), and
@@ -239,6 +240,7 @@ namespace Firebase.Storage.Internal {
       byte[] lookaheadByte = new byte[1];
       bool hasLookahead = false;
       bool reachedEof = false;
+      bool syncFileRead = _stream is FileStream;
 
       while (true) {
         byte[] buffer = GetChunkBuffer(currentChunkSize);
@@ -252,11 +254,17 @@ namespace Firebase.Storage.Internal {
             hasLookahead = false;
           }
           while (bytesInChunk < currentChunkSize && !reachedEof) {
-            int read = await _stream.ReadAsync(
-                buffer,
-                bytesInChunk,
-                currentChunkSize - bytesInChunk,
-                _storageTask.CancellationToken).ConfigureAwait(false);
+            int read;
+            if (syncFileRead) {
+              _storageTask.ThrowIfCanceled();
+              read = _stream.Read(buffer, bytesInChunk, currentChunkSize - bytesInChunk);
+            } else {
+              read = await _stream.ReadAsync(
+                  buffer,
+                  bytesInChunk,
+                  currentChunkSize - bytesInChunk,
+                  _storageTask.CancellationToken).ConfigureAwait(false);
+            }
             if (read <= 0) {
               reachedEof = true;
               break;
@@ -269,8 +277,14 @@ namespace Firebase.Storage.Internal {
               reachedEof = true;
             } else if (bytesInChunk == currentChunkSize) {
               // Peek one byte so a stream of unknown length can mark its last chunk as final.
-              int peekRead = await _stream.ReadAsync(
-                  lookaheadByte, 0, 1, _storageTask.CancellationToken).ConfigureAwait(false);
+              int peekRead;
+              if (syncFileRead) {
+                _storageTask.ThrowIfCanceled();
+                peekRead = _stream.Read(lookaheadByte, 0, 1);
+              } else {
+                peekRead = await _stream.ReadAsync(
+                    lookaheadByte, 0, 1, _storageTask.CancellationToken).ConfigureAwait(false);
+              }
               if (peekRead <= 0) {
                 reachedEof = true;
               } else {

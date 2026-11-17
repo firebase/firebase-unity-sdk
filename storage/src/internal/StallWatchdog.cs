@@ -39,11 +39,16 @@ namespace Firebase.Storage.Internal {
     private readonly CancellationTokenSource _cts;
     private readonly TimeSpan _timeout;
 
-    internal StallWatchdog(CancellationToken linkedToken, TimeSpan? timeout = null) {
+    internal StallWatchdog(
+        CancellationToken linkedToken,
+        TimeSpan? timeout = null,
+        bool startArmed = true) {
       _linkedToken = linkedToken;
       _timeout = timeout ?? StallTimeout;
       _cts = CancellationTokenSource.CreateLinkedTokenSource(linkedToken);
-      _cts.CancelAfter(_timeout);
+      if (startArmed) {
+        _cts.CancelAfter(_timeout);
+      }
     }
 
     internal CancellationToken Token => _cts.Token;
@@ -55,6 +60,17 @@ namespace Firebase.Storage.Internal {
     internal void Touch() {
       try {
         _cts.CancelAfter(_timeout);
+      } catch (ObjectDisposedException) {
+      }
+    }
+
+    /// <summary>
+    /// Suspends the idle timer while a caller-owned stream is between reads so consumer idle time
+    /// is never mistaken for a stalled socket.
+    /// </summary>
+    internal void Disarm() {
+      try {
+        _cts.CancelAfter(Timeout.InfiniteTimeSpan);
       } catch (ObjectDisposedException) {
       }
     }

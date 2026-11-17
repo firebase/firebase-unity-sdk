@@ -45,33 +45,14 @@ namespace Firebase.Storage.Internal {
     }
 
     private static HttpClient CreateDefaultHttpClient() {
-      try {
-        if (ServicePointManager.DefaultConnectionLimit < MaxConnectionsPerServer) {
-          ServicePointManager.DefaultConnectionLimit = MaxConnectionsPerServer;
-        }
-      } catch (Exception) {
-        // Ignore on runtimes where ServicePointManager is unsupported.
-      }
-      var handler = new HttpClientHandler();
-      try {
-        handler.MaxConnectionsPerServer = MaxConnectionsPerServer;
-      } catch (Exception) {
-        // MonoWebRequestHandler (Windows Mono / iOS IL2CPP) throws NotImplementedException;
-        // other runtimes may throw PlatformNotSupportedException. ServicePointManager fallback
-        // above covers MonoWebRequestHandler.
-      }
       // Per-attempt stall detection is handled by StallWatchdog (see StorageTask.RunAttemptAsync)
-      // so the client-wide timeout is disabled.
-      var client = new HttpClient(handler) {
-        Timeout = Timeout.InfiniteTimeSpan
-      };
-      // Mono defaults to "Expect: 100-continue", which costs a round trip on every upload chunk.
-      client.DefaultRequestHeaders.ExpectContinue = false;
-      return client;
+      // so the client-wide timeout is disabled. Uses the shared native FirebaseHttpMessageHandler
+      // (see HttpHelpers.CreateHttpClient for the Unity 6000.6+ revisit note).
+      return HttpHelpers.CreateHttpClient(Timeout.InfiniteTimeSpan, MaxConnectionsPerServer);
     }
 
     // Sets the standard Firebase Storage REST headers on an HttpRequestMessage.
-    // Note: Firebase Storage backend rejects 'x-goog-api-client' (b/74440917) and requires
+    // Note: Firebase Storage backend rejects 'x-goog-api-client' and requires
     // 'X-Firebase-Storage-Version' instead.
     internal static async Task SetStorageRequestHeaders(
         HttpRequestMessage request,

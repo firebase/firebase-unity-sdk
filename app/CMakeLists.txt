@@ -97,6 +97,44 @@ if (FIREBASE_GENERATE_SWIG_ONLY)
   return()
 endif()
 
+# Link the native streaming HTTP transport into FirebaseCppApp across platforms.
+set(firebase_http_transport_srcs
+  src/http_transport_common.cc
+)
+target_include_directories(firebase_app_swig
+  PRIVATE
+    ${FIREBASE_UNITY_DIR}
+    ${FIREBASE_CPP_SDK_DIR}
+)
+if (ANDROID)
+  list(APPEND firebase_http_transport_srcs src/http_transport_android.cc)
+elseif (FIREBASE_IOS_BUILD)
+  list(APPEND firebase_http_transport_srcs src/http_transport_apple.mm)
+  set_source_files_properties(src/http_transport_apple.mm
+    PROPERTIES COMPILE_OPTIONS "-fobjc-arc"
+  )
+else()
+  list(APPEND firebase_http_transport_srcs src/http_transport_curl.cc)
+  target_include_directories(firebase_app_swig
+    PRIVATE
+      ${CURL_SOURCE_DIR}/include
+  )
+  if (MSVC)
+    target_compile_definitions(firebase_app_swig
+      PRIVATE
+        WIN32_LEAN_AND_MEAN
+        NOMINMAX
+        CURL_STATICLIB=1
+    )
+  endif()
+  target_link_libraries(firebase_app_swig firebase_rest_lib)
+endif()
+
+target_sources(firebase_app_swig
+  PRIVATE
+    ${firebase_http_transport_srcs}
+)
+
 if(FIREBASE_UNI_LIBRARY AND NOT FIREBASE_IOS_BUILD)
   set(firebase_native_library firebase_app_uni)
 else()

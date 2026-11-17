@@ -151,11 +151,10 @@ namespace Firebase.Storage.Internal {
                       FileAccess.Write,
                       FileShare.Read,
                       IoUtil.FileStreamBufferSize,
-                      useAsync: true)) {
+                      useAsync: false)) {
                     await DownloadToStreamAsync(fileStream, maxDownloadSizeBytes: 0)
                         .ConfigureAwait(false);
-                    await fileStream.FlushAsync(_storageTask.CancellationToken)
-                        .ConfigureAwait(false);
+                    fileStream.Flush();
                   }
                   // Replace keeps the existing file if the move fails, unlike delete-then-move.
                   if (File.Exists(localPath)) {
@@ -277,9 +276,10 @@ namespace Firebase.Storage.Internal {
                     $"Streamed file size ({Math.Max(source.Length, source.Position)} bytes) " +
                     $"exceeded maximum allowed size of {maxDownloadSizeBytes} bytes.");
               }
-              // Outside the retry step: a destination error propagates unchanged.
-              await destination.WriteAsync(buffer, 0, read, _storageTask.CancellationToken)
-                  .ConfigureAwait(false);
+              // Outside the retry step: a destination error propagates unchanged. Synchronous
+              // Write avoids Mono/IL2CPP POSIX BeginWrite ThreadPool bounces on the worker thread.
+              _storageTask.ThrowIfCanceled();
+              destination.Write(buffer, 0, read);
             }
             _storageTask.MarkCompleted();
             return;
@@ -396,9 +396,12 @@ namespace Firebase.Storage.Internal {
       private readonly object _connectionLock = new object();
       private HttpResponseMessage _currentResponse;
       private Stream _currentStream;
+      private CancellationTokenSource _connectionCts;
+      private StallWatchdog _connectionWatchdog;
       private readonly string _expectedETag;
       private long _bytesReadTotal;
       private bool _reportedInitialProgress;
+      private bool _reachedEof;
       private int _disposed;
 
       public ResumableDownloadStream(
@@ -414,6 +417,7 @@ namespace Firebase.Storage.Internal {
         _expectedETag = initialETag;
         _ownsStorageTask = ownsStorageTask;
         _backoff = backoff;
+        InstallConnectionWatchdog();
 
         if (_owner._storageTask.CancellationToken.CanBeCanceled) {
           // Capture a weak reference so an undisposed stream stays collectable: the registration
@@ -469,46 +473,172 @@ namespace Firebase.Storage.Internal {
           int count,
           CancellationToken cancellationToken,
           bool allowReconnect) {
+        if (buffer == null) {
+          throw new ArgumentNullException(nameof(buffer));
+        }
+        if (offset < 0 || count < 0 || offset > buffer.Length || count > buffer.Length - offset) {
+          throw new ArgumentOutOfRangeException();
+        }
         ThrowIfDisposed();
-        int read = 0;
+        if (count == 0 || _reachedEof) {
+          _owner._storageTask.ThrowIfCanceled(cancellationToken);
+          return 0;
+        }
+
         while (true) {
-          bool done;
+          if (_owner._storageTask.IsPaused) {
+            await _owner._storageTask.WaitIfPausedAsync(_owner._storageTask.Slot, cancellationToken)
+                .ConfigureAwait(false);
+            _backoff.Reset();
+            InstallConnectionWatchdog();
+          }
+          _owner._storageTask.ThrowIfCanceled(cancellationToken);
+
+          Stream current;
+          StallWatchdog activeWatchdog;
+          CancellationTokenSource activeCts;
+          lock (_connectionLock) {
+            current = _currentStream;
+            activeWatchdog = _connectionWatchdog;
+            activeCts = _connectionCts;
+          }
+
+          if (current != null &&
+              (activeWatchdog == null || activeCts == null || activeCts.IsCancellationRequested) &&
+              !_owner._storageTask.IsPaused &&
+              !_owner._storageTask.IsCanceled) {
+            InstallConnectionWatchdog();
+            lock (_connectionLock) {
+              current = _currentStream;
+              activeWatchdog = _connectionWatchdog;
+              activeCts = _connectionCts;
+            }
+          }
+
+          if (current != null && activeWatchdog != null) {
+            // Fast path: reuse the connection-scoped StallWatchdog across reads (armed only while
+            // a read is in flight) so large downloads do not allocate linked
+            // CancellationTokenSources, Timers or log strings on every read chunk and idle consumer
+            // pauses between reads never expire the watchdog.
+            try {
+              activeWatchdog.Touch();
+              int read;
+              try {
+                if (cancellationToken.CanBeCanceled) {
+                  using (var linked = CancellationTokenSource.CreateLinkedTokenSource(
+                      activeWatchdog.Token, cancellationToken)) {
+                    read = await current.ReadAsync(buffer, offset, count, linked.Token)
+                        .ConfigureAwait(false);
+                  }
+                } else {
+                  read = await current.ReadAsync(buffer, offset, count, activeWatchdog.Token)
+                      .ConfigureAwait(false);
+                }
+              } finally {
+                activeWatchdog.Disarm();
+              }
+
+              if (read == 0) {
+                if (!_reportedInitialProgress) {
+                  _owner._downloadState.BytesTransferred = _bytesReadTotal;
+                  _owner._transferStateUpdater.Report();
+                  _reportedInitialProgress = true;
+                }
+                _reachedEof = true;
+                DisposeCurrentStream();
+                return 0;
+              }
+
+              _bytesReadTotal += read;
+              // Bytes arrived: the connection is healthy, so forget earlier failures.
+              _backoff.Reset();
+              _owner._downloadState.BytesTransferred = _bytesReadTotal;
+              _owner._transferStateUpdater.Report();
+              _reportedInitialProgress = true;
+              if (activeWatchdog.TimedOut) {
+                InstallConnectionWatchdog();
+              }
+              return read;
+            } catch (Exception) when (_disposed != 0) {
+              DisposeCurrentStream();
+              throw new ObjectDisposedException(nameof(ResumableDownloadStream));
+            } catch (Exception ex) when (StorageHttpClient.IsTransportException(ex)) {
+              bool pausedCancel = _owner._storageTask.IsPaused ||
+                  (activeCts != null && activeCts.IsCancellationRequested &&
+                   !activeWatchdog.TimedOut);
+              Exception failure = ex is OperationCanceledException canceled
+                  ? (Exception)activeWatchdog.AsStallException(canceled) ?? canceled
+                  : ex;
+              DisposeCurrentStream();
+
+              _owner._storageTask.ThrowIfCanceled(cancellationToken);
+              if (pausedCancel) {
+                if (_owner._storageTask.IsPaused) {
+                  await _owner._storageTask
+                      .WaitIfPausedAsync(_owner._storageTask.Slot, cancellationToken)
+                      .ConfigureAwait(false);
+                }
+                _backoff.Reset();
+                continue;
+              }
+              if (!allowReconnect) {
+                throw new StorageException(
+                    StorageException.ErrorUnknown,
+                    0,
+                    "The download stream lost its connection and cannot reconnect on the " +
+                    "Unity main thread. Read it from a background thread or use ReadAsync.");
+              }
+
+              string context = $"Download stream at offset {_bytesReadTotal}";
+              _owner._logger?.LogMessage(LogLevel.Warning, $"{context} failed: {failure.Message}");
+              try {
+                if (cancellationToken.CanBeCanceled) {
+                  using (var linkedDelay = CancellationTokenSource.CreateLinkedTokenSource(
+                      _owner._storageTask.GetChunkCancellationToken(), cancellationToken)) {
+                    await _backoff.DelayOrThrowAsync(
+                        true,
+                        failure,
+                        _owner._logger,
+                        context,
+                        linkedDelay.Token).ConfigureAwait(false);
+                  }
+                } else {
+                  await _backoff.DelayOrThrowAsync(
+                      true,
+                      failure,
+                      _owner._logger,
+                      context,
+                      _owner._storageTask.GetChunkCancellationToken()).ConfigureAwait(false);
+                }
+              } catch (OperationCanceledException) when (
+                  !_owner._storageTask.IsCanceled &&
+                  !cancellationToken.IsCancellationRequested &&
+                  _owner._storageTask.IsPaused) {
+                _backoff.Reset();
+              }
+              continue;
+            } catch {
+              DisposeCurrentStream();
+              throw;
+            }
+          }
+
+          if (!allowReconnect) {
+            throw new StorageException(
+                StorageException.ErrorUnknown,
+                0,
+                "The download stream lost its connection and cannot reconnect on the " +
+                "Unity main thread. Read it from a background thread or use ReadAsync.");
+          }
+
+          bool reconnected;
+          bool reached416Eof = false;
           try {
-            done = await _owner._storageTask.RunAttemptAsync(
+            reconnected = await _owner._storageTask.RunAttemptAsync(
                 async watchdog => {
-                  try {
-                    Stream current = CurrentStream;
-                    if (current == null) {
-                      if (!allowReconnect) {
-                        throw new StorageException(
-                            StorageException.ErrorUnknown,
-                            0,
-                            "The download stream lost its connection and cannot reconnect on the " +
-                            "Unity main thread. Read it from a background thread or use ReadAsync.");
-                      }
-                      current = await ReconnectAsync(watchdog).ConfigureAwait(false);
-                      if (current == null) {
-                        // 416: the server has no bytes past the ones already delivered.
-                        read = 0;
-                      }
-                    }
-                    if (current != null) {
-                      read = await current.ReadAsync(buffer, offset, count, watchdog.Token)
-                          .ConfigureAwait(false);
-                    }
-                    if (read > 0 || !_reportedInitialProgress) {
-                      _bytesReadTotal += read;
-                      // Bytes arrived: the connection is healthy, so forget earlier failures.
-                      _backoff.Reset();
-                      _owner._downloadState.BytesTransferred = _bytesReadTotal;
-                      _owner._transferStateUpdater.Report();
-                      _reportedInitialProgress = true;
-                    }
-                  } catch {
-                    // Whatever interrupted the read (pause, stall, network error), the connection
-                    // is unusable: drop it so the next attempt reconnects with a Range request.
-                    DisposeCurrentStream();
-                    throw;
+                  Stream reopened = await ReconnectAsync(watchdog).ConfigureAwait(false);
+                  if (reopened == null) {
+                    reached416Eof = true;
                   }
                 },
                 _backoff,
@@ -518,17 +648,46 @@ namespace Firebase.Storage.Internal {
           } catch (Exception) when (_disposed != 0) {
             throw new ObjectDisposedException(nameof(ResumableDownloadStream));
           }
-          if (done) {
-            return read;
+          if (reconnected) {
+            if (reached416Eof) {
+              if (!_reportedInitialProgress) {
+                _owner._downloadState.BytesTransferred = _bytesReadTotal;
+                _owner._transferStateUpdater.Report();
+                _reportedInitialProgress = true;
+              }
+              _reachedEof = true;
+              DisposeCurrentStream();
+              return 0;
+            }
+            InstallConnectionWatchdog();
           }
         }
       }
 
-      private Stream CurrentStream {
-        get {
-          lock (_connectionLock) {
-            return _currentStream;
+      private void InstallConnectionWatchdog() {
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(
+            _owner._storageTask.GetChunkCancellationToken());
+        var watchdog = new StallWatchdog(cts.Token, startArmed: false);
+        CancellationTokenSource oldCts = null;
+        StallWatchdog oldWatchdog = null;
+        bool discardNew = false;
+        lock (_connectionLock) {
+          if (_disposed != 0 || _currentStream == null ||
+              _owner._storageTask.CancellationToken.IsCancellationRequested) {
+            discardNew = true;
+          } else {
+            oldWatchdog = _connectionWatchdog;
+            oldCts = _connectionCts;
+            _connectionWatchdog = watchdog;
+            _connectionCts = cts;
           }
+        }
+        if (discardNew) {
+          watchdog.Dispose();
+          cts.Dispose();
+        } else {
+          oldWatchdog?.Dispose();
+          oldCts?.Dispose();
         }
       }
 
@@ -608,11 +767,25 @@ namespace Firebase.Storage.Internal {
       private void DisposeCurrentStream() {
         Stream stream;
         HttpResponseMessage response;
+        StallWatchdog watchdog;
+        CancellationTokenSource cts;
         lock (_connectionLock) {
           stream = _currentStream;
           response = _currentResponse;
+          watchdog = _connectionWatchdog;
+          cts = _connectionCts;
           _currentStream = null;
           _currentResponse = null;
+          _connectionWatchdog = null;
+          _connectionCts = null;
+        }
+        try {
+          watchdog?.Dispose();
+        } catch (Exception) {
+        }
+        try {
+          cts?.Dispose();
+        } catch (Exception) {
         }
         try {
           stream?.Dispose();
