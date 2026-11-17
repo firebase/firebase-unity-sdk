@@ -88,11 +88,7 @@ macro(mono_add_external_library name projpath)
       "${UNITY_MONO_SOURCES}"
   )
 
-  if(NOT FIREBASE_64BIT_BUILD)
-    set(platform "x86")
-  else()
-    set(platform "AnyCPU")
-  endif()
+  set(platform "AnyCPU")
 
   if(IS_ABSOLUTE ${projpath})
     set(absprojpath ${projpath})
