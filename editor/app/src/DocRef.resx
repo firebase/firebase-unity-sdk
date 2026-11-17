@@ -223,9 +223,7 @@
     <value>Set up Firebase Storage</value>
   </data>
   <data name="GoogleServicesAndroidGenerateXml" xml:space="preserve">
-    <value>Generated Firebase Android Resources file {0} from {1}
-	
-Executed {2}</value>
+    <value>Generated Firebase Android Resources file {0} from {1}</value>
   </data>
   <data name="GoogleServicesAndroidFileMissing" xml:space="preserve">
     <value>No {0} files found in your project so it is not possible to generate Firebase Android resources file {1}.
@@ -269,17 +267,12 @@ or:
     <value>Generation of the Firebase Android resource file {0} from {1} failed.
 If you have not included a valid Firebase Android resources in your app it will fail to initialize.
 
-{2}
-{3}
-
-You can start to diagnose this issue by executing "{2}" from the command line.</value>
+{2}</value>
   </data>
-  <data name="GoogleServicesToolMissing" xml:space="preserve">
-    <value>Unable to find command line tool {0} required for Firebase Android resource generation.
-{0} is required to generate the Firebase Android resource file {1} from {2}. Without Firebase Android resources, your app will fail to initialize.
-{0} was distributed with each Firebase Unity SDK plugin, was it deleted?
+  <data name="GoogleServicesFileReadFailed" xml:space="preserve">
+    <value>Unable to read Firebase configuration file {0}.
 
-{3}</value>
+{1}</value>
   </data>
   <data name="UnableToCreateDirectory" xml:space="preserve">
     <value>Failed to create directory {0}. Is the directory read-only?</value>
@@ -321,19 +314,5 @@ Try upgrading your Android SDK and setting the Android SDK level to {0} again.</
   </data>
   <data name="CouldNotTranslatePlist" xml:space="preserve">
     <value>Could not parse the file {0} as a plist file. Redownload from the firebase console?</value>
-  </data>
-  <data name="PythonScriptExecutionFailed" xml:space="preserve">
-    <value>Python executable executable {0} failed.
-
-If you're using Windows 7/8 you could try installing the Windows Universal C Runtime
-https://www.microsoft.com/en-us/download/details.aspx?id=48234
-then try again.
-
-Or you could try:
-- Installing Python
-- Add Python it to your path
-- Delete the {1} executable which will force Firebase to use the Python interpreter
-- Restart Unity
-</value>
   </data>
 </root>

@@ -113,6 +113,11 @@ Release Notes
 -   Changes
     - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
       to retrieve decoded ID token claims and metadata.
+    - General: The Firebase config files (`google-services.json` and
+      `GoogleService-Info.plist`) are now processed directly by the Unity
+      Editor. Python is no longer required, and
+      `generate_xml_from_google_services_json.py` / `.exe` are no longer
+      included in the packages.
 
 ### 14.1.0
 -   Changes

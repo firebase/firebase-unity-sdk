@@ -67,14 +67,4 @@ if(FIREBASE_INCLUDE_UNITY)
     "${JAR_RESOLVER_DLL_DIR}/"
     PACK_PATH "ExternalDependencyManager/Editor/"
   )
-
-  unity_pack_file(
-    "${FIREBASE_CPP_SDK_DIR}/generate_xml_from_google_services_json.exe"
-    PACK_PATH "Firebase/Editor"
-  )
-
-  unity_pack_file(
-    "${FIREBASE_CPP_SDK_DIR}/generate_xml_from_google_services_json.py"
-    PACK_PATH "Firebase/Editor"
-  )
 endif()

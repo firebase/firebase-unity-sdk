@@ -350,9 +350,7 @@ namespace Firebase.Editor {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Generated Firebase Android Resources file {0} from {1}
-        ///
-        ///Executed {2}.
+        ///   Looks up a localized string similar to Generated Firebase Android Resources file {0} from {1}.
         /// </summary>
         internal static string GoogleServicesAndroidGenerateXml {
             get {
@@ -364,10 +362,7 @@ namespace Firebase.Editor {
         ///   Looks up a localized string similar to Generation of the Firebase Android resource file {0} from {1} failed.
         ///If you have not included a valid Firebase Android resources in your app it will fail to initialize.
         ///
-        ///{2}
-        ///{3}
-        ///
-        ///You can start to diagnose this issue by executing &quot;{2}&quot; from the command line..
+        ///{2}.
         /// </summary>
         internal static string GoogleServicesAndroidGenerationFailed {
             get {
@@ -437,16 +432,15 @@ namespace Firebase.Editor {
             }
         }
 
+
         /// <summary>
-        ///   Looks up a localized string similar to Unable to find command line tool {0} required for Firebase Android resource generation.
-        ///{0} is required to generate the Firebase Android resource file {1} from {2}. Without Firebase Android resources, your app will fail to initialize.
-        ///{0} was distributed with each Firebase Unity SDK plugin, was it deleted?
+        ///   Looks up a localized string similar to Unable to read Firebase configuration file {0}.
         ///
-        ///{3}.
+        ///{1}.
         /// </summary>
-        internal static string GoogleServicesToolMissing {
+        internal static string GoogleServicesFileReadFailed {
             get {
-                return ResourceManager.GetString("GoogleServicesToolMissing", resourceCulture);
+                return ResourceManager.GetString("GoogleServicesFileReadFailed", resourceCulture);
             }
         }
 
@@ -595,13 +589,5 @@ namespace Firebase.Editor {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Python executable executable {0} failed.
-        /// </summary>
-        internal static string PythonScriptExecutionFailed {
-            get {
-                return ResourceManager.GetString("PythonScriptExecutionFailed", resourceCulture);
-            }
-        }
     }
 }
