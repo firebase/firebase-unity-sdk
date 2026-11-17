@@ -214,7 +214,6 @@
       "upm_packages": [
         "com.google.external-dependency-manager-*.tgz",
         "com.google.firebase.app-*.tgz",
-        "com.google.firebase.auth-*.tgz",
         "com.google.firebase.storage-*.tgz"
       ]
     }

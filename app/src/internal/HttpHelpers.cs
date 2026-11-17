@@ -24,6 +24,39 @@ namespace Firebase.Internal
   // Helper functions to help handling the Http calls.
   internal static class HttpHelpers
   {
+    private const int DefaultMaxConnectionsPerServer = 16;
+
+    /// <summary>
+    /// Creates the common platform-native <see cref="HttpMessageHandler" /> shared across pure-C#
+    /// Firebase Unity libraries (Storage, Functions, Firebase AI Logic).
+    ///
+    /// TODO(Unity 6000.6+): Revisit replacing <see cref="FirebaseHttpMessageHandler" /> once the
+    /// minimum supported Unity version reaches Unity 6000.6+ (specifically 6000.6.2f1+ with
+    /// UUM-150583 fixed in UnityHttpMessageHandler, or CoreCLR).
+    /// </summary>
+    internal static HttpMessageHandler CreateHttpMessageHandler(
+        int maxConnectionsPerServer = DefaultMaxConnectionsPerServer)
+    {
+      return new FirebaseHttpMessageHandler(maxConnectionsPerServer);
+    }
+
+    /// <summary>
+    /// Creates an <see cref="HttpClient" /> configured with the shared native
+    /// <see cref="FirebaseHttpMessageHandler" /> and ExpectContinue disabled.
+    /// </summary>
+    internal static HttpClient CreateHttpClient(
+        TimeSpan? timeout = null,
+        int maxConnectionsPerServer = DefaultMaxConnectionsPerServer)
+    {
+      var client = new HttpClient(CreateHttpMessageHandler(maxConnectionsPerServer), disposeHandler: true);
+      if (timeout.HasValue)
+      {
+        client.Timeout = timeout.Value;
+      }
+      client.DefaultRequestHeaders.ExpectContinue = false;
+      return client;
+    }
+
     internal static async Task SetRequestHeaders(HttpRequestMessage request, FirebaseApp firebaseApp, string authPrefix = "Firebase", bool limitedUseAppCheckTokens = false)
     {
       request.Headers.Add("x-goog-api-key", firebaseApp.Options.ApiKey);

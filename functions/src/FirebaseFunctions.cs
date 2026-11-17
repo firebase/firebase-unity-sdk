@@ -69,9 +69,9 @@ namespace Firebase.Functions {
       _region = region;
       _instanceKey = InstanceKey(app, region);
 
-      // Default timeout is 70 seconds matching native SDKs.
-      _httpClient = new HttpClient();
-      _httpClient.Timeout = TimeSpan.FromSeconds(70);
+      // Default timeout is 70 seconds matching native SDKs. Uses the shared native
+      // FirebaseHttpMessageHandler (see HttpHelpers.CreateHttpClient for Unity 6000.6+ revisit).
+      _httpClient = Firebase.Internal.HttpHelpers.CreateHttpClient(TimeSpan.FromSeconds(70));
 
       try {
         var appType = _firebaseApp.GetType();

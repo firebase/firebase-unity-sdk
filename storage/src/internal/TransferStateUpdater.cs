@@ -15,73 +15,94 @@
  */
 
 using System;
-using Firebase.Storage;
+using System.Threading;
+using System.Threading.Tasks;
+using Firebase.Platform;
 
 namespace Firebase.Storage.Internal {
   /// <summary>
-  /// Creates a MonitorController and updates a progress handler with UploadState as an upload
-  /// proceeds.
+  /// Delivers a transfer's progress object (<see cref="UploadState" /> or
+  /// <see cref="DownloadState" />) to the caller's <see cref="IProgress{T}" /> on the Unity main
+  /// thread, so handlers may touch UnityEngine objects as they could with the previous native
+  /// implementation. Reports are coalesced: at most one delivery is queued at a time and later
+  /// reports fold into it, matching the one-callback-per-poll behaviour of the native SDK. The
+  /// transfer engines update the state object directly and call <see cref="Report" />.
   /// </summary>
-  internal class TransferStateUpdater<T> {
-    // Handler which is updated with the upload state as the upload proceeds.
-    private IProgress<T> handler;
-    // Backing store for ProgressState.
-    private TransferState transferState;
+  internal sealed class TransferStateUpdater<T> {
+    // How often FlushAsync re-checks that the Unity main loop still exists while it waits for a
+    // queued callback. The wait normally ends as soon as the main thread runs the callback; this
+    // only bounds how long a flush can outlive a main loop that was torn down in the meantime.
+    private const int MainLoopPollIntervalMs = 250;
 
-    /// <summary>
-    /// If a progressHandler is specified:
-    /// * Create a MonitorController to monitor an upload.
-    /// * Register an event to monitor the transfer providing updates to progressHandler.
-    /// </summary>
-    /// <param name="storageReference">Storage reference we're uploading to.</param>
-    /// <param name="progressHandler">Handler to be notified of the upload state or null to
-    /// receive no updates.</param>
-    /// <param name="progressState">State passed to progressHandler to report progress.</param>
-    /// <param name="progressStateBackingStore">Instance of a TransferState retrieved from
-    /// progressState.</param>
-    public TransferStateUpdater(StorageReference storageReference,
-                                IProgress<T> progressHandler,
-                                T progressState, TransferState progressStateBackingStore) {
-      handler = progressHandler;
-      ProgressState = progressState;
-      transferState = progressStateBackingStore;
-      MonitorController = MonitorControllerInternal.Create(storageReference.Internal);
-      if (handler != null) {
-        MonitorController.Progress += (sender, eventArgs) => {
-          // Propagate forward progress to the transfer state.
-          var bytesTransferred = MonitorController.BytesTransferred;
-          var totalByteCount = MonitorController.TotalByteCount;
-          if (bytesTransferred > transferState.BytesTransferred) {
-            transferState.BytesTransferred = bytesTransferred;
-          }
-          if (totalByteCount > transferState.TotalByteCount) {
-            transferState.TotalByteCount = totalByteCount;
-          }
-          transferState.UploadSessionUri = null;  // TODO(smiles): b/68320317
-          handler.Report(ProgressState);
-        };
+    private readonly IProgress<T> _handler;
+    private readonly T _state;
+    private readonly object _lock = new object();
+    // 1 while a delivery is queued on the main thread but has not run yet.
+    private int _pending;
+    private Task _lastDelivery = Task.FromResult(true);
+
+    internal TransferStateUpdater(IProgress<T> handler, T state) {
+      _handler = handler;
+      _state = state;
+    }
+
+    /// <summary>Queues a progress callback with the current state, unless one is already queued.</summary>
+    internal void Report() {
+      if (_handler == null || Interlocked.Exchange(ref _pending, 1) != 0) {
+        return;
+      }
+      if (FirebaseHandler.DefaultInstance == null) {
+        // The main loop has been torn down (editor exit / domain reload); nobody would run the job.
+        Interlocked.Exchange(ref _pending, 0);
+        return;
+      }
+      lock (_lock) {
+        _lastDelivery = FirebaseHandler.RunOnMainThreadAsync(() => {
+          Deliver();
+          return true;
+        });
+      }
+    }
+
+    // Runs the queued callback, if it has not been delivered already.
+    private void Deliver() {
+      if (Interlocked.Exchange(ref _pending, 0) == 0) {
+        return;
+      }
+      try {
+        _handler.Report(_state);
+      } catch (Exception ex) {
+        // Never let a user callback exception abort the transfer; just log it.
+        ExceptionAggregator.LogException(ex);
       }
     }
 
     /// <summary>
-    /// Report metadata written to remote storage to the UploadState and report progress.
+    /// Completes once every queued progress callback has run, so callers never observe a
+    /// callback after the transfer's task completes. When called on the main thread itself (the
+    /// transfer unwound through a main-thread continuation) the queued callback could not run
+    /// before the task completes, so it is delivered inline instead; when the main loop is gone
+    /// there is nothing to wait for.
     /// </summary>
-    public void SetMetadata(StorageMetadata metadata) {
-      if (handler != null) {
-        transferState.Metadata = metadata;
-        handler.Report(ProgressState);
+    internal async Task FlushAsync() {
+      if (_handler == null) {
+        return;
+      }
+      Task pending;
+      lock (_lock) {
+        pending = _lastDelivery;
+      }
+      while (!pending.IsCompleted) {
+        FirebaseHandler handler = FirebaseHandler.DefaultInstance;
+        if (handler == null) {
+          return;
+        }
+        if (handler.IsMainThread()) {
+          Deliver();
+          return;
+        }
+        await Task.WhenAny(pending, Task.Delay(MainLoopPollIntervalMs)).ConfigureAwait(false);
       }
     }
-
-    /// <summary>
-    /// Get the transfer state object instanced by this class.
-    /// This will not be created if this object was created with no progress handler.
-    /// </summary>
-    public T ProgressState { get; private set; }
-
-    /// <summary>
-    /// MonitorControllerInternal instance used to control the transfer.
-    /// </summary>
-    public MonitorControllerInternal MonitorController { get; private set; }
   }
 }
