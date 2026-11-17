@@ -49,12 +49,7 @@ namespace Firebase.AI.Internal
     {
       if (jsonDict.TryGetValue(key, out object obj))
       {
-        if (obj == null)
-        {
-          value = default;
-          return false;
-        }
-        else if (obj is T tObj)
+        if (obj is T tObj)
         {
           value = tObj;
           return true;
@@ -76,7 +71,7 @@ namespace Firebase.AI.Internal
           value = (T)(object)(float)asDouble;
           return true;
         }
-        else if (options.HasFlag(JsonParseOptions.ThrowInvalidCast))
+        else if (obj != null && options.HasFlag(JsonParseOptions.ThrowInvalidCast))
         {
           throw new InvalidCastException(
               $"Invalid JSON format: '{key}' is not of type '{typeof(T).Name}', " +

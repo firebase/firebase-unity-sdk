@@ -2457,12 +2457,9 @@ namespace Firebase.Sample.FirebaseAI
 
         await foreach (var resp in synthSession.ReceiveAsync(ctsSynth.Token))
         {
-          if (resp.AudioAsFloat != null)
+          foreach (var chunk in resp.AudioAsFloat ?? Enumerable.Empty<float[]>())
           {
-            foreach (var chunk in resp.AudioAsFloat)
-            {
-              samples24k.AddRange(chunk);
-            }
+            samples24k.AddRange(chunk);
           }
         }
         await synthSession.CloseAsync(System.Threading.CancellationToken.None);
@@ -2545,12 +2542,10 @@ namespace Firebase.Sample.FirebaseAI
 
       bool sawStart = voiceActivities.Any(
           v => v.Type == LiveSessionVoiceActivity.VoiceActivityType.ActivityStart &&
-               v.AudioOffset.HasValue &&
-               v.AudioOffset.Value >= TimeSpan.Zero);
+               v.AudioOffset >= TimeSpan.Zero);
       bool sawEnd = voiceActivities.Any(
           v => v.Type == LiveSessionVoiceActivity.VoiceActivityType.ActivityEnd &&
-               v.AudioOffset.HasValue &&
-               v.AudioOffset.Value > TimeSpan.Zero);
+               v.AudioOffset > TimeSpan.Zero);
 
       Assert($"Expected ActivityStart in LiveSessionVoiceActivity events (count={voiceActivities.Count})", sawStart);
       Assert($"Expected ActivityEnd in LiveSessionVoiceActivity events (count={voiceActivities.Count})", sawEnd);

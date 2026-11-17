@@ -80,23 +80,23 @@ namespace Firebase.Sample.FirebaseAI {
     private int backendSelection = 0;
     private string[] backendChoices = new string[] { "Google AI Backend", "Agent Platform Backend" };
 
-    private LiveSession liveSession = null;
-    private CancellationTokenSource liveSessionCts = null;
-    private bool isConnectingLiveSession = false;
-    private bool isSimulatingSpeech = false;
+    private LiveSession liveSession;
+    private CancellationTokenSource liveSessionCts;
+    private bool isConnectingLiveSession;
+    private bool isSimulatingSpeech;
     private string voiceActivityStatus = "Idle";
-    private int activityStartCount = 0;
-    private int activityEndCount = 0;
+    private int activityStartCount;
+    private int activityEndCount;
 
     private const int kLiveMicSampleRate = 16000;
     private const float kMicPollIntervalSeconds = 0.1f;
-    private bool isStreamingMic = false;
-    private AudioClip micClip = null;
+    private bool isStreamingMic;
+    private AudioClip micClip;
 #if !UNITY_TVOS
-    private string activeMicDevice = null;
-    private int lastMicSamplePosition = 0;
+    private string activeMicDevice;
+    private int lastMicSamplePosition;
 #endif
-    private float nextMicPollTime = 0.0f;
+    private float nextMicPollTime;
 
     private GenerativeModel GetModel() {
       var backend = backendSelection == 0
@@ -109,8 +109,7 @@ namespace Firebase.Sample.FirebaseAI {
     private FirebaseAI GetLiveFirebaseAI() {
       var backend = backendSelection == 0
           ? FirebaseAI.Backend.GoogleAI()
-          : FirebaseAI.Backend.AgentPlatform(
-              string.IsNullOrWhiteSpace(LiveAgentPlatformLocation) ? "us-central1" : LiveAgentPlatformLocation.Trim());
+          : FirebaseAI.Backend.AgentPlatform(LiveAgentPlatformLocation);
 
       return FirebaseAI.GetInstance(backend, useLimitedUseAppCheckTokens: true);
     }
@@ -254,12 +253,10 @@ namespace Firebase.Sample.FirebaseAI {
             break;
         }
       } else if (response.Message is LiveSessionContent content) {
-        if (content.InputTranscription.HasValue &&
-            !string.IsNullOrEmpty(content.InputTranscription.Value.Text)) {
+        if (!string.IsNullOrEmpty(content.InputTranscription?.Text)) {
           DebugLog($"[Live InputTranscription] {content.InputTranscription.Value.Text}");
         }
-        if (content.OutputTranscription.HasValue &&
-            !string.IsNullOrEmpty(content.OutputTranscription.Value.Text)) {
+        if (!string.IsNullOrEmpty(content.OutputTranscription?.Text)) {
           DebugLog($"[Live OutputTranscription] {content.OutputTranscription.Value.Text}");
         }
         if (!string.IsNullOrEmpty(response.Text)) {
@@ -277,14 +274,13 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     async Task SendLiveTextMessageAsync(string message) {
-      if (liveSession == null || string.IsNullOrWhiteSpace(message)) {
+      if (string.IsNullOrWhiteSpace(message)) {
         return;
       }
 
       try {
         DebugLog($"Sending Live text message: {message}");
-        var token = liveSessionCts != null ? liveSessionCts.Token : CancellationToken.None;
-        await liveSession.SendAsync(ModelContent.Text(message), turnComplete: true, cancellationToken: token);
+        await liveSession.SendAsync(ModelContent.Text(message), turnComplete: true, cancellationToken: liveSessionCts.Token);
       } catch (Exception e) {
         DebugLog("Error sending Live text message:\n" + e);
       }
@@ -299,11 +295,11 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     void StartMicStreaming() {
-      if (liveSession == null || isStreamingMic) {
+      if (isStreamingMic) {
         return;
       }
 #if !UNITY_TVOS
-      if (Microphone.devices == null || Microphone.devices.Length == 0) {
+      if (Microphone.devices.Length == 0) {
         DebugLog("No microphone devices detected. Use 'Simulate Speech Turn' to test VoiceActivity without a mic.");
         return;
       }
@@ -329,7 +325,7 @@ namespace Firebase.Sample.FirebaseAI {
         return;
       }
 #if !UNITY_TVOS
-      if (!string.IsNullOrEmpty(activeMicDevice) && Microphone.IsRecording(activeMicDevice)) {
+      if (Microphone.IsRecording(activeMicDevice)) {
         Microphone.End(activeMicDevice);
       }
       activeMicDevice = null;
@@ -340,7 +336,7 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     private void PollAndSendMicAudio() {
-      if (!isStreamingMic || liveSession == null || micClip == null || Time.unscaledTime < nextMicPollTime) {
+      if (!isStreamingMic || Time.unscaledTime < nextMicPollTime) {
         return;
       }
       nextMicPollTime = Time.unscaledTime + kMicPollIntervalSeconds;
@@ -376,16 +372,13 @@ namespace Firebase.Sample.FirebaseAI {
         }
       }
 
-      var token = liveSessionCts != null ? liveSessionCts.Token : CancellationToken.None;
-      _ = SendAudioChunkSafeAsync(monoSamples, token);
+      _ = SendAudioChunkSafeAsync(monoSamples, liveSessionCts.Token);
 #endif
     }
 
     private async Task SendAudioChunkSafeAsync(float[] monoSamples, CancellationToken cancellationToken) {
       try {
-        if (liveSession != null && !cancellationToken.IsCancellationRequested) {
-          await liveSession.SendAudioAsync(monoSamples, cancellationToken);
-        }
+        await liveSession.SendAudioAsync(monoSamples, cancellationToken);
       } catch (OperationCanceledException) {
       } catch (Exception e) {
         if (!cancellationToken.IsCancellationRequested) {
@@ -413,12 +406,12 @@ namespace Firebase.Sample.FirebaseAI {
     // (padded with leading/trailing silence) into the active LiveSession so server VAD emits
     // ActivityStart and ActivityEnd even when testing without a physical microphone.
     async Task SimulateSpeechTurnAsync() {
-      if (liveSession == null || isSimulatingSpeech) {
+      if (isSimulatingSpeech) {
         return;
       }
 
       isSimulatingSpeech = true;
-      var token = liveSessionCts != null ? liveSessionCts.Token : CancellationToken.None;
+      CancellationToken token = liveSessionCts.Token;
       try {
         DebugLog("Generating spoken sample audio to feed into LiveSession VAD...");
         List<float> samples24k = new List<float>();
@@ -429,10 +422,8 @@ namespace Firebase.Sample.FirebaseAI {
               cancellationToken: token);
 
           await foreach (var resp in synthSession.ReceiveAsync(token)) {
-            if (resp.AudioAsFloat != null) {
-              foreach (var chunk in resp.AudioAsFloat) {
-                samples24k.AddRange(chunk);
-              }
+            foreach (var chunk in resp.AudioAsFloat ?? System.Linq.Enumerable.Empty<float[]>()) {
+              samples24k.AddRange(chunk);
             }
           }
           await synthSession.CloseAsync(CancellationToken.None);
@@ -451,7 +442,7 @@ namespace Firebase.Sample.FirebaseAI {
 
         DebugLog($"Streaming {streamSamples.Count / (float)kLiveMicSampleRate:F1}s of 16kHz audio (1s silence + speech + 3s silence)...");
         const int chunkSize = 1600; // 100ms @ 16kHz
-        for (int offset = 0; offset < streamSamples.Count && liveSession != null && !token.IsCancellationRequested; offset += chunkSize) {
+        for (int offset = 0; offset < streamSamples.Count && !token.IsCancellationRequested; offset += chunkSize) {
           int count = Math.Min(chunkSize, streamSamples.Count - offset);
           float[] chunk = streamSamples.GetRange(offset, count).ToArray();
           await liveSession.SendAudioAsync(chunk, token);
@@ -469,12 +460,9 @@ namespace Firebase.Sample.FirebaseAI {
     async Task CloseLiveSessionAsync() {
       StopMicStreaming();
 
-      var cts = liveSessionCts;
+      liveSessionCts?.Cancel();
+      liveSessionCts?.Dispose();
       liveSessionCts = null;
-      if (cts != null) {
-        cts.Cancel();
-        cts.Dispose();
-      }
 
       var session = liveSession;
       liveSession = null;
@@ -494,15 +482,11 @@ namespace Firebase.Sample.FirebaseAI {
 
     protected virtual void OnDestroy() {
       StopMicStreaming();
-      if (liveSessionCts != null) {
-        liveSessionCts.Cancel();
-        liveSessionCts.Dispose();
-        liveSessionCts = null;
-      }
-      if (liveSession != null) {
-        liveSession.Dispose();
-        liveSession = null;
-      }
+      liveSessionCts?.Cancel();
+      liveSessionCts?.Dispose();
+      liveSessionCts = null;
+      liveSession?.Dispose();
+      liveSession = null;
     }
 
     // Exit if escape (or back, on mobile) is pressed.
@@ -578,7 +562,7 @@ namespace Firebase.Sample.FirebaseAI {
           if (GUILayout.Button("Close Chat Session")) {
             CloseChatSession();
           }
-        } else if (liveSession != null) {
+        } else {
           GUILayout.Label($"Live Model: {LiveModelName}");
           GUILayout.Label($"Voice Activity: {voiceActivityStatus}");
           GUILayout.Label($"Counts: Start={activityStartCount}, End={activityEndCount}");

@@ -103,7 +103,9 @@ namespace Firebase.AI
     /// </summary>
     internal static LiveSessionResponse? FromJson(string jsonString)
     {
-      return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>);
+      return Json.Deserialize(jsonString) is Dictionary<string, object> jsonDict
+          ? FromJson(jsonDict)
+          : null;
     }
 
     /// <summary>
@@ -112,18 +114,13 @@ namespace Firebase.AI
     /// </summary>
     internal static LiveSessionResponse? FromJson(Dictionary<string, object> jsonDict)
     {
-      if (jsonDict == null)
-      {
-        return null;
-      }
-      else if (jsonDict.ContainsKey("setupComplete"))
+      if (jsonDict.ContainsKey("setupComplete"))
       {
         // We don't want to pass this along to the user, so return null instead.
         return null;
       }
       else if (jsonDict.TryParseValue("voiceActivity", out Dictionary<string, object> voiceActivity) &&
                (!jsonDict.TryParseValue("serverContent", out Dictionary<string, object> existingServerContent, JsonParseOptions.None) ||
-                existingServerContent == null ||
                 existingServerContent.Count == 0))
       {
         // Note: Some Gemini 3.x Live models (e.g. gemini-3.1-flash-live-preview) emit an empty
@@ -168,8 +165,8 @@ namespace Firebase.AI
     /// </summary>
     internal static IEnumerable<LiveSessionResponse> FromJsonFrames(string jsonString)
     {
-      var jsonDict = Json.Deserialize(jsonString) as Dictionary<string, object>;
-      if (jsonDict == null || jsonDict.ContainsKey("setupComplete"))
+      if (Json.Deserialize(jsonString) is not Dictionary<string, object> jsonDict ||
+          jsonDict.ContainsKey("setupComplete"))
       {
         yield break;
       }
@@ -183,10 +180,9 @@ namespace Firebase.AI
         yield break;
       }
 
-      LiveSessionResponse? singleResponse = FromJson(jsonDict);
-      if (singleResponse != null)
+      if (FromJson(jsonDict) is LiveSessionResponse singleResponse)
       {
-        yield return singleResponse.Value;
+        yield return singleResponse;
       }
     }
   }
@@ -529,13 +525,15 @@ namespace Firebase.AI
     {
       return new LiveSessionVoiceActivity(
         ParseVoiceActivityType(jsonDict),
-        ParseAudioOffset(jsonDict)
+        jsonDict.TryParseValue("audioOffset", out string offsetStr)
+            ? ParseProtoDuration(offsetStr)
+            : null
       );
     }
 
     private static VoiceActivityType ParseVoiceActivityType(Dictionary<string, object> jsonDict)
     {
-      if (jsonDict == null || !jsonDict.TryGetValue("type", out object rawType) || rawType is not string typeStr)
+      if (!jsonDict.TryParseValue("type", out string typeStr, JsonParseOptions.None))
       {
         return VoiceActivityType.Unspecified;
       }
@@ -554,33 +552,11 @@ namespace Firebase.AI
       }
     }
 
-    private static TimeSpan? ParseAudioOffset(Dictionary<string, object> jsonDict)
-    {
-      if (jsonDict == null || !jsonDict.TryGetValue("audioOffset", out object rawOffset) || rawOffset == null)
-      {
-        return null;
-      }
-
-      if (rawOffset is not string offsetStr)
-      {
-        throw new InvalidCastException(
-            $"Invalid JSON format: 'audioOffset' is not of type 'String', " +
-            $"Actual type: {rawOffset.GetType().FullName}.");
-      }
-
-      return ParseProtoDuration(offsetStr);
-    }
-
     // Parses a protobuf JSON duration string (e.g., "2.520s") into a TimeSpan.
     // Returns null when the string is not a finite number of seconds ending in 's',
     // or when that value does not fit in a TimeSpan.
     internal static TimeSpan? ParseProtoDuration(string value)
     {
-      if (string.IsNullOrEmpty(value))
-      {
-        return null;
-      }
-
       string trimmed = value.Trim();
       if (!trimmed.EndsWith("s", StringComparison.Ordinal))
       {
