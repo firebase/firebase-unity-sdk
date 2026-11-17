@@ -92,7 +92,7 @@ namespace Firebase.Sample.FirebaseAI {
     private const float kMicPollIntervalSeconds = 0.1f;
     private bool isStreamingMic = false;
     private AudioClip micClip = null;
-#if !UNITY_TVOS && !UNITY_WEBGL
+#if !UNITY_TVOS
     private string activeMicDevice = null;
     private int lastMicSamplePosition = 0;
 #endif
@@ -302,7 +302,7 @@ namespace Firebase.Sample.FirebaseAI {
       if (liveSession == null || isStreamingMic) {
         return;
       }
-#if !UNITY_TVOS && !UNITY_WEBGL
+#if !UNITY_TVOS
       if (Microphone.devices == null || Microphone.devices.Length == 0) {
         DebugLog("No microphone devices detected. Use 'Simulate Speech Turn' to test VoiceActivity without a mic.");
         return;
@@ -328,7 +328,7 @@ namespace Firebase.Sample.FirebaseAI {
       if (!isStreamingMic) {
         return;
       }
-#if !UNITY_TVOS && !UNITY_WEBGL
+#if !UNITY_TVOS
       if (!string.IsNullOrEmpty(activeMicDevice) && Microphone.IsRecording(activeMicDevice)) {
         Microphone.End(activeMicDevice);
       }
@@ -345,7 +345,7 @@ namespace Firebase.Sample.FirebaseAI {
       }
       nextMicPollTime = Time.unscaledTime + kMicPollIntervalSeconds;
 
-#if !UNITY_TVOS && !UNITY_WEBGL
+#if !UNITY_TVOS
       int currentPos = Microphone.GetPosition(activeMicDevice);
       if (currentPos < 0 || currentPos == lastMicSamplePosition) {
         return;
