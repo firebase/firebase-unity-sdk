@@ -15,6 +15,7 @@
  */
 
 using System.Collections.Generic;
+using System.Globalization;
 using Google.MiniJSON;
 using Firebase.AI.Internal;
 using System.Linq;
@@ -102,7 +103,9 @@ namespace Firebase.AI
     /// </summary>
     internal static LiveSessionResponse? FromJson(string jsonString)
     {
-      return FromJson(Json.Deserialize(jsonString) as Dictionary<string, object>);
+      return Json.Deserialize(jsonString) is Dictionary<string, object> jsonDict
+          ? FromJson(jsonDict)
+          : null;
     }
 
     /// <summary>
@@ -115,6 +118,14 @@ namespace Firebase.AI
       {
         // We don't want to pass this along to the user, so return null instead.
         return null;
+      }
+      else if (jsonDict.TryParseValue("voiceActivity", out Dictionary<string, object> voiceActivity) &&
+               (!jsonDict.TryParseValue("serverContent", out Dictionary<string, object> existingServerContent, JsonParseOptions.None) ||
+                existingServerContent.Count == 0))
+      {
+        // Note: Some Gemini 3.x Live models (e.g. gemini-3.1-flash-live-preview) emit an empty
+        // "serverContent": {} sibling alongside top-level "voiceActivity" in the same JSON frame.
+        return new LiveSessionResponse(LiveSessionVoiceActivity.FromJson(voiceActivity));
       }
       else if (jsonDict.TryParseValue("serverContent", out Dictionary<string, object> serverContent))
       {
@@ -144,6 +155,34 @@ namespace Firebase.AI
         UnityEngine.Debug.Log($"Failed to parse LiveSessionResponse from JSON, with keys: {string.Join(',', jsonDict.Keys)}");
 #endif
         return null;
+      }
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// Deserializes a WebSocket JSON frame that may contain both `voiceActivity` and a non-empty
+    /// `serverContent` payload in the same `BidiGenerateContentServerMessage`.
+    /// </summary>
+    internal static IEnumerable<LiveSessionResponse> FromJsonFrames(string jsonString)
+    {
+      if (Json.Deserialize(jsonString) is not Dictionary<string, object> jsonDict ||
+          jsonDict.ContainsKey("setupComplete"))
+      {
+        yield break;
+      }
+
+      if (jsonDict.TryParseValue("voiceActivity", out Dictionary<string, object> voiceActivity) &&
+          jsonDict.TryParseValue("serverContent", out Dictionary<string, object> serverContent) &&
+          serverContent.Count > 0)
+      {
+        yield return new LiveSessionResponse(LiveSessionVoiceActivity.FromJson(voiceActivity));
+        yield return new LiveSessionResponse(LiveSessionContent.FromJson(serverContent));
+        yield break;
+      }
+
+      if (FromJson(jsonDict) is LiveSessionResponse singleResponse)
+      {
+        yield return singleResponse;
       }
     }
   }
@@ -431,6 +470,142 @@ namespace Firebase.AI
         jsonDict.ParseNullableValue<bool>("resumable"),
         jsonDict.ParseNullableValue<int>("lastConsumedClientMessageIndex")
       );
+    }
+  }
+
+  /// <summary>
+  /// A server message indicating that voice activity was detected in the audio stream.
+  ///
+  /// > Warning: This API
+  /// is in Public Preview, which means that the feature is not subject to any SLA
+  /// or deprecation policy and could change in backwards-incompatible ways.
+  /// </summary>
+  public readonly struct LiveSessionVoiceActivity : ILiveSessionMessage
+  {
+    /// <summary>
+    /// The type of server-detected voice activity signal.
+    /// </summary>
+    public enum VoiceActivityType
+    {
+      /// <summary>
+      /// Unspecified or unknown voice activity signal.
+      /// </summary>
+      Unspecified = 0,
+      /// <summary>
+      /// Start of user speech signal.
+      /// </summary>
+      ActivityStart = 1,
+      /// <summary>
+      /// End of user speech signal.
+      /// </summary>
+      ActivityEnd = 2,
+    }
+
+    /// <summary>
+    /// Whether user speech started or stopped.
+    /// </summary>
+    public readonly VoiceActivityType Type { get; }
+
+    /// <summary>
+    /// The time the activity was detected relative to the start of the audio stream.
+    /// </summary>
+    public readonly TimeSpan? AudioOffset { get; }
+
+    private LiveSessionVoiceActivity(VoiceActivityType type, TimeSpan? audioOffset)
+    {
+      Type = type;
+      AudioOffset = audioOffset;
+    }
+
+    /// <summary>
+    /// Intended for internal use only.
+    /// This method is used for deserializing JSON responses and should not be called directly.
+    /// </summary>
+    internal static LiveSessionVoiceActivity FromJson(Dictionary<string, object> jsonDict)
+    {
+      return new LiveSessionVoiceActivity(
+        ParseVoiceActivityType(jsonDict),
+        jsonDict.TryParseValue("audioOffset", out string offsetStr)
+            ? ParseProtoDuration(offsetStr)
+            : null
+      );
+    }
+
+    private static VoiceActivityType ParseVoiceActivityType(Dictionary<string, object> jsonDict)
+    {
+      if (!jsonDict.TryParseValue("type", out string typeStr, JsonParseOptions.None))
+      {
+        return VoiceActivityType.Unspecified;
+      }
+
+      switch (typeStr)
+      {
+        case "ACTIVITY_START":
+          return VoiceActivityType.ActivityStart;
+        case "ACTIVITY_END":
+          return VoiceActivityType.ActivityEnd;
+        case "TYPE_UNSPECIFIED":
+          return VoiceActivityType.Unspecified;
+        default:
+          UnityEngine.Debug.LogWarning($"Ignoring unrecognized VoiceActivityType: {typeStr}");
+          return VoiceActivityType.Unspecified;
+      }
+    }
+
+    // Parses a protobuf JSON duration string (e.g., "2.520s") into a TimeSpan.
+    // Returns null when the string is not a finite number of seconds ending in 's',
+    // or when that value does not fit in a TimeSpan.
+    internal static TimeSpan? ParseProtoDuration(string value)
+    {
+      string trimmed = value.Trim();
+      if (!trimmed.EndsWith("s", StringComparison.Ordinal))
+      {
+        return null;
+      }
+
+      string numberPart = trimmed.Substring(0, trimmed.Length - 1);
+      const NumberStyles numberStyles =
+          NumberStyles.AllowLeadingSign |
+          NumberStyles.AllowDecimalPoint |
+          NumberStyles.AllowExponent;
+
+      if (decimal.TryParse(numberPart, numberStyles, CultureInfo.InvariantCulture, out decimal decSeconds))
+      {
+        try
+        {
+          decimal ticks = Math.Round(decSeconds * TimeSpan.TicksPerSecond, MidpointRounding.AwayFromZero);
+          if (ticks < TimeSpan.MinValue.Ticks || ticks > TimeSpan.MaxValue.Ticks)
+          {
+            return null;
+          }
+          return TimeSpan.FromTicks((long)ticks);
+        }
+        catch (OverflowException)
+        {
+          return null;
+        }
+      }
+
+      if (double.TryParse(numberPart, numberStyles, CultureInfo.InvariantCulture, out double dblSeconds) &&
+          !double.IsNaN(dblSeconds) && !double.IsInfinity(dblSeconds))
+      {
+        double ticks = dblSeconds * TimeSpan.TicksPerSecond;
+        if (double.IsNaN(ticks) || double.IsInfinity(ticks) ||
+            ticks < TimeSpan.MinValue.Ticks || ticks >= 9223372036854775808.0)
+        {
+          return null;
+        }
+        try
+        {
+          return TimeSpan.FromTicks(checked((long)Math.Round(ticks, MidpointRounding.AwayFromZero)));
+        }
+        catch (OverflowException)
+        {
+          return null;
+        }
+      }
+
+      return null;
     }
   }
 
