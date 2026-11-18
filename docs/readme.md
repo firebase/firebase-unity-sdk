@@ -137,6 +137,8 @@ Release Notes
       store (Schannel on Windows, the keychain on macOS) or the distribution's
       CA bundle on Linux. The same policy applies to the TLS connection to an
       HTTPS proxy, if one is configured.
+    - General: Build managed assemblies as `AnyCPU` instead of `x86` (`Required32Bit`)
+      so they load in 64-bit CoreCLR runtimes such as Unity 7.
 
 ### 14.1.0
 -   Changes
