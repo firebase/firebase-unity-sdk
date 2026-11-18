@@ -377,20 +377,27 @@ namespace Firebase.AI
 
           if (result.EndOfMessage)
           {
-            LiveSessionResponse? response = LiveSessionResponse.FromJson(messageBuilder.ToString());
+            string rawMessage = messageBuilder.ToString();
             // Reset for the next message.
             messageBuilder.Clear();
 
-            if (response != null)
+            bool turnCompleted = false;
+            foreach (LiveSessionResponse response in LiveSessionResponse.FromJsonFrames(rawMessage))
             {
-              yield return response.Value;
+              yield return response;
 
               // On receiving TurnComplete we close the ongoing connection.
-              if (response?.Message is LiveSessionContent serverContent &&
+              if (response.Message is LiveSessionContent serverContent &&
                   serverContent.TurnComplete)
               {
+                turnCompleted = true;
                 break;
               }
+            }
+
+            if (turnCompleted)
+            {
+              break;
             }
           }
         }
