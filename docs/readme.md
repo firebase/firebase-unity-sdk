@@ -111,8 +111,32 @@ Release Notes
 -------------
 ### 14.2.0
 -   Changes
+    - General: Update to Firebase C++ SDK version 14.2.0.
+    - General (Android): Update to Firebase Android BoM version 35.2.0.
+    - General (iOS): Update to Firebase CocoaPods version 13.2.0.
     - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
       to retrieve decoded ID token claims and metadata.
+    - App Check (Desktop): The App Check Debug Provider now automatically loads
+      CLI-provisioned debug tokens from `~/.config/configstore/firebase-appcheck.json`
+      and the `FIREBASE_APPCHECK_DEBUG_TOKEN` / `AppCheckDebugToken` environment
+      variables, and logs an actionable recovery hint when a debug token is
+      rejected with HTTP 403.
+    - App Check: Initialized `AppCheckToken::ExpireTimeMs` to `0` by
+      default and populated it from the JWT `exp` claim in iOS token change
+      notifications, fixing an `ArgumentOutOfRangeException` crash on iOS when
+      listening to `TokenChanged` in Unity.
+    - Database (Desktop): Replaced the uWebSockets/libuv WebSocket transport
+      with libcurl's WebSocket implementation, driven by one lightweight
+      event-driven thread per connection. Windows apps no longer need to link
+      `psapi` or `userenv` for the Realtime Database. Realtime Database
+      connections now honor the same proxy environment variables
+      (`https_proxy`, `all_proxy`, `no_proxy`, ...) as the REST transport.
+    - General (Desktop): REST and WebSocket connections now share one TLS
+      policy: peer and hostname verification are always on, TLS 1.2 is the
+      minimum version, and certificates are validated against the OS trust
+      store (Schannel on Windows, the keychain on macOS) or the distribution's
+      CA bundle on Linux. The same policy applies to the TLS connection to an
+      HTTPS proxy, if one is configured.
 
 ### 14.1.0
 -   Changes
