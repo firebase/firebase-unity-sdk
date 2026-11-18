@@ -10,6 +10,8 @@ This file contains boilerplate that is replaced with real values in the magic
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{@VAR_PROJECT_GUID@}</ProjectGuid>
     <OutputType>@VAR_OUTPUT_TYPE@</OutputType>
@@ -38,9 +40,6 @@ This file contains boilerplate that is replaced with real values in the magic
     <DefineConstants>@VAR_DEFINES@</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
-    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
 @VAR_REFERENCE@
