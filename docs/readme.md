@@ -116,6 +116,8 @@ Release Notes
     - Firebase AI: Added `LiveSessionVoiceActivity` to expose server-detected
       voice activity (`ActivityStart` and `ActivityEnd`) and `AudioOffset` in
       `LiveSession`.
+    - General: Build managed assemblies as `AnyCPU` instead of `x86` (`Required32Bit`)
+      so they load in 64-bit CoreCLR runtimes such as Unity 7.
 
 ### 14.1.0
 -   Changes
