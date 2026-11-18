@@ -109,7 +109,7 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
+### 14.2.0
 -   Changes
     - Auth: Added `IdTokenResult` struct and `FirebaseUser.GetIdTokenResultAsync()`
       to retrieve decoded ID token claims and metadata.
