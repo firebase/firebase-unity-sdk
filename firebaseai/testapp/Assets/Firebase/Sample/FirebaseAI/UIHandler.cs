@@ -74,53 +74,15 @@ namespace Firebase.Sample.FirebaseAI {
     }
 
     public string ModelName = "gemini-3.1-flash-lite";
-    public string LiveModelName = "gemini-3.8-live";
-    public string LiveAgentPlatformLocation = "us-central1";
 
     private int backendSelection = 0;
     private string[] backendChoices = new string[] { "Google AI Backend", "Agent Platform Backend" };
-
-    private LiveSession liveSession;
-    private CancellationTokenSource liveSessionCts;
-    private bool isConnectingLiveSession;
-    private bool isSimulatingSpeech;
-    private string voiceActivityStatus = "Idle";
-    private int activityStartCount;
-    private int activityEndCount;
-
-    private const int kLiveMicSampleRate = 16000;
-    private const float kMicPollIntervalSeconds = 0.1f;
-    private bool isStreamingMic;
-    private AudioClip micClip;
-#if !UNITY_TVOS
-    private string activeMicDevice;
-    private int lastMicSamplePosition;
-#endif
-    private float nextMicPollTime;
-
     private GenerativeModel GetModel() {
       var backend = backendSelection == 0
           ? FirebaseAI.Backend.GoogleAI()
           : FirebaseAI.Backend.AgentPlatform();
 
       return FirebaseAI.GetInstance(backend, useLimitedUseAppCheckTokens: true).GetGenerativeModel(ModelName);
-    }
-
-    private FirebaseAI GetLiveFirebaseAI() {
-      var backend = backendSelection == 0
-          ? FirebaseAI.Backend.GoogleAI()
-          : FirebaseAI.Backend.AgentPlatform(LiveAgentPlatformLocation);
-
-      return FirebaseAI.GetInstance(backend, useLimitedUseAppCheckTokens: true);
-    }
-
-    private LiveGenerativeModel GetLiveModel() {
-      return GetLiveFirebaseAI().GetLiveModel(
-          LiveModelName,
-          liveGenerationConfig: new LiveGenerationConfig(
-              responseModalities: new[] { ResponseModality.Audio },
-              inputAudioTranscription: new AudioTranscriptionConfig(),
-              outputAudioTranscription: new AudioTranscriptionConfig()));
     }
 
     // Send a single message to the Generative Model, without any history.
@@ -178,323 +140,11 @@ namespace Firebase.Sample.FirebaseAI {
       }
     }
 
-    async Task StartLiveSessionAsync() {
-      if (liveSession != null || isConnectingLiveSession) {
-        return;
-      }
-
-      isConnectingLiveSession = true;
-      voiceActivityStatus = "Connecting...";
-      activityStartCount = 0;
-      activityEndCount = 0;
-      liveSessionCts = new CancellationTokenSource();
-
-      try {
-        DebugLog($"Connecting LiveSession to '{LiveModelName}'...");
-        liveSession = await GetLiveModel().ConnectAsync(cancellationToken: liveSessionCts.Token);
-        voiceActivityStatus = "Idle (listening for voice activity)";
-        DebugLog("LiveSession connected. Start mic streaming or click 'Simulate Speech Turn' to test VoiceActivity.");
-        _ = ReceiveLiveResponsesLoopAsync(liveSession, liveSessionCts.Token);
-      } catch (Exception e) {
-        DebugLog("Error connecting LiveSession:\n" + e);
-        await CloseLiveSessionAsync();
-      } finally {
-        isConnectingLiveSession = false;
-      }
-    }
-
-    async Task ReceiveLiveResponsesLoopAsync(LiveSession session, CancellationToken cancellationToken) {
-      try {
-        while (!cancellationToken.IsCancellationRequested && liveSession == session) {
-          bool receivedAnyInTurn = false;
-          await foreach (var response in session.ReceiveAsync(cancellationToken)) {
-            receivedAnyInTurn = true;
-            HandleLiveSessionResponse(response);
-          }
-
-          if (!receivedAnyInTurn) {
-            DebugLog("LiveSession stream closed by server.");
-            break;
-          }
-        }
-      } catch (OperationCanceledException) {
-        // Expected on manual close.
-      } catch (Exception e) {
-        if (!cancellationToken.IsCancellationRequested) {
-          DebugLog("LiveSession receive loop error:\n" + e);
-        }
-      } finally {
-        if (liveSession == session) {
-          await CloseLiveSessionAsync();
-        }
-      }
-    }
-
-    private void HandleLiveSessionResponse(LiveSessionResponse response) {
-      if (response.Message is LiveSessionVoiceActivity voiceActivity) {
-        string offsetText = voiceActivity.AudioOffset.HasValue
-            ? $"{voiceActivity.AudioOffset.Value.TotalSeconds:F3}s ({voiceActivity.AudioOffset.Value})"
-            : "null";
-
-        switch (voiceActivity.Type) {
-          case LiveSessionVoiceActivity.VoiceActivityType.ActivityStart:
-            activityStartCount++;
-            voiceActivityStatus = $"SPEAKING (ActivityStart #{activityStartCount} @ {offsetText})";
-            DebugLog($"[VoiceActivity] User started speaking (ActivityStart) at AudioOffset={offsetText}");
-            break;
-          case LiveSessionVoiceActivity.VoiceActivityType.ActivityEnd:
-            activityEndCount++;
-            voiceActivityStatus = $"SILENT (ActivityEnd #{activityEndCount} @ {offsetText})";
-            DebugLog($"[VoiceActivity] User stopped speaking (ActivityEnd) at AudioOffset={offsetText}");
-            break;
-          default:
-            voiceActivityStatus = $"UNSPECIFIED ({voiceActivity.Type} @ {offsetText})";
-            DebugLog($"[VoiceActivity] Unspecified signal ({voiceActivity.Type}) at AudioOffset={offsetText}");
-            break;
-        }
-      } else if (response.Message is LiveSessionContent content) {
-        if (!string.IsNullOrEmpty(content.InputTranscription?.Text)) {
-          DebugLog($"[Live InputTranscription] {content.InputTranscription.Value.Text}");
-        }
-        if (!string.IsNullOrEmpty(content.OutputTranscription?.Text)) {
-          DebugLog($"[Live OutputTranscription] {content.OutputTranscription.Value.Text}");
-        }
-        if (!string.IsNullOrEmpty(response.Text)) {
-          DebugLog($"[Live Text] {response.Text}");
-        }
-        if (content.Interrupted) {
-          DebugLog("[Live Content] Model generation interrupted (barge-in).");
-        }
-        if (content.TurnComplete) {
-          DebugLog("[Live Content] TurnComplete.");
-        }
-      } else if (response.Message is LiveSessionGoingAway goingAway) {
-        DebugLog($"[Live GoingAway] Server disconnecting in {goingAway.TimeLeft}.");
-      }
-    }
-
-    async Task SendLiveTextMessageAsync(string message) {
-      if (string.IsNullOrWhiteSpace(message)) {
-        return;
-      }
-
-      try {
-        DebugLog($"Sending Live text message: {message}");
-        await liveSession.SendAsync(ModelContent.Text(message), turnComplete: true, cancellationToken: liveSessionCts.Token);
-      } catch (Exception e) {
-        DebugLog("Error sending Live text message:\n" + e);
-      }
-    }
-
-    void ToggleMicStreaming() {
-      if (isStreamingMic) {
-        StopMicStreaming();
-      } else {
-        StartMicStreaming();
-      }
-    }
-
-    void StartMicStreaming() {
-      if (isStreamingMic) {
-        return;
-      }
-#if !UNITY_TVOS
-      if (Microphone.devices.Length == 0) {
-        DebugLog("No microphone devices detected. Use 'Simulate Speech Turn' to test VoiceActivity without a mic.");
-        return;
-      }
-
-      activeMicDevice = Microphone.devices[0];
-      micClip = Microphone.Start(activeMicDevice, true, 10, kLiveMicSampleRate);
-      if (micClip == null) {
-        DebugLog($"Failed to start microphone '{activeMicDevice}'.");
-        return;
-      }
-
-      lastMicSamplePosition = 0;
-      nextMicPollTime = Time.unscaledTime + kMicPollIntervalSeconds;
-      isStreamingMic = true;
-      DebugLog($"Started 16kHz microphone streaming on '{activeMicDevice}'. Speak to trigger ActivityStart / ActivityEnd.");
-#else
-      DebugLog("Microphone capture is not supported on this platform. Use 'Simulate Speech Turn' instead.");
-#endif
-    }
-
-    void StopMicStreaming() {
-      if (!isStreamingMic) {
-        return;
-      }
-#if !UNITY_TVOS
-      if (Microphone.IsRecording(activeMicDevice)) {
-        Microphone.End(activeMicDevice);
-      }
-      activeMicDevice = null;
-#endif
-      isStreamingMic = false;
-      micClip = null;
-      DebugLog("Stopped microphone streaming.");
-    }
-
-    private void PollAndSendMicAudio() {
-      if (!isStreamingMic || Time.unscaledTime < nextMicPollTime) {
-        return;
-      }
-      nextMicPollTime = Time.unscaledTime + kMicPollIntervalSeconds;
-
-#if !UNITY_TVOS
-      int currentPos = Microphone.GetPosition(activeMicDevice);
-      if (currentPos < 0 || currentPos == lastMicSamplePosition) {
-        return;
-      }
-
-      int totalSamples = micClip.samples;
-      int sampleCount = currentPos >= lastMicSamplePosition
-          ? currentPos - lastMicSamplePosition
-          : (totalSamples - lastMicSamplePosition) + currentPos;
-
-      if (sampleCount <= 0) {
-        return;
-      }
-
-      float[] samples = new float[sampleCount * micClip.channels];
-      micClip.GetData(samples, lastMicSamplePosition);
-      lastMicSamplePosition = currentPos;
-
-      float[] monoSamples = samples;
-      if (micClip.channels > 1) {
-        monoSamples = new float[sampleCount];
-        for (int i = 0; i < sampleCount; i++) {
-          float sum = 0f;
-          for (int ch = 0; ch < micClip.channels; ch++) {
-            sum += samples[i * micClip.channels + ch];
-          }
-          monoSamples[i] = sum / micClip.channels;
-        }
-      }
-
-      _ = SendAudioChunkSafeAsync(monoSamples, liveSessionCts.Token);
-#endif
-    }
-
-    private async Task SendAudioChunkSafeAsync(float[] monoSamples, CancellationToken cancellationToken) {
-      try {
-        await liveSession.SendAudioAsync(monoSamples, cancellationToken);
-      } catch (OperationCanceledException) {
-      } catch (Exception e) {
-        if (!cancellationToken.IsCancellationRequested) {
-          DebugLog("Error streaming audio chunk:\n" + e);
-          StopMicStreaming();
-        }
-      }
-    }
-
-    private static float[] ResampleLinear(float[] input, int inRate, int outRate) {
-      int outLen = (int)((long)input.Length * outRate / inRate);
-      float[] output = new float[outLen];
-      double ratio = (double)(input.Length - 1) / Math.Max(1, outLen - 1);
-      for (int i = 0; i < outLen; i++) {
-        double srcIdx = i * ratio;
-        int idx0 = (int)srcIdx;
-        int idx1 = Math.Min(idx0 + 1, input.Length - 1);
-        float frac = (float)(srcIdx - idx0);
-        output[i] = input[idx0] * (1f - frac) + input[idx1] * frac;
-      }
-      return output;
-    }
-
-    // Synthesizes a short spoken utterance via a helper LiveSession and streams it as 16kHz PCM
-    // (padded with leading/trailing silence) into the active LiveSession so server VAD emits
-    // ActivityStart and ActivityEnd even when testing without a physical microphone.
-    async Task SimulateSpeechTurnAsync() {
-      if (isSimulatingSpeech) {
-        return;
-      }
-
-      isSimulatingSpeech = true;
-      CancellationToken token = liveSessionCts.Token;
-      try {
-        DebugLog("Generating spoken sample audio to feed into LiveSession VAD...");
-        List<float> samples24k = new List<float>();
-        using (var synthSession = await GetLiveModel().ConnectAsync(cancellationToken: token)) {
-          await synthSession.SendAsync(
-              ModelContent.Text("Please say clearly in one short sentence: Hello Gemini, testing voice activity one two three."),
-              turnComplete: true,
-              cancellationToken: token);
-
-          await foreach (var resp in synthSession.ReceiveAsync(token)) {
-            foreach (var chunk in resp.AudioAsFloat ?? System.Linq.Enumerable.Empty<float[]>()) {
-              samples24k.AddRange(chunk);
-            }
-          }
-          await synthSession.CloseAsync(CancellationToken.None);
-        }
-
-        if (samples24k.Count == 0) {
-          DebugLog("No audio returned when synthesizing sample utterance.");
-          return;
-        }
-
-        float[] speech16k = ResampleLinear(samples24k.ToArray(), 24000, kLiveMicSampleRate);
-        List<float> streamSamples = new List<float>(kLiveMicSampleRate * 4 + speech16k.Length);
-        streamSamples.AddRange(new float[kLiveMicSampleRate]); // 1s leading silence
-        streamSamples.AddRange(speech16k);
-        streamSamples.AddRange(new float[kLiveMicSampleRate * 3]); // 3s trailing silence
-
-        DebugLog($"Streaming {streamSamples.Count / (float)kLiveMicSampleRate:F1}s of 16kHz audio (1s silence + speech + 3s silence)...");
-        const int chunkSize = 1600; // 100ms @ 16kHz
-        for (int offset = 0; offset < streamSamples.Count && !token.IsCancellationRequested; offset += chunkSize) {
-          int count = Math.Min(chunkSize, streamSamples.Count - offset);
-          float[] chunk = streamSamples.GetRange(offset, count).ToArray();
-          await liveSession.SendAudioAsync(chunk, token);
-          await Task.Delay(50, token);
-        }
-        DebugLog("Finished streaming simulated speech audio.");
-      } catch (OperationCanceledException) {
-      } catch (Exception e) {
-        DebugLog("Error simulating speech turn:\n" + e);
-      } finally {
-        isSimulatingSpeech = false;
-      }
-    }
-
-    async Task CloseLiveSessionAsync() {
-      StopMicStreaming();
-
-      liveSessionCts?.Cancel();
-      liveSessionCts?.Dispose();
-      liveSessionCts = null;
-
-      var session = liveSession;
-      liveSession = null;
-      voiceActivityStatus = "Idle";
-
-      if (session != null) {
-        try {
-          await session.CloseAsync(CancellationToken.None);
-        } catch (Exception) {
-          // Ignore close errors during teardown.
-        } finally {
-          session.Dispose();
-        }
-        DebugLog("LiveSession closed.");
-      }
-    }
-
-    protected virtual void OnDestroy() {
-      StopMicStreaming();
-      liveSessionCts?.Cancel();
-      liveSessionCts?.Dispose();
-      liveSessionCts = null;
-      liveSession?.Dispose();
-      liveSession = null;
-    }
-
     // Exit if escape (or back, on mobile) is pressed.
     protected virtual void Update() {
       if (Input.GetKeyDown(KeyCode.Escape)) {
         Application.Quit();
       }
-      PollAndSendMicAudio();
     }
 
     // Output text to the debug log text field, as well as the console.
@@ -526,7 +176,7 @@ namespace Firebase.Sample.FirebaseAI {
 
         GUILayout.BeginVertical();
 
-        if (chatSession == null && liveSession == null) {
+        if (chatSession == null) {
           backendSelection = GUILayout.SelectionGrid(backendSelection, backendChoices, backendChoices.Length);
 
           textfieldString = GUILayout.TextField(textfieldString);
@@ -538,21 +188,7 @@ namespace Firebase.Sample.FirebaseAI {
           if (GUILayout.Button("Start Chat Session")) {
             StartChatSession();
           }
-
-          GUILayout.Space(10);
-          GUILayout.Label("Live API Model:");
-          LiveModelName = GUILayout.TextField(LiveModelName);
-          if (backendSelection == 1) {
-            GUILayout.Label("Agent Platform Location (Live API):");
-            LiveAgentPlatformLocation = GUILayout.TextField(LiveAgentPlatformLocation);
-          }
-
-          GUI.enabled = !isConnectingLiveSession;
-          if (GUILayout.Button(isConnectingLiveSession ? "Connecting Live Session..." : "Start Live Session")) {
-            _ = StartLiveSessionAsync();
-          }
-          GUI.enabled = true;
-        } else if (chatSession != null) {
+        } else {
           textfieldString = GUILayout.TextField(textfieldString);
 
           if (GUILayout.Button("Send Chat Message")) {
@@ -561,29 +197,6 @@ namespace Firebase.Sample.FirebaseAI {
 
           if (GUILayout.Button("Close Chat Session")) {
             CloseChatSession();
-          }
-        } else {
-          GUILayout.Label($"Live Model: {LiveModelName}");
-          GUILayout.Label($"Voice Activity: {voiceActivityStatus}");
-          GUILayout.Label($"Counts: Start={activityStartCount}, End={activityEndCount}");
-
-          if (GUILayout.Button(isStreamingMic ? "Stop Mic Streaming" : "Start Mic Streaming (16kHz)")) {
-            ToggleMicStreaming();
-          }
-
-          GUI.enabled = !isSimulatingSpeech;
-          if (GUILayout.Button(isSimulatingSpeech ? "Simulating Speech Turn..." : "Simulate Speech Turn (No Mic Needed)")) {
-            _ = SimulateSpeechTurnAsync();
-          }
-          GUI.enabled = true;
-
-          textfieldString = GUILayout.TextField(textfieldString);
-          if (GUILayout.Button("Send Live Text Message")) {
-            _ = SendLiveTextMessageAsync(textfieldString);
-          }
-
-          if (GUILayout.Button("Close Live Session")) {
-            _ = CloseLiveSessionAsync();
           }
         }
 
