@@ -26,6 +26,12 @@ internal sealed class InternalValueListener : InternalListener {
   public delegate void OnValueChangedDelegate(int callbackId, System.IntPtr snapshot);
   public delegate void OnCancelledDelegate(int callbackId, Error error, string msg);
 
+  // The delegates registered with C++, held here so that they are never garbage collected.
+  private static readonly InternalChildListener.OnCancelledDelegate cancelledDelegate =
+      new InternalChildListener.OnCancelledDelegate(OnCancelledHandler);
+  private static readonly OnValueChangedDelegate valueChangedDelegate =
+      new OnValueChangedDelegate(OnValueChangedHandler);
+
   // Gets the ValueListener for the given callbackId.
   private static bool TryGetListener(
       int callbackId, out InternalValueListener valueListener) {
@@ -76,7 +82,7 @@ internal sealed class InternalValueListener : InternalListener {
 
   static InternalValueListener() {
     InternalQuery.RegisterValueListenerCallbacks(
-        OnCancelledHandler, OnValueChangedHandler);
+        cancelledDelegate, valueChangedDelegate);
   }
 
   private object eventLock = new object();

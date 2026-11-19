@@ -25,10 +25,25 @@ unity_pack_folder(
 
 # For documentation, get all C# files recursively,
 # which make up the public API.
-file(GLOB_RECURSE firebase_functions_doc_src "src/*.cs")
+file(GLOB_RECURSE firebase_functions_all_src "src/*.cs")
+set(firebase_functions_doc_src ${firebase_functions_all_src})
 # Filter out any files located in src/Internal
 list(FILTER firebase_functions_doc_src EXCLUDE REGEX "src/Internal/")
 unity_pack_documentation_sources(firebasefunctions
   DOCUMENTATION_SOURCES
     ${firebase_functions_doc_src}
 )
+
+if (NOT FIREBASE_INCLUDE_UNITY AND NOT FIREBASE_GENERATE_SWIG_ONLY)
+  mono_add_library(firebase_functions_cs
+    MODULE
+      Firebase.Functions
+    SOURCES
+      ${firebase_functions_all_src}
+    REFERENCES
+      google_minijson_cs
+      firebase_app_internal_cs
+      ${FIREBASE_PLATFORM_REF}
+  )
+  unity_pack_cs(firebase_functions_cs)
+endif()

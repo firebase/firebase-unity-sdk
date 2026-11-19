@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>@VAR_TARGET_FRAMEWORK@</TargetFramework>
+    <OutputType>@VAR_OUTPUT_TYPE@</OutputType>
+    <RootNamespace>@VAR_ROOT_NAMESPACE@</RootNamespace>
+    <AssemblyName>@VAR_ASSEMBLY_NAME@</AssemblyName>
+    <!-- Must stay at C# 11 or later; do not copy the 9.0 that project.template
+         uses. From C# 11 the compiler stores the delegate it creates from a
+         static method name in a static field, once. The SDK passes such
+         delegates to native code as callbacks and relies on that field to keep
+         them alive: with 9.0 the .NET garbage collector frees them while
+         native code still holds them, and the Auth testapp crashes. -->
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <DefineConstants>@VAR_DEFINES@</DefineConstants>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <NoWarn>$(NoWarn);CS0618;CS0612;CS0414;CS0169;CS0067;CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+@VAR_REFERENCE@
+  </ItemGroup>
+  <ItemGroup>
+@VAR_COMPILE@
+  </ItemGroup>
+</Project>
