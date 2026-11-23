@@ -681,7 +681,7 @@ PlayerSettings:
   enableCrashReportAPI: 0
   cameraUsageDescription: 
   locationUsageDescription: 
-  microphoneUsageDescription: 
+  microphoneUsageDescription: Used to stream microphone audio to Gemini Live API in the test app.
   bluetoothUsageDescription: 
   switchNMETAOverride: 
   switchNetLibKey: 
