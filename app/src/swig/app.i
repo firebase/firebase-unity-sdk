@@ -898,6 +898,22 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
           // Don't actually want to do anything if it fails
         }
 
+        try {
+          // Functions is implemented in pure C# and doesn't depend on the native
+          // platform SDKs, so the heartbeat logic needs to check for it here,
+          // using reflection.
+          // From the asmdef file, the type should be located in the Firebase.Functions assembly.
+          System.Type foundType =
+              System.Type.GetType("Firebase.Functions.FirebaseFunctions, Firebase.Functions",
+                                  false, false);
+          if (foundType != null) {
+            // Found the class, add the Functions heartbeat to the user agent.
+            userAgentMap["fire-fn"] = Firebase.VersionInfo.SdkVersion;
+          }
+        } catch {
+          // Don't actually want to do anything if it fails
+        }
+
         RegisterLibrariesInternal(userAgentMap);
       }
 
