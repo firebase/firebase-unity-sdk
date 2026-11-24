@@ -71,7 +71,7 @@ namespace Firebase.Storage.Internal {
     }
 
     // Sets the standard Firebase Storage REST headers on an HttpRequestMessage.
-    // Note: Firebase Storage backend rejects 'x-goog-api-client' (b/74440917) and requires
+    // Note: Firebase Storage backend rejects 'x-goog-api-client' and requires
     // 'X-Firebase-Storage-Version' instead.
     internal static async Task SetStorageRequestHeaders(
         HttpRequestMessage request,

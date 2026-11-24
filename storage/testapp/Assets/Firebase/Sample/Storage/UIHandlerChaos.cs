@@ -232,12 +232,21 @@ namespace Firebase.Sample.Storage {
       return FirebaseStorage.DefaultInstance.GetReference("chaos/" + name);
     }
 
+    private static int SafeProcessThreadCount() {
+      try {
+        return System.Diagnostics.Process.GetCurrentProcess().Threads.Count;
+      } catch (NotSupportedException) {
+        // IL2CPP does not implement Process.GetCurrentProcess().Threads.
+        return -1;
+      }
+    }
+
     private void Metric(string scenario, params string[] kv) {
       Debug.Log("CHAOS|" + scenario + "|" + string.Join("|", kv) + "|retries=" + sdkRetryLogLines +
                 "|resyncs=" + sdkResyncLogLines + "|budget_exhausted=" + sdkBudgetExhaustedLines +
                 "|max_frame_gap_ms=" + (int)(chaosMaxFrameGap * 1000) +
                 "|managed_mb=" + (GC.GetTotalMemory(false) >> 20) + "|gc0=" + GC.CollectionCount(0) +
-                "|threads=" + System.Diagnostics.Process.GetCurrentProcess().Threads.Count);
+                "|threads=" + SafeProcessThreadCount());
     }
 
     // Tracks progress callbacks: count, monotonicity, thread affinity and last value.
@@ -832,7 +841,7 @@ namespace Firebase.Sample.Storage {
       int iterations = chaosSoakIterations;
       long size = 1024 * 1024;
       long memStart = GC.GetTotalMemory(true);
-      int threadsStart = System.Diagnostics.Process.GetCurrentProcess().Threads.Count;
+      int threadsStart = SafeProcessThreadCount();
       var rng = new System.Random(20);
       var stop = new CancellationTokenSource();
       Task weather = Task.Run(async () => {
@@ -878,7 +887,7 @@ namespace Firebase.Sample.Storage {
         await ClearWeatherAsync();
       }
       long memEnd = GC.GetTotalMemory(true);
-      int threadsEnd = System.Diagnostics.Process.GetCurrentProcess().Threads.Count;
+      int threadsEnd = SafeProcessThreadCount();
       Metric("S20", "phase=done", "iterations=" + iterations, "failures=" + failures,
              "seconds=" + (int)sw.Elapsed.TotalSeconds, "managed_start_mb=" + (memStart >> 20),
              "managed_end_mb=" + (memEnd >> 20), "threads_start=" + threadsStart, "threads_end=" + threadsEnd);

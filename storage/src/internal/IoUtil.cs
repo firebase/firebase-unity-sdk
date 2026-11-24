@@ -25,11 +25,12 @@ namespace Firebase.Storage.Internal {
   /// Local file and stream helpers shared by the upload and download engines.
   /// </summary>
   internal static class IoUtil {
-    // Buffer size for the FileStreams the engines open. This is FileStream's own default; it is
-    // spelled out only because every constructor overload that takes useAsync also takes a
-    // buffer size. The engines move data in their own, much larger blocks (see
-    // ResumableUploadTask.PreferredChunkSize and ResumableDownloadTask.BufferSize).
-    internal const int FileStreamBufferSize = 4096;
+    // Buffer size for the FileStreams the engines open (256 KB, matching ResumableDownloadTask
+    // and ResumableUploadTask transfer blocks) so disk reads and writes batch cleanly without
+    // per-record syscalls. Opened with useAsync: false because Mono/IL2CPP POSIX emulates async
+    // FileStream I/O via ThreadPool BeginRead/BeginWrite bounces, and transfers already run on
+    // background worker threads.
+    internal const int FileStreamBufferSize = 256 * 1024;
 
     // Scratch buffer for SkipAsync: the same 256 KB block size the engines transfer in, and
     // under the 1 MB above which ArrayPool<byte>.Shared stops pooling on Unity's BCL.
