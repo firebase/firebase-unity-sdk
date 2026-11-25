@@ -109,8 +109,6 @@ TEST_DEVICES = {
                      ]},
   "emulator_ftl_target": {"platform": ANDROID, "type": "real",
                           "device": [
-                            "model=Pixel2,version=28",
-                            "model=Pixel2.arm,version=28",
                             "model=MediumPhone.arm,version=28",
                             "model=MediumTablet.arm,version=28",
                             "model=SmallPhone.arm,version=28",
