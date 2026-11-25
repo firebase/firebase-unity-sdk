@@ -688,6 +688,12 @@ static firebase::AppOptions* AppOptionsLoadFromJsonConfig(const char* config) {
           "Firebase.Database.FirebaseDatabase, Firebase.Database",
           "database"
         ),
+        // Firestore is not auto-initialized. Listing it lets the C++ SDK
+        // register its user agent on desktop when Firestore is in use.
+        new EnableModuleParams(
+          "Firebase.Firestore.FirebaseFirestore, Firebase.Firestore",
+          "firestore"
+        ),
         new EnableModuleParams(
           "Firebase.Functions.FirebaseFunctions, Firebase.Functions",
           "functions"
