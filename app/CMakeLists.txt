@@ -97,6 +97,11 @@ if (FIREBASE_GENERATE_SWIG_ONLY)
   return()
 endif()
 
+# Link firebase-cpp-sdk's cross-platform native streaming HTTP transport
+# (libcurl on desktop, NSURLSession on iOS/tvOS, JNI HttpURLConnection on
+# Android) into FirebaseCppApp so pure-C# products share native networking.
+target_link_libraries(firebase_app_swig firebase_http_transport)
+
 if(FIREBASE_UNI_LIBRARY AND NOT FIREBASE_IOS_BUILD)
   set(firebase_native_library firebase_app_uni)
 else()

@@ -114,6 +114,8 @@ namespace Firebase.AI
     }
 
     // Create the initial ClientWebSocket with the appropriate headers.
+    // Note: Gemini Live uses bidirectional WebSockets (ClientWebSocket), which is separate from
+    // the native HTTP transport (FirebaseHttpMessageHandler) used by REST and SSE calls.
     private async Task<ClientWebSocket> CreateClientWebSocketAsync(CancellationToken cancellationToken)
     {
       ClientWebSocket clientWebSocket = new();

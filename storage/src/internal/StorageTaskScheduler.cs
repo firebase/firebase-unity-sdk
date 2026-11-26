@@ -126,7 +126,7 @@ namespace Firebase.Storage.Internal {
               Firebase.Platform.FirebaseHandler.DefaultInstance;
           if (handler != null && handler.IsMainThread()) {
             // Hop off the Unity main thread once a slot is acquired so synchronous FileStream I/O
-            // never blocks main-thread frame updates.
+            // and native HTTP fast-path copies never block main-thread frame updates.
             return await Task.Run(() => action(slot)).ConfigureAwait(false);
           }
         }

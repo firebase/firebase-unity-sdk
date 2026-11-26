@@ -28,6 +28,9 @@ namespace Firebase.Sample.FirebaseAI
   using System.Linq;
   using System.Net.Http;
   using System.Net;
+  using System.Net.Sockets;
+  using System.Text;
+  using System.Threading;
   using System.Threading.Tasks;
   using Google.MiniJSON;
   using UnityEngine;
@@ -154,6 +157,7 @@ namespace Firebase.Sample.FirebaseAI
       // When running on CI, these tests are only run in the Editor
       Func<Backend, Task>[] editorMultiBackendTests = {
         TestBasicTextStream,
+        TestBasicTextStreamCancellation,
         TestFunctionCallingAny,
         TestFunctionCallingNone,
         TestEnumSchemaResponse,
@@ -165,6 +169,7 @@ namespace Firebase.Sample.FirebaseAI
         TestThinkingBudget,
         TestTemplateGenerateContent,
         TestTemplateGenerateContentStream,
+        TestTemplateGenerateContentStreamCancellation,
         TestJsonSchemaStructureOutput,
         TestChatAutoFunctionCalling
       };
@@ -220,6 +225,8 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestUrlContextMixedValidity,
         InternalTestUsageMetadataWithCaching,
         InternalTestRealtimeInputConfigSerialization,
+        InternalTestNativeHttpFallbackClassification,
+        InternalTestNativeHttpLoopbackStreamingAndCancellation,
       };
 
       // Create the set of tests, combining the above lists.
@@ -2274,6 +2281,326 @@ namespace Firebase.Sample.FirebaseAI
       Assert("Should throw on overflowing prefix TimeSpan", caughtOverflowTimeSpan);
 
       return Task.CompletedTask;
+    }
+
+    // Verifies mid-stream CancellationToken cancellation on GenerativeModel SSE streams.
+    async Task TestBasicTextStreamCancellation(Backend backend)
+    {
+      var model = CreateGenerativeModel(backend);
+      using var cts = new CancellationTokenSource();
+      int receivedChunks = 0;
+      bool canceled = false;
+      try
+      {
+        await foreach (var response in model.GenerateContentStreamAsync(
+            "Write a detailed 500-word essay about the history of space exploration.",
+            cts.Token))
+        {
+          receivedChunks++;
+          if (receivedChunks >= 1)
+          {
+            cts.Cancel();
+          }
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        canceled = true;
+      }
+
+      Assert("Expected at least one chunk before canceling", receivedChunks >= 1);
+      Assert("Expected OperationCanceledException on mid-stream cancellation", canceled);
+    }
+
+    // Verifies mid-stream CancellationToken cancellation on TemplateGenerativeModel SSE streams.
+    async Task TestTemplateGenerateContentStreamCancellation(Backend backend)
+    {
+      var model = GetFirebaseAI(backend, "global").GetTemplateGenerativeModel();
+      var inputs = new Dictionary<string, object>()
+      {
+        ["customerName"] = "Jane"
+      };
+      using var cts = new CancellationTokenSource();
+      int receivedChunks = 0;
+      bool canceled = false;
+      try
+      {
+        await foreach (var response in model.GenerateContentStreamAsync(
+            "input-system-instructions", inputs, cancellationToken: cts.Token))
+        {
+          receivedChunks++;
+          if (receivedChunks >= 1)
+          {
+            cts.Cancel();
+          }
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        canceled = true;
+      }
+
+      Assert("Expected at least one template chunk before canceling", receivedChunks >= 1);
+      Assert("Expected OperationCanceledException on template mid-stream cancellation", canceled);
+    }
+
+    // Verifies managed fallback detection unwraps SWIG's 2-level nested TypeInitializationException
+    // (AppUtilPINVOKE -> SWIGExceptionHelper -> DllNotFoundException) as well as BadImageFormatException.
+    Task InternalTestNativeHttpFallbackClassification()
+    {
+      Assert("Direct DllNotFoundException",
+          FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(new DllNotFoundException("missing")));
+      Assert("Direct EntryPointNotFoundException",
+          FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(new EntryPointNotFoundException("missing")));
+      Assert("Direct BadImageFormatException",
+          FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(new BadImageFormatException("wrong arch")));
+
+      var oneLevel = new TypeInitializationException("AppUtilPINVOKE", new DllNotFoundException("missing"));
+      Assert("1-level TypeInitializationException",
+          FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(oneLevel));
+
+      var swigNested = new TypeInitializationException(
+          "Firebase.AppUtilPINVOKE",
+          new TypeInitializationException(
+              "Firebase.AppUtilPINVOKE+SWIGExceptionHelper",
+              new DllNotFoundException("FirebaseCppApp")));
+      Assert("2-level SWIG TypeInitializationException",
+          FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(swigNested));
+
+      var nestedBadImage = new TypeInitializationException(
+          "Firebase.AppUtilPINVOKE",
+          new TypeInitializationException(
+              "Firebase.AppUtilPINVOKE+SWIGExceptionHelper",
+              new BadImageFormatException("arch mismatch")));
+      Assert("2-level BadImageFormatException",
+          FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(nestedBadImage));
+
+      Assert("Unrelated InvalidOperationException must not trigger fallback",
+          !FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(new InvalidOperationException("bug")));
+      var unrelatedNested = new TypeInitializationException(
+          "SomeType", new InvalidOperationException("unrelated"));
+      Assert("TypeInitializationException wrapping unrelated error must not trigger fallback",
+          !FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(unrelatedNested));
+
+      return Task.CompletedTask;
+    }
+
+    // Deterministic offline loopback tests for FirebaseHttpMessageHandler + HttpHelpers covering:
+    //   1. Multi-value headers & JSON round-trip.
+    //   2. SSE incremental streaming & mid-stream cancellation via ResponseHeadersRead.
+    //   3. Stalled non-2xx error body cancellation in HttpHelpers.ValidateHttpResponse.
+    //   4. Unary ResponseContentRead post-header stall timeout enforcement.
+    //   5. Early 413 response mid->256 KiB upload completing without hanging.
+    async Task InternalTestNativeHttpLoopbackStreamingAndCancellation()
+    {
+      var listener = new TcpListener(IPAddress.Loopback, 0);
+      listener.Start();
+      int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+      using var serverStopCts = new CancellationTokenSource();
+
+      async Task<string> ReadRequestHeaderBlockAsync(NetworkStream ns)
+      {
+        var sb = new StringBuilder();
+        byte[] buf = new byte[1024];
+        while (!sb.ToString().Contains("\r\n\r\n"))
+        {
+          int n = await ns.ReadAsync(buf, 0, buf.Length).ConfigureAwait(false);
+          if (n <= 0) break;
+          sb.Append(Encoding.ASCII.GetString(buf, 0, n));
+        }
+        return sb.ToString();
+      }
+
+      Task serverLoop = Task.Run(async () =>
+      {
+        while (!serverStopCts.IsCancellationRequested)
+        {
+          TcpClient client;
+          try
+          {
+            client = await listener.AcceptTcpClientAsync().ConfigureAwait(false);
+          }
+          catch
+          {
+            break;
+          }
+          _ = Task.Run(async () =>
+          {
+            using (client)
+            using (NetworkStream ns = client.GetStream())
+            {
+              try
+              {
+                string req = await ReadRequestHeaderBlockAsync(ns).ConfigureAwait(false);
+                if (req.StartsWith("GET /headers "))
+                {
+                  byte[] resp = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 200 OK\r\n" +
+                      "Content-Type: text/plain\r\n" +
+                      "X-Multi: one\r\n" +
+                      "X-Multi: two\r\n" +
+                      "Content-Length: 2\r\n" +
+                      "Connection: close\r\n\r\nok");
+                  await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                }
+                else if (req.StartsWith("GET /sse-hang "))
+                {
+                  string ssePayload = "data: {\"seq\":1}\n\n";
+                  int chunkByteLen = Encoding.UTF8.GetByteCount(ssePayload);
+                  byte[] resp = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 200 OK\r\n" +
+                      "Content-Type: text/event-stream\r\n" +
+                      "Transfer-Encoding: chunked\r\n" +
+                      "Connection: close\r\n\r\n" +
+                      $"{chunkByteLen:x}\r\n{ssePayload}\r\n");
+                  await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                  await ns.FlushAsync().ConfigureAwait(false);
+                  try { await Task.Delay(15000, serverStopCts.Token).ConfigureAwait(false); } catch { }
+                }
+                else if (req.StartsWith("GET /err-stall "))
+                {
+                  byte[] resp = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 503 Service Unavailable\r\n" +
+                      "Content-Type: application/json\r\n" +
+                      "Content-Length: 1024\r\n" +
+                      "Connection: close\r\n\r\n{\"partial\":");
+                  await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                  await ns.FlushAsync().ConfigureAwait(false);
+                  try { await Task.Delay(15000, serverStopCts.Token).ConfigureAwait(false); } catch { }
+                }
+                else if (req.StartsWith("GET /unary-stall "))
+                {
+                  byte[] resp = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 200 OK\r\n" +
+                      "Content-Type: application/json\r\n" +
+                      "Content-Length: 4096\r\n" +
+                      "Connection: close\r\n\r\n{\"slow\":");
+                  await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                  await ns.FlushAsync().ConfigureAwait(false);
+                  try { await Task.Delay(15000, serverStopCts.Token).ConfigureAwait(false); } catch { }
+                }
+                else if (req.StartsWith("PUT /early-413 "))
+                {
+                  byte[] resp = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 413 Payload Too Large\r\n" +
+                      "Content-Length: 0\r\n" +
+                      "Connection: close\r\n\r\n");
+                  await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                  await ns.FlushAsync().ConfigureAwait(false);
+                }
+              }
+              catch
+              {
+              }
+            }
+          });
+        }
+      });
+
+      try
+      {
+        string baseUrl = $"http://127.0.0.1:{port}";
+        using var client = Firebase.Internal.HttpHelpers.CreateHttpClient(TimeSpan.FromSeconds(10));
+
+        // 1. Multi-value response headers round-trip.
+        using (var resp = await client.GetAsync(baseUrl + "/headers"))
+        {
+          AssertEq("Loopback /headers status", (int)resp.StatusCode, 200);
+          AssertEq("Loopback /headers body", await resp.Content.ReadAsStringAsync(), "ok");
+          Assert("Loopback X-Multi header present",
+              resp.Headers.TryGetValues("X-Multi", out var vals) && vals.Count() == 2);
+        }
+
+        // 2. SSE incremental delivery + mid-stream cancellation via ResponseHeadersRead.
+        using (var sseCts = new CancellationTokenSource())
+        {
+          using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/sse-hang");
+          using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, sseCts.Token);
+          using var reg = sseCts.Token.Register(() => resp.Dispose());
+          await Firebase.Internal.HttpHelpers.ValidateHttpResponse(resp, sseCts.Token);
+          using var stream = await resp.Content.ReadAsStreamAsync();
+          using var reader = new StreamReader(stream);
+
+          string firstLine = await Firebase.Internal.HttpHelpers.ReadLineWithCancellationAsync(reader, sseCts.Token);
+          AssertEq("SSE first chunk", firstLine, "data: {\"seq\":1}");
+          // Consume trailing blank line of event 1, then cancel while idle waiting for event 2.
+          string blankLine = await Firebase.Internal.HttpHelpers.ReadLineWithCancellationAsync(reader, sseCts.Token);
+          AssertEq("SSE blank separator", blankLine, "");
+
+          sseCts.CancelAfter(150);
+          var sw = System.Diagnostics.Stopwatch.StartNew();
+          bool canceled = false;
+          try
+          {
+            await Firebase.Internal.HttpHelpers.ReadLineWithCancellationAsync(reader, sseCts.Token);
+          }
+          catch (OperationCanceledException)
+          {
+            canceled = true;
+          }
+          sw.Stop();
+          Assert("SSE mid-stream cancel must throw OperationCanceledException", canceled);
+          Assert($"SSE mid-stream cancel took too long: {sw.ElapsedMilliseconds}ms", sw.ElapsedMilliseconds < 3000);
+        }
+
+        // 3. Stalled non-2xx error body under ResponseHeadersRead cancels promptly in ValidateHttpResponse.
+        using (var errCts = new CancellationTokenSource())
+        {
+          using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/err-stall");
+          using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, errCts.Token);
+          errCts.CancelAfter(150);
+          var sw = System.Diagnostics.Stopwatch.StartNew();
+          bool canceled = false;
+          try
+          {
+            await Firebase.Internal.HttpHelpers.ValidateHttpResponse(resp, errCts.Token);
+          }
+          catch (OperationCanceledException)
+          {
+            canceled = true;
+          }
+          sw.Stop();
+          Assert("Stalled error body must cancel with OperationCanceledException", canceled);
+          Assert($"Stalled error body cancel took too long: {sw.ElapsedMilliseconds}ms", sw.ElapsedMilliseconds < 3000);
+        }
+
+        // 4. Unary ResponseContentRead enforces HttpClient.Timeout on post-header stalls.
+        using (var shortClient = Firebase.Internal.HttpHelpers.CreateHttpClient(TimeSpan.FromMilliseconds(350)))
+        {
+          var sw = System.Diagnostics.Stopwatch.StartNew();
+          bool timedOut = false;
+          try
+          {
+            using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/unary-stall");
+            using var resp = await shortClient.SendAsync(req);
+          }
+          catch (OperationCanceledException)
+          {
+            timedOut = true;
+          }
+          sw.Stop();
+          Assert("Unary post-header stall must time out", timedOut);
+          Assert($"Unary post-header timeout took too long: {sw.ElapsedMilliseconds}ms", sw.ElapsedMilliseconds < 3000);
+        }
+
+        // 5. Early 413 response mid->256 KiB upload completes cleanly without hanging.
+        {
+          byte[] bigPayload = new byte[1024 * 1024];
+          using var req = new HttpRequestMessage(HttpMethod.Put, baseUrl + "/early-413");
+          req.Content = new StreamContent(new MemoryStream(bigPayload));
+          var sw = System.Diagnostics.Stopwatch.StartNew();
+          using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
+          sw.Stop();
+          AssertEq("Early 413 status", (int)resp.StatusCode, 413);
+          Assert($"Early 413 upload took too long: {sw.ElapsedMilliseconds}ms", sw.ElapsedMilliseconds < 3000);
+        }
+      }
+      finally
+      {
+        serverStopCts.Cancel();
+        listener.Stop();
+        try { await serverLoop; } catch { }
+      }
     }
   }
 }

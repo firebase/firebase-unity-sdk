@@ -1734,3 +1734,23 @@ static void TerminatePlayServicesInternal() {
 %}
 
 %include "app/src/include/firebase/variant.h"
+
+// Internal cross-platform native HTTP transport from firebase-cpp-sdk
+// (firebase_http_transport), consumed by FirebaseHttpMessageHandler.
+%{
+#include "app/http/http_bridge.h"
+%}
+
+%csmethodmodifiers firebase::HttpCreateRequestInternal "internal";
+%csmethodmodifiers firebase::HttpStartRequestInternal "internal";
+%csmethodmodifiers firebase::HttpTryWriteRequestBodyInternal "internal";
+%csmethodmodifiers firebase::HttpFinishRequestBodyInternal "internal";
+%csmethodmodifiers firebase::HttpPollResponseHeadersInternal "internal";
+%csmethodmodifiers firebase::HttpGetResponseHeadersInternal "internal";
+%csmethodmodifiers firebase::HttpTryReadResponseBodyInternal "internal";
+%csmethodmodifiers firebase::HttpGetErrorInternal "internal";
+%csmethodmodifiers firebase::HttpCancelRequestInternal "internal";
+%csmethodmodifiers firebase::HttpDestroyRequestInternal "internal";
+%csmethodmodifiers firebase::HttpWaitNextEventInternal "internal";
+%csmethodmodifiers firebase::HttpWakeEventPumpInternal "internal";
+%include "app/http/http_bridge.h"

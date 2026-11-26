@@ -45,29 +45,11 @@ namespace Firebase.Storage.Internal {
     }
 
     private static HttpClient CreateDefaultHttpClient() {
-      try {
-        if (ServicePointManager.DefaultConnectionLimit < MaxConnectionsPerServer) {
-          ServicePointManager.DefaultConnectionLimit = MaxConnectionsPerServer;
-        }
-      } catch (Exception) {
-        // Ignore on runtimes where ServicePointManager is unsupported.
-      }
-      var handler = new HttpClientHandler();
-      try {
-        handler.MaxConnectionsPerServer = MaxConnectionsPerServer;
-      } catch (Exception) {
-        // MonoWebRequestHandler (Windows Mono / iOS IL2CPP) throws NotImplementedException;
-        // other runtimes may throw PlatformNotSupportedException. ServicePointManager fallback
-        // above covers MonoWebRequestHandler.
-      }
       // Per-attempt stall detection is handled by StallWatchdog (see StorageTask.RunAttemptAsync)
-      // so the client-wide timeout is disabled.
-      var client = new HttpClient(handler) {
-        Timeout = Timeout.InfiniteTimeSpan
-      };
-      // Mono defaults to "Expect: 100-continue", which costs a round trip on every upload chunk.
-      client.DefaultRequestHeaders.ExpectContinue = false;
-      return client;
+      // so the client-wide timeout is disabled. Uses FirebaseHttpMessageHandler (backed by
+      // firebase-cpp-sdk's firebase_http_transport) to preserve native transfer speeds without
+      // depending on UnityEngine.Networking (see FirebaseHttpMessageHandler for full rationale).
+      return HttpHelpers.CreateHttpClient(Timeout.InfiniteTimeSpan, MaxConnectionsPerServer);
     }
 
     // Sets the standard Firebase Storage REST headers on an HttpRequestMessage.
@@ -125,14 +107,21 @@ namespace Firebase.Storage.Internal {
     }
 
     // Safely reads the response body as a string, returning an empty string on failure or null content.
-    internal static async Task<string> ReadResponseContentSafeAsync(HttpResponseMessage response) {
+    // Registers response disposal on cancellationToken so stalled error bodies on ResponseHeadersRead
+    // requests abort promptly when StallWatchdog or caller cancellation fires.
+    internal static async Task<string> ReadResponseContentSafeAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken = default) {
       if (response?.Content == null) {
         return string.Empty;
       }
-      try {
-        return await response.Content.ReadAsStringAsync().ConfigureAwait(false) ?? string.Empty;
-      } catch (Exception) {
-        return string.Empty;
+      using (cancellationToken.Register(() => response.Dispose())) {
+        try {
+          return await response.Content.ReadAsStringAsync().ConfigureAwait(false) ?? string.Empty;
+        } catch (Exception) {
+          cancellationToken.ThrowIfCancellationRequested();
+          return string.Empty;
+        }
       }
     }
 
@@ -140,11 +129,17 @@ namespace Firebase.Storage.Internal {
     /// Builds the <see cref="StorageException" /> for a non-success <paramref name="response" />
     /// from its status code and error body, and disposes the response.
     /// </summary>
-    internal static async Task<StorageException> CreateExceptionAsync(HttpResponseMessage response) {
+    internal static async Task<StorageException> CreateExceptionAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken = default) {
       int statusCode = (int)response.StatusCode;
-      string errorBody = await ReadResponseContentSafeAsync(response).ConfigureAwait(false);
-      response.Dispose();
-      return StorageException.CreateFromHttpResponse(statusCode, errorBody);
+      try {
+        string errorBody = await ReadResponseContentSafeAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+        return StorageException.CreateFromHttpResponse(statusCode, errorBody);
+      } finally {
+        response.Dispose();
+      }
     }
 
     /// <summary>
@@ -169,7 +164,7 @@ namespace Firebase.Storage.Internal {
                   .ConfigureAwait(false);
             }
             if (!IsSuccessOrResumeIncomplete((int)response.StatusCode)) {
-              throw await CreateExceptionAsync(response).ConfigureAwait(false);
+              throw await CreateExceptionAsync(response, watchdog.Token).ConfigureAwait(false);
             }
           },
           backoff,

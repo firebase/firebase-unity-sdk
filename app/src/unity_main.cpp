@@ -21,6 +21,7 @@
 
 #include <jni.h>
 
+#include "app/http/http_transport.h"
 #include "app/src/util.h"
 #include "app/src/util_android.h"
 
@@ -93,6 +94,7 @@ extern "C" {
 jint JNI_OnLoad(JavaVM *jvm, void *reserved) {
   ::firebase::LogDebug("JNI_OnLoad");
   ::firebase::g_jvm = jvm;
+  ::firebase::http::SetAndroidJavaVM(jvm);
   JNIEnv *jni_env;
   jobject activity_local_ref = ::firebase::UnityGetActivity(&jni_env);
   ::firebase::LogDebug(
