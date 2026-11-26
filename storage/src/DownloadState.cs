@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-using Firebase.Storage.Internal;
-
 namespace Firebase.Storage {
   /// <summary>
   /// DownloadState contains information for a download in progress.
@@ -27,30 +25,26 @@ namespace Firebase.Storage {
     /// <param name="totalByteCount">Total number of bytes to transfer or -1 if the size of the
     /// download is unknown.</param>
     internal DownloadState(StorageReference reference, long totalByteCount) {
-      State = new TransferState(reference) { TotalByteCount = totalByteCount };
+      Reference = reference;
+      TotalByteCount = totalByteCount;
     }
 
     /// <summary>
     /// The total number of bytes downloaded so far.
     /// </summary>
     /// <returns>the total number of bytes downloaded so far.</returns>
-    public long BytesTransferred { get { return State.BytesTransferred; } }
+    public long BytesTransferred { get; internal set; }
 
     /// <summary>
     /// The total number of bytes to download.
     /// </summary>
     /// <returns>The total number of bytes to download or -1 if the size is unknown.</returns>
-    public long TotalByteCount { get { return State.TotalByteCount; } }
+    public long TotalByteCount { get; internal set; }
 
     /// <summary>
     ///   Returns the <see cref="StorageReference" /> associated with this download.
     /// </summary>
     /// <returns>the <see cref="StorageReference" /> associated with this download.</returns>
-    public StorageReference Reference { get { return State.Reference; } }
-
-    /// <summary>
-    /// Backing store for DownloadState properties.
-    /// </summary>
-    internal TransferState State { get; private set; }
+    public StorageReference Reference { get; }
   }
 }
