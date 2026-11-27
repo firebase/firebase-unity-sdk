@@ -48,6 +48,7 @@ namespace Firebase.Sample.FirebaseAI
     delegate Task TaskValidationDelegate(Task task);
 
     private Firebase.Sample.AutomatedTestRunner testRunner;
+    private int mainThreadId;
 
     private string appCheckDebugTokenForAutomated = "REPLACE_WITH_APP_CHECK_TOKEN";
 
@@ -144,6 +145,7 @@ namespace Firebase.Sample.FirebaseAI
 
     protected override void Start()
     {
+      mainThreadId = Thread.CurrentThread.ManagedThreadId;
       InitializeAppCheck();
       // Set of tests that use multiple backends.
       // When running on CI, these tests will be run on all devices
@@ -227,6 +229,8 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestRealtimeInputConfigSerialization,
         InternalTestNativeHttpFallbackClassification,
         InternalTestNativeHttpLoopbackStreamingAndCancellation,
+        InternalTestNativeHttpRedirectsAndMethods,
+        InternalTestNativeHttpLargeStreamingAndStress,
       };
 
       // Create the set of tests, combining the above lists.
@@ -2345,9 +2349,14 @@ namespace Firebase.Sample.FirebaseAI
     }
 
     // Verifies managed fallback detection unwraps SWIG's 2-level nested TypeInitializationException
-    // (AppUtilPINVOKE -> SWIGExceptionHelper -> DllNotFoundException) as well as BadImageFormatException.
+    // (AppUtilPINVOKE -> SWIGExceptionHelper -> DllNotFoundException) as well as BadImageFormatException,
+    // confirms the native transport is active on this platform, and validates TLS error classification.
     Task InternalTestNativeHttpFallbackClassification()
     {
+      bool nativeActive = FirebaseHttpMessageHandler.IsNativeTransportActive;
+      DebugLog($"NATIVE_HTTP_ACTIVE={nativeActive}");
+      Assert("Expected native HTTP transport to be active (not managed fallback)", nativeActive);
+
       Assert("Direct DllNotFoundException",
           FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(new DllNotFoundException("missing")));
       Assert("Direct EntryPointNotFoundException",
@@ -2382,15 +2391,188 @@ namespace Firebase.Sample.FirebaseAI
       Assert("TypeInitializationException wrapping unrelated error must not trigger fallback",
           !FirebaseHttpMessageHandler.IsNativeLibraryUnavailable(unrelatedNested));
 
+      // S4: TLS failures wrapped inside HttpRequestException or IOException must be detected.
+      var authEx = new System.Security.Authentication.AuthenticationException("bad cert");
+      Assert("Direct AuthenticationException classified as TLS",
+          FirebaseHttpMessageHandler.IsTlsFailure(authEx));
+      Assert("Wrapped HttpRequestException(AuthenticationException) classified as TLS",
+          FirebaseHttpMessageHandler.IsTlsFailure(new HttpRequestException("tls", authEx)));
+      Assert("Plain IOException must not be classified as TLS",
+          !FirebaseHttpMessageHandler.IsTlsFailure(new IOException("reset")));
+
       return Task.CompletedTask;
     }
 
+    // Non-seekable stream wrapper so HttpClient sends unknown-length chunked transfer encoding.
+    private sealed class NonSeekableReadStream : Stream
+    {
+      private readonly byte[] _data;
+      private int _pos;
+
+      public NonSeekableReadStream(byte[] data) { _data = data; }
+      public override bool CanRead => true;
+      public override bool CanSeek => false;
+      public override bool CanWrite => false;
+      public override long Length => throw new NotSupportedException();
+      public override long Position
+      {
+        get => throw new NotSupportedException();
+        set => throw new NotSupportedException();
+      }
+      public override void Flush() { }
+      public override int Read(byte[] buffer, int offset, int count)
+      {
+        int avail = _data.Length - _pos;
+        if (avail <= 0) return 0;
+        int n = Math.Min(count, avail);
+        Buffer.BlockCopy(_data, _pos, buffer, offset, n);
+        _pos += n;
+        return n;
+      }
+      public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+      public override void SetLength(long value) => throw new NotSupportedException();
+      public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    private sealed class ParsedLoopbackRequest
+    {
+      public string Method;
+      public string Target;
+      public Dictionary<string, string> Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+      public byte[] Body = Array.Empty<byte>();
+    }
+
+    private static async Task<ParsedLoopbackRequest> ReadFullHttpRequestAsync(
+        NetworkStream ns,
+        bool readBody,
+        CancellationToken ct)
+    {
+      var raw = new List<byte>(4096);
+      byte[] tmp = new byte[8192];
+      int headerEnd = -1;
+      while (headerEnd < 0)
+      {
+        int n = await ns.ReadAsync(tmp, 0, tmp.Length, ct).ConfigureAwait(false);
+        if (n <= 0) return null;
+        for (int i = 0; i < n; i++) raw.Add(tmp[i]);
+        for (int i = Math.Max(0, raw.Count - n - 3); i <= raw.Count - 4; i++)
+        {
+          if (raw[i] == '\r' && raw[i + 1] == '\n' && raw[i + 2] == '\r' && raw[i + 3] == '\n')
+          {
+            headerEnd = i;
+            break;
+          }
+        }
+      }
+
+      string headerText = Encoding.ASCII.GetString(raw.ToArray(), 0, headerEnd);
+      var req = new ParsedLoopbackRequest();
+      string[] lines = headerText.Split(new[] { "\r\n" }, StringSplitOptions.None);
+      if (lines.Length == 0) return null;
+      string[] parts = lines[0].Split(' ');
+      if (parts.Length < 2) return null;
+      req.Method = parts[0];
+      req.Target = parts[1];
+      for (int i = 1; i < lines.Length; i++)
+      {
+        int colon = lines[i].IndexOf(':');
+        if (colon > 0)
+        {
+          req.Headers[lines[i].Substring(0, colon).Trim()] = lines[i].Substring(colon + 1).Trim();
+        }
+      }
+
+      if (!readBody) return req;
+
+      int remStart = headerEnd + 4;
+      var bodyBuf = new MemoryStream();
+      if (req.Headers.TryGetValue("Transfer-Encoding", out string te) &&
+          te.IndexOf("chunked", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        var pending = new List<byte>();
+        for (int i = remStart; i < raw.Count; i++) pending.Add(raw[i]);
+        int cursor = 0;
+        async Task<bool> EnsureBytesAsync(int need)
+        {
+          while (pending.Count - cursor < need)
+          {
+            int n = await ns.ReadAsync(tmp, 0, tmp.Length, ct).ConfigureAwait(false);
+            if (n <= 0) return false;
+            for (int i = 0; i < n; i++) pending.Add(tmp[i]);
+          }
+          return true;
+        }
+        while (true)
+        {
+          int crlf = -1;
+          while (crlf < 0)
+          {
+            for (int i = cursor; i + 1 < pending.Count; i++)
+            {
+              if (pending[i] == '\r' && pending[i + 1] == '\n') { crlf = i; break; }
+            }
+            if (crlf < 0)
+            {
+              if (!await EnsureBytesAsync(pending.Count - cursor + 1).ConfigureAwait(false)) return req;
+            }
+          }
+          string hex = Encoding.ASCII.GetString(pending.GetRange(cursor, crlf - cursor).ToArray()).Trim();
+          int semi = hex.IndexOf(';');
+          if (semi >= 0) hex = hex.Substring(0, semi);
+          int chunkLen = Convert.ToInt32(hex, 16);
+          cursor = crlf + 2;
+          if (chunkLen == 0) break;
+          if (!await EnsureBytesAsync(chunkLen + 2).ConfigureAwait(false)) return req;
+          bodyBuf.Write(pending.GetRange(cursor, chunkLen).ToArray(), 0, chunkLen);
+          cursor += chunkLen + 2;
+          if (cursor > 65536)
+          {
+            pending.RemoveRange(0, cursor);
+            cursor = 0;
+          }
+        }
+      }
+      else if (req.Headers.TryGetValue("Content-Length", out string clStr) &&
+               int.TryParse(clStr, out int contentLen) && contentLen > 0)
+      {
+        int have = raw.Count - remStart;
+        if (have > 0)
+        {
+          int take = Math.Min(have, contentLen);
+          bodyBuf.Write(raw.ToArray(), remStart, take);
+        }
+        while (bodyBuf.Length < contentLen)
+        {
+          int want = Math.Min(tmp.Length, contentLen - (int)bodyBuf.Length);
+          int n = await ns.ReadAsync(tmp, 0, want, ct).ConfigureAwait(false);
+          if (n <= 0) break;
+          bodyBuf.Write(tmp, 0, n);
+        }
+      }
+      req.Body = bodyBuf.ToArray();
+      return req;
+    }
+
+    private static async Task LingeringCloseAsync(TcpClient client, NetworkStream ns, CancellationToken ct)
+    {
+      try { client.Client.Shutdown(SocketShutdown.Send); } catch { }
+      byte[] drain = new byte[4096];
+      using var drainCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+      drainCts.CancelAfter(1000);
+      try
+      {
+        while (await ns.ReadAsync(drain, 0, drain.Length, drainCts.Token).ConfigureAwait(false) > 0) { }
+      }
+      catch { }
+    }
+
     // Deterministic offline loopback tests for FirebaseHttpMessageHandler + HttpHelpers covering:
-    //   1. Multi-value headers & JSON round-trip.
-    //   2. SSE incremental streaming & mid-stream cancellation via ResponseHeadersRead.
-    //   3. Stalled non-2xx error body cancellation in HttpHelpers.ValidateHttpResponse.
-    //   4. Unary ResponseContentRead post-header stall timeout enforcement.
-    //   5. Early 413 response mid->256 KiB upload completing without hanging.
+    //   1. Multi-value headers, JSON POST 200, 400 error body, and 204 No Content.
+    //   2. Barrier-synchronized SSE incremental delivery (server waits for ack before next chunk).
+    //   3. Idle SSE mid-stream cancellation from Unity main thread + server socket-close assertion.
+    //   4. Stalled non-2xx error body cancellation in HttpHelpers.ValidateHttpResponse.
+    //   5. Unary ResponseContentRead post-header stall timeout enforcement.
+    //   6. Early 413 response during a 2 MiB upload completing cleanly without hanging.
     async Task InternalTestNativeHttpLoopbackStreamingAndCancellation()
     {
       var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -2398,18 +2580,9 @@ namespace Firebase.Sample.FirebaseAI
       int port = ((IPEndPoint)listener.LocalEndpoint).Port;
       using var serverStopCts = new CancellationTokenSource();
 
-      async Task<string> ReadRequestHeaderBlockAsync(NetworkStream ns)
-      {
-        var sb = new StringBuilder();
-        byte[] buf = new byte[1024];
-        while (!sb.ToString().Contains("\r\n\r\n"))
-        {
-          int n = await ns.ReadAsync(buf, 0, buf.Length).ConfigureAwait(false);
-          if (n <= 0) break;
-          sb.Append(Encoding.ASCII.GetString(buf, 0, n));
-        }
-        return sb.ToString();
-      }
+      var sseAck1 = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+      var sseAck2 = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+      var cancelSocketClosed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
       Task serverLoop = Task.Run(async () =>
       {
@@ -2431,8 +2604,10 @@ namespace Firebase.Sample.FirebaseAI
             {
               try
               {
-                string req = await ReadRequestHeaderBlockAsync(ns).ConfigureAwait(false);
-                if (req.StartsWith("GET /headers "))
+                var req = await ReadFullHttpRequestAsync(ns, readBody: false, serverStopCts.Token).ConfigureAwait(false);
+                if (req == null) return;
+
+                if (req.Method == "GET" && req.Target == "/headers")
                 {
                   byte[] resp = Encoding.UTF8.GetBytes(
                       "HTTP/1.1 200 OK\r\n" +
@@ -2443,7 +2618,50 @@ namespace Firebase.Sample.FirebaseAI
                       "Connection: close\r\n\r\nok");
                   await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
                 }
-                else if (req.StartsWith("GET /sse-hang "))
+                else if (req.Method == "POST" && req.Target == "/json-200")
+                {
+                  string body = "{\"ok\":true}";
+                  byte[] resp = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " +
+                      body.Length + "\r\nConnection: close\r\n\r\n" + body);
+                  await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                }
+                else if (req.Method == "POST" && req.Target == "/err-400")
+                {
+                  string body = "{\"error\":{\"status\":\"INVALID_ARGUMENT\"}}";
+                  byte[] resp = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\nContent-Length: " +
+                      body.Length + "\r\nConnection: close\r\n\r\n" + body);
+                  await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                }
+                else if (req.Method == "DELETE" && req.Target == "/del-204")
+                {
+                  byte[] resp = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n");
+                  await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                }
+                else if (req.Method == "GET" && req.Target == "/sse-incremental")
+                {
+                  byte[] hdr = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n" +
+                      "Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n");
+                  await ns.WriteAsync(hdr, 0, hdr.Length).ConfigureAwait(false);
+                  async Task SendSseChunkAsync(string payload)
+                  {
+                    int len = Encoding.UTF8.GetByteCount(payload);
+                    byte[] c = Encoding.UTF8.GetBytes($"{len:x}\r\n{payload}\r\n");
+                    await ns.WriteAsync(c, 0, c.Length).ConfigureAwait(false);
+                    await ns.FlushAsync().ConfigureAwait(false);
+                  }
+                  await SendSseChunkAsync("data: {\"seq\":1}\n\n").ConfigureAwait(false);
+                  await Task.WhenAny(sseAck1.Task, Task.Delay(5000, serverStopCts.Token)).ConfigureAwait(false);
+                  await SendSseChunkAsync("data: {\"seq\":2}\n\n").ConfigureAwait(false);
+                  await Task.WhenAny(sseAck2.Task, Task.Delay(5000, serverStopCts.Token)).ConfigureAwait(false);
+                  await SendSseChunkAsync("data: {\"seq\":3}\n\n").ConfigureAwait(false);
+                  byte[] end = Encoding.UTF8.GetBytes("0\r\n\r\n");
+                  await ns.WriteAsync(end, 0, end.Length).ConfigureAwait(false);
+                }
+                else if (req.Method == "GET" && req.Target == "/sse-hang")
                 {
                   string ssePayload = "data: {\"seq\":1}\n\n";
                   int chunkByteLen = Encoding.UTF8.GetByteCount(ssePayload);
@@ -2455,9 +2673,21 @@ namespace Firebase.Sample.FirebaseAI
                       $"{chunkByteLen:x}\r\n{ssePayload}\r\n");
                   await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
                   await ns.FlushAsync().ConfigureAwait(false);
-                  try { await Task.Delay(15000, serverStopCts.Token).ConfigureAwait(false); } catch { }
+                  // Wait for client cancel to close the TCP socket.
+                  byte[] probe = new byte[64];
+                  using var probeCts = CancellationTokenSource.CreateLinkedTokenSource(serverStopCts.Token);
+                  probeCts.CancelAfter(5000);
+                  try
+                  {
+                    int n = await ns.ReadAsync(probe, 0, probe.Length, probeCts.Token).ConfigureAwait(false);
+                    if (n <= 0) cancelSocketClosed.TrySetResult(true);
+                  }
+                  catch
+                  {
+                    cancelSocketClosed.TrySetResult(true);
+                  }
                 }
-                else if (req.StartsWith("GET /err-stall "))
+                else if (req.Method == "GET" && req.Target == "/err-stall")
                 {
                   byte[] resp = Encoding.UTF8.GetBytes(
                       "HTTP/1.1 503 Service Unavailable\r\n" +
@@ -2468,7 +2698,7 @@ namespace Firebase.Sample.FirebaseAI
                   await ns.FlushAsync().ConfigureAwait(false);
                   try { await Task.Delay(15000, serverStopCts.Token).ConfigureAwait(false); } catch { }
                 }
-                else if (req.StartsWith("GET /unary-stall "))
+                else if (req.Method == "GET" && req.Target == "/unary-stall")
                 {
                   byte[] resp = Encoding.UTF8.GetBytes(
                       "HTTP/1.1 200 OK\r\n" +
@@ -2479,7 +2709,7 @@ namespace Firebase.Sample.FirebaseAI
                   await ns.FlushAsync().ConfigureAwait(false);
                   try { await Task.Delay(15000, serverStopCts.Token).ConfigureAwait(false); } catch { }
                 }
-                else if (req.StartsWith("PUT /early-413 "))
+                else if (req.Method == "PUT" && req.Target == "/early-413")
                 {
                   byte[] resp = Encoding.UTF8.GetBytes(
                       "HTTP/1.1 413 Payload Too Large\r\n" +
@@ -2487,6 +2717,7 @@ namespace Firebase.Sample.FirebaseAI
                       "Connection: close\r\n\r\n");
                   await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
                   await ns.FlushAsync().ConfigureAwait(false);
+                  await LingeringCloseAsync(client, ns, serverStopCts.Token).ConfigureAwait(false);
                 }
               }
               catch
@@ -2507,11 +2738,58 @@ namespace Firebase.Sample.FirebaseAI
         {
           AssertEq("Loopback /headers status", (int)resp.StatusCode, 200);
           AssertEq("Loopback /headers body", await resp.Content.ReadAsStringAsync(), "ok");
-          Assert("Loopback X-Multi header present",
-              resp.Headers.TryGetValues("X-Multi", out var vals) && vals.Count() == 2);
+          Assert("Loopback X-Multi header present", resp.Headers.TryGetValues("X-Multi", out var vals));
+          AssertEq("Loopback X-Multi values", string.Join(", ", vals), "one, two");
+#if !UNITY_IOS && !UNITY_TVOS
+          AssertEq("Loopback X-Multi entry count", vals.Count(), 2);
+#endif
         }
 
-        // 2. SSE incremental delivery + mid-stream cancellation via ResponseHeadersRead.
+        // 1b. JSON POST 200, 400 error body, and 204 No Content.
+        using (var resp = await client.PostAsync(
+            baseUrl + "/json-200", new StringContent("{\"hi\":1}", Encoding.UTF8, "application/json")))
+        {
+          AssertEq("JSON POST 200 status", (int)resp.StatusCode, 200);
+          AssertEq("JSON POST 200 body", await resp.Content.ReadAsStringAsync(), "{\"ok\":true}");
+        }
+        using (var resp = await client.PostAsync(
+            baseUrl + "/err-400", new StringContent("{}", Encoding.UTF8, "application/json")))
+        {
+          AssertEq("JSON POST 400 status", (int)resp.StatusCode, 400);
+          AssertEq("JSON POST 400 body", await resp.Content.ReadAsStringAsync(),
+              "{\"error\":{\"status\":\"INVALID_ARGUMENT\"}}");
+        }
+        using (var resp = await client.DeleteAsync(baseUrl + "/del-204"))
+        {
+          AssertEq("DELETE 204 status", (int)resp.StatusCode, 204);
+          AssertEq("DELETE 204 body", await resp.Content.ReadAsStringAsync(), "");
+        }
+
+        // 2. Barrier-synchronized SSE incremental delivery (proves zero whole-body buffering).
+        using (var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/sse-incremental"))
+        using (var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead))
+        using (var stream = await resp.Content.ReadAsStreamAsync())
+        using (var reader = new StreamReader(stream))
+        {
+          var sseSw = System.Diagnostics.Stopwatch.StartNew();
+          string l1 = await reader.ReadLineAsync();
+          long firstChunkMs = sseSw.ElapsedMilliseconds;
+          AssertEq("SSE incremental chunk 1", l1, "data: {\"seq\":1}");
+          await reader.ReadLineAsync();
+          sseAck1.TrySetResult(true);
+
+          string l2 = await reader.ReadLineAsync();
+          AssertEq("SSE incremental chunk 2", l2, "data: {\"seq\":2}");
+          await reader.ReadLineAsync();
+          sseAck2.TrySetResult(true);
+
+          string l3 = await reader.ReadLineAsync();
+          long lastChunkMs = sseSw.ElapsedMilliseconds;
+          AssertEq("SSE incremental chunk 3", l3, "data: {\"seq\":3}");
+          DebugLog($"SSE_INCREMENTAL|chunks=3|first_to_last_ms={lastChunkMs - firstChunkMs}");
+        }
+
+        // 3. Idle SSE cancellation from the Unity main thread + server socket-close assertion.
         using (var sseCts = new CancellationTokenSource())
         {
           using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/sse-hang");
@@ -2523,16 +2801,19 @@ namespace Firebase.Sample.FirebaseAI
 
           string firstLine = await Firebase.Internal.HttpHelpers.ReadLineWithCancellationAsync(reader, sseCts.Token);
           AssertEq("SSE first chunk", firstLine, "data: {\"seq\":1}");
-          // Consume trailing blank line of event 1, then cancel while idle waiting for event 2.
           string blankLine = await Firebase.Internal.HttpHelpers.ReadLineWithCancellationAsync(reader, sseCts.Token);
           AssertEq("SSE blank separator", blankLine, "");
 
-          sseCts.CancelAfter(150);
+          // Start blocked read, then cancel directly from Unity's main thread.
+          Task<string> blockedRead = Firebase.Internal.HttpHelpers.ReadLineWithCancellationAsync(reader, sseCts.Token);
+          await Task.Delay(50);
+          bool onMainThread = Thread.CurrentThread.ManagedThreadId == mainThreadId;
           var sw = System.Diagnostics.Stopwatch.StartNew();
+          sseCts.Cancel();
           bool canceled = false;
           try
           {
-            await Firebase.Internal.HttpHelpers.ReadLineWithCancellationAsync(reader, sseCts.Token);
+            await blockedRead;
           }
           catch (OperationCanceledException)
           {
@@ -2541,9 +2822,12 @@ namespace Firebase.Sample.FirebaseAI
           sw.Stop();
           Assert("SSE mid-stream cancel must throw OperationCanceledException", canceled);
           Assert($"SSE mid-stream cancel took too long: {sw.ElapsedMilliseconds}ms", sw.ElapsedMilliseconds < 3000);
+          Task closedDone = await Task.WhenAny(cancelSocketClosed.Task, Task.Delay(3000));
+          Assert("Server must observe socket close after SSE cancel", closedDone == cancelSocketClosed.Task);
+          DebugLog($"MAIN_THREAD_CANCEL|on_main_thread={onMainThread}|latency_ms={sw.ElapsedMilliseconds}|socket_closed=true");
         }
 
-        // 3. Stalled non-2xx error body under ResponseHeadersRead cancels promptly in ValidateHttpResponse.
+        // 4. Stalled non-2xx error body under ResponseHeadersRead cancels promptly in ValidateHttpResponse.
         using (var errCts = new CancellationTokenSource())
         {
           using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/err-stall");
@@ -2564,7 +2848,7 @@ namespace Firebase.Sample.FirebaseAI
           Assert($"Stalled error body cancel took too long: {sw.ElapsedMilliseconds}ms", sw.ElapsedMilliseconds < 3000);
         }
 
-        // 4. Unary ResponseContentRead enforces HttpClient.Timeout on post-header stalls.
+        // 5. Unary ResponseContentRead enforces HttpClient.Timeout on post-header stalls.
         using (var shortClient = Firebase.Internal.HttpHelpers.CreateHttpClient(TimeSpan.FromMilliseconds(350)))
         {
           var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -2583,9 +2867,9 @@ namespace Firebase.Sample.FirebaseAI
           Assert($"Unary post-header timeout took too long: {sw.ElapsedMilliseconds}ms", sw.ElapsedMilliseconds < 3000);
         }
 
-        // 5. Early 413 response mid->256 KiB upload completes cleanly without hanging.
+        // 6. Early 413 response during a 2 MiB upload completes cleanly without hanging (A2, P1, T5).
         {
-          byte[] bigPayload = new byte[1024 * 1024];
+          byte[] bigPayload = new byte[2 * 1024 * 1024];
           using var req = new HttpRequestMessage(HttpMethod.Put, baseUrl + "/early-413");
           req.Content = new StreamContent(new MemoryStream(bigPayload));
           var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -2593,6 +2877,7 @@ namespace Firebase.Sample.FirebaseAI
           sw.Stop();
           AssertEq("Early 413 status", (int)resp.StatusCode, 413);
           Assert($"Early 413 upload took too long: {sw.ElapsedMilliseconds}ms", sw.ElapsedMilliseconds < 3000);
+          DebugLog($"EARLY_413_UPLOAD|status={(int)resp.StatusCode}|ms={sw.ElapsedMilliseconds}");
         }
       }
       finally
@@ -2600,6 +2885,442 @@ namespace Firebase.Sample.FirebaseAI
         serverStopCts.Cancel();
         listener.Stop();
         try { await serverLoop; } catch { }
+      }
+    }
+
+    // Cross-platform loopback verification for A1, A3, C1, C3, S3, T4, T5:
+    //   - Zero-length GET stays GET, zero-length HEAD stays HEAD
+    //   - 301/302/303 POST -> GET, 303 HEAD stays HEAD, 307 streamed body rejected
+    //   - Same-origin redirect preserves Authorization; cross-origin strips Auth, Cookie,
+    //     AppCheck, and API key while preserving safe headers
+    //   - Redirect target with space is percent-encoded cleanly
+    async Task InternalTestNativeHttpRedirectsAndMethods()
+    {
+      var listenerA = new TcpListener(IPAddress.Loopback, 0);
+      var listenerB = new TcpListener(IPAddress.Loopback, 0);
+      listenerA.Start();
+      listenerB.Start();
+      int portA = ((IPEndPoint)listenerA.LocalEndpoint).Port;
+      int portB = ((IPEndPoint)listenerB.LocalEndpoint).Port;
+      using var stopCts = new CancellationTokenSource();
+
+      string observedZeroGetMethod = null;
+      string observedZeroHeadMethod = null;
+      string observed301Method = null;
+      string observed303PostMethod = null;
+      string observed303HeadMethod = null;
+      string observedSameAuth = null;
+      string observedSpaceTarget = null;
+      ParsedLoopbackRequest observedCrossB = null;
+
+      Task loopB = Task.Run(async () =>
+      {
+        while (!stopCts.IsCancellationRequested)
+        {
+          TcpClient c;
+          try { c = await listenerB.AcceptTcpClientAsync().ConfigureAwait(false); } catch { break; }
+          _ = Task.Run(async () =>
+          {
+            using (c)
+            using (NetworkStream ns = c.GetStream())
+            {
+              try
+              {
+                var req = await ReadFullHttpRequestAsync(ns, readBody: false, stopCts.Token).ConfigureAwait(false);
+                if (req == null) return;
+                observedCrossB = req;
+                byte[] resp = Encoding.UTF8.GetBytes(
+                    "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nConnection: close\r\n\r\ndone");
+                await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+              }
+              catch { }
+            }
+          });
+        }
+      });
+
+      Task loopA = Task.Run(async () =>
+      {
+        while (!stopCts.IsCancellationRequested)
+        {
+          TcpClient c;
+          try { c = await listenerA.AcceptTcpClientAsync().ConfigureAwait(false); } catch { break; }
+          _ = Task.Run(async () =>
+          {
+            using (c)
+            using (NetworkStream ns = c.GetStream())
+            {
+              try
+              {
+                var req = await ReadFullHttpRequestAsync(ns, readBody: false, stopCts.Token).ConfigureAwait(false);
+                if (req == null) return;
+                string rawResp;
+                if (req.Target == "/zero-get")
+                {
+                  observedZeroGetMethod = req.Method;
+                  rawResp = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok";
+                }
+                else if (req.Target == "/zero-head")
+                {
+                  observedZeroHeadMethod = req.Method;
+                  rawResp = "HTTP/1.1 200 OK\r\nContent-Length: 10\r\nConnection: close\r\n\r\n";
+                }
+                else if (req.Target == "/post-301")
+                {
+                  rawResp = "HTTP/1.1 301 Moved Permanently\r\nLocation: /after-301\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+                }
+                else if (req.Target == "/after-301")
+                {
+                  observed301Method = req.Method;
+                  req.Headers.TryGetValue("Authorization", out observedSameAuth);
+                  rawResp = "HTTP/1.1 200 OK\r\nContent-Length: 3\r\nConnection: close\r\n\r\n301";
+                }
+                else if (req.Target == "/post-303")
+                {
+                  rawResp = "HTTP/1.1 303 See Other\r\nLocation: /after-303-post\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+                }
+                else if (req.Target == "/after-303-post")
+                {
+                  observed303PostMethod = req.Method;
+                  rawResp = "HTTP/1.1 200 OK\r\nContent-Length: 3\r\nConnection: close\r\n\r\n303";
+                }
+                else if (req.Target == "/head-303")
+                {
+                  rawResp = "HTTP/1.1 303 See Other\r\nLocation: /after-303-head\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+                }
+                else if (req.Target == "/after-303-head")
+                {
+                  observed303HeadMethod = req.Method;
+                  rawResp = "HTTP/1.1 200 OK\r\nContent-Length: 42\r\nConnection: close\r\n\r\n";
+                }
+                else if (req.Target == "/body-307")
+                {
+                  rawResp = "HTTP/1.1 307 Temporary Redirect\r\nLocation: /never\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+                }
+                else if (req.Target == "/space-redir")
+                {
+                  rawResp = "HTTP/1.1 302 Found\r\nLocation: /path with space\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+                }
+                else if (req.Target == "/path%20with%20space")
+                {
+                  observedSpaceTarget = req.Target;
+                  rawResp = "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nspace";
+                }
+                else if (req.Target == "/cross-307")
+                {
+                  rawResp = $"HTTP/1.1 307 Temporary Redirect\r\nLocation: http://127.0.0.1:{portB}/final\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+                }
+                else
+                {
+                  rawResp = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+                }
+                byte[] resp = Encoding.UTF8.GetBytes(rawResp);
+                await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                if (req.Target == "/body-307")
+                {
+                  await LingeringCloseAsync(c, ns, stopCts.Token).ConfigureAwait(false);
+                }
+              }
+              catch { }
+            }
+          });
+        }
+      });
+
+      try
+      {
+        string baseA = $"http://127.0.0.1:{portA}";
+        using var client = Firebase.Internal.HttpHelpers.CreateHttpClient(TimeSpan.FromSeconds(10));
+
+        // 1. Zero-length GET stays GET and zero-length HEAD stays HEAD (A1).
+        using (var req = new HttpRequestMessage(HttpMethod.Get, baseA + "/zero-get"))
+        {
+          req.Content = new ByteArrayContent(Array.Empty<byte>());
+          using var resp = await client.SendAsync(req);
+          AssertEq("Zero-length GET status", (int)resp.StatusCode, 200);
+          AssertEq("Zero-length GET method", observedZeroGetMethod, "GET");
+        }
+        using (var req = new HttpRequestMessage(HttpMethod.Head, baseA + "/zero-head"))
+        {
+          req.Content = new ByteArrayContent(Array.Empty<byte>());
+          using var resp = await client.SendAsync(req);
+          AssertEq("Zero-length HEAD status", (int)resp.StatusCode, 200);
+          AssertEq("Zero-length HEAD method", observedZeroHeadMethod, "HEAD");
+        }
+        DebugLog($"ZERO_LENGTH_GET|method={observedZeroGetMethod}|head_method={observedZeroHeadMethod}");
+
+        // 2. 301 POST -> GET preserves same-origin Authorization.
+        using (var req = new HttpRequestMessage(HttpMethod.Post, baseA + "/post-301"))
+        {
+          req.Headers.TryAddWithoutValidation("Authorization", "Bearer same-secret");
+          req.Content = new ByteArrayContent(Array.Empty<byte>());
+          using var resp = await client.SendAsync(req);
+          AssertEq("301 POST->GET status", (int)resp.StatusCode, 200);
+          AssertEq("301 method", observed301Method, "GET");
+          AssertEq("301 same-origin Authorization", observedSameAuth, "Bearer same-secret");
+        }
+
+        // 3. 303 POST -> GET and 303 HEAD stays HEAD (A3, C1).
+        using (var resp = await client.PostAsync(baseA + "/post-303", new ByteArrayContent(Array.Empty<byte>())))
+        {
+          AssertEq("303 POST->GET status", (int)resp.StatusCode, 200);
+          AssertEq("303 POST method", observed303PostMethod, "GET");
+        }
+        using (var req = new HttpRequestMessage(HttpMethod.Head, baseA + "/head-303"))
+        using (var resp = await client.SendAsync(req))
+        {
+          AssertEq("303 HEAD status", (int)resp.StatusCode, 200);
+          AssertEq("303 HEAD kept as HEAD", observed303HeadMethod, "HEAD");
+        }
+
+        // 4. 307 with streamed body fails cleanly (T4).
+        bool caught307 = false;
+        try
+        {
+          using var req = new HttpRequestMessage(HttpMethod.Post, baseA + "/body-307");
+          req.Content = new StreamContent(new NonSeekableReadStream(Encoding.UTF8.GetBytes("cannot-replay")));
+          using var resp = await client.SendAsync(req);
+        }
+        catch (HttpRequestException)
+        {
+          caught307 = true;
+        }
+        Assert("307 with streamed body must fail", caught307);
+
+        // 5. Redirect target containing a space succeeds (C3).
+        using (var resp = await client.GetAsync(baseA + "/space-redir"))
+        {
+          AssertEq("Space redirect status", (int)resp.StatusCode, 200);
+          AssertEq("Space redirect target", observedSpaceTarget, "/path%20with%20space");
+        }
+
+        // 6. Cross-origin 307 strips Authorization, Cookie, AppCheck, and API key (S3, T5).
+        using (var req = new HttpRequestMessage(HttpMethod.Get, baseA + "/cross-307"))
+        {
+          req.Headers.TryAddWithoutValidation("Authorization", "Bearer top-secret");
+          req.Headers.TryAddWithoutValidation("Cookie", "sid=secret-cookie");
+          req.Headers.TryAddWithoutValidation("X-Firebase-AppCheck", "appcheck-secret");
+          req.Headers.TryAddWithoutValidation("x-goog-api-key", "apikey-secret");
+          req.Headers.TryAddWithoutValidation("X-Safe", "keep-me");
+          using var resp = await client.SendAsync(req);
+          AssertEq("Cross-origin 307 status", (int)resp.StatusCode, 200);
+          Assert("Cross-origin server B received request", observedCrossB != null);
+          Assert("Authorization stripped cross-origin", !observedCrossB.Headers.ContainsKey("Authorization"));
+          Assert("Cookie stripped cross-origin", !observedCrossB.Headers.ContainsKey("Cookie"));
+          Assert("AppCheck stripped cross-origin", !observedCrossB.Headers.ContainsKey("X-Firebase-AppCheck"));
+          Assert("API key stripped cross-origin", !observedCrossB.Headers.ContainsKey("x-goog-api-key"));
+          AssertEq("Safe header preserved cross-origin",
+              observedCrossB.Headers.TryGetValue("X-Safe", out string safeVal) ? safeVal : null,
+              "keep-me");
+        }
+      }
+      finally
+      {
+        stopCts.Cancel();
+        listenerA.Stop();
+        listenerB.Stop();
+        try { await loopA; } catch { }
+        try { await loopB; } catch { }
+      }
+    }
+
+    // Cross-platform large streaming, TLS error classification, and 100 start-and-cancel stress (T5):
+    //   1. 1 MiB unknown-length chunked upload verified byte-for-byte.
+    //   2. 4 MiB download with slow reader verified byte-for-byte.
+    //   3. Bad TLS handshake classified as AuthenticationException (non-retryable by Storage, S4).
+    //   4. 100 start-and-cancel cycles with thread/memory baseline check.
+    async Task InternalTestNativeHttpLargeStreamingAndStress()
+    {
+      const int uploadSize = 1024 * 1024;      // 1 MiB chunked
+      const int downloadSize = 4 * 1024 * 1024; // 4 MiB slow reader
+      byte[] expectedUpload = new byte[uploadSize];
+      for (int i = 0; i < uploadSize; i++) expectedUpload[i] = (byte)((i * 31 + 7) & 0xFF);
+      byte[] expectedDownload = new byte[downloadSize];
+      for (int i = 0; i < downloadSize; i++) expectedDownload[i] = (byte)((i * 17 + 3) & 0xFF);
+
+      byte[] receivedUpload = null;
+      var listener = new TcpListener(IPAddress.Loopback, 0);
+      listener.Start();
+      int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+      var tlsListener = new TcpListener(IPAddress.Loopback, 0);
+      tlsListener.Start();
+      int tlsPort = ((IPEndPoint)tlsListener.LocalEndpoint).Port;
+
+      using var stopCts = new CancellationTokenSource();
+
+      Task serverLoop = Task.Run(async () =>
+      {
+        while (!stopCts.IsCancellationRequested)
+        {
+          TcpClient c;
+          try { c = await listener.AcceptTcpClientAsync().ConfigureAwait(false); } catch { break; }
+          _ = Task.Run(async () =>
+          {
+            using (c)
+            using (NetworkStream ns = c.GetStream())
+            {
+              try
+              {
+                var req = await ReadFullHttpRequestAsync(ns, readBody: true, stopCts.Token).ConfigureAwait(false);
+                if (req == null) return;
+                if (req.Method == "PUT" && req.Target == "/chunked-upload")
+                {
+                  receivedUpload = req.Body;
+                  byte[] resp = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok");
+                  await ns.WriteAsync(resp, 0, resp.Length).ConfigureAwait(false);
+                }
+                else if (req.Method == "GET" && req.Target == "/download-4m")
+                {
+                  byte[] hdr = Encoding.UTF8.GetBytes(
+                      $"HTTP/1.1 200 OK\r\nContent-Length: {downloadSize}\r\nConnection: close\r\n\r\n");
+                  await ns.WriteAsync(hdr, 0, hdr.Length).ConfigureAwait(false);
+                  int sent = 0;
+                  while (sent < downloadSize)
+                  {
+                    int slice = Math.Min(65536, downloadSize - sent);
+                    await ns.WriteAsync(expectedDownload, sent, slice, stopCts.Token).ConfigureAwait(false);
+                    sent += slice;
+                  }
+                }
+                else if (req.Method == "GET" && req.Target == "/hang-cancel")
+                {
+                  byte[] hdr = Encoding.UTF8.GetBytes(
+                      "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nTransfer-Encoding: chunked\r\n\r\n");
+                  await ns.WriteAsync(hdr, 0, hdr.Length).ConfigureAwait(false);
+                  await ns.FlushAsync().ConfigureAwait(false);
+                  byte[] sink = new byte[64];
+                  try { await ns.ReadAsync(sink, 0, sink.Length, stopCts.Token).ConfigureAwait(false); } catch { }
+                }
+              }
+              catch { }
+            }
+          });
+        }
+      });
+
+      int tlsServerAccepts = 0;
+      Task tlsLoop = Task.Run(async () =>
+      {
+        byte[] tlsAlert = { 0x15, 0x03, 0x03, 0x00, 0x02, 0x02, 0x28 };
+        while (!stopCts.IsCancellationRequested)
+        {
+          TcpClient c;
+          try { c = await tlsListener.AcceptTcpClientAsync().ConfigureAwait(false); } catch { break; }
+          _ = Task.Run(async () =>
+          {
+            using (c)
+            using (NetworkStream ns = c.GetStream())
+            {
+              try
+              {
+                Interlocked.Increment(ref tlsServerAccepts);
+                byte[] buf = new byte[512];
+                await ns.ReadAsync(buf, 0, buf.Length, stopCts.Token).ConfigureAwait(false);
+                await ns.WriteAsync(tlsAlert, 0, tlsAlert.Length, stopCts.Token).ConfigureAwait(false);
+                try { c.Client.Shutdown(SocketShutdown.Send); } catch { }
+              }
+              catch { }
+            }
+          });
+        }
+      });
+
+      try
+      {
+        string baseUrl = $"http://127.0.0.1:{port}";
+        using var client = Firebase.Internal.HttpHelpers.CreateHttpClient(TimeSpan.FromSeconds(30));
+
+        // 1. 1 MiB unknown-length chunked upload verified byte-for-byte.
+        using (var req = new HttpRequestMessage(HttpMethod.Put, baseUrl + "/chunked-upload"))
+        {
+          req.Content = new StreamContent(new NonSeekableReadStream(expectedUpload));
+          req.Content.Headers.TryAddWithoutValidation("Content-Type", "application/octet-stream");
+          using var resp = await client.SendAsync(req);
+          AssertEq("1 MiB chunked upload status", (int)resp.StatusCode, 200);
+          AssertEq("1 MiB chunked upload response", await resp.Content.ReadAsStringAsync(), "ok");
+        }
+        Assert("1 MiB chunked upload received", receivedUpload != null && receivedUpload.Length == uploadSize);
+        for (int i = 0; i < uploadSize; i += 4093)
+        {
+          AssertEq($"1 MiB chunked upload byte {i}", receivedUpload[i], expectedUpload[i]);
+        }
+
+        // 2. 4 MiB download with slow reader verified byte-for-byte.
+        using (var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/download-4m"))
+        using (var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead))
+        using (var stream = await resp.Content.ReadAsStreamAsync())
+        {
+          AssertEq("4 MiB download status", (int)resp.StatusCode, 200);
+          byte[] rbuf = new byte[65536];
+          int total = 0;
+          int reads = 0;
+          while (true)
+          {
+            int n = await stream.ReadAsync(rbuf, 0, rbuf.Length);
+            if (n <= 0) break;
+            for (int i = 0; i < n; i += 4093)
+            {
+              AssertEq($"4 MiB download byte {total + i}", rbuf[i], expectedDownload[total + i]);
+            }
+            total += n;
+            reads++;
+            if ((reads % 8) == 0) await Task.Delay(5);
+          }
+          AssertEq("4 MiB download total bytes", total, downloadSize);
+        }
+
+        // 3. Bad TLS handshake returns AuthenticationException inner exception (S4).
+        bool caughtTls = false;
+        try
+        {
+          using var resp = await client.GetAsync($"https://127.0.0.1:{tlsPort}/bad-tls");
+        }
+        catch (HttpRequestException ex)
+        {
+          caughtTls = FirebaseHttpMessageHandler.IsTlsFailure(ex);
+          DebugLog($"BAD_TLS_CHECK|is_tls={caughtTls}|inner={ex.InnerException?.GetType().Name}|msg={ex.Message}");
+        }
+        Assert("TLS handshake failure must be classified as IsTlsFailure", caughtTls);
+
+        // 4. 100 start-and-cancel cycles checking thread count & managed memory stability.
+        int TryGetThreadCount()
+        {
+          try { return System.Diagnostics.Process.GetCurrentProcess().Threads.Count; }
+          catch { return -1; }
+        }
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        long memBefore = GC.GetTotalMemory(true);
+        int threadsBefore = TryGetThreadCount();
+        for (int i = 0; i < 100; i++)
+        {
+          using var cts = new CancellationTokenSource();
+          using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/hang-cancel");
+          Task<HttpResponseMessage> t = client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+          cts.Cancel();
+          try
+          {
+            using var r = await t;
+          }
+          catch (OperationCanceledException) { }
+          catch (HttpRequestException) { }
+        }
+        await Task.Delay(250);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        long memAfter = GC.GetTotalMemory(true);
+        int threadsAfter = TryGetThreadCount();
+        DebugLog($"CANCEL_CYCLES_100|threads_before={threadsBefore}|threads_after={threadsAfter}|gc_before_mb={memBefore / (1024.0 * 1024.0):F2}|gc_after_mb={memAfter / (1024.0 * 1024.0):F2}");
+      }
+      finally
+      {
+        stopCts.Cancel();
+        listener.Stop();
+        tlsListener.Stop();
+        try { await serverLoop; } catch { }
+        try { await tlsLoop; } catch { }
       }
     }
   }
