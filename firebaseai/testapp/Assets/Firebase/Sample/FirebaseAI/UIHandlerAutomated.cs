@@ -2566,6 +2566,25 @@ namespace Firebase.Sample.FirebaseAI
       catch { }
     }
 
+    // On IL2CPP, TcpListener.Stop() closes the listening fd without waking selector_thread's
+    // poll() on an in-flight AcceptTcpClientAsync(), causing `await serverLoop` to hang.
+    // Connecting a dummy loopback client after cancelling stopCts wakes AcceptTcpClientAsync
+    // cleanly before Stop().
+    private static async Task StopLoopbackListenerAsync(
+        TcpListener listener, int port, CancellationTokenSource stopCts, Task serverLoop)
+    {
+      stopCts.Cancel();
+      try
+      {
+        using var wake = new TcpClient();
+        var connectTask = wake.ConnectAsync(IPAddress.Loopback, port);
+        await Task.WhenAny(connectTask, Task.Delay(500)).ConfigureAwait(false);
+      }
+      catch { }
+      try { listener.Stop(); } catch { }
+      try { await Task.WhenAny(serverLoop, Task.Delay(1000)).ConfigureAwait(false); } catch { }
+    }
+
     // Deterministic offline loopback tests for FirebaseHttpMessageHandler + HttpHelpers covering:
     //   1. Multi-value headers, JSON POST 200, 400 error body, and 204 No Content.
     //   2. Barrier-synchronized SSE incremental delivery (server waits for ack before next chunk).
@@ -2595,6 +2614,11 @@ namespace Firebase.Sample.FirebaseAI
           }
           catch
           {
+            break;
+          }
+          if (serverStopCts.IsCancellationRequested)
+          {
+            try { client.Close(); } catch { }
             break;
           }
           _ = Task.Run(async () =>
@@ -2882,9 +2906,7 @@ namespace Firebase.Sample.FirebaseAI
       }
       finally
       {
-        serverStopCts.Cancel();
-        listener.Stop();
-        try { await serverLoop; } catch { }
+        await StopLoopbackListenerAsync(listener, port, serverStopCts, serverLoop);
       }
     }
 
@@ -2919,6 +2941,7 @@ namespace Firebase.Sample.FirebaseAI
         {
           TcpClient c;
           try { c = await listenerB.AcceptTcpClientAsync().ConfigureAwait(false); } catch { break; }
+          if (stopCts.IsCancellationRequested) { try { c.Close(); } catch { } break; }
           _ = Task.Run(async () =>
           {
             using (c)
@@ -2945,6 +2968,7 @@ namespace Firebase.Sample.FirebaseAI
         {
           TcpClient c;
           try { c = await listenerA.AcceptTcpClientAsync().ConfigureAwait(false); } catch { break; }
+          if (stopCts.IsCancellationRequested) { try { c.Close(); } catch { } break; }
           _ = Task.Run(async () =>
           {
             using (c)
@@ -3116,11 +3140,8 @@ namespace Firebase.Sample.FirebaseAI
       }
       finally
       {
-        stopCts.Cancel();
-        listenerA.Stop();
-        listenerB.Stop();
-        try { await loopA; } catch { }
-        try { await loopB; } catch { }
+        await StopLoopbackListenerAsync(listenerA, portA, stopCts, loopA);
+        await StopLoopbackListenerAsync(listenerB, portB, stopCts, loopB);
       }
     }
 
@@ -3155,6 +3176,7 @@ namespace Firebase.Sample.FirebaseAI
         {
           TcpClient c;
           try { c = await listener.AcceptTcpClientAsync().ConfigureAwait(false); } catch { break; }
+          if (stopCts.IsCancellationRequested) { try { c.Close(); } catch { } break; }
           _ = Task.Run(async () =>
           {
             using (c)
@@ -3208,6 +3230,7 @@ namespace Firebase.Sample.FirebaseAI
         {
           TcpClient c;
           try { c = await tlsListener.AcceptTcpClientAsync().ConfigureAwait(false); } catch { break; }
+          if (stopCts.IsCancellationRequested) { try { c.Close(); } catch { } break; }
           _ = Task.Run(async () =>
           {
             using (c)
@@ -3316,11 +3339,8 @@ namespace Firebase.Sample.FirebaseAI
       }
       finally
       {
-        stopCts.Cancel();
-        listener.Stop();
-        tlsListener.Stop();
-        try { await serverLoop; } catch { }
-        try { await tlsLoop; } catch { }
+        await StopLoopbackListenerAsync(listener, port, stopCts, serverLoop);
+        await StopLoopbackListenerAsync(tlsListener, tlsPort, stopCts, tlsLoop);
       }
     }
   }
