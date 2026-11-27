@@ -39,8 +39,9 @@ namespace firebase {
 %ignore FutureBase::OnCompletion;
 %ignore Future::OnCompletion;
 
-// We don't have a need for the equals operator, as C# Futures/Tasks don't
-// support copying.
+// We don't have a need for the equals operator or move constructor, as C#
+// Futures/Tasks don't support copying or moving.
+%ignore FutureBase::FutureBase(FutureBase&&);
 %ignore FutureBase::operator=;
 
 }  // namespace firebase

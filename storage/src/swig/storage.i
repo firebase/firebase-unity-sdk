@@ -162,8 +162,8 @@ static AttributeType& %mangle(Class) ##_## AttributeName ## _get_func(Class* sel
 %ignore firebase::storage::StorageReference::PutBytes;
 %ignore firebase::storage::StorageReference::PutFile;
 
-// Remove the copy operator as the proxy uses the copy constructor.
-%ignore firebase::storage::StorageReference::operator=(const StorageReference&);
+// Remove the assignment operators as the proxy uses the copy constructor.
+%ignore firebase::storage::StorageReference::operator=;
 
 %extend firebase::storage::StorageReference {
   // Fetch buffer_size bytes into buffer using monitor_controller to monitor
@@ -289,8 +289,8 @@ static AttributeType& %mangle(Class) ##_## AttributeName ## _get_func(Class* sel
   }
 %}
 
-// Remove the copy operator as the proxy uses the copy constructor.
-%ignore firebase::storage::Metadata::operator=(const Metadata&);
+// Remove the assignment operators as the proxy uses the copy constructor.
+%ignore firebase::storage::Metadata::operator=;
 
 // SWIG will generate a wrapper for listener which will simply result in
 // callbacks landing in the C++ class rather than the C# interface.  Therefore,
@@ -305,8 +305,8 @@ static AttributeType& %mangle(Class) ##_## AttributeName ## _get_func(Class* sel
 %attribute(firebase::storage::Controller, int64_t, TotalByteCount,
            total_byte_count);
 %attribute(firebase::storage::Controller, bool, IsValid, is_valid);
-// Remove the copy operator as the proxy uses the copy constructor.
-%ignore firebase::storage::Controller::operator=(const Controller&);
+// Remove the assignment operators as the proxy uses the copy constructor.
+%ignore firebase::storage::Controller::operator=;
 
 // TODO(smiles): All exceptions on tasks need to be propagated via
 // StorageException rather than returning this error code.
@@ -480,6 +480,7 @@ class MonitorController;
 %include "storage/src/include/firebase/storage/listener.h"
 %ignore firebase::storage::StorageListResult::items;
 %ignore firebase::storage::StorageListResult::prefixes;
+%ignore firebase::storage::StorageListResult::operator=;
 
 %extend firebase::storage::StorageListResult {
   size_t items_count() const { return self->items().size(); }
