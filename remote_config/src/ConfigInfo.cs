@@ -34,7 +34,7 @@ public sealed class ConfigInfo {
     if (milliseconds > MaxUnixEpochMilliseconds) {
       return MaxDateTimeUtc;
     }
-    return UnixEpochUtc.AddTicks((long)milliseconds * System.TimeSpan.TicksPerMillisecond);
+    return UnixEpochUtc.AddMilliseconds(milliseconds);
   }
 
   /// @brief The time when the last fetch operation completed.
