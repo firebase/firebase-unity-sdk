@@ -179,6 +179,7 @@ namespace Firebase.Sample.FirebaseAI
         TestGoogleMaps,
         TestTemplateChat,
         TestTemplateChatStreamAutoFunction,
+        TestLiveVoiceActivity,
       };
       // Construct the set of tests to run, based on the environment
       List<Func<Backend, Task>> multiBackendTests = new(basicMultiBackendTests);
@@ -220,6 +221,7 @@ namespace Firebase.Sample.FirebaseAI
         InternalTestUrlContextMixedValidity,
         InternalTestUsageMetadataWithCaching,
         InternalTestRealtimeInputConfigSerialization,
+        InternalTestLiveSessionVoiceActivityParsing,
       };
 
       // Create the set of tests, combining the above lists.
@@ -2274,6 +2276,269 @@ namespace Firebase.Sample.FirebaseAI
       Assert("Should throw on overflowing prefix TimeSpan", caughtOverflowTimeSpan);
 
       return Task.CompletedTask;
+    }
+
+    Task InternalTestLiveSessionVoiceActivityParsing()
+    {
+      var originalCulture = System.Globalization.CultureInfo.CurrentCulture;
+      try
+      {
+        foreach (var culture in new[] {
+            System.Globalization.CultureInfo.InvariantCulture,
+            new System.Globalization.CultureInfo("de-DE") })
+        {
+          System.Globalization.CultureInfo.CurrentCulture = culture;
+
+          // 1. Speech start and end with documented and edge-case proto durations
+          var witnesses = new Dictionary<string, TimeSpan>
+          {
+            { "2.520s", TimeSpan.FromTicks(25200000L) },
+            { " 2s", TimeSpan.FromSeconds(2) },
+            { "2s ", TimeSpan.FromSeconds(2) },
+            { "1.5s", TimeSpan.FromMilliseconds(1500) },
+            { "3s", TimeSpan.FromSeconds(3) },
+            { "0s", TimeSpan.Zero },
+            { "0.0000014s", TimeSpan.FromTicks(14L) },
+            { "0.0000015s", TimeSpan.FromTicks(15L) },
+            { "2e1s", TimeSpan.FromSeconds(20) },
+            { "+2s", TimeSpan.FromSeconds(2) },
+            { "-1.5s", TimeSpan.FromMilliseconds(-1500) },
+          };
+
+          foreach (var entry in witnesses)
+          {
+            foreach (var rawType in new[] { "ACTIVITY_START", "ACTIVITY_END" })
+            {
+              var dict = new Dictionary<string, object>
+              {
+                { "voiceActivity", new Dictionary<string, object> {
+                  { "type", rawType },
+                  { "audioOffset", entry.Key }
+                } }
+              };
+              LiveSessionResponse? response = LiveSessionResponse.FromJson(dict);
+              Assert($"Expected LiveSessionResponse for {rawType}/{entry.Key}", response.HasValue);
+              AssertType("LiveSessionVoiceActivity", response.Value.Message, out LiveSessionVoiceActivity voiceActivity);
+
+              var expectedType = rawType == "ACTIVITY_START"
+                  ? LiveSessionVoiceActivity.VoiceActivityType.ActivityStart
+                  : LiveSessionVoiceActivity.VoiceActivityType.ActivityEnd;
+              AssertEq("VoiceActivity.Type", voiceActivity.Type, expectedType);
+              AssertEq($"VoiceActivity.AudioOffset ({entry.Key}, {culture})", voiceActivity.AudioOffset, (TimeSpan?)entry.Value);
+            }
+          }
+
+          // 2. Keeps speech type when offset is missing, null, or rejected
+          foreach (var rawType in new[] { "ACTIVITY_START", "ACTIVITY_END" })
+          {
+            var expectedType = rawType == "ACTIVITY_START"
+                ? LiveSessionVoiceActivity.VoiceActivityType.ActivityStart
+                : LiveSessionVoiceActivity.VoiceActivityType.ActivityEnd;
+
+            LiveSessionResponse? missingResp = LiveSessionResponse.FromJson(
+                $"{{\"voiceActivity\": {{\"type\": \"{rawType}\"}}}}");
+            Assert("Expected response for missing offset", missingResp.HasValue);
+            AssertType("LiveSessionVoiceActivity", missingResp.Value.Message, out LiveSessionVoiceActivity missingVa);
+            AssertEq("missingVa.Type", missingVa.Type, expectedType);
+            AssertEq("missingVa.AudioOffset", missingVa.AudioOffset, null);
+
+            LiveSessionResponse? nullOffsetResp = LiveSessionResponse.FromJson(
+                $"{{\"voiceActivity\": {{\"type\": \"{rawType}\", \"audioOffset\": null}}}}");
+            Assert("Expected response for null offset", nullOffsetResp.HasValue);
+            AssertType("LiveSessionVoiceActivity", nullOffsetResp.Value.Message, out LiveSessionVoiceActivity nullOffsetVa);
+            AssertEq("nullOffsetVa.Type", nullOffsetVa.Type, expectedType);
+            AssertEq("nullOffsetVa.AudioOffset", nullOffsetVa.AudioOffset, null);
+
+            foreach (var badOffset in new[] { "", "s", "nope", "foo", "2 s", "2ss", "1e308s", "-1e308s" })
+            {
+              var rejectedDict = new Dictionary<string, object>
+              {
+                { "voiceActivity", new Dictionary<string, object> {
+                  { "type", rawType },
+                  { "audioOffset", badOffset }
+                } }
+              };
+              LiveSessionResponse? rejectedResp = LiveSessionResponse.FromJson(rejectedDict);
+              Assert($"Expected response for rejected offset '{badOffset}'", rejectedResp.HasValue);
+              AssertType("LiveSessionVoiceActivity", rejectedResp.Value.Message, out LiveSessionVoiceActivity rejectedVa);
+              AssertEq("rejectedVa.Type", rejectedVa.Type, expectedType);
+              AssertEq($"rejectedVa.AudioOffset ({badOffset})", rejectedVa.AudioOffset, null);
+            }
+          }
+
+          // 3. Unknown, unspecified, missing, and non-string types map to Unspecified and preserve valid offset
+          foreach (var rawType in new object[] { "TYPE_UNSPECIFIED", "GARBAGE", 1L, true, null })
+          {
+            var dict = new Dictionary<string, object>
+            {
+              { "voiceActivity", new Dictionary<string, object> {
+                { "type", rawType },
+                { "audioOffset", "2.520s" }
+              } }
+            };
+            LiveSessionResponse? resp = LiveSessionResponse.FromJson(dict);
+            Assert("Expected response for unknown/non-string type", resp.HasValue);
+            AssertType("LiveSessionVoiceActivity", resp.Value.Message, out LiveSessionVoiceActivity va);
+            AssertEq("va.Type", va.Type, LiveSessionVoiceActivity.VoiceActivityType.Unspecified);
+            AssertEq("va.AudioOffset", va.AudioOffset, (TimeSpan?)TimeSpan.FromMilliseconds(2520));
+          }
+
+          LiveSessionResponse? missingTypeResp = LiveSessionResponse.FromJson(
+              "{\"voiceActivity\": {\"audioOffset\": \"2.520s\"}}");
+          Assert("Expected response for missing type", missingTypeResp.HasValue);
+          AssertType("LiveSessionVoiceActivity", missingTypeResp.Value.Message, out LiveSessionVoiceActivity missingTypeVa);
+          AssertEq("missingTypeVa.Type", missingTypeVa.Type, LiveSessionVoiceActivity.VoiceActivityType.Unspecified);
+          AssertEq("missingTypeVa.AudioOffset", missingTypeVa.AudioOffset, (TimeSpan?)TimeSpan.FromMilliseconds(2520));
+
+          // 4. Non-string audioOffset throws InvalidCastException
+          bool caughtInvalidCast = false;
+          try
+          {
+            LiveSessionResponse.FromJson("{\"voiceActivity\": {\"type\": \"ACTIVITY_START\", \"audioOffset\": 1}}");
+          }
+          catch (InvalidCastException)
+          {
+            caughtInvalidCast = true;
+          }
+          Assert("Should throw InvalidCastException when audioOffset is not a string", caughtInvalidCast);
+
+          // 5. Unrecognized top-level message and null voiceActivity return null
+          AssertEq("Unknown top-level message", LiveSessionResponse.FromJson("{\"unknown\": {}}"), null);
+          AssertEq("Null voiceActivity", LiveSessionResponse.FromJson("{\"voiceActivity\": null}"), null);
+
+          // 6. Combined empty serverContent + voiceActivity frame (emitted by gemini-3.1-flash-live-preview)
+          LiveSessionResponse? combinedEmptySc = LiveSessionResponse.FromJson(
+              "{\"serverContent\": {}, \"voiceActivity\": {\"type\": \"ACTIVITY_START\", \"audioOffset\": \"1.160s\"}}");
+          Assert("Expected response for empty serverContent + voiceActivity", combinedEmptySc.HasValue);
+          AssertType("LiveSessionVoiceActivity", combinedEmptySc.Value.Message, out LiveSessionVoiceActivity combinedVa);
+          AssertEq("combinedVa.Type", combinedVa.Type, LiveSessionVoiceActivity.VoiceActivityType.ActivityStart);
+          AssertEq("combinedVa.AudioOffset", combinedVa.AudioOffset, (TimeSpan?)TimeSpan.FromMilliseconds(1160));
+
+          // 7. Combined non-empty serverContent + voiceActivity yields both messages via FromJsonFrames
+          var multiFrames = LiveSessionResponse.FromJsonFrames(
+              "{\"serverContent\": {\"inputTranscription\": {\"text\": \"hello\"}}, \"voiceActivity\": {\"type\": \"ACTIVITY_END\", \"audioOffset\": \"5.200s\"}}").ToList();
+          AssertEq("FromJsonFrames count", multiFrames.Count, 2);
+          AssertType("First multiFrame", multiFrames[0].Message, out LiveSessionVoiceActivity multiVa);
+          AssertEq("multiVa.Type", multiVa.Type, LiveSessionVoiceActivity.VoiceActivityType.ActivityEnd);
+          AssertEq("multiVa.AudioOffset", multiVa.AudioOffset, (TimeSpan?)TimeSpan.FromMilliseconds(5200));
+          AssertType("Second multiFrame", multiFrames[1].Message, out LiveSessionContent multiSc);
+          AssertEq("multiSc.InputTranscription", multiSc.InputTranscription?.Text, "hello");
+        }
+      }
+      finally
+      {
+        System.Globalization.CultureInfo.CurrentCulture = originalCulture;
+      }
+
+      return Task.CompletedTask;
+    }
+
+    // Test end-to-end Live API VoiceActivity signals (ActivityStart and ActivityEnd) with spoken audio.
+    async Task TestLiveVoiceActivity(Backend backend)
+    {
+      FirebaseAI ai = backend == Backend.AgentPlatform
+          ? GetFirebaseAI(backend, location: "us-central1")
+          : GetFirebaseAI(backend);
+
+      const string liveModelName = "gemini-3.8-live";
+      var synthModel = ai.GetLiveModel(
+          liveModelName,
+          liveGenerationConfig: new LiveGenerationConfig(
+              responseModalities: new[] { ResponseModality.Audio }));
+
+      List<float> samples24k = new List<float>();
+      using (var ctsSynth = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(45)))
+      using (var synthSession = await synthModel.ConnectAsync(cancellationToken: ctsSynth.Token))
+      {
+        await synthSession.SendAsync(
+            ModelContent.Text("Please say clearly in one short sentence: Hello Gemini, one two three four five."),
+            turnComplete: true,
+            cancellationToken: ctsSynth.Token);
+
+        await foreach (var resp in synthSession.ReceiveAsync(ctsSynth.Token))
+        {
+          foreach (var chunk in resp.AudioAsFloat ?? Enumerable.Empty<float[]>())
+          {
+            samples24k.AddRange(chunk);
+          }
+        }
+        await synthSession.CloseAsync(System.Threading.CancellationToken.None);
+      }
+
+      Assert("Expected synthesized speech samples for Live VoiceActivity test", samples24k.Count > 4000);
+
+      // Resample 24kHz -> 16kHz
+      const int targetRate = 16000;
+      float[] speech16k = ResampleLinear(samples24k.ToArray(), 24000, targetRate);
+
+      List<float> fullStream = new List<float>(targetRate * 4 + speech16k.Length);
+      fullStream.AddRange(new float[targetRate]); // 1s leading silence
+      fullStream.AddRange(speech16k);
+      fullStream.AddRange(new float[targetRate * 3]); // 3s trailing silence
+
+      var vadModel = ai.GetLiveModel(
+          liveModelName,
+          liveGenerationConfig: new LiveGenerationConfig(
+              responseModalities: new[] { ResponseModality.Audio },
+              inputAudioTranscription: new AudioTranscriptionConfig(),
+              outputAudioTranscription: new AudioTranscriptionConfig()));
+
+      List<LiveSessionVoiceActivity> voiceActivities = new List<LiveSessionVoiceActivity>();
+      using (var ctsVad = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(60)))
+      using (var vadSession = await vadModel.ConnectAsync(cancellationToken: ctsVad.Token))
+      {
+        Task receiveTask = Task.Run(async () =>
+        {
+          try
+          {
+            await foreach (var resp in vadSession.ReceiveAsync(ctsVad.Token))
+            {
+              if (resp.Message is LiveSessionVoiceActivity va)
+              {
+                voiceActivities.Add(va);
+              }
+            }
+          }
+          catch (OperationCanceledException) { }
+        });
+
+        const int chunkSize = 1600; // 100ms @ 16kHz
+        try
+        {
+          for (int offset = 0; offset < fullStream.Count && !ctsVad.IsCancellationRequested; offset += chunkSize)
+          {
+            int count = Math.Min(chunkSize, fullStream.Count - offset);
+            float[] chunk = fullStream.GetRange(offset, count).ToArray();
+            await vadSession.SendAudioAsync(chunk, ctsVad.Token);
+            await Task.Delay(50, ctsVad.Token);
+          }
+        }
+        catch (OperationCanceledException) { }
+
+        var finished = await Task.WhenAny(receiveTask, Task.Delay(TimeSpan.FromSeconds(20)));
+        if (finished != receiveTask)
+        {
+          ctsVad.Cancel();
+        }
+        await receiveTask;
+
+        try { await vadSession.CloseAsync(System.Threading.CancellationToken.None); } catch { }
+      }
+
+      foreach (var va in voiceActivities)
+      {
+        DebugLog($"[TestLiveVoiceActivity {backend}] Type={va.Type}, AudioOffset={va.AudioOffset}");
+      }
+
+      bool sawStart = voiceActivities.Any(
+          v => v.Type == LiveSessionVoiceActivity.VoiceActivityType.ActivityStart &&
+               v.AudioOffset >= TimeSpan.Zero);
+      bool sawEnd = voiceActivities.Any(
+          v => v.Type == LiveSessionVoiceActivity.VoiceActivityType.ActivityEnd &&
+               v.AudioOffset > TimeSpan.Zero);
+
+      Assert($"Expected ActivityStart in LiveSessionVoiceActivity events (count={voiceActivities.Count})", sawStart);
+      Assert($"Expected ActivityEnd in LiveSessionVoiceActivity events (count={voiceActivities.Count})", sawEnd);
     }
   }
 }

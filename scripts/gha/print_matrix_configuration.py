@@ -109,8 +109,6 @@ TEST_DEVICES = {
                      ]},
   "emulator_ftl_target": {"platform": ANDROID, "type": "real",
                           "device": [
-                            "model=Pixel2,version=28",
-                            "model=Pixel2.arm,version=28",
                             "model=MediumPhone.arm,version=28",
                             "model=MediumTablet.arm,version=28",
                             "model=SmallPhone.arm,version=28",
@@ -121,8 +119,8 @@ TEST_DEVICES = {
   "ios_target": {"platform": IOS, "type": "real",
                  "device": [
                    # Slightly different OS versions because of limited FTL selection.
-                   "model=iphone14pro,version=16.6",
-                   "model=iphone11pro,version=16.6",
+                   "model=iphone16pro,version=18.3",  # iPhone 16 Pro
+                   "model=iphonese3,version=18.4",    # iPhone SE 3
                  ]},
   "simulator_target": {"platform": IOS, "type": "virtual", "name": "iPhone 17 Pro Max", "version": "26.4.1"},
   "tvos_simulator": {"platform": TVOS, "type": "virtual", "name": "Apple TV", "version": "26.4"},
