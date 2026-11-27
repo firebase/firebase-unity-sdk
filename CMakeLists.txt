@@ -101,6 +101,8 @@ cmake_policy(SET CMP0078 NEW)
 if (FIREBASE_INCLUDE_MONO AND FIREBASE_INCLUDE_UNITY)
   message(WARNING "Both Mono and Unity build set to ON. Disabling Unity.")
   set(FIREBASE_INCLUDE_UNITY OFF)
+elseif (NOT FIREBASE_INCLUDE_UNITY AND NOT FIREBASE_INCLUDE_MONO)
+  set(FIREBASE_INCLUDE_MONO ON)
 endif()
 
 # Darwin library for security
@@ -263,7 +265,7 @@ set(PROJECT_LIST_HEADER "#define PROJECT_LIST(X)")
 list(APPEND PROJECT_LIST_HEADER "  X(App)")
 
 # Include Firebase editor tools.
-if (DESKTOP AND APPLE AND FIREBASE_INCLUDE_EDITOR_TOOL AND NOT FIREBASE_GENERATE_SWIG_ONLY)
+if (DESKTOP AND APPLE AND FIREBASE_INCLUDE_UNITY AND FIREBASE_INCLUDE_EDITOR_TOOL AND NOT FIREBASE_GENERATE_SWIG_ONLY)
   add_subdirectory(editor)
 endif()
 
@@ -285,7 +287,7 @@ if (FIREBASE_INCLUDE_AUTH)
   list(APPEND DOCUMENTATION_ONLY_LIB_NAMES "firebase_auth_swig")
   list(APPEND PROJECT_LIST_HEADER "  X(Auth)")
 endif()
-if (FIREBASE_INCLUDE_CRASHLYTICS AND FIREBASE_INCLUDE_UNITY)
+if (FIREBASE_INCLUDE_CRASHLYTICS)
   add_subdirectory(crashlytics)
   list(APPEND TARGET_LINK_LIB_NAMES "firebase_crashlytics" "firebase_crashlytics_swig")
   list(APPEND DOCUMENTATION_ONLY_LIB_NAMES "firebase_crashlytics_swig")
@@ -351,7 +353,7 @@ add_custom_target(firebase_swig_targets
     ${DOCUMENTATION_ONLY_LIB_NAMES}
 )
 
-if(FIREBASE_INCLUDE_MONO)
+if(FIREBASE_INCLUDE_MONO AND DESKTOP)
   add_subdirectory(samples/mono_app)
 endif()
 

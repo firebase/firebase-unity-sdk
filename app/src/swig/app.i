@@ -60,6 +60,7 @@ extern JavaVM *g_jvm;
 
 // Implemented in unity_main.cpp.
 extern jobject UnityGetActivity(JNIEnv **env);
+extern "C" void FirebaseSetAndroidActivity(JNIEnv *jni_env, jobject activity);
 #endif  // defined(__ANDROID__)
 
 // Reference count manager for C++ App instance, using pointer as the key for
@@ -1560,6 +1561,12 @@ static ::firebase::Future<void> FixAndroidDependencies();
 
 static void InitializePlayServicesInternal();
 static void TerminatePlayServicesInternal();
+
+// Registers the Android activity (a JNIEnv* and a jobject reference to an
+// android.app.Activity) that Firebase should use when the host is not a Unity
+// player. Call it once, before the first FirebaseApp is created. Does nothing
+// on other platforms.
+static void SetAndroidActivityInternal(void* jni_env, void* activity);
 }
 
 %{
@@ -1588,6 +1595,13 @@ static Future<void> FixAndroidDependencies() {
   return future;
 #else
   return Future<void>();
+#endif  // defined(__ANDROID__)
+}
+
+static void SetAndroidActivityInternal(void* jni_env, void* activity) {
+#if defined(__ANDROID__)
+  FirebaseSetAndroidActivity(static_cast<JNIEnv*>(jni_env),
+                             static_cast<jobject>(activity));
 #endif  // defined(__ANDROID__)
 }
 

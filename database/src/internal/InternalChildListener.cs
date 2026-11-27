@@ -28,6 +28,14 @@ internal sealed class InternalChildListener : InternalListener {
       ChildChangeType changeType, System.IntPtr snapshot, string previousChildName);
   public delegate void OnChildRemovedDelegate(int callbackId, System.IntPtr snapshot);
 
+  // The delegates registered with C++, held here so that they are never garbage collected.
+  private static readonly OnCancelledDelegate cancelledDelegate =
+      new OnCancelledDelegate(OnCancelledHandler);
+  private static readonly OnChildChangeDelegate childChangeDelegate =
+      new OnChildChangeDelegate(OnChildChangeHandler);
+  private static readonly OnChildRemovedDelegate childRemovedDelegate =
+      new OnChildRemovedDelegate(OnChildRemovedHandler);
+
   // Gets the ChildListener for the given callbackId.
   private static bool TryGetListener(
       int callbackId, out InternalChildListener childListener) {
@@ -104,7 +112,7 @@ internal sealed class InternalChildListener : InternalListener {
 
   static InternalChildListener() {
     InternalQuery.RegisterChildListenerCallbacks(
-        OnCancelledHandler, OnChildChangeHandler, OnChildRemovedHandler);
+        cancelledDelegate, childChangeDelegate, childRemovedDelegate);
   }
 
   private object eventLock = new object();

@@ -27,6 +27,10 @@ internal sealed class InternalTransactionHandler : IDisposable {
   public delegate InternalTransactionResult TransactionDelegate(
       int callbackId, System.IntPtr mutableData);
 
+  // The delegate registered with C++, held here so that it is never garbage collected.
+  private static readonly TransactionDelegate transactionDelegate =
+      new TransactionDelegate(DoTransaction);
+
   // To be supported on all platforms, cross-language callbacks need to be static,
   // so we use a callback id to find the actual handler of the callback.
   // The map will also keep the handler alive until it is removed in its Dispose function.
@@ -67,7 +71,7 @@ internal sealed class InternalTransactionHandler : IDisposable {
   }
 
   static InternalTransactionHandler() {
-    InternalDatabaseReference.RegisterTransactionCallback(DoTransaction);
+    InternalDatabaseReference.RegisterTransactionCallback(transactionDelegate);
   }
 
   private Func<MutableData, TransactionResult> transaction;

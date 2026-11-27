@@ -163,7 +163,61 @@ the product you care about to keep it fast. C++ Doxygen comments are converted
 to C# XML docs by `swig_commenter.py` (see `cmake/firebase_swig.cmake`), so
 `<SWIG>`/`@if swig_examples` blocks in C++ headers matter for Unity docs.
 
-## 5. CI equivalents
+## 5. Building without Unity (`--unityless`)
+
+For development and testing on a machine with no Unity installation:
+
+```bash
+python scripts/build_scripts/build_zips.py --platform=linux --unityless
+```
+
+- Needs the **.NET SDK** (`dotnet`, 8.0 or newer) instead of Unity; C# is
+  compiled with `dotnet build` (`cmake/dotnet_project.template`). Mono is not
+  required.
+- Sets `FIREBASE_INCLUDE_UNITY=OFF`, which makes CMake turn
+  `FIREBASE_INCLUDE_MONO` on. `Firebase.Platform.dll` is built from
+  `app/platform/Mono/` (its own update thread, logs to stderr) instead of
+  `app/platform/Unity/`, and Functions, Firebase AI and `Firebase.App.Internal`
+  are compiled to DLLs instead of only being packed as source.
+- Output goes to `<platform>_unityless_build/`, separate from
+  `<platform>_unity/`, so the two modes never share a CMake cache.
+
+> [!CAUTION]
+> A `--unityless` zip must never be packaged into a `.unitypackage` / `.tgz`.
+> Its `Firebase.Platform.dll` runs callbacks on its own thread rather than
+> Unity's main thread, and the Editor tooling is missing. Release builds stay
+> on the default (Unity) mode.
+
+`scripts/build_scripts/verify_unityless.sh` (it takes no options) builds the
+Linux `--unityless` zip, incrementally in `linux_unityless_build/`, checks that
+no built assembly references `UnityEngine`/`UnityEditor`, and runs
+`MonoTestApp` (`samples/mono_app`) against the zip it just built. `MonoTestApp`
+compiles the product `testapp` sources into one headless runner. The script
+runs only the tests listed as offline in
+`samples/mono_app/MonoTestAppRunner.cs`, which need neither a backend nor the
+network: ten of the twelve product suites (App Check and Functions have no
+such tests and are only compiled). The run fails if a listed test or one of
+those ten suites is missing, so it needs a build of all products. The script
+passes `FIREBASE_CPP_SDK_DIR`, when set, through `--cmake_extras`, so it wins
+over a sibling `../firebase-cpp-sdk`.
+
+> [!NOTE]
+> Known issue: the Auth suite sometimes crashes in native code while an `Auth`
+> object is destroyed (exit code 134 or 139 during `TestCreateDestroy`; about
+> one run in ten on a loaded workstation). The crash is in the C++ SDK's Auth
+> teardown, not in the Unity repo. A red run whose only failure is that crash
+> is this issue, not a regression: run the script again.
+
+On Android (`--platform=android --unityless`) the native library reads the
+activity from the `UnityPlayer` class; a host that is not a Unity player must
+register its activity once, before creating the first `FirebaseApp`, by
+calling the native export `FirebaseSetAndroidActivity(JNIEnv*, jobject)` (see
+`app/src/unity_main.cpp`). `Firebase.App.dll` also has a C# binding for it,
+`AppUtil.SetAndroidActivityInternal(IntPtr jniEnv, IntPtr activity)`, but that
+method is `internal`, so code outside the SDK's own assemblies can reach it
+only through reflection.
+
+## 6. CI equivalents
 
 `.github/workflows/build_starter.yml` fans out to `build_<platform>.yml`, each
 of which checks out `firebase-cpp-sdk` next to the Unity repo and runs e.g.:
