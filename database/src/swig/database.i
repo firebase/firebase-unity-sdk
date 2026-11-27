@@ -120,6 +120,7 @@ static CppInstanceManager<Database> g_database_instances;
 %warnfilter(314,516,844);
 
 %rename("$ignore", regextarget=1, fullname=1) "firebase::database::MutableData::.*";
+%ignore firebase::database::MutableData::MutableData;
 %rename("%s") firebase::database::MutableData::~MutableData;
 %rename("%s") firebase::database::MutableData::children_count;
 %rename("%s") firebase::database::MutableData::key;
