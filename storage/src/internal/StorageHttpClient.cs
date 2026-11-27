@@ -33,11 +33,6 @@ namespace Firebase.Storage.Internal {
   internal static class StorageHttpClient {
     private static readonly HttpMethod PatchMethod = new HttpMethod("PATCH");
 
-    // Upper bound on simultaneous connections to the Storage host. The scheduler allows up to
-    // 2 uploads + 3 downloads + 5 commands in flight, so this must exceed 10 or commands queue
-    // behind long transfers (Mono's default per-host limit is 2).
-    private const int MaxConnectionsPerServer = 16;
-
     private static readonly HttpClient _httpClient = CreateDefaultHttpClient();
 
     internal static HttpClient Client {
@@ -49,7 +44,7 @@ namespace Firebase.Storage.Internal {
       // so the client-wide timeout is disabled. Uses FirebaseHttpMessageHandler (backed by
       // firebase-cpp-sdk's firebase_http_transport) to preserve native transfer speeds without
       // depending on UnityEngine.Networking (see FirebaseHttpMessageHandler for full rationale).
-      return HttpHelpers.CreateHttpClient(Timeout.InfiniteTimeSpan, MaxConnectionsPerServer);
+      return HttpHelpers.CreateHttpClient(Timeout.InfiniteTimeSpan);
     }
 
     // Sets the standard Firebase Storage REST headers on an HttpRequestMessage.
@@ -228,6 +223,10 @@ namespace Firebase.Storage.Internal {
     /// its errors propagate unchanged and are never retried.
     /// </summary>
     internal static bool IsTransportException(Exception ex) {
+      // Never retry TLS / certificate verification failures (S4).
+      if (FirebaseHttpMessageHandler.IsTlsFailure(ex)) {
+        return false;
+      }
       switch (ex) {
         case null:
           return false;
@@ -237,9 +236,6 @@ namespace Firebase.Storage.Internal {
         case WebException _:
         case ObjectDisposedException _:
         case OperationCanceledException _:
-        // A TLS failure in the middle of a transfer (corrupted record, renegotiation refused by a
-        // middlebox) kills the connection; the next attempt opens a new one.
-        case System.Security.Authentication.AuthenticationException _:
           return true;
         case AggregateException agg:
           if (agg.InnerExceptions.Count == 0) {

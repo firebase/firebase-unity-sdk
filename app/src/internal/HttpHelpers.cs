@@ -26,8 +26,6 @@ namespace Firebase.Internal
   // Helper functions to help handling the Http calls.
   internal static class HttpHelpers
   {
-    private const int DefaultMaxConnectionsPerServer = 16;
-
     /// <summary>
     /// Creates the shared platform-native <see cref="HttpMessageHandler" /> backed by
     /// <c>firebase-cpp-sdk</c>'s <c>firebase_http_transport</c> (<c>libcurl</c> on Desktop,
@@ -39,21 +37,18 @@ namespace Firebase.Internal
     /// <c>UnityEngine.Networking</c>, and when to revisit once Unity 7+ (CoreCLR / .NET 10+ BCL)
     /// becomes the minimum supported runtime.
     /// </summary>
-    internal static HttpMessageHandler CreateHttpMessageHandler(
-        int maxConnectionsPerServer = DefaultMaxConnectionsPerServer)
+    internal static HttpMessageHandler CreateHttpMessageHandler()
     {
-      return new FirebaseHttpMessageHandler(maxConnectionsPerServer);
+      return new FirebaseHttpMessageHandler();
     }
 
     /// <summary>
     /// Creates an <see cref="HttpClient" /> configured with the shared native
     /// <see cref="FirebaseHttpMessageHandler" /> and ExpectContinue disabled.
     /// </summary>
-    internal static HttpClient CreateHttpClient(
-        TimeSpan? timeout = null,
-        int maxConnectionsPerServer = DefaultMaxConnectionsPerServer)
+    internal static HttpClient CreateHttpClient(TimeSpan? timeout = null)
     {
-      var client = new HttpClient(CreateHttpMessageHandler(maxConnectionsPerServer), disposeHandler: true);
+      var client = new HttpClient(CreateHttpMessageHandler(), disposeHandler: true);
       if (timeout.HasValue)
       {
         client.Timeout = timeout.Value;

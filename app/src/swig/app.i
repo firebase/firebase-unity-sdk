@@ -1749,8 +1749,10 @@ static void TerminatePlayServicesInternal() {
 %csmethodmodifiers firebase::HttpGetResponseHeadersInternal "internal";
 %csmethodmodifiers firebase::HttpTryReadResponseBodyInternal "internal";
 %csmethodmodifiers firebase::HttpGetErrorInternal "internal";
+%csmethodmodifiers firebase::HttpGetErrorClassInternal "internal";
 %csmethodmodifiers firebase::HttpCancelRequestInternal "internal";
 %csmethodmodifiers firebase::HttpDestroyRequestInternal "internal";
+%csmethodmodifiers firebase::HttpCancelAllRequestsInternal "internal";
 %csmethodmodifiers firebase::HttpWaitNextEventInternal "internal";
 %csmethodmodifiers firebase::HttpWakeEventPumpInternal "internal";
 %include "app/http/http_bridge.h"

@@ -84,6 +84,15 @@ namespace Firebase.Internal {
     private const int EventResponseHeadersReady = 2;
     private const int EventResponseBodyAvailable = 3;
 
+    // Structured native error classes returned by HttpGetErrorClassInternal (S4).
+    private const int ErrorClassNone = 0;
+    private const int ErrorClassCanceled = 1;
+    private const int ErrorClassConnect = 2;
+    private const int ErrorClassTls = 3;
+    private const int ErrorClassTimeout = 4;
+    private const int ErrorClassOther = 5;
+
+    private const int FallbackMaxConnectionsPerServer = 16;
     private const int CopyBufferSize = 64 * 1024;
 
     // Store an OperationSlot holding a WeakReference<NativeOperationState> plus a waiter-refcounted
@@ -103,13 +112,36 @@ namespace Firebase.Internal {
     // 0 = unprobed, 1 = native available, -1 = fallback to HttpClientHandler.
     private static int _nativeAvailability;
 
-    private readonly int _maxConnectionsPerServer;
     private HttpClientHandler _fallbackHandler;
     private readonly object _fallbackLock = new object();
     private int _disposed;
 
-    internal FirebaseHttpMessageHandler(int maxConnectionsPerServer = 16) {
-      _maxConnectionsPerServer = maxConnectionsPerServer;
+    internal FirebaseHttpMessageHandler() {
+    }
+
+    internal static bool IsNativeTransportActive => EnsureNativeTransportAvailable();
+
+    /// <summary>
+    /// Returns true if <paramref name="ex" /> represents or wraps a TLS / certificate failure
+    /// that must not be blindly retried.
+    /// </summary>
+    internal static bool IsTlsFailure(Exception ex) {
+      Exception current = ex;
+      while (current != null) {
+        if (current is System.Security.Authentication.AuthenticationException) {
+          return true;
+        }
+        if (current is AggregateException agg) {
+          foreach (Exception inner in agg.InnerExceptions) {
+            if (IsTlsFailure(inner)) {
+              return true;
+            }
+          }
+          return false;
+        }
+        current = current.InnerException;
+      }
+      return false;
     }
 
     protected override Task<HttpResponseMessage> SendAsync(
@@ -159,7 +191,7 @@ namespace Firebase.Internal {
           throw new ObjectDisposedException(nameof(FirebaseHttpMessageHandler));
         }
         if (_fallbackHandler == null) {
-          _fallbackHandler = CreateFallbackHandler(_maxConnectionsPerServer);
+          _fallbackHandler = CreateFallbackHandler(FallbackMaxConnectionsPerServer);
         }
         fallback = _fallbackHandler;
       }
@@ -256,6 +288,11 @@ namespace Firebase.Internal {
         if (entry.Value.TryGetTarget(out NativeOperationState op)) {
           op.AbortAndRelease();
         }
+      }
+      ActiveOperations.Clear();
+      try {
+        AppUtil.HttpCancelAllRequestsInternal();
+      } catch (Exception) {
       }
       try {
         AppUtil.HttpWakeEventPumpInternal();
@@ -451,8 +488,8 @@ namespace Firebase.Internal {
             throw uploadTask.Exception.GetBaseException();
           }
           string err = opState.GetErrorMessage();
-          throw new HttpRequestException(
-              string.IsNullOrEmpty(err) ? "Native HTTP transport request failed." : err);
+          int errorClass = opState.GetErrorClass();
+          throw CreateTransportException(errorClass, err, cancellationToken);
         }
 
         if (uploadTask != null && !uploadTask.IsCompleted) {
@@ -475,6 +512,30 @@ namespace Firebase.Internal {
         } else {
           await waitTask.ConfigureAwait(false);
         }
+      }
+    }
+
+    private static Exception CreateTransportException(
+        int errorClass,
+        string errorMessage,
+        CancellationToken cancellationToken) {
+      string msg = string.IsNullOrEmpty(errorMessage)
+          ? "Native HTTP transport request failed."
+          : errorMessage;
+      switch (errorClass) {
+        case ErrorClassCanceled:
+          return new TaskCanceledException(msg, null, cancellationToken);
+        case ErrorClassTls:
+          return new HttpRequestException(
+              msg, new System.Security.Authentication.AuthenticationException(msg));
+        case ErrorClassTimeout:
+          return new HttpRequestException(msg, new TimeoutException(msg));
+        case ErrorClassConnect:
+          return new HttpRequestException(msg, new IOException(msg));
+        case ErrorClassNone:
+        case ErrorClassOther:
+        default:
+          return new HttpRequestException(msg);
       }
     }
 
@@ -757,6 +818,12 @@ namespace Firebase.Internal {
       public string GetErrorMessage() {
         lock (_handleLock) {
           return _handle == 0 ? string.Empty : AppUtil.HttpGetErrorInternal(_handle);
+        }
+      }
+
+      public int GetErrorClass() {
+        lock (_handleLock) {
+          return _handle == 0 ? ErrorClassOther : AppUtil.HttpGetErrorClassInternal(_handle);
         }
       }
 
@@ -1094,9 +1161,17 @@ namespace Firebase.Internal {
           return new OperationCanceledException(cancellationToken);
         }
         string err = _op.GetErrorMessage();
+        int errorClass = _op.GetErrorClass();
         _op.AbortAndRelease();
-        return new IOException(
-            string.IsNullOrEmpty(err) ? "Native HTTP response stream aborted." : err);
+        string msg = string.IsNullOrEmpty(err) ? "Native HTTP response stream aborted." : err;
+        if (errorClass == ErrorClassTls) {
+          return new IOException(
+              msg, new System.Security.Authentication.AuthenticationException(msg));
+        }
+        if (errorClass == ErrorClassCanceled) {
+          return new OperationCanceledException(msg, cancellationToken);
+        }
+        return new IOException(msg);
       }
 
       public override long Seek(long offset, SeekOrigin origin) {
