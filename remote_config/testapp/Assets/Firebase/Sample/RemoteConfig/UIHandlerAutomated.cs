@@ -14,6 +14,7 @@ namespace Firebase.Sample.RemoteConfig {
       // Set the list of tests to run, note this is done at Start since they are
       // non-static.
       Func<Task>[] tests = {
+        TestEnsureInitialized,
         TestSetConfigSettings,
         TestDisplayData,
         TestDisplayAllKeys,
@@ -49,6 +50,22 @@ namespace Firebase.Sample.RemoteConfig {
                                           testRunner.CurrentTestDescription, value1, value2,
                                           message));
       }
+    }
+
+    async Task TestEnsureInitialized() {
+      ConfigInfo info = await FirebaseRemoteConfig.DefaultInstance.EnsureInitializedAsync();
+      if (info == null) {
+        throw new Exception("EnsureInitializedAsync returned null ConfigInfo");
+      }
+      AssertEq("Expected FetchTime to be UTC", DateTimeKind.Utc, info.FetchTime.Kind);
+      AssertEq("Expected ThrottledEndTime to be UTC", DateTimeKind.Utc, info.ThrottledEndTime.Kind);
+      ConfigInfo currentInfo = FirebaseRemoteConfig.DefaultInstance.Info;
+      if (currentInfo == null) {
+        throw new Exception("FirebaseRemoteConfig.Info returned null ConfigInfo");
+      }
+      AssertEq("Expected Info.FetchTime to be UTC", DateTimeKind.Utc, currentInfo.FetchTime.Kind);
+      AssertEq("Expected Info.ThrottledEndTime to be UTC", DateTimeKind.Utc,
+               currentInfo.ThrottledEndTime.Kind);
     }
 
     Task TestSetConfigSettings() {

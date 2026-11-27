@@ -20,7 +20,7 @@ namespace Firebase.RemoteConfig {
 /// Normally returned as a result of the GetInfo() function.
 public sealed class ConfigInfo {
 
-  private System.DateTime UnixEpochUtc =
+  private static readonly System.DateTime UnixEpochUtc =
       new System.DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
 
   /// @brief The time when the last fetch operation completed.
