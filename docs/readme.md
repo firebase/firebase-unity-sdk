@@ -109,12 +109,6 @@ Support
 
 Release Notes
 -------------
-### Upcoming Release
--   Changes
-    - Remote Config: Clamped `ConfigInfo.FetchTime` and
-      `ConfigInfo.ThrottledEndTime` to `DateTime.MaxValue` (UTC) to prevent
-      `ArgumentOutOfRangeException` on out-of-range timestamps.
-
 ### 14.2.0
 -   Changes
     - General: Update to Firebase C++ SDK version 14.2.0.

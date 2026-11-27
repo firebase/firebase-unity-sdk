@@ -23,20 +23,6 @@ public sealed class ConfigInfo {
   private static readonly System.DateTime UnixEpochUtc =
       new System.DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
 
-  private static readonly System.DateTime MaxDateTimeUtc =
-      new System.DateTime(System.DateTime.MaxValue.Ticks, System.DateTimeKind.Utc);
-
-  private static readonly ulong MaxUnixEpochMilliseconds =
-      (ulong)((System.DateTime.MaxValue.Ticks - UnixEpochUtc.Ticks) /
-              System.TimeSpan.TicksPerMillisecond);
-
-  private static System.DateTime FromUnixEpochMilliseconds(ulong milliseconds) {
-    if (milliseconds > MaxUnixEpochMilliseconds) {
-      return MaxDateTimeUtc;
-    }
-    return UnixEpochUtc.AddMilliseconds(milliseconds);
-  }
-
   /// @brief The time when the last fetch operation completed.
   public System.DateTime FetchTime { internal set; get; }
 
@@ -51,8 +37,8 @@ public sealed class ConfigInfo {
   public FetchFailureReason LastFetchFailureReason { internal set; get; }
 
   internal ConfigInfo(ConfigInfoInternal configInfoInternal) {
-    FetchTime = FromUnixEpochMilliseconds(configInfoInternal.fetch_time);
-    ThrottledEndTime = FromUnixEpochMilliseconds(configInfoInternal.throttled_end_time);
+    FetchTime = UnixEpochUtc.AddMilliseconds(configInfoInternal.fetch_time);
+    ThrottledEndTime = UnixEpochUtc.AddMilliseconds(configInfoInternal.throttled_end_time);
     LastFetchStatus = configInfoInternal.last_fetch_status;
     LastFetchFailureReason = configInfoInternal.last_fetch_failure_reason;
   }
