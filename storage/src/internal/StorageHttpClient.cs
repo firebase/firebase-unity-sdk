@@ -33,11 +33,6 @@ namespace Firebase.Storage.Internal {
   internal static class StorageHttpClient {
     private static readonly HttpMethod PatchMethod = new HttpMethod("PATCH");
 
-    // Upper bound on simultaneous connections to the Storage host. The scheduler allows up to
-    // 2 uploads + 3 downloads + 5 commands in flight, so this must exceed 10 or commands queue
-    // behind long transfers (Mono's default per-host limit is 2).
-    private const int MaxConnectionsPerServer = 16;
-
     private static readonly HttpClient _httpClient = CreateDefaultHttpClient();
 
     internal static HttpClient Client {
@@ -45,29 +40,11 @@ namespace Firebase.Storage.Internal {
     }
 
     private static HttpClient CreateDefaultHttpClient() {
-      try {
-        if (ServicePointManager.DefaultConnectionLimit < MaxConnectionsPerServer) {
-          ServicePointManager.DefaultConnectionLimit = MaxConnectionsPerServer;
-        }
-      } catch (Exception) {
-        // Ignore on runtimes where ServicePointManager is unsupported.
-      }
-      var handler = new HttpClientHandler();
-      try {
-        handler.MaxConnectionsPerServer = MaxConnectionsPerServer;
-      } catch (Exception) {
-        // MonoWebRequestHandler (Windows Mono / iOS IL2CPP) throws NotImplementedException;
-        // other runtimes may throw PlatformNotSupportedException. ServicePointManager fallback
-        // above covers MonoWebRequestHandler.
-      }
       // Per-attempt stall detection is handled by StallWatchdog (see StorageTask.RunAttemptAsync)
-      // so the client-wide timeout is disabled.
-      var client = new HttpClient(handler) {
-        Timeout = Timeout.InfiniteTimeSpan
-      };
-      // Mono defaults to "Expect: 100-continue", which costs a round trip on every upload chunk.
-      client.DefaultRequestHeaders.ExpectContinue = false;
-      return client;
+      // so the client-wide timeout is disabled. Uses FirebaseHttpMessageHandler (backed by
+      // firebase-cpp-sdk's firebase_http_transport) to preserve native transfer speeds without
+      // depending on UnityEngine.Networking (see FirebaseHttpMessageHandler for full rationale).
+      return HttpHelpers.CreateHttpClient(Timeout.InfiniteTimeSpan);
     }
 
     // Sets the standard Firebase Storage REST headers on an HttpRequestMessage.
@@ -125,14 +102,21 @@ namespace Firebase.Storage.Internal {
     }
 
     // Safely reads the response body as a string, returning an empty string on failure or null content.
-    internal static async Task<string> ReadResponseContentSafeAsync(HttpResponseMessage response) {
+    // Registers response disposal on cancellationToken so stalled error bodies on ResponseHeadersRead
+    // requests abort promptly when StallWatchdog or caller cancellation fires.
+    internal static async Task<string> ReadResponseContentSafeAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken = default) {
       if (response?.Content == null) {
         return string.Empty;
       }
-      try {
-        return await response.Content.ReadAsStringAsync().ConfigureAwait(false) ?? string.Empty;
-      } catch (Exception) {
-        return string.Empty;
+      using (cancellationToken.Register(() => response.Dispose())) {
+        try {
+          return await response.Content.ReadAsStringAsync().ConfigureAwait(false) ?? string.Empty;
+        } catch (Exception) {
+          cancellationToken.ThrowIfCancellationRequested();
+          return string.Empty;
+        }
       }
     }
 
@@ -140,11 +124,17 @@ namespace Firebase.Storage.Internal {
     /// Builds the <see cref="StorageException" /> for a non-success <paramref name="response" />
     /// from its status code and error body, and disposes the response.
     /// </summary>
-    internal static async Task<StorageException> CreateExceptionAsync(HttpResponseMessage response) {
+    internal static async Task<StorageException> CreateExceptionAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken = default) {
       int statusCode = (int)response.StatusCode;
-      string errorBody = await ReadResponseContentSafeAsync(response).ConfigureAwait(false);
-      response.Dispose();
-      return StorageException.CreateFromHttpResponse(statusCode, errorBody);
+      try {
+        string errorBody = await ReadResponseContentSafeAsync(response, cancellationToken)
+            .ConfigureAwait(false);
+        return StorageException.CreateFromHttpResponse(statusCode, errorBody);
+      } finally {
+        response.Dispose();
+      }
     }
 
     /// <summary>
@@ -169,7 +159,7 @@ namespace Firebase.Storage.Internal {
                   .ConfigureAwait(false);
             }
             if (!IsSuccessOrResumeIncomplete((int)response.StatusCode)) {
-              throw await CreateExceptionAsync(response).ConfigureAwait(false);
+              throw await CreateExceptionAsync(response, watchdog.Token).ConfigureAwait(false);
             }
           },
           backoff,
@@ -233,6 +223,10 @@ namespace Firebase.Storage.Internal {
     /// its errors propagate unchanged and are never retried.
     /// </summary>
     internal static bool IsTransportException(Exception ex) {
+      // Never retry TLS / certificate verification failures (S4).
+      if (FirebaseHttpMessageHandler.IsTlsFailure(ex)) {
+        return false;
+      }
       switch (ex) {
         case null:
           return false;
@@ -242,9 +236,6 @@ namespace Firebase.Storage.Internal {
         case WebException _:
         case ObjectDisposedException _:
         case OperationCanceledException _:
-        // A TLS failure in the middle of a transfer (corrupted record, renegotiation refused by a
-        // middlebox) kills the connection; the next attempt opens a new one.
-        case System.Security.Authentication.AuthenticationException _:
           return true;
         case AggregateException agg:
           if (agg.InnerExceptions.Count == 0) {

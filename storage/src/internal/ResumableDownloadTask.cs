@@ -708,7 +708,8 @@ namespace Firebase.Storage.Internal {
             return null;
           }
           if (!response.IsSuccessStatusCode) {
-            throw await StorageHttpClient.CreateExceptionAsync(response).ConfigureAwait(false);
+            throw await StorageHttpClient.CreateExceptionAsync(response, watchdog.Token)
+                .ConfigureAwait(false);
           }
 
           string newETag = GetResponseETag(response);

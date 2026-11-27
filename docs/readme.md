@@ -111,6 +111,12 @@ Release Notes
 -------------
 ### Upcoming Release
 -   Changes
+    - App / Networking: Added a shared platform-native `HttpMessageHandler`
+      (`FirebaseHttpMessageHandler`) backed by `firebase-cpp-sdk`'s `firebase_http_transport`
+      (`libcurl` on Desktop, `NSURLSession` on iOS/tvOS, JNI `HttpURLConnection` on Android) and
+      routed `Firebase.Storage`, `Firebase.Functions`, and `Firebase.AI` (REST and SSE streaming)
+      through it to deliver native wire-speed transfers and consistent TLS/redirect handling on
+      Unity 2022.3–6.x without depending on `UnityEngine.Networking`.
     - Storage: Rewrote the internal implementation in C#, removing the dependency on the C++
       and native platform Storage libraries. `Firebase.Storage.dll` is now shipped as C# source
       with an assembly definition of the same name (update `precompiledReferences` in your own

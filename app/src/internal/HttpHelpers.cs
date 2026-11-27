@@ -15,8 +15,10 @@
  */
 
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Firebase.Internal
@@ -24,6 +26,37 @@ namespace Firebase.Internal
   // Helper functions to help handling the Http calls.
   internal static class HttpHelpers
   {
+    /// <summary>
+    /// Creates the shared platform-native <see cref="HttpMessageHandler" /> backed by
+    /// <c>firebase-cpp-sdk</c>'s <c>firebase_http_transport</c> (<c>libcurl</c> on Desktop,
+    /// <c>NSURLSession</c> on iOS/tvOS, and JNI <c>HttpURLConnection</c> on Android), used by
+    /// Storage, Functions, and Firebase AI Logic.
+    ///
+    /// See <see cref="FirebaseHttpMessageHandler" /> for why pure-C# Firebase Unity products use
+    /// the native transport instead of managed <c>UnityTlsStream</c> or
+    /// <c>UnityEngine.Networking</c>, and when to revisit once Unity 7+ (CoreCLR / .NET 10+ BCL)
+    /// becomes the minimum supported runtime.
+    /// </summary>
+    internal static HttpMessageHandler CreateHttpMessageHandler()
+    {
+      return new FirebaseHttpMessageHandler();
+    }
+
+    /// <summary>
+    /// Creates an <see cref="HttpClient" /> configured with the shared native
+    /// <see cref="FirebaseHttpMessageHandler" /> and ExpectContinue disabled.
+    /// </summary>
+    internal static HttpClient CreateHttpClient(TimeSpan? timeout = null)
+    {
+      var client = new HttpClient(CreateHttpMessageHandler(), disposeHandler: true);
+      if (timeout.HasValue)
+      {
+        client.Timeout = timeout.Value;
+      }
+      client.DefaultRequestHeaders.ExpectContinue = false;
+      return client;
+    }
+
     internal static async Task SetRequestHeaders(HttpRequestMessage request, FirebaseApp firebaseApp, string authPrefix = "Firebase", bool limitedUseAppCheckTokens = false)
     {
       request.Headers.Add("x-goog-api-key", firebaseApp.Options.ApiKey);
@@ -40,23 +73,29 @@ namespace Firebase.Internal
 
     // Helper function to throw an exception if the Http Response indicates failure.
     // Useful as EnsureSuccessStatusCode can leave out relevant information.
-    internal static async Task ValidateHttpResponse(HttpResponseMessage response)
+    internal static async Task ValidateHttpResponse(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken = default)
     {
       if (response.IsSuccessStatusCode)
       {
         return;
       }
 
-      // Status code indicates failure, try to read the content for more details
+      // Status code indicates failure, try to read the content for more details.
+      // Register response disposal on the cancellation token so stalled non-2xx
+      // error bodies on ResponseHeadersRead requests abort promptly.
       string errorContent = "No error content available.";
       if (response.Content != null)
       {
+        using var registration = cancellationToken.Register(() => response.Dispose());
         try
         {
           errorContent = await response.Content.ReadAsStringAsync();
         }
         catch (Exception readEx)
         {
+          cancellationToken.ThrowIfCancellationRequested();
           // Handle being unable to read the content
           errorContent = $"Failed to read error content: {readEx.Message}";
         }
@@ -71,6 +110,23 @@ namespace Firebase.Internal
       ex.Data["StatusCode"] = response.StatusCode;
 
       throw ex;
+    }
+
+    // Reads a line from a streaming response reader, translating any stream-disposal
+    // exception triggered by cancellation registration into OperationCanceledException.
+    internal static async Task<string> ReadLineWithCancellationAsync(
+        StreamReader reader,
+        CancellationToken cancellationToken)
+    {
+      try
+      {
+        return await reader.ReadLineAsync();
+      }
+      catch (Exception) when (cancellationToken.IsCancellationRequested)
+      {
+        cancellationToken.ThrowIfCancellationRequested();
+        throw;
+      }
     }
   }
 

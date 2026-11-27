@@ -103,8 +103,10 @@ namespace Firebase.Functions
 #if FIREBASE_LOG_REST_CALLS
       UnityEngine.Debug.Log("Request:\n" + request.Content);
 #endif
+      // Use default ResponseContentRead for unary RPCs so HttpClient's Timeout
+      // CTS remains active through the full response body read.
       // TODO pipe through cancellation tokens
-      using var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+      using var response = await _firebaseFunctions.HttpClient.SendAsync(request);
       if (!response.IsSuccessStatusCode)
       {
         string errorBody = "";
@@ -171,7 +173,10 @@ namespace Firebase.Functions
 #endif
 
       // Use ResponseHeadersRead to avoid loading the whole stream at once.
+      // Register response disposal immediately so cancellation aborts both
+      // stalled non-2xx error bodies and idle SSE streams promptly.
       using var response = await _firebaseFunctions.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, linkedToken);
+      using var registration = linkedToken.Register(() => response.Dispose());
       if (!response.IsSuccessStatusCode)
       {
         string errorBody = "";
@@ -183,6 +188,7 @@ namespace Firebase.Functions
           }
           catch (Exception e)
           {
+            linkedToken.ThrowIfCancellationRequested();
             UnityEngine.Debug.LogWarning("Failed to read error response: " + e.Message);
           }
         }
@@ -196,12 +202,11 @@ namespace Firebase.Functions
 
       using var stream = await response.Content.ReadAsStreamAsync();
       using var reader = new StreamReader(stream);
-      using var registration = linkedToken.Register(() => response.Dispose());
 
       StringBuilder currentEventData = new StringBuilder();
 
       string line;
-      while ((line = await ReadLineWithCancellationAsync(reader, linkedToken)) != null)
+      while ((line = await HttpHelpers.ReadLineWithCancellationAsync(reader, linkedToken)) != null)
       {
         linkedToken.ThrowIfCancellationRequested();
 
@@ -235,19 +240,6 @@ namespace Firebase.Functions
         {
           currentEventData.Append(line.Substring(5));
         }
-      }
-    }
-
-    private static async Task<string> ReadLineWithCancellationAsync(StreamReader reader, CancellationToken token)
-    {
-      try
-      {
-        return await reader.ReadLineAsync();
-      }
-      catch (Exception) when (token.IsCancellationRequested)
-      {
-        token.ThrowIfCancellationRequested();
-        throw;
       }
     }
   }

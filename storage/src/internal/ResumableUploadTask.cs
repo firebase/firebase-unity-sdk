@@ -337,8 +337,8 @@ namespace Firebase.Storage.Internal {
                   response.Dispose();
                   return;
                 }
-                StorageException error = await StorageHttpClient.CreateExceptionAsync(response)
-                    .ConfigureAwait(false);
+                StorageException error = await StorageHttpClient.CreateExceptionAsync(
+                    response, watchdog.Token).ConfigureAwait(false);
                 if (statusCode == 400 && offsetMismatchError == null) {
                   // A 400 can mean the server committed more of an aborted chunk than we think;
                   // re-synchronize with one query before treating it as fatal.

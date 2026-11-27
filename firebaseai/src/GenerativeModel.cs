@@ -78,11 +78,10 @@ namespace Firebase.AI
       _requestOptions = requestOptions;
       _useLimitedUseAppCheckTokens = useLimitedUseAppCheckTokens;
 
-      // Create a HttpClient using the timeout requested, or the default one.
-      _httpClient = new HttpClient()
-      {
-        Timeout = requestOptions?.Timeout ?? RequestOptions.DefaultTimeout
-      };
+      // Create a HttpClient using the timeout requested, or the default one, routed through the
+      // shared platform-native HttpMessageHandler (firebase_http_transport in FirebaseCppApp).
+      _httpClient = Firebase.Internal.HttpHelpers.CreateHttpClient(
+          requestOptions?.Timeout ?? RequestOptions.DefaultTimeout);
     }
 
     #region Public API
@@ -285,8 +284,8 @@ namespace Firebase.AI
       UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-      var response = await _httpClient.SendAsync(request, cancellationToken);
-      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
+      using var response = await _httpClient.SendAsync(request, cancellationToken);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response, cancellationToken);
 
       string result = await response.Content.ReadAsStringAsync();
 
@@ -315,16 +314,18 @@ namespace Firebase.AI
       UnityEngine.Debug.Log("Request:\n" + bodyJson);
 #endif
 
-      var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
+      using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+      using var registration = cancellationToken.Register(() => response.Dispose());
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response, cancellationToken);
 
       // We are expecting a Stream as the response, so handle that.
       using var stream = await response.Content.ReadAsStreamAsync();
       using var reader = new StreamReader(stream);
 
       string line;
-      while ((line = await reader.ReadLineAsync()) != null)
+      while ((line = await Firebase.Internal.HttpHelpers.ReadLineWithCancellationAsync(reader, cancellationToken)) != null)
       {
+        cancellationToken.ThrowIfCancellationRequested();
         // Only pass along strings that begin with the expected prefix.
         if (line.StartsWith(StreamPrefix))
         {
@@ -355,8 +356,8 @@ namespace Firebase.AI
       UnityEngine.Debug.Log("CountTokensRequest:\n" + bodyJson);
 #endif
 
-      var response = await _httpClient.SendAsync(request, cancellationToken);
-      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response);
+      using var response = await _httpClient.SendAsync(request, cancellationToken);
+      await Firebase.Internal.HttpHelpers.ValidateHttpResponse(response, cancellationToken);
 
       string result = await response.Content.ReadAsStringAsync();
 
